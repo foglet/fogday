@@ -325,6 +325,12 @@ textarea {
     margin-left: 1%;
     margin-right: 1%; }
 
+  /* 3 Column Grid One Third  test >>>> */ 
+  .one-third {
+    width: 70%;
+    margin-left: 15%;
+    margin-right: 15%; }  
+
   /* 3 Column Grid Two Third */
   .two-third {
     width: 48%;
@@ -348,6 +354,7 @@ textarea {
     width: 23%;
     margin-left: 1%;
     margin-right: 1%; } }
+
 /* Landscape Tablet/Notebook/Laptop */
 @media only screen and (min-width: 1024px) {
   body {
@@ -406,14 +413,17 @@ textarea {
     width: 10.5%;
     margin-left: 1%;
     margin-right: 1%; } }
+
 /* Desktop */
 @media only screen and (min-width: 1280px) {
   body {
     font-size: 1.375em; } }
+
 /* Widescreen */
 @media only screen and (min-width: 1440px) {
   body {
     font-size: 1.375em; } }
+
 /* Typography */
 body {
   font-family: Georgia, "Times New Roman", Times, serif; }
@@ -445,7 +455,7 @@ p, ul, blockquote, pre, td, th, label {
 small, aside {
   font-size: 0.77273em; }
 
-/* Hyperlinks */ /* not working */
+/* Hyperlinks */
 a {
   color: #C22A09;
   text-decoration: none;
@@ -464,8 +474,6 @@ a:hover {
 
 a:focus {
   outline: thin dotted; }
-/* Hyperlinks */ /* not working */
-  
 
 p a {
   /* Optimized for touch devices */
@@ -936,150 +944,4 @@ body {
       /* color: #292b36; */
       border-top: 8px solid #C1272D;
       padding: 10px 10px 40px 10px; }
-
-body.mapsVar { border-top: 8px solid #ff5500; }
-
-.container {padding: 90px 10px 40px 10px; } 
-
-.container, .navigation {
-  width: 90%;
-  max-width: 980px;
-  margin: 0 auto; }
-
-.navigation {padding: 0 0 30px 0; } 
-  
-.container a, .container a:visited {
-  color: #363636;
-  text-decoration: none;
-  border: none; }
-
-.container a:hover, .container a:focus {
-  color: #003F87;
-  -moz-transition: all 0.2s ease-in;
-  -o-transition: all 0.2s ease-in;
-  -webkit-transition: all 0.2s ease-in;
-  -ms-transition: all 0.2s ease-in;
-  transition: all 0.2s ease-in; }
-
-.ping a:hover {
-  color: #008B45;
-  -moz-transition: all 0.2s ease-in;
-  -o-transition: all 0.2s ease-in;
-  -webkit-transition: all 0.2s ease-in;
-  -ms-transition: all 0.2s ease-in;
-  transition: all 0.2s ease-in; } 
-
-
-/*  H3/H4 overrides */
-h3 {font-family: 'Open Sans', sans-serif; font-weight: 700; 
-      font-variant: small-caps;}
-
-.grid > h3 {font-family: 'Open Sans', sans-serif; font-weight: 700; }
-.banner h5 {font-family: 'Open Sans' sans-serif; font-weight: 400;}
-.subtitle p {font-family: 'Open Sans' sans-serif; font-weight: 400;}
-
-
-
-h4 {text-align: left; color: #666;}
-
-
-/*  social list */
-#socialist li {
-  display: inline; padding: 10px;
-  list-style-type: none;
-  padding-right: 20px; border: 1px solid #fff;  background-color: #F0F0F0;
-  height: 50px; line-height: 50px; 
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px; }
-
-#socialist li:hover {
-    background-color: #143352; }
-
-#socialist li a:hover {
-    color: #FFF; }    
-
-/*  simple horizontal list */
-ul.horizontal, ul.horizontal li {
-  font-family: 'Open Sans', sans-serif;
-  font-variant:small-caps;}
-
-ul.horizontal {
-  display:inline;
-    list-style-type: none;
-    width: 300px;
-     overflow: auto;
-    margin: 0 auto; padding: 1px 0 0 1px; }
-
-ul.horizontal li {
-    float: left;
-    width: 100px;
-    height: 39px;
-    margin: 0 1px 1px 0;
-    text-align: left;
-    color: #666; }
-
-/* -------- captions -------- */
-
-figcaption {
-  text-align: center;
-  margin-top: 20px; 
-  font-family: 'Open Sans', sans-serif; font-weight: 400;
-  font-size: .7em; }  
-
-/*  sino special DIVs */
-
-
- 
-  /* centered grid */
-
- /*  .midhalf {
-  width: 60%;
-  margin-left: 20%;
-  margin-right: 20%; }
-
-  .lefthird {
-  width: 31.33333%;
-  margin-left: 15%;
-  margin-right: 1%; }
-
-  .righthird {
-  width: 31.33333%;
-  margin-left: 1%;
-  margin-right: 15%; }
-
- */ 
-
-/* Tablet/Notebook */
-/* @media only screen and (min-width: 320px) {
- 
-   .lefthird, .righthird {
-    width: 30%;
-    margin-left:10%;
-  margin-right:10%; } }
-
-@media only screen and (min-width: 320px) {
-   .one-third {
-    width: 30%;
-    margin-left: 10%;
-    margin-right: 10%; } } 
-    */
-
-.footer {
-    position: relative;
-    left: 0; bottom: -78px;
-    width: 90%;  height: 78px;
-    clear:both; }
-
-.copyright {
-  font-family: monospace,serif;
-  _font-family: 'courier new',monospace;
-  font-size: .7em; }
-
-img {display: block; }
-
-.full-width {
-  width: 100vw; }
-
-
 
