@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<!--[if !IE 7]>
+    <style type="text/css">
+        #wrap {display:table;height:100%}
+    </style>
+<![endif]-->
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" -->
+
+<html dir="ltr" lang="en">
+
+<html>
+
+<head>
+
+    <title>Connected Cities</title>
+
+    <meta property="og:title" content="World Transit Connections" />
+    <meta property="og:description" content="The best-connected cities." />
+    <meta property="og:determiner" content="the" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <meta name="robots" content="index,follow">
+    
+    <!-- revised 17 Mar 2023 --> 
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css' rel='stylesheet'/>
+
+   
+    <!-- Google fonts  --> 
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic' rel='stylesheet' type='text/css'>
+    
+    <!--  font-awesome for fixedLegend -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- transit-hero.css -->   
+     <link rel='stylesheet' href='https://db.tt/58uhrk6u'>
+
+    <style>
+        body { margin:0; padding:0; } /* default mapbox settings */
+        #map { position:absolute; top:0; bottom: 0; width:100%; }
+    </style> 
+
+</head>
+
+<body class="transit">    
+
+    <div id='map'></div> <br/><br/>
+
+   <div class="navigation">
+        <button onclick='' id='regions'>TRANSIT CONNECTIONS</button> 
+        <!-- <button onclick='fly1();' id='fly'>Beijing</button> -->
+         <button onclick='fly14();' id='fly'>Berlin</button>
+        <button onclick='fly10();' id='fly'>Hong Kong</button>
+        <button onclick='fly2();' id='fly'>London</button>
+        <!-- <button onclick='fly4();' id='fly'>Mexico City</button> -->
+        <button onclick='fly6();' id='fly'>New York</button>
+        <button onclick='fly7();' id='fly'>Paris</button>
+        <button onclick='fly13();' id='fly'>San Francisco</button>
+        <button onclick='fly9();' id='fly'>Shanghai</button>
+        <button onclick='fly11();' id='fly'>Tokyo</button>
+        <button onclick='fly12();' id='fly'>Vienna</button>
+      
+        <button onclick='home();' id='home'>Stockholm</button>  <!-- Stockholm -->
+    </div>
+
+    <div class="fixedLegend"><h4><strong>TRANSPORT MODE</strong></h4>
+        <ul class="fa-ul">
+
+            <li><span style="color: #edeff5;"> ————— </span>
+                <i class="fa fa-subway fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5em;"></i> metro/U-Bahn</li>
+
+            <li><span style="color: #d92020;"> ————— </span> <!-- orig #78000 d92020 -->
+                <i class="fa fa-train fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5;"></i> passenger/freight rail </li>    
+           
+            <li><span style="color: #31ad90;"> ————— </span>
+                <i class="fa fa-subway fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5em;"></i> light rail/tram/S-Bahn </li>
+
+            <li><span style="color: #775f95;"> ————— </span>
+                <i class="fa fa-bus fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5em;"></i> trolley bus</li>
+
+            <li><span style="color: #c945af;"> ————— </span>
+                <i class="fa fa-train fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5em;"></i> monorail/maglev </li>
+                    
+            <li><span style="color: #68ad68;"> ————— </span>
+                <i class="fa fa-train fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5em;"></i> Amtrak passenger rail </li>
+
+            <li><span style="color: #d95520;"> ————— </span>
+                <i class="fa fa-train fa-fw" style="font-size: 1.1em; color: #E8E8E8; line-height: 1.5em;"></i> cable car/funicular </li>    
+
+            <li><span style="color: #8f91b5;"> —  —  — -— </span>
+                <i class="fa fa-ship fa-fw" style="font-size: 1.1em; color: #E8E8E8;line-height: 1.5em;"></i> ferry route</li>
+        </ul>
+    </div>
+
+
+    <div class="attribution">&#169; <a href="http://fogday.com">Fogday Studios</a> | @fogfish
+    </div>    
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/fogfish/cildewrgb007h9jm16r0j102k', // glow
+
+          // center: [121.46,31.21], // starting position: Europe
+           //  zoom: 5.2 // starting zoom 
+
+              center: [21.22,45.75], // starting position: Timișoara, Romania
+            zoom: 11.6 // starting zoom
+                });
+
+
+
+        //  zoom and rotation map controls
+            map.addControl(new mapboxgl.Navigation());
+
+        //  geocoder
+         // map.addControl(new mapboxgl.Geocoder());
+    
+
+        // fly to locations
+        function home() { // Stockholm
+            map.flyTo({
+            center: [18.06,59.33],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly1() { // Beijing
+            map.flyTo({
+            center: [116.40,39.93], 
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly2() { // London 50
+            map.flyTo({
+            center: [-0.15,51.52],
+           zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly4() { // Mexico City
+            map.flyTo({
+            center: [-99.13,19.43],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+        function fly6() { // New York
+            map.flyTo({
+            center: [-73.97,40.75],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly7() { // Paris
+            map.flyTo({
+            center: [2.35,48.86],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly9() { // Shanghai
+            map.flyTo({
+            center: [121.46,31.21],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly10() { // Hong Kong 75
+            map.flyTo({
+            center: [114.08,22.49],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly11() { // Tokyo
+            map.flyTo({
+            center: [139.73,35.75],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly12() { // Vienna
+            map.flyTo({
+            center: [16.36,48.21],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly13() { // San Francisco
+            map.flyTo({
+            center: [-122.34,37.77],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+        function fly14() { // Berlin
+            map.flyTo({
+            center: [13.409779,52.520645],
+            zoom: 10, bearing: 0, 
+            speed: 40, curve: 5,
+            easing: function(t) {
+             return t;
+                  }
+                }); }
+
+    </script>
+
+</body>
+
+</html>
