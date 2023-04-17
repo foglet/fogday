@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <title>The Oyster Atlas</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+   
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.11.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.11.2/mapbox-gl.css' rel='stylesheet' />
+   
+    <!-- Google fonts  --> 
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic' rel='stylesheet' type='text/css'>
+    
+    <!--  font-awesome for fixedLegend -->
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
+
+    <!-- hero.css --> 
+    <!-- <link rel='stylesheet' href='/assets/css/hero.css' rel="stylesheet" type="text/css" /> -->
+  
+      <link rel='stylesheet' href='https://foglet.github.io/fogday/assets/css/style.css' rel="stylesheet" type="text/css" />
+      <link rel='stylesheet' href='https://foglet.github.io/fogday/assets/css/hero.css' rel="stylesheet" type="text/css" />
+
+
+     <style>
+        body { margin:0; padding:0; } /* default mapbox settings */
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+
+    <style>
+        #fly { /* flyto */
+            display: block;
+            position: fixed;
+            bottom: 20px; 
+            left: 20px; /
+            margin: .1em;  
+            padding: .3em; 
+            width: 3em; 
+            height: 3em;
+            border: .5em; 
+            border-color: none;
+            font-size: .65em; 
+            font-weight: 400;
+            text-align: center;
+            color: #f50; 
+            opacity: 0.9;
+            background: none; }
+
+        #fly:hover {
+            border: .1em; 
+            border-radius: .2em;
+            font-weight: 700; 
+            color: #001420;
+            opacity: 0.9;
+            background: #fc0; }
+
+        .fixedLegend, .attribution { 
+            position: fixed;
+            margin: -1em auto; 
+            
+            font-size: .9em; 
+            font-weight:600;
+            opacity: 1; 
+            background: #none; }
+
+        .fixedLegend { /* the legend */
+            width: 17em; 
+            height: 3em;
+            padding-left: 1em;
+            border-top: 1px solid #eaeaea;
+            border-bottom: 1px solid #eaeaea;
+            }
+          
+
+        .fixedLegend a:link,
+        .fixedLegend a:visited {
+            color: #222; text-decoration: none; }
+
+        .fixedLegend a:active, 
+        .fixedLegend a:focus, 
+        .fixedLegend a:hover {
+            text-decoration: underline;
+            color: #104E8B; }
+
+        .attribution {
+            bottom: 1em; 
+            left: 3.3em;
+            font-weight: 400; 
+            text-align: center; }
+
+        .attribution, 
+        .attribution a:link, 
+        .attribution a:visited,
+        .attribution a:active,
+        .attribution a:hover {
+            color: #cfcfcf; }
+
+        .attribution a:link, 
+        .attribution a:visited {
+            text-decoration: none; }
+
+        .attribution a:active, 
+        .attribution a:focus, 
+        .attribution a:hover {
+            text-decoration: underline;
+            color: #b2b200; }
+
+
+    </style>
+
+</head>
+
+<body>    
+
+    <div id='map'></div> <br/>
+
+      <div class="fixedLegend">
+          
+                <p>
+                    <i style="font-weight:300;">the </i>Digital <a href="http://www.theislandreview.com/island-books-judith-schalansky/">Atlas of Remote Islands</a>
+                </p> 
+                     
+             
+        
+        </div> 
+       
+        <button onclick='fly();' id='fly'><strong>X</strong></button>
+
+<!--
+    <div class="attribution">&#169; 2015 <a href="http://fogday.com">Fogday Studios</a> | @fogfish
+    </div>    -->
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJOeXZlMF9FIn0.I3vP7TOUVxyKTaW27p_IqA';
+
+        var map = new mapboxgl.Map({
+            container: 'map', // container id
+            style: 'mapbox://styles/fogfish/cig7qho11000fa3lz844zk6in', //stylesheet location
+            center: [-144.347, -27.598], // starting position
+            zoom: 11 // starting zoom
+        });
+
+        // Add zoom and rotation controls to the map.
+            map.addControl(new mapboxgl.Navigation());
+
+         // fly to locations
+        function fly() { // near Peter I Island
+            map.flyTo({
+            center: [-96.108810,-66.105235],
+            zoom: 5, bearing: 5, 
+            speed: 1, curve: 1,
+            easing: function(t) {
+             return t;
+                  }
+                }); } 
+    </script>
+
+       
+    </script>
+
+</body>
+
+</html>
