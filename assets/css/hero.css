@@ -69,6 +69,8 @@ body.anatomy {border-top-color: #80a5c1; } /* iPhone template */
 /*  H3/H4 overrides */
 h3 {font-family: 'Open Sans', sans-serif; font-weight: 700; 
       font-variant: all-caps;}
+.banner h5 {font-family: 'Open Sans' sans-serif; font-weight: 400;}
+.subtitle p {font-family: 'Open Sans' sans-serif; font-weight: 400;}
 
 .grid > h3 {font-family: 'Open Sans', sans-serif; font-weight: 700; }
 
