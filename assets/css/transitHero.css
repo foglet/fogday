@@ -1,0 +1,331 @@
+/* Design by Fogday Studios, fogday.com */
+/* Be kind, don't steal and rewind! */
+
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box; }
+
+* { margin: 0, padding: 0 }
+
+img, a { border:none, outline: none; }
+
+body { border-top: .9em solid #021724; } /* #fff 151734*/
+body { font-family: 'Source Sans Pro', sans-serif; font-weight: 400; font-size: 1.2em;
+    color: #cfcfcf;  }
+body, #map { background: #04121D; } /* #021724 */
+
+/* #map {margin: 0px; } change #map margin */
+
+    #fly, #regions { /* flyto and REGIONS */
+            display: inline; /* shows ul horizontal */
+            position: relative;
+            top: 0; 
+            left: 1em;
+            margin: .1em;  
+            padding: .3em; 
+            width: 8em; /* 14em */
+            height: 3em;
+            border: .5em; 
+            border-color: none;
+            font-size: .75em;  /* .65em */
+         /* font-weight: 400; */
+            text-align: center;
+            color: #b2b200; /* chartreuse */
+            opacity: 0.9;
+            background: none; }
+
+            .mobileLegend {
+            top: 5em; 
+            left: 1em; 
+            margin: 5em;  
+            padding: .3em; 
+            width: 14em; 
+            height: 3em; } 
+
+        #home { /* title */
+            display: block;
+            position: relative;
+            top: -18.25em; /* -12 em */
+            margin: 0 auto; 
+            padding: 0;
+            width: 10em; 
+            height: 2em;
+            border: .1em; 
+            border-radius: .2em; 
+            font-size: 1.4em; 
+            font-weight: 600;
+            text-align: center;
+            opacity: 0.9; 
+            background: #001420; }
+
+        #fly:hover, #home:hover {
+            border: .1em; 
+            border-radius: .2em;
+            font-weight: 700; 
+            color: #001420;
+            opacity: 0.9;
+            background: #b7c3d0; }
+  
+        #regions { /* REGIONS */
+            left: 0;
+            font-size: .75em;
+            font-weight: 600; }
+
+        .fixedLegend, .attribution {
+            position: fixed;
+            font-size: .65em; /* .75 em/
+       /*   font-weight:400; */
+            opacity: 1; 
+            background: none; }
+
+        .fixedLegend h4 {
+            margin-left: 2em; /* 33px  */
+            letter-spacing: .05em; }
+
+         .fixedLegend { /* the legend */
+            bottom: 8.5em; 
+            left: 0px; /* 2.5em */
+            width: 25em; 
+            height: 14em; }
+
+        .attribution {
+            bottom: 30px; 
+            left: 30px; /* 3.2em */
+         /* font-weight: 400; */
+            text-align: center; }
+
+        #home, #regions, /* title/credits */
+        .fixedLegend,
+        .attribution, 
+        .attribution a:link, 
+        .attribution a:visited,
+        .attribution a:active,
+        .attribution a:hover {
+            color: #cfcfcf; }
+
+        .attribution a:link, 
+        .attribution a:visited {
+            text-decoration: none; }
+
+        .attribution a:active, 
+        .attribution a:focus, 
+        .attribution a:hover {
+            text-decoration: underline;
+            color: #b2b200; }
+
+            .navigation {
+                margin-top: -50px;
+                margin-left: 33px;
+                height: 20px;}
+
+        /* new for toggle */    
+
+        /*        #navcontainer ul {
+                display: inline;
+                margin: 0; padding: 0;
+                list-style-type: none;
+                text-align: center; }
+
+                #navcontainer ul li { display: inline; }
+
+                #navcontainer ul li a {
+                text-decoration: none;
+                padding: .2em 1em;
+                color: #fff;
+                background-color: #036; }
+
+                #navcontainer ul li a:hover {
+                color: #fff;
+                background-color: #369; } */
+
+
+        /* original list */
+       /* li {
+            width: 20em; 
+            left: -23px;
+             }  */
+
+        .title h4, 
+        .mobNavigation #regions, 
+        .mobNavigation #fly {
+          display:none; }
+
+
+/* footer {
+    position: relative;
+    left: 0; bottom: -1.5em;
+    width: 100%;  height: 1.5em;
+    clear:both; } */
+
+
+ /* search box */
+/*        .mapboxgl-ctrl-geocoder {
+        font:15px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        position:relative;
+        background-color:#ccc; }
+
+        .mapboxgl-ctrl-geocoder input:focus {
+        color:rgba(0,0,0,.75);
+        outline:0;
+        box-shadow:none;
+        outline:thin dotted\8; }
+
+        .mapboxgl-ctrl-geocoder input[type='text'] {
+        font-size:12px;
+        font-weight: bold;
+        width:100%;
+        border:0;
+        background-color:transparent;
+        height:40px;
+        margin:0;
+        color:rgba(0,0,0,.8);
+        padding:10px 10px 10px 40px;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        overflow:hidden; } */
+
+        .mapboxgl-ctrl-top-right .mapboxgl-ctrl {
+        margin: 10px 10px 0 0;
+        float: right; }
+
+
+        /* nav controller +/-  */
+        .mapboxgl-ctrl-group { 
+        border-radius: 4px;
+        -moz-box-shadow: 0px 0px 2px rgba(0,0,0,0.1);
+        -webkit-box-shadow: 0px 0px 2px rgba(0,0,0,0.1);
+        box-shadow: 0px 0px 0px 2px rgba(0,0,0,0.1);
+        overflow: hidden;
+        background: #BEBEBE; } /* hover */
+
+        .mapboxgl-ctrl-group > button {
+        width: 30px;
+        height: 30px;
+        display: block;
+        padding: 0;
+        outline: none;
+        border: none;
+        border-bottom: 1px solid ##C4064F;
+        box-sizing: border-box;
+        background-color: #ccc;
+        cursor: pointer; }
+
+        .mapboxgl-ctrl-geocoder .geocoder-pin-right * {
+        background-color:#ccc; /* #fff */
+        z-index:2;
+        position:absolute;
+        right:10px;
+        top:10px;
+        display:none;
+        }   
+
+/* viewport and media queries */
+    @viewport{zoom: 2.0; width: device-width; }
+    @viewport{zoom: 2.0; width: extend-to-zoom; }
+    @-ms-viewport{width: extend-to-zoom; zoom: 2.0; }
+    @viewport {width: 640px; max-zoom: 3; min-zoom: 0.50; }
+
+    @media all and (max-width: 640px) {
+  
+   
+
+       .fixedLegend, #fly, #regions, .mapboxgl-ctrl-group {
+          display:none; } 
+
+       .title h4 {
+            display: block;
+            position: fixed;
+            top: -10px;
+            left: 20px;
+            text-align: left;
+            padding: 5px; 
+            width: 160px; 
+            height: 40px;
+            font-size: 20px; 
+            font-weight: 600;     
+            opacity: 0.9; 
+            background: #001420; }
+
+      .mobNavigation #fly, .mobNavigation #regions {
+           display: block;
+            position: relative; /* relative */
+            /* top: -40px; */
+            top: 200px;
+            left: 20px; 
+            margin: .1em;  
+            padding: .2em; 
+            width: 13em;
+            height: 1.8em; 
+            font-size: .7em;  
+         /* font-weight: 400; */
+            text-align: left;
+            color: #abc; /* chartreuse */ }
+
+        .mobNavigation {background-color: #abc; }    
+
+        .mobNavigation #regions {color: #cfcfcf; }  /* #cfcfcf */
+
+        .mobNavigation #fly:hover {
+            color: #b2b200; /* #b2b200 */
+            font-weight: 400; 
+            background: none; }   
+
+            } /* end of max-width 640px */
+  
+
+    /* expand REGION toggle navigation */
+    /* http://codepen.io/anon/pen/jfAoa */
+
+        label {
+          cursor: pointer; }
+
+        #menu-toggle {
+          display: none; /* hide the checkbox */ }
+
+        #menu {
+          display: none; }
+
+        #menu-toggle:checked + #menu {
+          display: block; }
+
+/* http://sylvain-hamel.github.io/simple-expand/ */
+/* 
+    .content {display:none;}
+
+    #container.expanded .expander {
+            padding-left: 13px;
+            background-position: left center;
+            background-repeat: no-repeat;
+            background-image: url(images/expanded.gif); }
+
+    #container.collapsed .expander {
+            padding-left: 13px;
+            background-position: left center;
+            background-repeat: no-repeat;
+            background-image: url(images/collapsed.gif); } */
+            
+  /*Opera Fix*/
+    body:before {
+        content:"";
+        height:100%;
+        float:left;
+        width:0;
+        margin-top:-32767px;/ }
+
+    .left {
+        position: absolute;
+        top: 10px; left: 20px;
+        text-align: left; }
+
+    .right {
+        position: absolute;
+        top: 0px; right: 5px; }
+
+    .right a { padding-right: 0 !important; } 
+
+    .center {
+       text-align: center;
+        margin: 15px; }
+
+    .right a { padding-right: 0 !important; } 
