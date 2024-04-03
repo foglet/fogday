@@ -6,9 +6,9 @@
     <title>The Oyster Atlas</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
    
-    <!-- revised 17 April 2023 --> 
-   <script src='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
-   <link href='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css' rel='stylesheet'/>
+    <!-- revised 03 April 2024 -->
+        <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
    
     <!-- Google fonts  --> 
     <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic' rel='stylesheet' type='text/css'>
@@ -116,20 +116,16 @@
     <div id='map'></div> <br/>
 
       <div class="fixedLegend">
-          
                 <p>
                     <i style="font-weight:300;">the </i>Digital <a href="https://en.wikipedia.org/wiki/Atlas_of_Remote_Islands">Atlas of Remote Islands</a>
                 </p> 
-                     
-             
-        
         </div> 
        
         <button onclick='fly();' id='fly'><strong>X</strong></button>
 
-<!--
-    <div class="attribution">&#169; 2015 <a href="http://fogday.com">Fogday Studios</a> | @fogfish
-    </div>    -->
+
+    <div class="attribution">&#169; 2024 <a href="http://fogday.com">Fogday Studios</a> | @fogfish
+    </div>    
 
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJOeXZlMF9FIn0.I3vP7TOUVxyKTaW27p_IqA';
