@@ -1,61 +1,104 @@
-/* Import Adobe Fonts with fallback */
-@import url('https://use.typekit.net/your-font-kit-id.css');
+/* Define global variables */
+:root {
+    /* Font Family */
+    --font-family: "Source Han Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
 
-body {font-family: "Source Han Sans", "PingFang SC", "Microsoft YaHei", sans-serif;}
+    /* Colors */
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --text-color: #333;
+    --background-color: #f8f8f8;
 
+    /* Font Sizes */
+    --font-size-base: 1rem;
+    --font-size-large: 1.5rem;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+
+    /* Border Radius */
+    --border-radius-small: 4px;
+    --border-radius-medium: 8px;
+
+    /* Box Shadows */
+    --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --shadow-medium: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+
+    /* Transition Durations */
+    --transition-fast: 0.2s;
+    --transition-medium: 0.4s;
+
+    /* Breakpoints */
+    --breakpoint-sm: 480px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+}
+
+/* Global styling for body */
 body {
-    background-color: #f8f8f8;
-    color: #333;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--text-color);
+    background-color: var(--background-color);
     margin: 0;
-    padding: 0;
-    line-height: 1.6; }
-    
-header {
-    text-align: center;
-    padding: 2rem;
-    background-color: #222;
-    color: #fff;
+    padding: var(--spacing-md);
 }
 
-header h1 {
-    font-family: "Source Serif Pro", Georgia, serif;
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+/* Example styling for headings */
+h1 {
+    font-size: var(--font-size-large);
+    color: var(--primary-color);
 }
 
-header p {
-    font-family: "Source Sans Pro", Arial, sans-serif;
-    font-size: 1.2rem;
-    margin: 0;
-}
-
-main {
-    padding: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-section.example {
+/* Card style for consistent design */
+.card {
     background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius-medium);
+    box-shadow: var(--shadow-light);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    transition: box-shadow var(--transition-medium);
 }
 
-section.example h2 {
-    font-family: "Source Serif Pro", Georgia, serif;
-    color: #555;
-    font-size: 1.8rem;
-    margin-top: 0;
+.card:hover {
+    box-shadow: var(--shadow-medium);
 }
 
-section.example p {
-    font-family: "Source Sans Pro", Arial, sans-serif;
-    font-size: 1rem;
-    margin: 0.5rem 0;
+/* Button styling */
+button {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--border-radius-small);
+    font-size: var(--font-size-base);
+    transition: background-color var(--transition-fast);
 }
 
-strong {
-    color: #222;
+button:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Responsive styles using breakpoints */
+@media (min-width: var(--breakpoint-sm)) {
+    body {
+        padding: var(--spacing-lg);
+    }
+}
+
+@media (min-width: var(--breakpoint-md)) {
+    :root {
+        --font-size-base: 1.125rem;
+        --font-size-large: 2rem;
+    }
+}
+
+@media (min-width: var(--breakpoint-lg)) {
+    :root {
+        --font-size-base: 1.25rem;
+        --font-size-large: 2.5rem;
+    }
 }
