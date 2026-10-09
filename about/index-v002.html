@@ -8,7 +8,7 @@
 	<!-- Pinterest verify -->
 	<meta name="p:domain_verify" content="86b9b4f5d232f9a2a8242ef39d520e5b">
 
-	<title>Fogday Studios</title>
+	<title>About · Fogday Studios</title>
 
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
 	<link rel="stylesheet" href="https://foglet.github.io/fogday/assets/css/style.css">
 	<link rel="stylesheet" href="https://foglet.github.io/fogday/assets/css/hero.css">
 
-	<!-- Banner at 98% of viewport, centered; breaks out of .container regardless of its max-width/padding -->
+	<!-- Same formatting as the home page -->
 	<style>
 		/* clip (not hidden) prevents sideways scroll on narrow desktop windows without breaking position: sticky */
 		html { overflow-x: clip; }
@@ -32,47 +32,48 @@
 			font-family: "Barlow", "Helvetica Neue", Helvetica, Arial, sans-serif;
 			font-weight: 700;
 		}
+		/* Photo at 98% of viewport, centered */
 		.full-bleed {
 			width: 98vw;
 			margin-left: calc(50% - 49vw);
 			margin-right: calc(50% - 49vw);
 			padding: 0;
 		}
-		.full-bleed a, .full-bleed img {
+		.full-bleed img {
 			display: block;
 			width: 100%;
 			max-width: none;
 			height: auto;
 			margin: 0;
 		}
+		/* About-page text */
+		.coords {
+			font-style: italic;
+			text-align: center;
+			margin: 0.75em 0 1.5em;
+		}
+		.contact {
+			text-align: center;
+		}
 	</style>
-
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/unveil/1.3.0/jquery.unveil.min.js"></script>
-	<script>
-		$(function() {
-			$("img").unveil(300);
-		});
-	</script>
 </head>
 
 <body class="fogday">
 
 	<div class="navigation">
 		<h3 class="logo"><a href="https://fogday.com/">FOGDAY STUDIOS</a></h3>
-		<!-- h3 tag is in css/style.css -->
-
-		<!-- <ul class="horizontal">
-			<li><a href="https://fogday.com/works">projects</a></li>
-			<li><a href="https://fogday.com/tools">tools</a></li>
-		</ul> -->
 	</div>
 
 	<div class="container">
 		<div class="one grid full">
 			<div class="full-bleed">
-				<a href="https://ohlonesky.com"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/banner-ohloneSky-mobile.png" alt="Ohlone Sky"></a>
+				<img src="https://s3.us-west-1.amazonaws.com/fogday.ai/fogday/slo-35%C2%B025'40.6%22N+120%C2%B045'16.6%22W.jpeg" alt="Photo taken at 35°25'40.6&quot;N 120°45'16.6&quot;W">
 			</div>
+
+			<p class="coords">35°25'40.6"N 120°45'16.6"W</p>
+
+			<p class="contact">« fogfish [at] duck [dot] com »</p>
+			<!-- <p class="contact"><a href="https://www.instagram.com/fogfish/">@fogfish instagram</a></p> -->
 		</div>
 		<div class="cf"></div>
 	</div> <!-- end of container -->
