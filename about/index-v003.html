@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About · Fogday</title>
+<meta name="description" content="About Fogday Sky LLC, Fogday Foundation and its founder.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one narrow column under a quiet header; fog-band mark beside a slab wordmark; Home at /index-v003.html, About at /about/index-v003.html. */
+:root {
+  --bg: #edf1f2;        /* morning fog */
+  --surface: #f8fafa;
+  --ink: #1c2830;       /* bay water at dusk */
+  --muted: #5b6a73;
+  --line: #cfd8dc;
+  --accent: #1f5f6b;    /* deep bay teal */
+  --font-logo: "Patua One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --font-ui: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-3: clamp(2.4rem, 7vw, 3.6rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10181d; --surface: #172229; --ink: #e2e8ea; --muted: #94a3ab;
+    --line: #2a3840; --accent: #7fc2cc; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10181d; --surface: #172229; --ink: #e2e8ea; --muted: #94a3ab;
+  --line: #2a3840; --accent: #7fc2cc; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 var(--step-0)/1.6 var(--font-ui);
+  padding-inline: 20px;
+}
+.wrap { max-width: 44rem; margin-inline: auto; }
+
+/* Header */
+header { border-bottom: 1px solid var(--line); }
+header .wrap {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px 24px; padding-block: 22px;
+}
+.logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-logo); font-weight: 400;
+  font-size: 1.9rem; line-height: 1; letter-spacing: 0.01em;
+  color: var(--ink); text-decoration: none;
+}
+.mark { display: grid; gap: 4px; }
+.mark span { display: block; height: 3px; border-radius: 2px; background: var(--accent); }
+.mark span:nth-child(1) { width: 22px; }
+.mark span:nth-child(2) { width: 14px; margin-left: 6px; opacity: .7; }
+.mark span:nth-child(3) { width: 18px; margin-left: 2px; opacity: .45; }
+
+nav { display: flex; gap: 22px; }
+nav a {
+  font-family: var(--font-ui); font-weight: 500; font-size: .875rem;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: var(--muted); text-decoration: none;
+  padding-block: 6px; border-bottom: 2px solid transparent;
+}
+nav a:hover { color: var(--ink); }
+nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* Content */
+main .wrap { padding-block: 56px 72px; display: grid; gap: 48px; }
+h1, h2 { font-family: var(--font-logo); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: var(--step-3); }
+h2 { font-size: var(--step-2); }
+p { margin: 0; max-width: 62ch; }
+.lede { font-size: var(--step-1); color: var(--muted); }
+.stack { display: grid; gap: 16px; }
+.eyebrow {
+  font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--accent);
+}
+
+/* Route card: the one real artifact of the subject */
+.route { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 24px; display: grid; gap: 18px; }
+.route ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.route li {
+  display: grid; grid-template-columns: 18px 1fr; column-gap: 14px;
+  position: relative; padding-bottom: 18px;
+}
+.route li:last-child { padding-bottom: 0; }
+.route li::before {
+  content: ""; width: 12px; height: 12px; margin: 6px 3px 0;
+  border-radius: 50%; border: 2px solid var(--accent); background: var(--surface);
+  position: relative; z-index: 1;
+}
+.route li:not(:last-child)::after {
+  content: ""; position: absolute; left: 8px; top: 18px; bottom: -6px;
+  border-left: 2px dashed var(--accent); opacity: .5;
+}
+.route .name { font-weight: 600; }
+.route .coord, .route .leg { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.route .leg { grid-column: 2; }
+.route .total { font-size: .9rem; border-top: 1px solid var(--line); padding-top: 14px; font-variant-numeric: tabular-nums; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 28px; }
+.facts > div { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.facts h3 { margin: 0; font-size: var(--step-0); font-weight: 600; }
+.facts p { color: var(--muted); }
+
+a.text { color: var(--accent); text-underline-offset: 3px; }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="logo" href="../index-v003.html" aria-label="Fogday home">
+      <span class="mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      Fogday
+    </a>
+    <nav aria-label="Main">
+      <a href="../index-v003.html">Home</a>
+      <a href="index-v003.html" aria-current="page">About</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="view-about" class="wrap" data-view="about">
+    <div class="stack">
+      <span class="eyebrow">About</span>
+      <h1>Who we are</h1>
+      <p class="lede">Fogday is a small San Francisco organization working on civic transit ideas for the Bay Area, starting with OhloneSky.</p>
+    </div>
+
+    <div class="stack">
+      <h2>How Fogday is organized</h2>
+      <div class="facts">
+        <div><h3>Fogday Sky LLC</h3><p>The operating company. It develops OhloneSky and will run its concessions.</p></div>
+        <div><h3>Fogday Foundation</h3><p>The nonprofit arm, now being set up. It is not yet a 501(c)(3), so contributions are not tax-deductible.</p></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h2>Founder</h2>
+      <p>Fogday was started by Fogfish, a San Francisco builder with a background in data engineering, web and iOS development. Fogfish lived in Oakland for fifteen years before moving across the Bay.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Fogday Sky LLC · San Francisco, CA</span>
+    <span>fogday.com</span>
+  </div>
+</footer>
+</body>
+</html>
