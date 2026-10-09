@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -107,16 +109,7 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 </style>
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <a class="logo" href="../index-v003.html" aria-label="Fogday Studios home">
-      FOGDAY STUDIOS
-    </a>
-    <nav aria-label="Main">
-      <a href="../works/index-v003.html" aria-current="page">Projects</a>
-    </nav>
-  </div>
-</header>
+{% include header.html current="works" %}
 
 <main>
   <section class="page">
@@ -133,10 +126,6 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
   </section>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>© FOGDAY™ <a class="braille" href="https://fogday.com/about" aria-label="About">⠏⠊⠝⠛</a></span>
-  </div>
-</footer>
+{% include footer.html %}
 </body>
 </html>

@@ -38,11 +38,11 @@
 
 * { box-sizing: border-box; }
 body {
+  margin: 0;
   background: var(--bg); color: var(--ink);
   font: 400 var(--step-0)/1.6 var(--font-ui);
-  padding-inline: 20px;
 }
-.wrap { max-width: 44rem; margin-inline: auto; }
+.wrap { max-width: calc(44rem + 40px); margin-inline: auto; padding-inline: 20px; }
 
 /* Header */
 header { border-bottom: 1px solid var(--line); }
@@ -71,7 +71,7 @@ nav a[aria-current="page"]:hover { color: var(--hot); }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
 /* Content */
-main .wrap { padding-block: 56px 72px; display: grid; gap: 48px; }
+.page { padding-block: 40px 72px; display: grid; gap: 40px; }
 h1, h2 { font-family: var(--font-logo); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.1; }
 h1 { font-size: var(--step-3); }
 h2 { font-size: var(--step-2); }
@@ -87,7 +87,7 @@ a.text { color: var(--accent); text-underline-offset: 3px; }
 footer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
   background: var(--bg); border-top: 1px solid var(--line);
-  padding-inline: 20px; padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 main { padding-bottom: 64px; } /* room for the fixed footer */
 footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
@@ -97,11 +97,11 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .braille:hover { color: var(--accent); }
 
 /* Data gallery: one column of full, uncropped images */
-.gallery { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; }
+.gallery { list-style: none; margin: 0 auto; padding: 0; width: 98%; display: grid; gap: 40px; } /* images run 98% of the window width */
 .gallery li { min-width: 0; }
 .gallery img { display: block; width: 100%; height: auto; }
 .gallery a { display: block; }
-.caption { margin-top: 10px; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
 </style>
 </head>
@@ -118,10 +118,12 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 </header>
 
 <main>
-  <section class="wrap">
+  <section class="page">
+    <div class="wrap">
     <div class="stack">
       <h1>Data &amp; Graphics</h1>
       <p class="lede">Since 2010, I've been creating infographics. They're fun to create and I enjoy making them. Big data in the enterprise has often been my subject matter. Here are my favorites.</p>
+    </div>
     </div>
     <ul class="gallery">
       <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/hollywoodHobbit.png" alt="Hollywood Hobbit" loading="lazy"></li>

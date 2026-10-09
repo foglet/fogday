@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -9,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
-/* Layout: one narrow column under a quiet header; slab wordmark. Pages: /index-v003.html, /data/index-v003.html, /about/v003.html. */
+/* Layout: one narrow column under a quiet header; slab wordmark. Pages: /index-v003.html, /works/index-v003.html, /data/index-v003.html, /about/v003.html. */
 :root {
   --bg: #edf1f2;        /* morning fog */
   --surface: #f8fafa;
@@ -106,16 +108,7 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 </style>
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <a class="logo" href="../index-v003.html" aria-label="Fogday Studios home">
-      FOGDAY STUDIOS
-    </a>
-    <nav aria-label="Main">
-      <a href="../works/index-v003.html">Projects</a>
-    </nav>
-  </div>
-</header>
+{% include header.html current="about" %}
 
 <main>
   <section class="page">
@@ -132,10 +125,6 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
   </section>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>© FOGDAY™ <a class="braille" href="https://fogday.com/about" aria-label="About">⠏⠊⠝⠛</a></span>
-  </div>
-</footer>
+{% include footer.html %}
 </body>
 </html>
