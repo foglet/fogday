@@ -1,87 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Projects · Fogday Studios</title>
+<meta name="description" content="Infographics by Fogday Studios, made since 2010.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one narrow column under a quiet header; slab wordmark. Pages: /index-v003.html, /data/index-v003.html, /about/v003.html. */
+:root {
+  --bg: #edf1f2;        /* morning fog */
+  --surface: #f8fafa;
+  --ink: #1c2830;       /* bay water at dusk */
+  --muted: #5b6a73;
+  --line: #cfd8dc;
+  --accent: #1f5f6b;    /* deep bay teal */
+  --hot: #ff5500;       /* nav hover */
+  --font-logo: "Patua One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --font-ui: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-3: clamp(2.4rem, 7vw, 3.6rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10181d; --surface: #172229; --ink: #e2e8ea; --muted: #94a3ab;
+    --line: #2a3840; --accent: #7fc2cc; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10181d; --surface: #172229; --ink: #e2e8ea; --muted: #94a3ab;
+  --line: #2a3840; --accent: #7fc2cc; color-scheme: dark;
+}
 
-<!DOCTYPE html>
-<!--[if !IE 7]>
-    <style type="text/css">
-        #wrap {display:table;height:100%}
-    </style>
-<![endif]-->
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font: 400 var(--step-0)/1.6 var(--font-ui);
+}
+.wrap { max-width: calc(44rem + 40px); margin-inline: auto; padding-inline: 20px; }
 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" -->
+/* Header */
+header { border-bottom: 1px solid var(--line); }
+header .wrap {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px 24px; padding-block: 22px;
+}
+.logo {
+    font-family: var(--font-logo); font-weight: 400;
+  font-size: 1.9rem; line-height: 1; letter-spacing: 0.01em;
+  color: var(--ink); text-decoration: none;
+}
 
-<!-- Pinterest verify -->
-<meta  me="p:domain_verify" content="86b9b4f5d232f9a2a8242ef39d520e5b"/>
+nav { display: flex; gap: 22px; }
+nav a {
+  font-family: var(--font-ui); font-weight: 500; font-size: .875rem;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: var(--muted); text-decoration: none;
+  padding-block: 6px;
+}
+nav a:hover { color: var(--hot); }
+nav a[aria-current="page"] { color: var(--ink); }
+nav a[aria-current="page"]:hover { color: var(--hot); }
+.logo { transition: color .15s ease; }
+.logo:hover { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
-<html dir="ltr" lang="en">
+/* Content */
+.page { padding-block: 40px 72px; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--font-logo); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: var(--step-3); }
+h2 { font-size: var(--step-2); }
+p { margin: 0; max-width: 62ch; }
+.lede { font-size: var(--step-1); color: var(--muted); }
+.stack { display: grid; gap: 16px; }
+.eyebrow {
+  font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--accent);
+}
 
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/unveil/1.3.0/jquery.unveil.min.js"></script>
+a.text { color: var(--accent); text-underline-offset: 3px; }
 
-    <script>
-	    $(function() {
-	        $("li img").unveil(300);
-	    });
-    </script>
+footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: var(--bg); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+main { padding-bottom: 64px; } /* room for the fixed footer */
+footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
 
+.logo { font-size: 1.55rem; letter-spacing: 0.04em; }
+.braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
+.braille:hover { color: var(--accent); }
 
-<body class="bigData">
+/* Data gallery: one column of full, uncropped images */
+.gallery { list-style: none; margin: 0 auto; padding: 0; width: 98%; display: grid; gap: 40px; } /* images run 98% of the window width */
+.gallery li { min-width: 0; }
+.gallery img { display: block; width: 100%; height: auto; }
+.gallery a { display: block; }
+.caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.contact { display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="logo" href="../index-v003.html" aria-label="Fogday Studios home">
+      FOGDAY STUDIOS
+    </a>
+    <nav aria-label="Main">
+      <a href="../data/index-v003.html" aria-current="page">Projects</a>
+    </nav>
+  </div>
+</header>
 
-	<head>
-		<title>Data & Graphics</title>
+<main>
+  <section class="page">
+    <div class="wrap">
+    <div class="stack">
+      <h1>Data &amp; Graphics</h1>
+      <p class="lede">Since 2010, I've been creating infographics. They're fun to create and I enjoy making them. Big data in the enterprise has often been my subject matter. Here are my favorites.</p>
+    </div>
+    </div>
+    <ul class="gallery">
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/hollywoodHobbit.png" alt="Hollywood Hobbit" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/whatsappMarket.png" alt="Whatsapp" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/electionBigData.png" alt="Big Data Votes" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/F1-austin.png" alt="F1 Sauber" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/dataStoragePlay.jpg" alt="Big Data Play" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/agileData.png" alt="Agile Data" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/farmville.jpg" alt="What is Farmville?" loading="lazy"></li>
+    </ul>
+  </section>
+</main>
 
-		<link rel='stylesheet' href='https://foglet.github.io/fogday/assets/css/style.css' rel="stylesheet" type="text/css" />
-		<link rel='stylesheet' href='https://foglet.github.io/fogday/assets/css/hero.css' rel="stylesheet" type="text/css" />
-
-		<!--[if IE]>
-			<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-		<![endif]-->
-
-		<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic:400,400italic,700,700italic'>
-		<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,600'>
-
-		<meta name="robots" content="noindex,nofollow">
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, user-scalable=yes" />
-	</head>
-
-	<div class="navigation">
-	<h3 class="logo"><a href="https://fogday.com/">FOGDAY STUDIOS</a></h3>
-		<!-- <ul class="horizontal">
-			<li><a href="https://fogday.com/works">projects</a></li>
-			<li><a href="https://fogday.com/tools">tools</a></li>
-		</ul> -->
-	</div>
-
-	<div class="container">
-
-		<div class="one grid full">
-
-		<h3>Data & Graphics</h3><br/>
-
-		<p>Since 2010, I've been creating infographics. They're fun to create and I enjoy making them. Big data in the enterprise has often been my subject matter. Here are my favorites.</p>
-
-		</div>
-
-		<ul class="grid source" style="list-style: none;">
-
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/hollywoodHobbit.png" alt="Hollywood Hobbit"></li><br/><br/>
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/whatsappMarket.png" alt="Whatsapp"></li><br/><br/>
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/electionBigData.png" alt="Big Data Votes"></li><br/><br/>
-
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/F1-austin.png" alt="F1 Sauber"></li><br/><br/>
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/dataStoragePlay.jpg" alt="Big Data Play"></li><br/><br/>
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/agileData.png" alt="Agile Data"></li><br/><br/>
-				<li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/farmville.jpg" alt="What is Farmville?"></li>
-
-		</ul>
-
-		<div class="cf"></div>
-
-
-	</div> <!-- end of container -->
-
-	<footer class="footer copyright">
-		<h4>© Fogday&#8482;
-		<a href="https://fogday.com/about">⠏⠊⠝⠛</a>
-	</footer>
-
+<footer>
+  <div class="wrap">
+    <span>© FOGDAY™ <a class="braille" href="https://fogday.com/about" aria-label="About">⠏⠊⠝⠛</a></span>
+  </div>
+</footer>
 </body>
 </html>
