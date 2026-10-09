@@ -1,10 +1,18 @@
 <header>
   <div class="wrap">
-    <a class="logo" href="{{ '/index-v003.html' | relative_url }}" aria-label="Fogday Studios home">
+    <a class="logo" href="{{ '/index-v007.html' | relative_url }}" aria-label="Fogday Studios home">
       FOGDAY STUDIOS
     </a>
     <nav aria-label="Main">
-      <a href="{{ '/works/index-v003.html' | relative_url }}"{% if include.current == "works" %} aria-current="page"{% endif %}>REPO</a>
+      <a href="{{ '/works/index-v007.html' | relative_url }}"{% if include.current == "works" %} aria-current="page"{% endif %} class="bento" aria-label="Projects" title="Projects">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <g fill="currentColor">
+            <rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/>
+            <rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/>
+            <rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/>
+          </g>
+        </svg>
+      </a>
     </nav>
   </div>
 </header>
