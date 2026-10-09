@@ -28,6 +28,7 @@
 }
 
 * { box-sizing: border-box; }
+html { scrollbar-gutter: stable; } /* reserve scrollbar space so the header doesn't shift between short and long pages */
 body {
   margin: 0;
   background: var(--bg); color: var(--ink);
