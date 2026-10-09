@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>About · Fogday Studios</title>
-<meta name="description" content="About Fogday Studios and its founder.">
+<title>Projects · Fogday Studios</title>
+<meta name="description" content="Infographics by Fogday Studios, made since 2010.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
@@ -118,15 +118,10 @@ footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); disp
 .braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
 .braille:hover { color: var(--accent); }
 
-/* Data gallery */
-.gallery { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 28px; }
+/* Data gallery: one column of full, uncropped images */
+.gallery { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; }
 .gallery li { min-width: 0; }
-.gallery figure { margin: 0; display: grid; gap: 10px; }
-.gallery a.img { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: top; transition: transform .3s ease; }
-.gallery a.img:hover img { transform: scale(1.02); }
-.gallery figcaption { font-weight: 600; font-size: .95rem; }
-@media (prefers-reduced-motion: reduce) { .gallery img { transition: none; } }
+.gallery img { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
@@ -136,23 +131,26 @@ footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); disp
       FOGDAY STUDIOS
     </a>
     <nav aria-label="Main">
-      <a href="../data/index-v003.html">Projects</a>
+      <a href="../data/index-v003.html" aria-current="page">Projects</a>
     </nav>
   </div>
 </header>
 
 <main>
-  <section id="view-about" class="wrap" data-view="about">
+  <section class="wrap">
     <div class="stack">
-      <span class="eyebrow">About</span>
-      <h1>Who we are</h1>
-      <p class="lede">Fogday Studios is a small San Francisco studio making data graphics and civic projects, including OhloneSky.</p>
+      <h1>Data &amp; Graphics</h1>
+      <p class="lede">Since 2010, I've been creating infographics. They're fun to create and I enjoy making them. Big data in the enterprise has often been my subject matter. Here are my favorites.</p>
     </div>
-
-    <div class="stack">
-      <h2>Founder</h2>
-      <p>Fogday was started by Fogfish, a San Francisco builder with a background in data engineering, web and iOS development. Fogfish lived in Oakland for fifteen years before moving across the Bay.</p>
-    </div>
+    <ul class="gallery">
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/hollywoodHobbit.png" alt="Hollywood Hobbit" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/whatsappMarket.png" alt="Whatsapp" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/electionBigData.png" alt="Big Data Votes" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/F1-austin.png" alt="F1 Sauber" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/dataStoragePlay.jpg" alt="Big Data Play" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/agileData.png" alt="Agile Data" loading="lazy"></li>
+      <li><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/farmville.jpg" alt="What is Farmville?" loading="lazy"></li>
+    </ul>
   </section>
 </main>
 

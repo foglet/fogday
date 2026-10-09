@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fogday</title>
-<meta name="description" content="Fogday develops OhloneSky, a proposed aerial gondola across San Francisco Bay.">
+<title>Fogday Studios</title>
+<meta name="description" content="Fogday Studios develops OhloneSky, a proposed aerial gondola across San Francisco Bay.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
-/* Layout: one narrow column under a quiet header; fog-band mark beside a slab wordmark; Home at /index-v003.html, About at /about/index-v003.html. */
+/* Layout: one narrow column under a quiet header; slab wordmark. Pages: /index-v003.html, /data/index-v003.html, /about/index-v003.html. */
 :root {
   --bg: #edf1f2;        /* morning fog */
   --surface: #f8fafa;
@@ -17,6 +17,7 @@
   --muted: #5b6a73;
   --line: #cfd8dc;
   --accent: #1f5f6b;    /* deep bay teal */
+  --hot: #ff5500;       /* nav hover */
   --font-logo: "Patua One", "Rockwell", "Roboto Slab", Georgia, serif;
   --font-ui: "Barlow", "Helvetica Neue", Arial, sans-serif;
   --step-0: 1.0625rem;
@@ -50,26 +51,23 @@ header .wrap {
   gap: 12px 24px; padding-block: 22px;
 }
 .logo {
-  display: inline-flex; align-items: center; gap: 10px;
-  font-family: var(--font-logo); font-weight: 400;
+    font-family: var(--font-logo); font-weight: 400;
   font-size: 1.9rem; line-height: 1; letter-spacing: 0.01em;
   color: var(--ink); text-decoration: none;
 }
-.mark { display: grid; gap: 4px; }
-.mark span { display: block; height: 3px; border-radius: 2px; background: var(--accent); }
-.mark span:nth-child(1) { width: 22px; }
-.mark span:nth-child(2) { width: 14px; margin-left: 6px; opacity: .7; }
-.mark span:nth-child(3) { width: 18px; margin-left: 2px; opacity: .45; }
 
 nav { display: flex; gap: 22px; }
 nav a {
   font-family: var(--font-ui); font-weight: 500; font-size: .875rem;
   text-transform: uppercase; letter-spacing: .12em;
   color: var(--muted); text-decoration: none;
-  padding-block: 6px; border-bottom: 2px solid transparent;
+  padding-block: 6px;
 }
-nav a:hover { color: var(--ink); }
-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav a:hover { color: var(--hot); }
+nav a[aria-current="page"] { color: var(--ink); }
+nav a[aria-current="page"]:hover { color: var(--hot); }
+.logo { transition: color .15s ease; }
+.logo:hover { color: var(--accent); }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
 /* Content */
@@ -115,24 +113,36 @@ a.text { color: var(--accent); text-underline-offset: 3px; }
 
 footer { border-top: 1px solid var(--line); }
 footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+.logo { font-size: 1.55rem; letter-spacing: 0.04em; }
+.braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
+.braille:hover { color: var(--accent); }
+
+/* Data gallery */
+.gallery { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 28px; }
+.gallery li { min-width: 0; }
+.gallery figure { margin: 0; display: grid; gap: 10px; }
+.gallery a.img { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: top; transition: transform .3s ease; }
+.gallery a.img:hover img { transform: scale(1.02); }
+.gallery figcaption { font-weight: 600; font-size: .95rem; }
+@media (prefers-reduced-motion: reduce) { .gallery img { transition: none; } }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <a class="logo" href="index-v003.html" aria-label="Fogday home">
-      <span class="mark" aria-hidden="true"><span></span><span></span><span></span></span>
-      Fogday
+    <a class="logo" href="index-v003.html" aria-label="Fogday Studios home">
+      FOGDAY STUDIOS
     </a>
     <nav aria-label="Main">
-      <a href="index-v003.html" aria-current="page">Home</a>
-      <a href="about/index-v003.html">About</a>
+      <a href="data/index-v003.html">Projects</a>
     </nav>
   </div>
 </header>
 
 <main>
-  <section id="view-home" class="wrap" data-view="home">
+  <section class="wrap">
     <div class="stack">
       <span class="eyebrow">San Francisco Bay</span>
       <h1>Building new ways across the Bay.</h1>
@@ -159,8 +169,7 @@ footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); disp
 
 <footer>
   <div class="wrap">
-    <span>© 2026 Fogday Sky LLC · San Francisco, CA</span>
-    <span>fogday.com</span>
+    <span>© FOGDAY™ <a class="braille" href="https://fogday.com/about" aria-label="About">⠏⠊⠝⠛</a></span>
   </div>
 </footer>
 </body>
