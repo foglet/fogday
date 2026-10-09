@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>About · Fogday Studios</title>
-<meta name="description" content="About Fogday Studios and its founder.">
+<meta name="description" content="About Fogday Studios.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap">
@@ -82,51 +82,27 @@ p { margin: 0; max-width: 62ch; }
   font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--accent);
 }
 
-/* Route card: the one real artifact of the subject */
-.route { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 24px; display: grid; gap: 18px; }
-.route ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-.route li {
-  display: grid; grid-template-columns: 18px 1fr; column-gap: 14px;
-  position: relative; padding-bottom: 18px;
-}
-.route li:last-child { padding-bottom: 0; }
-.route li::before {
-  content: ""; width: 12px; height: 12px; margin: 6px 3px 0;
-  border-radius: 50%; border: 2px solid var(--accent); background: var(--surface);
-  position: relative; z-index: 1;
-}
-.route li:not(:last-child)::after {
-  content: ""; position: absolute; left: 8px; top: 18px; bottom: -6px;
-  border-left: 2px dashed var(--accent); opacity: .5;
-}
-.route .name { font-weight: 600; }
-.route .coord, .route .leg { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.route .leg { grid-column: 2; }
-.route .total { font-size: .9rem; border-top: 1px solid var(--line); padding-top: 14px; font-variant-numeric: tabular-nums; }
-
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 28px; }
-.facts > div { display: grid; gap: 6px; align-content: start; min-width: 0; }
-.facts h3 { margin: 0; font-size: var(--step-0); font-weight: 600; }
-.facts p { color: var(--muted); }
-
 a.text { color: var(--accent); text-underline-offset: 3px; }
 
-footer { border-top: 1px solid var(--line); }
-footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: var(--bg); border-top: 1px solid var(--line);
+  padding-inline: 20px; padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+main { padding-bottom: 64px; } /* room for the fixed footer */
+footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
 
 .logo { font-size: 1.55rem; letter-spacing: 0.04em; }
 .braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
 .braille:hover { color: var(--accent); }
 
-/* Data gallery */
-.gallery { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 28px; }
+/* Data gallery: one column of full, uncropped images */
+.gallery { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; }
 .gallery li { min-width: 0; }
-.gallery figure { margin: 0; display: grid; gap: 10px; }
-.gallery a.img { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: top; transition: transform .3s ease; }
-.gallery a.img:hover img { transform: scale(1.02); }
-.gallery figcaption { font-weight: 600; font-size: .95rem; }
-@media (prefers-reduced-motion: reduce) { .gallery img { transition: none; } }
+.gallery img { display: block; width: 100%; height: auto; }
+.gallery a { display: block; }
+.caption { margin-top: 10px; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.contact { display: grid; gap: 6px; }
 </style>
 </head>
 <body>
@@ -142,16 +118,16 @@ footer .wrap { padding-block: 24px; font-size: .85rem; color: var(--muted); disp
 </header>
 
 <main>
-  <section id="view-about" class="wrap" data-view="about">
-    <div class="stack">
-      <span class="eyebrow">About</span>
-      <h1>Who we are</h1>
-      <p class="lede">Fogday Studios is a small San Francisco studio making data graphics and civic projects, including OhloneSky.</p>
-    </div>
-
-    <div class="stack">
-      <h2>Founder</h2>
-      <p>Fogday was started by Fogfish, a San Francisco builder with a background in data engineering, web and iOS development. Fogfish lived in Oakland for fifteen years before moving across the Bay.</p>
+  <section class="wrap">
+    <ul class="gallery">
+      <li>
+        <img src="https://s3.us-west-1.amazonaws.com/fogday.ai/fogday/slo-35°25'40.6%22N+120°45'16.6%22W.jpeg" alt="home">
+        <p class="caption">35°25'40.6"N 120°45'16.6"W</p>
+      </li>
+    </ul>
+    <div class="contact">
+      <p>fogfish [at] duck [dot] com</p>
+      <p><a class="text" href="https://www.instagram.com/fogfish/" target="_blank" rel="noopener">@fogfish instagram</a></p>
     </div>
   </section>
 </main>
