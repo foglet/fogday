@@ -12,7 +12,7 @@
 
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Gentium+Book+Basic:400,400italic,700,700italic|Open+Sans:400,600&display=swap">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Gentium+Book+Basic:400,400italic,700,700italic|Open+Sans:400,600|Inter:700&display=swap">
 
 	<link rel="stylesheet" href="https://foglet.github.io/fogday/assets/css/style.css">
 	<link rel="stylesheet" href="https://foglet.github.io/fogday/assets/css/hero.css">
@@ -21,6 +21,12 @@
 	<style>
 		/* clip (not hidden) prevents sideways scroll on narrow desktop windows without breaking position: sticky */
 		html { overflow-x: clip; }
+		/* Logo: Inter Bold (Google Font, closest free stand-in for Helvetica Neue Bold) */
+		.navigation h3.logo,
+		.navigation h3.logo a {
+			font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-weight: 700;
+		}
 		.full-bleed {
 			width: 98vw;
 			margin-left: calc(50% - 49vw);
