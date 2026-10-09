@@ -1,0 +1,10 @@
+<header>
+  <div class="wrap">
+    <a class="logo" href="{{ '/index-v003.html' | relative_url }}" aria-label="Fogday Studios home">
+      FOGDAY STUDIOS
+    </a>
+    <nav aria-label="Main">
+      <a href="{{ '/works/index-v003.html' | relative_url }}"{% if include.current == "works" %} aria-current="page"{% endif %}>Projects</a>
+    </nav>
+  </div>
+</header>
