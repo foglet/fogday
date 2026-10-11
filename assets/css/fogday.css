@@ -68,6 +68,7 @@ nav a[aria-current="page"]:hover { color: var(--hot); }
 .theme-toggle svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .theme-toggle .icon-sun { display: none; }
 :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+.theme-toggle:hover .icon-moon path { fill: currentColor; } /* moon fills in on hover */
 :root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
 :root[data-theme="dark"] .theme-toggle:hover { color: #ffe680; }
 @media (prefers-color-scheme: dark) {
