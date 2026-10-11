@@ -16,16 +16,16 @@
   --step-2: 1.75rem;
   --step-3: clamp(2.4rem, 7vw, 3.6rem);
 }
-/* Dark mode: follows the visitor's system setting. Night bay #04121D. */
+/* Dark mode: follows the visitor's system setting. Deep navy #16202A. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #04121d; --surface: #0a1e2c; --ink: #e3eaee; --muted: #8fa3b1;
-    --line: #183040; --accent: #7fc2cc; color-scheme: dark;
+    --bg: #16202a; --surface: #1e2a36; --ink: #e3eaee; --muted: #8fa3b1;
+    --line: #2a3846; --accent: #7fc2cc; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #04121d; --surface: #0a1e2c; --ink: #e3eaee; --muted: #8fa3b1;
-  --line: #183040; --accent: #7fc2cc; color-scheme: dark;
+  --bg: #16202a; --surface: #1e2a36; --ink: #e3eaee; --muted: #8fa3b1;
+  --line: #2a3846; --accent: #7fc2cc; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
