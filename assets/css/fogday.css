@@ -111,5 +111,6 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .gallery li { min-width: 0; }
 .gallery img { display: block; width: 100%; height: auto; }
 .gallery a { display: block; }
+.gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
