@@ -90,10 +90,9 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .braille:hover { color: var(--accent); }
 
 /* Data gallery: one column of full, uncropped images */
-.gallery { list-style: none; margin: 0 auto; padding: 0; width: 98%; display: grid; gap: 40px; } /* images run 98% of the window width */
+.gallery { list-style: none; margin: 0 auto; padding: 0; width: 95%; display: grid; gap: 40px; } /* images run 95% of the window width on every page */
 .gallery li { min-width: 0; }
 .gallery img { display: block; width: 100%; height: auto; }
 .gallery a { display: block; }
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
-.gallery.works { width: 95%; } /* Works banners: 95% of the window width */
