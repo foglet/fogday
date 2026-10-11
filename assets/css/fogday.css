@@ -1,6 +1,6 @@
 /* Fogday Studios — shared site styles.
    Layout: one narrow column under a quiet header; slab wordmark.
-   Pages: /index-v007.html, /works/index-v007.html, /data/index-v007.html, /about/index-v007.html */
+   Pages: /index-v007.html, /works/index-v007.html, /data/index-v007.html, /about/v007.html */
 :root {
   --bg: #edf1f2;        /* morning fog */
   --surface: #f8fafa;
@@ -16,16 +16,15 @@
   --step-2: 1.75rem;
   --step-3: clamp(2.4rem, 7vw, 3.6rem);
 }
-/* Dark mode: follows the visitor's system setting. Night bay #04121D. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #04121d; --surface: #0a1e2c; --ink: #e3eaee; --muted: #8fa3b1;
-    --line: #183040; --accent: #7fc2cc; color-scheme: dark;
+    --bg: #10181d; --surface: #172229; --ink: #e2e8ea; --muted: #94a3ab;
+    --line: #2a3840; --accent: #7fc2cc; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #04121d; --surface: #0a1e2c; --ink: #e3eaee; --muted: #8fa3b1;
-  --line: #183040; --accent: #7fc2cc; color-scheme: dark;
+  --bg: #10181d; --surface: #172229; --ink: #e2e8ea; --muted: #94a3ab;
+  --line: #2a3840; --accent: #7fc2cc; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -49,7 +48,7 @@ header .wrap {
   color: var(--ink); text-decoration: none;
 }
 
-nav { display: flex; align-items: center; gap: 4px; }
+nav { display: flex; gap: 22px; }
 nav a {
   font-family: var(--font-ui); font-weight: 500; font-size: .875rem;
   text-transform: uppercase; letter-spacing: .12em;
@@ -61,6 +60,40 @@ nav a[aria-current="page"] { color: var(--ink); }
 nav a[aria-current="page"]:hover { color: var(--hot); }
 .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 8px; transition: color .15s ease; }
 .bento svg { display: block; width: 100%; height: 100%; }
-/* Theme toggle: moon in light mode (fills in on hover), sun in dark mode (hover light yellow) */
-.theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 9px; margin: 0; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 4px; transition: color .15s ease; }
-.theme-toggle:hover { color: var(--muted); } /*
+.logo { transition: color .15s ease; }
+.logo:hover { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* Content */
+.page { padding-block: 40px 72px; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--font-logo); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: var(--step-3); }
+h2 { font-size: var(--step-2); }
+p { margin: 0; max-width: 62ch; }
+.lede { font-size: var(--step-1); color: var(--muted); }
+.stack { display: grid; gap: 16px; }
+.eyebrow {
+  font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--accent);
+}
+
+a.text { color: var(--accent); text-underline-offset: 3px; }
+
+footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: var(--bg); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+main { padding-bottom: 64px; } /* room for the fixed footer */
+footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; text-align: center; }
+
+.logo { font-size: 1.55rem; letter-spacing: 0.04em; }
+.braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
+.braille:hover { color: var(--accent); }
+
+/* Data gallery: one column of full, uncropped images */
+.gallery { list-style: none; margin: 0 auto; padding: 0; width: 95%; display: grid; gap: 40px; } /* images run 95% of the window width on every page */
+.gallery li { min-width: 0; }
+.gallery img { display: block; width: 100%; height: auto; }
+.gallery a { display: block; }
+.caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.contact { display: grid; gap: 6px; }
