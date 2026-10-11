@@ -4,6 +4,11 @@
       FOGDAY STUDIOS
     </a>
     <nav aria-label="Main">
+      <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
       <a href="{{ '/works/index-v007.html' | relative_url }}"{% if include.current == "works" %} aria-current="page"{% endif %} class="bento" aria-label="Projects" title="Projects">
         <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
           <g fill="currentColor">
