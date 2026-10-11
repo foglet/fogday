@@ -97,3 +97,5 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
 .gallery.works { width: 95%; } /* Works banners: 95% of the window width */
+
+/* test */
