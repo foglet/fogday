@@ -140,9 +140,12 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .wide .project h2 { font-size: var(--step-2); } /* section titles stay larger than the bigger body text */
 .wide .page > .gallery { width: calc(100% - 40px); max-width: 52rem; } /* Data on wide pages: images share the column with the title and intro */
 
-/* 404 page: same header, title and footer as other pages; the photo runs edge to edge */
-.lost .page { padding-bottom: 24px; }
-.lost-figure { margin: 0; }
-.lost-photo { display: block; width: 100%; height: max(320px, calc(100svh - 370px)); object-fit: cover; }
-.lost-figure .caption { margin-top: 8px; text-align: right; }
-.lost-figure .caption a { color: inherit; }
+/* 404 page (same layout as ohlonesky.com's): full-screen photo, multilingual "Lost in the fog?", click anywhere to go home */
+.lost main { padding-bottom: 56px; }
+.lost-hero { position: relative; height: max(420px, calc(100svh - 170px)); overflow: hidden; color: #fff; text-align: center; }
+.lost-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.75); }
+.lost-home { position: absolute; inset: 0; z-index: 1; }
+.lost-text { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; gap: 8px; padding: 24px; pointer-events: none; font-size: 1.125rem; font-weight: 500; line-height: 1.55; }
+.lost-text p { max-width: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.lost-credit { margin: 8px auto 0; text-align: center; font-size: .75rem; color: var(--muted); max-width: none; }
+.lost-credit a { color: inherit; }
