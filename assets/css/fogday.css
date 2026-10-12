@@ -120,3 +120,5 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .project h2 { font-size: var(--step-1); letter-spacing: .02em; }
 .page > .wrap, .project > .wrap { width: 100%; } /* keep text columns left-aligned inside grid sections */
 .prose a { color: var(--accent); text-underline-offset: 3px; }
+
+.project .gallery { width: calc(100% - 40px); max-width: 44rem; } /* images match the text column */
