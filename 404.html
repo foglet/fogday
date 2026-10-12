@@ -6,29 +6,39 @@ permalink: /404.html
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Page Not Found · Fogday Studios</title>
+<title>Lost in the fog? · Fogday Studios</title>
 <meta name="robots" content="noindex">
 {% include head.html %}
 </head>
-<body class="wide lost">
+<body class="lost">
 {% include header.html %}
 
 <main>
-  <section class="page">
-    <div class="wrap stack works-title prose">
-      <h2>404 · PAGE NOT FOUND</h2>
-      <p class="lede">This bridge doesn't lead anywhere. The page you're looking for isn't here. <a href="{{ '/index-v007.html' | relative_url }}">Fogday Studios home →</a> <a href="{{ '/works/index-v007.html' | relative_url }}">Projects →</a></p>
-    </div>
-  </section>
-  <figure class="lost-figure">
-    <img class="lost-photo"
+  <section class="lost-hero">
+    <!-- Clickable layer: anywhere on the photo returns home -->
+    <a class="lost-home" href="{{ '/index-v007.html' | relative_url }}" aria-label="Return to the Fogday Studios homepage"></a>
+
+    <!-- Full-screen photo -->
+    <img class="lost-bg"
          src="https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=2400&amp;q=80&amp;auto=format&amp;fit=crop"
          srcset="https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=900&amp;q=80&amp;auto=format&amp;fit=crop 900w,
                  https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=1600&amp;q=80&amp;auto=format&amp;fit=crop 1600w,
                  https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=2400&amp;q=80&amp;auto=format&amp;fit=crop 2400w"
-         sizes="100vw" alt="A bridge over the water in San Francisco">
-    <figcaption class="wrap caption">Photo: <a href="https://unsplash.com/photos/a-bridge-over-a-body-of-water-iijEvvEncsA">Wayne Zheng</a>, San Francisco · Unsplash</figcaption>
-  </figure>
+         sizes="100vw" alt="">
+
+    <!-- Overlay text -->
+    <div class="lost-text">
+      <p lang="zh-Hant">迷失在霧中？</p>
+      <p lang="it">Perso nella nebbia?</p>
+      <p lang="ar" dir="rtl">ضائع في الضباب؟</p>
+      <p lang="es">¿Perdido en la niebla?</p>
+      <p lang="en">Lost in the fog?</p>
+      <p lang="ru">Затерялся в тумане?</p>
+      <p lang="de">Verloren im Nebel?</p>
+      <p lang="fr">Perdu dans le brouillard?</p>
+    </div>
+  </section>
+  <p class="lost-credit">Source: <a href="https://unsplash.com/photos/a-bridge-over-a-body-of-water-iijEvvEncsA">Wayne Zheng</a>, Unsplash</p>
 </main>
 
 {% include footer.html %}
