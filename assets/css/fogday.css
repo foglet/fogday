@@ -133,6 +133,7 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 
 /* Wide pages (Maps): a wider column; text and images share the same edges */
 .wide .wrap { max-width: calc(52rem + 40px); }
+.wide .page > .wrap h2 { color: #4a90c8; }
 .wide .project { max-width: 52rem; }
 .wide .lede, .wide .prose p { max-width: none; }
 .wide .prose { font-size: clamp(1.0625rem, 0.9rem + 0.6vw, 1.25rem); line-height: 1.6; } /* 20px on desktop, 17px on phones */
