@@ -114,6 +114,7 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .gallery a { display: block; }
 .gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
 .works-title { width: 95%; margin-inline: auto; } /* heading lines up with the left edge of the banners */
+.works-title h2 { color: #4a90c8; } /* sky blue, readable in light and dark mode */
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
 
