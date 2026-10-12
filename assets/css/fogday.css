@@ -114,3 +114,9 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
+
+/* Long-form pages (e.g. Maps): each project = heading, image(s), text */
+.project { display: grid; gap: 20px; padding-top: 32px; border-top: 1px solid var(--line); }
+.project h2 { font-size: var(--step-1); letter-spacing: .02em; }
+.page > .wrap, .project > .wrap { width: 100%; } /* keep text columns left-aligned inside grid sections */
+.prose a { color: var(--accent); text-underline-offset: 3px; }
