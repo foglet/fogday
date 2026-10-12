@@ -39,6 +39,7 @@ body {
 
 /* Header */
 header { border-bottom: 1px solid var(--line); }
+header .wrap, .wide header .wrap { max-width: none; padding-inline: 16px; } /* header spans the full window: logo near the left edge, icons near the right (like ohlonesky.com) */
 header .wrap {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: 12px 24px; padding-block: 22px;
