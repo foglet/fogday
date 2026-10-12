@@ -1,0 +1,36 @@
+---
+permalink: /404.html
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page Not Found · Fogday Studios</title>
+<meta name="robots" content="noindex">
+{% include head.html %}
+</head>
+<body class="lost">
+<img class="lost-photo"
+     src="https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=2400&amp;q=80&amp;auto=format&amp;fit=crop"
+     srcset="https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=900&amp;q=80&amp;auto=format&amp;fit=crop 900w,
+             https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=1600&amp;q=80&amp;auto=format&amp;fit=crop 1600w,
+             https://images.unsplash.com/photo-1655239863285-f58d9fdffaba?w=2400&amp;q=80&amp;auto=format&amp;fit=crop 2400w"
+     sizes="100vw" alt="A bridge over the water in San Francisco">
+{% include header.html %}
+
+<main class="lost-main">
+  <div class="lost-message">
+    <h1>404</h1>
+    <p>This bridge doesn't lead anywhere. The page you're looking for isn't here.</p>
+    <p class="lost-links">
+      <a href="{{ '/index-v007.html' | relative_url }}">Fogday Studios home →</a>
+      <a href="{{ '/works/index-v007.html' | relative_url }}">Projects →</a>
+    </p>
+  </div>
+  <p class="lost-credit">Photo: <a href="https://unsplash.com/photos/a-bridge-over-a-body-of-water-iijEvvEncsA">Wayne Zheng</a>, San Francisco · Unsplash</p>
+</main>
+
+{% include footer.html %}
+</body>
+</html>
