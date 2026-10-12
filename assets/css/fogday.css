@@ -120,5 +120,9 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .project h2 { font-size: var(--step-1); letter-spacing: .02em; }
 .page > .wrap, .project > .wrap { width: 100%; } /* keep text columns left-aligned inside grid sections */
 .prose a { color: var(--accent); text-underline-offset: 3px; }
-
-.project .gallery { width: calc(100% - 40px); max-width: 60rem; } /* images match the text column */
+.project .gallery { width: calc(100% - 40px); max-width: 44rem; } /* images match the text column */
+.project .gallery a { transition: opacity .15s ease; }
+.project .gallery a:hover { opacity: .85; } /* preview dims slightly on hover */
+.view-link { margin-top: -12px; } /* sits close under its image */
+.view-link a { font-size: .9rem; font-weight: 600; letter-spacing: .02em; color: var(--accent); text-decoration: none; transition: color .15s ease; }
+.view-link a:hover { color: var(--hot); }
