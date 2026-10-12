@@ -5,34 +5,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Works · Fogday Studios</title>
-<meta name="description" content="Projects by Fogday Studios.">
+<title>Maps · Fogday Studios</title>
+<meta name="description" content="Maps by Fogday Studios: the Oyster Atlas, remote islands, transit connections and more.">
+<meta name="robots" content="noindex,nofollow">
 {% include head.html %}
 </head>
-<body>
-{% include header.html current="works" %}
+<body class="wide">
+{% include header.html current="maps" %}
 
 <main>
   <section class="page">
-
-      <div class="stack works-title">
-      <h2>SELECT PROJECTS</h2>
-      
+    <div class="wrap stack works-title">
+      <h2>SELECT MAPS</h2>
+      <p class="lede">I've been intrigued with and collected maps since my youth. Maps are just maps though. Creating a sense of place, a connection to a landscape, is what I strive for.</p>
     </div>
-    
-    <ul class="gallery works">
-      <li><a href="https://ohlonesky.com" target="_blank" rel="noopener"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/banner-ohloneSky-v003.png" alt="OhloneSky" loading="lazy"></a></li>
-      <li><a href="https://oysteratlas.com" target="_blank" rel="noopener"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/bannerOysterAtlas-3.png" alt="Oyster Atlas" loading="lazy"></a></li>
-      <li><a href="https://fogday.com/electoralCollege/" target="_blank" rel="noopener"><img src="https://s3-us-west-1.amazonaws.com/fogday.ai/fogday/banner-electoralCollege-980x300.png" alt="Electoral College" loading="lazy"></a></li>
-      <li><a href="https://fogday.com/fm/" target="_blank" rel="noopener"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/banner-flavorPairings.png" alt="Flavor Pairings" loading="lazy"></a></li>
-      <li><a href="https://fogday.com/okay/" target="_blank" rel="noopener"><img src="https://s3-us-west-1.amazonaws.com/fogday.ai/fogday/banner-itsokay-980x300.png" alt="It's Okay" loading="lazy"></a></li>
-      <li><a href="https://fogday.com/maps/" target="_blank" rel="noopener"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/bannerMaps.png" alt="Maps" loading="lazy"></a></li>
-      <li><a href="../data/index-v007.html"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/bannerSauber.png" alt="Data &amp; Graphics" loading="lazy"></a></li>
-      <li><a href="https://fogday.com/hybridPro/" target="_blank" rel="noopener"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/bannerHybridPro.png" alt="Hybrid Pro" loading="lazy"></a></li>
-    </ul>
-  </section>
-</main>
 
-{% include footer.html %}
-</body>
-</html>
+    <article class="project">
+      <div class="wrap"><h2>The Oyster Atlas</h2></div>
+      <ul class="gallery">
+        <li><a href="https://oysteratlas.com/"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/salishSea-34161586601_561bb6fd79_o.png" alt="Oyster Atlas: Salish Sea" loading="lazy"></a></li>
+      </ul>
+      <div class="wrap"><p class="view-link"><a href="https://oysteratlas.com/">View map →</a></p></div>
+      <div class="wrap stack prose">
+        <p>Oyster consumption has had a renaissance over the last two decades. A daily scenario (at many places) is deciphering the oyster selection. Knowing and even guessing the provenance of an oyster used to be simple; in the United States they were often from Toke Point, near the mouth of the Columbia River, Long Island Sound, Chesapeake Bay, and Louisiana to name a few places.</p>
+        <p>Today, reading an oyster menu is like that of wine — a seemingly long list of cities and regions: Fanny Bay (BC), Popponesset Bay (MA), Westcott Bay (WA), Olde Salt (Chincoteague Bay, VA). But where are these places in relationship to each other? Where are oysters grown? What areas have the highest concentration of oyster farms? I wanted to know.</p>
+      </div>
+      <ul class="gallery">
+        <li><a href="https://oysteratlas.com/"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/oysterPEI-33451074844_53a91f298f_o.png" alt="Oyster Atlas: PEI" loading="lazy"></a></li>
+      </ul>
+      <div class="wrap stack prose">
+        <p>The big map (not the tiny one above) represents the oysters of the world, 520 and counting. Although it is predominantly North America, this is part of my long-term project to represent all of the world's oysters. I have found more than 900 market varieties. You will notice there are no placemarkers. I found that representing oysters as place names makes it easier to remember. Plus, some market names are places. Then again, not all oysters are located where their namesake city is. Spatially, I wanted to see the density of oyster growing regions and adjacency of growers to each other.</p>
+        <p>Just so you know, Pacific oysters are largely grown on the West Coast and Eastern oysters from the Gulf of Mexico to the Maritime Provinces in Canada.</p>
+        <p>This was designed with <a href="https://www.mapbox.com/mapbox-studio/">Mapbox Studio</a> with a hat tip to <a href="https://carto.com/">Carto</a> for their inspiring heatmap style.</p>
+      </div>
+    </article>
+
+    <article class="project">
+      <div class="wrap"><h2>The Digital Atlas of Remote Islands</h2></div>
+      <ul class="gallery">
+        <li><a href="https://fogday.com/remote/"><img src="https://s3.us-west-1.amazonaws.com/fogday.ai/rapaNui-34161585711_00cf78b3c2_o.png" alt="Rapa Nui" loading="lazy"></a></li>
+      </ul>
+      <div class="wrap"><p class="view-link"><a href="https://fogday.com/remote/">View map →</a></p></div>
+      <div class="wrap stack prose">
+        <p>The <i><a href="https://en.wikipedia.org/wiki/Atlas_of_Remote_Islands">Atlas of Remote Islands:
