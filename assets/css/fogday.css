@@ -126,3 +126,10 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 .view-link { margin-top: -12px; } /* sits close under its image */
 .view-link a { font-size: .9rem; font-weight: 600; letter-spacing: .02em; color: var(--accent); text-decoration: none; transition: color .15s ease; }
 .view-link a:hover { color: var(--hot); }
+
+/* Wide pages (Maps): a wider column; text and images share the same edges */
+.wide .wrap { max-width: calc(52rem + 40px); }
+.wide .project .gallery { max-width: 52rem; }
+.wide .lede, .wide .prose p { max-width: none; }
+.wide .prose { font-size: clamp(1.0625rem, 0.9rem + 0.6vw, 1.25rem); line-height: 1.6; } /* 20px on desktop, 17px on phones */
+.wide .project h2 { font-size: var(--step-2); } /* section titles stay larger than the bigger body text */
