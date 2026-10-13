@@ -1,10 +1,28 @@
-/* Fogday Studios — light/dark toggle, plus random header colors.
+/* Fogday Studios — light/dark toggle, random warming-stripes top bar, plus random header colors.
    No saved choice: the site follows the visitor's system setting.
    After a click: the choice is saved and wins on every page. */
 (function () {
   var KEY = 'fogday-theme';
   var root = document.documentElement;
   var media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  /* ---- Random warming stripes ----
+     Every page load picks one place at random and puts its class on <html>
+     (e.g. class="stripes-paris"); fogday.css draws that place's stripes as the top bar.
+     It never repeats the place from the previous page in this tab, so clicking around
+     always changes the bar. Runs first, before anything else, so the default sky-blue
+     bar shows as briefly as possible. Without JavaScript the sky-blue bar stays.
+     To add a place: add its stripes block to fogday.css and its name here. */
+  var STRIPES = ['hawaii', 'paris', 'naples', 'san-diego', 'seattle', 'vancouver', 'san-francisco'];
+  (function pickStripes() {
+    var last = null;
+    try { last = sessionStorage.getItem('fogday-stripes'); } catch (e) {}
+    var choices = STRIPES.filter(function (s) { return s !== last; });
+    var place = choices[Math.floor(Math.random() * choices.length)];
+    root.classList.add('stripes-' + place);
+    root.dataset.stripes = place; /* handy for checking which one is showing */
+    try { sessionStorage.setItem('fogday-stripes', place); } catch (e) {}
+  })();
 
   function current() {
     return root.dataset.theme || (media.matches ? 'dark' : 'light');
