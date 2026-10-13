@@ -17,22 +17,40 @@
     btn.title = btn.getAttribute('aria-label');
   }
 
-  /* ---- Random colors: greens and blues only ----
-     Every color comes from one band of the color wheel, HUE_LO (green) to HUE_HI (blue).
-     The logo and bento menu share a two-color gradient: a random 60° slice of the band
-     (like green → teal). The Works title (and the top bar, which uses the same colors)
-     gets the mirror-image slice, so a greener logo means a bluer title and vice versa.
-     The middle of the band is skipped so the two gradients never come out the same.
+  /* ---- Random colors (logo and bento menu only) ----
+     The Works title and top bar use one fixed sky-blue gradient, set in fogday.css.
+     Two palettes for the logo/bento. A page picks one with <body data-palette="...">;
+     no attribute = the default.
+
+     Default (greens and blues): the logo and bento share a two-color gradient,
+     a random 60° slice of the band HUE_LO (green) to HUE_HI (blue), like green → teal.
+
+     data-palette="blue-yellow" (e.g. /okay/): a short gradient from either the blue or the
+     gold-yellow family (coin flip on every pick). Each gradient stays inside one family,
+     because a single blue → yellow gradient goes muddy gray in the middle.
+
      A new pick happens on page load and on every hover or tap of the logo, bento or Works title.
      The fade-in itself is CSS (fogday.css, "Random gradient").
      Saturation is fixed and lightness is adjusted until the color is easy to see
-     on the page background (at least 3:1 contrast), so nothing comes out gray or faint. */
+     on the page background (at least 3:1 contrast), so nothing comes out gray or faint.
+     (On the light background that turns yellow into a deeper gold; dark mode keeps it bright.) */
   var HUE_LO = 100;  /* green */
   var HUE_HI = 230;  /* blue */
-  var SPAN = 60;     /* width of each gradient, in degrees */
-  var GAP = 15;      /* skip this far either side of the middle, so logo and title always differ */
+  var SPAN = 60;     /* width of the gradient, in degrees */
+  var FAMILIES = {   /* blue-yellow palette: [lowest hue, highest hue] of each family, per theme */
+    blue:   { light: [200, 232], dark: [200, 232] },
+    /* Yellow needs a narrower band in light mode: darkened enough to read on the pale background,
+       hues past ~46 turn olive (54 → #92850c), while 34–46 stay gold (38 → #b87a0f). */
+    yellow: { light: [34, 46],   dark: [38, 54] }  /* 34 = amber-gold, 54 = yellow */
+  };
+  var FAMILY_SPAN = 10; /* width of each gradient inside a family; must fit the narrowest band */
   var BG = { light: '#edf1f2', dark: '#16202a' }; /* must match --bg in fogday.css */
   var hue = HUE_LO;
+  var pick = null;   /* blue-yellow palette: which family the logo gets, and where its slice sits (0–1) */
+
+  function palette() {
+    return (document.body && document.body.dataset.palette) || 'default';
+  }
 
   function hslToHex(h, s, l) {
     s /= 100; l /= 100;
@@ -71,26 +89,43 @@
       hex = hslToHex(h, 85, l);
     }
     /* Hard rule: never the dark-theme navy, or anything close to it, in either theme.
-       (No hue in the green–blue band comes near it today.) If a future tweak breaks that,
-       shift the hue toward green, which stays inside the band, and try again. */
-    if (contrast(hex, BG.dark) < 1.5 && tries < 12) return colorFor(Math.max(HUE_LO, h - 30), tries + 1);
+       (No hue in either palette comes near it today.) If a future tweak breaks that,
+       shift the hue 30° away from deep blue, toward cyan, and try again. */
+    if (contrast(hex, BG.dark) < 1.5 && tries < 12) return colorFor((h + 330) % 360, tries + 1);
     return hex;
   }
 
   function applyColors() {
-    var mirror = HUE_LO + HUE_HI - hue;                            /* same slice, reflected across the band */
-    root.style.setProperty('--g1', colorFor(hue));               /* logo/bento gradient start */
-    root.style.setProperty('--g2', colorFor(hue + SPAN));        /* logo/bento gradient end */
-    root.style.setProperty('--t1', colorFor(mirror - SPAN));     /* Works title / top bar gradient: */
-    root.style.setProperty('--t2', colorFor(mirror));            /* the mirror-image slice */
+    var g1, g2;
+    if (pick) {                                                  /* blue-yellow palette */
+      var logo = slice(pick.family, pick.pos);
+      g1 = logo[0]; g2 = logo[1];
+    } else {                                                     /* default: greens and blues */
+      g1 = hue; g2 = hue + SPAN;
+    }
+    root.style.setProperty('--g1', colorFor(g1));  /* logo/bento gradient start */
+    root.style.setProperty('--g2', colorFor(g2));  /* logo/bento gradient end */
   }
 
-  /* Gradient start: anywhere the full 60° slice fits in the band, except near the middle */
+  /* The slice of a family at position pos (0 = low end, 1 = high end) of this theme's band:
+     [start, end], FAMILY_SPAN wide. Kept as a position so a theme switch re-tunes the same pick. */
+  function slice(family, pos) {
+    var band = FAMILIES[family][current()];
+    var start = band[0] + pos * (band[1] - band[0] - FAMILY_SPAN);
+    return [start, start + FAMILY_SPAN];
+  }
+
   function newPick() {
-    var mid = (HUE_LO + HUE_HI - SPAN) / 2;
-    do {
+    if (palette() === 'blue-yellow') {
+      pick = {
+        family: Math.random() < 0.5 ? 'yellow' : 'blue', /* coin flip: which family the logo gets */
+        pos: Math.random()
+      };
+    } else {
+      /* Gradient start: anywhere the full 60° slice fits in the band */
+      pick = null;
       hue = HUE_LO + Math.random() * (HUE_HI - SPAN - HUE_LO);
-    } while (Math.abs(hue - mid) < GAP);
+    }
     applyColors();
   }
 
