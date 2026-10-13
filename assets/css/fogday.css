@@ -10,7 +10,10 @@
   --accent: #1f5f6b;    /* deep bay teal */
   --hot: #ff5500;       /* nav hover */
   --font-logo: "Patua One", "Rockwell", "Roboto Slab", Georgia, serif;
-  --font-ui: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  /* Fallbacks if Google Fonts doesn't load: humanist sans already on the visitor's computer
+     (Seravek: Mac/iPhone · Calibri, Segoe UI: Windows · Ubuntu, DejaVu Sans: Linux), then Arial. */
+  --font-wordmark: "Fira Sans Condensed", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", "Arial Narrow", Arial, sans-serif; /* logotype: weight 600 */
+  --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif; /* body: weight 400 */
   --step-0: 1.0625rem;
   --step-1: 1.25rem;
   --step-2: 1.75rem;
@@ -45,7 +48,7 @@ header .wrap {
   gap: 12px 24px; padding-block: 22px;
 }
 .logo {
-    font-family: var(--font-logo); font-weight: 400;
+    font-family: var(--font-wordmark); font-weight: 600;
   font-size: 1.75rem; line-height: 1; letter-spacing: 0.01em;
   color: var(--ink); text-decoration: none;
 }
@@ -101,7 +104,7 @@ footer {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 main { padding-bottom: 64px; } /* room for the fixed footer */
-footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; text-align: center; }
+footer .wrap { padding-block: 14px; font-family: var(--font-wordmark); font-weight: 400; letter-spacing: .02em; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; text-align: center; }
 
 .logo { font-size: 1.2rem; letter-spacing: 0.04em; text-box: trim-both cap alphabetic; margin-bottom: 13px; } /* smaller than page titles (1.75rem); trimmed to the caps and lifted 13px so its bottom lines up with the bottom of the visible icons */
 header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
@@ -149,16 +152,6 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .gallery img { display: block; width: 100%; height: auto; }
 .gallery a { display: block; }
 .gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
-/* Works page: hovering (or keyboard-focusing) one banner dims all the others to 50%, spotlighting the one you're on.
-   brightness(.5) looks the same as a 50% black box laid over the image. Uses the fade timings from the header. */
-.gallery.works img { transition: filter var(--fade-out) ease; }
-@media (hover: hover) {
-  .gallery.works:has(li:hover) li:not(:hover) img,
-  .gallery.works:has(a:focus-visible) li:not(:has(a:focus-visible)) img {
-    filter: brightness(.5);
-    transition: filter var(--fade-in) ease;
-  }
-}
 .works-title { width: 95%; margin-inline: auto; } /* heading lines up with the left edge of the banners */
 /* Works title: a gradient in the complementary colors of the logo/bento gradient (theme.js sets --t1 / --t2).
    Registering the two colors with @property lets them fade smoothly when they change.
