@@ -122,6 +122,12 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
 .bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
 .works-title h2 { transition: color .4s ease; }
+
+/* Dark mode: bento matches the logo (bright ink) instead of the dimmer muted gray */
+:root[data-theme="dark"] .bento { color: var(--ink); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bento { color: var(--ink); }
+}
 .braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
 .braille:hover { color: var(--accent); }
 
