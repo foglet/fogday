@@ -18,9 +18,11 @@
   }
 
   /* ---- Random colors ----
-     One random hue per pick. The logo and bento menu share it (their hover/tap color);
-     the Works title gets the complementary hue (opposite side of the color wheel).
-     A new pick happens on page load and on every hover or tap of the logo or bento.
+     One random hue per pick. The logo and bento menu share a two-color gradient that
+     starts at that hue and runs 60° around the color wheel (like amber → pink);
+     the Works title gets the complementary hue (opposite the middle of the gradient).
+     A new pick happens on page load and on every hover or tap of the logo, bento or Works title.
+     The fade-in itself is CSS (fogday.css, "Random gradient").
      Saturation is fixed and lightness is adjusted until the color is easy to see
      on the page background (at least 3:1 contrast), so nothing comes out gray or faint. */
   var BG = { light: '#edf1f2', dark: '#16202a' }; /* must match --bg in fogday.css */
@@ -70,14 +72,10 @@
   }
 
   function applyColors() {
-    var main = colorFor(hue);
-    var comp = colorFor((hue + 180) % 360);
-    var logo = document.querySelector('.logo');
-    var bento = document.querySelector('.bento');
+    root.style.setProperty('--g1', colorFor(hue));               /* gradient start */
+    root.style.setProperty('--g2', colorFor((hue + 60) % 360));  /* gradient end */
     var title = document.querySelector('.works-title h2');
-    if (logo) logo.style.setProperty('--accent', main); /* logo hover color */
-    if (bento) bento.style.setProperty('--hot', main);  /* bento hover color */
-    if (title) title.style.color = comp;
+    if (title) title.style.color = colorFor((hue + 210) % 360);  /* complement of the gradient's middle */
   }
 
   function newPick() {
@@ -85,14 +83,52 @@
     applyColors();
   }
 
+  /* Swap the bento's solid fill for a gradient the CSS can fade in */
+  function addBentoGradient(bento) {
+    var svg = bento.querySelector('svg');
+    var g = svg && svg.querySelector('g');
+    if (!g) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var defs = document.createElementNS(NS, 'defs');
+    var grad = document.createElementNS(NS, 'linearGradient');
+    grad.id = 'bento-grad';
+    grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    grad.setAttribute('x1', '2'); grad.setAttribute('y1', '2');
+    grad.setAttribute('x2', '22'); grad.setAttribute('y2', '22'); /* top-left → bottom-right */
+    ['g1', 'g2'].forEach(function (cls, i) {
+      var stop = document.createElementNS(NS, 'stop');
+      stop.setAttribute('offset', i ? '1' : '0');
+      stop.setAttribute('class', cls);
+      grad.appendChild(stop);
+    });
+    defs.appendChild(grad);
+    svg.insertBefore(defs, svg.firstChild);
+    g.setAttribute('fill', 'url(#bento-grad)');
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     newPick();
-    ['.logo', '.bento'].forEach(function (sel) {
-      var el = document.querySelector(sel);
+    var logo = document.querySelector('.logo');
+    var bento = document.querySelector('.bento');
+    if (bento) addBentoGradient(bento);
+
+    [logo, bento].forEach(function (el) {
       if (!el) return;
       el.addEventListener('pointerenter', newPick); /* mouse hover */
       el.addEventListener('pointerdown', newPick);  /* tap or click */
     });
+
+    /* Works title: hovering it picks new colors and fades the gradient into the logo and bento;
+       moving off fades them back to normal */
+    var title = document.querySelector('.works-title h2');
+    function lit(on) {
+      if (logo) logo.classList.toggle('lit', on);
+      if (bento) bento.classList.toggle('lit', on);
+    }
+    if (title) {
+      title.addEventListener('pointerenter', function () { newPick(); lit(true); });
+      title.addEventListener('pointerleave', function () { lit(false); });
+    }
 
     var btn = document.querySelector('.theme-toggle');
     if (!btn) return;
