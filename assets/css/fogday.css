@@ -149,6 +149,16 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .gallery img { display: block; width: 100%; height: auto; }
 .gallery a { display: block; }
 .gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
+/* Works page: hovering (or keyboard-focusing) one banner dims all the others to 50%, spotlighting the one you're on.
+   brightness(.5) looks the same as a 50% black box laid over the image. Uses the fade timings from the header. */
+.gallery.works img { transition: filter var(--fade-out) ease; }
+@media (hover: hover) {
+  .gallery.works:has(li:hover) li:not(:hover) img,
+  .gallery.works:has(a:focus-visible) li:not(:has(a:focus-visible)) img {
+    filter: brightness(.5);
+    transition: filter var(--fade-in) ease;
+  }
+}
 .works-title { width: 95%; margin-inline: auto; } /* heading lines up with the left edge of the banners */
 /* Works title: a gradient in the complementary colors of the logo/bento gradient (theme.js sets --t1 / --t2).
    Registering the two colors with @property lets them fade smoothly when they change.
