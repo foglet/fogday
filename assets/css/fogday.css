@@ -153,26 +153,22 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .gallery a { display: block; }
 .gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
 .works-title { width: 95%; margin-inline: auto; } /* heading lines up with the left edge of the banners */
-/* Works title: a gradient in the complementary colors of the logo/bento gradient (theme.js sets --t1 / --t2).
-   Registering the two colors with @property lets them fade smoothly when they change.
-   Before the script runs (or without it), both are the original sky blue. */
-@property --t1 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
-@property --t2 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+/* Works title and top bar: one fixed sky-blue gradient on every page (no random colors).
+   Light mode: deeper sky → the original sky blue, both at least 3:1 on --bg (3.75 and 3.02).
+   Dark mode: light sky blues (8.6:1 and 12.5:1 on the navy --bg). */
+:root { --title-1: #2f7fc1; --title-2: #4a90c8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --title-1: #7cc4f0; --title-2: #bfe6fb; } }
+:root[data-theme="dark"] { --title-1: #7cc4f0; --title-2: #bfe6fb; }
 .works-title h2 {
   width: fit-content; /* gradient spans the words, not the whole row */
-  background-image: linear-gradient(to right, var(--t1), var(--t2));
+  background-image: linear-gradient(to right, var(--title-1), var(--title-2));
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  transition: --t1 var(--blend) ease, --t2 var(--blend) ease; /* each new gradient fades in over the old one */
 }
 
-/* Top bar on every page: 8px across the top, in the same --t1 → --t2 gradient as the works title.
-   theme.js re-picks the colors on load and on each hover/tap of the logo, bento or works title;
-   the transition blends the bar to the new colors in step with the title.
-   Without theme.js both colors stay the sky-blue default (#4a90c8). */
+/* Top bar on every page: 8px across the top, in the same gradient as the works title */
 body {
-  border-top: 8px solid var(--t1); /* fallback if border-image is unsupported */
-  border-image: linear-gradient(to right, var(--t1), var(--t2)) 1;
-  transition: --t1 var(--blend) ease, --t2 var(--blend) ease;
+  border-top: 8px solid var(--title-1); /* fallback if border-image is unsupported */
+  border-image: linear-gradient(to right, var(--title-1), var(--title-2)) 1;
 }
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
