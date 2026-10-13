@@ -108,17 +108,28 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .bento { padding: 11px; } /* 18px icon in a 40px tap target */
 .theme-toggle { padding: 12px; } /* 16px icon in a 40px tap target; if these paddings change, change the logo's margin-bottom by the same amount */
 
-/* Random gradient (like "Peek Into the Future" on ohlonesky.com), faded in.
+/* Random gradient (like "Peek Into the Future" on ohlonesky.com), faded in and out.
    theme.js sets --g1 / --g2 to two random colors. The gradient always sits behind the logo text;
-   on hover (or while the Works title is hovered: .lit) the solid ink fades to transparent and reveals it. */
+   on hover (or while the Works title is hovered: .lit) the solid ink fades to transparent and reveals it.
+   Fade-in is quicker than fade-out, so colors arrive briskly and linger as they leave.
+   --g1 / --g2 are registered (@property) so a new gradient also blends in instead of jumping. */
+:root { --fade-in: .6s; --fade-out: 1.2s; --blend: .8s; }
+@media (prefers-reduced-motion: reduce) { :root { --fade-in: .01s; --fade-out: .01s; --blend: .01s; } }
+@property --g1 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+@property --g2 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
 .logo {
-  background-image: linear-gradient(to right, var(--g1, var(--ink)), var(--g2, var(--ink)));
+  background-image: linear-gradient(to right, var(--g1), var(--g2));
   -webkit-background-clip: text; background-clip: text;
   padding-block: 3px; margin-top: -3px; margin-bottom: 10px; /* room so round letters (O, S) aren't clipped; bottom edge unchanged (3 + 10 = 13px) */
-  transition: color .4s ease;
+  transition: color var(--fade-out) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; /* fade-out */
 }
-.logo:hover, .logo.lit { color: transparent; }
-.bento stop { stop-color: currentColor; transition: stop-color .4s ease; } /* bento squares are filled with a gradient that matches the icon color until lit */
+.logo:hover, .logo.lit {
+  color: transparent;
+  transition: color var(--fade-in) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; /* fade-in */
+}
+/* Bento squares are filled with a gradient that matches the icon color until lit */
+.bento stop { stop-color: currentColor; transition: stop-color var(--fade-out) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
+.bento:hover stop, .bento.lit stop { transition: stop-color var(--fade-in) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
 .bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
 .bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
 
@@ -148,7 +159,7 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
   width: fit-content; /* gradient spans the words, not the whole row */
   background-image: linear-gradient(to right, var(--t1), var(--t2));
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  transition: --t1 .4s ease, --t2 .4s ease;
+  transition: --t1 var(--blend) ease, --t2 var(--blend) ease; /* each new gradient fades in over the old one */
 }
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
