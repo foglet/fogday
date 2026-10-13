@@ -17,16 +17,22 @@
     btn.title = btn.getAttribute('aria-label');
   }
 
-  /* ---- Random colors ----
-     One random hue per pick. The logo and bento menu share a two-color gradient that
-     starts at that hue and runs 60° around the color wheel (like amber → pink);
-     the Works title gets the complementary gradient (each color opposite its partner on the wheel).
+  /* ---- Random colors: greens and blues only ----
+     Every color comes from one band of the color wheel, HUE_LO (green) to HUE_HI (blue).
+     The logo and bento menu share a two-color gradient: a random 60° slice of the band
+     (like green → teal). The Works title (and the top bar, which uses the same colors)
+     gets the mirror-image slice, so a greener logo means a bluer title and vice versa.
+     The middle of the band is skipped so the two gradients never come out the same.
      A new pick happens on page load and on every hover or tap of the logo, bento or Works title.
      The fade-in itself is CSS (fogday.css, "Random gradient").
      Saturation is fixed and lightness is adjusted until the color is easy to see
      on the page background (at least 3:1 contrast), so nothing comes out gray or faint. */
+  var HUE_LO = 100;  /* green */
+  var HUE_HI = 230;  /* blue */
+  var SPAN = 60;     /* width of each gradient, in degrees */
+  var GAP = 15;      /* skip this far either side of the middle, so logo and title always differ */
   var BG = { light: '#edf1f2', dark: '#16202a' }; /* must match --bg in fogday.css */
-  var hue = 0;
+  var hue = HUE_LO;
 
   function hslToHex(h, s, l) {
     s /= 100; l /= 100;
@@ -65,21 +71,26 @@
       hex = hslToHex(h, 85, l);
     }
     /* Hard rule: never the dark-theme navy, or anything close to it, in either theme.
-       (Today the nearest any hue gets is 1.61:1, bright blue #1111d4.) If a future
-       tweak breaks that, shift the hue and try again. */
-    if (contrast(hex, BG.dark) < 1.5 && tries < 12) return colorFor((h + 30) % 360, tries + 1);
+       (No hue in the green–blue band comes near it today.) If a future tweak breaks that,
+       shift the hue toward green, which stays inside the band, and try again. */
+    if (contrast(hex, BG.dark) < 1.5 && tries < 12) return colorFor(Math.max(HUE_LO, h - 30), tries + 1);
     return hex;
   }
 
   function applyColors() {
-    root.style.setProperty('--g1', colorFor(hue));               /* gradient start */
-    root.style.setProperty('--g2', colorFor((hue + 60) % 360));  /* gradient end */
-    root.style.setProperty('--t1', colorFor((hue + 180) % 360)); /* Works title gradient: the complement */
-    root.style.setProperty('--t2', colorFor((hue + 240) % 360)); /* of the logo/bento gradient, hue for hue */
+    var mirror = HUE_LO + HUE_HI - hue;                            /* same slice, reflected across the band */
+    root.style.setProperty('--g1', colorFor(hue));               /* logo/bento gradient start */
+    root.style.setProperty('--g2', colorFor(hue + SPAN));        /* logo/bento gradient end */
+    root.style.setProperty('--t1', colorFor(mirror - SPAN));     /* Works title / top bar gradient: */
+    root.style.setProperty('--t2', colorFor(mirror));            /* the mirror-image slice */
   }
 
+  /* Gradient start: anywhere the full 60° slice fits in the band, except near the middle */
   function newPick() {
-    hue = Math.floor(Math.random() * 360);
+    var mid = (HUE_LO + HUE_HI - SPAN) / 2;
+    do {
+      hue = HUE_LO + Math.random() * (HUE_HI - SPAN - HUE_LO);
+    } while (Math.abs(hue - mid) < GAP);
     applyColors();
   }
 
