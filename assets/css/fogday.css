@@ -121,7 +121,8 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .bento stop { stop-color: currentColor; transition: stop-color .4s ease; } /* bento squares are filled with a gradient that matches the icon color until lit */
 .bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
 .bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
-.works-title h2 { transition: color .4s ease; }
+
+.theme-toggle .icon-sun { transition: color 1.5s ease; } /* sun drifts between yellow and orange (theme.js) */
 
 /* Dark mode: bento matches the logo (bright ink) instead of the dimmer muted gray */
 :root[data-theme="dark"] .bento { color: var(--ink); }
@@ -138,7 +139,17 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .gallery a { display: block; }
 .gallery.works { gap: 16px; } /* Works page: tighter spacing between banners */
 .works-title { width: 95%; margin-inline: auto; } /* heading lines up with the left edge of the banners */
-.works-title h2 { color: #4a90c8; } /* sky blue, readable in light and dark mode */
+/* Works title: a gradient in the complementary colors of the logo/bento gradient (theme.js sets --t1 / --t2).
+   Registering the two colors with @property lets them fade smoothly when they change.
+   Before the script runs (or without it), both are the original sky blue. */
+@property --t1 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+@property --t2 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+.works-title h2 {
+  width: fit-content; /* gradient spans the words, not the whole row */
+  background-image: linear-gradient(to right, var(--t1), var(--t2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  transition: --t1 .4s ease, --t2 .4s ease;
+}
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
 
