@@ -107,6 +107,21 @@ footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); disp
 header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 .bento { padding: 11px; } /* 18px icon in a 40px tap target */
 .theme-toggle { padding: 12px; } /* 16px icon in a 40px tap target; if these paddings change, change the logo's margin-bottom by the same amount */
+
+/* Random gradient (like "Peek Into the Future" on ohlonesky.com), faded in.
+   theme.js sets --g1 / --g2 to two random colors. The gradient always sits behind the logo text;
+   on hover (or while the Works title is hovered: .lit) the solid ink fades to transparent and reveals it. */
+.logo {
+  background-image: linear-gradient(to right, var(--g1, var(--ink)), var(--g2, var(--ink)));
+  -webkit-background-clip: text; background-clip: text;
+  padding-block: 3px; margin-top: -3px; margin-bottom: 10px; /* room so round letters (O, S) aren't clipped; bottom edge unchanged (3 + 10 = 13px) */
+  transition: color .4s ease;
+}
+.logo:hover, .logo.lit { color: transparent; }
+.bento stop { stop-color: currentColor; transition: stop-color .4s ease; } /* bento squares are filled with a gradient that matches the icon color until lit */
+.bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
+.bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
+.works-title h2 { transition: color .4s ease; }
 .braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
 .braille:hover { color: var(--accent); }
 
