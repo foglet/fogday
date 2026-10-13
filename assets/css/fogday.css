@@ -103,8 +103,10 @@ footer {
 main { padding-bottom: 64px; } /* room for the fixed footer */
 footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; text-align: center; }
 
-.logo { font-size: 1.2rem; letter-spacing: 0.04em; text-box: trim-both cap alphabetic; margin-bottom: 10px; }
-header .wrap { align-items: flex-end; }
+.logo { font-size: 1.2rem; letter-spacing: 0.04em; text-box: trim-both cap alphabetic; margin-bottom: 13px; } /* smaller than page titles (1.75rem); trimmed to the caps and lifted 13px so its bottom lines up with the bottom of the visible icons */
+header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
+.bento { padding: 11px; } /* 18px icon in a 40px tap target */
+.theme-toggle { padding: 12px; } /* 16px icon in a 40px tap target; if these paddings change, change the logo's margin-bottom by the same amount */
 .braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
 .braille:hover { color: var(--accent); }
 
