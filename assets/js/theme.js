@@ -52,7 +52,8 @@
 
   /* Start at a vivid lightness, then darken (light mode) or lighten (dark mode)
      in small steps until the color stands out against the background. */
-  function colorFor(h) {
+  function colorFor(h, tries) {
+    tries = tries || 0;
     var dark = current() === 'dark';
     var bg = dark ? BG.dark : BG.light;
     var l = dark ? 65 : 45;
@@ -61,6 +62,10 @@
       l += dark ? 2 : -2;
       hex = hslToHex(h, 85, l);
     }
+    /* Hard rule: never the dark-theme navy, or anything close to it, in either theme.
+       (Today the nearest any hue gets is 1.61:1, bright blue #1111d4.) If a future
+       tweak breaks that, shift the hue and try again. */
+    if (contrast(hex, BG.dark) < 1.5 && tries < 12) return colorFor((h + 30) % 360, tries + 1);
     return hex;
   }
 
