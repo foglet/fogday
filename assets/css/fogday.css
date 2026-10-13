@@ -103,7 +103,8 @@ footer {
 main { padding-bottom: 64px; } /* room for the fixed footer */
 footer .wrap { padding-block: 14px; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; text-align: center; }
 
-.logo { font-size: 1.2rem; letter-spacing: 0.04em; } /* smaller than page titles (1.75rem) so the hierarchy reads */
+.logo { font-size: 1.2rem; letter-spacing: 0.04em; text-box: trim-both cap alphabetic; margin-bottom: 10px; }
+header .wrap { align-items: flex-end; }
 .braille { color: var(--muted); text-decoration: none; letter-spacing: .08em; font-size: 1rem; }
 .braille:hover { color: var(--accent); }
 
