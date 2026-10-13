@@ -46,7 +46,7 @@ header .wrap {
 }
 .logo {
     font-family: var(--font-logo); font-weight: 400;
-  font-size: 1rem; line-height: 1; letter-spacing: 0.01em;
+  font-size: 1.75rem; line-height: 1; letter-spacing: 0.01em;
   color: var(--ink); text-decoration: none;
 }
 
