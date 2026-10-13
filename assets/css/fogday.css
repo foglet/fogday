@@ -173,13 +173,15 @@ body {
 
 /* Warming stripes: top bars by place. One stripe per year; colors sampled from the #ShowYourStripes
    graphics by Ed Hawkins, University of Reading (showyourstripes.info, CC BY 4.0). Blue = cooler than
-   average, red = warmer. A page turns one on with its class, e.g. <body class="stripes-paris">.
+   average, red = warmer. theme.js picks one at random on every page load and puts its class on <html>
+   (e.g. <html class="stripes-paris">). A class on <body> also works, but the random pick on <html> wins.
    Hard color stops, so each year is a crisp band; neighboring years with the same color share one stop.
    Each list runs oldest year (left) to newest (right). */
 
 /* Hawaii: 143 years, 18 colors */
 body.stripes-hawaii,
-body.stripes /* original About-page class, kept so older pages still work */ {
+body.stripes, /* original About-page class, kept so older pages still work */
+:root.stripes-hawaii body {
   border-image: linear-gradient(to right,
     #4292c6 0% 0.6993%,
     #08519c 0.6993% 2.0979%,
@@ -302,7 +304,8 @@ body.stripes /* original About-page class, kept so older pages still work */ {
 }
 
 /* Paris: 176 years, 18 colors */
-body.stripes-paris {
+body.stripes-paris,
+:root.stripes-paris body {
   border-image: linear-gradient(to right,
     #08519c 0% 1.1364%,
     #fee0d2 1.1364% 1.7045%,
@@ -461,7 +464,8 @@ body.stripes-paris {
 }
 
 /* Naples: 176 years, 18 colors */
-body.stripes-naples {
+body.stripes-naples,
+:root.stripes-naples body {
   border-image: linear-gradient(to right,
     #001944 0% 1.1364%,
     #6baed6 1.1364% 1.7045%,
@@ -620,7 +624,8 @@ body.stripes-naples {
 }
 
 /* San Diego: 176 years, 18 colors */
-body.stripes-san-diego {
+body.stripes-san-diego,
+:root.stripes-san-diego body {
   border-image: linear-gradient(to right,
     #001944 0% 0.5682%,
     #2171b5 0.5682% 1.1364%,
@@ -783,7 +788,8 @@ body.stripes-san-diego {
 }
 
 /* Seattle: 176 years, 17 colors */
-body.stripes-seattle {
+body.stripes-seattle,
+:root.stripes-seattle body {
   border-image: linear-gradient(to right,
     #08519c 0% 0.5682%,
     #c6dbef 0.5682% 1.1364%,
@@ -946,7 +952,8 @@ body.stripes-seattle {
 }
 
 /* Vancouver, BC: 176 years, 17 colors */
-body.stripes-vancouver {
+body.stripes-vancouver,
+:root.stripes-vancouver body {
   border-image: linear-gradient(to right,
     #2171b5 0% 0.5682%,
     #fee0d2 0.5682% 1.1364%,
@@ -1112,7 +1119,8 @@ body.stripes-vancouver {
 }
 
 /* San Francisco: 176 years, 18 colors */
-body.stripes-san-francisco {
+body.stripes-san-francisco,
+:root.stripes-san-francisco body {
   border-image: linear-gradient(to right,
     #001944 0% 0.5682%,
     #2171b5 0.5682% 1.1364%,
