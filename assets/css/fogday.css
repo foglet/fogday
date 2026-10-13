@@ -164,6 +164,16 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
   -webkit-background-clip: text; background-clip: text; color: transparent;
   transition: --t1 var(--blend) ease, --t2 var(--blend) ease; /* each new gradient fades in over the old one */
 }
+
+/* Top bar on every page: 8px across the top, in the same --t1 → --t2 gradient as the works title.
+   theme.js re-picks the colors on load and on each hover/tap of the logo, bento or works title;
+   the transition blends the bar to the new colors in step with the title.
+   Without theme.js both colors stay the sky-blue default (#4a90c8). */
+body {
+  border-top: 8px solid var(--t1); /* fallback if border-image is unsupported */
+  border-image: linear-gradient(to right, var(--t1), var(--t2)) 1;
+  transition: --t1 var(--blend) ease, --t2 var(--blend) ease;
+}
 .caption { margin: 10px 0 0; max-width: none; font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .contact { display: grid; gap: 6px; }
 
@@ -182,7 +192,7 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
 
 /* Wide pages (Maps): a wider column; text and images share the same edges */
 .wide .wrap { max-width: calc(52rem + 40px); }
-.wide .page > .wrap h2 { color: #4a90c8; }
+.wide .page > .wrap:not(.works-title) h2 { color: #4a90c8; } /* :not() so the works title keeps its gradient (it was forced solid blue, so it didn't match the top bar) */
 .wide .project { max-width: 52rem; }
 .wide .lede, .wide .prose p { max-width: none; }
 .wide .prose { font-size: clamp(1.0625rem, 0.9rem + 0.6vw, 1.25rem); line-height: 1.6; } /* 20px on desktop, 17px on phones */
