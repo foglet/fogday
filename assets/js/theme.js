@@ -20,7 +20,7 @@
   /* ---- Random colors ----
      One random hue per pick. The logo and bento menu share a two-color gradient that
      starts at that hue and runs 60° around the color wheel (like amber → pink);
-     the Works title gets the complementary hue (opposite the middle of the gradient).
+     the Works title gets the complementary gradient (each color opposite its partner on the wheel).
      A new pick happens on page load and on every hover or tap of the logo, bento or Works title.
      The fade-in itself is CSS (fogday.css, "Random gradient").
      Saturation is fixed and lightness is adjusted until the color is easy to see
@@ -74,8 +74,8 @@
   function applyColors() {
     root.style.setProperty('--g1', colorFor(hue));               /* gradient start */
     root.style.setProperty('--g2', colorFor((hue + 60) % 360));  /* gradient end */
-    var title = document.querySelector('.works-title h2');
-    if (title) title.style.color = colorFor((hue + 210) % 360);  /* complement of the gradient's middle */
+    root.style.setProperty('--t1', colorFor((hue + 180) % 360)); /* Works title gradient: the complement */
+    root.style.setProperty('--t2', colorFor((hue + 240) % 360)); /* of the logo/bento gradient, hue for hue */
   }
 
   function newPick() {
@@ -106,8 +106,30 @@
     g.setAttribute('fill', 'url(#bento-grad)');
   }
 
+  /* Sun icon (shown in dark mode): drifts on its own through sun colors, yellow to orange.
+     Hue 25–55°, kept bright. Every 10 seconds a new shade, blended over 1.5s by the CSS
+     transition in fogday.css. Visitors who turn on "reduce motion" get one shade per page, no drifting. */
+  function sunColor() {
+    var h = 25 + Math.random() * 30;  /* 25 = orange, 55 = yellow */
+    var s = 90 + Math.random() * 10;
+    var l = 55 + Math.random() * 12;
+    var hex = hslToHex(h, s, l);
+    while (contrast(hex, BG.dark) < 4.5 && l < 85) { l += 2; hex = hslToHex(h, s, l); }
+    return hex;
+  }
+
+  function startSun() {
+    var sun = document.querySelector('.theme-toggle .icon-sun');
+    if (!sun) return;
+    function tick() { sun.style.color = sunColor(); }
+    tick();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setInterval(tick, 10000);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     newPick();
+    startSun();
     var logo = document.querySelector('.logo');
     var bento = document.querySelector('.bento');
     if (bento) addBentoGradient(bento);
