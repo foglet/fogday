@@ -163,6 +163,11 @@ header .wrap { align-items: flex-end; } /* logo and icons share a bottom edge */
   width: fit-content; /* gradient spans the words, not the whole row */
   background-image: linear-gradient(to right, var(--title-1), var(--title-2));
   -webkit-background-clip: text; background-clip: text; color: transparent;
+  /* Gradient text only shows inside the element's box, and the tight line-height leaves the box
+     shorter than some letters (the tail of the J in PROJECTS hangs below it and was cut off).
+     Padding grows the box around the letters; the matching negative margin keeps the text and
+     everything around it exactly where they were. */
+  padding: .2em .1em; margin: -.2em -.1em;
 }
 
 /* Top bar on every page: 8px, pinned to the top of the window so it stays put while the page scrolls.
