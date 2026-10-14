@@ -1340,7 +1340,9 @@ body.stripes-san-francisco { --bar-page: var(--stripes-san-francisco); }
 }
 .ig-link:hover { color: var(--accent); }
 .ig-link .ig {
-  display: inline-block; width: .7em; height: .7em; background: currentColor;
-  -webkit-mask: url(https://cdn.jsdelivr.net/npm/simple-icons@13/icons/instagram.svg) center/contain no-repeat;
-          mask: url(https://cdn.jsdelivr.net/npm/simple-icons@13/icons/instagram.svg) center/contain no-repeat;
+  display: inline-block; width: 1.1em; height: 1.1em;
+  vertical-align: -.225em; /* centers the icon on the capital letters */
+  background: currentColor;
+  -webkit-mask: url(/assets/icons/instagram.svg) center/contain no-repeat;
+          mask: url(/assets/icons/instagram.svg) center/contain no-repeat;
 }
