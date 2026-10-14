@@ -182,7 +182,7 @@ body::before {
    sits over the header's empty top padding, so it's invisible until you scroll. Follows dark mode via --bg. */
 body::after {
   content: "";
-  position: fixed; top: 8px; left: 0; right: 0; height: 16px;
+  position: fixed; top: 8px; left: 0; right: 0; height: 10px;
   z-index: 20;
   pointer-events: none;
   background: linear-gradient(to bottom, var(--bg), transparent);
