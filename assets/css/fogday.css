@@ -1331,3 +1331,16 @@ body.stripes-san-francisco { --bar-page: var(--stripes-san-francisco); }
 .pairings { list-style: none; margin: 0; padding: 0 0 0 50px; font-size: clamp(1.25rem, 1rem + 1vw, 1.5rem); line-height: 1.35; font-weight: 500; }
 .pairings li:nth-child(odd) { color: var(--pair-a); }
 .pairings li:nth-child(even) { color: var(--pair-b); }
+
+/* Instagram glyph in footer: cap-height square sitting on the text baseline */
+.ig-link {
+  display: inline-block; vertical-align: baseline; line-height: 0;
+  padding: 8px; margin: -8px -8px -8px calc(.6em - 8px); /* ~26px tap target, no layout shift */
+  color: var(--muted); text-decoration: none; transition: color .15s ease;
+}
+.ig-link:hover { color: var(--accent); }
+.ig-link .ig {
+  display: inline-block; width: .7em; height: .7em; background: currentColor;
+  -webkit-mask: url(https://cdn.jsdelivr.net/npm/simple-icons@13/icons/instagram.svg) center/contain no-repeat;
+          mask: url(https://cdn.jsdelivr.net/npm/simple-icons@13/icons/instagram.svg) center/contain no-repeat;
+}
