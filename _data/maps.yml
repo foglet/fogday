@@ -1,0 +1,17 @@
+# The map menu on every map page (shown when you tap the map's name in the header).
+# Same order as /maps/. To add a map: add a name and its url here.
+- name: The Oyster Atlas
+  url: https://oysteratlas.com/
+  external: true          # its own site; marked with ↗
+- name: Remote Islands
+  url: /remote/
+- name: Transit Connected
+  url: /transit/
+- name: Vintage French
+  url: /toulouse/
+- name: NYC Bike Share
+  url: /bikenyc/
+- name: East Beach
+  url: /eastbeach/
+- name: A Spy Map
+  url: /spymap/
