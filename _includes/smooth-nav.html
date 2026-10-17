@@ -1,0 +1,57 @@
+<!-- smooth-nav.html — page-to-page transitions (included from head.html) -->
+<style>
+  /* Opt every page into cross-page transitions */
+  @view-transition { navigation: auto; }
+
+  /* New section slides in from the right and fades up; old one fades out drifting left */
+  @keyframes fd-slide-in  { from { opacity: 0; transform: translateX(48px); } }
+  @keyframes fd-slide-out { to   { opacity: 0; transform: translateX(-24px); } }
+  ::view-transition-old(root) { animation: 200ms ease-in both fd-slide-out; }
+  ::view-transition-new(root) { animation: 360ms cubic-bezier(.2, .7, .2, 1) both fd-slide-in; }
+
+  /* Browser Back: mirror it — slides in from the left, old page drifts right */
+  @keyframes fd-slide-in-back  { from { opacity: 0; transform: translateX(-48px); } }
+  @keyframes fd-slide-out-back { to   { opacity: 0; transform: translateX(24px); } }
+  html:active-view-transition-type(back)::view-transition-old(root) { animation-name: fd-slide-out-back; }
+  html:active-view-transition-type(back)::view-transition-new(root) { animation-name: fd-slide-in-back; }
+
+  /* Header stays put while the content slides */
+  header { view-transition-name: site-header; }
+
+  /* Visitors who ask for less motion get an instant swap */
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  }
+
+  /* Page color painted before fogday.css loads (matches --bg) */
+  html { background: #edf1f2; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) { background: #16202a; } }
+  html[data-theme="dark"] { background: #16202a; }
+</style>
+<!-- Tag Back-button navigations as "back" so the CSS above can reverse the slide.
+     Runs inline (not deferred) because it must be ready before the new page first paints. -->
+<script>
+(function () {
+  function isBack(a) {
+    return a && a.navigationType === 'traverse' && a.entry && a.from && a.entry.index < a.from.index;
+  }
+  addEventListener('pageswap', function (e) {      /* old page, as it leaves */
+    if (e.viewTransition && isBack(e.activation)) e.viewTransition.types.add('back');
+  });
+  addEventListener('pagereveal', function (e) {    /* new page, before it shows */
+    if (e.viewTransition && window.navigation && isBack(navigation.activation)) e.viewTransition.types.add('back');
+  });
+})();
+</script>
+<!-- Preload the next page when a visitor is about to click (map pages skipped: Mapbox counts loads) -->
+<script type="speculationrules">
+{
+  "prerender": [{
+    "where": { "and": [
+      { "href_matches": "/*" },
+      { "not": { "href_matches": ["/remote/*", "/transit/*", "/bikenyc/*", "/toulouse/*", "/eastbeach/*", "/spymap/*"] } }
+    ]},
+    "eagerness": "moderate"
+  }]
+}
+</script>
