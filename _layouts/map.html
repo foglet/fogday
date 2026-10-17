@@ -30,18 +30,23 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   /* City picker: one row across the top on every screen size.
      If the cities don't fit, the row scrolls sideways (swipe, trackpad or mouse wheel)
      and the edge with more cities fades out as a hint. */
-  .map-places {
+  /* Outer strip: positions the row and draws the edge fades. Kept separate from the
+     scrolling row because iPhone Safari won't swipe a row that has a mask on it. */
+  .map-places-wrap {
     --fl: 0px; --fr: 0px;  /* fade widths, set by the script below */
-    position: absolute; z-index: 2; top: 12px; left: 0; right: 0;
-    display: flex; gap: 8px; padding: 0 12px; scroll-padding-inline: 12px;
-    overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
+    position: absolute; z-index: 2; top: 12px; left: 0;
+    width: fit-content; max-width: 100%;  /* only as wide as the cities, so the rest of the strip still drags the map */
     -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
             mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
-    pointer-events: none;  /* empty space in the row still lets you drag the map */
+  }
+  .map-places {
+    display: flex; gap: 8px; padding: 0 12px; scroll-padding-inline: 12px;
+    overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
+    touch-action: pan-x;  /* a finger swipe on the row scrolls the cities, not the map */
   }
   .map-places::-webkit-scrollbar { display: none; }
   .map-places button {
-    pointer-events: auto;
     flex: none; min-height: 40px; padding: 0 16px; border-radius: 999px;
     white-space: nowrap; cursor: pointer; scroll-snap-align: start;
     transition: background-color .15s ease, color .15s ease;
@@ -55,7 +60,8 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   .map-places button::after { content: attr(data-name); font-weight: 700; height: 0; overflow: hidden; visibility: hidden; }
   .map-places button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
   @media (min-width: 760px) {
-    .map-places { top: 16px; padding: 0 16px; scroll-padding-inline: 16px; }
+    .map-places-wrap { top: 16px; }
+    .map-places { padding: 0 16px; scroll-padding-inline: 16px; }
     .map-places button { min-height: 36px; }
   }
 
@@ -83,10 +89,12 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   <h1 class="map-title">{{ page.title }}</h1>
   <div id="map" role="region" aria-label="{{ page.title }} map"></div>
   {% if page.places %}
+  <div class="map-places-wrap">
   <nav class="map-places" aria-label="Fly to a city">
     {% for p in page.places %}<button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}" data-zoom="{{ p.zoom | default: 10 }}">{{ p.name }}</button>
     {% endfor %}
   </nav>
+  </div>
   {% endif %}
   {{ content }}
 </main>
@@ -125,13 +133,33 @@ document.addEventListener('DOMContentLoaded', function () {
   if (row) {
     var edges = function () {
       var more = row.scrollWidth - row.clientWidth;
-      row.style.setProperty('--fl', row.scrollLeft > 2 ? '28px' : '0px');
-      row.style.setProperty('--fr', row.scrollLeft < more - 2 ? '28px' : '0px');
+      row.parentNode.style.setProperty('--fl', row.scrollLeft > 2 ? '28px' : '0px');
+      row.parentNode.style.setProperty('--fr', row.scrollLeft < more - 2 ? '28px' : '0px');
     };
     row.addEventListener('scroll', edges, { passive: true });
     if (window.ResizeObserver) new ResizeObserver(edges).observe(row);
     window.addEventListener('resize', edges);
     edges();
+    /* Backup for phones: if a sideways finger swipe doesn't scroll the row by itself
+       (some iPhone Safari versions), move it with the finger. Does nothing when normal swiping works. */
+    var t = null;
+    row.addEventListener('scroll', function () { if (t && t.mode !== 'manual') t.native = true; }, { passive: true });
+    row.addEventListener('touchstart', function (e) {
+      var p = e.touches[0];
+      t = { x: p.clientX, y: p.clientY, left: row.scrollLeft, mode: null, native: false };
+    }, { passive: true });
+    row.addEventListener('touchmove', function (e) {
+      if (!t) return;
+      var p = e.touches[0], dx = t.x - p.clientX, dy = t.y - p.clientY;
+      if (!t.mode) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) t.mode = 'native';         /* up/down: not ours */
+        else if (Math.abs(dx) > 30) t.mode = t.native ? 'native' : 'manual';            /* 30px sideways and still no scroll → take over */
+      }
+      if (t.mode === 'manual') { row.scrollLeft = t.left + dx; if (e.cancelable) e.preventDefault(); }
+    }, { passive: false });
+    row.addEventListener('touchend', function () { t = null; }, { passive: true });
+    row.addEventListener('touchcancel', function () { t = null; }, { passive: true });
+
     row.addEventListener('wheel', function (e) {
       if (row.scrollWidth > row.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         row.scrollLeft += e.deltaY;
