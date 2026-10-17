@@ -17,52 +17,6 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   body.map-page main { flex: 1; position: relative; min-height: 0; }
   #map { position: absolute; inset: 0; }
   html[data-theme-locked] .theme-toggle { visibility: hidden; } /* hidden but keeps its space, so the header doesn't shift between pages */
-  /* Map name in the header, in place of the wordmark: same slab face and fixed light-blue gradient as the Works title.
-     Tapping it opens the map menu. */
-  .map-switch { position: relative; min-width: 0; margin-bottom: 13px; }  /* bottom lines up with the icons, like the wordmark */
-  .map-switch summary {
-    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 0;
-    padding: 8px 0; margin: -8px 0;  /* taller tap target, same position */
-    -webkit-tap-highlight-color: transparent;
-  }
-  .map-switch summary::-webkit-details-marker { display: none; }
-  .map-switch summary:focus-visible { outline: 2px solid var(--title-1); outline-offset: 4px; border-radius: 2px; }
-  .map-heading {
-    font-family: var(--font-logo); font-weight: 400; font-size: clamp(1.15rem, 4.6vw, 1.5rem);
-    line-height: 1; letter-spacing: .03em; text-transform: uppercase; margin: 0; min-width: 0;
-    text-box: trim-both cap alphabetic;
-    background-image: linear-gradient(to right, var(--title-1), var(--title-2));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    padding: .2em .1em; margin: -.2em -.1em;  /* room so the gradient doesn't clip letter edges */
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  /* very long names shorten instead of wrapping */
-  }
-  .map-chevron { flex: none; color: var(--title-2); transition: transform .2s ease; }
-  .map-switch[open] .map-chevron { transform: rotate(180deg); }
-  .map-switch summary:hover .map-heading { opacity: .8; }
-
-  /* The menu */
-  .map-menu {
-    position: absolute; z-index: 30; top: calc(100% + 14px); left: -8px;
-    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px;
-    animation: map-menu-in .16s ease-out;
-  }
-  @keyframes map-menu-in { from { opacity: 0; transform: translateY(-4px); } }
-  @media (prefers-reduced-motion: reduce) { .map-menu { animation: none; } .map-chevron { transition: none; } }
-  .map-menu ul { list-style: none; margin: 0; padding: 0; }
-  .map-menu a {
-    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
-    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
-  }
-  .map-menu a:hover, .map-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
-  .map-menu a[aria-current="page"] { font-weight: 700; color: var(--title-1); }
-  .map-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }  /* dot = you are here */
-  .map-menu .ext { color: var(--muted); font-weight: 400; }
-  .map-menu .all { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
-  .map-menu .all a { color: var(--muted); font-size: .9rem; }
-  header .wrap { flex-wrap: nowrap; }
-  body.map-page header { position: relative; z-index: 40; }  /* the open menu sits above the city row, legend and map controls */
 
   /* Panels floating over the map, in the site's colors (follow light/dark mode) */
   .map-places button, .map-legend {
@@ -213,15 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
       }
     }, { passive: false });
-  }
-
-  /* Map menu: close on a tap outside it or the Escape key */
-  var sw = document.querySelector('.map-switch');
-  if (sw) {
-    document.addEventListener('click', function (e) { if (sw.open && !sw.contains(e.target)) sw.open = false; });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && sw.open) { sw.open = false; sw.querySelector('summary').focus(); }
-    });
   }
 
   /* Legend starts open on larger screens, closed on phones */
