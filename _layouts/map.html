@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+{% include head.html %}
+{% if page.theme %}<script>/* This map only works in one theme ({{ page.theme }}): lock it, without touching the visitor's saved choice */
+document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentElement.dataset.themeLocked = '';</script>{% endif %}
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
+<style>
+  /* Header on top, map fills the rest of the window. No footer: it would cover Mapbox's required attribution. */
+  html { scrollbar-gutter: auto; } /* map pages never scroll, so don't reserve scrollbar space */
+  body.map-page { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+  body.map-page main { flex: 1; position: relative; min-height: 0; }
+  #map { position: absolute; inset: 0; }
+  html[data-theme-locked] .theme-toggle { visibility: hidden; } /* hidden but keeps its space, so the header doesn't shift between pages */
+  .map-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* for screen readers and search */
+
+  /* Panels floating over the map, in the site's colors (follow light/dark mode) */
+  .map-places button, .map-legend {
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: var(--ink); border: 1px solid var(--line);
+    font: 500 .9rem/1.2 var(--font-ui);
+  }
+
+  /* City picker: one row across the top on every screen size.
+     If the cities don't fit, the row scrolls sideways (swipe, trackpad or mouse wheel)
+     and the edge with more cities fades out as a hint. */
+  .map-places {
+    --fl: 0px; --fr: 0px;  /* fade widths, set by the script below */
+    position: absolute; z-index: 2; top: 12px; left: 0; right: 0;
+    display: flex; gap: 8px; padding: 0 12px; scroll-padding-inline: 12px;
+    overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
+            mask-image: linear-gradient(to right, transparent, #000 var(--fl), #000 calc(100% - var(--fr)), transparent);
+    pointer-events: none;  /* empty space in the row still lets you drag the map */
+  }
+  .map-places::-webkit-scrollbar { display: none; }
+  .map-places button {
+    pointer-events: auto;
+    flex: none; min-height: 40px; padding: 0 16px; border-radius: 999px;
+    white-space: nowrap; cursor: pointer; scroll-snap-align: start;
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .map-places button:hover { color: var(--accent); }
+  /* Selected city: solid "morning fog" white (the light-mode page color) with dark text, in both themes */
+  .map-places button[aria-pressed="true"] { background: #edf1f2; color: #1c2830; border-color: #edf1f2; font-weight: 700; }
+  .map-places button[aria-pressed="true"]:hover { color: #1c2830; }
+  /* Reserve each button's bold width up front, so selecting a city doesn't nudge its neighbors */
+  .map-places button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
+  .map-places button::after { content: attr(data-name); font-weight: 700; height: 0; overflow: hidden; visibility: hidden; }
+  .map-places button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+  @media (min-width: 760px) {
+    .map-places { top: 16px; padding: 0 16px; scroll-padding-inline: 16px; }
+    .map-places button { min-height: 36px; }
+  }
+
+  /* Legend: collapsible card, bottom left above the Mapbox logo */
+  .map-legend {
+    position: absolute; z-index: 2; left: 12px; bottom: 40px;
+    max-width: calc(100% - 24px); border-radius: 8px; padding: 0;
+  }
+  .map-legend summary {
+    list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
+    font-weight: 600; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend summary::after { content: " +"; color: var(--muted); }
+  .map-legend[open] summary::after { content: " –"; }
+  .map-legend ul { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 6px; font-size: .85rem; }
+  .map-legend li { display: flex; align-items: center; gap: 10px; }
+  .map-legend .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); }
+  .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
+</style>
+</head>
+<body class="map-page wide">
+{% include header.html current="maps" %}
+<main>
+  <h1 class="map-title">{{ page.title }}</h1>
+  <div id="map" role="region" aria-label="{{ page.title }} map"></div>
+  {% if page.places %}
+  <nav class="map-places" aria-label="Fly to a city">
+    {% for p in page.places %}<button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}" data-zoom="{{ p.zoom | default: 10 }}">{{ p.name }}</button>
+    {% endfor %}
+  </nav>
+  {% endif %}
+  {{ content }}
+</main>
+<script>
+/* Map settings come from each page's front matter:
+   title, mapbox_style, center, zoom — optional: bounds, places (city buttons), access_token. */
+document.addEventListener('DOMContentLoaded', function () {
+  mapboxgl.accessToken = '{{ page.access_token | default: "pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJOeXZlMF9FIn0.I3vP7TOUVxyKTaW27p_IqA" }}';
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
+    center: {{ page.center | jsonify }},   /* [longitude, latitude] */
+    zoom: {{ page.zoom }}{% if page.bounds %},
+    maxBounds: {{ page.bounds | jsonify }}{% endif %}
+  });
+  /* Zoom + compass: top right, or bottom right when city buttons run across the top */
+  var wide = window.matchMedia('(min-width: 760px)').matches;
+  map.addControl(new mapboxgl.NavigationControl(), '{% if page.places %}bottom-right{% else %}top-right{% endif %}');
+
+  /* City buttons: fly there (or jump, for visitors who prefer reduced motion) */
+  var buttons = document.querySelectorAll('.map-places button');
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+  Array.prototype.forEach.call(buttons, function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(buttons, function (x) { x.removeAttribute('aria-pressed'); });
+      b.setAttribute('aria-pressed', 'true');
+      b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: calm.matches ? 'auto' : 'smooth' });
+      var view = { center: JSON.parse(b.dataset.center), zoom: +b.dataset.zoom, bearing: 0 };
+      if (calm.matches) map.jumpTo(view);
+      else map.flyTo(Object.assign(view, { speed: 2.4, curve: 1.42 }));
+    });
+  });
+
+  /* City row: fade whichever edge has more cities past it; mouse wheel scrolls it sideways */
+  var row = document.querySelector('.map-places');
+  if (row) {
+    var edges = function () {
+      var more = row.scrollWidth - row.clientWidth;
+      row.style.setProperty('--fl', row.scrollLeft > 2 ? '28px' : '0px');
+      row.style.setProperty('--fr', row.scrollLeft < more - 2 ? '28px' : '0px');
+    };
+    row.addEventListener('scroll', edges, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(edges).observe(row);
+    window.addEventListener('resize', edges);
+    edges();
+    row.addEventListener('wheel', function (e) {
+      if (row.scrollWidth > row.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        row.scrollLeft += e.deltaY;
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
+
+  /* Legend starts open on larger screens, closed on phones */
+  var legend = document.querySelector('.map-legend');
+  if (legend && wide) legend.open = true;
+});
+</script>
+</body>
+</html>
