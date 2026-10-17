@@ -1,19 +1,7 @@
 <header>
   <div class="wrap">
-    {% if include.title %}{% comment %} Map pages: the map's name replaces the wordmark and opens a menu of all the maps {% endcomment %}
-    <details class="map-switch">
-      <summary aria-label="{{ include.title }} — show all maps">
-        <h1 class="map-heading">{{ include.title }}</h1>
-        <svg class="map-chevron" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </summary>
-      <nav class="map-menu" aria-label="Maps">
-        <ul>
-          {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" aria-label="(another site)"> ↗</span>{% endif %}</a></li>
-          {% endfor %}
-          <li class="all"><a href="{{ '/maps/' | relative_url }}">All maps →</a></li>
-        </ul>
-      </nav>
-    </details>
+    {% if include.title %}{% comment %} Map pages and /maps/: the page name replaces the wordmark and opens a menu of all the maps {% endcomment %}
+    {% include map-menu.html title=include.title %}
     {% else %}<a class="logo" href="{{ '/' | relative_url }}" aria-label="Fogday Studios home">
       FOGDAY STUDIOS
     </a>{% endif %}
