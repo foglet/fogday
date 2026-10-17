@@ -1,0 +1,30 @@
+---
+layout: map
+title: The Oyster Atlas
+description: The world's oysters mapped by market name — 520 and counting, mostly North America. A test version of oysteratlas.com, by Fogday Studios.
+mapbox_style: cifta9e28000ztgkpe46j4rh8   # the "glow" style used on oysteratlas.com
+theme: dark   # glowing oyster names only read on a dark page; the light/dark toggle is hidden here
+center: [-95.484415, 40.987548]   # opening view: all of North America
+zoom: 3
+fly_speed: 1.2   # slower, gliding flights, like the original site
+fly_curve: 1.42
+places:   # same regions and views as oysteratlas.com, west to east
+  - { name: Overview,                       center: [-95.484415, 40.987548], zoom: 3 }
+  - { name: Washington • British Columbia, center: [-123.05, 49],         zoom: 6, bearing: 6 }
+  - { name: Tomales Bay,                    center: [-122.84, 38.10],       zoom: 7 }
+  - { name: Maritime Provinces,             center: [-63.8, 46.7],          zoom: 7, bearing: 5 }
+  - { name: Cape Cod • Long Island,         center: [-72.2, 41.5],          zoom: 7 }
+  - { name: Chesapeake Bay,                 center: [-76.2, 37.5],          zoom: 7 }
+  - { name: Gulf Coast,                     center: [-90, 29],              zoom: 6, bearing: 6 }
+  - { name: France,                         center: [-1.1, 45.80],          zoom: 11 }
+---
+<details class="map-legend">
+  <summary>Oyster species</summary>
+  <ul>
+    <li><span class="dot" style="--c:#7D12B3"></span>Belon <i>(Ostrea edulis)</i></li>
+    <li><span class="dot" style="--c:#C72052"></span>Eastern <i>(Crassostrea virginica)</i></li>
+    <li><span class="dot" style="--c:#C7A15B"></span>Kumamoto <i>(Crassostrea sikamea)</i></li>
+    <li><span class="dot" style="--c:#A2BC13"></span>Olympia <i>(Ostrea lurida)</i></li>
+    <li><span class="dot" style="--c:#2A7889"></span>Pacific <i>(Crassostrea gigas)</i></li>
+  </ul>
+</details>
