@@ -1,0 +1,79 @@
+{% comment %}
+  map-menu.html — the map name + drop-down list of all maps, shown in the header in place of the wordmark.
+  Used by header.html whenever a page passes a title (map pages, and /maps/). The list comes from _data/maps.yml.
+{% endcomment %}
+<style>
+  /* Map name in the header, in place of the wordmark: same slab face and fixed light-blue gradient as the Works title.
+     Tapping it opens the map menu. */
+  .map-switch { position: relative; min-width: 0; margin-bottom: 13px; }  /* bottom lines up with the icons, like the wordmark */
+  .map-switch summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 0;
+    padding: 8px 0; margin: -8px 0;  /* taller tap target, same position */
+    -webkit-tap-highlight-color: transparent;
+  }
+  .map-switch summary::-webkit-details-marker { display: none; }
+  .map-switch summary:focus-visible { outline: 2px solid var(--title-1); outline-offset: 4px; border-radius: 2px; }
+  .map-heading {
+    font-family: var(--font-logo); font-weight: 400; font-size: clamp(1.15rem, 4.6vw, 1.5rem);
+    line-height: 1; letter-spacing: .03em; text-transform: uppercase; margin: 0; min-width: 0;
+    text-box: trim-both cap alphabetic;
+    background-image: linear-gradient(to right, var(--title-1), var(--title-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    padding: .2em .1em; margin: -.2em -.1em;  /* room so the gradient doesn't clip letter edges */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  /* very long names shorten instead of wrapping */
+  }
+  .map-chevron { flex: none; color: var(--title-2); transition: transform .2s ease; }
+  .map-switch[open] .map-chevron { transform: rotate(180deg); }
+  .map-switch summary:hover .map-heading { opacity: .8; }
+
+  /* The menu */
+  .map-menu {
+    position: absolute; z-index: 30; top: calc(100% + 14px); left: -8px;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px;
+    animation: map-menu-in .16s ease-out;
+  }
+  @keyframes map-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  @media (prefers-reduced-motion: reduce) { .map-menu { animation: none; } .map-chevron { transition: none; } }
+  .map-menu ul { list-style: none; margin: 0; padding: 0; }
+  .map-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+  }
+  .map-menu a:hover, .map-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .map-menu a[aria-current="page"] { font-weight: 700; color: var(--title-1); }
+  .map-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }  /* dot = you are here */
+  .map-menu .ext { color: var(--muted); font-weight: 400; }
+  .map-menu .all { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
+  .map-menu .all a { color: var(--muted); font-size: .9rem; }
+  .map-menu .all a[aria-current="page"] { color: var(--title-1); }  /* on /maps/ itself */
+  header:has(.map-switch) .wrap { flex-wrap: nowrap; }
+  header:has(.map-switch) { position: relative; z-index: 40; }  /* the open menu sits above the page, the city row, legend and map controls */
+</style>
+<details class="map-switch">
+  <summary aria-label="{{ include.title }} — show all maps">
+    <h1 class="map-heading">{{ include.title }}</h1>
+    <svg class="map-chevron" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </summary>
+  <nav class="map-menu" aria-label="Maps">
+    <ul>
+      {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" aria-label="(another site)"> ↗</span>{% endif %}</a></li>
+      {% endfor %}
+      <li class="all"><a href="{{ '/maps/' | relative_url }}"{% if page.url == '/maps/' %} aria-current="page"{% endif %}>All maps →</a></li>
+    </ul>
+  </nav>
+</details>
+<script>
+(function () {
+  /* Menu: close on a tap outside it or the Escape key */
+  var sw = document.querySelector('.map-switch');
+  if (sw) {
+    document.addEventListener('click', function (e) { if (sw.open && !sw.contains(e.target)) sw.open = false; });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sw.open) { sw.open = false; sw.querySelector('summary').focus(); }
+    });
+  }
+
+})();
+</script>
