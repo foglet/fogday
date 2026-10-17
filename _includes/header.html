@@ -1,8 +1,9 @@
 <header>
   <div class="wrap">
-    <a class="logo" href="{{ '/' | relative_url }}" aria-label="Fogday Studios home">
+    {% if include.title %}<h1 class="map-heading"><a href="{{ '/maps/' | relative_url }}" title="All maps">{{ include.title }}</a></h1>{% comment %} map pages: the map's name replaces the wordmark and links back to /maps/ {% endcomment %}
+    {% else %}<a class="logo" href="{{ '/' | relative_url }}" aria-label="Fogday Studios home">
       FOGDAY STUDIOS
-    </a>
+    </a>{% endif %}
         <nav aria-label="Main">
       <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
         <svg class="icon-moon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
