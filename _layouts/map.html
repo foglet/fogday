@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var wide = window.matchMedia('(min-width: 760px)').matches;
   var roomy = window.matchMedia('(min-width: 760px) and (min-height: 600px)').matches;  /* big enough to show the legend open */
   window.fogMap = map;  /* lets a page's own buttons move the map (e.g. the X on /remote/) */
+  window.fogMapHome = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };  /* the opening view */
   map.addControl(new mapboxgl.NavigationControl(), '{% if page.places %}bottom-right{% else %}top-right{% endif %}');
 
   /* City buttons: fly there (or jump, for visitors who prefer reduced motion) */
