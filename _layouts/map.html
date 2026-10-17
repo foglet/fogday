@@ -17,7 +17,21 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   body.map-page main { flex: 1; position: relative; min-height: 0; }
   #map { position: absolute; inset: 0; }
   html[data-theme-locked] .theme-toggle { visibility: hidden; } /* hidden but keeps its space, so the header doesn't shift between pages */
-  .map-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* for screen readers and search */
+  /* Map name in the header, in place of the wordmark: same slab face and fixed light-blue gradient as the Works title */
+  .map-heading {
+    font-family: var(--font-logo); font-weight: 400; font-size: clamp(1.15rem, 4.6vw, 1.5rem);
+    line-height: 1; letter-spacing: .03em; text-transform: uppercase;
+    text-box: trim-both cap alphabetic; margin: 0 0 13px; min-width: 0;  /* bottom lines up with the icons, like the wordmark */
+  }
+  .map-heading a {
+    display: block; text-decoration: none; color: transparent;
+    background-image: linear-gradient(to right, var(--title-1), var(--title-2));
+    -webkit-background-clip: text; background-clip: text;
+    padding: .2em .1em; margin: -.2em -.1em;  /* room so the gradient doesn't clip letter edges */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  /* very long names shorten instead of wrapping */
+  }
+  .map-heading a:hover { opacity: .8; }
+  header .wrap { flex-wrap: nowrap; }
 
   /* Panels floating over the map, in the site's colors (follow light/dark mode) */
   .map-places button, .map-legend {
@@ -69,6 +83,7 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   .map-legend {
     position: absolute; z-index: 2; left: 12px; bottom: 40px;
     max-width: calc(100% - 24px); border-radius: 8px; padding: 0;
+    max-height: calc(100% - 112px); overflow-y: auto;  /* never taller than the space under the city row (matters on landscape phones) */
   }
   .map-legend summary {
     list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
@@ -84,9 +99,9 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
 </style>
 </head>
 <body class="map-page wide">
-{% include header.html current="maps" %}
+{% assign header_title = page.header_title | default: page.title %}
+{% include header.html current="maps" title=header_title %}
 <main>
-  <h1 class="map-title">{{ page.title }}</h1>
   <div id="map" role="region" aria-label="{{ page.title }} map"></div>
   {% if page.places %}
   <div class="map-places-wrap">
@@ -112,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   /* Zoom + compass: top right, or bottom right when city buttons run across the top */
   var wide = window.matchMedia('(min-width: 760px)').matches;
+  var roomy = window.matchMedia('(min-width: 760px) and (min-height: 600px)').matches;  /* big enough to show the legend open */
   map.addControl(new mapboxgl.NavigationControl(), '{% if page.places %}bottom-right{% else %}top-right{% endif %}');
 
   /* City buttons: fly there (or jump, for visitors who prefer reduced motion) */
@@ -170,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Legend starts open on larger screens, closed on phones */
   var legend = document.querySelector('.map-legend');
-  if (legend && wide) legend.open = true;
+  if (legend && roomy) legend.open = true;
 });
 </script>
 </body>
