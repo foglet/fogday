@@ -542,6 +542,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!f) return;
       markCity(cities.filter(function (b) { return b.dataset.name === f.name; })[0] || null);
       clearSpot();
+      var t = spotTurn;   // the searched city's details appear on landing (as the atlas does), unless a tap came first
+      map.once('moveend', function () { if (t === spotTurn) showSpot(mapboxgl.LngLat.convert(f.center)); });
       go({ center: f.center, zoom: f.zoom || 10, bearing: 0 });
       minimize(byKeyboard);
     }
@@ -591,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
        3:18 PM   (larger)
      Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
      coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
-     The clock keeps ticking. A new tap replaces it; a city flight, a search pick or Escape clears it. */
+     The clock keeps ticking. A new tap replaces it; a search pick shows the found city's; a Cities flight or Escape clears it. */
   var spotCard = document.getElementById('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotZone = null, spotAnim = null;
   var spotMarker = new mapboxgl.Marker({ color: '#FF5500', anchor: 'bottom' });   // pin tip on the spot
   spotMarker.getElement().classList.add('tc-spot');
