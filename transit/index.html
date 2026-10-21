@@ -152,9 +152,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: var(--muted); }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
-  /* The tapped point: an orange location pin (the site's --hot). Taps pass through it to the map. */
-  .tc-spot { pointer-events: none; }
-  .tc-spot svg circle[fill="white"] { fill: #B33C00; }   /* the pin's center dot: a darker orange (70% of #FF5500) instead of white */
+  /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
+  .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
 
   /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
   .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
@@ -599,8 +598,8 @@ document.addEventListener('DOMContentLoaded', function () {
      coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
      The clock keeps ticking. A new tap replaces it; a search pick shows the found city's; a Cities flight or Escape clears it. */
   var spotCard = document.getElementById('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotZone = null, spotAnim = null;
-  var spotMarker = new mapboxgl.Marker({ color: '#FF5500', anchor: 'bottom' });   // pin tip on the spot
-  spotMarker.getElement().classList.add('tc-spot');
+  var spotDot = document.createElement('div'); spotDot.className = 'tc-spot';
+  var spotMarker = new mapboxgl.Marker({ element: spotDot });   // centered on the spot
   var tzReady = null;
   function loadTz() {
     return tzReady || (tzReady = new Promise(function (ok) {
