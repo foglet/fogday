@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('focusout', function () { setTimeout(liftForKeyboard, 50); });
 
   /* Tap the map: above the legend, show where that is —
-       San Francisco, California, United States
+       San Francisco, CA, US
        (37.774929, -122.419416)
        GMT-7
        3:18 PM   (larger)
@@ -622,7 +622,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
       });
       var city = c.place || c.locality || c.district, region = c.region, country = c.country;
-      var parts = [cityName || (city && city.name), region && region.name, country && country.name].filter(Boolean)
+      /* Postal-style abbreviations: state/province code (CA, ON, NSW) and two-letter country code (US, JP).
+         Where the region's code is only a number (Tokyo's is 13), its name reads better, so that stays. */
+      var rc = region && region.region_code, cc = country && country.country_code;
+      var st = region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
+      var co = country && (cc ? cc.toUpperCase() : country.name);
+      var parts = [cityName || (city && city.name), st, co].filter(Boolean)
                     .filter(function (n, i, a) { return a.indexOf(n) === i; });   // Singapore, not "Singapore, Singapore"
       return parts.length ? parts.join(', ') : 'Open water';
     }).catch(function () { return 'Place name unavailable'; });
