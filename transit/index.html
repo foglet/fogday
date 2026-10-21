@@ -152,6 +152,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
   /* The tapped point: an orange location pin (the site's --hot). Taps pass through it to the map. */
   .tc-spot { pointer-events: none; }
+  .tc-spot svg circle[fill="white"] { fill: #B33C00; }   /* the pin's center dot: a darker orange (70% of #FF5500) instead of white */
 
   /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
   .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
