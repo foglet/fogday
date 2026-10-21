@@ -585,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* Tap the map: above the legend, show where that is —
        San Francisco, California, United States
        37.774929, -122.419416
-       Wed 3:08 PM · Pacific Daylight Time (GMT-7)
+       Wed 15:08 · Pacific Daylight Time (GMT-7)
      Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
      coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
      The clock keeps ticking. A new tap replaces it; a city flight, a search pick or Escape clears it. */
@@ -619,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }).catch(function () { return 'Place name unavailable'; });
   }
   function clockLine(zone) {
-    var now = new Date(), opts = { timeZone: zone, weekday: 'short', hour: 'numeric', minute: '2-digit' };
+    var now = new Date(), opts = { timeZone: zone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };   // 24-hour: 09:05, 15:08
     try {
       var t = new Intl.DateTimeFormat('en-US', opts).format(now);
       var name = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'long' }).formatToParts(now)
