@@ -9,6 +9,21 @@
 <meta name="description" content="Flavor Pairings: a chain of ingredients where each one pairs with the next.">
 
 {% include head.html %}
+<style>
+  /* Copy button after "Pair adjacent flavors.": copies the list, one flavor per line */
+  .copy-list {
+    display: inline-flex; align-items: center; justify-content: center; vertical-align: -.15em;
+    width: 40px; height: 40px; margin: -10px 0 -10px 4px; padding: 10px; border: 0; border-radius: 4px;
+    background: none; color: var(--muted); cursor: pointer; transition: color .15s ease;
+  }
+  .copy-list:hover { color: var(--hot); }   /* the site's nav hover */
+  .copy-list:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .copy-list svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .copy-list .i-done, .copy-list.done .i-copy { display: none; }
+  .copy-list.done .i-done { display: block; }
+  .copy-list.done { color: var(--accent); }
+  .copy-status { margin-left: 4px; font-size: .9rem; }
+</style>
 </head>
 <body class="wide">
 {% include header.html current="fm" %}
@@ -17,7 +32,10 @@
   <section class="page">
     <div class="wrap stack works-title">
       <h2>FLAVOR PAIRINGS</h2>
-      <p class="lede">Pair adjacent flavors.</p>
+      <p class="lede">Pair adjacent flavors.<button type="button" class="copy-list" aria-label="Copy the list" title="Copy the list">
+        <svg class="i-copy" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+        <svg class="i-done" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </button><span class="copy-status" role="status"></span></p>
       <!-- Hat tip to notesoncooking.com, now dark. -->
     </div>
     <div class="wrap">
@@ -149,5 +167,35 @@
 </main>
 
 {% include footer.html %}
+<script>
+/* Copy the flavor list (one per line). Falls back to a hidden text box where the Clipboard API isn't available. */
+(function () {
+  var btn = document.querySelector('.copy-list'), note = document.querySelector('.copy-status'), timer = 0;
+  if (!btn) return;
+  function text() {
+    return Array.prototype.map.call(document.querySelectorAll('.pairings li'), function (li) { return li.textContent.trim(); }).join('\n');
+  }
+  function fallback(t) {
+    var ta = document.createElement('textarea');
+    ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    return ok ? Promise.resolve() : Promise.reject();
+  }
+  function show(msg, ok) {
+    clearTimeout(timer);
+    btn.classList.toggle('done', ok);
+    note.textContent = msg;
+    timer = setTimeout(function () { btn.classList.remove('done'); note.textContent = ''; }, 1800);
+  }
+  btn.addEventListener('click', function () {
+    var t = text();
+    var copy = navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(t).catch(function () { return fallback(t); }) : fallback(t);
+    copy.then(function () { show('Copied', true); }, function () { show('Couldn\u2019t copy', false); });
+  });
+})();
+</script>
 </body>
 </html>
