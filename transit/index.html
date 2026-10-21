@@ -139,7 +139,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 
   /* Tapped spot, above the legend (same card as the atlas's picked oyster): place, coordinates, local time.
      No panel: each line gets its own frosted background, only as wide as its text; all three flush left. */
-  .oa-detail-panel { flex: none; align-self: flex-start; max-width: 100%; font-size: .9rem; line-height: 1.35; }
+  /* Text lines up with "Transport mode": legend border 1px + summary padding 14px, minus each line's 8px padding = 7px */
+  .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 7px; max-width: calc(100% - 7px); font-size: .9rem; line-height: 1.35; }
   .oa-detail-panel[hidden] { display: none; }
   .oa-detail-panel > div {
     width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
