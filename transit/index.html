@@ -147,6 +147,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
   .oa-detail-name { font-weight: 700; }
+  .oa-detail-code { color: #7cc4f0; letter-spacing: .04em; }   /* airport code, in the site's light title blue */
+  .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: var(--muted); }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
@@ -513,7 +515,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!/^[a-z]{3}$/i.test(q)) return Promise.resolve(null);
       return loadAirports().then(function (all) {
         var a = all[q.toUpperCase()];
-        return a ? { name: q.toUpperCase() + ' · ' + a[0], where: [a[1], a[2]].filter(Boolean).join(', '), center: [a[3], a[4]], zoom: 11 } : null;
+        return a ? { name: q.toUpperCase() + ' · ' + a[0], where: [a[1], a[2]].filter(Boolean).join(', '), center: [a[3], a[4]], zoom: 11,
+                     airport: { code: q.toUpperCase(), name: a[0], city: a[1] } } : null;
       });
     }
     function lookup() {
@@ -544,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function () {
       markCity(cities.filter(function (b) { return b.dataset.name === f.name; })[0] || null);
       clearSpot();
       var t = spotTurn;   // the searched city's details appear on landing (as the atlas does), unless a tap came first
-      map.once('moveend', function () { if (t === spotTurn) showSpot(mapboxgl.LngLat.convert(f.center)); });
+      map.once('moveend', function () { if (t === spotTurn) showSpot(mapboxgl.LngLat.convert(f.center), f.airport); });
       go({ center: f.center, zoom: f.zoom || 10, bearing: 0 });
       minimize(byKeyboard);
     }
@@ -608,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.head.appendChild(s);
     }));
   }
-  function placeName(lng, lat) {
+  function placeName(lng, lat, cityName) {   // cityName: an airport's own city, which beats the suburb it sits in
     var url = 'https://api.mapbox.com/search/geocode/v6/reverse?longitude=' + lng + '&latitude=' + lat +
               '&language=en&access_token=' + mapboxgl.accessToken;
     return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
@@ -619,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
       });
       var city = c.place || c.locality || c.district, region = c.region, country = c.country;
-      var parts = [city && city.name, region && region.name, country && country.name].filter(Boolean)
+      var parts = [cityName || (city && city.name), region && region.name, country && country.name].filter(Boolean)
                     .filter(function (n, i, a) { return a.indexOf(n) === i; });   // Singapore, not "Singapore, Singapore"
       return parts.length ? parts.join(', ') : 'Open water';
     }).catch(function () { return 'Place name unavailable'; });
@@ -643,17 +646,21 @@ document.addEventListener('DOMContentLoaded', function () {
     spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
-  function showSpot(lngLat) {
+  function showSpot(lngLat, airport) {   // airport (from search): { code, name, city }
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
     spotMarker.setLngLat(ll).addTo(map);
-    Promise.all([placeName(lng, lat), loadTz()]).then(function (r) {
+    Promise.all([placeName(lng, lat, airport && airport.city), loadTz()]).then(function (r) {
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       var zone = null;
       try { zone = r[1] ? r[1](+lat, +lng) : null; } catch (e) {}
       spotZone = zone;
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
-      spotCard.appendChild(line('oa-detail-name', r[0]));
+      if (airport) {   // SFO / San Francisco International Airport / then the city
+        spotCard.appendChild(line('oa-detail-name oa-detail-code', airport.code));
+        spotCard.appendChild(line('oa-detail-name', airport.name));
+        spotCard.appendChild(line('oa-detail-place', r[0]));
+      } else spotCard.appendChild(line('oa-detail-name', r[0]));
       spotCard.appendChild(line('oa-detail-coords', '(' + lat + ', ' + lng + ')'));
       if (zone) {
         spotCard.appendChild(line('oa-detail-offset', offsetText(zone)));
