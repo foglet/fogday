@@ -2,7 +2,7 @@
 # Same order as /maps/. To add a map: add a name and its url here.
 - name: The Oyster Atlas
   url: https://oysteratlas.com/
-  external: true          # its own site; marked with ↗
+  external: true          # its own site; marked with the AIGA forward-and-right arrow
 - name: Remote Islands
   url: /remote/
 - name: Transit Connected
