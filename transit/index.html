@@ -1,13 +1,12 @@
 ---
-layout: map
+layout: null   # self-contained page with the Oyster Atlas interface (oysteratlas.com), not the shared map layout
 title: Transit Connected
 description: Metro, rail, tram, trolley bus, monorail, cable car and ferry lines in more than 400 cities worldwide. A map by Fogday Studios.
 mapbox_style: cildewrgb007h9jm16r0j102k
-theme: dark   # glowing routes only read on a dark page; the light/dark toggle is hidden here
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 center: [21.22, 45.75]
 zoom: 11.6
-places:
+places:   # the Cities menu (folded-map button). Optional per city: zoom (default 10), bearing (default 0)
   - { name: Berlin,        center: [13.409779, 52.520645] }
   - { name: Hong Kong,     center: [114.08, 22.49] }
   - { name: London,        center: [-0.15, 51.52] }
@@ -20,8 +19,202 @@ places:
   - { name: Vienna,        center: [16.36, 48.21] }
   - { name: Zurich,        center: [8.54111, 47.37444] }
 ---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#021724">
+
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+
+<style>
+  /* Transit Connected — the Oyster Atlas interface (oysteratlas.com), one self-contained page. Always dark.
+     Class names are kept from the Oyster Atlas (oa-…) so fixes can be copied between the two pages. */
+  :root {
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+    --kb: 0px;  /* on-screen keyboard height while searching (set by the script) */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; }
+  #map { position: fixed; inset: 0; }
+
+  /* Frosted panels over the map */
+  .map-legend-panel, .title {
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: var(--ink); border: 1px solid var(--line);
+  }
+
+  /* Title, top left (centered on phones): tap it to fly to another city */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0 0 0 12px; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .sky-text { color: #4a90c8; }
+  .title-text { background-image: linear-gradient(to right, #2f7fc1, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title { margin-left: 16px; } }
+  @media (max-width: 759px) { .top { text-align: center; } .title { margin-left: 0; } }
+
+  /* Bottom left, above the Mapbox logo: the legend */
+  .map-bottom-left {
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab));
+    display: flex; flex-direction: column; gap: 8px;
+    width: 320px; max-width: calc(100% - 24px - var(--sal) - var(--sar)); max-height: calc(100% - 180px - var(--sat) - var(--sab));
+  }
+  /* Legend: starts collapsed; opens only when tapped. Just its title while shut, the panel once open. */
+  .map-legend-panel { min-height: 0; overflow-y: auto; border-radius: 8px; border-color: color-mix(in srgb, var(--line) 50%, transparent);
+                      transition: background-color .18s ease, border-color .18s ease; align-self: flex-start; }
+  .map-legend-panel:has(.map-legend:not([open])) { background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
+                        font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend summary::after { content: " +"; color: var(--muted); }
+  .map-legend[open] summary::after { content: " –"; }
+  .map-legend summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+  .map-legend ul { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 6px; font-size: .9rem; }
+  .map-legend li { display: flex; align-items: center; gap: 10px; }
+  .map-legend .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); }  /* route swatch (the atlas uses dots) */
+  .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
+
+  /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--kb)); }
+
+  /* Zoom + compass: dark panel, 50% border, thin muted icons (same as the atlas) */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group button { width: 30px; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint); background-size: 18px 18px; }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E"); }
+
+  /* Square buttons in the stack (outline toggle, Cities), same size as zoom */
+  .oa-regions[hidden], .oa-bgtoggle[hidden], .oa-search[hidden] { display: none; }
+  .mapboxgl-ctrl.oa-regions { position: relative; }
+  .oa-pin {
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+    background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
+    color: var(--muted); cursor: pointer;
+  }
+  .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: var(--panel); }
+  @media (hover: hover) { .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 8%, var(--panel)); } }
+  .oa-pin[aria-expanded="true"] { color: var(--accent); }
+  .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Cities menu, to the left of its button: no panel, each line gets its own frosted background */
+  .oa-regions-pop {
+    position: absolute; right: calc(100% + 8px); bottom: 0; padding: 0;
+    max-height: calc(100vh - 160px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; align-items: flex-start; color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left;
+  }
+  .oa-regions-pop[hidden] { display: none; }
+  .oa-regions-title, .oa-regions-pop li button span {
+    display: block; width: fit-content; padding: 2px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; font-size: .9rem; }
+  .oa-regions-pop li button { all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap; }
+  .oa-regions-pop li button:hover { color: var(--accent); }
+  .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
+  .oa-regions-pop li button[aria-current="true"] span { font-weight: 700; }  /* the city on screen */
+  .oa-regions-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Search for any city (Mapbox geocoding). Starts minimized to its magnifying glass. */
+  .oa-search { display: flex; flex-direction: column; }
+  .mapboxgl-ctrl.oa-search { width: 270px; max-width: calc(100vw - 20px); padding: 0; border: 0; background: none; color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  .oa-field {
+    display: flex; align-items: center; gap: 8px; width: 270px; max-width: 100%; height: 35px; padding: 0 12px; margin-left: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; transition: width .18s ease; cursor: text;
+  }
+  .oa-field:not(:focus-within) { border-color: color-mix(in srgb, var(--line) 50%, transparent); }
+  .oa-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .oa-field svg { flex: none; color: var(--muted); }
+  .oa-input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; color: var(--ink); font: 400 .9rem/1 var(--font); }
+  .oa-input::placeholder { color: var(--muted); }
+  .oa-input:focus { outline: none; }
+  .oa-input::-webkit-search-cancel-button { display: none; }
+  .oa-status, .oa-results { border-radius: 8px; background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .oa-status { margin: 4px 0 0; padding: 6px 10px; align-self: flex-start; width: fit-content; max-width: 100%; font-size: .8rem; color: var(--muted); }
+  .oa-status:empty { display: none; }
+  .oa-results { list-style: none; margin: 4px 0 0; padding: 4px; font-size: .9rem; max-height: calc(5 * 40px); overflow-y: auto; overscroll-behavior: contain; }
+  .oa-results:empty { display: none; }
+  .oa-result { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+  .oa-result:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .oa-result[aria-selected="true"] { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .oa-name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .oa-where { margin-left: auto; padding-left: 12px; color: var(--muted); text-align: right; line-height: 1.25; max-width: 55%; }
+  .oa-search.oa-collapsed { width: auto; }
+  .oa-search.oa-collapsed .oa-results, .oa-search.oa-collapsed .oa-status { display: none; }
+  .oa-search.oa-collapsed .oa-field { width: 32px; height: 32px; border-radius: 4px; gap: 0; padding: 0; justify-content: center; cursor: pointer; }
+  .oa-search.oa-collapsed .oa-input { flex: 0 0 0; width: 0; padding: 0; opacity: 0; }
+
+  /* Outline mode (top button): controls lose their panels, icons get a navy halo */
+  .oa-outline .mapboxgl-ctrl-group { background: transparent; border-color: transparent; }
+  .oa-outline .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
+  .oa-outline .oa-pin { background: transparent; border-color: transparent; }
+  .oa-outline .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: transparent; }
+  .oa-outline .oa-search.oa-collapsed .oa-field { background: transparent; border-color: transparent; }
+  .oa-outline .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
+  .oa-outline .oa-pin svg, .oa-outline .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
+
+  /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
+  @media (pointer: coarse) {
+    .oa-pin { width: 44px; height: 44px; }
+    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; height: 42px; }
+    .oa-field { height: 44px; }
+    .oa-search.oa-collapsed .oa-field { width: 44px; height: 44px; }
+    .oa-input { font-size: 16px; }  /* under 16px, iPhone Safari zooms the page */
+    .mapboxgl-ctrl.oa-search:not(.oa-collapsed), .mapboxgl-ctrl.oa-search:not(.oa-collapsed) .oa-field { width: 290px; }
+    .oa-regions-pop li button span { padding: 10px 12px; }
+    .oa-result { min-height: 44px; }
+    .oa-results { max-height: calc(5 * 44px); }
+  }
+</style>
+</head>
+<body>
+
+<div id="map" role="region" aria-label="{{ page.title }} map"></div>
+<!-- Recolors Mapbox's zoom/compass icons to the muted icon color -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="oa-ctrl-tint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="-0.6017 0 0 0 0.6813  -0.6817 0 0 0 0.7753  -0.7400 0 0 0 0.8420  0 0 0 1 0"/>
+  </filter>
+</svg>
+
+<div class="top">
+  <h1 style="margin:0"><button type="button" class="title" data-home title="Go to another city"><span class="title-text">{{ page.title }}</span></button></h1>
+</div>
+
+<div class="map-bottom-left">
+<div class="map-legend-panel">
 <details class="map-legend">
-  <summary>Transport mode</summary>
+  <summary><span class="sky-text">Transport mode</span></summary>
   <ul>
     <li><span class="line" style="--c:#edeff5"></span>Metro / U-Bahn</li>
     <li><span class="line" style="--c:#d92020"></span>Passenger / freight rail</li>
@@ -33,3 +226,247 @@ places:
     <li><span class="line dashed" style="--c:#8f91b5"></span>Ferry route</li>
   </ul>
 </details>
+</div>
+</div>
+
+<!-- Moved into the map's bottom-right stack by the script: outline toggle, search, Cities, then zoom -->
+<div class="oa-regions" hidden>
+  <button type="button" class="oa-pin" aria-expanded="false" aria-controls="oa-regions-pop" aria-label="Cities" title="Cities">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+  </button>
+  <div class="oa-regions-pop" id="oa-regions-pop" hidden>
+    <p class="oa-regions-title"><span class="sky-text">Cities</span></p>
+    <ul aria-label="Fly to a city">
+      {% for p in page.places %}<li><button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}" data-zoom="{{ p.zoom | default: 10 }}" data-bearing="{{ p.bearing | default: 0 }}"><span>{{ p.name }}</span></button></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+<div class="oa-bgtoggle" hidden>
+  <button type="button" class="oa-pin" aria-pressed="false" aria-label="Outline-only controls" title="Outline-only controls">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 14L14 4M10 20L20 10"/></svg>
+  </button>
+</div>
+<div class="oa-search oa-collapsed" role="search" hidden>
+  <div class="oa-field" title="Search cities">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="oa-search-input" class="oa-input" type="search"
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="oa-search-results"
+           autocomplete="off" spellcheck="false" placeholder="E.g., Osaka, Madrid or Montréal" aria-label="Search for a city">
+  </div>
+  <p id="oa-search-status" class="oa-status" aria-live="polite"></p>
+  <ul id="oa-search-results" class="oa-results" role="listbox" aria-label="Matching cities"></ul>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
+  var FLY = { speed: 1.8, curve: 1, easing: function (t) { return t; } };          /* same steady glide as the atlas */
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  mapboxgl.accessToken = '{{ page.access_token }}';
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
+    center: HOME.center, zoom: HOME.zoom,
+    customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a> | <a href="https://fogday.com/maps/">More maps</a>'
+  });
+  function go(view) {
+    if (calm.matches) map.jumpTo(view); else map.flyTo(Object.assign({}, FLY, view));
+  }
+
+  /* Bottom-right stack, top to bottom: outline toggle, search, Cities, zoom + compass (added bottom first) */
+  function asControl(el) {
+    map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
+                     onRemove: function () { el.remove(); } }, 'bottom-right');
+  }
+  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+  var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
+  var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
+  var bgCtrl = document.querySelector('.oa-bgtoggle');     asControl(bgCtrl);
+
+  /* Outline toggle: remembered in this browser (its own key, so the atlas and this map don't share it) */
+  var bgBtn = bgCtrl.querySelector('button'), mapEl = map.getContainer();
+  function setOutline(on) { mapEl.classList.toggle('oa-outline', on); bgBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  try { setOutline(localStorage.getItem('tc-controls') === 'outline'); } catch (e) {}
+  bgBtn.addEventListener('click', function () {
+    var on = !mapEl.classList.contains('oa-outline');
+    setOutline(on);
+    try { localStorage.setItem('tc-controls', on ? 'outline' : 'dark'); } catch (e) {}
+  });
+
+  /* Lines run up into place one by one (same motion as the atlas) */
+  var LINE_IN = [{ opacity: 0, transform: 'translateY(18px)', easing: 'cubic-bezier(.2,.7,.35,1)' },
+                 { opacity: 1, transform: 'translateY(-2px)', offset: .78, easing: 'ease-in-out' },
+                 { opacity: 1, transform: 'none' }];
+  function slideLines(els) {
+    els = Array.prototype.slice.call(els);
+    var gap = els.length > 1 ? Math.min(60, 380 / (els.length - 1)) : 0, at = 0;
+    return els.map(function (el, i) {
+      if (i) at += gap + (Math.random() * 2 - 1) * Math.min(15, gap / 3);
+      return el.animate(LINE_IN, { duration: 420, delay: Math.max(0, at), fill: 'backwards' });
+    });
+  }
+
+  /* Cities menu. Picking a row flies there and shuts the menu. The city on screen is bold.
+     Search and Cities are either/or. A tap elsewhere, or Escape, shuts it. */
+  var pin = regionsCtrl.querySelector('.oa-pin'), pop = document.getElementById('oa-regions-pop');
+  var cities = Array.prototype.slice.call(pop.querySelectorAll('li button')), popAnims = [];
+  function isOpen() { return pin.getAttribute('aria-expanded') === 'true'; }
+  function markCity(b) { cities.forEach(function (x) { if (x === b) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); }); }
+  function setPop(open) {
+    if (open === isOpen()) return;
+    pin.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) search.minimize();
+    popAnims.forEach(function (a) { a.cancel(); }); popAnims = [];
+    pop.hidden = false;
+    if (calm.matches || !pop.animate) { pop.hidden = !open; return; }
+    if (open) popAnims = slideLines([pop.querySelector('.oa-regions-title')].concat(Array.prototype.slice.call(pop.querySelectorAll('li'))));
+    else {
+      var a = pop.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }], { duration: 240, easing: 'cubic-bezier(0,0,.2,1)', fill: 'forwards' });
+      popAnims = [a];
+      a.onfinish = function () { popAnims = []; pop.hidden = true; a.cancel(); };
+    }
+  }
+  function flyToCity(b) {
+    markCity(b);
+    go({ center: JSON.parse(b.dataset.center), zoom: +b.dataset.zoom, bearing: +b.dataset.bearing || 0 });
+  }
+  cities.forEach(function (b) { b.addEventListener('click', function () { flyToCity(b); setPop(false); }); });
+  pin.addEventListener('click', function () { setPop(!isOpen()); });
+  document.addEventListener('pointerdown', function (e) { if (isOpen() && !regionsCtrl.contains(e.target)) setPop(false); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { setPop(false); pin.focus(); } });
+
+  /* Title: fly to another city from the menu (never the one on screen, or the last one in this tab) */
+  document.querySelector('[data-home]').addEventListener('click', function () {
+    var last = null;
+    try { last = sessionStorage.getItem('tc-city'); } catch (e) {}
+    var pool = cities.filter(function (b) { return b.getAttribute('aria-current') !== 'true' && b.dataset.name !== last; });
+    if (!pool.length) pool = cities;
+    var b = pool[Math.floor(Math.random() * pool.length)];
+    try { sessionStorage.setItem('tc-city', b.dataset.name); } catch (e) {}
+    flyToCity(b);
+  });
+
+  /* Legend: starts collapsed and opens only when tapped; slides open/shut in 180ms */
+  (function (menu) {
+    var sum = menu.querySelector('summary'), list = menu.querySelector('ul'), slide = null, shutting = false;
+    sum.addEventListener('click', function (e) {
+      if (calm.matches || !list.animate) return;   /* native instant toggle */
+      e.preventDefault();
+      var opening = !menu.open || shutting;
+      var from = menu.open ? list.getBoundingClientRect().height : 0;
+      if (slide) slide.cancel();
+      menu.open = true;
+      var to = opening ? list.scrollHeight : 0;
+      shutting = !opening;
+      list.style.overflow = 'hidden';
+      slide = list.animate({ height: [from + 'px', to + 'px'] },
+        { duration: 180, easing: opening ? 'cubic-bezier(.2,.7,.3,1)' : 'cubic-bezier(.4,0,.8,.3)', fill: 'forwards' });
+      slide.onfinish = function () { if (shutting) menu.open = false; slide.cancel(); slide = null; shutting = false; list.style.overflow = ''; };
+    });
+  })(document.querySelector('.map-legend'));
+
+  /* Search: any city in the world, via Mapbox geocoding. Picking one flies there and minimizes the bar. */
+  var search = (function () {
+    var input = document.getElementById('oa-search-input'), list = document.getElementById('oa-search-results'),
+        status = document.getElementById('oa-search-status'), field = searchCard.querySelector('.oa-field');
+    var HINT = 'Type a city name', shown = [], active = -1, timer = 0, turn = 0;
+    function setStatus(t) { status.textContent = t; }
+    function minimize(keepFocus) {
+      searchCard.classList.add('oa-collapsed'); input.setAttribute('aria-expanded', 'false');
+      if (!keepFocus && document.activeElement === input) input.blur();
+    }
+    function expand() {
+      searchCard.classList.remove('oa-collapsed');
+      if (shown.length) input.setAttribute('aria-expanded', 'true');
+      setPop(false);
+      /* Phones: an open legend would cover the search bar, so it shuts (it never opens again by itself) */
+      var legend = document.querySelector('.map-legend');
+      if (legend.open && window.innerWidth < 760) legend.open = false;
+    }
+    function setActive(i) {
+      active = i;
+      Array.prototype.forEach.call(list.children, function (li, k) { li.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+      if (list.children[i]) { input.setAttribute('aria-activedescendant', list.children[i].id); list.children[i].scrollIntoView({ block: 'nearest' }); }
+      else input.removeAttribute('aria-activedescendant');
+    }
+    function render() {
+      list.textContent = '';
+      shown.forEach(function (f, i) {
+        var li = document.createElement('li'), name = document.createElement('span'), where = document.createElement('span');
+        li.className = 'oa-result'; li.id = 'oa-opt-' + i; li.setAttribute('role', 'option'); li.dataset.index = i;
+        name.className = 'oa-name'; name.textContent = f.name;
+        where.className = 'oa-where'; where.textContent = f.where;
+        li.appendChild(name); li.appendChild(where); list.appendChild(li);
+      });
+      setActive(-1);
+      input.setAttribute('aria-expanded', shown.length ? 'true' : 'false');
+    }
+    function lookup() {
+      var q = input.value.trim(), mine = ++turn;
+      if (!q) { shown = []; render(); setStatus(HINT); return; }
+      var url = 'https://api.mapbox.com/search/geocode/v6/forward?q=' + encodeURIComponent(q) +
+                '&types=place&limit=6&autocomplete=true&access_token=' + mapboxgl.accessToken;
+      fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+        if (mine !== turn) return;   // a newer keystroke won
+        shown = (j.features || []).map(function (f) {
+          var p = f.properties || {};
+          return { name: p.name || p.full_address || q, where: p.place_formatted || '', center: f.geometry.coordinates, bbox: p.bbox };
+        });
+        render();
+        setStatus(shown.length ? '' : 'No cities match “' + q + '”.');
+      }).catch(function () { if (mine === turn) { shown = []; render(); setStatus('Search isn’t available right now.'); } });
+    }
+    function pick(i, byKeyboard) {
+      var f = shown[i];
+      if (!f) return;
+      markCity(cities.filter(function (b) { return b.dataset.name === f.name; })[0] || null);
+      go({ center: f.center, zoom: 10, bearing: 0 });
+      minimize(byKeyboard);
+    }
+    field.addEventListener('click', function () { if (document.activeElement !== input) input.focus(); });
+    input.addEventListener('focus', expand);
+    input.addEventListener('input', function () { expand(); clearTimeout(timer); timer = setTimeout(lookup, 200); });
+    input.addEventListener('keydown', function (e) {
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && searchCard.classList.contains('oa-collapsed')) { e.preventDefault(); expand(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (shown.length) setActive(Math.min(active + 1, shown.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (shown.length) setActive(Math.max(active - 1, 0)); }
+      else if (e.key === 'Enter') { e.preventDefault(); pick(active >= 0 ? active : 0, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; shown = []; render(); setStatus(HINT); minimize(); }
+    });
+    list.addEventListener('mousedown', function (e) { e.preventDefault(); });   // keep focus in the box
+    list.addEventListener('click', function (e) { var li = e.target.closest('.oa-result'); if (li) pick(+li.dataset.index); });
+    document.addEventListener('pointerdown', function (e) { if (!searchCard.contains(e.target)) minimize(); }, true);
+    setStatus(HINT);
+    return { minimize: function () { minimize(); } };
+  })();
+
+  /* iPhone keyboard: raise the bottom-right stack so the search sits just above it */
+  var vv = window.visualViewport;
+  function liftForKeyboard() {
+    var root = document.documentElement, list = document.getElementById('oa-search-results'), kb = 0, lift = 0;
+    if (vv && vv.scale < 1.01 && document.activeElement && document.activeElement.id === 'oa-search-input')
+      kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    list.style.maxHeight = '';
+    if (kb > 0) {
+      var css = getComputedStyle(root), current = parseFloat(css.getPropertyValue('--kb')) || 0;
+      var gap = window.innerHeight - (searchCard.getBoundingClientRect().bottom + current);
+      lift = Math.max(0, kb + 8 - gap);
+      var room = (window.innerHeight - kb - 8) - ((parseFloat(css.getPropertyValue('--sat')) || 0) + 8);
+      var rest = searchCard.getBoundingClientRect().height - list.getBoundingClientRect().height;
+      var fiveRows = list.firstElementChild ? 5 * list.firstElementChild.offsetHeight : 220;
+      list.style.maxHeight = Math.max(44, Math.min(fiveRows, room - rest)) + 'px';
+    }
+    root.style.setProperty('--kb', lift + 'px');
+  }
+  if (vv) { vv.addEventListener('resize', liftForKeyboard); vv.addEventListener('scroll', liftForKeyboard); }
+  document.addEventListener('focusin', liftForKeyboard);
+  document.addEventListener('focusout', function () { setTimeout(liftForKeyboard, 50); });
+
+  /* A drag, pinch or scroll leaves the city menu's bold mark behind: the map is somewhere else now */
+  map.on('movestart', function (e) { if (e.originalEvent) markCity(null); });
+});
+</script>
+</body>
+</html>
