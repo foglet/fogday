@@ -10,7 +10,7 @@
 
 {% include head.html %}
 <style>
-  /* Copy button after "Pair adjacent flavors.": copies the list, one flavor per line */
+  /* Copy button after "Pair adjacent flavors.": copies a three-line heading, then the list, one flavor per line */
   .copy-list {
     display: inline-flex; align-items: center; justify-content: center; vertical-align: -.15em;
     width: 40px; height: 40px; margin: -10px 0 -10px 4px; padding: 10px; border: 0; border-radius: 4px;
@@ -168,12 +168,13 @@
 
 {% include footer.html %}
 <script>
-/* Copy the flavor list (one per line). Falls back to a hidden text box where the Clipboard API isn't available. */
+/* Copy the title, note and credit, then the flavor list (one per line). Falls back to a hidden text box where the Clipboard API isn't available. */
 (function () {
   var btn = document.querySelector('.copy-list'), note = document.querySelector('.copy-status'), timer = 0;
   if (!btn) return;
   function text() {
-    return Array.prototype.map.call(document.querySelectorAll('.pairings li'), function (li) { return li.textContent.trim(); }).join('\n');
+    var head = ['FLAVOR PAIRINGS', 'Pair adjacent flavors.', 'Credit: notesoncooking.com, now dark', ''];   // three lines, then a blank line
+    return head.concat(Array.prototype.map.call(document.querySelectorAll('.pairings li'), function (li) { return li.textContent.trim(); })).join('\n');
   }
   function fallback(t) {
     var ta = document.createElement('textarea');
