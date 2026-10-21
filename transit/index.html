@@ -137,6 +137,20 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .map-legend .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); }  /* route swatch (the atlas uses dots) */
   .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
 
+  /* Tapped spot, above the legend (same card as the atlas's picked oyster): place, coordinates, local time.
+     No panel: each line gets its own frosted background, only as wide as its text; lines 2–3 indent. */
+  .oa-detail-panel { flex: none; align-self: flex-start; max-width: 100%; font-size: .9rem; line-height: 1.35; }
+  .oa-detail-panel[hidden] { display: none; }
+  .oa-detail-panel > div {
+    width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .oa-detail-name { font-weight: 700; }
+  .oa-detail-coords, .oa-detail-time { margin: 2px 0 0 20px; max-width: calc(100% - 20px) !important; font-variant-numeric: tabular-nums; }
+  .oa-detail-time { color: var(--muted); }
+  /* The tapped point on the map */
+  .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); pointer-events: none; }
+
   /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
   .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
   .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--kb)); }
@@ -268,6 +282,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 </div>
 
 <div class="map-bottom-left">
+<div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
 <div class="map-legend-panel">
 <details class="map-legend">
   <summary><span class="sky-text">Transport mode</span></summary>
@@ -341,6 +356,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
   var bgCtrl = document.querySelector('.oa-bgtoggle');     asControl(bgCtrl);
 
+  /* A tap that only shuts a menu (Cities, Maps, an open search) shouldn't also show the tapped spot.
+     Registered before the menus' own listeners, so it sees them still open. */
+  var menuWasOpen = false;
+  document.addEventListener('pointerdown', function () {
+    menuWasOpen = !document.getElementById('maps-menu').hidden || !document.getElementById('oa-regions-pop').hidden ||
+                  !searchCard.classList.contains('oa-collapsed');
+  }, true);
+
   /* Outline toggle: remembered in this browser (its own key, so the atlas and this map don't share it) */
   var bgBtn = bgCtrl.querySelector('button'), mapEl = map.getContainer();
   function setOutline(on) { mapEl.classList.toggle('oa-outline', on); bgBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
@@ -386,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function flyToCity(b) {
     markCity(b);
+    clearSpot();   // the tapped spot belongs to the old view
     go({ center: JSON.parse(b.dataset.center), zoom: +b.dataset.zoom, bearing: +b.dataset.bearing || 0 });
   }
   cities.forEach(function (b) { b.addEventListener('click', function () { flyToCity(b); setPop(false); }); });
@@ -515,6 +539,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var f = shown[i];
       if (!f) return;
       markCity(cities.filter(function (b) { return b.dataset.name === f.name; })[0] || null);
+      clearSpot();
       go({ center: f.center, zoom: f.zoom || 10, bearing: 0 });
       minimize(byKeyboard);
     }
@@ -556,6 +581,94 @@ document.addEventListener('DOMContentLoaded', function () {
   if (vv) { vv.addEventListener('resize', liftForKeyboard); vv.addEventListener('scroll', liftForKeyboard); }
   document.addEventListener('focusin', liftForKeyboard);
   document.addEventListener('focusout', function () { setTimeout(liftForKeyboard, 50); });
+
+  /* Tap the map: above the legend, show where that is —
+       San Francisco, California, United States
+         Latitude: 37.774929 | Longitude: -122.419416
+         Wed 3:08 PM · Pacific Daylight Time (GMT-7)
+     Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
+     coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
+     The clock keeps ticking. A new tap replaces it; a city flight, a search pick or Escape clears it. */
+  var spotCard = document.getElementById('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotZone = null, spotAnim = null;
+  var spotDot = document.createElement('div'); spotDot.className = 'tc-spot';
+  var spotMarker = new mapboxgl.Marker({ element: spotDot });
+  var tzReady = null;
+  function loadTz() {
+    return tzReady || (tzReady = new Promise(function (ok) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@photostructure/tz-lookup@11.7.0/tz.js';
+      s.onload = function () { ok(window.tzlookup || null); };
+      s.onerror = function () { tzReady = null; ok(null); };   // try again on the next tap
+      document.head.appendChild(s);
+    }));
+  }
+  function placeName(lng, lat) {
+    var url = 'https://api.mapbox.com/search/geocode/v6/reverse?longitude=' + lng + '&latitude=' + lat +
+              '&language=en&access_token=' + mapboxgl.accessToken;
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+      var c = {};   // every level found, from the features themselves and their context
+      (j.features || []).forEach(function (f) {
+        var p = f.properties || {};
+        Object.keys(p.context || {}).forEach(function (k) { if (!c[k]) c[k] = p.context[k]; });
+        if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
+      });
+      var city = c.place || c.locality || c.district, region = c.region, country = c.country;
+      var parts = [city && city.name, region && region.name, country && country.name].filter(Boolean)
+                    .filter(function (n, i, a) { return a.indexOf(n) === i; });   // Singapore, not "Singapore, Singapore"
+      return parts.length ? parts.join(', ') : 'Open water';
+    }).catch(function () { return 'Place name unavailable'; });
+  }
+  function clockLine(zone) {
+    var now = new Date(), opts = { timeZone: zone, weekday: 'short', hour: 'numeric', minute: '2-digit' };
+    try {
+      var t = new Intl.DateTimeFormat('en-US', opts).format(now);
+      var name = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'long' }).formatToParts(now)
+                   .filter(function (p) { return p.type === 'timeZoneName'; })[0];
+      var off = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(now)
+                   .filter(function (p) { return p.type === 'timeZoneName'; })[0];
+      name = name ? name.value : zone;
+      return t + ' · ' + name + (off && off.value !== name ? ' (' + off.value + ')' : '');
+    } catch (e) { return 'Time zone: ' + zone; }
+  }
+  function tick() {   // refresh on each new minute
+    clearTimeout(spotTimer);
+    var line = spotCard.querySelector('.oa-detail-time');
+    if (!line || !spotZone) return;
+    line.textContent = clockLine(spotZone);
+    spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
+  }
+  function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
+  function showSpot(lngLat) {
+    var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
+    spotMarker.setLngLat(ll).addTo(map);
+    Promise.all([placeName(lng, lat), loadTz()]).then(function (r) {
+      if (mine !== spotTurn) return;   // a newer tap, or a clear, won
+      var zone = null;
+      try { zone = r[1] ? r[1](+lat, +lng) : null; } catch (e) {}
+      spotZone = zone;
+      if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
+      spotCard.textContent = '';
+      spotCard.appendChild(line('oa-detail-name', r[0]));
+      spotCard.appendChild(line('oa-detail-coords', 'Latitude: ' + lat + ' | Longitude: ' + lng));
+      spotCard.appendChild(line('oa-detail-time', zone ? clockLine(zone) : 'Time zone unavailable'));
+      spotCard.hidden = false;
+      if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // lines run up, as in the atlas
+      tick();
+    });
+  }
+  function clearSpot() {   // leaves as one piece: 180ms fade + 16px drop, as in the atlas
+    spotTurn++; spotZone = null; clearTimeout(spotTimer); spotMarker.remove();
+    if (spotCard.hidden || spotAnim) return;
+    if (calm.matches || !spotCard.animate) { spotCard.hidden = true; return; }
+    spotAnim = spotCard.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(16px)' }],
+                                { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    spotAnim.onfinish = function () { var a = spotAnim; spotAnim = null; spotCard.hidden = true; spotCard.textContent = ''; a.cancel(); };
+  }
+  map.on('click', function (e) { if (!menuWasOpen) showSpot(e.lngLat); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !spotCard.hidden && document.getElementById('maps-menu').hidden &&
+        document.getElementById('oa-regions-pop').hidden && searchCard.classList.contains('oa-collapsed')) clearSpot();
+  }, true);   // capture: checked before Escape shuts a menu, so one Escape shuts one thing
 
   /* A drag, pinch or scroll leaves the city menu's bold mark behind: the map is somewhere else now */
   map.on('movestart', function (e) { if (e.originalEvent) markCity(null); });
