@@ -138,7 +138,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
 
   /* Tapped spot, above the legend (same card as the atlas's picked oyster): place, coordinates, local time.
-     No panel: each line gets its own frosted background, only as wide as its text; lines 2–3 indent. */
+     No panel: each line gets its own frosted background, only as wide as its text; all three flush left. */
   .oa-detail-panel { flex: none; align-self: flex-start; max-width: 100%; font-size: .9rem; line-height: 1.35; }
   .oa-detail-panel[hidden] { display: none; }
   .oa-detail-panel > div {
@@ -146,7 +146,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
   .oa-detail-name { font-weight: 700; }
-  .oa-detail-coords, .oa-detail-time { margin: 2px 0 0 20px; max-width: calc(100% - 20px) !important; font-variant-numeric: tabular-nums; }
+  .oa-detail-coords, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-time { color: var(--muted); }
   /* The tapped point on the map */
   .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); pointer-events: none; }
@@ -584,8 +584,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Tap the map: above the legend, show where that is —
        San Francisco, California, United States
-         Latitude: 37.774929 | Longitude: -122.419416
-         Wed 3:08 PM · Pacific Daylight Time (GMT-7)
+       37.774929, -122.419416
+       Wed 3:08 PM · Pacific Daylight Time (GMT-7)
      Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
      coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
      The clock keeps ticking. A new tap replaces it; a city flight, a search pick or Escape clears it. */
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
       spotCard.appendChild(line('oa-detail-name', r[0]));
-      spotCard.appendChild(line('oa-detail-coords', 'Latitude: ' + lat + ' | Longitude: ' + lng));
+      spotCard.appendChild(line('oa-detail-coords', lat + ', ' + lng));
       spotCard.appendChild(line('oa-detail-time', zone ? clockLine(zone) : 'Time zone unavailable'));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // lines run up, as in the atlas
