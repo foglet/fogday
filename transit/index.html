@@ -147,8 +147,9 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
   .oa-detail-name { font-weight: 700; }
-  .oa-detail-coords, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .oa-detail-time { color: var(--muted); }
+  .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .oa-detail-offset { color: var(--muted); }
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
   /* The tapped point: an orange location pin (the site's --hot). Taps pass through it to the map. */
   .tc-spot { pointer-events: none; }
 
@@ -586,7 +587,8 @@ document.addEventListener('DOMContentLoaded', function () {
   /* Tap the map: above the legend, show where that is —
        San Francisco, California, United States
        37.774929, -122.419416
-       Wed 15:08 · Pacific Daylight Time (GMT-7)
+       GMT-7
+       3:18 PM   (larger)
      Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
      coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
      The clock keeps ticking. A new tap replaces it; a city flight, a search pick or Escape clears it. */
@@ -619,23 +621,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return parts.length ? parts.join(', ') : 'Open water';
     }).catch(function () { return 'Place name unavailable'; });
   }
-  function clockLine(zone) {
-    var now = new Date(), opts = { timeZone: zone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };   // 24-hour: 09:05, 15:08
+  function offsetText(zone) {   // GMT-7, GMT+5:30, GMT+0
     try {
-      var t = new Intl.DateTimeFormat('en-US', opts).format(now);
-      var name = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'long' }).formatToParts(now)
-                   .filter(function (p) { return p.type === 'timeZoneName'; })[0];
-      var off = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(now)
-                   .filter(function (p) { return p.type === 'timeZoneName'; })[0];
-      name = name ? name.value : zone;
-      return t + ' · ' + name + (off && off.value !== name ? ' (' + off.value + ')' : '');
-    } catch (e) { return 'Time zone: ' + zone; }
+      var o = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(new Date())
+                .filter(function (p) { return p.type === 'timeZoneName'; })[0].value;
+      return o === 'GMT' ? 'GMT+0' : o;
+    } catch (e) { return zone; }
   }
-  function tick() {   // refresh on each new minute
+  function timeText(zone) {     // 3:18 PM
+    try { return new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date()); }
+    catch (e) { return ''; }
+  }
+  function tick() {   // refresh on each new minute (the offset too, in case daylight saving starts or ends)
     clearTimeout(spotTimer);
-    var line = spotCard.querySelector('.oa-detail-time');
-    if (!line || !spotZone) return;
-    line.textContent = clockLine(spotZone);
+    var t = spotCard.querySelector('.oa-detail-time'), o = spotCard.querySelector('.oa-detail-offset');
+    if (!t || !spotZone) return;
+    t.textContent = timeText(spotZone); o.textContent = offsetText(spotZone);
     spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
@@ -651,7 +652,10 @@ document.addEventListener('DOMContentLoaded', function () {
       spotCard.textContent = '';
       spotCard.appendChild(line('oa-detail-name', r[0]));
       spotCard.appendChild(line('oa-detail-coords', lat + ', ' + lng));
-      spotCard.appendChild(line('oa-detail-time', zone ? clockLine(zone) : 'Time zone unavailable'));
+      if (zone) {
+        spotCard.appendChild(line('oa-detail-offset', offsetText(zone)));
+        spotCard.appendChild(line('oa-detail-time', timeText(zone)));
+      } else spotCard.appendChild(line('oa-detail-offset', 'Time zone unavailable'));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // lines run up, as in the atlas
       tick();
