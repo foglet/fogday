@@ -16,6 +16,8 @@ document.documentElement.dataset.theme = '{{ page.theme }}'; document.documentEl
   body.map-page { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
   body.map-page main { flex: 1; position: relative; min-height: 0; }
   #map { position: absolute; inset: 0; }
+  /* Map name in the header: the Oyster Atlas title's size (1.12rem). Delete this line to go back to the slab's own size. */
+  body.map-page .map-heading { font-size: 1.12rem; }
   html[data-theme-locked] .theme-toggle { visibility: hidden; } /* hidden but keeps its space, so the header doesn't shift between pages */
 
   /* Panels floating over the map, in the site's colors (follow light/dark mode) */
