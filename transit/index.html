@@ -589,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Tap the map: above the legend, show where that is —
        San Francisco, California, United States
-       37.774929, -122.419416
+       (37.774929, -122.419416)
        GMT-7
        3:18 PM   (larger)
      Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
@@ -654,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
       spotCard.appendChild(line('oa-detail-name', r[0]));
-      spotCard.appendChild(line('oa-detail-coords', lat + ', ' + lng));
+      spotCard.appendChild(line('oa-detail-coords', '(' + lat + ', ' + lng + ')'));
       if (zone) {
         spotCard.appendChild(line('oa-detail-offset', offsetText(zone)));
         spotCard.appendChild(line('oa-detail-time', timeText(zone)));
