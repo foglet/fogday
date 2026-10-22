@@ -174,8 +174,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E"); }
 
-  /* Square buttons in the stack (outline toggle, Cities), same size as zoom */
-  .oa-regions[hidden], .oa-bgtoggle[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
+  /* Square buttons in the stack (Cities), same size as zoom */
+  .oa-regions[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
 
   /* Zoom readout (above zoom/compass): the current zoom, live. Display only — taps pass through to the map. */
   .oa-zoomread {
@@ -183,7 +183,6 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
     color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
   }
-  .oa-outline .oa-zoomread { background: transparent; border-color: transparent; text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg); }
   .mapboxgl-ctrl.oa-regions { position: relative; }
   .oa-pin {
     display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
@@ -243,14 +242,6 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-search.oa-collapsed .oa-field { width: 32px; height: 32px; border-radius: 4px; gap: 0; padding: 0; justify-content: center; cursor: pointer; }
   .oa-search.oa-collapsed .oa-input { flex: 0 0 0; width: 0; padding: 0; opacity: 0; }
 
-  /* Outline mode (top button): controls lose their panels, icons get a navy halo */
-  .oa-outline .mapboxgl-ctrl-group { background: transparent; border-color: transparent; }
-  .oa-outline .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
-  .oa-outline .oa-pin { background: transparent; border-color: transparent; }
-  .oa-outline .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: transparent; }
-  .oa-outline .oa-search.oa-collapsed .oa-field { background: transparent; border-color: transparent; }
-  .oa-outline .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
-  .oa-outline .oa-pin svg, .oa-outline .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
 
   /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
   @media (pointer: coarse) {
@@ -315,7 +306,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 </div>
 </div>
 
-<!-- Moved into the map's bottom-right stack by the script: outline toggle, search, Cities, then zoom -->
+<!-- Moved into the map's bottom-right stack by the script: search, Cities, zoom readout, then zoom -->
 <div class="oa-regions" hidden>
   <button type="button" class="oa-pin" aria-expanded="false" aria-controls="oa-regions-pop" aria-label="Cities" title="Cities">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
@@ -329,11 +320,6 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   </div>
 </div>
 <div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
-<div class="oa-bgtoggle" hidden>
-  <button type="button" class="oa-pin" aria-pressed="false" aria-label="Outline-only controls" title="Outline-only controls">
-    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 14L14 4M10 20L20 10"/></svg>
-  </button>
-</div>
 <div class="oa-search oa-collapsed" role="search" hidden>
   <div class="oa-field" title="Search cities">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -364,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (calm.matches) map.jumpTo(view); else map.flyTo(Object.assign({}, FLY, view));
   }
 
-  /* Bottom-right stack, top to bottom: outline toggle, search, Cities, zoom + compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, Cities, zoom readout, zoom + compass (added bottom first) */
   function asControl(el) {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
@@ -373,7 +359,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
-  var bgCtrl = document.querySelector('.oa-bgtoggle');     asControl(bgCtrl);
 
   /* A tap that only shuts a menu (Cities, Maps, an open search) shouldn't also show the tapped spot.
      Registered before the menus' own listeners, so it sees them still open. */
@@ -382,16 +367,6 @@ document.addEventListener('DOMContentLoaded', function () {
     menuWasOpen = !document.getElementById('maps-menu').hidden || !document.getElementById('oa-regions-pop').hidden ||
                   !searchCard.classList.contains('oa-collapsed');
   }, true);
-
-  /* Outline toggle: remembered in this browser (its own key, so the atlas and this map don't share it) */
-  var bgBtn = bgCtrl.querySelector('button'), mapEl = map.getContainer();
-  function setOutline(on) { mapEl.classList.toggle('oa-outline', on); bgBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
-  try { setOutline(localStorage.getItem('tc-controls') === 'outline'); } catch (e) {}
-  bgBtn.addEventListener('click', function () {
-    var on = !mapEl.classList.contains('oa-outline');
-    setOutline(on);
-    try { localStorage.setItem('tc-controls', on ? 'outline' : 'dark'); } catch (e) {}
-  });
 
   /* Zoom: whatever zoom the visitor pinches or +/−s to is the zoom every flight keeps (Cities, search, the title),
      and it's remembered in this browser for their next visit. The readout shows it live, to one decimal. */
