@@ -261,12 +261,14 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-outline .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
   .oa-outline .oa-pin svg, .oa-outline .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
 
-  /* Touch screens: 44-point tap targets; +/− stay (they step 0.1, finer than a pinch), with the compass */
+  /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
   @media (pointer: coarse) {
     .oa-pin { width: 44px; height: 44px; }
     .oa-zoompref .oa-pin { font-size: .85rem; }
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; height: 42px; }
     .oa-field { height: 44px; }
     .oa-search.oa-collapsed .oa-field { width: 44px; height: 44px; }
     .oa-input { font-size: 16px; }  /* under 16px, iPhone Safari zooms the page */
