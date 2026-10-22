@@ -121,7 +121,9 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab));
     display: flex; flex-direction: column; gap: 8px;
     width: 320px; max-width: calc(100% - 24px - var(--sal) - var(--sar)); max-height: calc(100% - 180px - var(--sat) - var(--sab));
+    pointer-events: none;   /* its empty area mustn't swallow taps meant for the map or, on narrow phones, the right-hand controls */
   }
+  .map-bottom-left > * { pointer-events: auto; }
   /* Legend: starts collapsed; opens only when tapped. Just its title while shut, the panel once open. */
   .map-legend-panel { min-height: 0; overflow-y: auto; border-radius: 8px; border-color: color-mix(in srgb, var(--line) 50%, transparent);
                       transition: background-color .18s ease, border-color .18s ease; align-self: flex-start; }
@@ -259,14 +261,12 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-outline .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
   .oa-outline .oa-pin svg, .oa-outline .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
 
-  /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
+  /* Touch screens: 44-point tap targets; +/− stay (they step 0.1, finer than a pinch), with the compass */
   @media (pointer: coarse) {
     .oa-pin { width: 44px; height: 44px; }
     .oa-zoompref .oa-pin { font-size: .85rem; }
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
-    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
-    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; height: 42px; }
     .oa-field { height: 44px; }
     .oa-search.oa-collapsed .oa-field { width: 44px; height: 44px; }
     .oa-input { font-size: 16px; }  /* under 16px, iPhone Safari zooms the page */
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var zoomPref = savedZoom();
   var zpBtn = zoomCtrl.querySelector('button'), zpIcon = zpBtn.innerHTML, zpTip = zoomCtrl.querySelector('.oa-zoompref-tip');
   var zpHold = 0, zpHeld = false, zpTipTimer = 0;
-  function zpText(z) { return (Math.round(z * 10) / 10).toFixed(1).replace(/\.0$/, ''); }   // 12.6, 13
+  function zpText(z) { return (Math.round(z * 10) / 10).toFixed(1); }   // 12.6, 13.0
   function zpAt() { return zoomPref != null && Math.abs(map.getZoom() - zoomPref) < 0.05; }
   function zpShow() {
     if (zoomPref == null) { zpBtn.innerHTML = zpIcon; zpBtn.removeAttribute('data-at'); return; }
@@ -452,6 +452,18 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   map.on('zoomend', zpShow);
   zpShow();
+
+  /* +/− step the zoom by 0.1 (Mapbox's own step is 1), so a visitor can dial in the level they like,
+     then hold the preset to save it. Quick taps add up: each step builds on the last target, not mid-glide. */
+  var zTarget = null;
+  map.getContainer().querySelector('.mapboxgl-ctrl-zoom-in').parentNode.addEventListener('click', function (e) {
+    var b = e.target.closest('button'), dir = b && b.classList.contains('mapboxgl-ctrl-zoom-in') ? 1 : b && b.classList.contains('mapboxgl-ctrl-zoom-out') ? -1 : 0;
+    if (!dir) return;   // the compass keeps its own behavior
+    e.stopPropagation(); e.preventDefault();   // capture phase: Mapbox's 1-step handler never sees it
+    var base = zTarget != null && map.isEasing() ? zTarget : Math.round(map.getZoom() * 10) / 10;
+    zTarget = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), Math.round((base + dir * 0.1) * 10) / 10));
+    if (calm.matches) map.jumpTo({ zoom: zTarget }); else map.easeTo({ zoom: zTarget, duration: 160 });
+  }, true);
 
   /* Lines run up into place one by one (same motion as the atlas) */
   var LINE_IN = [{ opacity: 0, transform: 'translateY(18px)', easing: 'cubic-bezier(.2,.7,.35,1)' },
