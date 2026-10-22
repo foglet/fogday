@@ -34,7 +34,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&family=Patua+One&display=swap">
+<link rel="stylesheet" href="https://use.typekit.net/bqh2pni.css">  <!-- ohlonesky.com's Adobe Fonts kit: Vista Slab (phone menu), FF Meta (desktop menu) -->
 
 <style>
   /* Transit Connected — the Oyster Atlas interface (oysteratlas.com), one self-contained page. Always dark.
@@ -194,23 +195,53 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Cities menu, to the left of its button: no panel, each line gets its own frosted background */
-  .oa-regions-pop {
-    position: absolute; right: calc(100% + 8px); bottom: 0; padding: 0;
-    max-height: calc(100vh - 160px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain;
-    display: flex; flex-direction: column; align-items: flex-start; color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left;
+  /* Cities menu: full screen, the same list as ohlonesky.com's menu — big bold slab capitals, centered,
+     rising one by one; hover turns them orange; the close X sits in an amber-to-pink circle.
+     In this page's dark colors (the map page is always dark; ohlonesky.com's menu is white). */
+  .tc-cities {
+    position: fixed; inset: 0; z-index: 10; display: flex; overflow-y: auto; overscroll-behavior: contain; background: var(--bg);
+    padding: calc(72px + var(--sat)) calc(16px + var(--sar)) calc(32px + var(--sab)) calc(16px + var(--sal));
   }
-  .oa-regions-pop[hidden] { display: none; }
-  .oa-regions-title, .oa-regions-pop li button span {
-    display: block; width: fit-content; padding: 2px 8px; border-radius: 4px;
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  .tc-cities[hidden] { display: none; }
+  .tc-cities ul { list-style: none; margin: auto; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+  .tc-cities li button {
+    all: unset; box-sizing: border-box; display: block; cursor: pointer; text-align: center; color: var(--ink);
+    font: 700 2.25rem/2.5rem "vista-slab", "Patua One", serif; text-transform: uppercase; transition: color .15s ease;
   }
-  .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
-  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; font-size: .9rem; }
-  .oa-regions-pop li button { all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap; }
-  .oa-regions-pop li button:hover { color: var(--accent); }
-  .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
-  .oa-regions-pop li button[aria-current="true"] span { font-weight: 700; }  /* the city on screen */
-  .oa-regions-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tc-cities li button:hover { color: #FF5500; }
+  .tc-cities li button[aria-current="true"] { color: #7cc4f0; }   /* the city on screen */
+  .tc-cities li button:focus-visible { outline: 2px solid #FF5500; outline-offset: 4px; border-radius: 4px; }
+  .tc-cities-close {
+    position: fixed; top: calc(12px + var(--sat)); right: calc(16px + var(--sar)); width: 44px; height: 44px; padding: 0; border: 0;
+    border-radius: 50%; cursor: pointer; background: linear-gradient(to right, #F59E0B, #EC4899);   /* amber-500 → pink-500 */
+  }
+  .tc-cities-close::before, .tc-cities-close::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 3px; border-radius: 2px; background: #fff;
+    translate: -50% -50%; rotate: 45deg;
+  }
+  .tc-cities-close::after { rotate: -45deg; }
+  .tc-cities-close:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+  /* Wide screens: the cities as a row of small links at the top right, as in ohlonesky.com's desktop header
+     (FF Meta Light, .875rem, uppercase, 8px padding, 16px apart, orange on hover). It wraps onto a second line
+     if the window is narrow. Here the full-screen list and its button are for phones and tablets only. */
+  .tc-cities-bar { display: none; }
+  @media (min-width: 1024px) {
+    .tc-cities-bar {
+      position: absolute; top: 0; right: calc(16px + var(--sar)); max-width: calc(100% - 320px); pointer-events: auto;   /* clears the title and its chevron */
+      display: flex; flex-wrap: wrap; justify-content: flex-end; column-gap: 1rem;
+      list-style: none; margin: 0; padding: 0;
+    }
+    .tc-cities-bar button {
+      all: unset; box-sizing: border-box; cursor: pointer; padding: .5rem; color: var(--ink); text-transform: uppercase; white-space: nowrap;
+      font: 300 .875rem/1.25rem "ff-meta-web-pro", "Fira Sans", sans-serif;
+      text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);   /* reads over the map, like the icons */
+    }
+    .tc-cities-bar button:hover { color: #FF5500; }
+    .tc-cities-bar button[aria-current="true"] { color: #7cc4f0; }
+    .tc-cities-bar button:focus-visible { outline: 2px solid #FF5500; outline-offset: 0; border-radius: 4px; }
+    .mapboxgl-ctrl.oa-regions { display: none; }   /* the row replaces the Cities button */
+  }
 
   /* Search for any city (Mapbox geocoding). Starts minimized to its magnifying glass. */
   .oa-search { display: flex; flex-direction: column; }
@@ -266,7 +297,6 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     .oa-search.oa-collapsed .oa-field { width: 44px; height: 44px; }
     .oa-input { font-size: 16px; }  /* under 16px, iPhone Safari zooms the page */
     .mapboxgl-ctrl.oa-search:not(.oa-collapsed), .mapboxgl-ctrl.oa-search:not(.oa-collapsed) .oa-field { width: 290px; }
-    .oa-regions-pop li button span { padding: 10px 12px; }
     .oa-result { min-height: 44px; }
     .oa-results { max-height: calc(5 * 44px); }
   }
@@ -296,6 +326,10 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
       </ul>
     </nav>
   </div>
+  <ul class="tc-cities-bar" aria-label="Fly to a city">
+    {% for p in page.places %}<li><button type="button" data-name="{{ p.name }}">{{ p.name }}</button></li>
+    {% endfor %}
+  </ul>
 </div>
 
 <div class="map-bottom-left">
@@ -319,17 +353,17 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 
 <!-- Moved into the map's bottom-right stack by the script: search, Cities, zoom readout, then zoom -->
 <div class="oa-regions" hidden>
-  <button type="button" class="oa-pin" aria-expanded="false" aria-controls="oa-regions-pop" aria-label="Cities" title="Cities">
+  <button type="button" class="oa-pin" aria-expanded="false" aria-controls="tc-cities" aria-label="Cities" title="Cities">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
   </button>
-  <div class="oa-regions-pop" id="oa-regions-pop" hidden>
-    <p class="oa-regions-title"><span class="sky-text">Cities</span></p>
-    <ul aria-label="Fly to a city">
-      {% for p in page.places %}<li><button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}" data-zoom="{{ p.zoom | default: 10 }}" data-bearing="{{ p.bearing | default: 0 }}"><span>{{ p.name }}</span></button></li>
-      {% endfor %}
-    </ul>
-  </div>
 </div>
+<nav class="tc-cities" id="tc-cities" aria-label="Cities" hidden>
+  <button type="button" class="tc-cities-close" aria-label="Close"></button>
+  <ul>
+    {% for p in page.places %}<li><button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}" data-zoom="{{ p.zoom | default: 10 }}" data-bearing="{{ p.bearing | default: 0 }}">{{ p.name }}</button></li>
+    {% endfor %}
+  </ul>
+</nav>
 <div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
 <div class="oa-search oa-collapsed" role="search" hidden>
   <div class="oa-field" title="Search cities">
@@ -375,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function () {
      Registered before the menus' own listeners, so it sees them still open. */
   var menuWasOpen = false;
   document.addEventListener('pointerdown', function () {
-    menuWasOpen = !document.getElementById('maps-menu').hidden || !document.getElementById('oa-regions-pop').hidden ||
+    menuWasOpen = !document.getElementById('maps-menu').hidden || !document.getElementById('tc-cities').hidden ||
                   !searchCard.classList.contains('oa-collapsed');
   }, true);
 
@@ -411,25 +445,46 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* Cities menu. Picking a row flies there and shuts the menu. The city on screen is bold.
-     Search and Cities are either/or. A tap elsewhere, or Escape, shuts it. */
-  var pin = regionsCtrl.querySelector('.oa-pin'), pop = document.getElementById('oa-regions-pop');
+  /* Cities menu (full screen, as on ohlonesky.com). Opening: the list rises 1rem as it fades in, and each city
+     rises 2rem into place, top to bottom (500ms each). Closing: the cities lift away 2rem, bottom first (400ms each),
+     then the screen fades. ohlonesky.com spaces its 4 links 800ms apart; with 11 cities that would take 9s, so the
+     gaps here are 100ms in, 50ms out. Picking a city flies there behind the closing menu. The city on screen is blue.
+     The X, a tap off the list, or Escape shuts it. */
+  var pin = regionsCtrl.querySelector('.oa-pin'), pop = document.getElementById('tc-cities'), popClose = pop.querySelector('.tc-cities-close');
   var cities = Array.prototype.slice.call(pop.querySelectorAll('li button')), popAnims = [];
+  var SWAY = 'cubic-bezier(.4,0,.2,1)', IN_GAP = 100, OUT_GAP = 50;
   function isOpen() { return pin.getAttribute('aria-expanded') === 'true'; }
-  function markCity(b) { cities.forEach(function (x) { if (x === b) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); }); }
+  var barCities = Array.prototype.slice.call(document.querySelectorAll('.tc-cities-bar button'));
+  function markCity(b) {
+    var name = b && b.dataset.name;
+    cities.concat(barCities).forEach(function (x) { if (name && x.dataset.name === name) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); });
+  }
   function setPop(open) {
     if (open === isOpen()) return;
     pin.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (open) search.minimize();
     popAnims.forEach(function (a) { a.cancel(); }); popAnims = [];
-    pop.hidden = false;
-    if (calm.matches || !pop.animate) { pop.hidden = !open; return; }
-    if (open) popAnims = slideLines([pop.querySelector('.oa-regions-title')].concat(Array.prototype.slice.call(pop.querySelectorAll('li'))));
-    else {
-      var a = pop.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }], { duration: 240, easing: 'cubic-bezier(0,0,.2,1)', fill: 'forwards' });
-      popAnims = [a];
-      a.onfinish = function () { popAnims = []; pop.hidden = true; a.cancel(); };
+    var items = Array.prototype.slice.call(pop.querySelectorAll('li')), still = calm.matches || !pop.animate;
+    if (open) {
+      search.minimize();
+      pop.hidden = false; pop.scrollTop = 0;
+      if (!still) {
+        popAnims.push(pop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: 'ease-out' }));
+        popAnims.push(pop.querySelector('ul').animate([{ opacity: 0, transform: 'translateY(1rem)' }, { opacity: 1, transform: 'none' }], { duration: 500, easing: 'cubic-bezier(0,0,.2,1)' }));
+        items.forEach(function (li, i) {
+          popAnims.push(li.animate([{ opacity: 0, transform: 'translateY(2rem)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: i * IN_GAP, easing: SWAY, fill: 'backwards' }));
+        });
+      }
+      (cities.filter(function (b) { return b.getAttribute('aria-current') === 'true'; })[0] || cities[0]).focus({ preventScroll: true });
+      return;
     }
+    if (still) { pop.hidden = true; return; }
+    var last = items.length - 1;
+    items.forEach(function (li, i) {
+      popAnims.push(li.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-2rem)' }], { duration: 400, delay: (last - i) * OUT_GAP, easing: SWAY, fill: 'forwards' }));
+    });
+    var fade = pop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: Math.max(0, 400 + last * OUT_GAP - 150), easing: 'ease-in', fill: 'forwards' });
+    popAnims.push(fade);
+    fade.onfinish = function () { pop.hidden = true; popAnims.forEach(function (a) { a.cancel(); }); popAnims = []; };
   }
   function flyToCity(b) {
     markCity(b);
@@ -437,6 +492,9 @@ document.addEventListener('DOMContentLoaded', function () {
     go({ center: JSON.parse(b.dataset.center), zoom: +b.dataset.zoom, bearing: +b.dataset.bearing || 0 });
   }
   cities.forEach(function (b) { b.addEventListener('click', function () { flyToCity(b); setPop(false); }); });
+  barCities.forEach(function (b) { b.addEventListener('click', function () {
+    flyToCity(cities.filter(function (c) { return c.dataset.name === b.dataset.name; })[0]);
+  }); });
 
   /* Maps menu (the chevron beside the title): shuts on a pick,
      a tap elsewhere or Escape. Opening it shuts Cities and search, like they shut each other. */
@@ -451,7 +509,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('pointerdown', function (e) { if (!mapsBtn.contains(e.target) && !mapsMenu.contains(e.target)) setMaps(false); }, true);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); } });
   pin.addEventListener('click', function () { setPop(!isOpen()); });
-  document.addEventListener('pointerdown', function (e) { if (isOpen() && !regionsCtrl.contains(e.target)) setPop(false); }, true);
+  popClose.addEventListener('click', function () { setPop(false); pin.focus(); });
+  pop.addEventListener('click', function (e) { if (!e.target.closest('button')) setPop(false); });   // a tap off the list
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { setPop(false); pin.focus(); } });
 
   /* Title: fly to another city from the menu (never the one on screen, or the last one in this tab) */
@@ -714,7 +773,7 @@ document.addEventListener('DOMContentLoaded', function () {
   map.on('click', function (e) { if (!menuWasOpen) showSpot(e.lngLat); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !spotCard.hidden && document.getElementById('maps-menu').hidden &&
-        document.getElementById('oa-regions-pop').hidden && searchCard.classList.contains('oa-collapsed')) clearSpot();
+        document.getElementById('tc-cities').hidden && searchCard.classList.contains('oa-collapsed')) clearSpot();
   }, true);   // capture: checked before Escape shuts a menu, so one Escape shuts one thing
 
   /* A drag, pinch or scroll leaves the city menu's bold mark behind: the map is somewhere else now */
