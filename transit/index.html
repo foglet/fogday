@@ -175,24 +175,15 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E"); }
 
   /* Square buttons in the stack (outline toggle, Cities), same size as zoom */
-  .oa-regions[hidden], .oa-bgtoggle[hidden], .oa-search[hidden], .oa-zoompref[hidden] { display: none; }
+  .oa-regions[hidden], .oa-bgtoggle[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
 
-  /* Zoom preset (above zoom/compass), like a car-radio preset: tap returns to your zoom, press and hold saves it.
-     Shows the saved zoom as a number: orange while the map is at it, muted when a tap would take you back. */
-  .mapboxgl-ctrl.oa-zoompref { position: relative; }
-  .oa-zoompref .oa-pin { font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
-                         -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
-  .oa-zoompref .oa-pin[data-at="true"] { color: var(--accent); }
-  .oa-zoompref .oa-pin.saved { animation: zp-saved .35s ease-out; }
-  @keyframes zp-saved { 40% { transform: scale(1.18); } }
-  .oa-zoompref-tip {   /* a short note to the left of the button, same frosted line as the Cities menu */
-    position: absolute; right: calc(100% + 8px); top: 50%; translate: 0 -50%; white-space: nowrap; pointer-events: none;
-    padding: 2px 8px; border-radius: 4px; font: 400 .85rem/1.4 var(--font); color: var(--ink);
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    transition: opacity .2s ease;
+  /* Zoom readout (above zoom/compass): the current zoom, live. Display only — taps pass through to the map. */
+  .oa-zoomread {
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; pointer-events: none;
+    background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
+    color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
   }
-  .oa-zoompref-tip[hidden] { display: block; opacity: 0; }
-  @media (prefers-reduced-motion: reduce) { .oa-zoompref .oa-pin.saved { animation: none; } }
+  .oa-outline .oa-zoomread { background: transparent; border-color: transparent; text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg); }
   .mapboxgl-ctrl.oa-regions { position: relative; }
   .oa-pin {
     display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
@@ -264,7 +255,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
   @media (pointer: coarse) {
     .oa-pin { width: 44px; height: 44px; }
-    .oa-zoompref .oa-pin { font-size: .85rem; }
+    .oa-zoomread { width: 44px; height: 44px; font-size: .85rem; }
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
     .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
@@ -337,12 +328,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </ul>
   </div>
 </div>
-<div class="oa-zoompref" hidden>
-  <button type="button" class="oa-pin" aria-label="Zoom preset: press and hold to save this zoom" title="Press and hold to save this zoom">
-    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><circle cx="12" cy="12" r="2.5"/></svg>
-  </button>
-  <span class="oa-zoompref-tip" role="status" hidden></span>
-</div>
+<div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
 <div class="oa-bgtoggle" hidden>
   <button type="button" class="oa-pin" aria-pressed="false" aria-label="Outline-only controls" title="Outline-only controls">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 14L14 4M10 20L20 10"/></svg>
@@ -370,11 +356,11 @@ document.addEventListener('DOMContentLoaded', function () {
   var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
-    center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom,   // a visitor's saved zoom (zoom preset) opens the map too
+    center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
   function go(view) {
-    if (zoomPref != null && view.zoom != null) view = Object.assign({}, view, { zoom: zoomPref });   // the visitor's saved zoom wins
+    if (view.zoom != null) { view = Object.assign({}, view); delete view.zoom; }   // flights keep the visitor's current zoom
     if (calm.matches) map.jumpTo(view); else map.flyTo(Object.assign({}, FLY, view));
   }
 
@@ -384,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function () {
                      onRemove: function () { el.remove(); } }, 'bottom-right');
   }
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-  var zoomCtrl = document.querySelector('.oa-zoompref');   asControl(zoomCtrl);
+  var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
   var bgCtrl = document.querySelector('.oa-bgtoggle');     asControl(bgCtrl);
@@ -407,56 +393,15 @@ document.addEventListener('DOMContentLoaded', function () {
     try { localStorage.setItem('tc-controls', on ? 'outline' : 'dark'); } catch (e) {}
   });
 
-  /* Zoom preset. Each visitor saves their own zoom (kept in this browser; nothing is preset for them).
-       • Nothing saved yet: a tap saves the current zoom.
-       • Saved: a tap glides back to it, wherever the map is. Press and hold (½ s) saves the current zoom instead.
-         Desktop: Shift-click also saves.
-     While saved, every flight (Cities, search, the title) lands at that zoom; pinching or +/− changes the view,
-     not the saved zoom. */
-  var zoomPref = savedZoom();
-  var zpBtn = zoomCtrl.querySelector('button'), zpIcon = zpBtn.innerHTML, zpTip = zoomCtrl.querySelector('.oa-zoompref-tip');
-  var zpHold = 0, zpHeld = false, zpTipTimer = 0;
-  function zpText(z) { return (Math.round(z * 10) / 10).toFixed(1); }   // 12.6, 13.0
-  function zpAt() { return zoomPref != null && Math.abs(map.getZoom() - zoomPref) < 0.05; }
-  function zpShow() {
-    if (zoomPref == null) { zpBtn.innerHTML = zpIcon; zpBtn.removeAttribute('data-at'); return; }
-    zpBtn.textContent = zpText(zoomPref);
-    zpBtn.setAttribute('data-at', zpAt() ? 'true' : 'false');
-    var label = 'Zoom preset ' + zpText(zoomPref) + ': tap to return to it, press and hold to save this zoom';
-    zpBtn.setAttribute('aria-label', label); zpBtn.title = 'Tap: back to zoom ' + zpText(zoomPref) + ' · Hold: save this zoom';
-  }
-  function zpNote(t) {
-    zpTip.textContent = t; zpTip.hidden = false;
-    clearTimeout(zpTipTimer); zpTipTimer = setTimeout(function () { zpTip.hidden = true; }, 2200);
-  }
-  function zpSave() {
-    zoomPref = Math.round(map.getZoom() * 10) / 10;
-    try { localStorage.setItem('tc-zoom', String(zoomPref)); } catch (e) {}
-    zpShow();
-    zpBtn.classList.remove('saved'); void zpBtn.offsetWidth; zpBtn.classList.add('saved');
-    zpNote('Zoom ' + zpText(zoomPref) + ' saved · hold to change');
-  }
-  function zpReturn() {
-    if (zpAt()) { zpNote('At zoom ' + zpText(zoomPref) + ' · hold to change'); return; }
-    if (calm.matches) map.jumpTo({ zoom: zoomPref }); else map.easeTo({ zoom: zoomPref, duration: 450 });
-  }
-  function zpCancel() { clearTimeout(zpHold); zpHold = 0; }
-  zpBtn.addEventListener('pointerdown', function (e) {
-    if (e.button) return;
-    zpHeld = false; zpCancel();
-    zpHold = setTimeout(function () { zpHold = 0; zpHeld = true; zpSave(); }, 500);
-  });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (t) { zpBtn.addEventListener(t, zpCancel); });
-  zpBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });   // a long press shouldn't open a menu
-  zpBtn.addEventListener('click', function (e) {
-    if (zpHeld) { zpHeld = false; return; }   // the hold already saved
-    if (zoomPref == null || e.shiftKey) zpSave(); else zpReturn();
-  });
-  map.on('zoomend', zpShow);
-  zpShow();
+  /* Zoom: whatever zoom the visitor pinches or +/−s to is the zoom every flight keeps (Cities, search, the title),
+     and it's remembered in this browser for their next visit. The readout shows it live, to one decimal. */
+  function showZoom() { var t = (Math.round(map.getZoom() * 10) / 10).toFixed(1); zoomRead.textContent = t; zoomRead.setAttribute('aria-label', 'Zoom level ' + t); }
+  map.on('zoom', showZoom);
+  map.on('zoomend', function () { try { localStorage.setItem('tc-zoom', String(Math.round(map.getZoom() * 10) / 10)); } catch (e) {} });
+  showZoom();
 
   /* +/− step the zoom by 0.1 (Mapbox's own step is 1), so a visitor can dial in the level they like,
-     then hold the preset to save it. Quick taps add up: each step builds on the last target, not mid-glide. */
+     and flights keep it. Quick taps add up: each step builds on the last target, not mid-glide. */
   var zTarget = null;
   map.getContainer().querySelector('.mapboxgl-ctrl-zoom-in').parentNode.addEventListener('click', function (e) {
     var b = e.target.closest('button'), dir = b && b.classList.contains('mapboxgl-ctrl-zoom-in') ? 1 : b && b.classList.contains('mapboxgl-ctrl-zoom-out') ? -1 : 0;
