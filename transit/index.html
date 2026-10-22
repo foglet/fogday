@@ -35,7 +35,6 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&family=Patua+One&display=swap">
-<link rel="stylesheet" href="https://use.typekit.net/bqh2pni.css">  <!-- ohlonesky.com's Adobe Fonts kit: Vista Slab (phone menu), FF Meta (desktop menu) -->
 
 <style>
   /* Transit Connected — the Oyster Atlas interface (oysteratlas.com), one self-contained page. Always dark.
@@ -195,7 +194,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Cities menu, to the left of its button: no panel, each line gets its own frosted background */
-  /* Cities menu: full screen, the same list as ohlonesky.com's menu — big bold slab capitals, centered,
+  /* Cities menu: full screen, the same list as ohlonesky.com's menu — big bold slab capitals (Patua One), centered,
      rising one by one; hover turns them orange; the close X sits in an amber-to-pink circle.
      In this page's dark colors (the map page is always dark; ohlonesky.com's menu is white). */
   .tc-cities {
@@ -206,7 +205,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .tc-cities ul { list-style: none; margin: auto; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
   .tc-cities li button {
     all: unset; box-sizing: border-box; display: block; cursor: pointer; text-align: center; color: var(--ink);
-    font: 700 2.25rem/2.5rem "vista-slab", "Patua One", serif; text-transform: uppercase; transition: color .15s ease;
+    font: 400 2.25rem/2.5rem "Patua One", serif;   /* fogday's slab (Patua One has one weight, already bold) */ text-transform: uppercase; transition: color .15s ease;
   }
   .tc-cities li button:hover { color: #FF5500; }
   .tc-cities li button[aria-current="true"] { color: #7cc4f0; }   /* the city on screen */
@@ -223,7 +222,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .tc-cities-close:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
   /* Wide screens: the cities as a row of small links at the top right, as in ohlonesky.com's desktop header
-     (FF Meta Light, .875rem, uppercase, 8px padding, 16px apart, orange on hover). It wraps onto a second line
+     (light sans, .875rem, uppercase, 8px padding, 16px apart, orange on hover; Fira Sans Light here). It wraps onto a second line
      if the window is narrow. Here the full-screen list and its button are for phones and tablets only. */
   .tc-cities-bar { display: none; }
   @media (min-width: 1024px) {
@@ -234,7 +233,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     }
     .tc-cities-bar button {
       all: unset; box-sizing: border-box; cursor: pointer; padding: .5rem; color: var(--ink); text-transform: uppercase; white-space: nowrap;
-      font: 300 .875rem/1.25rem "ff-meta-web-pro", "Fira Sans", sans-serif;
+      font: 300 .875rem/1.25rem "Fira Sans", sans-serif;
       text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);   /* reads over the map, like the icons */
     }
     .tc-cities-bar button:hover { color: #FF5500; }
