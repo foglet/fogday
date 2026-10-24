@@ -336,6 +336,17 @@ function drawStrip(){
 }
 
 
+
+/* Sunrise / sunset, top right. Sunrise greys out once it has happened; after sunset it shows tomorrow's. */
+function renderSun(){
+  const now=Date.now(), t=todayKey(), sun=sunTimes(t);
+  const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
+  const riseDone = !afterSet && now>=sun.rise;
+  const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
+    return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
+  $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">Sunrise</span><span class="time">${tm(rise)}</span></div><div><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
+}
+
 /* ---- Page ---- */
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
@@ -348,10 +359,7 @@ function render(opts2){
   renderNow(); renderMoon();
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
-  const sun=sunTimes(view);
-  const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
-    return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
-  $('sun').innerHTML=`<div><span class="label">Sunrise</span><span class="time">${tm(sun.rise)}</span></div><div><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
+  renderSun();
   if (!opts2 || opts2.weather !== false) renderWeather();
 }
 
@@ -369,7 +377,7 @@ $('beachBtn').addEventListener('click', ()=>{
   render();
 });
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
-setInterval(()=>{ if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
+setInterval(()=>{ if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
 try { render(); } catch (err) { console.error('SF Tides:', err); try { renderNow(); drawStrip(); } catch (e2) { console.error(e2); } }
