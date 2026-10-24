@@ -289,7 +289,7 @@ const Y0=-2.5, Y1=8;
 const ticks = () => units==='m'
   ? [-0.5,0,0.5,1,1.5,2].map(m=>[m/0.3048, m<0?'−'+(-m):String(m)])
   : [-2,0,2,4,6,8].map(f=>[f, f<0?'−'+(-f):String(f)]);
-function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:40, pb:26}; }
+function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:33, pb:33}; }  // equal top and bottom space centers the plot vertically
 function drawStrip(){
   const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
   const start=dayStart(view), days=[...Array(DAYS_IN_STRIP+1)].map((_,i)=>addDays(view,i));
