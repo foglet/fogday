@@ -1,12 +1,12 @@
 ---
-title: SF Tides
+title: Tides of San Francisco
 ---
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SF Tides · Fogday Studios</title>
+<title>Tides of San Francisco · Fogday Studios</title>
 <meta name="description" content="Tides, weather and wind for San Francisco beaches: Baker Beach, China Beach, East Beach, Fort Funston and Ocean Beach. By Fogday Studios.">
 
 {% include head.html %}
@@ -39,16 +39,21 @@ title: SF Tides
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; }
   .tides .unit { font-family: var(--font-ui); font-size: 1rem; color: var(--muted); margin-left: 4px; }
 
-  /* Beach picker */
-  .tides .picker { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 20px; }
-  .tides .picker > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-  .tides .select { position: relative; }
+  /* Beach picker: the beach name is the drop-down (no box), then its coordinates and local time, as on /transit/ */
+  .tides .picker { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .tides .select { position: relative; display: inline-block; max-width: 100%; }
   .tides .select select {
-    appearance: none; -webkit-appearance: none; background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
-    padding: 9px 42px 9px 16px; font-weight: 600; font-size: 1.05rem; cursor: pointer; min-width: 210px; }
-  .tides .select::after { content: ""; position: absolute; right: 17px; top: 50%; width: 8px; height: 8px;
-    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-  .tides .place { margin: 0; line-height: 1.35; }
+    appearance: none; -webkit-appearance: none; background: transparent; border: 0; border-radius: 0; color: var(--ink);
+    padding: 0 30px 0 0; margin: 0; font: 600 clamp(1.6rem, 6.5vw, 2rem)/1.2 var(--font-ui); cursor: pointer; max-width: 100%; }
+  .tides .select select:hover { color: var(--accent); }
+  .tides .select::after { content: ""; position: absolute; right: 6px; top: 50%; width: 10px; height: 10px;
+    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-75%) rotate(45deg); pointer-events: none; }
+  .tides .coords { font-size: .95rem; margin-top: 4px; }
+  .tides .clock { line-height: 1.2; margin-top: 2px; }
+  .tides .clock .time { font-size: 1.5rem; font-weight: 600; }
+  .tides .clock .ampm { font-size: .667em; }      /* AM/PM at 2/3 the size of the digits */
+  .tides .clock .offset { color: var(--muted); }
+  .tides .place { margin: 8px 0 0; line-height: 1.35; color: var(--muted); }
   .tides .station { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
   /* Tide now */
@@ -132,22 +137,19 @@ title: SF Tides
 <main>
   <div class="wrap tides">
     <div class="picker">
-      <div>
-        <label class="label" for="beach">Beach</label>
-        <div class="select">
-          <select id="beach">
-            <option value="baker">Baker Beach</option>
-            <option value="china">China Beach</option>
-            <option value="east">East Beach</option>
-            <option value="funston">Fort Funston</option>
-            <option value="ocean">Ocean Beach</option>
-          </select>
-        </div>
+      <div class="select">
+        <select id="beach" aria-label="Beach">
+          <option value="baker">Baker Beach</option>
+          <option value="china">China Beach</option>
+          <option value="east">East Beach</option>
+          <option value="funston">Fort Funston</option>
+          <option value="ocean">Ocean Beach</option>
+        </select>
       </div>
-      <div>
-        <p class="place" id="place"></p>
-        <span class="station" id="station"></span>
-      </div>
+      <div class="coords num" id="coords"></div>
+      <div class="clock"><span class="time num" id="clockTime"></span> <span class="offset num" id="clockOffset"></span></div>
+      <p class="place" id="place"></p>
+      <span class="station" id="station"></span>
     </div>
 
     <section class="hero" aria-live="polite">
