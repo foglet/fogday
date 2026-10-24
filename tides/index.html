@@ -84,7 +84,9 @@ title: Tides of San Francisco
   .tides .nrow.neg .label { color: var(--sand); }
 
   /* Condition tiles */
-  .tides .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .tides { --tilegap: 12px; }
+  .tides .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--tilegap); }
+  .tides .tiles + .day { margin-top: calc(var(--tilegap) - 24px); }  /* chart sits the same distance below the moon tile as the tiles are from each other (24px = .tides gap) */
   .tides .tile { background: var(--surface); border: 0; border-radius: 12px; padding: 14px 16px 16px;
     display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
@@ -138,7 +140,7 @@ title: Tides of San Francisco
 
   @media (max-width: 520px) {
     .tides .hero { grid-template-columns: 1fr; }
-    .tides .tiles { gap: 10px; }
+    .tides { --tilegap: 10px; }
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .compass { width: 48px; height: 48px; }
     .tides .sky { width: 34px; height: 34px; }
