@@ -70,7 +70,6 @@ title: Tides of San Francisco
   /* Tide now */
   .tides .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center;
     padding-block: 6px 22px; border-bottom: 1px solid var(--line); }
-  .tides .hero > .label { grid-column: 1 / -1; }
   .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px;
     background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; justify-self: start; -webkit-tap-highlight-color: transparent; }
   .tides .big:hover .unit { color: var(--accent); }
@@ -167,7 +166,6 @@ title: Tides of San Francisco
     </div>
 
     <section class="hero" aria-live="polite">
-      <span class="label" id="tideLabel">Tide</span>
       <div class="hero-in" id="tideNow" style="display:contents"></div>
     </section>
 
