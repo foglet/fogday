@@ -766,31 +766,23 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   /* Named places drawn on the map and named on a tap.
      New York's five boroughs: a label each from zoom 10 (the card names the borough from the geocoder, above).
-     San Francisco's beaches, from zoom 13: names and spots from Mapbox's own data (Search Box "beach" category and
-     Streets beach points); the long ones (Ocean Beach, Baker Beach, Funston Beach) run as a line along their sand. */
+     Bay Area beaches (the nine counties), from zoom 13: beaches.json, in this folder, built from Mapbox's own data
+     (Search Box "beach" category and Streets beach points), de-duplicated. A beach Mapbox marks at several spots
+     runs as a line through them; San Francisco's long ones (Ocean, Baker, Funston) are traced along their sand. */
   var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'The Bronx', 'Bronx', 'Staten Island'];
   var BOROUGH_LABELS = [['Manhattan', -73.9712, 40.7831], ['Brooklyn', -73.9496, 40.6500], ['Queens', -73.7949, 40.7282],
                         ['The Bronx', -73.8648, 40.8448], ['Staten Island', -74.1502, 40.5795]];
   var BEACH_ZOOM = 13, BEACH_REACH = 150;   // metres from a beach's spot or line that still count as on it
-  var BEACHES = [   // name, label spot [lng, lat], then the line along the sand (if any)
-    ['Ocean Beach', [-122.51086, 37.76056], [[-122.5123, 37.7745], [-122.5117, 37.7700], [-122.5109, 37.7606], [-122.5095, 37.7500], [-122.5083, 37.7400], [-122.5076, 37.7300]]],
-    ['Funston Beach', [-122.50581, 37.7196], [[-122.5066, 37.7235], [-122.50581, 37.7196]]],
-    ['Baker Beach', [-122.48425, 37.79289], [[-122.4871, 37.7895], [-122.4844, 37.7927], [-122.4824, 37.7960], [-122.48182, 37.79761]]],
-    ['China Beach', [-122.49112, 37.7882]],
-    ['Marshall’s Beach', [-122.47999, 37.80165]],
-    ['Mile Rock Beach', [-122.50636, 37.78731]],
-    ['Seal Rocks Beach', [-122.50832, 37.78602]],
-    ['Crissy Field East Beach', [-122.45187, 37.80616]],
-    ['Crissy Field South Beach', [-122.45415, 37.80624]],
-    ['Aquatic Park', [-122.4225, 37.8075]],
-    ['Crane Cove Beach', [-122.38703, 37.76352]],
-    ['Port of Trade Winds Beach', [-122.36996, 37.81344]]
-  ];
+  var BEACHES = [];   // [name, label spot [lng, lat], line along the sand (optional)], loaded from beaches.json on map load
   map.on('load', function () {
     function pts(rows, kind) { return rows.map(function (r) {
       return { type: 'Feature', properties: { name: r[0], kind: kind }, geometry: { type: 'Point', coordinates: r[1].length ? r[1] : [r[1], r[2]] } }; }); }
-    map.addSource('tc-places', { type: 'geojson', data: { type: 'FeatureCollection',
-      features: pts(BOROUGH_LABELS.map(function (b) { return [b[0], [b[1], b[2]]]; }), 'borough').concat(pts(BEACHES, 'beach')) } });
+    var boroughs = pts(BOROUGH_LABELS.map(function (b) { return [b[0], [b[1], b[2]]]; }), 'borough');
+    map.addSource('tc-places', { type: 'geojson', data: { type: 'FeatureCollection', features: boroughs } });
+    fetch('{{ "/transit/beaches.json" | relative_url }}').then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (list) { BEACHES = list;
+        map.getSource('tc-places').setData({ type: 'FeatureCollection', features: boroughs.concat(pts(list, 'beach')) }); })
+      .catch(function () {});   // no beaches file: the map simply has no beach names
     map.addLayer({ id: 'tc-borough-labels', type: 'symbol', source: 'tc-places', minzoom: 10, maxzoom: 15, filter: ['==', ['get', 'kind'], 'borough'],
       layout: { 'text-field': ['upcase', ['get', 'name']], 'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
                 'text-size': ['interpolate', ['linear'], ['zoom'], 10, 12, 13, 16], 'text-letter-spacing': 0.2, 'text-max-width': 8 },
