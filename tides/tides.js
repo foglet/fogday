@@ -161,6 +161,12 @@ function renderNow(){
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
   const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
+  // Next negative (minus) tide: the first low below MLLW in the coming six weeks, listed between the other two
+  const neg = extremes(beach, now, now+42*864e5).find(e=>!e.high && e.v<0);
+  const pd=t=>{ const a=parts(t), b=parts(now); return Math.round((Date.UTC(a.y,a.m-1,a.d)-Date.UTC(b.y,b.m-1,b.d))/864e5); };
+  const negLine = `<div class="nrow neg"><span class="label">Next negative tide</span>${neg
+    ? `<span><b class="num">${pd(neg.t)===0?'Today':pd(neg.t)===1?'Tomorrow':fMoonDay.format(new Date(neg.t))} at ${fTime.format(new Date(neg.t))}</b> <span class="num muted">${fh(neg.v)}</span></span>`
+    : '<span class="muted">None in the next six weeks</span>'}</div>`;
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideLabel').textContent = rising ? 'Tide is rising' : 'Tide is falling';
   $('tideNow').innerHTML = `
@@ -168,7 +174,7 @@ function renderNow(){
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${order.map(([l,e])=>line(l,e)).join('')}</div></div>`;
+    <div class="hero-side"><div class="nlist">${line(...order[0])}${negLine}${line(...order[1])}</div></div>`;
 }
 
 /* ---- Moon tile ---- */
