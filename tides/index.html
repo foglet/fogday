@@ -116,13 +116,6 @@ title: Tides of San Francisco
   .tides .lab { font: 600 12px var(--font-ui); fill: var(--ink); font-variant-numeric: tabular-nums; }
   .tides .labt { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
   .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
-  .tides .events { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-  .tides .ev { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; background: var(--bg); min-width: 0; }
-  .tides .pill { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex: none; }
-  .tides .pill.H { background: var(--water-fill); color: var(--water); }
-  .tides .pill.L { background: var(--sand-bg); color: var(--sand); }
-  .tides .ev .t { font-weight: 600; }
-  .tides .ev .h { margin-left: auto; color: var(--muted); }
   .tides .sun { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: .875rem; border-top: 1px solid var(--line); padding-top: 10px; }
   .tides .sun b { color: var(--ink); font-weight: 500; }
 
@@ -179,7 +172,6 @@ title: Tides of San Francisco
           <div id="stripInner"><div id="stripSvg"></div><div class="stripes" aria-hidden="true"></div></div>
         </div>
       </div>
-      <div class="events" id="events"></div>
       <div class="sun" id="sun"></div>
     </section>
 

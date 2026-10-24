@@ -343,7 +343,6 @@ function render(opts2){
   renderNow(); renderMoon();
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
-  $('events').innerHTML=extremes(beach, s, e).map(x=>`<div class="ev"><span class="pill ${x.high?'H':'L'}">${x.high?'High':'Low'}</span><span class="t num">${fTime.format(new Date(x.t))}</span><span class="h num">${fh(x.v)}</span></div>`).join('');
   const sun=sunTimes(view);
   $('sun').innerHTML=`<span>Sunrise <b class="num">${fTime.format(new Date(sun.rise))}</b></span><span>Sunset <b class="num">${fTime.format(new Date(sun.set))}</b></span><span>Shaded hours are night.</span>`;
   if (!opts2 || opts2.weather !== false) renderWeather();
