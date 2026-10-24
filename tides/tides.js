@@ -147,7 +147,7 @@ const levelAt = (key, t) => pred(BEACHES[key].st).getWaterLevelAtTime({time:new 
 let beach = 'baker';
 const hashBeach = (location.hash||'').slice(1);
 if (BEACHES[hashBeach]) beach = hashBeach;
-else { try { const s=localStorage.getItem('sf-tides-beach'); if (BEACHES[s]) beach=s; } catch(e){} }
+// Baker Beach on every load (a #china, #east, #funston or #ocean link still opens that beach)
 let view = todayKey();
 
 /* ---- Tide now ---- */
@@ -360,7 +360,6 @@ $('tideNow').addEventListener('click', e=>{
 const ORDER=Object.keys(BEACHES);
 $('beachBtn').addEventListener('click', ()=>{
   beach=ORDER[(ORDER.indexOf(beach)+1)%ORDER.length];
-  try{ localStorage.setItem('sf-tides-beach', beach); }catch(err){}
   render();
 });
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
