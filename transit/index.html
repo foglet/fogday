@@ -155,6 +155,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-detail-offset { color: var(--muted); }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
   /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
+  .tc-spot-wrap { pointer-events: none; }
   .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
 
   /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
@@ -642,8 +643,21 @@ document.addEventListener('DOMContentLoaded', function () {
      coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
      The clock keeps ticking. A new tap replaces it; a search pick shows the found city's; a Cities flight or Escape clears it. */
   var spotCard = document.getElementById('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotZone = null, spotAnim = null;
-  var spotDot = document.createElement('div'); spotDot.className = 'tc-spot';
-  var spotMarker = new mapboxgl.Marker({ element: spotDot });   // centered on the spot
+  /* The dot sits inside a wrapper: Mapbox sets the marker element's own opacity (to dim it behind the globe),
+     so the fade runs on the inner dot and the two don't fight. */
+  var spotWrap = document.createElement('div'), spotDot = document.createElement('div');
+  spotWrap.className = 'tc-spot-wrap'; spotDot.className = 'tc-spot'; spotWrap.appendChild(spotDot);
+  var spotMarker = new mapboxgl.Marker({ element: spotWrap });   // centered on the spot
+  /* The dot fades out over 15s and is then removed (the card stays). A new tap or search pick restarts it.
+     Reduced motion: no fade, the dot simply goes at 15s. */
+  var SPOT_LIFE = 15000, spotLife = 0, spotFade = null;
+  function spotStop() { clearTimeout(spotLife); if (spotFade) { spotFade.cancel(); spotFade = null; } }
+  function spotStart() {
+    spotStop();
+    if (!calm.matches && spotDot.animate)
+      spotFade = spotDot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPOT_LIFE, easing: 'linear', fill: 'forwards' });
+    spotLife = setTimeout(function () { spotStop(); spotMarker.remove(); }, SPOT_LIFE);
+  }
   var tzReady = null;
   function loadTz() {
     return tzReady || (tzReady = new Promise(function (ok) {
@@ -702,7 +716,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
   function showSpot(lngLat, airport) {   // airport (from search): { code, name, city }
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
-    spotMarker.setLngLat(ll).addTo(map);
+    spotMarker.setLngLat(ll).addTo(map); spotStart();
     Promise.all([placeName(lng, lat, airport && airport.city), loadTz()]).then(function (r) {
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       var zone = null;
@@ -728,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
   function clearSpot() {   // leaves as one piece: 180ms fade + 16px drop, as in the atlas
-    spotTurn++; spotZone = null; clearTimeout(spotTimer); spotMarker.remove();
+    spotTurn++; spotZone = null; clearTimeout(spotTimer); spotStop(); spotMarker.remove();
     if (spotCard.hidden || spotAnim) return;
     if (calm.matches || !spotCard.animate) { spotCard.hidden = true; return; }
     spotAnim = spotCard.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(16px)' }],
