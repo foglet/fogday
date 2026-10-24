@@ -47,19 +47,8 @@ title: Tides of San Francisco
   /* Beach name in the site's sky-blue title gradient (same as the header title) */
   .tides #beachName { background-image: linear-gradient(to right, var(--title-1), var(--title-2));
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .1em .05em; margin: -.1em -.05em; }
-  .tides .beachbtn:hover #beachName, .tides .beachbtn[aria-expanded="true"] #beachName { opacity: .8; }
-  /* The list: no panel; each beach gets its own background, only as wide as its name (as on /transit/).
-     Backgrounds come from the page tokens, so the list is dark in dark mode. */
-  .tides .beachlist { position: absolute; z-index: 30; top: calc(100% + 6px); left: -10px; margin: 0; padding: 0; list-style: none;
-    display: flex; flex-direction: column; align-items: flex-start; gap: 4px; animation: tides-menu-in .14s ease-out; }
-  .tides .beachlist[hidden] { display: none; }  /* collapsed until the name is tapped */
-  @keyframes tides-menu-in { from { opacity: 0; transform: translateY(-4px); } }
-  @media (prefers-reduced-motion: reduce) { .tides .beachlist { animation: none; } }
-  .tides .beachlist button { width: fit-content; max-width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px;
-    background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    box-shadow: 0 6px 18px rgb(0 0 0 / .18); color: var(--ink); font: 500 1.15rem/1.25 var(--font-ui); cursor: pointer; text-align: left; white-space: nowrap; }
-  .tides .beachlist button:hover, .tides .beachlist button:focus-visible { color: var(--accent); outline: none; border-color: var(--accent); }
-  .tides .beachlist button[aria-selected="true"] { font-weight: 700; color: var(--title-1); }
+  .tides .beachbtn:hover #beachName { opacity: .8; }
+  .tides .beachbtn:active #beachName { opacity: .6; }
   .tides .coords { font-size: .95rem; margin-top: 4px; }
   .tides .clock { line-height: 1.2; margin-top: 2px; }
   .tides .clock .time { font-size: 1.5rem; font-weight: 600; }
@@ -164,14 +153,7 @@ title: Tides of San Francisco
   <div class="wrap tides">
     <div class="picker">
       <div class="beachpick">
-        <button class="beachbtn" id="beachBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="beachList"><span id="beachName">Baker Beach</span></button>
-        <ul class="beachlist" id="beachList" role="listbox" aria-label="Beaches" hidden>
-          <li><button type="button" role="option" data-v="baker">Baker Beach</button></li>
-          <li><button type="button" role="option" data-v="china">China Beach</button></li>
-          <li><button type="button" role="option" data-v="east">East Beach</button></li>
-          <li><button type="button" role="option" data-v="funston">Fort Funston</button></li>
-          <li><button type="button" role="option" data-v="ocean">Ocean Beach</button></li>
-        </ul>
+        <button class="beachbtn" id="beachBtn" type="button"><span id="beachName">Baker Beach</span></button>
       </div>
       <div class="coords num" id="coords"></div>
       <div class="clock"><span class="time num" id="clockTime"></span> <span class="offset num" id="clockOffset"></span></div>
