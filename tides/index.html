@@ -57,16 +57,17 @@ title: Tides of San Francisco
   .tides .station { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
   /* Tide now */
-  .tides .hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 28px; align-items: center;
+  .tides .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center;
     padding-block: 6px 22px; border-bottom: 1px solid var(--line); }
   .tides .hero > .label { grid-column: 1 / -1; }
-  .tides .big { display: flex; align-items: baseline; }
+  .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px; }
+  .tides .big .arrow { width: clamp(1.8rem, 7vw, 2.6rem); height: clamp(1.8rem, 7vw, 2.6rem); fill: var(--water); align-self: center; margin-right: 6px; flex: none; }
+  .tides .big .dir { margin-left: 14px; align-self: center; }
   .tides .big .slab { font-size: clamp(4.2rem, 19vw, 6.6rem); }
   .tides .big .unit { font-size: 1.3rem; }
   .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-  .tides .dir { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.15rem; }
-  .tides .dir svg { width: 18px; height: 18px; fill: var(--water); }
-  .tides .nlist { display: flex; flex-direction: column; gap: 6px; }
+  .tides .dir { font-weight: 600; font-size: 1.2rem; }
+  .tides .nlist { display: flex; flex-wrap: wrap; gap: 8px 32px; }
   .tides .nrow { display: flex; flex-direction: column; line-height: 1.3; }
   .tides .nrow b { font-weight: 600; }
 
