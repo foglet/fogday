@@ -60,7 +60,9 @@ title: Tides of San Francisco
   .tides .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center;
     padding-block: 6px 22px; border-bottom: 1px solid var(--line); }
   .tides .hero > .label { grid-column: 1 / -1; }
-  .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px; }
+  .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px;
+    background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; justify-self: start; -webkit-tap-highlight-color: transparent; }
+  .tides .big:hover .unit { color: var(--accent); }
   .tides .big .arrow { width: clamp(1.8rem, 7vw, 2.6rem); height: clamp(1.8rem, 7vw, 2.6rem); fill: var(--water); align-self: center; margin-right: 6px; flex: none; }
   .tides .big .slab { font-size: clamp(4.2rem, 19vw, 6.6rem); }
   .tides .big .unit { font-size: 1.3rem; }
@@ -178,7 +180,7 @@ title: Tides of San Francisco
 
     <div class="notes">
       <span id="source"></span>
-      <span>Heights in feet above mean lower low water (MLLW). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
+      <span>Heights above mean lower low water (MLLW); tap the tide height to switch between feet and meters. A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
     </div>
   </div>
 </main>

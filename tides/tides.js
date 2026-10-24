@@ -41,7 +41,12 @@ const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day
 const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
 const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
-const ft = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+// Tide heights: predictions are in feet; tap the big number to switch to meters (remembered per visitor).
+let units = 'ft';
+try { if (localStorage.getItem('sf-tides-units') === 'm') units = 'm'; } catch(e){}
+const ft = v => { const x = units==='m' ? v*0.3048 : v; return (x < 0 ? '−' : '') + Math.abs(x).toFixed(units==='m'?2:1); };
+const U = () => units==='m' ? 'm' : 'ft';
+const fh = v => ft(v) + ' ' + U();
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---- Sunrise / sunset (NOAA sunrise equation, ±1–2 min) ---- */
@@ -153,15 +158,15 @@ function renderNow(){
   const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
   const dur = mins>=60 ? `${Math.floor(mins/60)} h ${mins%60} min` : `${mins} min`;
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
-  const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${ft(e.level)} ft${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
+  const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideLabel').textContent = rising ? 'Tide is rising' : 'Tide is falling';
   $('tideNow').innerHTML = `
-    <div class="big" aria-label="Tide ${ft(lv)} feet and ${rising?'rising':'falling'}">
+    <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
-      <span class="slab grad num">${ft(lv)}</span><span class="unit">ft</span>
-    </div>
+      <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
+    </button>
     <div class="hero-side"><div class="nlist">${order.map(([l,e])=>line(l,e)).join('')}</div></div>`;
 }
 
@@ -277,6 +282,10 @@ async function renderWeather(){
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
 const Y0=-2.5, Y1=8;
+// Axis ticks as [height in feet, label in the current unit]
+const ticks = () => units==='m'
+  ? [-0.5,0,0.5,1,1.5,2].map(m=>[m/0.3048, m<0?'−'+(-m):String(m)])
+  : [-2,0,2,4,6,8].map(f=>[f, f<0?'−'+(-f):String(f)]);
 function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:40, pb:26}; }
 function drawStrip(){
   const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
@@ -288,7 +297,7 @@ function drawStrip(){
   const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
   // fixed y-axis gutter
   let gs=`<svg viewBox="0 0 30 ${H}" width="30" height="${H}" aria-hidden="true">`;
-  for (let v=-2; v<=8; v+=2) gs+=`<text class="tick" x="24" y="${y(v)+4}" text-anchor="end">${v<0?'−'+(-v):v}</text>`;
+  for (const [v,lab] of ticks()) gs+=`<text class="tick" x="24" y="${y(v)+4}" text-anchor="end">${lab}</text>`;
   $('gutter').innerHTML=gs+'</svg>';
 
   let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height over ${DAYS_IN_STRIP} days">`;
@@ -299,7 +308,7 @@ function drawStrip(){
     if (i>0) s+=`<line x1="${x0}" x2="${x0}" y1="${pt-30}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
     [0,6,12,18].forEach(h=>{ const t=laTime(days[i].y,days[i].m,days[i].d,h); s+=`<text class="tick" x="${x(t)}" y="${H-7}" text-anchor="middle">${h===12?'noon':h===6?'6a':h===18?'6p':''}</text>`; });
   }
-  for (let v=-2; v<=8; v+=2) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.4:1}" ${v===0?'':'stroke-dasharray="2 5"'}/>`;
+  for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
   const tl=timeline(beach, start, end, 600);
   const pts=tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
   s+=`<path d="M0,${y(Y0)} L${pts.join(' L')} L${W},${y(Y0)} Z" fill="var(--water-fill)"/>`;
@@ -308,7 +317,7 @@ function drawStrip(){
     const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
     s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
     const dy = e.high ? [-21,-8] : [20,32];
-    s+=`<text class="lab" x="${ex}" y="${ey+dy[0]}" text-anchor="${anchor}">${fShort(e.t)}</text><text class="labt" x="${ex}" y="${ey+dy[1]}" text-anchor="${anchor}">${ft(e.v)} ft</text>`;
+    s+=`<text class="lab" x="${ex}" y="${ey+dy[0]}" text-anchor="${anchor}">${fShort(e.t)}</text><text class="labt" x="${ex}" y="${ey+dy[1]}" text-anchor="${anchor}">${fh(e.v)}</text>`;
   }
   const now=Date.now();
   if (now>=start && now<end){
@@ -333,12 +342,19 @@ function render(opts2){
   renderNow(); renderMoon();
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
-  $('events').innerHTML=extremes(beach, s, e).map(x=>`<div class="ev"><span class="pill ${x.high?'H':'L'}">${x.high?'High':'Low'}</span><span class="t num">${fTime.format(new Date(x.t))}</span><span class="h num">${ft(x.v)} ft</span></div>`).join('');
+  $('events').innerHTML=extremes(beach, s, e).map(x=>`<div class="ev"><span class="pill ${x.high?'H':'L'}">${x.high?'High':'Low'}</span><span class="t num">${fTime.format(new Date(x.t))}</span><span class="h num">${fh(x.v)}</span></div>`).join('');
   const sun=sunTimes(view);
   $('sun').innerHTML=`<span>Sunrise <b class="num">${fTime.format(new Date(sun.rise))}</b></span><span>Sunset <b class="num">${fTime.format(new Date(sun.set))}</b></span><span>Shaded hours are night.</span>`;
   if (!opts2 || opts2.weather !== false) renderWeather();
 }
 
+$('tideNow').addEventListener('click', e=>{
+  if (!e.target.closest('#unitToggle')) return;
+  units = units==='m' ? 'ft' : 'm';
+  try { localStorage.setItem('sf-tides-units', units); } catch(err){}
+  render({weather:false});
+  const b=$('unitToggle'); if (b.focus) b.focus();
+});
 $('beach').addEventListener('change', e=>{
   beach=e.target.value;
   try{ localStorage.setItem('sf-tides-beach', beach); }catch(err){}
