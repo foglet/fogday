@@ -40,6 +40,14 @@ title: Tides of San Francisco
   .tides .unit { font-family: var(--font-ui); font-size: 1rem; color: var(--muted); margin-left: 4px; }
 
   /* Beach picker: the beach name is the drop-down (no box), then its coordinates and local time, as on /transit/ */
+  /* Top: beach, coordinates and clock on the left; sunrise and sunset flush right, in the clock's style */
+  .tides .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .tides .top .picker { min-width: 0; }
+  .tides .suntimes { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 8px; flex: none; padding-top: 6px; }
+  .tides .suntimes > div { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
+  .tides .suntimes .label { font-size: .68rem; }
+  .tides .suntimes .time { font-size: 1.5rem; font-weight: 600; }
+  .tides .suntimes .ampm { font-size: .667em; }
   .tides .picker { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
   .tides .beachpick { position: relative; max-width: 100%; }
   .tides .beachbtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; color: var(--ink);
@@ -116,8 +124,6 @@ title: Tides of San Francisco
   .tides .lab { font: 600 12px var(--font-ui); fill: var(--ink); font-variant-numeric: tabular-nums; }
   .tides .labt { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
   .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
-  .tides .sun { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: .875rem; border-top: 1px solid var(--line); padding-top: 10px; }
-  .tides .sun b { color: var(--ink); font-weight: 500; }
 
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
@@ -144,14 +150,17 @@ title: Tides of San Francisco
 
 <main>
   <div class="wrap tides">
-    <div class="picker">
-      <div class="beachpick">
-        <button class="beachbtn" id="beachBtn" type="button"><span id="beachName">Baker Beach</span></button>
+    <div class="top">
+      <div class="picker">
+        <div class="beachpick">
+          <button class="beachbtn" id="beachBtn" type="button"><span id="beachName">Baker Beach</span></button>
+        </div>
+        <div class="coords num" id="coords"></div>
+        <div class="clock"><span class="time num" id="clockTime"></span> <span class="offset num" id="clockOffset"></span></div>
+        <p class="place" id="place"></p>
+        <span class="station" id="station"></span>
       </div>
-      <div class="coords num" id="coords"></div>
-      <div class="clock"><span class="time num" id="clockTime"></span> <span class="offset num" id="clockOffset"></span></div>
-      <p class="place" id="place"></p>
-      <span class="station" id="station"></span>
+      <div class="suntimes num" id="sun" aria-label="Sunrise and sunset"></div>
     </div>
 
     <section class="hero" aria-live="polite">
@@ -172,7 +181,6 @@ title: Tides of San Francisco
           <div id="stripInner"><div id="stripSvg"></div><div class="stripes" aria-hidden="true"></div></div>
         </div>
       </div>
-      <div class="sun" id="sun"></div>
     </section>
 
 

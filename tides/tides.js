@@ -344,7 +344,9 @@ function render(opts2){
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
   const sun=sunTimes(view);
-  $('sun').innerHTML=`<span>Sunrise <b class="num">${fTime.format(new Date(sun.rise))}</b></span><span>Sunset <b class="num">${fTime.format(new Date(sun.set))}</b></span><span>Shaded hours are night.</span>`;
+  const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
+    return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
+  $('sun').innerHTML=`<div><span class="label">Sunrise</span><span class="time">${tm(sun.rise)}</span></div><div><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
   if (!opts2 || opts2.weather !== false) renderWeather();
 }
 
