@@ -357,6 +357,7 @@ $('tideNow').addEventListener('click', e=>{
 });
 $('beach').addEventListener('change', e=>{
   beach=e.target.value;
+  e.target.blur();  // list has closed: the mark goes back to +
   try{ localStorage.setItem('sf-tides-beach', beach); }catch(err){}
   render();
 });
