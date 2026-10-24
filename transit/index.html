@@ -194,7 +194,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     color: var(--muted); cursor: pointer;
   }
   .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: var(--panel); }
-  .oa-pin[aria-expanded="true"] { color: var(--accent); }
+  .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { color: var(--accent); }   /* menu open, or rivers on */
   .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Cities menu: the same pop-out as oysteratlas.com's Regions menu. It opens to the left of the folded-map button,
@@ -338,7 +338,12 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 </div>
 </div>
 
-<!-- Moved into the map's bottom-right stack by the script: search, Cities, zoom readout, then zoom -->
+<!-- Moved into the map's bottom-right stack by the script: search, Cities, Rivers, zoom readout, then zoom -->
+<div class="tc-rivers" hidden>
+  <button type="button" class="oa-pin" aria-pressed="false" aria-label="Rivers" title="Rivers">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.6 4.7-6 8.1-6 11a6 6 0 0 0 12 0c0-2.9-2.4-6.3-6-11z"/></svg>
+  </button>
+</div>
 <div class="oa-regions" hidden>
   <button type="button" class="oa-pin" aria-expanded="false" aria-controls="tc-cities" aria-label="Cities" title="Cities">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
@@ -382,13 +387,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (calm.matches) map.jumpTo(view); else map.flyTo(Object.assign({}, FLY, view));
   }
 
-  /* Bottom-right stack, top to bottom: search, Cities, zoom readout, zoom + compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, Cities, Rivers, zoom readout, zoom + compass (added bottom first) */
   function asControl(el) {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
   }
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
+  var riversCtrl = document.querySelector('.tc-rivers');   asControl(riversCtrl);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
 
@@ -778,6 +784,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 'text-size': ['interpolate', ['linear'], ['zoom'], 10, 12, 13, 16], 'text-letter-spacing': 0.2, 'text-max-width': 8 },
       paint: { 'text-color': 'rgba(237,239,245,0.7)', 'text-halo-color': '#000', 'text-halo-width': 1.5 } });   // the city labels' colors, softened
   });
+  /* Rivers: the water-drop button turns on rivers, canals and streams in blue, with river names along them
+     (Mapbox Streets waterways, already in the map's tiles; the base map draws them near-black, all but invisible).
+     Drawn under the transit lines so the lines stay on top. Off at first; the choice is remembered for next time. */
+  var RIVER_LAYERS = ['tc-rivers', 'tc-river-labels'], riverBtn = riversCtrl.querySelector('.oa-pin');
+  var riversOn = false;
+  try { riversOn = localStorage.getItem('tc-rivers') === '1'; } catch (e) {}
+  function showRivers(on) {
+    riversOn = on; riverBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    RIVER_LAYERS.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); });
+    try { localStorage.setItem('tc-rivers', on ? '1' : '0'); } catch (e) {}
+  }
+  riverBtn.addEventListener('click', function () { showRivers(!riversOn); });
+  map.on('load', function () {
+    var src = 'mapbox://mapbox.mapbox-streets-v7', under = map.getLayer('amtrak routes 8fdb63') ? 'amtrak routes 8fdb63' : undefined;
+    if (!map.getSource(src)) return;   // the base style changed: no waterways to show
+    var vis = riversOn ? 'visible' : 'none', isStream = ['==', ['get', 'class'], 'stream'];
+    map.addLayer({ id: 'tc-rivers', type: 'line', source: src, 'source-layer': 'waterway',
+      filter: ['match', ['get', 'class'], ['river', 'canal', 'stream'], true, false],
+      layout: { visibility: vis, 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#4aa3df', 'line-opacity': ['case', isStream, 0.6, 0.9],
+               'line-width': ['interpolate', ['linear'], ['zoom'], 5, ['case', isStream, 0, 0.6], 10, ['case', isStream, 0.4, 1.4],
+                              14, ['case', isStream, 1, 3], 18, ['case', isStream, 2.5, 6]] } }, under);
+    map.addLayer({ id: 'tc-river-labels', type: 'symbol', source: src, 'source-layer': 'waterway', minzoom: 10,
+      filter: ['==', ['get', 'class'], 'river'],
+      layout: { visibility: vis, 'symbol-placement': 'line', 'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']],
+                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 10, 11, 16, 14],
+                'text-letter-spacing': 0.1, 'symbol-spacing': 400 },
+      paint: { 'text-color': '#8fcdf3', 'text-halo-color': '#000', 'text-halo-width': 1 } });
+    showRivers(riversOn);
+  });
+
   /* Tapping an airport names it, as a search pick does. The map draws an airport from zoom 10 as runways and
      taxiways, and from zoom 12 also as its code (SFO); a tap within a fingertip of any of these counts.
      The code label names the airport directly. A runway or taxiway carries no code, so it goes to the nearest
