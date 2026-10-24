@@ -1,49 +1,59 @@
-/* SF Tides — fogday.com/tides. Predictions computed in the browser from NOAA harmonic constants
-   (stations 9414290 and 9414275) with the Neaps tide predictor (neaps.min.js, MIT). */
-const STATIONS = {"ref":{"id":"noaa/9414290","name":"SAN FRANCISCO (Golden Gate)","latitude":37.80630555555555,"longitude":-122.4658888888889,"region":"CA","country":"United States","continent":"Americas","timezone":"America/Los_Angeles","type":"reference","disclaimers":"","chart_datum":"MLLW","source":{"name":"US National Oceanic and Atmospheric Administration","id":"9414290","published_harmonics":true,"url":"https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290"},"harmonic_constituents":[{"name":"M2","amplitude":0.576,"phase":208.2},{"name":"S2","amplitude":0.137,"phase":216.2},{"name":"N2","amplitude":0.122,"phase":183.2},{"name":"K1","amplitude":0.37,"phase":225.4},{"name":"M4","amplitude":0.022,"phase":136.8},{"name":"O1","amplitude":0.23,"phase":208.4},{"name":"M6","amplitude":0.002,"phase":7.3},{"name":"MK3","amplitude":0.018,"phase":124.1},{"name":"S4","amplitude":0,"phase":0},{"name":"MN4","amplitude":0.008,"phase":112},{"name":"NU2","amplitude":0.026,"phase":189.9},{"name":"S6","amplitude":0,"phase":0},{"name":"MU2","amplitude":0.007,"phase":100.2},{"name":"2N2","amplitude":0.013,"phase":153.3},{"name":"OO1","amplitude":0.012,"phase":260},{"name":"LAM2","amplitude":0.007,"phase":214.3},{"name":"S1","amplitude":0.007,"phase":282.6},{"name":"M1","amplitude":0.011,"phase":237.5},{"name":"J1","amplitude":0.019,"phase":244.3},{"name":"MM","amplitude":0,"phase":0},{"name":"SSA","amplitude":0.03,"phase":272.3},{"name":"SA","amplitude":0.044,"phase":200.2},{"name":"MSF","amplitude":0,"phase":0},{"name":"MF","amplitude":0.015,"phase":153.1},{"name":"RHO","amplitude":0.009,"phase":200},{"name":"Q1","amplitude":0.041,"phase":202.4},{"name":"T2","amplitude":0.009,"phase":204.6},{"name":"R2","amplitude":0.001,"phase":126.8},{"name":"2Q1","amplitude":0.006,"phase":208.6},{"name":"P1","amplitude":0.114,"phase":222.1},{"name":"2SM2","amplitude":0.003,"phase":37.3},{"name":"M3","amplitude":0.003,"phase":37.6},{"name":"L2","amplitude":0.018,"phase":229.6},{"name":"2MK3","amplitude":0.014,"phase":92.2},{"name":"K2","amplitude":0.04,"phase":206},{"name":"M8","amplitude":0.001,"phase":108.5},{"name":"MS4","amplitude":0.01,"phase":149}],"datums":{"LAT":1.2268009,"HAT":4.027801,"STND":0,"MHHW":3.602,"MHW":3.416,"DTL":2.712,"MTL":2.792,"MSL":2.773,"MLW":2.168,"MLLW":1.822,"GT":1.78,"MN":1.248,"DHQ":0.186,"DLQ":0.346,"HWI":7.535,"LWI":0.848,"NAVD88":1.804}},"ob":{"id":"noaa/9414275","name":"Ocean Beach, outer coast","latitude":37.775,"longitude":-122.513,"region":"CA","country":"United States","continent":"Americas","timezone":"America/Los_Angeles","type":"subordinate","chart_datum":"MLLW","source":{"name":"US National Oceanic and Atmospheric Administration","id":"9414275","published_harmonics":true,"url":"https://tidesandcurrents.noaa.gov/stationhome.html?id=9414275"},"offsets":{"reference":"noaa/9414290","height":{"type":"fixed","high":0.03,"low":0},"time":{"high":-49,"low":-35}},"harmonic_constituents":[{"name":"M2","amplitude":0.576,"phase":208.2},{"name":"S2","amplitude":0.137,"phase":216.2},{"name":"N2","amplitude":0.122,"phase":183.2},{"name":"K1","amplitude":0.37,"phase":225.4},{"name":"M4","amplitude":0.022,"phase":136.8},{"name":"O1","amplitude":0.23,"phase":208.4},{"name":"M6","amplitude":0.002,"phase":7.3},{"name":"MK3","amplitude":0.018,"phase":124.1},{"name":"S4","amplitude":0,"phase":0},{"name":"MN4","amplitude":0.008,"phase":112},{"name":"NU2","amplitude":0.026,"phase":189.9},{"name":"S6","amplitude":0,"phase":0},{"name":"MU2","amplitude":0.007,"phase":100.2},{"name":"2N2","amplitude":0.013,"phase":153.3},{"name":"OO1","amplitude":0.012,"phase":260},{"name":"LAM2","amplitude":0.007,"phase":214.3},{"name":"S1","amplitude":0.007,"phase":282.6},{"name":"M1","amplitude":0.011,"phase":237.5},{"name":"J1","amplitude":0.019,"phase":244.3},{"name":"MM","amplitude":0,"phase":0},{"name":"SSA","amplitude":0.03,"phase":272.3},{"name":"SA","amplitude":0.044,"phase":200.2},{"name":"MSF","amplitude":0,"phase":0},{"name":"MF","amplitude":0.015,"phase":153.1},{"name":"RHO","amplitude":0.009,"phase":200},{"name":"Q1","amplitude":0.041,"phase":202.4},{"name":"T2","amplitude":0.009,"phase":204.6},{"name":"R2","amplitude":0.001,"phase":126.8},{"name":"2Q1","amplitude":0.006,"phase":208.6},{"name":"P1","amplitude":0.114,"phase":222.1},{"name":"2SM2","amplitude":0.003,"phase":37.3},{"name":"M3","amplitude":0.003,"phase":37.6},{"name":"L2","amplitude":0.018,"phase":229.6},{"name":"2MK3","amplitude":0.014,"phase":92.2},{"name":"K2","amplitude":0.04,"phase":206},{"name":"M8","amplitude":0.001,"phase":108.5},{"name":"MS4","amplitude":0.01,"phase":149}],"datums":{"LAT":1.2268009,"HAT":4.027801,"STND":0,"MHHW":3.602,"MHW":3.416,"DTL":2.712,"MTL":2.792,"MSL":2.773,"MLW":2.168,"MLLW":1.822,"GT":1.78,"MN":1.248,"DHQ":0.186,"DLQ":0.346,"HWI":7.535,"LWI":0.848,"NAVD88":1.804}}};
+/* SF Tides — fogday.com/tides
+   Tides: computed in the browser from NOAA harmonic constants (stations.js) with the Neaps predictor (neaps.min.js, MIT).
+   Weather: live from the National Weather Service API (api.weather.gov), fetched by the visitor's browser. */
+(function () {
+const STATIONS = window.TIDE_STATIONS;
 const TZ = 'America/Los_Angeles';
-const SITE = {lat: 37.79, lon: -122.48};
 const BEACHES = {
-  baker: {name: 'Baker Beach', st: 'ref', place: 'Outer Golden Gate, below the Presidio bluffs'},
-  east:  {name: 'East Beach',  st: 'ref', place: 'Crissy Field, just inside the Golden Gate'},
-  ocean: {name: 'Ocean Beach', st: 'ob',  place: 'Pacific shore, from the Cliff House to Fort Funston'}
+  baker:   {name: 'Baker Beach',  st: 'ref', lat: 37.7936, lon: -122.4836, place: 'Outer Golden Gate, below the Presidio bluffs'},
+  china:   {name: 'China Beach',  st: 'ob',  lat: 37.7883, lon: -122.4915, place: 'Small cove in Sea Cliff, facing the Golden Gate'},
+  east:    {name: 'East Beach',   st: 'ref', lat: 37.8055, lon: -122.4535, place: 'Crissy Field, just inside the Golden Gate'},
+  funston: {name: 'Fort Funston', st: 'ob',  lat: 37.7146, lon: -122.5023, place: 'Beach below the Fort Funston bluffs, south of Lake Merced'},
+  ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107, place: 'Pacific shore, from the Cliff House to Sloat Boulevard'}
 };
+const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
 const SOURCE = {
-  ref: 'Computed from NOAA harmonic constants for station 9414290, San Francisco (Golden Gate).',
-  ob:  'Computed from NOAA station 9414275, Ocean Beach (time and height offsets from 9414290, San Francisco).'
+  ref: 'Tides computed from NOAA harmonic constants for station 9414290, San Francisco (Golden Gate), the nearest NOAA station to this beach.',
+  ob:  'Tides computed from NOAA station 9414275, Ocean Beach, outer coast (time and height offsets from 9414290, San Francisco), the nearest NOAA station to this beach.'
 };
+const DAYS_IN_STRIP = 1;  // one day, fitted to the card (no sideways scroll)
 
 const predictors = {};
 const pred = k => predictors[k] || (predictors[k] = Neaps.useStation(STATIONS[k]));
 const opts = {datum: 'MLLW', units: 'feet'};
+const $ = id => document.getElementById(id);
 
-/* ---- Pacific time helpers (always SF time, whatever the viewer's clock says) ---- */
+/* ---- Pacific time helpers (always SF time, whatever the visitor's clock says) ---- */
 const dtf = new Intl.DateTimeFormat('en-US', {timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
 function parts(ms){ const o={}; for (const p of dtf.formatToParts(new Date(ms))) o[p.type]=p.value; return {y:+o.year, m:+o.month, d:+o.day, h:+o.hour % 24, mi:+o.minute}; }
 function tzOffset(ms){ const p=parts(ms); return Date.UTC(p.y,p.m-1,p.d,p.h,p.mi) - Math.floor(ms/60000)*60000; }
 function laTime(y,m,d,h=0){ const base=Date.UTC(y,m-1,d,h); let t=base-tzOffset(base); t=base-tzOffset(t); return t; }
+const dayStart = day => laTime(day.y, day.m, day.d);
 function addDays(day,n){ const t=new Date(Date.UTC(day.y,day.m-1,day.d+n)); return {y:t.getUTCFullYear(), m:t.getUTCMonth()+1, d:t.getUTCDate()}; }
 function todayKey(){ const p=parts(Date.now()); return {y:p.y,m:p.m,d:p.d}; }
 const same = (a,b) => a.y===b.y && a.m===b.m && a.d===b.d;
 const fTime = new Intl.DateTimeFormat('en-US', {timeZone: TZ, hour:'numeric', minute:'2-digit'});
 const fShort = ms => fTime.format(new Date(ms)).replace(' AM','a').replace(' PM','p');
-const fDay = new Intl.DateTimeFormat('en-US', {timeZone: 'UTC', weekday:'long', month:'long', day:'numeric'});
-const fWk = new Intl.DateTimeFormat('en-US', {timeZone: 'UTC', weekday:'short'});
-const fMd = new Intl.DateTimeFormat('en-US', {timeZone: 'UTC', month:'short', day:'numeric'});
+const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', month:'long', day:'numeric'});
+const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
+const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
+const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
+const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 const ft = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---- Sunrise / sunset (NOAA sunrise equation, ±1–2 min) ---- */
 function sunTimes(day){
-  const r=Math.PI/180, noon=laTime(day.y,day.m,day.d,12);
+  const r=Math.PI/180, lat=37.79, lon=-122.48, noon=laTime(day.y,day.m,day.d,12);
   const n=Math.floor(noon/864e5+2440587.5-2451545+0.0008);
-  const Js=n-SITE.lon/360;
+  const Js=n-lon/360;
   const M=(357.5291+0.98560028*Js)%360;
   const C=1.9148*Math.sin(M*r)+0.02*Math.sin(2*M*r)+0.0003*Math.sin(3*M*r);
   const L=(M+C+180+102.9372)%360;
   const Jt=2451545+Js+0.0053*Math.sin(M*r)-0.0069*Math.sin(2*L*r);
   const dec=Math.asin(Math.sin(L*r)*Math.sin(23.4397*r));
-  const w=Math.acos((Math.sin(-0.833*r)-Math.sin(SITE.lat*r)*Math.sin(dec))/(Math.cos(SITE.lat*r)*Math.cos(dec)))/r;
+  const w=Math.acos((Math.sin(-0.833*r)-Math.sin(lat*r)*Math.sin(dec))/(Math.cos(lat*r)*Math.cos(dec)))/r;
   const toMs=J=>(J-2440587.5)*864e5;
   return {rise:toMs(Jt-w/360), set:toMs(Jt+w/360)};
 }
@@ -93,31 +103,18 @@ function moonInfo(now){
   return {p, lit, name, nextFull, age:(now-prevNew)/864e5};
 }
 
-function moonIcon(p){
-  const r=15, waning=p>.5, q=waning?1-p:p, rx=(r*Math.abs(Math.cos(2*Math.PI*q))).toFixed(2), sweep=q<.25?0:1;
-  return `<svg viewBox="-17 -17 34 34" aria-hidden="true"><circle r="${r}" fill="var(--moon-dark)"/>`+
-    `<path transform="${waning?'scale(-1,1)':''}" d="M0,-${r} A${r},${r} 0 0 1 0,${r} A${rx},${r} 0 0 ${sweep} 0,-${r}Z" fill="var(--moon-lit)"/>`+
-    `<circle r="${r}" fill="none" stroke="var(--line)" stroke-width="1"/></svg>`;
-}
-const fFull=new Intl.DateTimeFormat('en-US',{timeZone:TZ,weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-function renderMoon(){
-  const m=moonInfo(Date.now());
-  $('moon').innerHTML=`${moonIcon(m.p)}<div class="mtxt"><b>${m.name}</b><span class="num">${Math.round(m.lit*100)}% lit · day ${Math.floor(m.age)+1} of 29.5</span></div>
-    <div class="mfull"><span>Next full moon</span><b class="num">${fFull.format(new Date(m.nextFull))}</b></div>`;
-}
-
-/* ---- Data ---- */
-function dayData(key, day){
-  const start=laTime(day.y,day.m,day.d), end=laTime(...Object.values(addDays(day,1)));
-  const p=pred(BEACHES[key].st);
+/* ---- Tide data ---- */
+function extremes(key, start, end){
   // Pad the window: subordinate stations shift reference extremes by up to ±2 h.
-  const ext=p.getExtremesPrediction({start:new Date(start-3*36e5), end:new Date(end+3*36e5), ...opts}).extremes
+  return pred(BEACHES[key].st).getExtremesPrediction({start:new Date(start-3*36e5), end:new Date(end+3*36e5), ...opts}).extremes
     .map(e=>({t:+new Date(e.time), v:e.level, high:e.high}))
     .filter(e=>e.t>=start && e.t<end);
-  const tl=p.getTimelinePrediction({start:new Date(start-36e5), end:new Date(end+36e5), timeFidelity:600, ...opts}).timeline
-    .map(x=>({t:+new Date(x.time), v:x.level}));
-  return {start, end, ext, tl};
 }
+function timeline(key, start, end, step){
+  return pred(BEACHES[key].st).getTimelinePrediction({start:new Date(start), end:new Date(end), timeFidelity:step, ...opts}).timeline
+    .map(x=>({t:+new Date(x.time), v:x.level}));
+}
+const levelAt = (key, t) => pred(BEACHES[key].st).getWaterLevelAtTime({time:new Date(t), ...opts}).level;
 
 /* ---- State ---- */
 let beach = 'baker';
@@ -125,110 +122,199 @@ const hashBeach = (location.hash||'').slice(1);
 if (BEACHES[hashBeach]) beach = hashBeach;
 else { try { const s=localStorage.getItem('sf-tides-beach'); if (BEACHES[s]) beach=s; } catch(e){} }
 let view = todayKey();
-const $ = id => document.getElementById(id);
 $('beach').value = beach;
 
-/* ---- Rendering ---- */
-const NS='http://www.w3.org/2000/svg';
-const Y0=-2.5, Y1=8;
-
-function drawChart(d, isToday){
-  const box=$('chart'), W=Math.max(280, box.clientWidth), H=W<520?230:280;
-  const pl=30, pr=8, pt=34, pb=26, iw=W-pl-pr, ih=H-pt-pb;
-  const x=t=>pl+(t-d.start)/(d.end-d.start)*iw;
-  const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height through the day">`;
-  s+=`<defs><clipPath id="clip"><rect x="${pl}" y="0" width="${iw}" height="${H}"/></clipPath></defs>`;
-  const sun=sunTimes(view);
-  s+=`<rect x="${pl}" y="${pt}" width="${Math.max(0,x(sun.rise)-pl)}" height="${ih}" fill="var(--night)"/>`;
-  s+=`<rect x="${x(sun.set)}" y="${pt}" width="${Math.max(0,pl+iw-x(sun.set))}" height="${ih}" fill="var(--night)"/>`;
-  for (let v=-2; v<=8; v+=2){
-    s+=`<line x1="${pl}" x2="${pl+iw}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.4:1}" ${v===0?'':'stroke-dasharray="2 4"'}/>`;
-    s+=`<text class="tick" x="${pl-6}" y="${y(v)+4}" text-anchor="end">${v<0?'−'+(-v):v}</text>`;
-  }
-  const hrs=[0,6,12,18,24], hl=['12a','6a','12p','6p','12a'];
-  const nd=addDays(view,1);
-  hrs.forEach((h,i)=>{
-    const t = h===24 ? d.end : laTime(view.y,view.m,view.d,h);
-    s+=`<text class="tick" x="${x(t)}" y="${H-6}" text-anchor="${i===0?'start':i===4?'end':'middle'}">${hl[i]}</text>`;
-  });
-  const pts=d.tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
-  s+=`<g clip-path="url(#clip)"><path class="tide" d="M${pts[0].split(',')[0]},${y(Y0)} L${pts.join(' L')} L${pts[pts.length-1].split(',')[0]},${y(Y0)} Z" fill="var(--water-fill)"/>`;
-  s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.2" stroke-linejoin="round"/></g>`;
-  d.ext.forEach(e=>{
-    const ex=x(e.t), ey=y(e.v);
-    const anchor = ex<pl+40 ? 'start' : ex>pl+iw-40 ? 'end' : 'middle';
-    s+=`<circle cx="${ex}" cy="${ey}" r="4" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2"/>`;
-    if (e.high){
-      s+=`<text class="lab" x="${ex}" y="${ey-20}" text-anchor="${anchor}">${ft(e.v)} ft</text><text class="labt" x="${ex}" y="${ey-8}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
-    } else {
-      s+=`<text class="lab" x="${ex}" y="${ey+19}" text-anchor="${anchor}">${ft(e.v)} ft</text><text class="labt" x="${ex}" y="${ey+31}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
-    }
-  });
-  if (isToday){
-    const now=Date.now(), lv=pred(BEACHES[beach].st).getWaterLevelAtTime({time:new Date(now), ...opts}).level;
-    s+=`<line x1="${x(now)}" x2="${x(now)}" y1="${pt-6}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.5"/>`;
-    s+=`<circle cx="${x(now)}" cy="${y(lv)}" r="5.5" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2"/>`;
-    s+=`<text class="tick" x="${x(now)}" y="${pt-10}" text-anchor="${x(now)<pl+30?'start':x(now)>pl+iw-30?'end':'middle'}" style="fill:var(--buoy)">now</text>`;
-  }
-  box.innerHTML=s+'</svg>';
-}
-
+/* ---- Tide now ---- */
 function renderNow(){
-  const el=$('now'), now=Date.now(), p=pred(BEACHES[beach].st);
-  const lv=p.getWaterLevelAtTime({time:new Date(now), ...opts}).level;
-  const nx=p.getExtremesPrediction({start:new Date(now-3*36e5), end:new Date(now+30*36e5), ...opts}).extremes
+  const now=Date.now(), lv=levelAt(beach, now);
+  const nx=pred(BEACHES[beach].st).getExtremesPrediction({start:new Date(now-3*36e5), end:new Date(now+30*36e5), ...opts}).extremes
     .filter(e=>+new Date(e.time)>now);
-  const n1=nx[0], n2=nx[1];
-  const rising=n1 && n1.high;
+  const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
   const dur = mins>=60 ? `${Math.floor(mins/60)} h ${mins%60} min` : `${mins} min`;
-  const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
-  const line=(lab,e)=> e ? `<span class="next">${lab}: <b class="num">${fTime.format(new Date(e.time))}</b> · <span class="num">${ft(e.level)} ft</span>${e===n1?` · in ${dur}`:''}</span>` : '';
+  const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${ft(e.level)} ft${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
-  el.innerHTML = `<div class="level num">${ft(lv)}<small>ft</small></div>
-    <div class="state"><span class="dir"><svg viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>Tide is ${rising?'rising':'falling'}</span>
-    ${order.map(([l,e])=>line(l,e)).join('')}</div>`;
+  const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
+  $('tideNow').innerHTML = `
+    <div class="big"><span class="slab grad num">${ft(lv)}</span><span class="unit">ft</span></div>
+    <div class="hero-side"><div class="dir"><svg viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>Tide is ${rising?'rising':'falling'}</div>
+    <div class="nlist">${order.map(([l,e])=>line(l,e)).join('')}</div></div>`;
 }
 
-function spark(d){
-  const W=200,H=34, x=t=>(t-d.start)/(d.end-d.start)*W, y=v=>2+(Y1-v)/(Y1-Y0)*(H-4);
-  const pts=d.tl.filter((p,i)=>i%3===0).map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join(' L');
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)" stroke-width="1"/><path d="M${pts}" fill="none" stroke="var(--water)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
+/* ---- Moon tile ---- */
+function moonIcon(p){
+  const r=15, waning=p>.5, q=waning?1-p:p, rx=(r*Math.abs(Math.cos(2*Math.PI*q))).toFixed(2), sweep=q<.25?0:1;
+  return `<svg class="moonicon" viewBox="-17 -17 34 34" aria-hidden="true"><circle r="${r}" fill="var(--moon-dark)"/>`+
+    `<path transform="${waning?'scale(-1,1)':''}" d="M0,-${r} A${r},${r} 0 0 1 0,${r} A${rx},${r} 0 0 ${sweep} 0,-${r}Z" fill="var(--moon-lit)"/>`+
+    `<circle r="${r}" fill="none" stroke="var(--line)" stroke-width="1"/></svg>`;
+}
+function renderMoon(){
+  const m=moonInfo(Date.now());
+  $('moon').innerHTML=`<span class="label">Moon</span>
+    <div class="trow">${moonIcon(m.p)}<div class="stack"><b>${m.name}</b><span class="muted num">${Math.round(m.lit*100)}% lit</span></div></div>
+    <div class="sub"><span class="muted">Next full moon</span><b class="num">${fFull.format(new Date(m.nextFull))}</b></div>`;
 }
 
-function renderWeek(){
-  const t=todayKey(), list=$('week');
-  let html='';
-  for (let i=0;i<7;i++){
-    const day=addDays(t,i), d=dayData(beach,day);
-    const lows=d.ext.filter(e=>!e.high), lo=lows.reduce((a,b)=>b.v<a.v?b:a, lows[0]);
-    const label = i===0 ? 'Today' : fWk.format(dayDate(day));
-    html+=`<button class="wd" data-off="${i}" ${same(day,view)?'aria-current="date"':''}>
-      <span class="dname"><b>${label}</b><span>${fMd.format(dayDate(day))}</span></span>
-      ${spark(d)}
-      <span class="lo">${lo?`<span>Low <b class="num">${ft(lo.v)}</b> · <span class="num">${fShort(lo.t)}</span></span>${lo.v<0?'<span class="chip">Minus tide</span>':''}`:''}</span>
-    </button>`;
+/* ---- Weather (National Weather Service) ---- */
+const wxCache = {};
+async function nws(url){
+  const r = await fetch(url, {headers:{'Accept':'application/geo+json'}});
+  if (!r.ok) throw new Error('NWS ' + r.status);
+  return r.json();
+}
+async function loadWeather(key){
+  const c = wxCache[key];
+  if (c && Date.now()-c.at < 10*6e4) return c.data;
+  const b = BEACHES[key];
+  const pt = (await nws(`https://api.weather.gov/points/${b.lat},${b.lon}`)).properties;
+  const [daily, hourly, stations] = await Promise.all([
+    nws(pt.forecast).catch(()=>null), nws(pt.forecastHourly).catch(()=>null), nws(pt.observationStations).catch(()=>null)
+  ]);
+  let obs = null, prev = null, stationName = '';
+  for (const f of (stations && stations.features || []).slice(0, 3)) {
+    try {
+      const list = (await nws(`https://api.weather.gov/stations/${f.properties.stationIdentifier}/observations?limit=6`)).features || [];
+      const good = list.filter(o => o.properties.temperature && o.properties.temperature.value != null);
+      if (good.length && Date.now()-new Date(good[0].properties.timestamp) < 3*36e5) {
+        obs = good[0].properties; stationName = f.properties.name;
+        prev = good.find(o => new Date(good[0].properties.timestamp)-new Date(o.properties.timestamp) >= 2.5*36e5);
+        prev = prev && prev.properties; break;
+      }
+    } catch(e) {}
   }
-  list.innerHTML=html;
+  const periods = daily && daily.properties.periods || [];
+  const today = periods.find(p=>p.isDaytime), tonight = periods.find(p=>!p.isDaytime);
+  const h0 = hourly && hourly.properties.periods && hourly.properties.periods[0];
+  const data = {obs, prev, stationName, hi: today && today.temperature, lo: tonight && tonight.temperature,
+    short: h0 && h0.shortForecast, rain: h0 && h0.probabilityOfPrecipitation ? h0.probabilityOfPrecipitation.value : null,
+    hourlyTemp: h0 && h0.temperature, hourlyWind: h0 && h0.windSpeed, hourlyDir: h0 && h0.windDirection, isDay: h0 ? h0.isDaytime : true};
+  wxCache[key] = {at: Date.now(), data};
+  return data;
+}
+const cToF = c => c*9/5+32, kmhToMph = k => k/1.609344;
+const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const compass = deg => COMPASS[Math.round(((deg%360)+360)%360/22.5)%16];
+function skyIcon(text, isDay){
+  const t=(text||'').toLowerCase();
+  const sun='<circle cx="18" cy="18" r="6"/><path d="M18 4v4M18 28v4M4 18h4M28 18h4M8 8l2.8 2.8M25.2 25.2 28 28M8 28l2.8-2.8M25.2 10.8 28 8"/>';
+  const moon='<path d="M24 22.5A9 9 0 1 1 15.5 9a7 7 0 0 0 8.5 13.5z"/>';
+  const cloud='<path d="M11 27h15a5.5 5.5 0 0 0 .5-11A8 8 0 0 0 11.2 18 4.5 4.5 0 0 0 11 27z"/>';
+  const fog='<path d="M6 13h24M4 18h28M8 23h20M6 28h24"/>';
+  const rain=cloud.replace('27h15','23h15').replace('0 0 0 11 27z','0 0 0 11 23z')+'<path d="M13 27l-2 4M19 27l-2 4M25 27l-2 4"/>';
+  let g = /rain|shower|drizzle|storm/.test(t) ? rain : /fog|haze|mist|smoke/.test(t) ? fog : /cloud|overcast/.test(t) && !/partly|mostly sunny|mostly clear/.test(t) ? cloud
+    : /partly|mostly/.test(t) ? (isDay?sun:moon).replace('cx="18" cy="18" r="6"','cx="14" cy="13" r="5"') + cloud : (isDay?sun:moon);
+  return `<svg class="sky" viewBox="0 0 36 36" aria-hidden="true">${g}</svg>`;
+}
+function compassSvg(deg){
+  const ticks=[0,90,180,270].map(a=>`<line x1="0" y1="-22" x2="0" y2="-18" transform="rotate(${a})"/>`).join('');
+  const arrow = deg==null ? '' : `<g transform="rotate(${deg+180})"><path d="M0,-17 L5,-4 L0,-7 L-5,-4 Z" class="needle"/><line x1="0" y1="-7" x2="0" y2="14" class="tail"/></g>`;
+  return `<svg class="compass" viewBox="-28 -28 56 56" aria-hidden="true"><circle r="22" class="ring"/>${ticks}<text y="-23.5" text-anchor="middle">N</text>${arrow}</svg>`;
+}
+let wxToken = 0;
+async function renderWeather(){
+  const token = ++wxToken, key = beach;
+  try {
+    const w = await loadWeather(key);
+    if (token !== wxToken) return;
+    const o = w.obs || {};
+    const val = x => x && x.value != null ? x.value : null;
+    const tF = val(o.temperature) != null ? Math.round(cToF(val(o.temperature))) : w.hourlyTemp;
+    const desc = o.textDescription || w.short || '—';
+    $('weather').innerHTML = `<span class="label">Weather</span>
+      <div class="trow"><span class="slab mid num">${tF!=null?tF+'°':'—'}</span>${skyIcon(desc, w.isDay)}</div>
+      <div class="sub"><b>${esc(desc)}</b><span class="muted num">${w.hi!=null?`H ${w.hi}°`:''}${w.lo!=null?` · L ${w.lo}°`:''}</span></div>`;
+    let spd = val(o.windSpeed) != null ? Math.round(kmhToMph(val(o.windSpeed))) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
+    let dir = val(o.windDirection);
+    const gust = val(o.windGust) != null ? Math.round(kmhToMph(val(o.windGust))) : null;
+    const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
+    if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
+    $('wind').innerHTML = `<span class="label">Wind</span>
+      <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">mph</span></span>${compassSvg(spd===0?null:dir)}</div>
+      <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="muted num">${gust?`Gusts ${gust} mph`:'No gusts reported'}</span></div>`;
+    const vis = val(o.visibility) != null ? (val(o.visibility)/1609.344) : null;
+    const pr = val(o.barometricPressure) != null ? val(o.barometricPressure)/3386.389 : null;
+    const pr0 = w.prev && w.prev.barometricPressure && w.prev.barometricPressure.value != null ? w.prev.barometricPressure.value/3386.389 : null;
+    const trend = pr!=null && pr0!=null ? (pr-pr0 > 0.02 ? ' ↑' : pr0-pr > 0.02 ? ' ↓' : ' →') : '';
+    $('details').innerHTML = `<span class="label">Conditions</span>
+      <dl class="rows">
+        <div><dt>Rain chance</dt><dd class="num">${w.rain!=null?w.rain+'%':'—'}</dd></div>
+        <div><dt>Visibility</dt><dd class="num">${vis!=null?(vis>=10?Math.round(vis):vis.toFixed(1))+' mi':'—'}</dd></div>
+        <div><dt>Pressure</dt><dd class="num">${pr!=null?pr.toFixed(2)+' in'+trend:'—'}</dd></div>
+      </dl>
+      <div class="sub muted">${w.stationName?'Observed at '+esc(w.stationName):'National Weather Service forecast'}</div>`;
+  } catch(e) {
+    if (token !== wxToken) return;
+    const msg = '<p class="muted">Live weather isn’t available right now. It comes from the National Weather Service; try again in a few minutes.</p>';
+    $('weather').innerHTML = '<span class="label">Weather</span>' + msg;
+    $('wind').innerHTML = '<span class="label">Wind</span>';
+    $('details').innerHTML = '<span class="label">Conditions</span>';
+  }
 }
 
-function render(){
+/* ---- Multi-day tide strip (swipe sideways) ---- */
+const Y0=-2.5, Y1=8;
+function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:40, pb:26}; }
+function drawStrip(){
+  const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
+  const start=dayStart(view), days=[...Array(DAYS_IN_STRIP+1)].map((_,i)=>addDays(view,i));
+  const bounds=days.map(dayStart), end=bounds[DAYS_IN_STRIP];
+  const W=dayW*DAYS_IN_STRIP;
+  // each day gets the same width even across a DST change
+  const x=t=>{ let i=0; while(i<DAYS_IN_STRIP-1 && t>=bounds[i+1]) i++; return i*dayW + (t-bounds[i])/(bounds[i+1]-bounds[i])*dayW; };
+  const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
+  // fixed y-axis gutter
+  let gs=`<svg viewBox="0 0 30 ${H}" width="30" height="${H}" aria-hidden="true">`;
+  for (let v=-2; v<=8; v+=2) gs+=`<text class="tick" x="24" y="${y(v)+4}" text-anchor="end">${v<0?'−'+(-v):v}</text>`;
+  $('gutter').innerHTML=gs+'</svg>';
+
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height over ${DAYS_IN_STRIP} days">`;
+  for (let i=0;i<DAYS_IN_STRIP;i++){
+    const sun=sunTimes(days[i]), x0=i*dayW;
+    s+=`<rect x="${x0}" y="${pt}" width="${Math.max(0,x(sun.rise)-x0)}" height="${ih}" fill="var(--night)"/>`;
+    s+=`<rect x="${x(sun.set)}" y="${pt}" width="${Math.max(0,x0+dayW-x(sun.set))}" height="${ih}" fill="var(--night)"/>`;
+    if (i>0) s+=`<line x1="${x0}" x2="${x0}" y1="${pt-30}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
+    [0,6,12,18].forEach(h=>{ const t=laTime(days[i].y,days[i].m,days[i].d,h); s+=`<text class="tick" x="${x(t)}" y="${H-7}" text-anchor="middle">${h===12?'noon':h===6?'6a':h===18?'6p':''}</text>`; });
+  }
+  for (let v=-2; v<=8; v+=2) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${v===0?1.4:1}" ${v===0?'':'stroke-dasharray="2 5"'}/>`;
+  const tl=timeline(beach, start, end, 600);
+  const pts=tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
+  s+=`<path d="M0,${y(Y0)} L${pts.join(' L')} L${W},${y(Y0)} Z" fill="var(--water-fill)"/>`;
+  s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  for (const e of extremes(beach, start, end)){
+    const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
+    s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
+    const dy = e.high ? [-21,-8] : [20,32];
+    s+=`<text class="lab" x="${ex}" y="${ey+dy[0]}" text-anchor="${anchor}">${fShort(e.t)}</text><text class="labt" x="${ex}" y="${ey+dy[1]}" text-anchor="${anchor}">${ft(e.v)} ft</text>`;
+  }
+  const now=Date.now();
+  if (now>=start && now<end){
+    const nx=x(now), lv=levelAt(beach, now);
+    s+=`<line x1="${nx}" x2="${nx}" y1="${pt-14}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>`;
+    s+=`<circle cx="${nx}" cy="${y(lv)}" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/>`;
+    s+=`<text class="nowl" x="${nx}" y="${pt-18}" text-anchor="middle">now</text>`;
+  }
+  $('stripInner').style.width = W+'px';
+  $('stripSvg').innerHTML = s+'</svg>';
+  return {x, now, start, end, dayW};
+}
+
+
+/* ---- Page ---- */
+function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
-  renderMoon();
   $('place').textContent=b.place;
+  $('station').textContent=STATION_LINE[b.st];
   $('source').textContent=SOURCE[b.st];
-  $('dayTitle').textContent = (isToday?'Today, ':'') + fDay.format(dayDate(view));
-  $('todayBtn').hidden = isToday;
-  $('now').hidden = !isToday;
-  if (isToday) renderNow();
-  const d=dayData(beach,view);
-  drawChart(d,isToday);
-  $('events').innerHTML = d.ext.map(e=>`<div class="ev"><span class="pill ${e.high?'H':'L'}">${e.high?'High':'Low'}</span><span class="t num">${fTime.format(new Date(e.t))}</span><span class="h num">${ft(e.v)} ft</span></div>`).join('');
-  const s=sunTimes(view);
-  $('sun').innerHTML=`<span>Sunrise <b class="num">${fTime.format(new Date(s.rise))}</b></span><span>Sunset <b class="num">${fTime.format(new Date(s.set))}</b></span><span>Shaded areas on the chart are night.</span>`;
-  renderWeek();
+  $('dayTitle').textContent=(isToday?'Today, ':'')+fDay.format(dayDate(view));
+  $('todayBtn').hidden=isToday;
+  renderNow(); renderMoon();
+  drawStrip();
+  const s=dayStart(view), e=dayStart(addDays(view,1));
+  $('events').innerHTML=extremes(beach, s, e).map(x=>`<div class="ev"><span class="pill ${x.high?'H':'L'}">${x.high?'High':'Low'}</span><span class="t num">${fTime.format(new Date(x.t))}</span><span class="h num">${ft(x.v)} ft</span></div>`).join('');
+  const sun=sunTimes(view);
+  $('sun').innerHTML=`<span>Sunrise <b class="num">${fTime.format(new Date(sun.rise))}</b></span><span>Sunset <b class="num">${fTime.format(new Date(sun.set))}</b></span><span>Shaded hours are night.</span>`;
+  if (!opts2 || opts2.weather !== false) renderWeather();
 }
 
 $('beach').addEventListener('change', e=>{
@@ -236,10 +322,12 @@ $('beach').addEventListener('change', e=>{
   try{ localStorage.setItem('sf-tides-beach', beach); }catch(err){}
   render();
 });
-$('prev').addEventListener('click', ()=>{ view=addDays(view,-1); render(); });
-$('next').addEventListener('click', ()=>{ view=addDays(view,1); render(); });
-$('todayBtn').addEventListener('click', ()=>{ view=todayKey(); render(); });
-$('week').addEventListener('click', e=>{ const b=e.target.closest('.wd'); if(!b) return; view=addDays(todayKey(), +b.dataset.off); render(); });
-let rt; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>drawChart(dayData(beach,view), same(view,todayKey())), 120); });
-setInterval(()=>{ renderMoon(); if (same(view,todayKey())) { renderNow(); drawChart(dayData(beach,view), true); } }, 60000);
+$('prev').addEventListener('click', ()=>{ view=addDays(view,-1); render({weather:false}); });
+$('next').addEventListener('click', ()=>{ view=addDays(view,1); render({weather:false}); });
+$('todayBtn').addEventListener('click', ()=>{ view=todayKey(); render({weather:false}); });
+let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
+setInterval(()=>{ renderNow(); renderMoon(); drawStrip(); }, 60000);
+setInterval(()=>{ renderWeather(); }, 10*60000);
+lastW=$('strip').clientWidth;
 render();
+})();
