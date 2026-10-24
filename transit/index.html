@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ['Seal Rocks Beach', [-122.50832, 37.78602]],
     ['Crissy Field East Beach', [-122.45187, 37.80616]],
     ['Crissy Field South Beach', [-122.45415, 37.80624]],
-    ['Aquatic Park Beach', [-122.4225, 37.8075]],
+    ['Aquatic Park', [-122.4225, 37.8075]],
     ['Crane Cove Beach', [-122.38703, 37.76352]],
     ['Port of Trade Winds Beach', [-122.36996, 37.81344]]
   ];
@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function () {
     map.addLayer({ id: 'tc-beach-labels', type: 'symbol', source: 'tc-places', minzoom: BEACH_ZOOM, filter: ['==', ['get', 'kind'], 'beach'],
       layout: { 'text-field': ['get', 'name'], 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'],
                 'text-size': ['interpolate', ['linear'], ['zoom'], 13, 12, 16, 15], 'text-max-width': 8, 'text-padding': 4 },
-      paint: { 'text-color': '#f2d39a', 'text-halo-color': '#000', 'text-halo-width': 1 } });   // sand
+      paint: { 'text-color': 'rgba(237,239,245,1)', 'text-halo-color': '#000', 'text-halo-width': 1 } });   // the city labels' color
   });
   function segMetres(ll, a, b) {   // distance from a point to the segment a–b, flat-earth (fine at beach scale)
     var k = Math.PI / 180, c = Math.cos(ll.lat * k) * k * 6371000, m = k * 6371000;
