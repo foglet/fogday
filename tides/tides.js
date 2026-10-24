@@ -160,7 +160,7 @@ function renderNow(){
     <div class="big" aria-label="Tide ${ft(lv)} feet and ${rising?'rising':'falling'}">
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">ft</span>
-      <span class="dir">Tide is ${rising?'rising':'falling'}</span>
+      <span class="dir">${rising?'rising':'falling'}</span>
     </div>
     <div class="hero-side"><div class="nlist">${order.map(([l,e])=>line(l,e)).join('')}</div></div>`;
 }
