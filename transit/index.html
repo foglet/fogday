@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
     list.addEventListener('click', function (e) { var li = e.target.closest('.oa-result'); if (li) pick(+li.dataset.index); });
     document.addEventListener('pointerdown', function (e) { if (!searchCard.contains(e.target)) minimize(); }, true);
     setStatus(HINT);
-    return { minimize: function () { minimize(); } };
+    return { minimize: function () { minimize(); }, airports: loadAirports };   // airports: also used by a tap on an airport
   })();
 
   /* iPhone keyboard: raise the bottom-right stack so the search sits just above it */
@@ -725,9 +725,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
       if (airport) {   // SFO San Francisco International Airport, then the city
-        var head = line('oa-detail-name', ' ' + airport.name), code = document.createElement('span');
+        var head = line('oa-detail-name', (airport.code ? ' ' : '') + airport.name), code = document.createElement('span');
         code.className = 'oa-detail-code'; code.textContent = airport.code;
-        head.insertBefore(code, head.firstChild);   // SFO San Francisco International Airport, on one line
+        if (airport.code) head.insertBefore(code, head.firstChild);   // SFO San Francisco International Airport, on one line
         spotCard.appendChild(head);
         spotCard.appendChild(line('oa-detail-place', r[0]));
       } else spotCard.appendChild(line('oa-detail-name', r[0]));
@@ -749,7 +749,40 @@ document.addEventListener('DOMContentLoaded', function () {
                                 { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
     spotAnim.onfinish = function () { var a = spotAnim; spotAnim = null; spotCard.hidden = true; spotCard.textContent = ''; a.cancel(); };
   }
-  map.on('click', function (e) { if (!menuWasOpen) showSpot(e.lngLat); });
+  /* Tapping an airport names it, as a search pick does. The map draws an airport from zoom 10 as runways and
+     taxiways, and from zoom 12 also as its code (SFO); a tap within a fingertip of any of these counts.
+     The code label names the airport directly. A runway or taxiway carries no code, so it goes to the nearest
+     airport in airports.json within 8 km (heliports, seaplane bases and stations skipped). Anything else is a plain tap. */
+  var AIR_LABEL = 'aeroway labels v7', AIR_LAYERS = [AIR_LABEL, 'aeroway_runway', 'aeroway_taxiway'], AIR_REACH = 8000;
+  var NOT_AIRFIELD = /heliport|seaplane|railway|train station|rail station|bus station|ferry/i;
+  function metres(ll, lng, lat) {   // short distances: flat-earth approximation is plenty
+    var k = Math.PI / 180, x = (lng - ll.lng) * k * Math.cos((lat + ll.lat) / 2 * k), y = (lat - ll.lat) * k;
+    return Math.sqrt(x * x + y * y) * 6371000;
+  }
+  function tapAirport(e) {
+    var r = matchMedia('(pointer: coarse)').matches ? 16 : 8, p = e.point;
+    var layers = AIR_LAYERS.filter(function (id) { return map.getLayer(id); });
+    var hits = layers.length ? map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: layers }) : [];
+    if (!hits.length) return Promise.resolve(null);
+    var label = hits.filter(function (f) { return f.layer.id === AIR_LABEL; })[0], ll = e.lngLat.wrap();
+    return search.airports().then(function (all) {
+      var ref = label ? String(label.properties.ref || '').toUpperCase() : '', a = ref && all[ref];
+      if (a) return { code: ref, name: a[0], city: a[1] };
+      if (label && label.properties.name) return { code: /^[A-Z]{3}$/.test(ref) ? ref : '', name: label.properties.name, city: null };
+      var best = null, bd = AIR_REACH;
+      Object.keys(all).forEach(function (c) {
+        var v = all[c]; if (NOT_AIRFIELD.test(v[0])) return;
+        var d = metres(ll, v[3], v[4]); if (d < bd) { bd = d; best = c; }
+      });
+      return best ? { code: best, name: all[best][0], city: all[best][1] } : null;
+    });
+  }
+  map.on('click', function (e) {
+    if (menuWasOpen) return;
+    var mine = spotTurn;   // a newer tap, a search pick or a clear while the airport list loads wins
+    tapAirport(e).catch(function () { return null; })
+      .then(function (a) { if (mine === spotTurn) showSpot(e.lngLat, a || undefined); });
+  });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !spotCard.hidden && document.getElementById('maps-menu').hidden &&
         !isOpen() && searchCard.classList.contains('oa-collapsed')) clearSpot();
