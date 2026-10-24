@@ -144,7 +144,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   /* Text lines up with "Transport mode": legend border 1px + summary padding 14px, minus each line's 8px padding = 7px */
   .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 7px; max-width: calc(100% - 7px); font-size: .9rem; line-height: 1.35; }
   .oa-detail-panel[hidden] { display: none; }
-  .oa-detail-panel > div:not(.oa-detail-clock), .oa-detail-clock > div {
+  .oa-detail-panel > div {
     width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
@@ -154,9 +154,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: var(--muted); }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
-  /* Time, then its GMT offset to the right, on one line (baselines aligned); each keeps its own look */
-  .oa-detail-clock { display: flex; align-items: baseline; gap: 6px; margin-top: 2px; }
-  .oa-detail-clock > div { margin-top: 0; }
+  /* Time, a space, then its GMT offset, in one pill; each keeps its own look */
+  .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
   /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
   .tc-spot-wrap { pointer-events: none; }
   .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
@@ -732,13 +731,14 @@ document.addEventListener('DOMContentLoaded', function () {
         code.className = 'oa-detail-code'; code.textContent = airport.code;
         if (airport.code) head.insertBefore(code, head.firstChild);   // SFO San Francisco International Airport, on one line
         spotCard.appendChild(head);
-        spotCard.appendChild(line('oa-detail-place', r[0]));
-      } else spotCard.appendChild(line('oa-detail-name', r[0]));
-      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      }
+      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));   // coordinates above the city
+      spotCard.appendChild(line(airport ? 'oa-detail-place' : 'oa-detail-name', r[0]));
       if (zone) {
-        var clock = document.createElement('div'); clock.className = 'oa-detail-clock';   // 8:30 PM  GMT-7
-        clock.appendChild(line('oa-detail-time', timeText(zone)));
-        clock.appendChild(line('oa-detail-offset', offsetText(zone)));
+        var clock = document.createElement('div'), tm = document.createElement('span'), off = document.createElement('span');
+        clock.className = 'oa-detail-clock'; tm.className = 'oa-detail-time'; off.className = 'oa-detail-offset';
+        tm.textContent = timeText(zone); off.textContent = offsetText(zone);
+        clock.appendChild(tm); clock.appendChild(document.createTextNode(' ')); clock.appendChild(off);   // 8:30 PM GMT-7
         spotCard.appendChild(clock);
       } else spotCard.appendChild(line('oa-detail-offset', 'Time zone unavailable'));
       spotCard.hidden = false;
