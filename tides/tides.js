@@ -337,14 +337,15 @@ function drawStrip(){
 
 
 
-/* Sunrise / sunset, top right. Sunrise greys out once it has happened; after sunset it shows tomorrow's. */
+/* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
 function renderSun(){
   const now=Date.now(), t=todayKey(), sun=sunTimes(t);
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
   const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
     return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
-  $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">Sunrise</span><span class="time">${tm(rise)}</span></div><div><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
+  // Sunset greys out once it has happened, until the next sunrise
+  $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">Sunrise</span><span class="time">${tm(rise)}</span></div><div class="${afterSet?'past':''}"><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
 }
 
 /* ---- Page ---- */
