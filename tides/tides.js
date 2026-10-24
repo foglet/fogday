@@ -130,19 +130,6 @@ function renderClock(){
 let clockTimer; (function tick(){ renderClock(); clockTimer=setTimeout(tick, 60000-Date.now()%60000+50); })();
 
 
-/* Size the beach drop-down to the chosen name (a native select is as wide as its longest option),
-   so the +/– mark sits right after the name. */
-function fitSelect(){
-  const sel=document.getElementById('beach'); if(!sel) return;
-  const cs=getComputedStyle(sel), c=fitSelect.c||(fitSelect.c=document.createElement('canvas')).getContext('2d');
-  if (!c) return;
-  c.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const w=c.measureText(sel.options[sel.selectedIndex].text).width;
-  if (w>0) sel.style.width=Math.ceil(w+(parseFloat(cs.paddingRight)||0)+2)+'px';
-}
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSelect);
-addEventListener('resize', fitSelect);
-
 /* ---- Tide data ---- */
 function extremes(key, start, end){
   // Pad the window: subordinate stations shift reference extremes by up to ±2 h.
@@ -162,7 +149,6 @@ const hashBeach = (location.hash||'').slice(1);
 if (BEACHES[hashBeach]) beach = hashBeach;
 else { try { const s=localStorage.getItem('sf-tides-beach'); if (BEACHES[s]) beach=s; } catch(e){} }
 let view = todayKey();
-$('beach').value = beach;
 
 /* ---- Tide now ---- */
 function renderNow(){
@@ -349,7 +335,8 @@ function drawStrip(){
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
   $('place').textContent=b.place;
-  fitSelect();
+  $('beachName').textContent=b.name;
+  for (const o of document.querySelectorAll('#beachList [data-v]')) o.setAttribute('aria-selected', o.dataset.v===beach ? 'true' : 'false');
   $('coords').textContent=dms(b.lat,'N','S')+' '+dms(b.lon,'E','W');
   $('station').textContent=STATION_LINE[b.st];
   $('source').textContent=SOURCE[b.st];
@@ -369,11 +356,23 @@ $('tideNow').addEventListener('click', e=>{
   render({weather:false});
   const b=$('unitToggle'); if (b.focus) b.focus();
 });
-$('beach').addEventListener('change', e=>{
-  beach=e.target.value;
-  e.target.blur();  // list has closed: the mark goes back to +
+/* Beach menu: tap the name to open the list; tap a beach, outside, or Escape to close */
+const menuBtn=$('beachBtn'), menu=$('beachList');
+function openMenu(on){ menu.hidden=!on; menuBtn.setAttribute('aria-expanded', on?'true':'false'); if(on){ const cur=menu.querySelector('[aria-selected="true"]'); if(cur) cur.focus(); } }
+menuBtn.addEventListener('click', e=>{ e.stopPropagation(); openMenu(menu.hidden); });
+menu.addEventListener('click', e=>{
+  const o=e.target.closest('[data-v]'); if(!o) return;
+  openMenu(false); menuBtn.focus();
+  if (o.dataset.v===beach) return;
+  beach=o.dataset.v;
   try{ localStorage.setItem('sf-tides-beach', beach); }catch(err){}
   render();
+});
+document.addEventListener('click', e=>{ if(!menu.hidden && !menu.contains(e.target) && e.target!==menuBtn) openMenu(false); });
+document.addEventListener('keydown', e=>{
+  if (menu.hidden) return;
+  if (e.key==='Escape'){ openMenu(false); menuBtn.focus(); }
+  if (e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); const os=[...menu.querySelectorAll('[data-v]')], i=os.indexOf(document.activeElement); const n=os[(i+(e.key==='ArrowDown'?1:-1)+os.length)%os.length]; n.focus(); }
 });
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
 setInterval(()=>{ if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
