@@ -125,6 +125,8 @@ title: Tides of San Francisco
   .tides .labt { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
   .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
 
+  .tides .foot { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }  /* Info on the left, credit flush right on the same line */
+  .tides .madeat { flex: none; color: var(--muted); font-size: .85rem; line-height: 1.5; padding: 4px 0; text-align: right; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
@@ -181,6 +183,7 @@ title: Tides of San Francisco
     </section>
 
 
+    <div class="foot">
     <details class="notes">
       <summary>Info</summary>
       <div class="notes-body">
@@ -189,6 +192,8 @@ title: Tides of San Francisco
       <span>Heights above mean lower low water (MLLW); tap the tide height to switch between feet and meters. A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
       </div>
     </details>
+    <span class="madeat">Made at Baker Beach.</span>
+    </div>
   </div>
 </main>
 
