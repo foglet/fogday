@@ -289,7 +289,7 @@ const Y0=-2.5, Y1=8;
 const ticks = () => units==='m'
   ? [-0.5,0,0.5,1,1.5,2].map(m=>[m/0.3048, m<0?'−'+(-m):String(m)])
   : [-2,0,2,4,6,8].map(f=>[f, f<0?'−'+(-f):String(f)]);
-function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:33, pb:33}; }  // equal top and bottom space centers the plot vertically
+function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:22, pb:14}; }  // room above for the "now" label, below for low-tide labels
 function drawStrip(){
   const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
   const start=dayStart(view), days=[...Array(DAYS_IN_STRIP+1)].map((_,i)=>addDays(view,i));
@@ -298,10 +298,8 @@ function drawStrip(){
   // each day gets the same width even across a DST change
   const x=t=>{ let i=0; while(i<DAYS_IN_STRIP-1 && t>=bounds[i+1]) i++; return i*dayW + (t-bounds[i])/(bounds[i+1]-bounds[i])*dayW; };
   const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
-  // fixed y-axis gutter
-  let gs=`<svg viewBox="0 0 30 ${H}" width="30" height="${H}" aria-hidden="true">`;
-  for (const [v,lab] of ticks()) gs+=`<text class="tick" x="24" y="${y(v)+4}" text-anchor="end">${lab}</text>`;
-  $('gutter').innerHTML=gs+'</svg>';
+  // top and bottom padding of 2.5% of the card height, so the chart fills 95% of it
+  const day=$('strip').closest('.day'); if (day) day.style.paddingBlock = (H*0.025/0.95).toFixed(1)+'px';
 
   let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height over ${DAYS_IN_STRIP} days">`;
   for (let i=0;i<DAYS_IN_STRIP;i++){
@@ -309,13 +307,14 @@ function drawStrip(){
     s+=`<rect x="${x0}" y="${pt}" width="${Math.max(0,x(sun.rise)-x0)}" height="${ih}" fill="var(--night)"/>`;
     s+=`<rect x="${x(sun.set)}" y="${pt}" width="${Math.max(0,x0+dayW-x(sun.set))}" height="${ih}" fill="var(--night)"/>`;
     if (i>0) s+=`<line x1="${x0}" x2="${x0}" y1="${pt-30}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
-    [0,6,12,18].forEach(h=>{ const t=laTime(days[i].y,days[i].m,days[i].d,h); s+=`<text class="tick" x="${x(t)}" y="${H-7}" text-anchor="middle">${h===12?'noon':h===6?'6a':h===18?'6p':''}</text>`; });
   }
   for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
   const tl=timeline(beach, start, end, 600);
   const pts=tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
   s+=`<path d="M0,${y(Y0)} L${pts.join(' L')} L${W},${y(Y0)} Z" fill="var(--water-fill)"/>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  // height labels inside the chart, just above each gridline at the left edge
+  for (const [v,lab] of ticks()) s+=`<text class="tick ytick" x="4" y="${y(v)-4}">${lab}</text>`;
   for (const e of extremes(beach, start, end)){
     const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
     s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
@@ -325,9 +324,9 @@ function drawStrip(){
   const now=Date.now();
   if (now>=start && now<end){
     const nx=x(now), lv=levelAt(beach, now);
-    s+=`<line x1="${nx}" x2="${nx}" y1="${pt-14}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>`;
+    s+=`<line x1="${nx}" x2="${nx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>`;
     s+=`<circle cx="${nx}" cy="${y(lv)}" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/>`;
-    s+=`<text class="nowl" x="${nx}" y="${pt-18}" text-anchor="middle">now</text>`;
+    s+=`<text class="nowl" x="${nx}" y="${pt-6}" text-anchor="middle">now</text>`;
   }
   $('stripInner').style.width = W+'px';
   $('stripSvg').innerHTML = s+'</svg>';
