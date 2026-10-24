@@ -128,6 +128,20 @@ function renderClock(){
 }
 let clockTimer; (function tick(){ renderClock(); clockTimer=setTimeout(tick, 60000-Date.now()%60000+50); })();
 
+
+/* Size the beach drop-down to the chosen name (a native select is as wide as its longest option),
+   so the +/– mark sits right after the name. */
+function fitSelect(){
+  const sel=document.getElementById('beach'); if(!sel) return;
+  const cs=getComputedStyle(sel), c=fitSelect.c||(fitSelect.c=document.createElement('canvas')).getContext('2d');
+  if (!c) return;
+  c.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const w=c.measureText(sel.options[sel.selectedIndex].text).width;
+  if (w>0) sel.style.width=Math.ceil(w+(parseFloat(cs.paddingRight)||0)+2)+'px';
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSelect);
+addEventListener('resize', fitSelect);
+
 /* ---- Tide data ---- */
 function extremes(key, start, end){
   // Pad the window: subordinate stations shift reference extremes by up to ±2 h.
@@ -180,8 +194,11 @@ function moonIcon(p){
 function renderMoon(){
   const m=moonInfo(Date.now());
   $('moon').innerHTML=`<span class="label">Moon</span>
-    <div class="trow">${moonIcon(m.p)}<div class="stack"><b>${m.name}</b><span class="muted num">${Math.round(m.lit*100)}% lit</span></div></div>
-    <div class="sub"><span class="muted">Next full moon</span><b class="num">${fFull.format(new Date(m.nextFull))}</b></div>`;
+    <div class="moonrow">${moonIcon(m.p)}
+      <div class="stack"><span class="slab moonname">${m.name}</span>
+        <span class="muted num">${Math.round(m.lit*100)}% lit · day ${Math.floor(m.age)+1} of 29.5</span>
+        <span class="nextfull"><span class="muted">Next full moon</span> <b class="num">${fFull.format(new Date(m.nextFull))}</b></span></div>
+    </div>`;
 }
 
 /* ---- Weather (National Weather Service) ---- */
@@ -260,23 +277,11 @@ async function renderWeather(){
     $('wind').innerHTML = `<span class="label">Wind</span>
       <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">mph</span></span>${compassSvg(spd===0?null:dir)}</div>
       <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="muted num">${gust?`Gusts ${gust} mph`:'No gusts reported'}</span></div>`;
-    const vis = val(o.visibility) != null ? (val(o.visibility)/1609.344) : null;
-    const pr = val(o.barometricPressure) != null ? val(o.barometricPressure)/3386.389 : null;
-    const pr0 = w.prev && w.prev.barometricPressure && w.prev.barometricPressure.value != null ? w.prev.barometricPressure.value/3386.389 : null;
-    const trend = pr!=null && pr0!=null ? (pr-pr0 > 0.02 ? ' ↑' : pr0-pr > 0.02 ? ' ↓' : ' →') : '';
-    $('details').innerHTML = `<span class="label">Conditions</span>
-      <dl class="rows">
-        <div><dt>Rain chance</dt><dd class="num">${w.rain!=null?w.rain+'%':'—'}</dd></div>
-        <div><dt>Visibility</dt><dd class="num">${vis!=null?(vis>=10?Math.round(vis):vis.toFixed(1))+' mi':'—'}</dd></div>
-        <div><dt>Pressure</dt><dd class="num">${pr!=null?pr.toFixed(2)+' in'+trend:'—'}</dd></div>
-      </dl>
-      <div class="sub muted">${w.stationName?'Observed at '+esc(w.stationName):'National Weather Service forecast'}</div>`;
   } catch(e) {
     if (token !== wxToken) return;
     const msg = '<p class="muted">Live weather isn’t available right now. It comes from the National Weather Service; try again in a few minutes.</p>';
     $('weather').innerHTML = '<span class="label">Weather</span>' + msg;
     $('wind').innerHTML = '<span class="label">Wind</span>';
-    $('details').innerHTML = '<span class="label">Conditions</span>';
   }
 }
 
@@ -336,6 +341,7 @@ function drawStrip(){
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
   $('place').textContent=b.place;
+  fitSelect();
   $('coords').textContent=dms(b.lat,'N','S')+' '+dms(b.lon,'E','W');
   $('station').textContent=STATION_LINE[b.st];
   $('source').textContent=SOURCE[b.st];

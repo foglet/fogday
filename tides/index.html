@@ -44,10 +44,10 @@ title: Tides of San Francisco
   .tides .select { position: relative; display: inline-block; max-width: 100%; }
   .tides .select select {
     appearance: none; -webkit-appearance: none; background: transparent; border: 0; border-radius: 0; color: var(--ink);
-    padding: 0 30px 0 0; margin: 0; font: 600 clamp(1.6rem, 6.5vw, 2rem)/1.2 var(--font-ui); cursor: pointer; max-width: 100%; }
+    padding: 0 24px 0 0; margin: 0; font: 600 clamp(1.6rem, 6.5vw, 2rem)/1.2 var(--font-ui); cursor: pointer; max-width: 100%; }
   .tides .select select:hover { color: var(--accent); }
   /* + when the list is closed, – while it's open (same marks as the map legends) */
-  .tides .select::after { content: "+"; position: absolute; right: 2px; top: 50%; transform: translateY(-54%);
+  .tides .select::after { content: "+"; position: absolute; right: 0; top: 50%; transform: translateY(-54%);
     font: 400 1.6rem/1 var(--font-ui); color: var(--muted); pointer-events: none; }
   .tides .select:focus-within::after { content: "–"; }
   .tides .coords { font-size: .95rem; margin-top: 4px; }
@@ -92,7 +92,12 @@ title: Tides of San Francisco
   .tides .compass text { font: 600 7px var(--font-ui); fill: var(--muted); }
   .tides .compass .needle { fill: var(--buoy); }
   .tides .compass .tail { stroke: var(--buoy); stroke-width: 1.6; opacity: .55; }
-  .tides .moonicon { width: 40px; height: 40px; flex: none; order: 2; }
+  .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
+  .tides .moonrow { display: flex; align-items: center; gap: 22px; }
+  .tides .moonicon { width: clamp(84px, 24vw, 120px); height: clamp(84px, 24vw, 120px); flex: none; }
+  .tides .moonname { font-size: clamp(1.7rem, 6.5vw, 2.2rem); line-height: 1.05; }
+  .tides .moon .stack { gap: 4px; }
+  .tides .nextfull { font-size: .95rem; margin-top: 4px; }
   .tides .rows { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   .tides .rows div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
   .tides .rows dt { color: var(--muted); font-size: .9rem; }
@@ -129,7 +134,7 @@ title: Tides of San Francisco
     .tides .tiles { gap: 10px; }
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .compass { width: 48px; height: 48px; }
-    .tides .sky, .tides .moonicon { width: 34px; height: 34px; }
+    .tides .sky { width: 34px; height: 34px; }
   }
   @media (max-width: 340px) { .tides .tiles { grid-template-columns: 1fr; } }
   </style>
@@ -161,11 +166,10 @@ title: Tides of San Francisco
       <div class="hero-in" id="tideNow" style="display:contents"></div>
     </section>
 
-    <section class="tiles" aria-label="Conditions">
+    <section class="tiles" aria-label="Weather and moon">
       <div class="tile" id="weather"><span class="label">Weather</span><p class="loading">Loading live weather…</p></div>
       <div class="tile" id="wind"><span class="label">Wind</span><p class="loading">Loading…</p></div>
-      <div class="tile" id="details"><span class="label">Conditions</span><p class="loading">Loading…</p></div>
-      <div class="tile" id="moon"><span class="label">Moon</span></div>
+      <div class="tile moon" id="moon"><span class="label">Moon</span></div>
     </section>
 
     <section class="day" aria-label="Today’s tide chart">
