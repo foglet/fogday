@@ -127,7 +127,14 @@ title: Tides of San Francisco
   .tides .sun { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: .875rem; border-top: 1px solid var(--line); padding-top: 10px; }
   .tides .sun b { color: var(--ink); font-weight: 500; }
 
-  .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; display: flex; flex-direction: column; gap: 4px; max-width: 65ch; }
+  .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
+  .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
+  .tides .notes summary::-webkit-details-marker { display: none; }
+  .tides .notes summary::after { content: " +"; }
+  .tides .notes[open] summary::after { content: " –"; }
+  .tides .notes summary:hover { color: var(--accent); }
+  .tides .notes-body { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
 
   @media (max-width: 520px) {
     .tides .hero { grid-template-columns: 1fr; }
@@ -184,10 +191,13 @@ title: Tides of San Francisco
     </section>
 
 
-    <div class="notes">
+    <details class="notes">
+      <summary>Info</summary>
+      <div class="notes-body">
       <span id="source"></span>
       <span>Heights above mean lower low water (MLLW); tap the tide height to switch between feet and meters. A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
-    </div>
+      </div>
+    </details>
   </div>
 </main>
 
