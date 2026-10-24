@@ -362,7 +362,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
-  var FLY = { speed: 1.8, curve: 1, easing: function (t) { return t; } };          /* same steady glide as the atlas */
+  var FLY = { speed: 2.7, curve: 1, easing: function (t) { return t; } };          /* the atlas glide (1.8), 50% faster */
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function savedZoom() { try { var z = parseFloat(localStorage.getItem('tc-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
