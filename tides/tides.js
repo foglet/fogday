@@ -306,8 +306,6 @@ function render(opts2){
   $('place').textContent=b.place;
   $('station').textContent=STATION_LINE[b.st];
   $('source').textContent=SOURCE[b.st];
-  $('dayTitle').textContent=(isToday?'Today, ':'')+fDay.format(dayDate(view));
-  $('todayBtn').hidden=isToday;
   renderNow(); renderMoon();
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
@@ -322,11 +320,8 @@ $('beach').addEventListener('change', e=>{
   try{ localStorage.setItem('sf-tides-beach', beach); }catch(err){}
   render();
 });
-$('prev').addEventListener('click', ()=>{ view=addDays(view,-1); render({weather:false}); });
-$('next').addEventListener('click', ()=>{ view=addDays(view,1); render({weather:false}); });
-$('todayBtn').addEventListener('click', ()=>{ view=todayKey(); render({weather:false}); });
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
-setInterval(()=>{ renderNow(); renderMoon(); drawStrip(); }, 60000);
+setInterval(()=>{ if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
 render();

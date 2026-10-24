@@ -92,12 +92,6 @@ title: SF Tides
 
   /* Day card with the swipeable strip */
   .tides .day { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 12px; }
-  .tides .daynav { display: flex; align-items: center; gap: 8px; }
-  .tides .daynav h2 { font-size: 1.3rem; flex: 1; min-width: 0; }
-  .tides .iconbtn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; }
-  .tides .iconbtn:hover, .tides .today:hover { border-color: var(--muted); }
-  .tides .iconbtn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-  .tides .today { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: .875rem; font-weight: 600; cursor: pointer; }
   .tides .chartbox { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; }
   .tides #gutter svg { display: block; }
   .tides .strip { overflow: hidden; min-width: 0; }
@@ -168,13 +162,7 @@ title: SF Tides
       <div class="tile" id="moon"><span class="label">Moon</span></div>
     </section>
 
-    <section class="day" aria-label="Tide chart">
-      <div class="daynav">
-        <button class="iconbtn" id="prev" type="button" aria-label="Previous day"><svg viewBox="0 0 14 14"><path d="M9 2 4 7l5 5"/></svg></button>
-        <h2 id="dayTitle"></h2>
-        <button class="today" id="todayBtn" type="button" hidden>Today</button>
-        <button class="iconbtn" id="next" type="button" aria-label="Next day"><svg viewBox="0 0 14 14"><path d="m5 2 5 5-5 5"/></svg></button>
-      </div>
+    <section class="day" aria-label="Today’s tide chart">
       <div class="chartbox">
         <div id="gutter"></div>
         <div class="strip" id="strip">
