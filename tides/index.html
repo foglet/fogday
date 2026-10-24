@@ -22,12 +22,13 @@ title: Tides of San Francisco
     --sand: #a77d37;            /* low tides, minus tides */
     --sand-bg: rgb(181 139 69 / .15);
     --moon-lit: #f3ebd3; --moon-dark: #c3cfd0;
+    --past: color-mix(in srgb, var(--muted) 45%, var(--bg));  /* lighter grey for times already past */
     display: flex; flex-direction: column; gap: 24px; padding-block: 22px 36px;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides {
-    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; } }
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); } }
   :root[data-theme="dark"] .tides {
-    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; }
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); }
 
   .tides .num { font-variant-numeric: tabular-nums; }
   .tides .muted { color: var(--muted); }
@@ -48,7 +49,7 @@ title: Tides of San Francisco
   .tides .suntimes .label { font-size: .68rem; }
   .tides .suntimes .time { font-size: 1.5rem; font-weight: 600; }
   .tides .suntimes .ampm { font-size: .667em; }
-  .tides .suntimes .past .time { color: var(--muted); }  /* already happened: the theme's grey (light or dark) */
+  .tides .suntimes .past .time { color: var(--past); }  /* already happened: light grey in light mode, the site grey in dark */
   .tides .picker { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
   .tides .beachpick { position: relative; max-width: 100%; }
   .tides .beachbtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; color: var(--ink);
