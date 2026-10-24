@@ -39,6 +39,7 @@ const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', m
 const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
 const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
 const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
+const fMoonDay = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric'});
 const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 // Tide heights: predictions are in feet; tap the big number to switch to meters (remembered per visitor).
@@ -192,12 +193,19 @@ function moonIcon(p){
     `<circle r="${r}" fill="none" stroke="var(--line)" stroke-width="1"/></svg>`;
 }
 function renderMoon(){
-  const m=moonInfo(Date.now());
+  const now=Date.now(), m=moonInfo(now), full=m.nextFull;
+  // Calendar days in SF time: "in 1 day" means tomorrow. On the day itself, hours and minutes.
+  const pf=parts(full), pn=parts(now);
+  const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
+  let when;
+  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = mins>=60 ? `in ${Math.floor(mins/60)} h ${mins%60} min` : `in ${mins} min`; }
+  else when = `in ${days} day${days===1?'':'s'}`;
+  const dateTxt = (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
-        <span class="muted num">${Math.round(m.lit*100)}% lit · day ${Math.floor(m.age)+1} of 29.5</span>
-        <span class="nextfull"><span class="muted">Next full moon</span> <b class="num">${fFull.format(new Date(m.nextFull))}</b></span></div>
+        <span class="muted num">${Math.round(m.lit*100)}% lit</span>
+        <span class="nextfull"><b>Next full moon ${when}</b><br><span class="muted num">${dateTxt}</span></span></div>
     </div>`;
 }
 
