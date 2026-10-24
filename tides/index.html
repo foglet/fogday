@@ -88,7 +88,15 @@ title: SF Tides
   .tides .sun b { color: var(--ink); font-weight: 500; }
 
   /* Week */
-  .tides .week h2 { font-size: 1.3rem; margin-bottom: 8px; }
+  .tides .week summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    min-height: 44px; border-bottom: 1px solid var(--line); -webkit-tap-highlight-color: transparent; }
+  .tides .week summary::-webkit-details-marker { display: none; }
+  .tides .week summary h2 { font-size: 1.3rem; }
+  .tides .week summary:hover h2 { color: var(--accent); }
+  .tides .week .chev { color: var(--muted); flex: none; transition: transform .2s ease; }
+  .tides .week[open] .chev { transform: rotate(180deg); }
+  @media (prefers-reduced-motion: reduce) { .tides .week .chev { transition: none; } }
+  .tides .week[open] summary { border-bottom: 0; }
   .tides .weeklist { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
   .tides .wd { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 10px 4px;
     border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; width: 100%; }
@@ -146,10 +154,10 @@ title: SF Tides
       <div class="sun" id="sun"></div>
     </section>
 
-    <section class="week">
-      <h2>Next 7 days</h2>
+    <details class="week" id="weekBox">
+      <summary><h2>Next 7 days</h2><svg class="chev" viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="weeklist" id="week"></div>
-    </section>
+    </details>
 
     <div class="notes">
       <span id="source"></span>
