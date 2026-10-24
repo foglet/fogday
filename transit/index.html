@@ -154,6 +154,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: var(--muted); }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
+  .oa-detail-ampm { font-size: .667em; }   /* AM/PM at 2/3 the size of the digits */
   /* Time, a space, then its GMT offset, in one pill; each keeps its own look */
   .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
   /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
@@ -700,15 +701,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return o === 'GMT' ? 'GMT+0' : o;
     } catch (e) { return zone; }
   }
-  function timeText(zone) {     // 3:18 PM
-    try { return new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date()); }
-    catch (e) { return ''; }
+  function setTime(el, zone) {   // 3:18 PM, with AM/PM at 2/3 the size of the digits
+    el.textContent = '';
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(new Date());
+      var digits = parts.filter(function (p) { return p.type !== 'dayPeriod'; }).map(function (p) { return p.value; }).join('').trim();
+      var period = parts.filter(function (p) { return p.type === 'dayPeriod'; }).map(function (p) { return p.value; }).join('');
+      el.appendChild(document.createTextNode(digits));
+      if (period) { var ap = document.createElement('span'); ap.className = 'oa-detail-ampm'; ap.textContent = period;
+                    el.appendChild(document.createTextNode(' ')); el.appendChild(ap); }
+    } catch (e) {}
   }
   function tick() {   // refresh on each new minute (the offset too, in case daylight saving starts or ends)
     clearTimeout(spotTimer);
     var t = spotCard.querySelector('.oa-detail-time'), o = spotCard.querySelector('.oa-detail-offset');
     if (!t || !spotZone) return;
-    t.textContent = timeText(spotZone); o.textContent = offsetText(spotZone);
+    setTime(t, spotZone); o.textContent = offsetText(spotZone);
     spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
   }
   /* 46°51′48″N 03°09′48″E — degrees, minutes, seconds (rounded to the second), as on Wikipedia */
@@ -739,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (zone) {
         var clock = document.createElement('div'), tm = document.createElement('span'), off = document.createElement('span');
         clock.className = 'oa-detail-clock'; tm.className = 'oa-detail-time'; off.className = 'oa-detail-offset';
-        tm.textContent = timeText(zone); off.textContent = offsetText(zone);
+        setTime(tm, zone); off.textContent = offsetText(zone);
         clock.appendChild(tm); clock.appendChild(document.createTextNode(' ')); clock.appendChild(off);   // 8:30 PM GMT-7
         spotCard.appendChild(clock);
       } else spotCard.appendChild(line('oa-detail-offset', 'Time zone unavailable'));
