@@ -125,8 +125,8 @@ title: Tides of San Francisco
   .tides .labt { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
   .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
 
-  .tides .foot { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }  /* Info on the left, credit flush right on the same line */
-  .tides .madeat { flex: none; color: var(--muted); font-size: .85rem; line-height: 1.5; padding: 4px 0; text-align: right; }
+  .tides .foot { position: relative; }  /* credit pinned flush right on the Info line; the open notes keep their full width */
+  .tides .madeat { position: absolute; top: 0; right: 0; color: var(--muted); font-size: .85rem; line-height: 1.5; padding: 4px 0; text-align: right; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
