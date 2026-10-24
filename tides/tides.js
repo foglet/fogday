@@ -167,11 +167,12 @@ function renderNow(){
   const negIsNext = !!(neg && nLow && Math.abs(+new Date(nLow.time)-neg.t)<6e4);
   const negLine = neg ? `<div class="nrow neg"><span class="label">Negative tide</span><span><b class="num">${fTime.format(new Date(neg.t))}</b> <span class="num muted">${fh(neg.v)}</span></span></div>` : '';
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
-  $('tideLabel').textContent = rising ? 'Rising' : 'Falling';
+  $('tideLabel').textContent = 'Tide';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
+      <span class="dir">${rising?'Rising':'Falling'}</span>
     </button>
     <div class="hero-side"><div class="nlist">${negIsNext ? order.map(([l,e])=>e===nLow?negLine:line(l,e)).join('') : line(...order[0])+negLine+line(...order[1])}</div></div>`;
 }
