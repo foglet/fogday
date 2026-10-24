@@ -85,7 +85,7 @@ title: Tides of San Francisco
 
   /* Condition tiles */
   .tides .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .tides .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px;
+  .tides .tile { background: var(--surface); border: 0; border-radius: 12px; padding: 14px 16px 16px;
     display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
   .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -114,7 +114,7 @@ title: Tides of San Francisco
   .tides .loading { color: var(--muted); font-size: .9rem; }
 
   /* Day card with the swipeable strip */
-  .tides .day { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 5px; display: flex; flex-direction: column; gap: 12px; }
+  .tides .day { background: var(--surface); border: 0; border-radius: 12px; padding: 5px; display: flex; flex-direction: column; gap: 12px; }
   .tides .chartbox { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: start; }
   .tides #gutter svg { display: block; }
   .tides .strip { overflow: hidden; min-width: 0; }
