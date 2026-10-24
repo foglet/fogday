@@ -156,11 +156,11 @@ function renderNow(){
   const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${ft(e.level)} ft${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
+  $('tideLabel').textContent = rising ? 'Tide is rising' : 'Tide is falling';
   $('tideNow').innerHTML = `
     <div class="big" aria-label="Tide ${ft(lv)} feet and ${rising?'rising':'falling'}">
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">ft</span>
-      <span class="dir">${rising?'rising':'falling'}</span>
     </div>
     <div class="hero-side"><div class="nlist">${order.map(([l,e])=>line(l,e)).join('')}</div></div>`;
 }
