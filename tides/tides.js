@@ -111,23 +111,12 @@ function moonInfo(now){
 }
 
 
-/* ---- Coordinates and local clock (same format as /transit/) ---- */
+/* ---- Coordinates (same format as /transit/) ---- */
 // 37°47′37″N 122°29′01″W — degrees, minutes, seconds, rounded to the second
 function dms(v, pos, neg){
   const t=Math.round(Math.abs(v)*3600), d=Math.floor(t/3600), m=Math.floor(t%3600/60), sec=t%60, two=n=>(n<10?'0':'')+n;
   return two(d)+'°'+two(m)+'′'+two(sec)+'″'+(v<0?neg:pos);
 }
-function offsetText(){ // GMT-7 (GMT-8 in winter)
-  try { const o=new Intl.DateTimeFormat('en-US',{timeZone:TZ,timeZoneName:'shortOffset'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value; return o==='GMT'?'GMT+0':o; }
-  catch(e){ return 'Pacific Time'; }
-}
-function renderClock(){
-  const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date());
-  const digits=ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim(), period=ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join('');
-  $('clockTime').innerHTML=esc(digits)+(period?` <span class="ampm">${esc(period)}</span>`:'');
-  $('clockOffset').textContent=offsetText();
-}
-let clockTimer; (function tick(){ renderClock(); clockTimer=setTimeout(tick, 60000-Date.now()%60000+50); })();
 
 
 /* ---- Tide data ---- */

@@ -40,8 +40,8 @@ title: Tides of San Francisco
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; }
   .tides .unit { font-family: var(--font-ui); font-size: 1rem; color: var(--muted); margin-left: 4px; }
 
-  /* Beach picker: the beach name is the drop-down (no box), then its coordinates and local time, as on /transit/ */
-  /* Top: beach, coordinates and clock on the left; sunrise and sunset flush right, in the clock's style */
+  /* Beach picker: the beach name is the drop-down (no box), then its coordinates, as on /transit/ */
+  /* Top: beach and coordinates on the left; sunrise and sunset flush right */
   .tides .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
   .tides .top .picker { min-width: 0; }
   .tides .suntimes { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 8px; flex: none; padding-top: 6px; }
@@ -60,10 +60,6 @@ title: Tides of San Francisco
   .tides .beachbtn:hover #beachName { opacity: .8; }
   .tides .beachbtn:active #beachName { opacity: .6; }
   .tides .coords { font-size: .95rem; margin-top: 4px; }
-  .tides .clock { line-height: 1.2; margin-top: 2px; }
-  .tides .clock .time { font-size: 1.5rem; font-weight: 600; }
-  .tides .clock .ampm { font-size: .667em; }      /* AM/PM at 2/3 the size of the digits */
-  .tides .clock .offset { color: var(--muted); }
   .tides .place { margin: 8px 0 0; line-height: 1.35; color: var(--muted); }
   .tides .station { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
@@ -160,7 +156,6 @@ title: Tides of San Francisco
           <button class="beachbtn" id="beachBtn" type="button"><span id="beachName">Baker Beach</span></button>
         </div>
         <div class="coords num" id="coords"></div>
-        <div class="clock"><span class="time num" id="clockTime"></span> <span class="offset num" id="clockOffset"></span></div>
         <p class="place" id="place"></p>
       </div>
       <div class="suntimes num" id="sun" aria-label="Sunrise and sunset"></div>
