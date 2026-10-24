@@ -21,7 +21,8 @@ const DAYS_IN_STRIP = 1;  // one day, fitted to the card (no sideways scroll)
 const predictors = {};
 const pred = k => predictors[k] || (predictors[k] = Neaps.useStation(STATIONS[k]));
 const opts = {datum: 'MLLW', units: 'feet'};
-const $ = id => document.getElementById(id);
+// Missing elements get a detached stand-in, so one stale or removed part of the page can't stop the rest from drawing.
+const $ = id => document.getElementById(id) || document.createElement('div');
 
 /* ---- Pacific time helpers (always SF time, whatever the visitor's clock says) ---- */
 const dtf = new Intl.DateTimeFormat('en-US', {timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
@@ -324,5 +325,5 @@ let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeou
 setInterval(()=>{ if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
-render();
+try { render(); } catch (err) { console.error('SF Tides:', err); try { renderNow(); drawStrip(); } catch (e2) { console.error(e2); } }
 })();
