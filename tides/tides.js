@@ -195,8 +195,9 @@ function renderMoon(){
   const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
   // Howl only in the 28 hours before the full moon.
   const howl = full-now <= 28*3.6e6 ? ' Ahhh-wooooooo!!!' : '';
-  const head = (days<=0 ? 'A full moon and oysters.'
-    : tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
+  // Full moon day: the howl alone (always within the 28 hours)
+  const head = days<=0 ? howl.trim()
+    : (tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
   const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
     : (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
