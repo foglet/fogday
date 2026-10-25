@@ -200,6 +200,9 @@ function renderNow(){
   if (nHigh) rows.push([+new Date(nHigh.time), line('Next high tide',nHigh)]);
   if (neg) rows.push([neg.t, negLine]);
   rows.sort((a,b)=>a[0]-b[0]);
+  // Slack tide: only while it is happening (within 15 minutes either side of a high or low), never predicted ahead; always the first line
+  const SLACK_MS=15*6e4;
+  if (extremes(beach, now-SLACK_MS, now+SLACK_MS).length) rows.unshift([now, '<div class="nrow slack"><span class="label">Slack tide</span></div>']);
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
