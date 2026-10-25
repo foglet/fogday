@@ -204,8 +204,8 @@ function renderMoon(){
   const head = days<=0 ? howl.trim()
     : (tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
   const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
-    // Today: "Tonight at 9:11 PM" once the moment is after today's sunset, otherwise "Today at …"
-    : (days<=0 ? (full>=sunTimes({y:pn.y,m:pn.m,d:pn.d}).set ? 'Tonight' : 'Today') : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
+    // Today, by when the moment falls: after sunset "Tonight at 9:11 PM", noon to sunset "This afternoon at …", morning "Today at …"
+    : (days<=0 ? (full>=sunTimes({y:pn.y,m:pn.m,d:pn.d}).set ? 'Tonight' : pf.h>=12 ? 'This afternoon' : 'Today') : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
