@@ -213,11 +213,13 @@ function renderNow(){
 }
 
 /* ---- Moon tile ---- */
+// Weather Icons has 28 moon phases: new, 6 waxing crescents, first quarter, 6 waxing gibbous, full, 6 waning gibbous, third quarter, 6 waning crescents.
+// p is the phase fraction (0 new, .25 first quarter, .5 full, .75 third quarter).
+const MOON_PHASES = (()=>{ const s=n=>[1,2,3,4,5,6].map(i=>`${n}-${i}`);
+  return ['new',...s('waxing-crescent'),'first-quarter',...s('waxing-gibbous'),'full',...s('waning-gibbous'),'third-quarter',...s('waning-crescent')]; })();
 function moonIcon(p){
-  const r=15, waning=p>.5, q=waning?1-p:p, rx=(r*Math.abs(Math.cos(2*Math.PI*q))).toFixed(2), sweep=q<.25?0:1;
-  return `<svg class="moonicon" viewBox="-17 -17 34 34" aria-hidden="true"><circle r="${r}" fill="var(--moon-dark)"/>`+
-    `<path transform="${waning?'scale(-1,1)':''}" d="M0,-${r} A${r},${r} 0 0 1 0,${r} A${rx},${r} 0 0 ${sweep} 0,-${r}Z" fill="var(--moon-lit)"/>`+
-    `<circle r="${r}" fill="none" stroke="var(--line)" stroke-width="1"/></svg>`;
+  const i = Math.round((((p%1)+1)%1)*28) % 28;
+  return `<i class="wi wi-moon-alt-${MOON_PHASES[i]} moonicon" aria-hidden="true"></i>`;
 }
 function renderMoon(){
   const now=Date.now(), m=moonInfo(now), full=m.nextFull;
@@ -289,17 +291,26 @@ async function loadWeather(key){
 const cToF = c => c*9/5+32, kmhToMph = k => k/1.609344;
 const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 const compass = deg => COMPASS[Math.round(((deg%360)+360)%360/22.5)%16];
-function skyIcon(text, isDay){
-  const t=(text||'').toLowerCase();
-  const sun='<circle cx="18" cy="18" r="6"/><path d="M18 4v4M18 28v4M4 18h4M28 18h4M8 8l2.8 2.8M25.2 25.2 28 28M8 28l2.8-2.8M25.2 10.8 28 8"/>';
-  const moon='<path d="M24 22.5A9 9 0 1 1 15.5 9a7 7 0 0 0 8.5 13.5z"/>';
-  const cloud='<path d="M11 27h15a5.5 5.5 0 0 0 .5-11A8 8 0 0 0 11.2 18 4.5 4.5 0 0 0 11 27z"/>';
-  const fog='<path d="M6 13h24M4 18h28M8 23h20M6 28h24"/>';
-  const rain=cloud.replace('27h15','23h15').replace('0 0 0 11 27z','0 0 0 11 23z')+'<path d="M13 27l-2 4M19 27l-2 4M25 27l-2 4"/>';
-  let g = /rain|shower|drizzle|storm/.test(t) ? rain : /fog|haze|mist|smoke/.test(t) ? fog : /cloud|overcast/.test(t) && !/partly|mostly sunny|mostly clear/.test(t) ? cloud
-    : /partly|mostly/.test(t) ? (isDay?sun:moon).replace('cx="18" cy="18" r="6"','cx="14" cy="13" r="5"') + cloud : (isDay?sun:moon);
-  return `<svg class="sky" viewBox="0 0 36 36" aria-hidden="true">${g}</svg>`;
+// NWS text description ("Mostly Cloudy", "Fog/Mist", "Light Rain"…) → a Weather Icons glyph (https://erikflowers.github.io/weather-icons/)
+function skyClass(text, isDay){
+  const t=(text||'').toLowerCase(), dn=(d,n)=>isDay?d:n;
+  if (/thunder|t-storm|tstorm/.test(t)) return dn('wi-day-thunderstorm','wi-night-alt-thunderstorm');
+  if (/snow|flurr/.test(t)) return 'wi-snow';
+  if (/sleet|freezing|ice pellet|hail/.test(t)) return 'wi-sleet';
+  if (/drizzle/.test(t)) return 'wi-sprinkle';
+  if (/shower/.test(t)) return dn('wi-day-showers','wi-night-alt-showers');
+  if (/rain/.test(t)) return 'wi-rain';
+  if (/smoke/.test(t)) return 'wi-smoke';
+  if (/haze|dust/.test(t)) return dn('wi-day-haze','wi-night-fog');
+  if (/fog|mist/.test(t)) return dn('wi-day-fog','wi-night-fog');
+  if (/overcast/.test(t) || (/cloud/.test(t) && !/partly|mostly/.test(t))) return 'wi-cloudy';
+  if (/mostly cloudy/.test(t)) return dn('wi-day-cloudy','wi-night-alt-cloudy');
+  if (/partly|mostly sunny|mostly clear|few clouds/.test(t)) return dn('wi-day-sunny-overcast','wi-night-alt-partly-cloudy');
+  if (/sunny|clear|fair/.test(t)) return dn('wi-day-sunny','wi-night-clear');
+  if (/wind|breez|gust/.test(t)) return 'wi-strong-wind';
+  return dn('wi-day-sunny','wi-night-clear');
 }
+const skyIcon = (text, isDay) => `<i class="wi ${skyClass(text, isDay)} sky" aria-hidden="true"></i>`;
 function compassSvg(deg){
   const ticks=[0,90,180,270].map(a=>`<line x1="0" y1="-22" x2="0" y2="-18" transform="rotate(${a})"/>`).join('');
   const arrow = deg==null ? '' : `<g transform="rotate(${deg+180})"><path d="M0,-17 L5,-4 L0,-7 L-5,-4 Z" class="needle"/><line x1="0" y1="-7" x2="0" y2="14" class="tail"/></g>`;

@@ -10,6 +10,7 @@ title: Tides of San Francisco
 <meta name="description" content="Tides, weather and wind for San Francisco beaches: Baker Beach, China Beach, East Beach, Fort Funston and Ocean Beach. By Fogday Studios.">
 
 {% include head.html %}
+<link rel="stylesheet" href="{{ '/tides/weather-icons/css/weather-icons.min.css' | relative_url }}">
 <style>
   /* SF Tides, in the site's own identity: Patua One slab numbers in the sky-blue title gradient,
      condition tiles, and a day tide curve.
@@ -93,7 +94,8 @@ title: Tides of San Francisco
   .tides .sub b { font-weight: 600; font-size: 1rem; }
   .tides .stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
   .tides .stack b { font-weight: 600; }
-  .tides .sky { width: 40px; height: 40px; flex: none; fill: none; stroke: var(--sand); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* Weather Icons glyphs (font): sized by font-size, colored by color */
+  .tides .sky { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }
   .tides .compass { width: 58px; height: 58px; flex: none; }
   .tides .compass .ring { fill: none; stroke: var(--line); stroke-width: 1.5; }
   .tides .compass line { stroke: var(--muted); stroke-width: 1.5; }
@@ -102,7 +104,7 @@ title: Tides of San Francisco
   .tides .compass .tail { stroke: var(--buoy); stroke-width: 1.6; opacity: .55; }
   .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
   .tides .moonrow { display: flex; align-items: center; gap: 22px; }
-  .tides .moonicon { width: clamp(84px, 24vw, 120px); height: clamp(84px, 24vw, 120px); flex: none; }
+  .tides .moonicon { font-size: clamp(72px, 21vw, 104px); width: 1.15em; text-align: center; flex: none; color: var(--sand); }
   .tides .moonname { font-size: clamp(1.7rem, 6.5vw, 2.2rem); line-height: 1.05; }
   .tides .moon .stack { gap: 4px; }
   .tides .nextfull { font-size: .95rem; margin-top: 4px; }
@@ -140,7 +142,7 @@ title: Tides of San Francisco
     .tides { --tilegap: 10px; }
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .compass { width: 48px; height: 48px; }
-    .tides .sky { width: 34px; height: 34px; }
+    .tides .sky { font-size: 34px; }
   }
   @media (max-width: 340px) { .tides .tiles { grid-template-columns: 1fr; } }
   </style>
@@ -188,6 +190,7 @@ title: Tides of San Francisco
       <span class="station" id="station"></span>
       <span id="source"></span>
       <span>Heights above mean lower low water (MLLW); tap the tide height to switch between feet and meters. A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
+      <span>Weather and moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
       </div>
     </details>
     <span class="madeat">Made at Baker Beach.</span>
