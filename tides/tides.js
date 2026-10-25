@@ -194,7 +194,7 @@ function renderMoon(){
   // Tomorrow, after that day's sunset: "The full moon is tomorrow night."
   const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
   // Howl only in the 28 hours before the full moon.
-  const howl = full-now <= 28*3.6e6 ? ' Ahhh-wooooo!!!!' : '';
+  const howl = full-now <= 28*3.6e6 ? ' Ahhh-woooooo!!!' : '';
   const head = (days<=0 ? 'A full moon and oysters.'
     : tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
   const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
