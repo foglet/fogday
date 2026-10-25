@@ -326,7 +326,11 @@ function drawStrip(){
   for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
   const tl=timeline(beach, start, end, 600);
   const pts=tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
-  s+=`<path d="M0,${y(Y0)} L${pts.join(' L')} L${W},${y(Y0)} Z" fill="var(--water-fill)"/>`;
+  const waterD=`M0,${y(Y0)} L${pts.join(' L')} L${W},${y(Y0)} Z`;
+  s+=`<path d="${waterD}" fill="var(--water-fill)"/>`;
+  // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
+  s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
+  s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
   // height labels inside the chart, just above each gridline at the left edge
   for (const [v,lab] of ticks()) s+=`<text class="tick ytick" x="4" y="${y(v)-4}">${lab}</text>`;
