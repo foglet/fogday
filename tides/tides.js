@@ -146,7 +146,7 @@ function renderNow(){
     .filter(e=>+new Date(e.time)>now);
   const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
-  const dur = mins>=60 ? `${Math.floor(mins/60)} h ${mins%60} min` : `${mins} min`;
+  const dur = mins>=60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
   const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
@@ -177,7 +177,7 @@ function renderMoon(){
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
   let when;
-  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = mins>=60 ? `in ${Math.floor(mins/60)} h ${mins%60} min` : `in ${mins} min`; }
+  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = mins>=60 ? `in ${Math.floor(mins/60)}h${mins%60}m` : `in ${mins}m`; }
   else when = `in ${days} day${days===1?'':'s'}`;
   const dateTxt = (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
