@@ -199,7 +199,7 @@ function renderMoon(){
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
         <span class="muted num">${Math.round(m.lit*100)}% lit</span>
-        <span class="nextfull"><b>${head}</b><br><span class="muted num">${dateTxt}</span></span></div>
+        <span class="nextfull"><b>${head} Ah-ewwww!!</b><br><span class="muted num">${dateTxt}</span></span></div>
     </div>`;
 }
 
