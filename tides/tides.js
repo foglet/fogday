@@ -160,7 +160,7 @@ function renderNow(){
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
   const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
-  // Negative (minus) tide: listed between the other two only if one is still to come later today
+  // Negative (minus) tide: listed last, to the right of the other two, only if one is still to come later today
   const neg = extremes(beach, now, dayStart(addDays(todayKey(),1))).find(e=>!e.high && e.v<0);
   // If the next low is itself the negative tide, it takes the low's place instead of appearing twice
   const negIsNext = !!(neg && nLow && Math.abs(+new Date(nLow.time)-neg.t)<6e4);
@@ -171,7 +171,7 @@ function renderNow(){
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${negIsNext ? order.map(([l,e])=>e===nLow?negLine:line(l,e)).join('') : line(...order[0])+negLine+line(...order[1])}</div></div>`;
+    <div class="hero-side"><div class="nlist">${negIsNext ? order.map(([l,e])=>e===nLow?negLine:line(l,e)).join('') : line(...order[0])+line(...order[1])+negLine}</div></div>`;
 }
 
 /* ---- Moon tile ---- */
