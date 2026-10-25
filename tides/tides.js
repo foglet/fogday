@@ -189,23 +189,22 @@ function agoDur(mins){
 /* ---- Tide now ---- */
 function renderNow(){
   const now=Date.now(), lv=levelAt(beach, now);
-  // Rolling window: highs and lows from the last two hours, and every upcoming one within the next eighteen hours
-  const PAST_MS=2*36e5, AHEAD_MS=18*36e5;
+  // Rolling window: highs and lows from the last two hours, and upcoming ones within the next twelve hours
+  const PAST_MS=2*36e5, AHEAD_MS=12*36e5;
   const win=extremes(beach, now-PAST_MS, now+AHEAD_MS);
   const nx=extremes(beach, now, now+30*36e5).filter(e=>e.t>now);  // next extreme, for the arrow even when it is past the window
   const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
   const past=win.filter(e=>e.t<=now), ahead=win.filter(e=>e.t>now);
+  const nLow=ahead.find(e=>!e.high), nHigh=ahead.find(e=>e.high);
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'high tide':'low tide';
   const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
-  // Upcoming: every high and low in the window (a minus low reads "Negative tide"); the soonest gets "in about … hours"
-  // The first upcoming low and first upcoming high read "Next …"; later ones in the window just "Low tide" / "High tide"
-  const upLabel=(e,first)=>neg(e)?'Negative tide':first?'Next '+kind(e):kind(e)[0].toUpperCase()+kind(e).slice(1);
+  // Upcoming: the next low and next high (a minus low reads "Negative tide"); the soonest gets "in about … hours"
+  const upLabel=e=>neg(e)?'Negative tide':'Next '+kind(e);
   const rows = [];
   for (const e of past) rows.push([e.t, row(neg(e)?'Negative tide':kind(e)[0].toUpperCase()+kind(e).slice(1), e, agoDur(Math.round((now-e.t)/6e4)), 'past')]);
-  ahead.forEach((e,i)=>{ const first=!ahead.slice(0,i).some(x=>x.high===e.high);
-    rows.push([e.t, row(upLabel(e,first), e, n1 && Math.abs(e.t-n1.t)<6e4 ? inDur(mins) : '')]); });
+  for (const e of [nLow, nHigh]) if (e) rows.push([e.t, row(upLabel(e), e, n1 && Math.abs(e.t-n1.t)<6e4 ? inDur(mins) : '')]);
   rows.sort((a,b)=>a[0]-b[0]);
   // Slack tide: only while it is happening (within 15 minutes either side of a high or low), never predicted ahead; always the first line
   const SLACK_MS=15*6e4;
