@@ -16,7 +16,8 @@ const SOURCE = {
   ref: 'Tides computed from NOAA harmonic constants for station 9414290, San Francisco (Golden Gate), the nearest NOAA station to this beach.',
   ob:  'Tides computed from NOAA station 9414275, Ocean Beach, outer coast (time and height offsets from 9414290, San Francisco), the nearest NOAA station to this beach.'
 };
-const DAYS_IN_STRIP = 1;  // one day, fitted to the card (no sideways scroll)
+const CHART_PAST_MS = 2*36e5, CHART_AHEAD_MS = 18*36e5;  // tide chart: last 2 h through the next 18 h
+const fDayName = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday: 'short'});
 
 const predictors = {};
 const pred = k => predictors[k] || (predictors[k] = Neaps.useStation(STATIONS[k]));
@@ -179,32 +180,30 @@ function inDur(mins){
   return `in a little more than ${hoursText(Math.floor(mins/60))}`;
 }
 
-// Past durations, within the two-hour look-back: "just now", "under an hour ago", "about an hour ago", "about two hours ago"
-function agoDur(mins){
-  if (mins<15) return 'just now';
-  if (mins<45) return 'under an hour ago';
-  return `about ${hoursText(Math.max(1, Math.round(mins/60)))} ago`;
+/* ---- Shared rolling window: the chart and the tide list use the same one, so they always agree.
+   Edges are on the minute, so the list and chart drawn in the same minute see identical highs and lows. ---- */
+function chartWindow(){
+  const m=Math.floor(Date.now()/6e4)*6e4, start=m-CHART_PAST_MS, end=m+CHART_AHEAD_MS;
+  return {start, end, extremes: extremes(beach, start, end)};
 }
 
 /* ---- Tide now ---- */
 function renderNow(){
   const now=Date.now(), lv=levelAt(beach, now);
-  // Rolling window: highs and lows from the last two hours, and upcoming ones within the next twelve hours
-  const PAST_MS=2*36e5, AHEAD_MS=12*36e5;
-  const win=extremes(beach, now-PAST_MS, now+AHEAD_MS);
+  // Same rolling window as the chart; the list shows only its upcoming highs and lows
+  const ahead=chartWindow().extremes.filter(e=>e.t>now);
   const nx=extremes(beach, now, now+30*36e5).filter(e=>e.t>now);  // next extreme, for the arrow even when it is past the window
   const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
-  const past=win.filter(e=>e.t<=now), ahead=win.filter(e=>e.t>now);
-  const nLow=ahead.find(e=>!e.high), nHigh=ahead.find(e=>e.high);
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'high tide':'low tide';
   const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
-  // Upcoming: the next low and next high (a minus low reads "Negative tide"); the soonest gets "in about … hours"
-  const upLabel=e=>neg(e)?'Negative tide':'Next '+kind(e);
+  // Every upcoming high and low in the window, in order. The first low and first high read "Next …", later ones
+  // "Low tide" / "High tide", a minus low "Negative tide"; the soonest gets "in about … hours"
+  const upLabel=(e,first)=>neg(e)?'Negative tide':first?'Next '+kind(e):kind(e)[0].toUpperCase()+kind(e).slice(1);
   const rows = [];
-  for (const e of past) rows.push([e.t, row(neg(e)?'Negative tide':kind(e)[0].toUpperCase()+kind(e).slice(1), e, agoDur(Math.round((now-e.t)/6e4)), 'past')]);
-  for (const e of [nLow, nHigh]) if (e) rows.push([e.t, row(upLabel(e), e, n1 && Math.abs(e.t-n1.t)<6e4 ? inDur(mins) : '')]);
+  ahead.forEach((e,i)=>{ const first=!ahead.slice(0,i).some(x=>x.high===e.high);
+    rows.push([e.t, row(upLabel(e,first), e, n1 && Math.abs(e.t-n1.t)<6e4 ? inDur(mins) : '')]); });
   rows.sort((a,b)=>a[0]-b[0]);
   // Slack tide: only while it is happening (within 15 minutes either side of a high or low), never predicted ahead; always the first line
   const SLACK_MS=15*6e4;
@@ -362,19 +361,21 @@ const ticks = () => units==='m'
 function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:22, pb:14}; }  // room above for the "now" label, below for low-tide labels
 function drawStrip(){
   const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
-  const start=dayStart(view), days=[...Array(DAYS_IN_STRIP+1)].map((_,i)=>addDays(view,i));
-  const bounds=days.map(dayStart), end=bounds[DAYS_IN_STRIP];
-  const W=dayW*DAYS_IN_STRIP;
-  // each day gets the same width even across a DST change
-  const x=t=>{ let i=0; while(i<DAYS_IN_STRIP-1 && t>=bounds[i+1]) i++; return i*dayW + (t-bounds[i])/(bounds[i+1]-bounds[i])*dayW; };
+  // Rolling window: the last two hours through the next eighteen, redrawn every minute
+  const now=Date.now(), cw=chartWindow(), start=cw.start, end=cw.end;
+  const W=dayW;
+  const x=t=>(t-start)/(end-start)*W;
   const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
   // top and bottom padding of 2.5% of the card height, so the chart fills 95% of it
   const day=$('strip').closest('.day'); if (day) day.style.paddingBlock = (H*0.025/0.95).toFixed(1)+'px';
 
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height over ${DAYS_IN_STRIP} days">`;
-  for (let i=0;i<DAYS_IN_STRIP;i++){
-    const x0=i*dayW;
-    if (i>0) s+=`<line x1="${x0}" x2="${x0}" y1="${pt-30}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height from two hours ago to eighteen hours ahead">`;
+  // Midnight: a divider with the new day's name at its foot
+  for (let d=todayKey(), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))){
+    if (m<=start) continue;
+    const mx=x(m), anchor=mx>W-30?'end':'start';
+    s+=`<line x1="${mx}" x2="${mx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
+    s+=`<text class="dayl" x="${mx+(anchor==='end'?-5:5)}" y="${pt+ih-6}" text-anchor="${anchor}">${fDayName.format(new Date(m))}</text>`;
   }
   for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
   const tl=timeline(beach, start, end, 600);
@@ -385,19 +386,20 @@ function drawStrip(){
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
-  for (const e of extremes(beach, start, end)){
+  let labels='';  // drawn last, over the "now" line, so a label near it stays readable
+  for (const e of cw.extremes){
     const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
     s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
     // Height above the wave, time below it (highs and lows alike)
-    s+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="${anchor}">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
+    labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="${anchor}">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
   }
-  const now=Date.now();
-  if (now>=start && now<end){
+  {
     const nx=x(now), lv=levelAt(beach, now);
     s+=`<line x1="${nx}" x2="${nx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>`;
     s+=`<circle cx="${nx}" cy="${y(lv)}" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/>`;
     s+=`<text class="nowl" x="${nx}" y="${pt-6}" text-anchor="middle">now</text>`;
   }
+  s+=labels;
   $('stripInner').style.width = W+'px';
   $('stripSvg').innerHTML = s+'</svg>';
   return {x, now, start, end, dayW};
