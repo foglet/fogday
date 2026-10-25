@@ -96,15 +96,13 @@ title: Tides of San Francisco
   .tides .stack b { font-weight: 600; }
   /* Weather Icons glyphs (font): sized by font-size, colored by color */
   .tides .sky { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }
-  .tides .compass { width: 58px; height: 58px; flex: none; }
-  .tides .compass .ring { fill: none; stroke: var(--line); stroke-width: 1.5; }
-  .tides .compass line { stroke: var(--muted); stroke-width: 1.5; }
-  .tides .compass text { font: 600 7px var(--font-ui); fill: var(--muted); }
-  .tides .compass .needle { fill: var(--buoy); }
-  .tides .compass .tail { stroke: var(--buoy); stroke-width: 1.6; opacity: .55; }
+  .tides .windicon { font-size: 44px; width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; flex: none; color: var(--buoy); }
+  /* Sunrise / sunset / moonrise / moonset glyph beside each label */
+  .tides .riseicon { font-size: 1.7em; color: var(--sand); margin-right: .3em; vertical-align: -.3em; letter-spacing: 0; }
+  .tides .past .riseicon { color: var(--past); }
   .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
   .tides .moonrow { display: flex; align-items: center; gap: 22px; }
-  .tides .moonicon { font-size: clamp(72px, 21vw, 104px); width: 1.15em; text-align: center; flex: none; color: var(--sand); }
+  .tides .moonicon { font-size: clamp(72px, 21vw, 104px); width: 1em; text-align: center; flex: none; color: var(--sand); }
   .tides .moonname { font-size: clamp(1.7rem, 6.5vw, 2.2rem); line-height: 1.05; }
   .tides .moon .stack { gap: 4px; }
   .tides .nextfull { font-size: .95rem; margin-top: 4px; }
@@ -141,8 +139,14 @@ title: Tides of San Francisco
     .tides .hero { grid-template-columns: 1fr; }
     .tides { --tilegap: 10px; }
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
-    .tides .compass { width: 48px; height: 48px; }
+    .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
+    .tides .moonrow { gap: 14px; }  /* room for the moonrise / moonset glyphs */
     .tides .sky { font-size: 34px; }
+  }
+  @media (max-width: 400px) {  /* phones: keep "Full moon" on one line beside the moonrise / moonset glyphs */
+    .tides .moonrow { gap: 10px; }
+    .tides .moonicon { font-size: 17vw; }
+    .tides .moontimes .riseicon { font-size: 1.35em; margin-right: .15em; }
   }
   @media (max-width: 340px) { .tides .tiles { grid-template-columns: 1fr; } }
   </style>

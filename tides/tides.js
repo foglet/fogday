@@ -225,7 +225,7 @@ function renderMoon(){
   const now=Date.now(), m=moonInfo(now), full=m.nextFull;
   // Moonrise / moonset for today, same format as sunrise / sunset; each greys out once it has happened, "—" if none today
   const mrs=moonTimes(todayKey());
-  const mt=(lab,ms,n)=>`<div class="${ms!==null&&n>=ms?'past':''}"><span class="label">${lab}</span><span class="time">${ms===null?'—':tm(ms)}</span></div>`;
+  const mt=(lab,ms,n)=>`<div class="${ms!==null&&n>=ms?'past':''}"><span class="label">${riseIcon(lab)}${lab}</span><span class="time">${ms===null?'—':tm(ms)}</span></div>`;
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
@@ -311,10 +311,12 @@ function skyClass(text, isDay){
   return dn('wi-day-sunny','wi-night-clear');
 }
 const skyIcon = (text, isDay) => `<i class="wi ${skyClass(text, isDay)} sky" aria-hidden="true"></i>`;
-function compassSvg(deg){
-  const ticks=[0,90,180,270].map(a=>`<line x1="0" y1="-22" x2="0" y2="-18" transform="rotate(${a})"/>`).join('');
-  const arrow = deg==null ? '' : `<g transform="rotate(${deg+180})"><path d="M0,-17 L5,-4 L0,-7 L-5,-4 Z" class="needle"/><line x1="0" y1="-7" x2="0" y2="14" class="tail"/></g>`;
-  return `<svg class="compass" viewBox="-28 -28 56 56" aria-hidden="true"><circle r="22" class="ring"/>${ticks}<text y="-23.5" text-anchor="middle">N</text>${arrow}</svg>`;
+// Wind arrow (Weather Icons wi-wind-direction, which points north): wind "from" deg blows toward deg+180, as Weather Icons' from-N-deg classes do.
+// Calm shows Beaufort 0; a wind with no reported direction shows "n/a".
+function windIcon(deg, calm){
+  if (calm) return '<i class="wi wi-wind-beaufort-0 windicon" aria-hidden="true"></i>';
+  if (deg==null) return '<i class="wi wi-na windicon" aria-hidden="true"></i>';
+  return `<i class="wi wi-wind-direction windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true"></i>`;
 }
 let wxToken = 0;
 async function renderWeather(){
@@ -335,7 +337,7 @@ async function renderWeather(){
     const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
     if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
     $('wind').innerHTML = `<span class="label">Wind</span>
-      <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">mph</span></span>${compassSvg(spd===0?null:dir)}</div>
+      <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">mph</span></span>${windIcon(dir, spd===0)}</div>
       <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="muted num">${gust?`Gusts ${gust} mph`:'No gusts reported'}</span></div>`;
   } catch(e) {
     if (token !== wxToken) return;
@@ -401,13 +403,16 @@ function drawStrip(){
 const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
   return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
 
+// Weather Icons glyph for a Sunrise / Sunset / Moonrise / Moonset label
+const riseIcon = lab => `<i class="wi wi-${lab.toLowerCase()} riseicon" aria-hidden="true"></i>`;
+
 /* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
 function renderSun(){
   const now=Date.now(), t=todayKey(), sun=sunTimes(t);
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
   // Sunset greys out once it has happened, until the next sunrise
-  $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">Sunrise</span><span class="time">${tm(rise)}</span></div><div class="${afterSet?'past':''}"><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
+  $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">${riseIcon('Sunrise')}Sunrise</span><span class="time">${tm(rise)}</span></div><div class="${afterSet?'past':''}"><span class="label">${riseIcon('Sunset')}Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
 }
 
 /* ---- Page ---- */
