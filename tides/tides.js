@@ -159,7 +159,8 @@ function renderNow(){
   const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
   const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
-  const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
+  // Fixed order: low tide, high tide, then negative tide
+  const order = [['Next low tide',nLow],['Next high tide',nHigh]];
   // Negative (minus) tide: listed last, to the right of the other two, only if one is still to come later today
   const neg = extremes(beach, now, dayStart(addDays(todayKey(),1))).find(e=>!e.high && e.v<0);
   // If the next low is itself the negative tide, it takes the low's place instead of appearing twice
