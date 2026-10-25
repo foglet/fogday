@@ -354,9 +354,7 @@ function drawStrip(){
 
   let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height over ${DAYS_IN_STRIP} days">`;
   for (let i=0;i<DAYS_IN_STRIP;i++){
-    const sun=sunTimes(days[i]), x0=i*dayW;
-    s+=`<rect x="${x0}" y="${pt}" width="${Math.max(0,x(sun.rise)-x0)}" height="${ih}" fill="var(--night)"/>`;
-    s+=`<rect x="${x(sun.set)}" y="${pt}" width="${Math.max(0,x0+dayW-x(sun.set))}" height="${ih}" fill="var(--night)"/>`;
+    const x0=i*dayW;
     if (i>0) s+=`<line x1="${x0}" x2="${x0}" y1="${pt-30}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
   }
   for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
