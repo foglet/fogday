@@ -6,7 +6,7 @@ const STATIONS = window.TIDE_STATIONS;
 const TZ = 'America/Los_Angeles';
 const BEACHES = {
   baker:   {name: 'Baker Beach',  st: 'ref', lat: 37.7936, lon: -122.4836, place: 'Below the Presidio bluffs, the outer Golden Gate'},
-  china:   {name: 'China Beach',  st: 'ob',  lat: 37.7883, lon: -122.4915, place: 'Small cove in Sea Cliff, facing the Golden Gate'},
+  china:   {name: 'China Beach',  st: 'ob',  lat: 37.7883, lon: -122.4915, place: 'A delightful small cove in Sea Cliff, facing the Golden Gate'},
   east:    {name: 'East Beach',   st: 'ref', lat: 37.8055, lon: -122.4535, place: 'At Crissy Field, just inside the Golden Gate'},
   funston: {name: 'Fort Funston', st: 'ob',  lat: 37.7146, lon: -122.5023, place: 'Below the Fort Funston bluffs, south of Lake Merced'},
   ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107, place: 'The Pacific shore from the Cliff House to Sloat Boulevard'}
