@@ -405,9 +405,8 @@ function drawStrip(){
 
 
 
-// "6:17 PM" with a smaller "PM", as in the sunrise / sunset and moonrise / moonset columns
-const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
-  return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
+// Rise / set times, formatted like the tide times ("5:33 PM")
+const tm=ms=>esc(fTime.format(new Date(ms)));
 
 // Weather Icons glyph for a Sunrise / Sunset / Moonrise / Moonset label
 const riseIcon = lab => `<i class="wi wi-${lab.toLowerCase()} riseicon" aria-hidden="true"></i>`;
