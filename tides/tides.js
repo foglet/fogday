@@ -65,6 +65,35 @@ function sunTimes(day){
   return {rise:toMs(Jt-w/360), set:toMs(Jt+w/360)};
 }
 
+/* ---- Moonrise / moonset (low-precision lunar position, after SunCalc / Astronomy Answers; ±2–5 min) ---- */
+function moonAlt(ms){
+  const r=Math.PI/180, lat=37.79*r, lw=122.48*r, d=ms/864e5-0.5+2440588-2451545, e=23.4397*r;
+  const L=r*(218.316+13.176396*d), M=r*(134.963+13.064993*d), F=r*(93.272+13.22935*d);
+  const l=L+r*6.289*Math.sin(M), b=r*5.128*Math.sin(F);
+  const ra=Math.atan2(Math.sin(l)*Math.cos(e)-Math.tan(b)*Math.sin(e), Math.cos(l));
+  const dec=Math.asin(Math.sin(b)*Math.cos(e)+Math.cos(b)*Math.sin(e)*Math.sin(l));
+  const H=r*(280.16+360.9856235*d)-lw-ra;
+  let h=Math.asin(Math.sin(lat)*Math.sin(dec)+Math.cos(lat)*Math.cos(dec)*Math.cos(H));
+  if (h>=0) h+=0.0002967/Math.tan(h+0.00312536/(h+0.08901179));  // refraction
+  return h;
+}
+// Today's moonrise and moonset in SF (either can be null: the moon skips one of them about once a month)
+function moonTimes(day){
+  const t0=dayStart(day), hr=36e5, hc=0.133*Math.PI/180;
+  let h0=moonAlt(t0)-hc, rise=null, set=null;
+  for (let i=1;i<=24;i+=2){
+    const h1=moonAlt(t0+i*hr)-hc, h2=moonAlt(t0+(i+1)*hr)-hc;
+    const a=(h0+h2)/2-h1, b=(h2-h0)/2, xe=-b/(2*a), ye=(a*xe+b)*xe+h1, disc=b*b-4*a*h1;
+    let roots=0, x1=0, x2=0;
+    if (disc>=0){ const dx=Math.sqrt(disc)/(Math.abs(a)*2); x1=xe-dx; x2=xe+dx; if (Math.abs(x1)<=1) roots++; if (Math.abs(x2)<=1) roots++; if (x1<-1) x1=x2; }
+    if (roots===1){ if (h0<0) rise=i+x1; else set=i+x1; }
+    else if (roots===2){ rise=i+(ye<0?x2:x1); set=i+(ye<0?x1:x2); }
+    if (rise!==null && set!==null) break;
+    h0=h2;
+  }
+  return {rise: rise===null?null:t0+rise*hr, set: set===null?null:t0+set*hr};
+}
+
 /* ---- Moon (Meeus, Astronomical Algorithms ch. 49; accurate to ~1 min) ---- */
 function moonPhaseJDE(k){ // k integer = new moon, k+0.5 = full moon
   const r=Math.PI/180, T=k/1236.85, T2=T*T, T3=T2*T, T4=T3*T, full=(k%1)!==0;
@@ -189,6 +218,9 @@ function moonIcon(p){
 }
 function renderMoon(){
   const now=Date.now(), m=moonInfo(now), full=m.nextFull;
+  // Moonrise / moonset for today, same format as sunrise / sunset; each greys out once it has happened, "—" if none today
+  const mrs=moonTimes(todayKey());
+  const mt=(lab,ms,n)=>`<div class="${ms!==null&&n>=ms?'past':''}"><span class="label">${lab}</span><span class="time">${ms===null?'—':tm(ms)}</span></div>`;
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
@@ -211,6 +243,7 @@ function renderMoon(){
       <div class="stack"><span class="slab moonname">${m.name}</span>
         <span class="muted num">${Math.round(m.lit*100)}% lit</span>
         <span class="nextfull"><b>${head}</b><br><span class="muted num">${dateTxt}</span></span></div>
+      <div class="suntimes num moontimes" aria-label="Moonrise and moonset">${mt('Moonrise',mrs.rise,now)}${mt('Moonset',mrs.set,now)}</div>
     </div>`;
 }
 
@@ -354,13 +387,15 @@ function drawStrip(){
 
 
 
+// "6:17 PM" with a smaller "PM", as in the sunrise / sunset and moonrise / moonset columns
+const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
+  return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
+
 /* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
 function renderSun(){
   const now=Date.now(), t=todayKey(), sun=sunTimes(t);
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
-  const tm=ms=>{ const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,hour:'numeric',minute:'2-digit',hour12:true}).formatToParts(new Date(ms));
-    return esc(ps.filter(p=>p.type!=='dayPeriod').map(p=>p.value).join('').trim())+' <span class="ampm">'+esc(ps.filter(p=>p.type==='dayPeriod').map(p=>p.value).join(''))+'</span>'; };
   // Sunset greys out once it has happened, until the next sunrise
   $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">Sunrise</span><span class="time">${tm(rise)}</span></div><div class="${afterSet?'past':''}"><span class="label">Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
 }
