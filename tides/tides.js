@@ -190,7 +190,8 @@ function renderMoon(){
   if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = inDur(mins); }
   else if (days===1) when = 'is tomorrow';
   else when = `in ${days} days`;
-  const dateTxt = (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
+  const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
+    : (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
