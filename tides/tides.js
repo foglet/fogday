@@ -139,12 +139,15 @@ if (BEACHES[hashBeach]) beach = hashBeach;
 // Baker Beach on every load (a #china, #east, #funston or #ocean link still opens that beach)
 let view = todayKey();
 
-/* ---- Durations: "in about six hours" within 15 min of a whole hour, else "in 6h20m" / "in 40m" ---- */
+/* ---- Durations, in words: "shortly" under 45 min; "in about six hours" within 15 min of a whole hour;
+   "in a little more than six hours" from 16 to 44 min past it ---- */
 const NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty-one','twenty-two','twenty-three','twenty-four'];
+function hoursText(h){ return h===1 ? 'an hour' : `${NUM_WORDS[h]||h} hours`; }
 function inDur(mins){
+  if (mins<45) return 'shortly';
   const h=Math.round(mins/60);
-  if (h>=1 && Math.abs(mins-h*60)<=15) return `in about ${NUM_WORDS[h]||h} hour${h===1?'':'s'}`;
-  return mins>=60 ? `in ${Math.floor(mins/60)}h${mins%60}m` : `in ${mins}m`;
+  if (Math.abs(mins-h*60)<=15) return `in about ${hoursText(h)}`;
+  return `in a little more than ${hoursText(Math.floor(mins/60))}`;
 }
 
 /* ---- Tide now ---- */
