@@ -114,7 +114,7 @@ title: Tides of San Francisco
   .tides .loading { color: var(--muted); font-size: .9rem; }
 
   /* Day card with the swipeable strip */
-  .tides .day { background: var(--surface); border: 0; border-radius: 12px; padding: 0 2.5%; display: flex; flex-direction: column; gap: 12px; }  /* 2.5% each side: chart fills 95% of the card width; tides.js sets the matching top/bottom */
+  .tides .day { background: var(--surface); border: 0; border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }  /* chart fills 100% of the card width (rounded corners clip it); tides.js sets the top/bottom padding */
   .tides .chartbox { display: block; }  /* height labels sit inside the chart, so no side gutter */
   .tides .strip { overflow: hidden; min-width: 0; }
   .tides .strip svg { display: block; overflow: visible; }
