@@ -139,6 +139,13 @@ if (BEACHES[hashBeach]) beach = hashBeach;
 // Baker Beach on every load (a #china, #east, #funston or #ocean link still opens that beach)
 let view = todayKey();
 
+/* ---- Durations: "in about 6 hours" within 15 min of a whole hour, else "in 6h20m" / "in 40m" ---- */
+function inDur(mins){
+  const h=Math.round(mins/60);
+  if (h>=1 && Math.abs(mins-h*60)<=15) return `in about ${h} hour${h===1?'':'s'}`;
+  return mins>=60 ? `in ${Math.floor(mins/60)}h${mins%60}m` : `in ${mins}m`;
+}
+
 /* ---- Tide now ---- */
 function renderNow(){
   const now=Date.now(), lv=levelAt(beach, now);
@@ -146,9 +153,8 @@ function renderNow(){
     .filter(e=>+new Date(e.time)>now);
   const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
-  const dur = mins>=60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
-  const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · in ${dur}`:''}</span></span></div>` : '';
+  const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
   const order = rising ? [['Next high tide',nHigh],['Next low tide',nLow]] : [['Next low tide',nLow],['Next high tide',nHigh]];
   // Negative (minus) tide: listed between the other two only if one is still to come later today
   const neg = extremes(beach, now, dayStart(addDays(todayKey(),1))).find(e=>!e.high && e.v<0);
@@ -177,7 +183,7 @@ function renderMoon(){
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
   let when;
-  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = mins>=60 ? `in ${Math.floor(mins/60)}h${mins%60}m` : `in ${mins}m`; }
+  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = inDur(mins); }
   else when = `in ${days} day${days===1?'':'s'}`;
   const dateTxt = (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
