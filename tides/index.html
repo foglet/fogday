@@ -45,9 +45,9 @@ title: Tides of San Francisco
   /* Top: beach and coordinates on the left; sunrise and sunset flush right */
   .tides .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
   .tides .top .picker { min-width: 0; }
-  .tides .suntimes { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 8px; flex: none; padding-top: 6px; }
+  .tides .suntimes { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 18px; flex: none; padding-top: 6px; }
   .tides .suntimes > div { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
-  .tides .suntimes .label { font-size: .68rem; }
+  .tides .suntimes .label { font-size: .68rem; display: inline-flex; align-items: center; }  /* glyph centered on the label text */
   .tides .suntimes .time { font-size: 1.5rem; font-weight: 600; }
   .tides .suntimes .ampm { font-size: .667em; }
   .tides .suntimes .past .time { color: var(--past); }  /* already happened: light grey in light mode, the site grey in dark */
@@ -98,8 +98,12 @@ title: Tides of San Francisco
   .tides .sky { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }
   .tides .windicon { font-size: 44px; width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; flex: none; color: var(--buoy); }
   /* Sunrise / sunset / moonrise / moonset glyph beside each label */
-  .tides .riseicon { font-size: 1.7em; color: var(--sand); margin-right: .3em; vertical-align: -.3em; letter-spacing: 0; }
+  .tides .riseicon { font-size: 1.7em; line-height: 1; color: var(--sand); margin-right: .3em; letter-spacing: 0; position: relative; top: var(--rise-nudge, 0); }
   .tides .past .riseicon { color: var(--past); }
+  /* Each glyph's ink sits differently in its em box; nudge so its ink is centered on the label's capitals (measured) */
+  .tides .wi-sunrise.riseicon { --rise-nudge: .08em; }
+  .tides .wi-moonrise.riseicon { --rise-nudge: -.03em; }
+  .tides .wi-moonset.riseicon { --rise-nudge: -.12em; }
   .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
   .tides .moonrow { display: flex; align-items: center; gap: 22px; }
   .tides .moonicon { font-size: clamp(72px, 21vw, 104px); width: 1em; text-align: center; flex: none; color: var(--sand); }
@@ -146,7 +150,7 @@ title: Tides of San Francisco
   @media (max-width: 400px) {  /* phones: keep "Full moon" on one line beside the moonrise / moonset glyphs */
     .tides .moonrow { gap: 10px; }
     .tides .moonicon { font-size: 17vw; }
-    .tides .moontimes .riseicon { font-size: 1.35em; margin-right: .15em; }
+    .tides .moontimes .riseicon { font-size: 1.35em; margin-right: .22em; }
   }
   @media (max-width: 340px) { .tides .tiles { grid-template-columns: 1fr; } }
   </style>
