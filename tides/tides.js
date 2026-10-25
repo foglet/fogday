@@ -371,8 +371,8 @@ function drawStrip(){
   for (const e of extremes(beach, start, end)){
     const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
     s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
-    const dy = e.high ? [-21,-8] : [20,32];
-    s+=`<text class="lab" x="${ex}" y="${ey+dy[0]}" text-anchor="${anchor}">${fShort(e.t)}</text><text class="labt" x="${ex}" y="${ey+dy[1]}" text-anchor="${anchor}">${fh(e.v)}</text>`;
+    // Height above the wave, time below it (highs and lows alike)
+    s+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="${anchor}">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
   }
   const now=Date.now();
   if (now>=start && now<end){
