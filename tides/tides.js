@@ -190,13 +190,16 @@ function renderMoon(){
   if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = inDur(mins); }
   else if (days===1) when = 'is tomorrow';
   else when = `in ${days} days`;
+  // Tomorrow, after that day's sunset: "The full moon is tomorrow night."
+  const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
+  const head = tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`;
   const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
     : (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
         <span class="muted num">${Math.round(m.lit*100)}% lit</span>
-        <span class="nextfull"><b>Next full moon ${when}</b><br><span class="muted num">${dateTxt}</span></span></div>
+        <span class="nextfull"><b>${head}</b><br><span class="muted num">${dateTxt}</span></span></div>
     </div>`;
 }
 
