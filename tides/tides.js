@@ -179,26 +179,32 @@ function inDur(mins){
   return `in a little more than ${hoursText(Math.floor(mins/60))}`;
 }
 
+// Past durations, within the two-hour look-back: "just now", "under an hour ago", "about an hour ago", "about two hours ago"
+function agoDur(mins){
+  if (mins<15) return 'just now';
+  if (mins<45) return 'under an hour ago';
+  return `about ${hoursText(Math.max(1, Math.round(mins/60)))} ago`;
+}
+
 /* ---- Tide now ---- */
 function renderNow(){
   const now=Date.now(), lv=levelAt(beach, now);
-  const nx=pred(BEACHES[beach].st).getExtremesPrediction({start:new Date(now-3*36e5), end:new Date(now+30*36e5), ...opts}).extremes
-    .filter(e=>+new Date(e.time)>now);
+  // Rolling window: highs and lows from the last two hours, and upcoming ones within the next twelve hours
+  const PAST_MS=2*36e5, AHEAD_MS=12*36e5;
+  const win=extremes(beach, now-PAST_MS, now+AHEAD_MS);
+  const nx=extremes(beach, now, now+30*36e5).filter(e=>e.t>now);  // next extreme, for the arrow even when it is past the window
   const n1=nx[0], rising=!!(n1 && n1.high);
-  const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
-  const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
-  const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
-  // Negative (minus) tide: shown only if one is still to come later today
-  const neg = extremes(beach, now, dayStart(addDays(todayKey(),1))).find(e=>!e.high && e.v<0);
-  // If the next low is itself the negative tide, it takes the low's place instead of appearing twice
-  const negIsNext = !!(neg && nLow && Math.abs(+new Date(nLow.time)-neg.t)<6e4);
-  const negIsN1 = !!(neg && n1 && Math.abs(+new Date(n1.time)-neg.t)<6e4);
-  const negLine = neg ? `<div class="nrow neg"><span class="label">Negative tide</span><span><b class="num">${fTime.format(new Date(neg.t))}</b> <span class="num muted">${fh(neg.v)}${negIsN1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
-  // Listed in order of time: whichever comes first (low, high or negative) is shown first
+  const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
+  const past=win.filter(e=>e.t<=now), ahead=win.filter(e=>e.t>now);
+  const nLow=ahead.find(e=>!e.high), nHigh=ahead.find(e=>e.high);
+  const neg=e=>!e.high && e.v<0;
+  const kind=e=>neg(e)?'Negative tide':e.high?'high tide':'low tide';
+  const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
+  // Upcoming: the next low and next high (a minus low reads "Negative tide"); the soonest gets "in about … hours"
+  const upLabel=e=>neg(e)?'Negative tide':'Next '+kind(e);
   const rows = [];
-  if (nLow && !negIsNext) rows.push([+new Date(nLow.time), line('Next low tide',nLow)]);
-  if (nHigh) rows.push([+new Date(nHigh.time), line('Next high tide',nHigh)]);
-  if (neg) rows.push([neg.t, negLine]);
+  for (const e of past) rows.push([e.t, row(neg(e)?'Negative tide':kind(e)[0].toUpperCase()+kind(e).slice(1), e, agoDur(Math.round((now-e.t)/6e4)), 'past')]);
+  for (const e of [nLow, nHigh]) if (e) rows.push([e.t, row(upLabel(e), e, n1 && Math.abs(e.t-n1.t)<6e4 ? inDur(mins) : '')]);
   rows.sort((a,b)=>a[0]-b[0]);
   // Slack tide: only while it is happening (within 15 minutes either side of a high or low), never predicted ahead; always the first line
   const SLACK_MS=15*6e4;
