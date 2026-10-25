@@ -183,12 +183,13 @@ function moonIcon(p){
 }
 function renderMoon(){
   const now=Date.now(), m=moonInfo(now), full=m.nextFull;
-  // Calendar days in SF time: "in 1 day" means tomorrow. On the day itself, hours and minutes.
+  // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
   let when;
   if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = inDur(mins); }
-  else when = `in ${days} day${days===1?'':'s'}`;
+  else if (days===1) when = 'is tomorrow';
+  else when = `in ${days} days`;
   const dateTxt = (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
