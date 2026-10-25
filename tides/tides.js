@@ -159,20 +159,25 @@ function renderNow(){
   const mins=n1 ? Math.round((+new Date(n1.time)-now)/6e4) : 0;
   const nLow=nx.find(e=>e.low), nHigh=nx.find(e=>e.high);
   const line=(lab,e)=> e ? `<div class="nrow"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.time))}</b> <span class="num muted">${fh(e.level)}${e===n1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
-  // Fixed order: low tide, high tide, then negative tide
-  const order = [['Next low tide',nLow],['Next high tide',nHigh]];
-  // Negative (minus) tide: listed last, to the right of the other two, only if one is still to come later today
+  // Negative (minus) tide: shown only if one is still to come later today
   const neg = extremes(beach, now, dayStart(addDays(todayKey(),1))).find(e=>!e.high && e.v<0);
   // If the next low is itself the negative tide, it takes the low's place instead of appearing twice
   const negIsNext = !!(neg && nLow && Math.abs(+new Date(nLow.time)-neg.t)<6e4);
-  const negLine = neg ? `<div class="nrow neg"><span class="label">Negative tide</span><span><b class="num">${fTime.format(new Date(neg.t))}</b> <span class="num muted">${fh(neg.v)}</span></span></div>` : '';
+  const negIsN1 = !!(neg && n1 && Math.abs(+new Date(n1.time)-neg.t)<6e4);
+  const negLine = neg ? `<div class="nrow neg"><span class="label">Negative tide</span><span><b class="num">${fTime.format(new Date(neg.t))}</b> <span class="num muted">${fh(neg.v)}${negIsN1?` · ${inDur(mins)}`:''}</span></span></div>` : '';
+  // Listed in order of time: whichever comes first (low, high or negative) is shown first
+  const rows = [];
+  if (nLow && !negIsNext) rows.push([+new Date(nLow.time), line('Next low tide',nLow)]);
+  if (nHigh) rows.push([+new Date(nHigh.time), line('Next high tide',nHigh)]);
+  if (neg) rows.push([neg.t, negLine]);
+  rows.sort((a,b)=>a[0]-b[0]);
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${negIsNext ? order.map(([l,e])=>e===nLow?negLine:line(l,e)).join('') : line(...order[0])+line(...order[1])+negLine}</div></div>`;
+    <div class="hero-side"><div class="nlist">${rows.map(r=>r[1]).join('')}</div></div>`;
 }
 
 /* ---- Moon tile ---- */
