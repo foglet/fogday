@@ -45,8 +45,9 @@ title: Tides of San Francisco
   /* Top: beach and coordinates on the left; sunrise and sunset flush right */
   .tides .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
   .tides .top .picker { min-width: 0; }
-  .tides .suntimes { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 18px; flex: none; padding-top: 6px; }
-  .tides .suntimes > div { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
+  /* Rise / set block: sits flush right; inside it, icons and times are left-aligned */
+  .tides .suntimes { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 18px; flex: none; padding-top: 6px; }
+  .tides .suntimes > div { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
   .tides .suntimes .label { font-size: .68rem; display: inline-flex; align-items: center; }  /* glyph centered on the label text */
   .tides .suntimes .time { font-size: 1.5rem; font-weight: 600; }
   .tides .suntimes .ampm { font-size: .667em; }
