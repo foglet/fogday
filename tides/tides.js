@@ -192,7 +192,7 @@ function renderMoon(){
   else when = `in ${days} days`;
   // Tomorrow, after that day's sunset: "The full moon is tomorrow night."
   const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
-  const head = days<=0 ? 'Full moons make me horny. Ah-whoooo!!!'
+  const head = days<=0 ? 'A full moon and oysters. Ah-whoooo!!!'
     : (tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + ' Ah-whooooo!!!';
   const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
     : (days<=0 ? 'Today' : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
