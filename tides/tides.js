@@ -230,7 +230,7 @@ function renderMoon(){
   const now=Date.now(), m=moonInfo(now), full=m.nextFull;
   // Moonrise / moonset for today, same format as sunrise / sunset; each greys out once it has happened, "—" if none today
   const mrs=moonTimes(todayKey());
-  const mt=(lab,ms,n)=>`<div class="${ms!==null&&n>=ms?'past':''}"><span class="label">${riseIcon(lab)}${lab}</span><span class="time">${ms===null?'—':tm(ms)}</span></div>`;
+  const mt=(lab,ms,n)=>riseItem(lab, ms===null?'—':tm(ms), ms!==null&&n>=ms);
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
@@ -412,6 +412,8 @@ const tm=ms=>esc(fTime.format(new Date(ms)));
 
 // Weather Icons glyph for a Sunrise / Sunset / Moonrise / Moonset label
 const riseIcon = lab => `<i class="wi wi-${lab.toLowerCase()} riseicon" aria-hidden="true"></i>`;
+// One rise / set item: icon, title, time (icon left of the title; title and time share a left edge)
+const riseItem = (lab, time, past) => `<div class="${past?'past':''}">${riseIcon(lab)}<span class="label">${lab}</span><span class="time">${time}</span></div>`;
 
 /* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
 function renderSun(){
@@ -419,7 +421,7 @@ function renderSun(){
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
   // Sunset greys out once it has happened, until the next sunrise
-  $('sun').innerHTML=`<div class="${riseDone?'past':''}"><span class="label">${riseIcon('Sunrise')}Sunrise</span><span class="time">${tm(rise)}</span></div><div class="${afterSet?'past':''}"><span class="label">${riseIcon('Sunset')}Sunset</span><span class="time">${tm(sun.set)}</span></div>`;
+  $('sun').innerHTML = riseItem('Sunrise', tm(rise), riseDone) + riseItem('Sunset', tm(sun.set), afterSet);
 }
 
 /* ---- Page ---- */
