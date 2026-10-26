@@ -692,18 +692,19 @@ function glideTo(target){
   const strip=$('strip');
   strip.tabIndex=0;
   strip.setAttribute('role','slider');
-  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to a week ahead.');
+  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to a week ahead. Tap to return to now.');
   let drag=null;
   strip.addEventListener('pointerdown', e=>{
     if (e.button>0) return;
     stopAnim();
-    drag={x:e.clientX, t:cursor(), id:e.pointerId, hist:[[performance.now(), e.clientX]]};
+    drag={x:e.clientX, y:e.clientY, t:cursor(), id:e.pointerId, at:performance.now(), moved:0, hist:[[performance.now(), e.clientX]]};
     strip.setPointerCapture && strip.setPointerCapture(e.pointerId);
     strip.classList.add('dragging');
   });
   strip.addEventListener('pointermove', e=>{
     if (!drag || e.pointerId!==drag.id) return;
     const now=performance.now(); drag.hist.push([now, e.clientX]);
+    drag.moved=Math.max(drag.moved, Math.hypot(e.clientX-drag.x, e.clientY-drag.y));
     while (drag.hist.length>2 && now-drag.hist[0][0]>100) drag.hist.shift();
     setCursor(snapTime(drag.t - (e.clientX-drag.x)/stripK));   // drag left to move ahead in time; snaps onto a nearby high or low
   });
@@ -712,6 +713,8 @@ function glideTo(target){
     const h=drag.hist, a=h[0], b=h[h.length-1], dt=b[0]-a[0];
     // Released while moving: keep going with the finger's speed (px/ms → time/ms)
     if (e.type==='pointerup' && dt>0 && performance.now()-b[0]<60) { const v=-(b[1]-a[1])/dt/stripK; if (Math.abs(v*stripK)>0.15) fling(v); }
+    // A tap (no real movement, quick): glide back to the current time
+    if (e.type==='pointerup' && drag.moved<6 && performance.now()-drag.at<500) glideTo(Date.now());
     drag=null; strip.classList.remove('dragging');
   };
   strip.addEventListener('pointerup', end); strip.addEventListener('pointercancel', end);
