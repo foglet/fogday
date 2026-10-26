@@ -78,7 +78,13 @@ title: Tides of San Francisco
   /* Arrow sits on the number's baseline (falling: its foot on the baseline); rising lifts it so its tip meets the
      top of the figures (Patua One figures stand .70em tall, measured) */
   .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; margin-right: 6px; flex: none; }
-  .tides .big .arrow.up { position: relative; top: calc(var(--arrow-h) - var(--tide-fs) * .70); }
+  .tides .big .arrow { position: relative; top: 0; transform: rotate(180deg); transition: transform .5s ease, top .5s ease; }  /* falling: the rising drawing turned over */
+  .tides .big .arrow.up { top: calc(var(--arrow-h) - var(--tide-fs) * .70); transform: rotate(0deg); }
+  /* Smooth icon changes: glyphs crossfade (tides.js fades out, swaps, fades in), the wind arrow turns, past times fade to grey */
+  .tides i.wi { transition: opacity .16s ease; }
+  .tides i.wi.windicon { transition: opacity .16s ease, transform .5s ease; }
+  .tides .suntimes .time, .tides i.wi.riseicon { transition: color .3s ease, opacity .16s ease; }
+  @media (prefers-reduced-motion: reduce) { .tides i.wi, .tides .windicon, .tides .big .arrow, .tides .suntimes .time, .tides .riseicon { transition: none; } }
   .tides .big .slab { font-size: var(--tide-fs); }
   .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .tides .dir { font-weight: 600; font-size: 1.2rem; }
@@ -131,6 +137,11 @@ title: Tides of San Francisco
   .tides .chartbox { display: block; }  /* height labels sit inside the chart, so no side gutter */
   .tides .strip { overflow: hidden; min-width: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }  /* drag sideways through time; vertical swipes still scroll the page */
   .tides .strip.dragging { cursor: grabbing; }
+  /* The week picture and its labels slide together; the center line (stripCur) stays put between them */
+  .tides #stripInner { position: relative; overflow: hidden; }
+  .tides #stripSvg, .tides #stripCur, .tides #stripLab { position: absolute; top: 0; left: 0; }
+  .tides #stripSvg, .tides #stripLab { will-change: transform; }
+  .tides #stripCur, .tides #stripLab { pointer-events: none; }
   .tides .strip svg { display: block; overflow: visible; }
   .tides .tick { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
   .tides .dayl { font: 600 11px var(--font-ui); fill: var(--ink); letter-spacing: .1em; text-transform: uppercase; }
@@ -197,7 +208,7 @@ title: Tides of San Francisco
     <section class="day" aria-label="Today’s tide chart">
       <div class="chartbox">
         <div class="strip" id="strip">
-          <div id="stripInner"><div id="stripSvg"></div></div>
+          <div id="stripInner"><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
         </div>
       </div>
     </section>

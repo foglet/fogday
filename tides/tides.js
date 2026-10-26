@@ -26,6 +26,36 @@ const opts = {datum: 'MLLW', units: 'feet'};
 // Missing elements get a detached stand-in, so one stale or removed part of the page can't stop the rest from drawing.
 const $ = id => document.getElementById(id) || document.createElement('div');
 
+/* ---- Smooth updates: redraw a panel in place instead of replacing it, so icons crossfade, arrows turn and greys fade.
+   Text and attributes are patched in place; only a part whose layout changed is replaced. ---- */
+function iconPatch(a,b){
+  // Rotation (the wind arrow) turns the short way round, from where it is now
+  const rot=s=>{ const m=/rotate\((-?[\d.]+)deg\)/.exec(s||''); return m?+m[1]:null; };
+  const nr=rot(b.getAttribute('style'));
+  if (nr!=null){ const or=a._rot!=null?a._rot:rot(a.getAttribute('style')); const r=or==null?nr:or+(((nr-or)%360+540)%360-180); a._rot=r; a.style.transform=`rotate(${r}deg)`; }
+  else if (a._rot!=null || a.style.transform){ a._rot=null; a.style.transform=''; }
+  // A different glyph: fade out, swap, fade in (the latest glyph wins if it changes again mid-fade)
+  a._next=b.className;
+  if (a._fading || a.className===a._next) return;
+  a._fading=true; a.style.opacity='0';
+  setTimeout(()=>{ a.className=a._next; a.style.opacity=''; a._fading=false; }, 160);
+}
+function patch(a,b){
+  if (a.nodeType===3){ if (a.nodeValue!==b.nodeValue) a.nodeValue=b.nodeValue; return; }
+  if (a.nodeType!==1) return;
+  if (a.matches('i.wi')) return iconPatch(a,b);
+  for (const at of [...a.attributes]) if (!b.hasAttribute(at.name)) a.removeAttribute(at.name);
+  for (const at of [...b.attributes]) if (a.getAttribute(at.name)!==at.value) a.setAttribute(at.name, at.value);
+  patchKids(a,b);
+}
+// Children in the same order and kind are patched one by one; where they differ, only that part is replaced
+function patchKids(a,b){
+  const A=[...a.childNodes], B=[...b.childNodes];
+  if (A.length!==B.length || A.some((n,i)=>n.nodeType!==B[i].nodeType || n.nodeName!==B[i].nodeName)) { a.innerHTML=b.innerHTML; return; }
+  A.forEach((n,i)=>patch(n,B[i]));
+}
+function morph(el, html){ const t=document.createElement(el.tagName); t.innerHTML=html; patchKids(el,t); }
+
 /* ---- Pacific time helpers (always SF time, whatever the visitor's clock says) ---- */
 const dtf = new Intl.DateTimeFormat('en-US', {timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
 function parts(ms){ const o={}; for (const p of dtf.formatToParts(new Date(ms))) o[p.type]=p.value; return {y:+o.year, m:+o.month, d:+o.day, h:+o.hour % 24, mi:+o.minute}; }
@@ -218,14 +248,14 @@ function renderNow(){
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
     : n1 ? row(kind(n1)+' occurs '+inDur(mins), n1) : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
-  const arrow = rising ? '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>'
-                       : '<polygon points="100,-600 100,200 500,-200 500,100 0,600 -500,100 -500,-200 -100,200 -100,-600"/>';
-  $('tideNow').innerHTML = `
+  // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
+  const arrow = '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>';
+  morph($('tideNow'), `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
+    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`);
 }
 
 /* ---- Moon tile ---- */
@@ -255,13 +285,13 @@ function renderMoon(){
   const howl = full-now <= 28*3.6e6 ? ' Ahhh-wooooooo!!!' : '';
   // No date or time: "The next full moon occurs in thirty days." / "… tomorrow (night)." / on the day "… in about two hours."
   const head = `The next full moon occurs ${tmrwNight ? 'tomorrow night' : when}.` + howl;
-  $('moon').innerHTML=`<span class="label">Moon</span>
+  morph($('moon'), `<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
         <span class="muted num">${Math.round(m.lit*100)}%</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
       <div class="suntimes num moontimes" aria-label="Moonrise and moonset">${mt('Moonrise',mrs.rise,now)}${mt('Moonset',mrs.set,now)}</div>
-    </div>`;
+    </div>`);
 }
 
 /* ---- Weather (National Weather Service) ---- */
@@ -368,16 +398,16 @@ function drawForecast(w, t){
   }
   const d = dayOf(t), onDay = q => same(dayOf(q.s), d);
   const hi = (w.daily||[]).find(q=>q.isDay && onDay(q)), lo = (w.daily||[]).find(q=>!q.isDay && onDay(q));
-  $('weather').innerHTML = `<span class="label">Forecast</span>
+  morph($('weather'), `<span class="label">Forecast</span>
     <div class="trow"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</div>
-    <div class="sub"><b>${esc(p.short||'—')}</b><span class="label num">${[hi?`High ${tempNum(hi.temp)}°`:'', lo?`Low ${tempNum(lo.temp)}°`:''].filter(Boolean).join(' ')}</span></div>`;
+    <div class="sub"><b>${esc(p.short||'—')}</b><span class="label num">${[hi?`High ${tempNum(hi.temp)}°`:'', lo?`Low ${tempNum(lo.temp)}°`:''].filter(Boolean).join(' ')}</span></div>`);
   // windSpeed is "12 mph" (hourly) or "10 to 15 mph" (daily): show the low end, and the top of a range below it
   const nums = String(p.wind||'').match(/\d+/g) || [];
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
-  $('wind').innerHTML = `<span class="label">Wind</span>
+  morph($('wind'), `<span class="label">Wind</span>
     <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
-    <div class="sub"><b>${spd===0?'Calm':p.dir?'From '+p.dir:'—'}</b><span class="label num">${top?`Up to ${top} ${spdUnit()}`:'Forecast'}</span></div>`;
+    <div class="sub"><b>${spd===0?'Calm':p.dir?'From '+p.dir:'—'}</b><span class="label num">${top?`Up to ${top} ${spdUnit()}`:'Forecast'}</span></div>`);
 }
 function drawWeather(w){
   if (!isLive()) return drawForecast(w, cursor());
@@ -386,18 +416,18 @@ function drawWeather(w){
   // Exact °F and mph; rounded only for display. Observations come in °C and km/h; the forecast in °F and mph.
   const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
   const desc = o.textDescription || w.short || '—';
-  $('weather').innerHTML = `<span class="label">Weather</span>
+  morph($('weather'), `<span class="label">Weather</span>
     <div class="trow"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</div>
-    <div class="sub"><b>${esc(desc)}</b><span class="label num">${[w.hi!=null?`High ${tempNum(w.hi)}°`:'', w.lo!=null?`Low ${tempNum(w.lo)}°`:''].filter(Boolean).join(' ')}</span></div>`;
+    <div class="sub"><b>${esc(desc)}</b><span class="label num">${[w.hi!=null?`High ${tempNum(w.hi)}°`:'', w.lo!=null?`Low ${tempNum(w.lo)}°`:''].filter(Boolean).join(' ')}</span></div>`);
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);
   const gust = val(o.windGust) != null ? spdNum(kmhToMph(val(o.windGust))) : null;
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
-  $('wind').innerHTML = `<span class="label">Wind</span>
+  morph($('wind'), `<span class="label">Wind</span>
     <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir, spd===0)}</div>
-    <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} ${spdUnit()}`:'No gusts reported'}</span></div>`;
+    <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} ${spdUnit()}`:'No gusts reported'}</span></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
@@ -407,56 +437,63 @@ const ticks = () => units==='m'
   ? [-0.5,0,0.5,1,1.5,2].map(m=>[m/0.3048, m<0?'−'+(-m):String(m)])
   : [-2,0,2,4,6,8].map(f=>[f, f<0?'−'+(-f):String(f)]);
 function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:22, pb:14}; }  // room above for the "now" label, below for low-tide labels
-function drawStrip(){
-  const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
-  // Window centered on the viewed moment: ten hours either side, redrawn every minute and on every drag
-  const now=cursor(), start=now-HALF_MS, end=now+HALF_MS, td=tideData();
-  const W=dayW;
-  stripW=W;
-  const x=t=>(t-start)/(end-start)*W;
-  const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
+/* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
+   sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
+   layer that never moves sideways; the dot rides up and down with the tide. */
+let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
+function buildStrip(){
+  const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
+  const key=[beach, units, W, td.hr].join('|');
+  if (key===stripKey) return;
+  stripKey=key; stripW=W; stripG={W, H, pt, ih};
+  const start=td.tl[0].t, end=td.tl[td.tl.length-1].t, k=W/SPAN_MS, TW=Math.ceil((end-start)*k);
+  strip0=start; stripK=k; stripTl=td.tl;
+  const x=t=>((t-start)*k).toFixed(1), y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
   // top and bottom padding of 2.5% of the card height, so the chart fills 95% of it
   const day=$('strip').closest('.day'); if (day) day.style.paddingBlock = (H*0.025/0.95).toFixed(1)+'px';
 
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height from ten hours before to ten hours after ${isLive()?'now':esc(fFull.format(new Date(now)))}">`;
+  let s=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   // Midnight: a divider with the new day's name at its foot
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))){
-    if (m<=start) continue;
-    const mx=x(m), anchor=mx>W-30?'end':'start';
-    s+=`<line x1="${mx}" x2="${mx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
-    s+=`<text class="dayl" x="${mx+(anchor==='end'?-5:5)}" y="${pt+ih-6}" text-anchor="${anchor}">${fDayName.format(new Date(m))}</text>`;
+    s+=`<line x1="${x(m)}" x2="${x(m)}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
+    s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
   }
-  for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
-  // The cached curve, one point past each edge so it runs off the card (the card clips it)
-  const tl=td.tl.filter(p=>p.t>=start-6e5 && p.t<=end+6e5);
-  const pts=tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
-  const x0=x(tl[0].t).toFixed(1), x1=x(tl[tl.length-1].t).toFixed(1);
-  const waterD=`M${x0},${y(Y0)} L${pts.join(' L')} L${x1},${y(Y0)} Z`;
+  for (const [v] of ticks()) s+=`<line x1="0" x2="${TW}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
+  const pts=td.tl.map(p=>`${x(p.t)},${y(p.v).toFixed(1)}`);
+  const waterD=`M0,${y(Y0)} L${pts.join(' L')} L${TW},${y(Y0)} Z`;
   s+=`<path d="${waterD}" fill="var(--water-fill)"/>`;
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
-  let labels='';  // drawn last, over the "now" line, so a label near it stays readable
-  for (const e of td.ex.filter(e=>e.t>=start && e.t<end)){
-    const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
+  // Highs and lows: markers in the picture; height above, time below, in a top layer over the center line
+  let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
+  for (const e of td.ex){
+    const ex=x(e.t), ey=y(e.v);
     s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
-    // Height above the wave, time below it (highs and lows alike)
-    labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="${anchor}">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
+    labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
-  {
-    // The center line is the viewed moment (now, until dragged); the dot rides it up and down with the tide. No label.
-    const nx=W/2, lv=levelAt(beach, now);
-    s+=`<line x1="${nx}" x2="${nx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>`;
-    s+=`<circle cx="${nx}" cy="${y(lv)}" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/>`;
-  }
-  s+=labels;
-  $('stripInner').style.width = W+'px';
   $('stripSvg').innerHTML = s+'</svg>';
-  return {x, now, start, end, dayW};
+  $('stripLab').innerHTML = labels+'</svg>';
+  $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+    <line x1="${W/2}" x2="${W/2}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>
+    <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
+  $('stripInner').style.height = H+'px';
 }
-
-
+// Tide height on the drawn curve (straight lines between its 10-minute points), so the dot sits exactly on the line
+function curveAt(t){
+  const tl=stripTl, f=(t-tl[0].t)/6e5, i=Math.max(0, Math.min(tl.length-2, Math.floor(f))), r=Math.min(1, Math.max(0, f-i));
+  return tl[i].v + (tl[i+1].v-tl[i].v)*r;
+}
+// Slide the week so the viewed moment sits under the center line, and move the dot to the tide there
+function placeStrip(){
+  const now=cursor(), {W, pt, ih}=stripG;
+  const tx=`translate3d(${(-((now-HALF_MS)-strip0)*stripK).toFixed(2)}px,0,0)`;
+  $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
+  $('stripDot').setAttribute('cy', (pt+(Y1-curveAt(now))/(Y1-Y0)*ih).toFixed(2));
+  $('strip').setAttribute('aria-valuetext', isLive() ? 'Now' : fFull.format(new Date(now)));
+}
+function drawStrip(){ buildStrip(); placeStrip(); }
 
 // Rise / set times, formatted like the tide times ("5:33 PM")
 // AM / PM set at the size of the Sunrise / Sunset labels
@@ -473,7 +510,7 @@ function renderSun(){
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
   // Sunset greys out once it has happened, until the next sunrise
-  $('sun').innerHTML = riseItem('Sunrise', tm(rise), riseDone) + riseItem('Sunset', tm(sun.set), afterSet);
+  morph($('sun'), riseItem('Sunrise', tm(rise), riseDone) + riseItem('Sunset', tm(sun.set), afterSet));
 }
 
 /* ---- Page ---- */
@@ -508,55 +545,95 @@ $('beachBtn').addEventListener('click', ()=>{
 });
 /* ---- Drag the chart sideways to look ahead, up to a week; it stops at now going back.
    The tide panel stays on now; sun, moon and forecast follow the center line. ---- */
-let stripW=1, frame=0;
+let stripW=1, frame=0, tileAt=0, tileTimer=0, tileKey='';
+// Tiles (sun, moon, forecast) redraw at most ten times a second while sliding, and once more when it settles
+function updateTiles(){
+  tileAt=performance.now(); tileTimer=0;
+  const k=isLive()+'|'+Math.floor(cursor()/6e4);
+  if (k===tileKey) return; tileKey=k;
+  renderSun(); renderMoon();
+  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
+}
 function redrawViewed(){
   frame=0;
-  renderNow(); renderSun(); renderMoon(); drawStrip();
-  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
+  placeStrip();
+  const wait=100-(performance.now()-tileAt);
+  if (wait<=0) updateTiles(); else if (!tileTimer) tileTimer=setTimeout(updateTiles, wait);
 }
 function setCursor(t){
   const now=Date.now();
   t=Math.min(t, now+MAX_AHEAD_MS);
   scrub = t <= now+6e4 ? null : t;   // within a minute of now is live again
   if (!frame) frame=requestAnimationFrame(redrawViewed);
+  return t>now && t<now+MAX_AHEAD_MS;   // false once it hits an end
+}
+/* Motion: a fling keeps gliding and slows to a stop; keys and Home / End glide to their target */
+let anim=0;
+const stopAnim=()=>{ if (anim) cancelAnimationFrame(anim); anim=0; };
+function fling(v){            // v: time per millisecond of real time
+  stopAnim(); let last=performance.now();
+  const step=ts=>{ const dt=Math.min(40, ts-last); last=ts;
+    v*=Math.exp(-dt/325);       // the same easing as an iPhone list fling
+    const moving=setCursor(cursor()+v*dt);
+    anim = moving && Math.abs(v*stripK)>0.02 ? requestAnimationFrame(step) : 0; };
+  anim=requestAnimationFrame(step);
+}
+function glideTo(target){
+  stopAnim(); const from=cursor(), t0=performance.now(), D=320;
+  const step=ts=>{ const p=Math.min(1,(ts-t0)/D), e=1-Math.pow(1-p,3);
+    setCursor(from+(target-from)*e); anim = p<1 ? requestAnimationFrame(step) : 0; };
+  anim=requestAnimationFrame(step);
 }
 {
   const strip=$('strip');
   strip.tabIndex=0;
+  strip.setAttribute('role','slider');
   strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to a week ahead.');
   let drag=null;
   strip.addEventListener('pointerdown', e=>{
     if (e.button>0) return;
-    drag={x:e.clientX, t:cursor(), id:e.pointerId};
+    stopAnim();
+    drag={x:e.clientX, t:cursor(), id:e.pointerId, hist:[[performance.now(), e.clientX]]};
     strip.setPointerCapture && strip.setPointerCapture(e.pointerId);
     strip.classList.add('dragging');
   });
   strip.addEventListener('pointermove', e=>{
     if (!drag || e.pointerId!==drag.id) return;
-    setCursor(drag.t - (e.clientX-drag.x)/stripW*SPAN_MS);   // drag left to move ahead in time
+    const now=performance.now(); drag.hist.push([now, e.clientX]);
+    while (drag.hist.length>2 && now-drag.hist[0][0]>100) drag.hist.shift();
+    setCursor(drag.t - (e.clientX-drag.x)/stripK);   // drag left to move ahead in time
   });
-  const end=()=>{ drag=null; strip.classList.remove('dragging'); };
+  const end=e=>{
+    if (!drag) return;
+    const h=drag.hist, a=h[0], b=h[h.length-1], dt=b[0]-a[0];
+    // Released while moving: keep going with the finger's speed (px/ms → time/ms)
+    if (e.type==='pointerup' && dt>0 && performance.now()-b[0]<60) { const v=-(b[1]-a[1])/dt/stripK; if (Math.abs(v*stripK)>0.15) fling(v); }
+    drag=null; strip.classList.remove('dragging');
+  };
   strip.addEventListener('pointerup', end); strip.addEventListener('pointercancel', end);
-  // Trackpad: a sideways scroll moves through time too
+  // Trackpad: a sideways scroll moves through time too (the trackpad supplies its own glide)
   strip.addEventListener('wheel', e=>{
     if (Math.abs(e.deltaX)<=Math.abs(e.deltaY)) return;
-    e.preventDefault();
-    setCursor(cursor() + e.deltaX/stripW*SPAN_MS);
+    e.preventDefault(); stopAnim();
+    setCursor(cursor() + e.deltaX/stripK);
   }, {passive:false});
   // Keys: ← / → an hour, Shift for a day; Home is now, End a week ahead
   strip.addEventListener('keydown', e=>{
-    const step=e.shiftKey?864e5:36e5, k=e.key;
-    if (k==='ArrowRight') setCursor(cursor()+step);
-    else if (k==='ArrowLeft') setCursor(cursor()-step);
-    else if (k==='Home') setCursor(Date.now());
-    else if (k==='End') setCursor(Date.now()+MAX_AHEAD_MS);
+    const step=e.shiftKey?864e5:36e5, k=e.key, base=anim&&glideTarget!=null?glideTarget:cursor();
+    let to;
+    if (k==='ArrowRight') to=base+step;
+    else if (k==='ArrowLeft') to=base-step;
+    else if (k==='Home') to=Date.now();
+    else if (k==='End') to=Date.now()+MAX_AHEAD_MS;
     else return;
     e.preventDefault();
+    glideTarget=Math.min(Math.max(to, Date.now()), Date.now()+MAX_AHEAD_MS); glideTo(glideTarget);
   });
 }
-let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
+let glideTarget=null;
+let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; stripKey=''; drawStrip(); } }, 150); });
 setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the clock caught up with the viewed time
-  if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
+  if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); if (!anim) drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
 try { render(); } catch (err) { console.error('SF Tides:', err); try { renderNow(); drawStrip(); } catch (e2) { console.error(e2); } }
