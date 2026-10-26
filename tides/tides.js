@@ -456,7 +456,7 @@ function drawForecast(w, t){
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${spdValTag(spd)}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="wline">${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:fmtSpd(top),u:spdUnit(top)}):L.fcSub)}</span></span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${spdValTag(spd)}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="wline">${nums.length?bftTag(+nums[0]):''}${top?`<span class="label num">${esc(tr('upTo',{n:fmtSpd(top),u:spdUnit(top)}))}</span>`:''}</span></div></div>`);
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
 const wxT = t => I18N.wxText(t, lang);
