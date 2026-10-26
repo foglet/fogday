@@ -25,7 +25,7 @@ const beachName = k => L.beaches[k] || BEACHES[k].name;
 let fDayName, fTime, fWkMd, fFull;
 function setFormatters(){
   const loc=L.locale, h=L.h12 ? {} : {hourCycle:'h23'};
-  fDayName = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday: 'short'});
+  fDayName = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday: 'long'});
   fTime = new Intl.DateTimeFormat(loc, {timeZone: TZ, hour:'numeric', minute:'2-digit', ...h});
   fWkMd = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday:'long', month:'long', day:'numeric'});   // "Wednesday, October 28"
   fFull = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', ...h});
