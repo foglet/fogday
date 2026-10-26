@@ -90,6 +90,10 @@ title: Tides of San Francisco
   .tides .suntimes .time, .tides i.wi.riseicon { transition: color .3s ease, opacity .16s ease; }
   @media (prefers-reduced-motion: reduce) { .tides i.wi, .tides i.ph, .tides i.aiga, .tides .windicon, .tides .suntimes .time, .tides .riseicon { transition: none; } }
   .tides .big .slab { font-size: var(--tide-fs); }
+  /* FT kerned against the last figure: about 2.5px of ink gap, 3px at most. Each Patua One figure leaves a different
+     space on its right, so the pull-in is per figure (measured), in proportion to the figure size */
+  .tides .big .spdunit { margin-left: calc(-3px - var(--tide-fs) * var(--kern, .02)); }
+  .tides .big .spdunit[data-ld="0"] { --kern: 0.031; } .tides .big .spdunit[data-ld="1"] { --kern: 0.022; } .tides .big .spdunit[data-ld="2"] { --kern: 0.022; } .tides .big .spdunit[data-ld="3"] { --kern: 0.026; } .tides .big .spdunit[data-ld="4"] { --kern: 0.015; } .tides .big .spdunit[data-ld="5"] { --kern: 0.019; } .tides .big .spdunit[data-ld="6"] { --kern: 0.01; } .tides .big .spdunit[data-ld="7"] { --kern: -0.005; } .tides .big .spdunit[data-ld="8"] { --kern: 0.025; } .tides .big .spdunit[data-ld="9"] { --kern: 0.026; }
   /* The next-tide line beside the big reading: left edge on the weather descriptions below (--desc-x, set by tides.js),
      its last line on the same baseline as the unit (FT). Falls back to below the reading when the reading is wider */
   .tides .hero.inline { grid-template-columns: var(--desc-x) minmax(0, 1fr); column-gap: 0; align-items: last baseline; }

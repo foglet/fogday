@@ -283,7 +283,7 @@ function renderNow(){
   morph($('tideNow'), `
     <button class="big" id="unitToggle" type="button" aria-label="${esc(tr('unitAria', {v: ft(lv), unit: units==='m'?L.meters:L.feet, dir: rising?L.rising:L.falling, other: units==='m'?L.feet:L.meters}))}" title="${esc(tr('unitTitle', {other: units==='m'?L.feet:L.meters}))}">
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
-      <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
+      <span class="slab grad num">${ft(lv)}</span><span class="label spdunit" data-ld="${String(ft(lv)).slice(-1)}">${U()}</span>
     </button>
     <div class="hero-side"><div class="nlist">${nextLine}</div></div>`);
   if (ar && wasUp!==rising) flipArrow(ar, fromTop);
