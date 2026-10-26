@@ -114,13 +114,16 @@ title: Tides of San Francisco
   .tides .sub b { font-weight: 600; font-size: 1rem; }
   /* Weather, wind and moon each get their own full-width line: reading with its icon right beside it, then the description.
      The tiles share two columns (subgrid), so every description starts at the same x: 100px right of the widest reading + icon */
-  .tides .tiles { grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--descgap); }
-  .tides { --descgap: 100px; }
+  /* Three shared columns (subgrid): readings | icons, centered in one column | descriptions. The icon column sits the same
+     distance from the widest reading as from the descriptions, so every icon lines up, roughly midway */
+  .tides .tiles { grid-template-columns: max-content var(--icw) minmax(0, 1fr); column-gap: var(--icgap); }
+  .tides { --icw: 58px; --icgap: 50px; }
   .tides #weather, .tides #wind, .tides #moon { grid-column: 1 / -1; min-height: 0; display: grid; grid-template-columns: subgrid; align-content: start; }
   .tides #weather > .label, .tides #wind > .label, .tides #moon > .label { grid-column: 1 / -1; }
-  .tides .trow.inline { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: var(--descgap); align-items: center; }
-  .tides .trow.inline .ri { display: flex; align-items: center; gap: 10px; }  /* icon right beside the reading */
-  .tides .trow.inline .sub { grid-column: 2; margin: 0; min-width: 0; }
+  .tides .trow.inline { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: var(--icgap); align-items: center; }
+  .tides .trow.inline .ri { display: contents; }  /* reading and icon each take their own column */
+  .tides .trow.inline .ri > i { grid-column: 2; justify-self: center; text-align: center; }
+  .tides .trow.inline .sub { grid-column: 3; margin: 0; min-width: 0; }
   .tides .trow.inline .moonicon { font-size: 40px; }
   .tides .stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
   .tides .stack b { font-weight: 600; }
@@ -190,7 +193,7 @@ title: Tides of San Francisco
 
   @media (max-width: 520px) {
     .tides .hero { grid-template-columns: 1fr; }
-    .tides { --tilegap: 10px; --descgap: 24px; }  /* 100px leaves the descriptions a 76px column on a phone */
+    .tides { --tilegap: 10px; --icw: 48px; --icgap: 16px; }  /* phone: keeps the description column wide enough to read */
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
     .tides i.ph.sky { font-size: 38px; }
