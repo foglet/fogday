@@ -16,7 +16,8 @@ const SOURCE = {
   ref: 'Tides computed from NOAA harmonic constants for station 9414290, San Francisco (Golden Gate), the nearest NOAA station to this beach.',
   ob:  'Tides computed from NOAA station 9414275, Ocean Beach, outer coast (time and height offsets from 9414290, San Francisco), the nearest NOAA station to this beach.'
 };
-const CHART_PAST_MS = 2*36e5, CHART_AHEAD_MS = 18*36e5;  // tide chart: last 2 h through the next 18 h
+// Tide chart: 20 hours wide, centered on the viewed moment (now, or up to a week ahead once dragged)
+const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 7*864e5;
 const fDayName = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday: 'short'});
 
 const predictors = {};
@@ -32,7 +33,8 @@ function tzOffset(ms){ const p=parts(ms); return Date.UTC(p.y,p.m-1,p.d,p.h,p.mi
 function laTime(y,m,d,h=0){ const base=Date.UTC(y,m-1,d,h); let t=base-tzOffset(base); t=base-tzOffset(t); return t; }
 const dayStart = day => laTime(day.y, day.m, day.d);
 function addDays(day,n){ const t=new Date(Date.UTC(day.y,day.m-1,day.d+n)); return {y:t.getUTCFullYear(), m:t.getUTCMonth()+1, d:t.getUTCDate()}; }
-function todayKey(){ const p=parts(Date.now()); return {y:p.y,m:p.m,d:p.d}; }
+function dayOf(ms){ const p=parts(ms); return {y:p.y,m:p.m,d:p.d}; }
+const todayKey = () => dayOf(Date.now());
 const same = (a,b) => a.y===b.y && a.m===b.m && a.d===b.d;
 const fTime = new Intl.DateTimeFormat('en-US', {timeZone: TZ, hour:'numeric', minute:'2-digit'});
 const fShort = ms => fTime.format(new Date(ms)).replace(' AM','a').replace(' PM','p');
@@ -185,28 +187,38 @@ function inDur(mins){
   return `in a little more than ${hoursText(Math.floor(mins/60))}`;
 }
 
-/* ---- Shared rolling window: the chart and the tide list use the same one, so they always agree.
-   Edges are on the minute, so the list and chart drawn in the same minute see identical highs and lows. ---- */
-function chartWindow(){
-  const m=Math.floor(Date.now()/6e4)*6e4, start=m-CHART_PAST_MS, end=m+CHART_AHEAD_MS;
-  return {start, end, extremes: extremes(beach, start, end)};
+/* ---- Viewed moment: now, or a time up to a week ahead picked by dragging the chart.
+   scrub is null while live (the chart follows the clock); otherwise the absolute time being viewed. ---- */
+let scrub = null;
+const cursor = () => scrub===null ? Date.now() : Math.min(Math.max(scrub, Date.now()), Date.now()+MAX_AHEAD_MS);
+const isLive = () => scrub===null;
+
+/* ---- Tide cache: a week of highs, lows and the curve, rebuilt each hour (and per beach), so dragging is smooth ---- */
+let tideCache = null;
+function tideData(){
+  const hr=Math.floor(Date.now()/36e5);
+  if (tideCache && tideCache.beach===beach && tideCache.hr===hr) return tideCache;
+  const from=hr*36e5-HALF_MS-36e5, to=hr*36e5+MAX_AHEAD_MS+HALF_MS+2*36e5;
+  tideCache = {beach, hr, ex: extremes(beach, from, to), tl: timeline(beach, from, to, 600)};
+  return tideCache;
 }
 
-/* ---- Tide now ---- */
+/* ---- Tide at the viewed moment ---- */
 function renderNow(){
-  const now=Date.now(), lv=levelAt(beach, now);
-  const nx=extremes(beach, now, now+30*36e5).filter(e=>e.t>now);  // next extreme, for the arrow even when it is past the window
-  const n1=nx[0], rising=!!(n1 && n1.high);
+  const now=cursor(), live=isLive(), lv=levelAt(beach, now), ex=tideData().ex;
+  const n1=ex.find(e=>e.t>now), rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
-  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height
+  // otherwise the next high or low: live, "High tide occurs in about two hours"; ahead, "High tide at 5:12 PM"
   const SLACK_MS=15*6e4;
-  const slack=extremes(beach, now-SLACK_MS, now+SLACK_MS).length>0;
+  const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
-    : n1 ? row(kind(n1)+' occurs '+inDur(mins), n1) : '';
+    : n1 ? row(kind(n1)+(live ? ' occurs '+inDur(mins) : ' at '+fTime.format(new Date(n1.t))), n1) : '';
+  // Ahead of now: the viewed day and time; tap it to come back to now
+  const whenLine = live ? '' : `<button class="when label num" id="backNow" type="button" title="Back to now">${esc(fFull.format(new Date(now)))}<span class="back"> · Now ›</span></button>`;
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   const arrow = rising ? '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>'
                        : '<polygon points="100,-600 100,200 500,-200 500,100 0,600 -500,100 -500,-200 -100,200 -100,-600"/>';
@@ -215,7 +227,7 @@ function renderNow(){
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
+    <div class="hero-side">${whenLine}<div class="nlist">${nextLine}</div></div>`;
 }
 
 /* ---- Moon tile ---- */
@@ -228,9 +240,9 @@ function moonIcon(p){
   return `<i class="wi wi-moon-alt-${MOON_PHASES[i]} moonicon" aria-hidden="true"></i>`;
 }
 function renderMoon(){
-  const now=Date.now(), m=moonInfo(now), full=m.nextFull;
-  // Moonrise / moonset for today, same format as sunrise / sunset; each greys out once it has happened, "—" if none today
-  const mrs=moonTimes(todayKey());
+  const now=cursor(), m=moonInfo(now), full=m.nextFull;
+  // Moonrise / moonset for the viewed day, same format as sunrise / sunset; each greys out once it has happened, "—" if none that day
+  const mrs=moonTimes(dayOf(now));
   const mt=(lab,ms,n)=>riseItem(lab, ms===null?'—':tm(ms), ms!==null&&n>=ms);
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
@@ -283,8 +295,13 @@ async function loadWeather(key){
   }
   const periods = daily && daily.properties.periods || [];
   const today = periods.find(p=>p.isDaytime), tonight = periods.find(p=>!p.isDaytime);
-  const h0 = hourly && hourly.properties.periods && hourly.properties.periods[0];
-  const data = {obs, prev, stationName, hi: today && today.temperature, lo: tonight && tonight.temperature,
+  const hperiods = hourly && hourly.properties.periods || [];
+  const h0 = hperiods[0];
+  // Forecast periods kept for dragging ahead: hourly (about 6½ days), then the twice-daily periods (about 7 days)
+  const slim = p => ({s:+new Date(p.startTime), e:+new Date(p.endTime), temp:p.temperature, short:p.shortForecast,
+    isDay:p.isDaytime, wind:p.windSpeed, dir:p.windDirection});
+  const data = {hourly: hperiods.map(slim), daily: periods.map(slim),
+    obs, prev, stationName, hi: today && today.temperature, lo: tonight && tonight.temperature,
     short: h0 && h0.shortForecast, rain: h0 && h0.probabilityOfPrecipitation ? h0.probabilityOfPrecipitation.value : null,
     hourlyTemp: h0 && h0.temperature, hourlyWind: h0 && h0.windSpeed, hourlyDir: h0 && h0.windDirection, isDay: h0 ? h0.isDaytime : true};
   wxCache[key] = {at: Date.now(), data};
@@ -342,7 +359,30 @@ async function renderWeather(){
   }
 }
 // Draw from loaded data (also on the feet / meters toggle, without refetching)
+// Ahead of now: the NWS forecast for the viewed hour (hourly periods, else the twice-daily ones), and that day's high and low
+function drawForecast(w, t){
+  const inP = p => t>=p.s && t<p.e;
+  const p = (w.hourly||[]).find(inP) || (w.daily||[]).find(inP);
+  if (!p){
+    $('weather').innerHTML = '<span class="label">Forecast</span><p class="muted">No forecast this far ahead yet.</p>';
+    $('wind').innerHTML = '<span class="label">Wind</span><p class="muted">No forecast this far ahead yet.</p>';
+    return;
+  }
+  const d = dayOf(t), onDay = q => same(dayOf(q.s), d);
+  const hi = (w.daily||[]).find(q=>q.isDay && onDay(q)), lo = (w.daily||[]).find(q=>!q.isDay && onDay(q));
+  $('weather').innerHTML = `<span class="label">Forecast</span>
+    <div class="trow"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</div>
+    <div class="sub"><b>${esc(p.short||'—')}</b><span class="label num">${[hi?`High ${tempNum(hi.temp)}°`:'', lo?`Low ${tempNum(lo.temp)}°`:''].filter(Boolean).join(' ')}</span></div>`;
+  // windSpeed is "12 mph" (hourly) or "10 to 15 mph" (daily): show the low end, and the top of a range below it
+  const nums = String(p.wind||'').match(/\d+/g) || [];
+  const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
+  const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
+  $('wind').innerHTML = `<span class="label">Wind</span>
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
+    <div class="sub"><b>${spd===0?'Calm':p.dir?'From '+p.dir:'—'}</b><span class="label num">${top?`Up to ${top} ${spdUnit()}`:'Forecast'}</span></div>`;
+}
 function drawWeather(w){
+  if (!isLive()) return drawForecast(w, cursor());
   const o = w.obs || {};
   const val = x => x && x.value != null ? x.value : null;
   // Exact °F and mph; rounded only for display. Observations come in °C and km/h; the forecast in °F and mph.
@@ -371,43 +411,46 @@ const ticks = () => units==='m'
 function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:22, pb:14}; }  // room above for the "now" label, below for low-tide labels
 function drawStrip(){
   const g=chartGeom(), {dayW, H, pt, pb}=g, ih=H-pt-pb;
-  // Rolling window: the last two hours through the next eighteen, redrawn every minute
-  const now=Date.now(), cw=chartWindow(), start=cw.start, end=cw.end;
+  // Window centered on the viewed moment: ten hours either side, redrawn every minute and on every drag
+  const now=cursor(), start=now-HALF_MS, end=now+HALF_MS, td=tideData();
   const W=dayW;
+  stripW=W;
   const x=t=>(t-start)/(end-start)*W;
   const y=v=>pt+(Y1-v)/(Y1-Y0)*ih;
   // top and bottom padding of 2.5% of the card height, so the chart fills 95% of it
   const day=$('strip').closest('.day'); if (day) day.style.paddingBlock = (H*0.025/0.95).toFixed(1)+'px';
 
-  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height from two hours ago to eighteen hours ahead">`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Tide height from ten hours before to ten hours after ${isLive()?'now':esc(fFull.format(new Date(now)))}">`;
   // Midnight: a divider with the new day's name at its foot
-  for (let d=todayKey(), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))){
+  for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))){
     if (m<=start) continue;
     const mx=x(m), anchor=mx>W-30?'end':'start';
     s+=`<line x1="${mx}" x2="${mx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
     s+=`<text class="dayl" x="${mx+(anchor==='end'?-5:5)}" y="${pt+ih-6}" text-anchor="${anchor}">${fDayName.format(new Date(m))}</text>`;
   }
   for (const [v] of ticks()) s+=`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
-  const tl=timeline(beach, start, end, 600);
+  // The cached curve, one point past each edge so it runs off the card (the card clips it)
+  const tl=td.tl.filter(p=>p.t>=start-6e5 && p.t<=end+6e5);
   const pts=tl.map(p=>`${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`);
-  const waterD=`M0,${y(Y0)} L${pts.join(' L')} L${W},${y(Y0)} Z`;
+  const x0=x(tl[0].t).toFixed(1), x1=x(tl[tl.length-1].t).toFixed(1);
+  const waterD=`M${x0},${y(Y0)} L${pts.join(' L')} L${x1},${y(Y0)} Z`;
   s+=`<path d="${waterD}" fill="var(--water-fill)"/>`;
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
   let labels='';  // drawn last, over the "now" line, so a label near it stays readable
-  for (const e of cw.extremes){
+  for (const e of td.ex.filter(e=>e.t>=start && e.t<end)){
     const ex=x(e.t), ey=y(e.v), anchor = ex<36?'start':ex>W-36?'end':'middle';
     s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
     // Height above the wave, time below it (highs and lows alike)
     labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="${anchor}">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="${anchor}">${fShort(e.t)}</text>`;
   }
   {
-    const nx=x(now), lv=levelAt(beach, now);
+    // The center line is the viewed moment (now, until dragged); the dot rides it up and down with the tide. No label.
+    const nx=W/2, lv=levelAt(beach, now);
     s+=`<line x1="${nx}" x2="${nx}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>`;
     s+=`<circle cx="${nx}" cy="${y(lv)}" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/>`;
-    s+=`<text class="nowl" x="${nx}" y="${pt-6}" text-anchor="middle">now</text>`;
   }
   s+=labels;
   $('stripInner').style.width = W+'px';
@@ -428,7 +471,7 @@ const riseItem = (lab, time, past) => `<div class="${past?'past':''}">${riseIcon
 
 /* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
 function renderSun(){
-  const now=Date.now(), t=todayKey(), sun=sunTimes(t);
+  const now=cursor(), t=dayOf(now), sun=sunTimes(t);
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
   // Sunset greys out once it has happened, until the next sunrise
@@ -465,8 +508,59 @@ $('beachBtn').addEventListener('click', ()=>{
   beach=ORDER[(ORDER.indexOf(beach)+1)%ORDER.length];
   render();
 });
+/* ---- Drag the chart sideways to look ahead, up to a week; it stops at now going back.
+   Everything on the page that depends on time (tide, next high or low, sun, moon, forecast) follows the center line. ---- */
+let stripW=1, frame=0;
+function redrawViewed(){
+  frame=0;
+  renderNow(); renderSun(); renderMoon(); drawStrip();
+  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
+}
+function setCursor(t){
+  const now=Date.now();
+  t=Math.min(t, now+MAX_AHEAD_MS);
+  scrub = t <= now+6e4 ? null : t;   // within a minute of now is live again
+  if (!frame) frame=requestAnimationFrame(redrawViewed);
+}
+{
+  const strip=$('strip');
+  strip.tabIndex=0;
+  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to a week ahead.');
+  let drag=null;
+  strip.addEventListener('pointerdown', e=>{
+    if (e.button>0) return;
+    drag={x:e.clientX, t:cursor(), id:e.pointerId};
+    strip.setPointerCapture && strip.setPointerCapture(e.pointerId);
+    strip.classList.add('dragging');
+  });
+  strip.addEventListener('pointermove', e=>{
+    if (!drag || e.pointerId!==drag.id) return;
+    setCursor(drag.t - (e.clientX-drag.x)/stripW*SPAN_MS);   // drag left to move ahead in time
+  });
+  const end=()=>{ drag=null; strip.classList.remove('dragging'); };
+  strip.addEventListener('pointerup', end); strip.addEventListener('pointercancel', end);
+  // Trackpad: a sideways scroll moves through time too
+  strip.addEventListener('wheel', e=>{
+    if (Math.abs(e.deltaX)<=Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    setCursor(cursor() + e.deltaX/stripW*SPAN_MS);
+  }, {passive:false});
+  // Keys: ← / → an hour, Shift for a day; Home is now, End a week ahead
+  strip.addEventListener('keydown', e=>{
+    const step=e.shiftKey?864e5:36e5, k=e.key;
+    if (k==='ArrowRight') setCursor(cursor()+step);
+    else if (k==='ArrowLeft') setCursor(cursor()-step);
+    else if (k==='Home') setCursor(Date.now());
+    else if (k==='End') setCursor(Date.now()+MAX_AHEAD_MS);
+    else return;
+    e.preventDefault();
+  });
+}
+// The viewed time in the tide panel: tap it to come back to now
+$('tideNow').addEventListener('click', e=>{ if (e.target.closest('#backNow')) setCursor(Date.now()); });
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
-setInterval(()=>{ if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
+setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the clock caught up with the viewed time
+  if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
 try { render(); } catch (err) { console.error('SF Tides:', err); try { renderNow(); drawStrip(); } catch (e2) { console.error(e2); } }

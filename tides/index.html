@@ -129,7 +129,11 @@ title: Tides of San Francisco
   /* Day card with the swipeable strip */
   .tides .day { background: var(--surface); border: 0; border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }  /* chart fills 100% of the card width (rounded corners clip it); tides.js sets the top/bottom padding */
   .tides .chartbox { display: block; }  /* height labels sit inside the chart, so no side gutter */
-  .tides .strip { overflow: hidden; min-width: 0; }
+  .tides .strip { overflow: hidden; min-width: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }  /* drag sideways through time; vertical swipes still scroll the page */
+  .tides .strip.dragging { cursor: grabbing; }
+  .tides .when { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; color: var(--buoy); -webkit-tap-highlight-color: transparent; }
+  .tides .when .back { color: var(--muted); }
+  .tides .when:hover .back { color: var(--accent); }
   .tides .strip svg { display: block; overflow: visible; }
   .tides .tick { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
   .tides .dayl { font: 600 11px var(--font-ui); fill: var(--ink); letter-spacing: .1em; text-transform: uppercase; }
