@@ -272,7 +272,11 @@ function renderNow(){
   // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wednesday, October 28 at 6:30 AM"
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
-  const when = e => mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
+  // Within four hours: the countdown. Tomorrow (SF calendar day): just "tomorrow", no date or time.
+  // Later today: "in N hours". Two or more days out: its date and time.
+  const tomorrow = e => same(dayOf(e.t), addDays(dayOf(Date.now()), 1));
+  const when = e => mins<240 ? L.dur(mins) : tomorrow(e) ? L.tomorrow
+    : mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
   // While the water is below zero at the viewed moment (slack at a negative low, or any time it's negative), the line runs on:
   // "… Visit a tide pool. Respect Mother Nature." Not shown ahead of time just because the next low is negative,
   // and only within four hours of the real now (not when the chart has been slid days ahead).
