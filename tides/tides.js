@@ -248,7 +248,7 @@ function renderMoon(){
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
-        <span class="muted num">${Math.round(m.lit*100)}% lit</span>
+        <span class="muted num">${Math.round(m.lit*100)}%</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
       <div class="suntimes num moontimes" aria-label="Moonrise and moonset">${mt('Moonrise',mrs.rise,now)}${mt('Moonset',mrs.set,now)}</div>
     </div>`;
