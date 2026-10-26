@@ -498,7 +498,8 @@ function buildStrip(){
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
     const ex=x(e.t), ey=y(e.v);
-    s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="var(--water)" stroke-width="2.2"/>`;   // same marker for highs and lows
+    s+=`<circle cx="${ex}" cy="${ey}" r="1.2" fill="var(--surface)"/>`;
+    // Highs and lows: a light bead set into the line, as wide as the line itself (2.4 px), same for both
     labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
   $('stripSvg').innerHTML = s+'</svg>';
@@ -625,8 +626,16 @@ function fling(v){            // v: time per millisecond of real time
   const step=ts=>{ const dt=Math.min(40, ts-last); last=ts;
     v*=Math.exp(-dt/325);       // the same easing as an iPhone list fling
     const moving=setCursor(cursor()+v*dt);
-    anim = moving && Math.abs(v*stripK)>0.02 ? requestAnimationFrame(step) : 0; };
+    if (moving && Math.abs(v*stripK)>0.02) anim=requestAnimationFrame(step);
+    else { anim=0; const s=snapTime(cursor()); if (s!==cursor()) glideTo(s); } };   // a fling that stops near a high or low settles onto it
   anim=requestAnimationFrame(step);
+}
+/* Snap: within 8 px of a high or low, the center line locks onto it (dragging on past releases it) */
+const SNAP_PX=8;
+function snapTime(t){
+  const lim=SNAP_PX/stripK; let best=t, bd=lim;
+  for (const e of tideData().ex){ const d=Math.abs(e.t-t); if (d<bd && e.t>Date.now()+6e4){ bd=d; best=e.t; } }
+  return best;
 }
 function glideTo(target){
   stopAnim(); const from=cursor(), t0=performance.now(), D=320;
@@ -651,7 +660,7 @@ function glideTo(target){
     if (!drag || e.pointerId!==drag.id) return;
     const now=performance.now(); drag.hist.push([now, e.clientX]);
     while (drag.hist.length>2 && now-drag.hist[0][0]>100) drag.hist.shift();
-    setCursor(drag.t - (e.clientX-drag.x)/stripK);   // drag left to move ahead in time
+    setCursor(snapTime(drag.t - (e.clientX-drag.x)/stripK));   // drag left to move ahead in time; snaps onto a nearby high or low
   });
   const end=e=>{
     if (!drag) return;
