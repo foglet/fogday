@@ -117,7 +117,7 @@ window.TIDE_I18N = {
     beachAria:'{b}, beach {i} of {n}. Tap for {next}.', nextBeach:'Next: {n}',
     unitAria:'Tide {v} {unit}, {dir}. Tap to show {other}.', feet:'feet', meters:'meters', rising:'rising', falling:'falling',
     unitTitle:'Tap to show {other}',
-    chartAria:'Tide chart. Drag sideways, or use the arrow keys, to look up to 72 hours ahead.', farTide:'This tidal event is more than a day away.', now:'Now',
+    chartAria:'Tide chart. Drag sideways, or use the arrow keys, to look up to 36 hours ahead.', farTide:'This tidal event is more than a day away.', now:'Now',
     langAria:'Language: English. Tap for {next}.', tilesAria:'Weather and moon', chartSection:'Tide chart',
     sunAria:'Sunrise and sunset', moonAria:'Moonrise and moonset'
   },
@@ -156,7 +156,7 @@ window.TIDE_I18N = {
     beachAria:'{b}, plage {i} sur {n}. Touchez pour {next}.', nextBeach:'Suivante : {n}',
     unitAria:'Marée {v} {unit}, {dir}. Touchez pour afficher en {other}.', feet:'pieds', meters:'mètres', rising:'montante', falling:'descendante',
     unitTitle:'Touchez pour afficher en {other}',
-    chartAria:'Graphique des marées. Faites glisser, ou utilisez les flèches, pour voir jusqu’à 72 heures.', farTide:'Cette marée est dans plus d’un jour.', now:'Maintenant',
+    chartAria:'Graphique des marées. Faites glisser, ou utilisez les flèches, pour voir jusqu’à 36 heures.', farTide:'Cette marée est dans plus d’un jour.', now:'Maintenant',
     langAria:'Langue : français. Touchez pour {next}.', tilesAria:'Météo et lune', chartSection:'Graphique des marées',
     sunAria:'Lever et coucher du soleil', moonAria:'Lever et coucher de lune'
   },
@@ -195,7 +195,7 @@ window.TIDE_I18N = {
     beachAria:'{b}, playa {i} de {n}. Toque para {next}.', nextBeach:'Siguiente: {n}',
     unitAria:'Marea {v} {unit}, {dir}. Toque para mostrar en {other}.', feet:'pies', meters:'metros', rising:'subiendo', falling:'bajando',
     unitTitle:'Toque para mostrar en {other}',
-    chartAria:'Gráfico de mareas. Deslice, o use las flechas, para ver hasta 72 horas.', farTide:'Esta marea es dentro de más de un día.', now:'Ahora',
+    chartAria:'Gráfico de mareas. Deslice, o use las flechas, para ver hasta 36 horas.', farTide:'Esta marea es dentro de más de un día.', now:'Ahora',
     langAria:'Idioma: español. Toque para {next}.', tilesAria:'Tiempo y luna', chartSection:'Gráfico de mareas',
     sunAria:'Amanecer y atardecer', moonAria:'Salida y puesta de la luna'
   },
@@ -234,7 +234,7 @@ window.TIDE_I18N = {
     beachAria:'{b}，第 {i} 个海滩，共 {n} 个。点按切换到{next}。', nextBeach:'下一个：{n}',
     unitAria:'潮高 {v} {unit}，{dir}。点按切换为{other}。', feet:'英尺', meters:'米', rising:'涨潮中', falling:'落潮中',
     unitTitle:'点按切换为{other}',
-    chartAria:'潮汐图。左右拖动或使用方向键，可查看未来72小时。', farTide:'这次潮汐在一天以后。', now:'现在',
+    chartAria:'潮汐图。左右拖动或使用方向键，可查看未来36小时。', farTide:'这次潮汐在一天以后。', now:'现在',
     langAria:'语言：中文。点按切换到{next}。', tilesAria:'天气和月亮', chartSection:'潮汐图',
     sunAria:'日出和日落', moonAria:'月出和月落'
   },

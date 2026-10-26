@@ -12,8 +12,8 @@ const BEACHES = {
   ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107}
 };
 const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
-// Tide chart: 20 hours wide, centered on the viewed moment (now, or up to 72 hours ahead once dragged)
-const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 72*36e5;
+// Tide chart: 20 hours wide, centered on the viewed moment (now, or up to 36 hours ahead once dragged)
+const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 36*36e5;
 /* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code beside "Made at Baker Beach." to cycle (remembered per visitor) ---- */
 const I18N = window.TIDE_I18N;
 let lang = 'en';
@@ -242,13 +242,13 @@ let view = todayKey();
 
 /* ---- Durations in words ("in about six hours") come from i18n.js, in each language, with the same thresholds ---- */
 
-/* ---- Viewed moment: now, or a time up to 72 hours ahead picked by dragging the chart.
+/* ---- Viewed moment: now, or a time up to 36 hours ahead picked by dragging the chart.
    scrub is null while live (the chart follows the clock); otherwise the absolute time being viewed. ---- */
 let scrub = null;
 const cursor = () => scrub===null ? Date.now() : Math.min(Math.max(scrub, Date.now()), Date.now()+MAX_AHEAD_MS);
 const isLive = () => scrub===null;
 
-/* ---- Tide cache: 72 hours (plus the chart's margins) of highs, lows and the curve, rebuilt each hour (and per beach), so dragging is smooth ---- */
+/* ---- Tide cache: 36 hours (plus the chart's margins) of highs, lows and the curve, rebuilt each hour (and per beach), so dragging is smooth ---- */
 let tideCache = null;
 function tideData(){
   const hr=Math.floor(Date.now()/36e5);
@@ -523,7 +523,7 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
-/* Sea life in the chart: in each screen-width of time one crab on the floor and three fish at different depths.
+/* Sea life in the chart: in each screen-width of time one crab on the floor and two great white sharks at different depths.
    Drawn with a 2px border in the card color so they read against the waves. Placed the same way every time (seeded),
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
 function seaLife(td, start, end, TW, W, x, y, floor){
@@ -537,7 +537,10 @@ function seaLife(td, start, end, TW, W, x, y, floor){
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))) busy.push([+x(m)-6, +x(m)+80]);
   for (const e of td.ex) if (!e.high && y(e.v)+30 > floor-40) busy.push([+x(e.t)-34, +x(e.t)+34]);
   const free = (a,b) => !busy.some(([l,r]) => b>l && a<r);
-  const fishFree = cx => !td.ex.some(e => Math.abs(+x(e.t)-cx) < 40);   // fish swim anywhere in the water, so clear of every high and low and its labels
+  // Boxes around every high / low: its marker, the height above it and the time below it (plus 4px), which sharks keep clear of
+  const labelBox = e => { const ex=+x(e.t), ey=y(e.v); return [ex-38, ex+38, ey-27, ey+30]; };
+  const LB = td.ex.map(labelBox);
+  const sharkFree = (cx,cy) => !LB.some(([l,r,t,b]) => cx+27>l && cx-23<r && cy+12>t && cy-15<b);
   let g = `<defs><filter id="seaRim" x="-30%" y="-30%" width="160%" height="160%">
       <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
       <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
@@ -548,24 +551,29 @@ function seaLife(td, start, end, TW, W, x, y, floor){
       <circle cx="-8.5" cy="-8" r="2.6" stroke="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
       <ellipse cx="0" cy="0" rx="7.5" ry="4.8" stroke="none"/>
       <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`;
-  const fish = (cx,cy,dir,col) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir},1)" filter="url(#seaRim)">
-      <path d="M-9,0 C-5,-6 4,-6 7,0 C4,6 -5,6 -9,0 Z M6,0 L12,-5 L11,0 L12,5 Z" fill="${col}"/>
-      <circle cx="-5" cy="-1" r="1.1" fill="#1b2a33"/></g>`;
-  const COLS=['#f2a33a','#e8c547','#f07f5a'];
+  // Great white shark, facing left (scale -1 turns it): slate-grey back, white underside, dorsal and pectoral fins, forked tail
+  const shark = (cx,cy,dir) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir},1)" filter="url(#seaRim)">
+      <path d="M-1,-5.8 L3,-12.5 L6.5,-5.4 Z" fill="#5d6f7d"/>
+      <path d="M-18,0 C-15,-4 -8,-6 0,-6 C8,-6 13,-3 16,-1 L23.5,-8.5 L21,0 L23.5,6.5 L16,2 C10,5 -6,6 -13,4 C-16,3 -18,1 -18,0 Z" fill="#6f8191"/>
+      <path d="M-17.4,1.3 C-10,5.6 6,5.2 15.2,2.2 C8,6.2 -8,6.4 -13,4.2 C-15.6,3.2 -17.2,2.2 -17.4,1.3 Z" fill="#f2f4f5"/>
+      <path d="M-4,3.6 L-0.5,9.5 L2.6,4.1 Z" fill="#5d6f7d"/>
+      <path d="M-8.6,-2.2 v3 M-7.2,-2.4 v3 M-5.8,-2.5 v3" stroke="#3e4c57" stroke-width=".6" fill="none"/>
+      <path d="M-17,1.6 q3,1.1 6.2,.5" stroke="#3e4c57" stroke-width=".6" fill="none"/>
+      <circle cx="-12.2" cy="-1.6" r=".95" fill="#1b2a33"/></g>`;
+  // Every creature placed so far, as a box (with 4px to spare), so none touches another across the whole strip
+  const taken=[], clear=(l,r,t,b) => !taken.some(([L,R,T,B]) => r+4>L && l-4<R && b+4>T && t-4<B);
   for (let seg=0; seg<TW; seg+=W){
     // one crab on the floor
-    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40); if (cx>TW-15 || !free(cx-14,cx+14)) continue; g+=crab(cx, floor-9); break; }
-    // three fish just above the grass, each under the surface
-    let placed=0; const school=[];
-    for (let tries=0; tries<40 && placed<3; tries++){
-      // each fish in its own depth band of the water column at that spot: near the top, mid-water, near the floor
-      const cx=seg+16+rnd()*(W-32), top=surf(cx)+16, bot=floor-14, band=[[.05,.3],[.38,.62],[.7,.95]][placed];
-      if (bot-top < 30) continue;
+    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14,cx+14,cy-13,cy+9)) continue; taken.push([cx-14,cx+14,cy-13,cy+9]); g+=crab(cx, cy); break; }
+    // two great whites at different depths: one in the upper water, one lower, always under the surface
+    let placed=0;
+    for (let tries=0; tries<120 && placed<2; tries++){
+      const cx=seg+30+rnd()*(W-60), top=surf(cx)+18, bot=floor-16, band=[[.05,.42],[.58,.95]][placed];
+      if (bot-top < 34) continue;
       const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
-      if (cx>TW-16 || !fishFree(cx) || !free(cx-16,cx+16)) continue;
-      if (school.some(([fx,fy]) => Math.abs(fx-cx)<34 && Math.abs(fy-cy)<16)) continue;   // never touching another fish
-      school.push([cx,cy]);
-      g+=fish(cx, cy, rnd()<.5?1:-1, COLS[placed%COLS.length]); placed++;
+      if (cx>TW-30 || !sharkFree(cx,cy) || !free(cx-28,cx+28)) continue;
+      if (!clear(cx-26,cx+26,cy-15,cy+12)) continue;   // never touching another shark or the crab
+      taken.push([cx-26,cx+26,cy-15,cy+12]); g+=shark(cx, cy, rnd()<.5?1:-1); placed++;
     }
   }
   return g+'</g>';
@@ -732,7 +740,7 @@ $('beachBtn').addEventListener('click', ()=>{
   beach=ORDER[(ORDER.indexOf(beach)+1)%ORDER.length];
   render();
 });
-/* ---- Drag the chart sideways to look ahead, up to 72 hours; it stops at now going back.
+/* ---- Drag the chart sideways to look ahead, up to 36 hours; it stops at now going back.
    The tide panel, sun, moon and forecast follow the center line. ---- */
 let stripW=1, frame=0, tileAt=0, tileTimer=0, tileKey='';
 // Tiles (sun, moon, forecast) redraw at most ten times a second while sliding, and once more when it settles
@@ -785,7 +793,7 @@ function glideTo(target){
   const strip=$('strip');
   strip.tabIndex=0;
   strip.setAttribute('role','slider');
-  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to 72 hours ahead. Tap to return to now.');
+  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to 36 hours ahead. Tap to return to now.');
   let drag=null;
   strip.addEventListener('pointerdown', e=>{
     if (e.button>0) return;
@@ -817,7 +825,7 @@ function glideTo(target){
     e.preventDefault(); stopAnim();
     setCursor(cursor() + e.deltaX/stripK);
   }, {passive:false});
-  // Keys: ← / → an hour, Shift for a day; Home is now, End 72 hours ahead
+  // Keys: ← / → an hour, Shift for a day; Home is now, End 36 hours ahead
   strip.addEventListener('keydown', e=>{
     const step=e.shiftKey?864e5:36e5, k=e.key, base=anim&&glideTarget!=null?glideTarget:cursor();
     let to;
