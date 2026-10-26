@@ -72,6 +72,7 @@ const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', m
 const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
 const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
 const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
+const fWkMd = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric'});
 const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 // Tide heights: predictions are in feet; tap the big number to switch to meters (remembered per visitor).
@@ -235,18 +236,20 @@ function tideData(){
 
 /* ---- Tide now (always the live tide; dragging the chart doesn't change it) ---- */
 function renderNow(){
-  const now=Date.now(), lv=levelAt(beach, now), ex=tideData().ex;
+  // The tide at the viewed moment (now, or wherever the chart has been slid to); the next high or low after it
+  const now=cursor(), lv=levelAt(beach, now), ex=tideData().ex;
   const n1=ex.find(e=>e.t>now), rising=!!(n1 && n1.high);
-  const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
+  const mins=n1 ? Math.round((n1.t-Date.now())/6e4) : 0;   // counted from the real now
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
-  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height
+  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height.
+  // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wed, Oct 28 at 6:30 AM"
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
-    : n1 ? row(kind(n1)+' occurs '+inDur(mins), n1) : '';
+    : n1 ? row(kind(n1)+' occurs '+(mins<1440 ? inDur(mins) : fWkMd.format(new Date(n1.t))+' at '+fTime.format(new Date(n1.t))), n1) : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
   const arrow = '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>';
@@ -544,14 +547,14 @@ $('beachBtn').addEventListener('click', ()=>{
   render();
 });
 /* ---- Drag the chart sideways to look ahead, up to a week; it stops at now going back.
-   The tide panel stays on now; sun, moon and forecast follow the center line. ---- */
+   The tide panel, sun, moon and forecast follow the center line. ---- */
 let stripW=1, frame=0, tileAt=0, tileTimer=0, tileKey='';
 // Tiles (sun, moon, forecast) redraw at most ten times a second while sliding, and once more when it settles
 function updateTiles(){
   tileAt=performance.now(); tileTimer=0;
   const k=isLive()+'|'+Math.floor(cursor()/6e4);
   if (k===tileKey) return; tileKey=k;
-  renderSun(); renderMoon();
+  renderNow(); renderSun(); renderMoon();
   if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
 }
 function redrawViewed(){
