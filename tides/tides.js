@@ -310,7 +310,7 @@ function renderMoon(){
   const head = esc(tr('fullMoon', {when: tmrwNight ? L.tomorrowNight : when}) + howl);
   morph($('moon'), `<span class="label">${esc(L.moon)}</span>
     <div class="moonrow">${moonIcon(m.p)}
-      <div class="stack"><span class="slab moonname num">${Math.round(m.lit*100)}%</span>
+      <div class="stack"><span class="slab mid num">${Math.round(m.lit*100)}%</span>
         <span class="muted">${esc(L.phases[m.ph])}</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
       <div class="suntimes num moontimes" aria-label="${esc(L.moonAria)}">${mt('moonrise',mrs.rise,now)}${mt('moonset',mrs.set,now)}</div>
