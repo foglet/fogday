@@ -310,8 +310,8 @@ function flipArrow(el, fromTop){
   const toTop=parseFloat(getComputedStyle(el).top)||0, d=toTop-fromTop, s0=-d;   // s0: offset back to where it was
   el.animate([
     {offset:0,    transform:T(s0,a0),       easing:'cubic-bezier(.45,.05,.55,.95)'},   // spin in place: ease in and out
-    {offset:.5,   transform:T(s0,a1),       easing:'cubic-bezier(.55,0,.85,.4)'},      // then drop or rise, gathering speed
-    {offset:.68,  transform:T(0,a1),        easing:'cubic-bezier(.2,.6,.35,1)'},       // land
+    {offset:.48,  transform:T(s0,a1),       easing:'cubic-bezier(.55,.055,.675,.19)'}, // then drop or rise: eases in (gathers speed, like falling)
+    {offset:.72,  transform:T(0,a1),        easing:'cubic-bezier(.2,.6,.35,1)'},       // land
     {offset:.8,   transform:T(-d*.10,a1),   easing:'cubic-bezier(.55,0,.6,1)'},        // soft rebound
     {offset:.9,   transform:T(0,a1),        easing:'cubic-bezier(.2,.6,.35,1)'},
     {offset:.95,  transform:T(-d*.03,a1),   easing:'cubic-bezier(.55,0,.6,1)'},        // smaller rebound
@@ -506,6 +506,58 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
+/* Sea life on the floor of the chart: eel grass all along, and in each screen-width of time one crab and three fish.
+   Drawn with a 2px border in the card color so they read against the waves. Placed the same way every time (seeded),
+   clear of the day names and of the low-tide labels, and the fish always under the surface. */
+function seaLife(td, start, end, TW, W, x, y, floor){
+  let seed = Math.floor(start/36e5) % 2147483647 || 1;
+  const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
+  const k = TW/(end-start), tAt = px => start + px/k;
+  const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
+    const a=tl[i-1], b=tl[i], f=(t-a.t)/((b.t-a.t)||1); return y(a.v+(b.v-a.v)*f); };
+  // Keep clear: each day name (bottom left of its midnight line) and each low whose time label sits near the floor
+  const busy=[];
+  for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))) busy.push([+x(m)-6, +x(m)+80]);
+  for (const e of td.ex) if (!e.high && y(e.v)+30 > floor-40) busy.push([+x(e.t)-34, +x(e.t)+34]);
+  const free = (a,b) => !busy.some(([l,r]) => b>l && a<r);
+  let g = `<defs><filter id="seaRim" x="-30%" y="-30%" width="160%" height="160%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
+      <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
+      <feMerge><feMergeNode in="rim"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="sealife">`;
+  // Eel grass: clumps of three to five blades, swaying, 14–28px tall
+  for (let gx=8+rnd()*20; gx<TW; gx+=34+rnd()*46){
+    if (!free(gx-10, gx+10)) continue;
+    const n=3+Math.floor(rnd()*3);
+    for (let i=0;i<n;i++){
+      const bx=gx+(i-(n-1)/2)*3.2, h=14+rnd()*14, sway=(rnd()-.5)*12;
+      g+=`<path d="M${bx.toFixed(1)},${floor} q${(sway*.3).toFixed(1)},${(-h*.5).toFixed(1)} ${sway.toFixed(1)},${(-h).toFixed(1)}" fill="none" stroke="#5f8f4e" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>`;
+    }
+  }
+  const crab = (cx,cy) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
+      <path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/>
+      <path d="M-5,-2 l-3,-5 M5,-2 l3,-5" stroke-width="1.6" fill="none"/>
+      <circle cx="-8.5" cy="-8" r="2.6" stroke="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
+      <ellipse cx="0" cy="0" rx="7.5" ry="4.8" stroke="none"/>
+      <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`;
+  const fish = (cx,cy,dir,col) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir},1)" filter="url(#seaRim)">
+      <path d="M-9,0 C-5,-6 4,-6 7,0 C4,6 -5,6 -9,0 Z M6,0 L12,-5 L11,0 L12,5 Z" fill="${col}"/>
+      <circle cx="-5" cy="-1" r="1.1" fill="#1b2a33"/></g>`;
+  const COLS=['#f2a33a','#e8c547','#f07f5a'];
+  for (let seg=0; seg<TW; seg+=W){
+    // one crab on the floor
+    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40); if (cx>TW-15 || !free(cx-14,cx+14)) continue; g+=crab(cx, floor-6); break; }
+    // three fish just above the grass, each under the surface
+    let placed=0; const school=[];
+    for (let tries=0; tries<40 && placed<3; tries++){
+      const cx=seg+16+rnd()*(W-32), cy=floor-30-rnd()*30;
+      if (cx>TW-16 || !free(cx-16,cx+16) || cy-10 < surf(cx)) continue;
+      if (school.some(([fx,fy]) => Math.abs(fx-cx)<34 && Math.abs(fy-cy)<16)) continue;   // never touching another fish
+      school.push([cx,cy]);
+      g+=fish(cx, cy, rnd()<.5?1:-1, COLS[placed%COLS.length]); placed++;
+    }
+  }
+  return g+'</g>';
+}
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
   const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
@@ -523,13 +575,18 @@ function buildStrip(){
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))){
     s+=`<line x1="${x(m)}" x2="${x(m)}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
   }
-  for (const [v] of ticks()) s+=`<line x1="0" x2="${TW}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
   const pts=td.tl.map(p=>`${x(p.t)},${y(p.v).toFixed(1)}`);
+  // Height lines (dotted, and the solid zero line) only in the air: clipped to the area above the water, so below the surface you see only waves
+  s+=`<defs><clipPath id="tideAir"><path d="M0,0 L0,${y(td.tl[0].v).toFixed(1)} L${pts.join(' L')} L${TW},${y(td.tl[td.tl.length-1].v).toFixed(1)} L${TW},0 Z"/></clipPath></defs>`;
+  for (const [v] of ticks()) s+= Math.abs(v)<1e-9
+    ? `<line x1="0" x2="${TW}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1.4" clip-path="url(#tideAir)"/>`
+    : `<line x1="0" x2="${TW}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 5" clip-path="url(#tideAir)"/>`;
   const waterD=`M0,${y(Y0)} L${pts.join(' L')} L${TW},${y(Y0)} Z`;
   s+=`<path d="${waterD}" fill="var(--water-fill)"/>`;
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
+  s+=seaLife(td, start, end, TW, W, x, y, pt+ih);
   // Day names at the foot of each midnight divider, drawn over the water and waves so they stay on top
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1)))
     s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
