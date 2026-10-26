@@ -203,22 +203,20 @@ function tideData(){
   return tideCache;
 }
 
-/* ---- Tide at the viewed moment ---- */
+/* ---- Tide now (always the live tide; dragging the chart doesn't change it) ---- */
 function renderNow(){
-  const now=cursor(), live=isLive(), lv=levelAt(beach, now), ex=tideData().ex;
+  const now=Date.now(), lv=levelAt(beach, now), ex=tideData().ex;
   const n1=ex.find(e=>e.t>now), rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
-  // otherwise the next high or low: live, "High tide occurs in about two hours"; ahead, "High tide at 5:12 PM"
+  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
-    : n1 ? row(kind(n1)+(live ? ' occurs '+inDur(mins) : ' at '+fTime.format(new Date(n1.t))), n1) : '';
-  // Ahead of now: the viewed day and time; tap it to come back to now
-  const whenLine = live ? '' : `<button class="when label num" id="backNow" type="button" title="Back to now">${esc(fFull.format(new Date(now)))}<span class="back"> · Now ›</span></button>`;
+    : n1 ? row(kind(n1)+' occurs '+inDur(mins), n1) : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   const arrow = rising ? '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>'
                        : '<polygon points="100,-600 100,200 500,-200 500,100 0,600 -500,100 -500,-200 -100,200 -100,-600"/>';
@@ -227,7 +225,7 @@ function renderNow(){
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
-    <div class="hero-side">${whenLine}<div class="nlist">${nextLine}</div></div>`;
+    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
 }
 
 /* ---- Moon tile ---- */
@@ -509,7 +507,7 @@ $('beachBtn').addEventListener('click', ()=>{
   render();
 });
 /* ---- Drag the chart sideways to look ahead, up to a week; it stops at now going back.
-   Everything on the page that depends on time (tide, next high or low, sun, moon, forecast) follows the center line. ---- */
+   The tide panel stays on now; sun, moon and forecast follow the center line. ---- */
 let stripW=1, frame=0;
 function redrawViewed(){
   frame=0;
@@ -556,8 +554,6 @@ function setCursor(t){
     e.preventDefault();
   });
 }
-// The viewed time in the tide panel: tap it to come back to now
-$('tideNow').addEventListener('click', e=>{ if (e.target.closest('#backNow')) setCursor(Date.now()); });
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; drawStrip(); } }, 150); });
 setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the clock caught up with the viewed time
   if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); drawStrip(); } }, 60000);  // rolls over to the new day at midnight
