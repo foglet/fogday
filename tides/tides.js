@@ -427,15 +427,13 @@ function drawForecast(w, t){
   const d = dayOf(t), onDay = q => same(dayOf(q.s), d);
   const hi = (w.daily||[]).find(q=>q.isDay && onDay(q)), lo = (w.daily||[]).find(q=>!q.isDay && onDay(q));
   morph($('weather'), `<span class="label">${esc(L.forecast)}</span>
-    <div class="trow"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</div>
-    <div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span></div>`);
+    <div class="trow inline"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}<div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span></div></div>`);
   // windSpeed is "12 mph" (hourly) or "10 to 15 mph" (daily): show the low end, and the top of a range below it
   const nums = String(p.wind||'').match(/\d+/g) || [];
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
-    <div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b>${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit(top)}):L.fcSub)}</span></div>`);
+    <div class="trow inline"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}<div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b>${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit(top)}):L.fcSub)}</span></div></div>`);
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
 const wxT = t => I18N.wxText(t, lang);
@@ -450,8 +448,7 @@ function drawWeather(w){
   const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
   const desc = o.textDescription || w.short || '—';
   morph($('weather'), `<span class="label">${esc(L.weather)}</span>
-    <div class="trow"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</div>
-    <div class="sub"><b>${esc(wxT(desc))}</b><span class="label num">${hiLo(w.hi, w.lo)}</span></div>`);
+    <div class="trow inline"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}<div class="sub"><b>${esc(wxT(desc))}</b><span class="label num">${hiLo(w.hi, w.lo)}</span></div></div>`);
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);
@@ -459,8 +456,7 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</div>
-    <div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b>${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit(gust)}):L.noGusts)}</span></div>`);
+    <div class="trow inline"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}<div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b>${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit(gust)}):L.noGusts)}</span></div></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
