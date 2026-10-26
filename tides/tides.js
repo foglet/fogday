@@ -12,8 +12,8 @@ const BEACHES = {
   ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107}
 };
 const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
-// Tide chart: 20 hours wide, centered on the viewed moment (now, or up to a week ahead once dragged)
-const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 7*864e5;
+// Tide chart: 20 hours wide, centered on the viewed moment (now, or up to 72 hours ahead once dragged)
+const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 72*36e5;
 /* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code beside "Made at Baker Beach." to cycle (remembered per visitor) ---- */
 const I18N = window.TIDE_I18N;
 let lang = 'en';
@@ -242,13 +242,13 @@ let view = todayKey();
 
 /* ---- Durations in words ("in about six hours") come from i18n.js, in each language, with the same thresholds ---- */
 
-/* ---- Viewed moment: now, or a time up to a week ahead picked by dragging the chart.
+/* ---- Viewed moment: now, or a time up to 72 hours ahead picked by dragging the chart.
    scrub is null while live (the chart follows the clock); otherwise the absolute time being viewed. ---- */
 let scrub = null;
 const cursor = () => scrub===null ? Date.now() : Math.min(Math.max(scrub, Date.now()), Date.now()+MAX_AHEAD_MS);
 const isLive = () => scrub===null;
 
-/* ---- Tide cache: a week of highs, lows and the curve, rebuilt each hour (and per beach), so dragging is smooth ---- */
+/* ---- Tide cache: 72 hours (plus the chart's margins) of highs, lows and the curve, rebuilt each hour (and per beach), so dragging is smooth ---- */
 let tideCache = null;
 function tideData(){
   const hr=Math.floor(Date.now()/36e5);
@@ -291,7 +291,9 @@ function renderNow(){
   // "… Visit a tide pool. Respect Mother Nature." Not shown ahead of time just because the next low is negative,
   // and only within four hours of the real now (not when the chart has been slid days ahead).
   const negNow = lv < 0 && now - Date.now() <= 4*36e5;
-  const nextLine = slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(L.slack+(negNow?L.stop.trim():''))}</span></div>`
+  // Beyond a day from the real now (slid ahead), no countdown: "This tidal event is more than a day away."
+  const far = (slack ? now : n1 ? n1.t : now) - Date.now() > 864e5;
+  const nextLine = far ? `<div class="nrow"><span class="label">${esc(L.farTide)}</span></div>` : slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(L.slack+(negNow?L.stop.trim():''))}</span></div>`
     : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})+(negNow?L.stop.trim():'')), n1) : '';
   // Second line while the tide is below zero: "Visit a tide pool. Respect Mother Nature."
   const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
@@ -730,7 +732,7 @@ $('beachBtn').addEventListener('click', ()=>{
   beach=ORDER[(ORDER.indexOf(beach)+1)%ORDER.length];
   render();
 });
-/* ---- Drag the chart sideways to look ahead, up to a week; it stops at now going back.
+/* ---- Drag the chart sideways to look ahead, up to 72 hours; it stops at now going back.
    The tide panel, sun, moon and forecast follow the center line. ---- */
 let stripW=1, frame=0, tileAt=0, tileTimer=0, tileKey='';
 // Tiles (sun, moon, forecast) redraw at most ten times a second while sliding, and once more when it settles
@@ -783,7 +785,7 @@ function glideTo(target){
   const strip=$('strip');
   strip.tabIndex=0;
   strip.setAttribute('role','slider');
-  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to a week ahead. Tap to return to now.');
+  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to 72 hours ahead. Tap to return to now.');
   let drag=null;
   strip.addEventListener('pointerdown', e=>{
     if (e.button>0) return;
@@ -815,7 +817,7 @@ function glideTo(target){
     e.preventDefault(); stopAnim();
     setCursor(cursor() + e.deltaX/stripK);
   }, {passive:false});
-  // Keys: ← / → an hour, Shift for a day; Home is now, End a week ahead
+  // Keys: ← / → an hour, Shift for a day; Home is now, End 72 hours ahead
   strip.addEventListener('keydown', e=>{
     const step=e.shiftKey?864e5:36e5, k=e.key, base=anim&&glideTarget!=null?glideTarget:cursor();
     let to;
