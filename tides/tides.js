@@ -40,7 +40,6 @@ const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', m
 const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
 const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
 const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
-const fMoonDay = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric'});
 const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 // Tide heights: predictions are in feet; tap the big number to switch to meters (remembered per visitor).
@@ -244,17 +243,13 @@ function renderMoon(){
   const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
   // Howl only in the 28 hours before the full moon.
   const howl = full-now <= 28*3.6e6 ? ' Ahhh-wooooooo!!!' : '';
-  // Full moon day: the howl alone (always within the 28 hours)
-  const head = days<=0 ? howl.trim()
-    : (tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
-  const dateTxt = days===1 ? 'at ' + fTime.format(new Date(full))  // tomorrow: the heading already says so
-    // Today, by when the moment falls: after sunset "Tonight at 9:11 PM", noon to sunset "This afternoon at …", morning "Today at …"
-    : (days<=0 ? (full>=sunTimes({y:pn.y,m:pn.m,d:pn.d}).set ? 'Tonight' : pf.h>=12 ? 'This afternoon' : 'Today') : fMoonDay.format(new Date(full))) + ' at ' + fTime.format(new Date(full));
+  // No date or time: on the day itself, "Next full moon in about two hours"
+  const head = (tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
         <span class="muted num">${Math.round(m.lit*100)}% lit</span>
-        <span class="nextfull"><b>${head}</b><br><span class="muted num">${dateTxt}</span></span></div>
+        <span class="nextfull"><b>${head}</b></span></div>
       <div class="suntimes num moontimes" aria-label="Moonrise and moonset">${mt('Moonrise',mrs.rise,now)}${mt('Moonset',mrs.set,now)}</div>
     </div>`;
 }
@@ -410,7 +405,8 @@ function drawStrip(){
 
 
 // Rise / set times, formatted like the tide times ("5:33 PM")
-const tm=ms=>esc(fTime.format(new Date(ms)));
+// AM / PM set at the size of the Sunrise / Sunset labels
+const tm=ms=>esc(fTime.format(new Date(ms))).replace(/ ([AP]M)$/,' <span class="ampm">$1</span>');
 
 // Weather Icons glyph for a Sunrise / Sunset / Moonrise / Moonset label
 const riseIcon = lab => `<i class="wi wi-${lab.toLowerCase()} riseicon" aria-hidden="true"></i>`;

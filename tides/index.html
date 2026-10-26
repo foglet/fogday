@@ -53,6 +53,7 @@ title: Tides of San Francisco
   .tides .suntimes > div { display: grid; grid-template-columns: calc(var(--rise-ic) * 1.2) auto; column-gap: 5px; align-items: center; line-height: 1.15; }
   .tides .suntimes .label { font-size: .68rem; grid-column: 2; grid-row: 1; }
   .tides .suntimes .time { font-weight: 600; line-height: 1.3; grid-column: 2; grid-row: 2; }  /* same as the tide times */
+  .tides .suntimes .ampm { font-size: .68rem; }  /* same size as the Sunrise / Sunset labels */
   .tides .suntimes .past .time { color: var(--past); }  /* already happened: light grey in light mode, the site grey in dark */
   .tides .picker { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
   .tides .beachpick { position: relative; max-width: 100%; }
@@ -176,7 +177,7 @@ title: Tides of San Francisco
           <button class="beachbtn" id="beachBtn" type="button"><span id="beachName">Baker Beach</span></button>
         </div>
         <div class="coords num" id="coords"></div>
-        <p class="place" id="place"></p>
+        <p class="place label" id="place"></p>
       </div>
       <div class="suntimes num" id="sun" aria-label="Sunrise and sunset"></div>
     </div>
