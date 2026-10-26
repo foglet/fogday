@@ -358,7 +358,7 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   $('wind').innerHTML = `<span class="label">Wind</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">${spdUnit()}</span></span>${windIcon(dir, spd===0)}</div>
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir, spd===0)}</div>
     <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} ${spdUnit()}`:'No gusts reported'}</span></div>`;
 }
 
