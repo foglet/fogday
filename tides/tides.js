@@ -273,8 +273,9 @@ function renderNow(){
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
   const when = e => mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
-  // A negative tide (next, or slack at one now) runs on in the same text: "Negative tide occurs in about eight hours. Visit a tide pool. Respect Mother Nature."
-  const negNow = slack ? ex.some(e=>Math.abs(e.t-now)<=SLACK_MS && neg(e)) : !!(n1 && neg(n1));
+  // While the water is below zero at the viewed moment (slack at a negative low, or any time it's negative), the line runs on:
+  // "… Visit a tide pool. Respect Mother Nature." Not shown ahead of time just because the next low is negative.
+  const negNow = lv < 0;
   const pool = t => negNow ? t + L.stop + L.tidePool : t;
   const nextLine = slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(pool(L.slack))}</span></div>`
     : n1 ? row(esc(pool(tr('next', {kind: kind(n1), when: when(n1)}))), n1) : '';
