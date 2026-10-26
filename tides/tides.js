@@ -213,7 +213,7 @@ function renderNow(){
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
-      <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
+      <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
     <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
 }

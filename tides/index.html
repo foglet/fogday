@@ -73,14 +73,13 @@ title: Tides of San Francisco
     padding-block: 6px 22px; border-bottom: 1px solid var(--line); }
   .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px;
     background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; justify-self: start; -webkit-tap-highlight-color: transparent; }
-  .tides .big:hover .unit { color: var(--accent); }
+  .tides .big:hover .spdunit { color: var(--accent); }
   .tides .big { --tide-fs: clamp(4.2rem, 19vw, 6.6rem); --arrow-h: clamp(1.8rem, 7vw, 2.6rem); }
   /* Arrow sits on the number's baseline (falling: its foot on the baseline); rising lifts it so its tip meets the
      top of the figures (Patua One figures stand .70em tall, measured) */
   .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; margin-right: 6px; flex: none; }
   .tides .big .arrow.up { position: relative; top: calc(var(--arrow-h) - var(--tide-fs) * .70); }
   .tides .big .slab { font-size: var(--tide-fs); }
-  .tides .big .unit { font-size: 1.3rem; }
   .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .tides .dir { font-weight: 600; font-size: 1.2rem; }
   .tides .nlist { display: flex; flex-wrap: wrap; gap: 8px 32px; }
@@ -98,7 +97,7 @@ title: Tides of San Francisco
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
   .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }  /* as tall as the wind icon, so the temperature and wind speed share a line */
   .tides .slab.mid { font-size: clamp(2.3rem, 9vw, 2.9rem); }
-  .tides .spdunit { margin-left: 6px; font-family: var(--font-ui); }  /* mph / km/h in the small-label style */
+  .tides .spdunit { margin-left: 6px; font-family: var(--font-ui); }  /* units (ft / m, mph / km/h) in the small-label style */
   .tides .sub { display: flex; flex-direction: column; line-height: 1.3; font-size: .9rem; margin-top: auto; }
   .tides .sub b { font-weight: 600; font-size: 1rem; }
   .tides .stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
