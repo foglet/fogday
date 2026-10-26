@@ -395,7 +395,8 @@ const tempNum = f => units==='m' ? Math.round((f-32)*5/9) : Math.round(f);   // 
 // Tap the wind unit (mph / km/h) to switch to knots, tap "kn" to switch back; remembered like the tide units
 let knots = false;
 try { knots = localStorage.getItem('sf-tides-knots') === '1'; } catch(e){}
-const spdNum = mph => mph==null ? null : Math.round(knots ? mph*1609.344/1852 : units==='m' ? mph*1.609344 : mph);
+// Knots keep one decimal (7.5 knots; a whole number drops the .0); mph and km/h stay whole
+const spdNum = mph => mph==null ? null : knots ? Math.round(mph*1609.344/1852*10)/10 : Math.round(units==='m' ? mph*1.609344 : mph);
 const spdUnit = n => knots ? (n===1 ? L.knot : L.knots) : units==='m' ? 'km/h' : 'mph';   // knots spelled out, in the page's language
 // Beaufort force from the sustained wind (WMO bands in whole knots: 1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64)
 const BFT = [1,4,7,11,17,22,28,34,41,48,56,64];
@@ -506,8 +507,8 @@ function buildStrip(){
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
     const ex=x(e.t), ey=y(e.v);
-    s+=`<circle cx="${ex}" cy="${ey}" r="1.5" fill="var(--surface)"/>`;
-    // Highs and lows: a light bead set into the line, 3 px across, a little wider than the 2.4 px line, same for both
+    s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="var(--water)" stroke-width="1.6"/>`;
+    // Highs and lows: a light bead set into the line, 9 px across (3x the old 3 px), ringed in the water color, same for both
     // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
     labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
