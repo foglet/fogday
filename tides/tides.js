@@ -310,8 +310,8 @@ function renderMoon(){
   const head = esc(tr('fullMoon', {when: tmrwNight ? L.tomorrowNight : when}) + howl);
   morph($('moon'), `<span class="label">${esc(L.moon)}</span>
     <div class="moonrow">${moonIcon(m.p)}
-      <div class="stack"><span class="slab moonname">${esc(L.phases[m.ph])}</span>
-        <span class="muted num">${Math.round(m.lit*100)}%</span>
+      <div class="stack"><span class="slab moonname num">${Math.round(m.lit*100)}%</span>
+        <span class="muted">${esc(L.phases[m.ph])}</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
       <div class="suntimes num moontimes" aria-label="${esc(L.moonAria)}">${mt('moonrise',mrs.rise,now)}${mt('moonset',mrs.set,now)}</div>
     </div>`);
@@ -392,8 +392,12 @@ let wxToken = 0, wxLast = null;
 // Weather in the tide units: feet → °F and mph; meters → °C and km/h
 const tempTxt = f => f==null ? '—' : units==='m' ? Math.round((f-32)*5/9)+'°C' : Math.round(f)+'°F';
 const tempNum = f => units==='m' ? Math.round((f-32)*5/9) : Math.round(f);   // H / L: number only
-const spdNum = mph => mph==null ? null : Math.round(units==='m' ? mph*1.609344 : mph);
-const spdUnit = () => units==='m' ? 'km/h' : 'mph';
+// Tap the wind unit (mph / km/h) to switch to knots, tap "kn" to switch back; remembered like the tide units
+let knots = false;
+try { knots = localStorage.getItem('sf-tides-knots') === '1'; } catch(e){}
+const spdNum = mph => mph==null ? null : Math.round(knots ? mph*1609.344/1852 : units==='m' ? mph*1.609344 : mph);
+const spdUnit = () => knots ? 'kn' : units==='m' ? 'km/h' : 'mph';
+const spdUnitTag = () => `<span class="label spdunit" role="button" tabindex="0" title="${knots ? (units==='m'?'km/h':'mph') : 'kn'}">${spdUnit()}</span>`;
 async function renderWeather(){
   const token = ++wxToken, key = beach;
   try {
@@ -429,7 +433,7 @@ function drawForecast(w, t){
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag()}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
     <div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit()}):L.fcSub)}</span></div>`);
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
@@ -454,7 +458,7 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir, spd===0)}</div>
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag()}</span>${windIcon(dir, spd===0)}</div>
     <div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit()}):L.noGusts)}</span></div>`);
 }
 
@@ -583,6 +587,18 @@ $('tideNow').addEventListener('click', e=>{
   if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);  // weather follows the units too
   const b=$('unitToggle'); if (b.focus) b.focus();
 });
+// Wind unit: mph / km/h ⇄ knots (click, or Enter / Space when focused)
+function toggleKnots(e){
+  if (!e.target.closest('.spdunit')) return;
+  if (e.type==='keydown' && e.key!=='Enter' && e.key!==' ') return;
+  e.preventDefault();
+  knots = !knots;
+  try { localStorage.setItem('sf-tides-knots', knots?'1':'0'); } catch(err){}
+  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
+  const u=$('wind').querySelector('.spdunit'); if (u && u.focus) u.focus();
+}
+$('wind').addEventListener('click', toggleKnots);
+$('wind').addEventListener('keydown', toggleKnots);
 /* ---- Text that isn't drawn by a panel: page title, header, Info notes, credit, section labels, the language button ---- */
 function applyStatic(){
   document.documentElement.lang = L.html;
