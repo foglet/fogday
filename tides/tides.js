@@ -78,7 +78,9 @@ function addDays(day,n){ const t=new Date(Date.UTC(day.y,day.m-1,day.d+n)); retu
 function dayOf(ms){ const p=parts(ms); return {y:p.y,m:p.m,d:p.d}; }
 const todayKey = () => dayOf(Date.now());
 const same = (a,b) => a.y===b.y && a.m===b.m && a.d===b.d;
-const fShort = ms => fTime.format(new Date(ms)).replace(/\s?AM$/,'a').replace(/\s?PM$/,'p');   // chart labels: "5:12p" (English) or "17:12"
+// Chart labels: always 12-hour with AM / PM ("5:12 PM"), in every language; the rest of the page keeps its own format
+const fChart = new Intl.DateTimeFormat('en-US', {timeZone: TZ, hour:'numeric', minute:'2-digit', hour12:true});
+const fShort = ms => fChart.format(new Date(ms)).replace(/\s+/,' ');
 const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', month:'long', day:'numeric'});
 const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
 const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
