@@ -500,7 +500,8 @@ function buildStrip(){
     const ex=x(e.t), ey=y(e.v);
     s+=`<circle cx="${ex}" cy="${ey}" r="1.2" fill="var(--surface)"/>`;
     // Highs and lows: a light bead set into the line, as wide as the line itself (2.4 px), same for both
-    labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="middle">${fShort(e.t)}</text>`;
+    // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
+    labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
   $('stripSvg').innerHTML = s+'</svg>';
   $('stripLab').innerHTML = labels+'</svg>';
