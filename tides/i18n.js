@@ -18,12 +18,14 @@ const frF = w => w.replace(/^un$/,'une').replace(/-un$/,'-une');                
 
 /* Shared duration shape (same thresholds in every language):
    under 10 min → soon; 10–19 / 20–29 / 30–37 / 38–44 min → about ten / twenty / thirty / forty-five minutes;
-   2:00–3:59 → a few hours; otherwise "about N hours" within 15 min of a whole hour, else "a little more than N hours" */
+   2:00–3:59 → a few hours; under 2 hours, "about an hour" within 15 min of it, else "a little more than an hour";
+   4 hours or more → plainly "in N hours" (nearest hour): "about" and "a little more" only for tides within four hours */
 function durWith(w){
   return mins => {
     if (mins<10) return w.soon;
     if (mins<20) return w.m10; if (mins<30) return w.m20; if (mins<38) return w.m30; if (mins<45) return w.m45;
     if (mins>=120 && mins<240) return w.few;
+    if (mins>=240) return w.hrs(Math.round(mins/60));
     const h=Math.round(mins/60);
     if (Math.abs(mins-h*60)<=15) return w.about(h);
     return w.more(Math.floor(mins/60));
@@ -108,7 +110,7 @@ window.TIDE_I18N = {
     next:'{kind} occurs {when}', dateAt:'{date} at {time}',
     dur: durWith({soon:'any time now', m10:'in about ten minutes', m20:'in about twenty minutes', m30:'in about thirty minutes',
       m45:'in about forty-five minutes', few:'in a few hours',
-      about:h=>'in about '+(h===1?'an hour':EN_N[h]+' hours'), more:h=>'in a little more than '+(h===1?'an hour':EN_N[h]+' hours')}),
+      hrs:h=>'in '+EN_N[h]+' hours', about:h=>'in about '+(h===1?'an hour':EN_N[h]+' hours'), more:h=>'in a little more than '+(h===1?'an hour':EN_N[h]+' hours')}),
     phases:['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent'],
     fullMoon:'The next full moon occurs {when}.', tomorrow:'tomorrow', tomorrowNight:'tomorrow night',
     inDays:n=>'in '+EN_N[n]+' days', howl:' Ahhh-wooooooo!!!',
@@ -147,7 +149,7 @@ window.TIDE_I18N = {
     next:'{kind} {when}', dateAt:'{date} à {time}',
     dur: durWith({soon:'d’un instant à l’autre', m10:'dans environ dix minutes', m20:'dans environ vingt minutes', m30:'dans environ trente minutes',
       m45:'dans environ quarante-cinq minutes', few:'dans quelques heures',
-      about:h=>'dans environ '+(h===1?'une heure':frF(FR_N[h])+' heures'), more:h=>'dans un peu plus '+(h===1?'d’une heure':'de '+frF(FR_N[h])+' heures')}),
+      hrs:h=>'dans '+frF(FR_N[h])+' heures', about:h=>'dans environ '+(h===1?'une heure':frF(FR_N[h])+' heures'), more:h=>'dans un peu plus '+(h===1?'d’une heure':'de '+frF(FR_N[h])+' heures')}),
     phases:['Nouvelle lune','Premier croissant','Premier quartier','Gibbeuse croissante','Pleine lune','Gibbeuse décroissante','Dernier quartier','Dernier croissant'],
     fullMoon:'Prochaine pleine lune {when}.', tomorrow:'demain', tomorrowNight:'demain soir',
     inDays:n=>'dans '+FR_N[n]+' jours', howl:' Ahouuuuuu !!!',
@@ -186,7 +188,7 @@ window.TIDE_I18N = {
     next:'{kind} {when}', dateAt:'{date} a las {time}',
     dur: durWith({soon:'en cualquier momento', m10:'en unos diez minutos', m20:'en unos veinte minutos', m30:'en unos treinta minutos',
       m45:'en unos cuarenta y cinco minutos', few:'en unas pocas horas',
-      about:h=>h===1?'en aproximadamente una hora':'en unas '+fem(ES_N[h])+' horas', more:h=>'en poco más de '+(h===1?'una hora':fem(ES_N[h])+' horas')}),
+      hrs:h=>'en '+fem(ES_N[h])+' horas', about:h=>h===1?'en aproximadamente una hora':'en unas '+fem(ES_N[h])+' horas', more:h=>'en poco más de '+(h===1?'una hora':fem(ES_N[h])+' horas')}),
     phases:['Luna nueva','Luna creciente','Cuarto creciente','Gibosa creciente','Luna llena','Gibosa menguante','Cuarto menguante','Luna menguante'],
     fullMoon:'La próxima luna llena llega {when}.', tomorrow:'mañana', tomorrowNight:'mañana por la noche',
     inDays:n=>'en '+masc(ES_N[n])+' días', howl:' ¡¡¡Auuuuuu!!!',
@@ -225,7 +227,7 @@ window.TIDE_I18N = {
     slack:'平潮', highTide:'高潮', lowTide:'低潮', negTide:'负潮', stop:'。', tidePool:'去探访潮池。尊重大自然。',
     next:'{kind}：{when}', dateAt:'{date} {time}',
     dur: durWith({soon:'即将到来', m10:'约十分钟后', m20:'约二十分钟后', m30:'约三十分钟后', m45:'约四十五分钟后', few:'几小时后',
-      about:h=>'约'+zhM(h)+'小时后', more:h=>zhM(h)+'个多小时后'}),
+      hrs:h=>zhM(h)+'小时后', about:h=>'约'+zhM(h)+'小时后', more:h=>zhM(h)+'个多小时后'}),
     phases:['新月','蛾眉月','上弦月','盈凸月','满月','亏凸月','下弦月','残月'],
     fullMoon:'下一次满月：{when}。', tomorrow:'明天', tomorrowNight:'明天晚上',
     inDays:n=>zhM(n)+'天后', howl:' 嗷呜——！！！',
