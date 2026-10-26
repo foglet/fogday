@@ -142,7 +142,7 @@ function moonInfo(now){
 
 
 /* ---- Coordinates (same format as /transit/) ---- */
-// 37°47′37″N 122°29′01″W — degrees, minutes, seconds, rounded to the second
+// 37°47′37″N, 122°29′01″W — degrees, minutes, seconds, rounded to the second
 function dms(v, pos, neg){
   const t=Math.round(Math.abs(v)*3600), d=Math.floor(t/3600), m=Math.floor(t%3600/60), sec=t%60, two=n=>(n<10?'0':'')+n;
   return two(d)+'°'+two(m)+'′'+two(sec)+'″'+(v<0?neg:pos);
@@ -424,7 +424,7 @@ function render(opts2){
   $('place').textContent=b.place;
   $('beachName').textContent=b.name;
   { const i=ORDER.indexOf(beach), n=BEACHES[ORDER[(i+1)%ORDER.length]].name; $('beachBtn').setAttribute('aria-label', `${b.name}, beach ${i+1} of ${ORDER.length}. Tap for ${n}.`); $('beachBtn').title=`Next: ${n}`; }
-  $('coords').textContent=dms(b.lat,'N','S')+' '+dms(b.lon,'E','W');
+  $('coords').textContent=dms(b.lat,'N','S')+', '+dms(b.lon,'E','W');
   $('station').textContent=STATION_LINE[b.st];
   $('source').textContent=SOURCE[b.st];
   renderNow(); renderMoon();

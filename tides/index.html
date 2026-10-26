@@ -105,8 +105,9 @@ title: Tides of San Francisco
   .tides .past .riseicon { color: var(--past); }
   /* Each glyph's ink sits differently in its em box; nudge so its ink is centered on the label's capitals (measured) */
   .tides .wi-sunrise.riseicon { --rise-nudge: .03em; }
-  .tides .wi-moonrise.riseicon { --rise-nudge: -.03em; }
-  .tides .wi-moonset.riseicon { --rise-nudge: -.12em; }
+  /* The moon glyphs are drawn smaller than the sun glyphs; scale each so its ink matches its sun twin's height (measured from the font), and nudge so it sits at the same height */
+  .tides .wi-moonrise.riseicon { font-size: calc(var(--rise-ic) * 1.31); --rise-nudge: .05em; }
+  .tides .wi-moonset.riseicon { font-size: calc(var(--rise-ic) * 1.245); --rise-nudge: -.10em; }
   .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
   .tides .moonrow { display: flex; align-items: center; gap: 22px; }
   .tides .moonicon { font-size: clamp(72px, 21vw, 104px); width: 1em; text-align: center; flex: none; color: var(--sand); }
@@ -154,7 +155,6 @@ title: Tides of San Francisco
   @media (max-width: 400px) {  /* phones: keep "Full moon" on one line beside the moonrise / moonset glyphs */
     .tides .moonrow { gap: 10px; }
     .tides .moonicon { font-size: 16vw; }
-    .tides .moontimes { --rise-ic: calc(.68rem * 1.4); }
     .tides .moontimes > div { column-gap: 3px; }
   }
   @media (max-width: 340px) { .tides .tiles { grid-template-columns: 1fr; } }
