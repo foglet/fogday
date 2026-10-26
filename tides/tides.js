@@ -497,7 +497,7 @@ function buildStrip(){
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
     const ex=x(e.t), ey=y(e.v);
-    s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="${e.high?'var(--water)':'var(--sand)'}" stroke-width="2.2"/>`;
+    s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="var(--water)" stroke-width="2.2"/>`;   // same marker for highs and lows
     labels+=`<text class="labt" x="${ex}" y="${ey-9}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+20}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
   $('stripSvg').innerHTML = s+'</svg>';
