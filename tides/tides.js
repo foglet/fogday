@@ -260,6 +260,9 @@ function renderNow(){
   const when = e => mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
   const nextLine = slack ? `<div class="nrow slack"><span class="label">${esc(L.slack)}</span></div>`
     : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})), n1) : '';
+  // A negative tide (next, or slack at one now): add a second line, "Visit a tide pool. Respect Mother Nature."
+  const negNow = slack ? ex.some(e=>Math.abs(e.t-now)<=SLACK_MS && neg(e)) : !!(n1 && neg(n1));
+  const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
   const arrow = '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>';
@@ -270,7 +273,7 @@ function renderNow(){
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`);
+    <div class="hero-side"><div class="nlist">${nextLine}${poolLine}</div></div>`);
   if (ar && wasUp!==rising) flipArrow(ar, fromTop);
 }
 /* Tide arrow changing direction: a smooth half turn (always clockwise), then it drops or rises to its resting spot
