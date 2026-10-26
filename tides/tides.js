@@ -294,20 +294,26 @@ function renderNow(){
 /* Tide arrow changing direction: a smooth half turn (always clockwise), then it drops or rises to its resting spot
    and lands with a soft bounce: a small rebound, a smaller one, then still. */
 function flipArrow(el, fromTop){
-  if (!el.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!el.animate) return;
   el.getAnimations().forEach(a=>a.cancel());
-  const toTop=parseFloat(getComputedStyle(el).top)||0, d=toTop-fromTop;
-  const a0=el._ang||0, a1=a0+180; el._ang=a1%360;
-  const up=el.classList.contains('up'), rot=a=>`rotate(${a}deg)`;
-  const px=v=>(v).toFixed(2)+'px';
+  // Start from where it pointed before this change (it has just been switched): up was 0°, down 180°
+  const a0=el._ang!=null ? el._ang : (el.classList.contains('up') ? 180 : 0), a1=a0+180; el._ang=a1%360;
+  const T=(y,a)=>`translateY(${y.toFixed(2)}px) rotate(${a}deg)`;
+  // Reduce Motion: still turn (quick, no drop or bounce)
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.animate([{transform:T(0,a0)},{transform:T(0,a1)}], {duration:250, easing:'ease-out'}); return;
+  }
+  // The arrow already sits at its new spot (top); start it at the old one with a translate and bring it home.
+  // Moved by transform only (no layout), so it runs smoothly on phones, even mid-drag.
+  const toTop=parseFloat(getComputedStyle(el).top)||0, d=toTop-fromTop, s0=-d;   // s0: offset back to where it was
   el.animate([
-    {offset:0,    top:px(fromTop),       transform:rot(a0), easing:'cubic-bezier(.45,.05,.55,.95)'},   // spin: ease in and out
-    {offset:.5,   top:px(fromTop),       transform:rot(a1), easing:'cubic-bezier(.55,0,.85,.4)'},      // fall: gathering speed
-    {offset:.68,  top:px(toTop),         transform:rot(a1), easing:'cubic-bezier(.2,.6,.35,1)'},       // land
-    {offset:.8,   top:px(toTop-d*.10),   transform:rot(a1), easing:'cubic-bezier(.55,0,.6,1)'},        // soft rebound
-    {offset:.9,   top:px(toTop),         transform:rot(a1), easing:'cubic-bezier(.2,.6,.35,1)'},
-    {offset:.95,  top:px(toTop-d*.03),   transform:rot(a1), easing:'cubic-bezier(.55,0,.6,1)'},        // smaller rebound
-    {offset:1,    top:px(toTop),         transform:rot(a1)}
+    {offset:0,    transform:T(s0,a0),       easing:'cubic-bezier(.45,.05,.55,.95)'},   // spin in place: ease in and out
+    {offset:.5,   transform:T(s0,a1),       easing:'cubic-bezier(.55,0,.85,.4)'},      // then drop or rise, gathering speed
+    {offset:.68,  transform:T(0,a1),        easing:'cubic-bezier(.2,.6,.35,1)'},       // land
+    {offset:.8,   transform:T(-d*.10,a1),   easing:'cubic-bezier(.55,0,.6,1)'},        // soft rebound
+    {offset:.9,   transform:T(0,a1),        easing:'cubic-bezier(.2,.6,.35,1)'},
+    {offset:.95,  transform:T(-d*.03,a1),   easing:'cubic-bezier(.55,0,.6,1)'},        // smaller rebound
+    {offset:1,    transform:T(0,a1)}
   ], {duration:1400});
 }
 
