@@ -1,4 +1,4 @@
-/* SF Tides — translations: EN (default), FR, ES, ZH. Tap the language code beside "Made at Baker Beach." to cycle.
+/* SF Tides — translations: EN (default), FR, ES, ZH. Tap the language code beside "Made at Baker Beach" to cycle.
    Each language: locale for dates and times, page text, and the few phrases built from numbers
    (tide durations, days to the full moon). Weather descriptions from the National Weather Service arrive in English;
    common ones are translated here, anything unknown is shown as sent. */
@@ -91,7 +91,7 @@ window.TIDE_I18N = {
       ob:'Tides computed from NOAA station 9414275, Ocean Beach, outer coast (time and height offsets from 9414290, San Francisco), the nearest NOAA station to this beach.'},
     notes:'Heights above mean lower low water (MLLW); tap the tide height to switch between US and metric units (feet / meters, °F / °C, mph / km/h). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.',
     credit:'Weather and moon icons: '+ICONS+' by Erik Flowers.',
-    madeat:'Made at Baker Beach.', info:'Info',
+    madeat:'Made at Baker Beach', info:'Info',
     weather:'Weather', forecast:'Forecast', wind:'Wind', moon:'Moon',
     sunrise:'Sunrise', sunset:'Sunset', moonrise:'Moonrise', moonset:'Moonset',
     loadingWx:'Loading live weather…', loading:'Loading…',
@@ -127,7 +127,7 @@ window.TIDE_I18N = {
       ob:'Marées calculées à partir de la station NOAA 9414275, Ocean Beach, côte extérieure (décalages d’heure et de hauteur par rapport à 9414290, San Francisco), la station NOAA la plus proche de cette plage.'},
     notes:'Hauteurs au-dessus du niveau moyen des basses mers inférieures (MLLW) ; touchez la hauteur de marée pour passer des unités américaines aux unités métriques (pieds / mètres, °F / °C, mph / km/h). Une marée négative descend sous ce niveau : le meilleur moment pour explorer les flaques. Les marées sont des prédictions astronomiques ; le vent et la houle modifient le niveau réel de l’eau. Météo du National Weather Service. Ne pas utiliser pour la navigation.',
     credit:'Icônes météo et lune : '+ICONS+' par Erik Flowers.',
-    madeat:'Fait à Baker Beach.', info:'Infos',
+    madeat:'Fait à Baker Beach', info:'Infos',
     weather:'Météo', forecast:'Prévisions', wind:'Vent', moon:'Lune',
     sunrise:'Lever du soleil', sunset:'Coucher du soleil', moonrise:'Lever de lune', moonset:'Coucher de lune',
     loadingWx:'Chargement de la météo…', loading:'Chargement…',
@@ -163,7 +163,7 @@ window.TIDE_I18N = {
       ob:'Mareas calculadas a partir de la estación 9414275 de la NOAA, Ocean Beach, costa exterior (desfases de hora y altura respecto a 9414290, San Francisco), la estación de la NOAA más cercana a esta playa.'},
     notes:'Alturas sobre la bajamar media inferior (MLLW); toque la altura de la marea para cambiar entre unidades estadounidenses y métricas (pies / metros, °F / °C, mph / km/h). Una marea negativa baja por debajo de esa línea: el mejor momento para ver las pozas de marea. Las mareas son predicciones astronómicas; el viento y el oleaje cambian el nivel real del agua. Tiempo del National Weather Service. No apto para la navegación.',
     credit:'Iconos del tiempo y de la luna: '+ICONS+' de Erik Flowers.',
-    madeat:'Hecho en Baker Beach.', info:'Información',
+    madeat:'Hecho en Baker Beach', info:'Información',
     weather:'Tiempo', forecast:'Pronóstico', wind:'Viento', moon:'Luna',
     sunrise:'Amanecer', sunset:'Atardecer', moonrise:'Salida de la luna', moonset:'Puesta de la luna',
     loadingWx:'Cargando el tiempo…', loading:'Cargando…',
@@ -200,7 +200,7 @@ window.TIDE_I18N = {
       ob:'潮汐根据 NOAA 9414275 号站（海洋海滩，外海岸；以旧金山 9414290 号站为基准修正时间和高度）计算，该站是距离此海滩最近的 NOAA 站。'},
     notes:'高度以平均较低低潮面（MLLW）为基准；点按潮高可在美制与公制单位之间切换（英尺 / 米、°F / °C、mph / km/h）。负潮指低于该基准面的潮位，是观察潮池的最佳时机。潮汐为天文预测；风和涌浪会改变实际水位。天气数据来自美国国家气象局。不可用于航海。',
     credit:'天气和月相图标：'+ICONS+'，作者 Erik Flowers。',
-    madeat:'制作于贝克海滩。', info:'说明',
+    madeat:'Baker Beach 制作', info:'说明',
     weather:'天气', forecast:'预报', wind:'风', moon:'月亮',
     sunrise:'日出', sunset:'日落', moonrise:'月出', moonset:'月落',
     loadingWx:'正在加载实时天气…', loading:'正在加载…',
