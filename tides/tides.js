@@ -90,7 +90,7 @@ const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 let units = 'ft';
 try { if (localStorage.getItem('sf-tides-units') === 'm') units = 'm'; } catch(e){}
 const ft = v => { const x = units==='m' ? v*0.3048 : v; return (x < 0 ? '−' : '') + Math.abs(x).toFixed(units==='m'?2:1); };
-const U = () => units==='m' ? 'm' : 'ft';
+const U = () => units==='m' ? 'm' : 'FT';   // feet always written FT (chart labels "6.4 FT", the tide unit)
 const fh = v => ft(v) + ' ' + U();
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
