@@ -394,8 +394,13 @@ const tempNum = f => units==='m' ? Math.round((f-32)*5/9) : Math.round(f);   // 
 // Tap the wind unit (mph / km/h) to switch to knots, tap "kn" to switch back; remembered like the tide units
 let knots = false;
 try { knots = localStorage.getItem('sf-tides-knots') === '1'; } catch(e){}
-// Knots keep one decimal (7.5 knots; a whole number drops the .0); mph and km/h stay whole
-const spdNum = mph => mph==null ? null : knots ? Math.round(mph*1609.344/1852*10)/10 : Math.round(units==='m' ? mph*1.609344 : mph);
+// Tap the wind number to switch between whole speeds and 0.1 readings (any unit); remembered like the units
+let windDec = false;
+try { windDec = localStorage.getItem('sf-tides-winddec') === '1'; } catch(e){}
+const spdNum = mph => { if (mph==null) return null; const v = knots ? mph*1609.344/1852 : units==='m' ? mph*1.609344 : mph;
+  return windDec ? Math.round(v*10)/10 : Math.round(v); };
+const fmtSpd = n => n==null ? '—' : windDec ? n.toFixed(1) : String(n);   // 0.1 mode always shows the decimal, 12.0
+const spdValTag = n => `<span class="spdval" role="button" tabindex="0" title="${esc(windDec ? L.wholeSpd : L.decSpd)}">${fmtSpd(n)}</span>`;
 const spdUnit = n => knots ? (n===1 ? L.knot : L.knots) : units==='m' ? 'km/h' : 'mph';   // knots spelled out, in the page's language
 // Beaufort force from the sustained wind (WMO bands in whole knots: 1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64)
 const BFT = [1,4,7,11,17,22,28,34,41,48,56,64];
@@ -436,7 +441,7 @@ function drawForecast(w, t){
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="wline">${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit(top)}):L.fcSub)}</span></span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${spdValTag(spd)}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="wline">${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:fmtSpd(top),u:spdUnit(top)}):L.fcSub)}</span></span></div></div>`);
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
 const wxT = t => I18N.wxText(t, lang);
@@ -459,7 +464,7 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="wline">${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit(gust)}):L.noGusts)}</span></span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${spdValTag(spd)}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="wline">${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:fmtSpd(gust),u:spdUnit(gust)}):L.noGusts)}</span></span></div></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
@@ -592,6 +597,18 @@ function toggleKnots(e){
 }
 $('wind').addEventListener('click', toggleKnots);
 $('wind').addEventListener('keydown', toggleKnots);
+// Wind number: whole ⇄ 0.1 readings (click, or Enter / Space when focused)
+function toggleDec(e){
+  if (!e.target.closest('.spdval')) return;
+  if (e.type==='keydown' && e.key!=='Enter' && e.key!==' ') return;
+  e.preventDefault();
+  windDec = !windDec;
+  try { localStorage.setItem('sf-tides-winddec', windDec?'1':'0'); } catch(err){}
+  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
+  const v=$('wind').querySelector('.spdval'); if (v && v.focus) v.focus();
+}
+$('wind').addEventListener('click', toggleDec);
+$('wind').addEventListener('keydown', toggleDec);
 /* ---- Text that isn't drawn by a panel: page title, header, Info notes, credit, section labels, the language button ---- */
 function applyStatic(){
   document.documentElement.lang = L.html;
