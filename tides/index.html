@@ -78,7 +78,10 @@ title: Tides of San Francisco
   /* Arrow sits on the number's baseline (falling: its foot on the baseline); rising lifts it so its tip meets the
      top of the figures (Patua One figures stand .70em tall, measured) */
   .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; margin-right: 6px; flex: none; }
-  .tides .big .arrow { position: relative; top: 0; transform: rotate(180deg); transition: transform .5s ease, top .5s ease; }  /* falling: the rising drawing turned over */
+  /* Falling: the rising drawing turned over. A change of direction spins 180° first, then the arrow falls (or rises)
+     straight to its resting spot and settles */
+  .tides .big .arrow { position: relative; top: 0; transform: rotate(180deg);
+    transition: transform .5s cubic-bezier(.45,0,.25,1), top .45s cubic-bezier(.3,1.5,.55,1) .5s; }
   .tides .big .arrow.up { top: calc(var(--arrow-h) - var(--tide-fs) * .70); transform: rotate(0deg); }
   /* Smooth icon changes: glyphs crossfade (tides.js fades out, swaps, fades in), the wind arrow turns, past times fade to grey */
   .tides i.wi { transition: opacity .16s ease; }
