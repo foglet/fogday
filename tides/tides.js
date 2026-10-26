@@ -76,7 +76,11 @@ function alignHero(){
   // The reading's natural width (unwrapped), not its width squeezed into the column, so a wide value (−0.5) drops below instead of wrapping
   const fw=big.style.flexWrap, wd=big.style.width; big.style.flexWrap='nowrap'; big.style.width='max-content';
   const need=big.getBoundingClientRect().width; big.style.flexWrap=fw; big.style.width=wd;
-  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=need+6<=x;
+  // Beside only if every line of the tide text fits on one line there; otherwise it goes below, where it has the full width
+  const room=hero.getBoundingClientRect().width-(sub.getBoundingClientRect().left-hero.getBoundingClientRect().left);
+  const widest=Math.max(0, ...[...hero.querySelectorAll('.hero-side .nrow .label')].map(l=>{
+    const ws=l.style.whiteSpace; l.style.whiteSpace='nowrap'; const r=document.createRange(); r.selectNodeContents(l); const w=r.getBoundingClientRect().width; l.style.whiteSpace=ws; return w; }));
+  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=need+6<=x && widest<=room;
   hero.style.setProperty('--desc-x', x.toFixed(1)+'px');
   hero.classList.toggle('inline', fits);
 }
@@ -291,9 +295,9 @@ function renderNow(){
   // "… Visit a tide pool. Respect Mother Nature." Not shown ahead of time just because the next low is negative,
   // and only within four hours of the real now (not when the chart has been slid days ahead).
   const negNow = lv < 0 && now - Date.now() <= 4*36e5;
-  // Beyond a day from the real now (slid ahead), no countdown: "This tidal event is more than a day away."
+  // Beyond a day from the real now (slid ahead), no countdown: "This tidal event is more than a day away." / "Come back later."
   const far = (slack ? now : n1 ? n1.t : now) - Date.now() > 864e5;
-  const nextLine = far ? `<div class="nrow"><span class="label">${esc(L.farTide)}</span></div>` : slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(L.slack+(negNow?L.stop.trim():''))}</span></div>`
+  const nextLine = far ? `<div class="nrow"><span class="label">${esc(L.farTide)}</span></div><div class="nrow"><span class="label">${esc(L.comeBack)}</span></div>` : slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(L.slack+(negNow?L.stop.trim():''))}</span></div>`
     : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})+(negNow?L.stop.trim():'')), n1) : '';
   // Second line while the tide is below zero: "Visit a tide pool. Respect Mother Nature."
   const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
@@ -560,11 +564,9 @@ function seaLife(td, start, end, TW, W, x, y, floor){
       <path d="M-8.6,-2.2 v3 M-7.2,-2.4 v3 M-5.8,-2.5 v3" stroke="#3e4c57" stroke-width=".6" fill="none"/>
       <path d="M-17,1.6 q3,1.1 6.2,.5" stroke="#3e4c57" stroke-width=".6" fill="none"/>
       <circle cx="-12.2" cy="-1.6" r=".95" fill="#1b2a33"/></g>`;
-  // Every creature placed so far, as a box (with 4px to spare), so none touches another across the whole strip
-  const taken=[], clear=(l,r,t,b) => !taken.some(([L,R,T,B]) => r+4>L && l-4<R && b+4>T && t-4<B);
+  // Spread out, not grouped: at least 44px sideways between any two creatures (a crab never sits under a shark)
+  const taken=[], clear=(l,r) => !taken.some(([L,R]) => r+44>L && l-44<R);
   for (let seg=0; seg<TW; seg+=W){
-    // one crab on the floor
-    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14,cx+14,cy-13,cy+9)) continue; taken.push([cx-14,cx+14,cy-13,cy+9]); g+=crab(cx, cy); break; }
     // two great whites at different depths: one in the upper water, one lower, always under the surface
     let placed=0;
     for (let tries=0; tries<120 && placed<2; tries++){
@@ -572,9 +574,11 @@ function seaLife(td, start, end, TW, W, x, y, floor){
       if (bot-top < 34) continue;
       const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
       if (cx>TW-30 || !sharkFree(cx,cy) || !free(cx-28,cx+28)) continue;
-      if (!clear(cx-26,cx+26,cy-15,cy+12)) continue;   // never touching another shark or the crab
+      if (!clear(cx-26,cx+26)) continue;   // spread out from the other shark and the crab
       taken.push([cx-26,cx+26,cy-15,cy+12]); g+=shark(cx, cy, rnd()<.5?1:-1); placed++;
     }
+    // then one crab on the floor, where it fits between the sharks
+    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14,cx+14)) continue; taken.push([cx-14,cx+14,cy-13,cy+9]); g+=crab(cx, cy); break; }
   }
   return g+'</g>';
 }
