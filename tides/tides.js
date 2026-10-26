@@ -190,31 +190,25 @@ function chartWindow(){
 /* ---- Tide now ---- */
 function renderNow(){
   const now=Date.now(), lv=levelAt(beach, now);
-  // Same rolling window as the chart; the list shows only its upcoming highs and lows
-  const ahead=chartWindow().extremes.filter(e=>e.t>now);
   const nx=extremes(beach, now, now+30*36e5).filter(e=>e.t>now);  // next extreme, for the arrow even when it is past the window
   const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'high tide':'low tide';
   const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
-  // Every upcoming high and low in the window, in order. The first low and first high read "Next …", later ones
-  // "Low tide" / "High tide", a minus low "Negative tide"; the soonest gets "in about … hours"
-  const upLabel=(e,first)=>neg(e)?'Negative tide':first?'Next '+kind(e):kind(e)[0].toUpperCase()+kind(e).slice(1);
-  const rows = [];
-  ahead.forEach((e,i)=>{ const first=!ahead.slice(0,i).some(x=>x.high===e.high);
-    rows.push([e.t, row(upLabel(e,first), e, n1 && Math.abs(e.t-n1.t)<6e4 ? inDur(mins) : '')]); });
-  rows.sort((a,b)=>a[0]-b[0]);
-  // Slack tide: only while it is happening (within 15 minutes either side of a high or low), never predicted ahead; always the first line
+  // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
+  // otherwise the next high or low ("Next high tide" / "Next low tide", a minus low "Negative tide")
   const SLACK_MS=15*6e4;
-  if (extremes(beach, now-SLACK_MS, now+SLACK_MS).length) rows.unshift([now, '<div class="nrow slack"><span class="label">Slack tide</span></div>']);
+  const slack=extremes(beach, now-SLACK_MS, now+SLACK_MS).length>0;
+  const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
+    : n1 ? row(neg(n1)?'Negative tide':'Next '+kind(n1), n1, inDur(mins)) : '';
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
       <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${rows.map(r=>r[1]).join('')}</div></div>`;
+    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
 }
 
 /* ---- Moon tile ---- */
