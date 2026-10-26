@@ -171,7 +171,7 @@ let view = todayKey();
 /* ---- Durations, in words: "any time now" under 10 min; "in about ten / twenty / thirty minutes" for 10–19 / 20–29 / 30–37;
    "in about forty-five minutes" for 38–44; "in a few hours" from 2:00 to 3:59;
    otherwise "in about six hours" within 15 min of a whole hour, "in a little more than six hours" from 16 to 44 min past it ---- */
-const NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty-one','twenty-two','twenty-three','twenty-four'];
+const NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty-one','twenty-two','twenty-three','twenty-four','twenty-five','twenty-six','twenty-seven','twenty-eight','twenty-nine','thirty','thirty-one'];
 function hoursText(h){ return h===1 ? 'an hour' : `${NUM_WORDS[h]||h} hours`; }
 function inDur(mins){
   if (mins<10) return 'any time now';
@@ -237,14 +237,14 @@ function renderMoon(){
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
   let when;
   if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = inDur(mins); }
-  else if (days===1) when = 'is tomorrow';
-  else when = `in ${days} days`;
-  // Tomorrow, after that day's sunset: "The full moon is tomorrow night."
+  else if (days===1) when = 'tomorrow';
+  else when = `in ${NUM_WORDS[days]||days} days`;
+  // Tomorrow, after that day's sunset: "The next full moon occurs tomorrow night."
   const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
   // Howl only in the 28 hours before the full moon.
   const howl = full-now <= 28*3.6e6 ? ' Ahhh-wooooooo!!!' : '';
-  // No date or time: on the day itself, "Next full moon in about two hours"
-  const head = (tmrwNight ? 'The full moon is tomorrow night.' : `Next full moon ${when}`) + howl;
+  // No date or time: "The next full moon occurs in thirty days." / "… tomorrow (night)." / on the day "… in about two hours."
+  const head = `The next full moon occurs ${tmrwNight ? 'tomorrow night' : when}.` + howl;
   $('moon').innerHTML=`<span class="label">Moon</span>
     <div class="moonrow">${moonIcon(m.p)}
       <div class="stack"><span class="slab moonname">${m.name}</span>
