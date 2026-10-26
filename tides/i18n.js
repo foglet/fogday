@@ -118,16 +118,16 @@ window.TIDE_I18N = {
   fr: {
     locale:'fr-FR', html:'fr', name:'Français',
     title:'Marées de San Francisco',
-    beaches:{}, place:{
+    beaches:{baker:'Plage Baker', china:'Plage de Chine', east:'Plage Est', funston:'Fort Funston', ocean:'Plage de l’Océan'}, place:{
       baker:'Au pied des falaises du Presidio, à l’entrée du Golden Gate', china:'Une charmante petite crique à Sea Cliff, face au Golden Gate',
       east:'À Crissy Field, juste à l’intérieur du Golden Gate', funston:'Au pied des falaises de Fort Funston, au sud du lac Merced',
       ocean:'Le rivage du Pacifique, de la Cliff House à Sloat Boulevard'},
     source:{
       ref:'Marées calculées à partir des constantes harmoniques de la NOAA pour la station 9414290, San Francisco (Golden Gate), la station NOAA la plus proche de cette plage.',
-      ob:'Marées calculées à partir de la station NOAA 9414275, Ocean Beach, côte extérieure (décalages d’heure et de hauteur par rapport à 9414290, San Francisco), la station NOAA la plus proche de cette plage.'},
+      ob:'Marées calculées à partir de la station NOAA 9414275, plage de l’Océan, côte extérieure (décalages d’heure et de hauteur par rapport à 9414290, San Francisco), la station NOAA la plus proche de cette plage.'},
     notes:'Hauteurs au-dessus du niveau moyen des basses mers inférieures (MLLW) ; touchez la hauteur de marée pour passer des unités américaines aux unités métriques (pieds / mètres, °F / °C, mph / km/h). Une marée négative descend sous ce niveau : le meilleur moment pour explorer les flaques. Les marées sont des prédictions astronomiques ; le vent et la houle modifient le niveau réel de l’eau. Météo du National Weather Service. Ne pas utiliser pour la navigation.',
     credit:'Icônes météo et lune : '+ICONS+' par Erik Flowers.',
-    madeat:'Fait à Baker Beach.', info:'Infos',
+    madeat:'Fait à la plage Baker.', info:'Infos',
     weather:'Météo', forecast:'Prévisions', wind:'Vent', moon:'Lune',
     sunrise:'Lever du soleil', sunset:'Coucher du soleil', moonrise:'Lever de lune', moonset:'Coucher de lune',
     loadingWx:'Chargement de la météo…', loading:'Chargement…',
@@ -154,16 +154,16 @@ window.TIDE_I18N = {
   es: {
     locale:'es-ES', html:'es', name:'Español',
     title:'Mareas de San Francisco',
-    beaches:{}, place:{
+    beaches:{baker:'Playa Baker', china:'Playa China', east:'Playa Este', funston:'Fuerte Funston', ocean:'Playa del Océano'}, place:{
       baker:'Bajo los acantilados del Presidio, en la entrada del Golden Gate', china:'Una pequeña y encantadora cala en Sea Cliff, frente al Golden Gate',
-      east:'En Crissy Field, justo dentro del Golden Gate', funston:'Bajo los acantilados de Fort Funston, al sur del lago Merced',
+      east:'En Crissy Field, justo dentro del Golden Gate', funston:'Bajo los acantilados del Fuerte Funston, al sur del lago Merced',
       ocean:'La orilla del Pacífico, desde la Cliff House hasta Sloat Boulevard'},
     source:{
       ref:'Mareas calculadas a partir de las constantes armónicas de la NOAA para la estación 9414290, San Francisco (Golden Gate), la estación de la NOAA más cercana a esta playa.',
-      ob:'Mareas calculadas a partir de la estación 9414275 de la NOAA, Ocean Beach, costa exterior (desfases de hora y altura respecto a 9414290, San Francisco), la estación de la NOAA más cercana a esta playa.'},
+      ob:'Mareas calculadas a partir de la estación 9414275 de la NOAA, Playa del Océano, costa exterior (desfases de hora y altura respecto a 9414290, San Francisco), la estación de la NOAA más cercana a esta playa.'},
     notes:'Alturas sobre la bajamar media inferior (MLLW); toque la altura de la marea para cambiar entre unidades estadounidenses y métricas (pies / metros, °F / °C, mph / km/h). Una marea negativa baja por debajo de esa línea: el mejor momento para ver las pozas de marea. Las mareas son predicciones astronómicas; el viento y el oleaje cambian el nivel real del agua. Tiempo del National Weather Service. No apto para la navegación.',
     credit:'Iconos del tiempo y de la luna: '+ICONS+' de Erik Flowers.',
-    madeat:'Hecho en Baker Beach.', info:'Información',
+    madeat:'Hecho en Playa Baker.', info:'Información',
     weather:'Tiempo', forecast:'Pronóstico', wind:'Viento', moon:'Luna',
     sunrise:'Amanecer', sunset:'Atardecer', moonrise:'Salida de la luna', moonset:'Puesta de la luna',
     loadingWx:'Cargando el tiempo…', loading:'Cargando…',
@@ -190,15 +190,14 @@ window.TIDE_I18N = {
   zh: {
     locale:'zh-CN', html:'zh', name:'中文',
     title:'旧金山潮汐',
-    // Beach names: the English name, then the Chinese
-    beaches:{baker:'Baker Beach 贝克海滩', china:'China Beach 中国海滩', east:'East Beach 东海滩', funston:'Fort Funston 芬斯顿堡', ocean:'Ocean Beach 海洋海滩'},
+    beaches:{baker:'贝克海滩', china:'中国海滩', east:'东海滩', funston:'芬斯顿堡', ocean:'海洋海滩'},
     place:{
-      baker:'位于要塞公园（Presidio）悬崖下方，金门海峡外侧', china:'海崖区（Sea Cliff）一处迷人的小海湾，面朝金门海峡',
-      east:'位于克里斯菲尔德（Crissy Field），金门海峡内侧', funston:'位于 Fort Funston 芬斯顿堡悬崖下方，默塞德湖以南',
+      baker:'位于 Presidio 悬崖下方，金门海峡外侧', china:'海崖区（Sea Cliff）一处迷人的小海湾，面朝金门海峡',
+      east:'位于克里斯菲尔德（Crissy Field），金门海峡内侧', funston:'位于芬斯顿堡悬崖下方，默塞德湖以南',
       ocean:'太平洋海岸，从悬崖屋（Cliff House）延伸至斯洛特大道'},
     source:{
       ref:'潮汐根据美国国家海洋和大气管理局（NOAA）9414290 号站（旧金山，金门）的调和常数计算，该站是距离此海滩最近的 NOAA 站。',
-      ob:'潮汐根据 NOAA 9414275 号站（Ocean Beach 海洋海滩，外海岸；以旧金山 9414290 号站为基准修正时间和高度）计算，该站是距离此海滩最近的 NOAA 站。'},
+      ob:'潮汐根据 NOAA 9414275 号站（海洋海滩，外海岸；以旧金山 9414290 号站为基准修正时间和高度）计算，该站是距离此海滩最近的 NOAA 站。'},
     notes:'高度以平均较低低潮面（MLLW）为基准；点按潮高可在美制与公制单位之间切换（英尺 / 米、°F / °C、mph / km/h）。负潮指低于该基准面的潮位，是观察潮池的最佳时机。潮汐为天文预测；风和涌浪会改变实际水位。天气数据来自美国国家气象局。不可用于航海。',
     credit:'天气和月相图标：'+ICONS+'，作者 Erik Flowers。',
     madeat:'制作于贝克海滩。', info:'说明',
