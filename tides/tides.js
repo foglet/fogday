@@ -488,8 +488,7 @@ function buildStrip(){
   const pts=td.tl.map(p=>`${x(p.t)},${y(p.v).toFixed(1)}`);
   const waterD=`M0,${y(Y0)} L${pts.join(' L')} L${TW},${y(Y0)} Z`;
   s+=`<path d="${waterD}" fill="var(--water-fill)"/>`;
-  // Waves inside the water, after Bridget Riley's "Current": close parallel lines whose ripple swells and fades across
-  // the water in slow diagonal bands, each line a little out of step with the one above, so the field shimmers.
+  // Waves inside the water, after Bridget Riley (rileyWaves, below)
   s+=`<defs><clipPath id="waterClip"><path d="${waterD}"/></clipPath></defs><g clip-path="url(#waterClip)" fill="none" stroke="var(--water)" stroke-linecap="round">`+rileyWaves(TW, Math.min(...td.tl.map(p=>y(p.v)))-4, y(Y0))+'</g>';
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
   // Highs and lows: markers in the picture; height above, time below, in a top layer over the center line
@@ -506,21 +505,23 @@ function buildStrip(){
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
 }
-/* Riley waves: close parallel lines (4 px apart) that never cross. Each line is a run of half-waves (12 px) drawn as
-   quadratic curves; its ripple swells and fades along the line (a 260 px swell), and both the ripple and the swell slip
-   a little sideways from one line to the next, so crests lean and the swells form slow diagonal bands. */
+/* Waves after Bridget Riley ("Current", "Cataract"): parallel lines, 12 px apart, that never cross. Each line is a run of
+   half-waves drawn as quadratic curves. Along each line the ripple varies twice over: its height swells from almost flat
+   to 5 px and back (a 300 px swell), and its length stretches from 18 to 38 px (a 640 px rhythm). Both slip sideways a
+   little from one line to the next, so the swells lean into diagonal bands and the field shimmers. */
 function rileyWaves(TW, top, bottom){
-  const GAP=4, HALF=12, SWELL=260, out=[];
-  for (let k=0, yy=bottom-2; yy>top; k++, yy-=GAP){
-    let x=-((k*1.7)%(2*HALF))-2*HALF, up=true, d=`M${x.toFixed(1)},${yy.toFixed(1)}`;
+  const GAP=12, SWELL=300, RHYTHM=640, out=[];
+  for (let k=0, yy=bottom-3; yy>top; k++, yy-=GAP){
+    let x=-40-(k*5)%40, up=true, d=`M${x.toFixed(1)},${yy.toFixed(1)}`;
     while (x<TW){
-      const mid=x+HALF/2, amp=0.15+1.75*Math.pow(0.5+0.5*Math.sin(2*Math.PI*(mid+k*7)/SWELL), 1.6);
-      d+=` Q${mid.toFixed(1)},${(yy+(up?-2:2)*amp).toFixed(1)} ${(x+HALF).toFixed(1)},${yy.toFixed(1)}`;
-      x+=HALF; up=!up;
+      const half=14+5*Math.sin(2*Math.PI*(x+k*23)/RHYTHM);                     // half-wave 9–19 px: wave length 18–38 px
+      const mid=x+half/2, amp=0.25+4.75*Math.pow(0.5+0.5*Math.sin(2*Math.PI*(mid+k*31)/SWELL), 1.8);   // 0.25–5 px
+      d+=` Q${mid.toFixed(1)},${(yy+(up?-2:2)*amp).toFixed(1)} ${(x+half).toFixed(1)},${yy.toFixed(1)}`;
+      x+=half; up=!up;
     }
     out.push(`<path d="${d}"/>`);
   }
-  return `<g stroke-width="1.15" stroke-opacity="0.62">${out.join('')}</g>`;
+  return `<g stroke-width="1.5" stroke-opacity="0.7">${out.join('')}</g>`;
 }
 // Tide height on the drawn curve (straight lines between its 10-minute points), so the dot sits exactly on the line
 function curveAt(t){
