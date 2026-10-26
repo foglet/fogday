@@ -169,12 +169,13 @@ if (BEACHES[hashBeach]) beach = hashBeach;
 // Baker Beach on every load (a #china, #east, #funston or #ocean link still opens that beach)
 let view = todayKey();
 
-/* ---- Durations, in words: "shortly" under 45 min; "in about six hours" within 15 min of a whole hour;
-   "in a little more than six hours" from 16 to 44 min past it ---- */
+/* ---- Durations, in words: under 45 min to the nearest quarter hour ("in about thirty minutes", "shortly" under 8 min);
+   "in about six hours" within 15 min of a whole hour; "in a little more than six hours" from 16 to 44 min past it ---- */
 const NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty-one','twenty-two','twenty-three','twenty-four'];
 function hoursText(h){ return h===1 ? 'an hour' : `${NUM_WORDS[h]||h} hours`; }
 function inDur(mins){
-  if (mins<45) return 'shortly';
+  if (mins<8) return 'shortly';
+  if (mins<45) return `in about ${['fifteen','thirty','forty-five'][Math.min(2,Math.round(mins/15)-1)]} minutes`;
   const h=Math.round(mins/60);
   if (Math.abs(mins-h*60)<=15) return `in about ${hoursText(h)}`;
   return `in a little more than ${hoursText(Math.floor(mins/60))}`;
@@ -197,11 +198,11 @@ function renderNow(){
   const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
   const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
-  // otherwise the next high or low ("High tide, next at" / "Low tide, next at", a minus low "Negative tide, next at")
+  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide), then its time and height
   const SLACK_MS=15*6e4;
   const slack=extremes(beach, now-SLACK_MS, now+SLACK_MS).length>0;
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
-    : n1 ? row(kind(n1)+', next at', n1, inDur(mins)) : '';
+    : n1 ? row(kind(n1)+' occurs '+inDur(mins), n1) : '';
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
