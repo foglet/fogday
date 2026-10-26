@@ -96,7 +96,7 @@ title: Tides of San Francisco
   .tides .tile { background: var(--surface); border: 0; border-radius: 12px; padding: 14px 16px 16px;
     display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
-  .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }  /* as tall as the wind icon, so the temperature and wind speed share a line */
   .tides .slab.mid { font-size: clamp(2.3rem, 9vw, 2.9rem); }
   .tides .sub { display: flex; flex-direction: column; line-height: 1.3; font-size: .9rem; margin-top: auto; }
   .tides .sub b { font-weight: 600; font-size: 1rem; }
@@ -154,6 +154,7 @@ title: Tides of San Francisco
     .tides { --tilegap: 10px; }
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
+    .tides .trow { min-height: 48px; }
     .tides .moonrow { gap: 14px; }  /* room for the moonrise / moonset glyphs */
     .tides .sky { font-size: 34px; }
   }
