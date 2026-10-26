@@ -125,11 +125,13 @@ title: Tides of San Francisco
   .tides .wi-moonrise.riseicon { font-size: calc(var(--rise-ic) * 1.31); --rise-nudge: .05em; }
   .tides .wi-moonset.riseicon { font-size: calc(var(--rise-ic) * 1.245); --rise-nudge: -.10em; }
   .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
-  .tides .moonrow { display: flex; align-items: center; gap: 22px; }
+  /* Same two columns as the weather / wind tiles, so the % and moon icon sit exactly where the temperature and sky icon do */
+  .tides .moonrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: calc(var(--tilegap) + 32px); align-items: start; }
+  .tides .moonmain { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .tides .moonicon { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }  /* same size as the sky icon */
   .tides .moon .stack { gap: 4px; }
   .tides .nextfull { font-size: .95rem; margin-top: 4px; }
-  .tides .moontimes { margin-left: auto; padding-top: 0; align-self: flex-start; }  /* moonrise / moonset flush right, styled like sunrise / sunset */
+  .tides .moontimes { justify-self: end; padding-top: 0; }  /* moonrise / moonset flush right, styled like sunrise / sunset */
   .tides .rows { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   .tides .rows div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
   .tides .rows dt { color: var(--muted); font-size: .9rem; }
@@ -176,14 +178,13 @@ title: Tides of San Francisco
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
     .tides .trow { min-height: 48px; }
-    .tides .moonrow { gap: 14px; }  /* room for the moonrise / moonset glyphs */
+    .tides .moonrow { column-gap: calc(var(--tilegap) + 24px); }  /* tile padding is 12px here */
     .tides .sky, .tides .moonicon { font-size: 34px; }
   }
   @media (max-width: 400px) {  /* phones: keep "Full moon" on one line beside the moonrise / moonset glyphs */
-    .tides .moonrow { gap: 10px; }
     .tides .moontimes > div { column-gap: 3px; }
   }
-  @media (max-width: 340px) { .tides .tiles { grid-template-columns: 1fr; } }
+  @media (max-width: 340px) { .tides .tiles, .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
   </style>
 </head>
 <body class="wide">

@@ -309,8 +309,8 @@ function renderMoon(){
   // No date or time: "The next full moon occurs in thirty days." / "… tomorrow (night)." / on the day "… in about two hours."
   const head = esc(tr('fullMoon', {when: tmrwNight ? L.tomorrowNight : when}) + howl);
   morph($('moon'), `<span class="label">${esc(L.moon)}</span>
-    <div class="moonrow">${moonIcon(m.p)}
-      <div class="stack"><span class="slab mid num">${Math.round(m.lit*100)}%</span>
+    <div class="moonrow">
+      <div class="moonmain"><div class="trow"><span class="slab mid num">${Math.round(m.lit*100)}%</span>${moonIcon(m.p)}</div>
         <span class="muted">${esc(L.phases[m.ph])}</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
       <div class="suntimes num moontimes" aria-label="${esc(L.moonAria)}">${mt('moonrise',mrs.rise,now)}${mt('moonset',mrs.set,now)}</div>
@@ -502,8 +502,8 @@ function buildStrip(){
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
     const ex=x(e.t), ey=y(e.v);
-    s+=`<circle cx="${ex}" cy="${ey}" r="1.2" fill="var(--surface)"/>`;
-    // Highs and lows: a light bead set into the line, as wide as the line itself (2.4 px), same for both
+    s+=`<circle cx="${ex}" cy="${ey}" r="1.5" fill="var(--surface)"/>`;
+    // Highs and lows: a light bead set into the line, 3 px across, a little wider than the 2.4 px line, same for both
     // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
     labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
