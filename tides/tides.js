@@ -76,7 +76,7 @@ function alignHero(){
   // The reading's natural width (unwrapped), not its width squeezed into the column, so a wide value (−0.5) drops below instead of wrapping
   const fw=big.style.flexWrap, wd=big.style.width; big.style.flexWrap='nowrap'; big.style.width='max-content';
   const need=big.getBoundingClientRect().width; big.style.flexWrap=fw; big.style.width=wd;
-  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=need+12<=x;
+  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=need+6<=x;
   hero.style.setProperty('--desc-x', x.toFixed(1)+'px');
   hero.classList.toggle('inline', fits);
 }
@@ -291,9 +291,10 @@ function renderNow(){
   // "… Visit a tide pool. Respect Mother Nature." Not shown ahead of time just because the next low is negative,
   // and only within four hours of the real now (not when the chart has been slid days ahead).
   const negNow = lv < 0 && now - Date.now() <= 4*36e5;
-  const pool = t => negNow ? t + L.stop + L.tidePool : t;
-  const nextLine = slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(pool(L.slack))}</span></div>`
-    : n1 ? row(esc(pool(tr('next', {kind: kind(n1), when: when(n1)}))), n1) : '';
+  const nextLine = slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(L.slack+(negNow?L.stop.trim():''))}</span></div>`
+    : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})+(negNow?L.stop.trim():'')), n1) : '';
+  // Second line while the tide is below zero: "Visit a tide pool. Respect Mother Nature."
+  const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
   const arrow = '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>';
@@ -304,7 +305,7 @@ function renderNow(){
       <svg class="arrow ${rising?'up':'down'}" data-fd="${ft(lv).charAt(0)==='−'?'m':ft(lv).charAt(0)}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit" data-ld="${String(ft(lv)).slice(-1)}">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${nextLine}</div></div>`);
+    <div class="hero-side"><div class="nlist">${nextLine}${poolLine}</div></div>`);
   if (ar && wasUp!==rising) flipArrow(ar, fromTop);
 }
 /* Tide arrow changing direction: a smooth half turn (always clockwise), then it drops or rises to its resting spot
