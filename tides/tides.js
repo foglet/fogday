@@ -169,13 +169,18 @@ if (BEACHES[hashBeach]) beach = hashBeach;
 // Baker Beach on every load (a #china, #east, #funston or #ocean link still opens that beach)
 let view = todayKey();
 
-/* ---- Durations, in words: under 45 min to the nearest quarter hour ("in about thirty minutes", "shortly" under 8 min);
-   "in about six hours" within 15 min of a whole hour; "in a little more than six hours" from 16 to 44 min past it ---- */
+/* ---- Durations, in words: "any time now" under 10 min; "in about ten / twenty / thirty minutes" for 10–19 / 20–29 / 30–37;
+   "in about forty-five minutes" for 38–44; "in a few hours" from 2:00 to 3:59;
+   otherwise "in about six hours" within 15 min of a whole hour, "in a little more than six hours" from 16 to 44 min past it ---- */
 const NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty-one','twenty-two','twenty-three','twenty-four'];
 function hoursText(h){ return h===1 ? 'an hour' : `${NUM_WORDS[h]||h} hours`; }
 function inDur(mins){
-  if (mins<8) return 'shortly';
-  if (mins<45) return `in about ${['fifteen','thirty','forty-five'][Math.min(2,Math.round(mins/15)-1)]} minutes`;
+  if (mins<10) return 'any time now';
+  if (mins<20) return 'in about ten minutes';
+  if (mins<30) return 'in about twenty minutes';
+  if (mins<38) return 'in about thirty minutes';
+  if (mins<45) return 'in about forty-five minutes';
+  if (mins>=120 && mins<240) return 'in a few hours';
   const h=Math.round(mins/60);
   if (Math.abs(mins-h*60)<=15) return `in about ${hoursText(h)}`;
   return `in a little more than ${hoursText(Math.floor(mins/60))}`;
