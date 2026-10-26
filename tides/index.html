@@ -151,7 +151,12 @@ title: Tides of San Francisco
   .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
 
   .tides .foot { position: relative; }  /* credit pinned flush right on the Info line; the open notes keep their full width */
-  .tides .madeat { position: absolute; top: 0; right: 0; color: var(--muted); font-size: .85rem; line-height: 1.5; padding: 4px 0; text-align: right; }
+  .tides .madeat { position: absolute; top: 0; right: 0; color: var(--muted); font-size: .85rem; line-height: 1.5; padding: 4px 0; text-align: right;
+    display: flex; align-items: baseline; gap: 10px; }
+  /* Language: tap to cycle EN → FR → ES → ZH, styled like the Info label and the units toggle */
+  .tides .langbtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-size: .75rem; font-weight: 600;
+    letter-spacing: .14em; color: var(--accent); -webkit-tap-highlight-color: transparent; }
+  .tides .langbtn:hover { opacity: .8; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
@@ -192,20 +197,20 @@ title: Tides of San Francisco
         <div class="coords num" id="coords"></div>
         <p class="place label" id="place"></p>
       </div>
-      <div class="suntimes num" id="sun" aria-label="Sunrise and sunset"></div>
+      <div class="suntimes num" id="sun" aria-label="Sunrise and sunset" data-i18n-aria="sunAria"></div>
     </div>
 
     <section class="hero" aria-live="polite">
       <div class="hero-in" id="tideNow" style="display:contents"></div>
     </section>
 
-    <section class="tiles" aria-label="Weather and moon">
-      <div class="tile" id="weather"><span class="label">Weather</span><p class="loading">Loading live weather…</p></div>
-      <div class="tile" id="wind"><span class="label">Wind</span><p class="loading">Loading…</p></div>
-      <div class="tile moon" id="moon"><span class="label">Moon</span></div>
+    <section class="tiles" aria-label="Weather and moon" data-i18n-aria="tilesAria">
+      <div class="tile" id="weather"><span class="label" data-i18n="weather">Weather</span><p class="loading" data-i18n="loadingWx">Loading live weather…</p></div>
+      <div class="tile" id="wind"><span class="label" data-i18n="wind">Wind</span><p class="loading" data-i18n="loading">Loading…</p></div>
+      <div class="tile moon" id="moon"><span class="label" data-i18n="moon">Moon</span></div>
     </section>
 
-    <section class="day" aria-label="Today’s tide chart">
+    <section class="day" aria-label="Tide chart" data-i18n-aria="chartSection">
       <div class="chartbox">
         <div class="strip" id="strip">
           <div id="stripInner"><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
@@ -216,21 +221,22 @@ title: Tides of San Francisco
 
     <div class="foot">
     <details class="notes">
-      <summary>Info</summary>
+      <summary data-i18n="info">Info</summary>
       <div class="notes-body">
       <span class="station" id="station"></span>
       <span id="source"></span>
-      <span>Heights above mean lower low water (MLLW); tap the tide height to switch between US and metric units (feet / meters, °F / °C, mph / km/h). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
-      <span>Weather and moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
+      <span data-i18n="notes">Heights above mean lower low water (MLLW); tap the tide height to switch between US and metric units (feet / meters, °F / °C, mph / km/h). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
+      <span data-i18n="credit">Weather and moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
       </div>
     </details>
-    <span class="madeat">Made at Baker Beach.</span>
+    <span class="madeat"><span data-i18n="madeat">Made at Baker Beach.</span><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button></span>
     </div>
   </div>
 </main>
 
 {% include footer.html %}
 <script src="{{ '/tides/neaps.min.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+<script src="{{ '/tides/i18n.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script src="{{ '/tides/stations.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script src="{{ '/tides/tides.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 </body>

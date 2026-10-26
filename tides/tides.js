@@ -5,20 +5,32 @@
 const STATIONS = window.TIDE_STATIONS;
 const TZ = 'America/Los_Angeles';
 const BEACHES = {
-  baker:   {name: 'Baker Beach',  st: 'ref', lat: 37.7936, lon: -122.4836, place: 'Below the Presidio bluffs, the outer Golden Gate'},
-  china:   {name: 'China Beach',  st: 'ob',  lat: 37.7883, lon: -122.4915, place: 'A delightful small cove in Sea Cliff, facing the Golden Gate'},
-  east:    {name: 'East Beach',   st: 'ref', lat: 37.8055, lon: -122.4535, place: 'At Crissy Field, just inside the Golden Gate'},
-  funston: {name: 'Fort Funston', st: 'ob',  lat: 37.7146, lon: -122.5023, place: 'Below the Fort Funston bluffs, south of Lake Merced'},
-  ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107, place: 'The Pacific shore from the Cliff House to Sloat Boulevard'}
+  baker:   {name: 'Baker Beach',  st: 'ref', lat: 37.7936, lon: -122.4836},
+  china:   {name: 'China Beach',  st: 'ob',  lat: 37.7883, lon: -122.4915},
+  east:    {name: 'East Beach',   st: 'ref', lat: 37.8055, lon: -122.4535},
+  funston: {name: 'Fort Funston', st: 'ob',  lat: 37.7146, lon: -122.5023},
+  ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107}
 };
 const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
-const SOURCE = {
-  ref: 'Tides computed from NOAA harmonic constants for station 9414290, San Francisco (Golden Gate), the nearest NOAA station to this beach.',
-  ob:  'Tides computed from NOAA station 9414275, Ocean Beach, outer coast (time and height offsets from 9414290, San Francisco), the nearest NOAA station to this beach.'
-};
 // Tide chart: 20 hours wide, centered on the viewed moment (now, or up to a week ahead once dragged)
 const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 7*864e5;
-const fDayName = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday: 'short'});
+/* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code beside "Made at Baker Beach." to cycle (remembered per visitor) ---- */
+const I18N = window.TIDE_I18N;
+let lang = 'en';
+try { const l=localStorage.getItem('sf-tides-lang'); if (I18N[l]) lang=l; } catch(e){}
+let L = I18N[lang];
+const tr = (k, v) => I18N.fill(L[k], v);
+const beachName = k => L.beaches[k] || BEACHES[k].name;
+// Dates and times in the page's language, always in San Francisco time. English keeps "5:12 PM" / "5:12p"; the others use 17:12.
+let fDayName, fTime, fWkMd, fFull;
+function setFormatters(){
+  const loc=L.locale, h=L.h12 ? {} : {hourCycle:'h23'};
+  fDayName = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday: 'short'});
+  fTime = new Intl.DateTimeFormat(loc, {timeZone: TZ, hour:'numeric', minute:'2-digit', ...h});
+  fWkMd = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday:'long', month:'long', day:'numeric'});   // "Wednesday, October 28"
+  fFull = new Intl.DateTimeFormat(loc, {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', ...h});
+}
+setFormatters();
 
 const predictors = {};
 const pred = k => predictors[k] || (predictors[k] = Neaps.useStation(STATIONS[k]));
@@ -66,14 +78,11 @@ function addDays(day,n){ const t=new Date(Date.UTC(day.y,day.m-1,day.d+n)); retu
 function dayOf(ms){ const p=parts(ms); return {y:p.y,m:p.m,d:p.d}; }
 const todayKey = () => dayOf(Date.now());
 const same = (a,b) => a.y===b.y && a.m===b.m && a.d===b.d;
-const fTime = new Intl.DateTimeFormat('en-US', {timeZone: TZ, hour:'numeric', minute:'2-digit'});
-const fShort = ms => fTime.format(new Date(ms)).replace(' AM','a').replace(' PM','p');
+const fShort = ms => fTime.format(new Date(ms)).replace(/\s?AM$/,'a').replace(/\s?PM$/,'p');   // chart labels: "5:12p" (English) or "17:12"
 const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', month:'long', day:'numeric'});
 const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
 const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
 const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
-const fWkMd = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'long', month:'long', day:'numeric'});  // "Wednesday, October 28"
-const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 // Tide heights: predictions are in feet; tap the big number to switch to meters (remembered per visitor).
 let units = 'ft';
@@ -169,7 +178,8 @@ function moonInfo(now){
   const nearNew=Math.min(now-prevNew,nextNew-now)<D, nearFull=Math.min(now-prevFull,nextFull-now)<D;
   const name = nearNew ? 'New moon' : nearFull ? 'Full moon' : Math.abs(p-.25)<day ? 'First quarter'
     : Math.abs(p-.75)<day ? 'Last quarter' : p<.25 ? 'Waxing crescent' : p<.5 ? 'Waxing gibbous' : p<.75 ? 'Waning gibbous' : 'Waning crescent';
-  return {p, lit, name, nextFull, age:(now-prevNew)/864e5};
+  const ph = ['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent'].indexOf(name);
+  return {p, lit, name, ph, nextFull, age:(now-prevNew)/864e5};
 }
 
 
@@ -201,22 +211,7 @@ if (BEACHES[hashBeach]) beach = hashBeach;
 // Baker Beach on every load (a #china, #east, #funston or #ocean link still opens that beach)
 let view = todayKey();
 
-/* ---- Durations, in words: "any time now" under 10 min; "in about ten / twenty / thirty minutes" for 10–19 / 20–29 / 30–37;
-   "in about forty-five minutes" for 38–44; "in a few hours" from 2:00 to 3:59;
-   otherwise "in about six hours" within 15 min of a whole hour, "in a little more than six hours" from 16 to 44 min past it ---- */
-const NUM_WORDS=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','twenty-one','twenty-two','twenty-three','twenty-four','twenty-five','twenty-six','twenty-seven','twenty-eight','twenty-nine','thirty','thirty-one'];
-function hoursText(h){ return h===1 ? 'an hour' : `${NUM_WORDS[h]||h} hours`; }
-function inDur(mins){
-  if (mins<10) return 'any time now';
-  if (mins<20) return 'in about ten minutes';
-  if (mins<30) return 'in about twenty minutes';
-  if (mins<38) return 'in about thirty minutes';
-  if (mins<45) return 'in about forty-five minutes';
-  if (mins>=120 && mins<240) return 'in a few hours';
-  const h=Math.round(mins/60);
-  if (Math.abs(mins-h*60)<=15) return `in about ${hoursText(h)}`;
-  return `in a little more than ${hoursText(Math.floor(mins/60))}`;
-}
+/* ---- Durations in words ("in about six hours") come from i18n.js, in each language, with the same thresholds ---- */
 
 /* ---- Viewed moment: now, or a time up to a week ahead picked by dragging the chart.
    scrub is null while live (the chart follows the clock); otherwise the absolute time being viewed. ---- */
@@ -241,20 +236,21 @@ function renderNow(){
   const n1=ex.find(e=>e.t>now), rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-Date.now())/6e4) : 0;   // counted from the real now
   const neg=e=>!e.high && e.v<0;
-  const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
+  const kind=e=>neg(e)?L.negTide:e.high?L.highTide:L.lowTide;
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
   // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height.
   // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wednesday, October 28 at 6:30 AM"
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
-  const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
-    : n1 ? row(kind(n1)+' occurs '+(mins<1440 ? inDur(mins) : fWkMd.format(new Date(n1.t))+' at '+fTime.format(new Date(n1.t))), n1) : '';
+  const when = e => mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
+  const nextLine = slack ? `<div class="nrow slack"><span class="label">${esc(L.slack)}</span></div>`
+    : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})), n1) : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
   const arrow = '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>';
   morph($('tideNow'), `
-    <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
+    <button class="big" id="unitToggle" type="button" aria-label="${esc(tr('unitAria', {v: ft(lv), unit: units==='m'?L.meters:L.feet, dir: rising?L.rising:L.falling, other: units==='m'?L.feet:L.meters}))}" title="${esc(tr('unitTitle', {other: units==='m'?L.feet:L.meters}))}">
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
@@ -274,26 +270,26 @@ function renderMoon(){
   const now=cursor(), m=moonInfo(now), full=m.nextFull;
   // Moonrise / moonset for the viewed day, same format as sunrise / sunset; each greys out once it has happened, "—" if none that day
   const mrs=moonTimes(dayOf(now));
-  const mt=(lab,ms,n)=>riseItem(lab, ms===null?'—':tm(ms), ms!==null&&n>=ms);
+  const mt=(key,ms,n)=>riseItem(key, ms===null?'—':tm(ms), ms!==null&&n>=ms);
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
   let when;
-  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = inDur(mins); }
-  else if (days===1) when = 'tomorrow';
-  else when = `in ${NUM_WORDS[days]||days} days`;
+  if (days<=0){ const mins=Math.max(0,Math.round((full-now)/6e4)); when = L.dur(mins); }
+  else if (days===1) when = L.tomorrow;
+  else when = L.inDays(days);
   // Tomorrow, after that day's sunset: "The next full moon occurs tomorrow night."
   const tmrwNight = days===1 && full>=sunTimes({y:pf.y,m:pf.m,d:pf.d}).set;
   // Howl only in the 28 hours before the full moon.
-  const howl = full-now <= 28*3.6e6 ? ' Ahhh-wooooooo!!!' : '';
+  const howl = full-now <= 28*3.6e6 ? L.howl : '';
   // No date or time: "The next full moon occurs in thirty days." / "… tomorrow (night)." / on the day "… in about two hours."
-  const head = `The next full moon occurs ${tmrwNight ? 'tomorrow night' : when}.` + howl;
-  morph($('moon'), `<span class="label">Moon</span>
+  const head = esc(tr('fullMoon', {when: tmrwNight ? L.tomorrowNight : when}) + howl);
+  morph($('moon'), `<span class="label">${esc(L.moon)}</span>
     <div class="moonrow">${moonIcon(m.p)}
-      <div class="stack"><span class="slab moonname">${m.name}</span>
+      <div class="stack"><span class="slab moonname">${esc(L.phases[m.ph])}</span>
         <span class="muted num">${Math.round(m.lit*100)}%</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
-      <div class="suntimes num moontimes" aria-label="Moonrise and moonset">${mt('Moonrise',mrs.rise,now)}${mt('Moonset',mrs.set,now)}</div>
+      <div class="suntimes num moontimes" aria-label="${esc(L.moonAria)}">${mt('moonrise',mrs.rise,now)}${mt('moonset',mrs.set,now)}</div>
     </div>`);
 }
 
@@ -384,9 +380,9 @@ async function renderWeather(){
   } catch(e) {
     if (token !== wxToken) return;
     wxLast = null;
-    const msg = '<p class="muted">Live weather isn’t available right now. It comes from the National Weather Service; try again in a few minutes.</p>';
-    $('weather').innerHTML = '<span class="label">Weather</span>' + msg;
-    $('wind').innerHTML = '<span class="label">Wind</span>';
+    const msg = `<p class="muted">${esc(L.wxDown)}</p>`;
+    $('weather').innerHTML = `<span class="label">${esc(L.weather)}</span>` + msg;
+    $('wind').innerHTML = `<span class="label">${esc(L.wind)}</span>`;
   }
 }
 // Draw from loaded data (also on the feet / meters toggle, without refetching)
@@ -395,23 +391,27 @@ function drawForecast(w, t){
   const inP = p => t>=p.s && t<p.e;
   const p = (w.hourly||[]).find(inP) || (w.daily||[]).find(inP);
   if (!p){
-    $('weather').innerHTML = '<span class="label">Forecast</span><p class="muted">No forecast this far ahead yet.</p>';
-    $('wind').innerHTML = '<span class="label">Wind</span><p class="muted">No forecast this far ahead yet.</p>';
+    $('weather').innerHTML = `<span class="label">${esc(L.forecast)}</span><p class="muted">${esc(L.noForecast)}</p>`;
+    $('wind').innerHTML = `<span class="label">${esc(L.wind)}</span><p class="muted">${esc(L.noForecast)}</p>`;
     return;
   }
   const d = dayOf(t), onDay = q => same(dayOf(q.s), d);
   const hi = (w.daily||[]).find(q=>q.isDay && onDay(q)), lo = (w.daily||[]).find(q=>!q.isDay && onDay(q));
-  morph($('weather'), `<span class="label">Forecast</span>
+  morph($('weather'), `<span class="label">${esc(L.forecast)}</span>
     <div class="trow"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</div>
-    <div class="sub"><b>${esc(p.short||'—')}</b><span class="label num">${[hi?`High ${tempNum(hi.temp)}°`:'', lo?`Low ${tempNum(lo.temp)}°`:''].filter(Boolean).join(' ')}</span></div>`);
+    <div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span></div>`);
   // windSpeed is "12 mph" (hourly) or "10 to 15 mph" (daily): show the low end, and the top of a range below it
   const nums = String(p.wind||'').match(/\d+/g) || [];
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
-  morph($('wind'), `<span class="label">Wind</span>
+  morph($('wind'), `<span class="label">${esc(L.wind)}</span>
     <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
-    <div class="sub"><b>${spd===0?'Calm':p.dir?'From '+p.dir:'—'}</b><span class="label num">${top?`Up to ${top} ${spdUnit()}`:'Forecast'}</span></div>`);
+    <div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit()}):L.fcSub)}</span></div>`);
 }
+// Weather words in the page's language (icons still read the original English); high / low, compass points
+const wxT = t => I18N.wxText(t, lang);
+const hiLo = (hi, lo) => esc([hi!=null?tr('high',{n:tempNum(hi)}):'', lo!=null?tr('low',{n:tempNum(lo)}):''].filter(Boolean).join(' '));
+const dirName = d => { const i=COMPASS.indexOf(d); return i<0 ? d : L.compass[i]; };
 function drawWeather(w){
   if (!isLive()) return drawForecast(w, cursor());
   const o = w.obs || {};
@@ -419,18 +419,18 @@ function drawWeather(w){
   // Exact °F and mph; rounded only for display. Observations come in °C and km/h; the forecast in °F and mph.
   const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
   const desc = o.textDescription || w.short || '—';
-  morph($('weather'), `<span class="label">Weather</span>
+  morph($('weather'), `<span class="label">${esc(L.weather)}</span>
     <div class="trow"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</div>
-    <div class="sub"><b>${esc(desc)}</b><span class="label num">${[w.hi!=null?`High ${tempNum(w.hi)}°`:'', w.lo!=null?`Low ${tempNum(w.lo)}°`:''].filter(Boolean).join(' ')}</span></div>`);
+    <div class="sub"><b>${esc(wxT(desc))}</b><span class="label num">${hiLo(w.hi, w.lo)}</span></div>`);
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);
   const gust = val(o.windGust) != null ? spdNum(kmhToMph(val(o.windGust))) : null;
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
-  morph($('wind'), `<span class="label">Wind</span>
+  morph($('wind'), `<span class="label">${esc(L.wind)}</span>
     <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="label spdunit">${spdUnit()}</span></span>${windIcon(dir, spd===0)}</div>
-    <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} ${spdUnit()}`:'No gusts reported'}</span></div>`);
+    <div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit()}):L.noGusts)}</span></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
@@ -446,7 +446,7 @@ function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
   const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
-  const key=[beach, units, W, td.hr].join('|');
+  const key=[beach, units, lang, W, td.hr].join('|');
   if (key===stripKey) return;
   stripKey=key; stripW=W; stripG={W, H, pt, ih};
   const start=td.tl[0].t, end=td.tl[td.tl.length-1].t, k=W/SPAN_MS, TW=Math.ceil((end-start)*k);
@@ -494,18 +494,18 @@ function placeStrip(){
   const tx=`translate3d(${(-((now-HALF_MS)-strip0)*stripK).toFixed(2)}px,0,0)`;
   $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
   $('stripDot').setAttribute('cy', (pt+(Y1-curveAt(now))/(Y1-Y0)*ih).toFixed(2));
-  $('strip').setAttribute('aria-valuetext', isLive() ? 'Now' : fFull.format(new Date(now)));
+  $('strip').setAttribute('aria-valuetext', isLive() ? L.now : fFull.format(new Date(now)));
 }
 function drawStrip(){ buildStrip(); placeStrip(); }
 
 // Rise / set times, formatted like the tide times ("5:33 PM")
 // AM / PM set at the size of the Sunrise / Sunset labels
-const tm=ms=>esc(fTime.format(new Date(ms))).replace(/ ([AP]M)$/,' <span class="ampm">$1</span>');
+const tm=ms=>esc(fTime.format(new Date(ms))).replace(/\s([AP]M)$/,' <span class="ampm">$1</span>');
 
 // Weather Icons glyph for a Sunrise / Sunset / Moonrise / Moonset label
-const riseIcon = lab => `<i class="wi wi-${lab.toLowerCase()} riseicon" aria-hidden="true"></i>`;
+const riseIcon = key => `<i class="wi wi-${key} riseicon" aria-hidden="true"></i>`;
 // One rise / set item: icon, title, time (icon left of the title; title and time share a left edge)
-const riseItem = (lab, time, past) => `<div class="${past?'past':''}">${riseIcon(lab)}<span class="label">${lab}</span><span class="time">${time}</span></div>`;
+const riseItem = (key, time, past) => `<div class="${past?'past':''}">${riseIcon(key)}<span class="label">${esc(L[key])}</span><span class="time">${time}</span></div>`;
 
 /* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
 function renderSun(){
@@ -513,18 +513,19 @@ function renderSun(){
   const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
   const riseDone = !afterSet && now>=sun.rise;
   // Sunset greys out once it has happened, until the next sunrise
-  morph($('sun'), riseItem('Sunrise', tm(rise), riseDone) + riseItem('Sunset', tm(sun.set), afterSet));
+  morph($('sun'), riseItem('sunrise', tm(rise), riseDone) + riseItem('sunset', tm(sun.set), afterSet));
 }
 
 /* ---- Page ---- */
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
-  $('place').textContent=b.place;
-  $('beachName').textContent=b.name;
-  { const i=ORDER.indexOf(beach), n=BEACHES[ORDER[(i+1)%ORDER.length]].name; $('beachBtn').setAttribute('aria-label', `${b.name}, beach ${i+1} of ${ORDER.length}. Tap for ${n}.`); $('beachBtn').title=`Next: ${n}`; }
+  $('place').textContent=L.place[beach];
+  $('beachName').textContent=beachName(beach);
+  { const i=ORDER.indexOf(beach), n=beachName(ORDER[(i+1)%ORDER.length]); $('beachBtn').setAttribute('aria-label', tr('beachAria', {b: beachName(beach), i: i+1, n: ORDER.length, next: n})); $('beachBtn').title=tr('nextBeach', {n}); }
   $('coords').textContent=dms(b.lat,'N','S')+', '+dms(b.lon,'E','W');
   $('station').textContent=STATION_LINE[b.st];
-  $('source').textContent=SOURCE[b.st];
+  $('source').textContent=L.source[b.st];
+  applyStatic();
   renderNow(); renderMoon();
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
@@ -539,6 +540,27 @@ $('tideNow').addEventListener('click', e=>{
   render({weather:false});
   if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);  // weather follows the units too
   const b=$('unitToggle'); if (b.focus) b.focus();
+});
+/* ---- Text that isn't drawn by a panel: page title, header, Info notes, credit, section labels, the language button ---- */
+function applyStatic(){
+  document.documentElement.lang = L.html;
+  document.title = L.title+' · Fogday Studios';
+  const h=document.querySelector('.map-heading'); if (h) h.textContent = L.title;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = L[el.dataset.i18n]; });   // trusted text from i18n.js (the credit has a link)
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', L[el.dataset.i18nAria]));
+  $('strip').setAttribute('aria-label', L.chartAria);
+  const next=I18N.order[(I18N.order.indexOf(lang)+1)%I18N.order.length], b=$('langBtn');
+  b.textContent = lang.toUpperCase();
+  b.setAttribute('aria-label', tr('langAria', {next: I18N[next].name})); b.title = I18N[next].name;
+}
+/* Tap the language code (EN → FR → ES → ZH → EN), like the units: the whole page redraws in the new language */
+$('langBtn').addEventListener('click', ()=>{
+  lang = I18N.order[(I18N.order.indexOf(lang)+1)%I18N.order.length]; L = I18N[lang];
+  try { localStorage.setItem('sf-tides-lang', lang); } catch(err){}
+  setFormatters(); tileKey='';
+  render({weather:false});
+  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w); else renderWeather();
+  const b=$('langBtn'); if (b.focus) b.focus();
 });
 /* Tap the beach name for the next beach (five, in order, then back to the first) */
 const ORDER=Object.keys(BEACHES);
