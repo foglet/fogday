@@ -530,10 +530,11 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
-/* Sea life in the chart: in each screen-width of time one crab on the floor and two great white sharks at different depths.
+/* Sea life in the chart: in each screen-width of time two great white sharks at different depths, a sea otter floating at the surface,
+   a gull above the water, and a crab on the floor.
    Drawn with a 2px border in the card color so they read against the waves. Placed the same way every time (seeded),
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
-function seaLife(td, start, end, TW, W, x, y, floor){
+function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   let seed = Math.floor(start/36e5) % 2147483647 || 1;
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
@@ -547,19 +548,21 @@ function seaLife(td, start, end, TW, W, x, y, floor){
   // Boxes around every high / low: its marker, the height above it and the time below it (plus 4px), which sharks keep clear of
   const labelBox = e => { const ex=+x(e.t), ey=y(e.v); return [ex-38, ex+38, ey-27, ey+30]; };
   const LB = td.ex.map(labelBox);
-  const sharkFree = (cx,cy) => !LB.some(([l,r,t,b]) => cx+27>l && cx-23<r && cy+12>t && cy-15<b);
+  // Day names sit on the floor (bottom left of each midnight line): only creatures that low need to avoid them
+  for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))) LB.push([+x(m)-6, +x(m)+80, floor-20, floor+2]);
+  const sharkFree = (cx,cy) => !LB.some(([l,r,t,b]) => cx+27*SZ>l && cx-27*SZ<r && cy+12*SZ>t && cy-15*SZ<b);
   let g = `<defs><filter id="seaRim" x="-30%" y="-30%" width="160%" height="160%">
       <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
       <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
       <feMerge><feMergeNode in="rim"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="sealife">`;
-  const crab = (cx,cy) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
+  const crab = (cx,cy) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${SZ})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
       <path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/>
       <path d="M-5,-2 l-3,-5 M5,-2 l3,-5" stroke-width="1.6" fill="none"/>
       <circle cx="-8.5" cy="-8" r="2.6" stroke="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
       <ellipse cx="0" cy="0" rx="7.5" ry="4.8" stroke="none"/>
       <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`;
   // Great white shark, facing left (scale -1 turns it): slate-grey back, white underside, dorsal and pectoral fins, forked tail
-  const shark = (cx,cy,dir) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir},1)" filter="url(#seaRim)">
+  const shark = (cx,cy,dir) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
       <path d="M-1,-5.8 L3,-12.5 L6.5,-5.4 Z" fill="#5d6f7d"/>
       <path d="M-18,0 C-15,-4 -8,-6 0,-6 C8,-6 13,-3 16,-1 L23.5,-8.5 L21,0 L23.5,6.5 L16,2 C10,5 -6,6 -13,4 C-16,3 -18,1 -18,0 Z" fill="#6f8191"/>
       <path d="M-17.4,1.3 C-10,5.6 6,5.2 15.2,2.2 C8,6.2 -8,6.4 -13,4.2 C-15.6,3.2 -17.2,2.2 -17.4,1.3 Z" fill="#f2f4f5"/>
@@ -567,21 +570,57 @@ function seaLife(td, start, end, TW, W, x, y, floor){
       <path d="M-8.6,-2.2 v3 M-7.2,-2.4 v3 M-5.8,-2.5 v3" stroke="#3e4c57" stroke-width=".6" fill="none"/>
       <path d="M-17,1.6 q3,1.1 6.2,.5" stroke="#3e4c57" stroke-width=".6" fill="none"/>
       <circle cx="-12.2" cy="-1.6" r=".95" fill="#1b2a33"/></g>`;
-  // Spread out, not grouped: at least 44px sideways between any two creatures (a crab never sits under a shark)
-  const taken=[], clear=(l,r) => !taken.some(([L,R]) => r+44>L && l-44<R);
+  // Spread out, not grouped: at least 44px (24px on phones) sideways between any two creatures (a crab never sits under a shark)
+  const SZ = W<520 ? .8 : 1;   // phones: creatures drawn 20% smaller, so a narrow screen still fits them
+  const GAP = W<520 ? 24 : 44;   // phones are narrow: a smaller gap still keeps them apart
+  const taken=[], clear=(l,r) => !taken.some(([L,R]) => r+GAP>L && l-GAP<R);
+  // Sea otter floating on its back at the surface (head left): brown body, pale face, paws up on its chest, tail and a hind foot
+  const otter = (cx,cy,dir,ang) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+      <ellipse cx="15" cy="0.5" rx="5.5" ry="2" fill="#5a3d2a" transform="rotate(-8 15 0.5)"/>
+      <ellipse cx="0" cy="0" rx="13" ry="4.6" fill="#6b4a33"/>
+      <ellipse cx="10.5" cy="-4" rx="2.2" ry="1.4" fill="#5a3d2a"/>
+      <ellipse cx="-5.5" cy="-4.8" rx="2" ry="1.5" fill="#5a3d2a"/><ellipse cx="-1.8" cy="-5.2" rx="2" ry="1.5" fill="#5a3d2a"/>
+      <circle cx="-13.5" cy="-1.6" r="4.4" fill="#cdb79c"/>
+      <circle cx="-16.6" cy="-2.6" r=".8" fill="#1b2a33"/><circle cx="-13.6" cy="-4.4" r=".7" fill="#1b2a33"/>
+      <path d="M-17.6,-1.4 l-2.4,-.6 M-17.6,-.9 l-2.6,.4" stroke="#3a2a1d" stroke-width=".4" fill="none"/></g>`;
+  // Gull in flight (head left): white body, grey wings with dark tips, yellow beak
+  const gull = (cx,cy,dir) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+      <path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
+      <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/>
+      <ellipse cx="0" cy="0" rx="6" ry="2.3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
+      <circle cx="-5.6" cy="-0.6" r="2" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
+      <path d="M-7.4,-0.6 l-2.4,.5 l2.3,.5 Z" fill="#f2b632"/><circle cx="-6.2" cy="-1.1" r=".55" fill="#1b2a33"/>
+      <path d="M5.5,0 l3.4,-1 l-.2,2.2 Z" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/></g>`;
+  // Each screen-width: the otter at the surface and a gull in the air first (so even a narrow phone shows them), then two sharks, then the crab.
+  // Sharks sit in depth bands (upper / lower water); every creature keeps its sideways distance from the rest.
+  const SH = {half:26*SZ, topPad:18*SZ, bands:[[.05,.42],[.58,.95]]};
+  const slope = px => Math.atan2(surf(px+6)-surf(px-6), 12)*180/Math.PI;
   for (let seg=0; seg<TW; seg+=W){
-    // two great whites at different depths: one in the upper water, one lower, always under the surface
-    let placed=0;
-    for (let tries=0; tries<120 && placed<2; tries++){
-      const cx=seg+30+rnd()*(W-60), top=surf(cx)+18, bot=floor-16, band=[[.05,.42],[.58,.95]][placed];
-      if (bot-top < 34) continue;
-      const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
-      if (cx>TW-30 || !sharkFree(cx,cy) || !free(cx-28,cx+28)) continue;
-      if (!clear(cx-26,cx+26)) continue;   // spread out from the other shark and the crab
-      taken.push([cx-26,cx+26,cy-15,cy+12]); g+=shark(cx, cy, rnd()<.5?1:-1); placed++;
+    let sharks=0;
+    for (const kind of ['otter','gull','shark','shark']){
+      for (let tries=0; tries<200; tries++){
+        const cx=seg+30+rnd()*(W-60); if (cx>TW-30) continue;   // label and day-name boxes are checked with each creature's height below
+        if (kind==='shark'){
+          const top=surf(cx)+SH.topPad, bot=floor-16, band=SH.bands[sharks]; if (bot-top < 32) continue;
+          const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
+          if (!sharkFree(cx,cy) || !clear(cx-SH.half,cx+SH.half)) continue;
+          taken.push([cx-SH.half,cx+SH.half]); g+=shark(cx, cy, rnd()<.5?1:-1); sharks++; break;
+        }
+        if (kind==='otter'){   // floating: belly up, riding the surface line and tilted with it
+          const cy=surf(cx)-3*SZ, a=slope(cx), h=20*SZ;
+          if (Math.abs(a)>(W<520?68:40) || !sharkFree(cx,cy) || !clear(cx-h,cx+h)) continue;
+          taken.push([cx-h,cx+h]); g+=otter(cx, cy, rnd()<.5?1:-1, a); break;
+        }
+        if (kind==='gull'){    // in the air, at least 22px above the water, clear of the height labels
+          const lo=surf(cx)-22*SZ, hi=pt0+14; if (lo-hi < 10) continue;
+          const cy=hi+(lo-hi)*rnd(), h=13*SZ;
+          if (!sharkFree(cx,cy) || !clear(cx-h,cx+h)) continue;
+          taken.push([cx-h,cx+h]); g+=gull(cx, cy, rnd()<.5?1:-1); break;
+        }
+      }
     }
-    // then one crab on the floor, where it fits between the sharks
-    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14,cx+14)) continue; taken.push([cx-14,cx+14,cy-13,cy+9]); g+=crab(cx, cy); break; }
+    // then one crab on the floor, where it fits between the others
+    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); break; }
   }
   return g+'</g>';
 }
@@ -613,11 +652,11 @@ function buildStrip(){
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
-  s+=seaLife(td, start, end, TW, W, x, y, pt+ih);
   // Day names at the foot of each midnight divider, drawn over the water and waves so they stay on top
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1)))
     s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  s+=seaLife(td, start, end, TW, W, x, y, pt+ih, pt);   // after the tide line, so the otter floats on top of it
   // Highs and lows: markers in the picture; height above, time below, in a top layer over the center line
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
