@@ -432,7 +432,8 @@ function drawForecast(w, t){
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
 const wxT = t => I18N.wxText(t, lang);
-const hiLo = (hi, lo) => esc([hi!=null?tr('high',{n:tempNum(hi)}):'', lo!=null?tr('low',{n:tempNum(lo)}):''].filter(Boolean).join(' '));
+const hiLo = (hi, lo) => { const deg=units==='m'?'°C':'°F';   // "High 64°F Low 52°F", same units as the temperature
+  return esc([hi!=null?tr('high',{n:tempNum(hi),deg}):'', lo!=null?tr('low',{n:tempNum(lo),deg}):''].filter(Boolean).join(' ')); };
 const dirName = d => { const i=COMPASS.indexOf(d); return i<0 ? d : L.compass[i]; };
 function drawWeather(w){
   if (!isLive()) return drawForecast(w, cursor());
