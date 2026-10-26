@@ -55,7 +55,7 @@ function iconPatch(a,b){
 function patch(a,b){
   if (a.nodeType===3){ if (a.nodeValue!==b.nodeValue) a.nodeValue=b.nodeValue; return; }
   if (a.nodeType!==1) return;
-  if (a.matches('i.wi')) return iconPatch(a,b);
+  if (a.matches('i.wi, i.ph')) return iconPatch(a,b);
   for (const at of [...a.attributes]) if (!b.hasAttribute(at.name)) a.removeAttribute(at.name);
   for (const at of [...b.attributes]) if (a.getAttribute(at.name)!==at.value) a.setAttribute(at.name, at.value);
   patchKids(a,b);
@@ -354,32 +354,26 @@ async function loadWeather(key){
 const cToF = c => c*9/5+32, kmhToMph = k => k/1.609344;
 const COMPASS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 const compass = deg => COMPASS[Math.round(((deg%360)+360)%360/22.5)%16];
-// NWS text description ("Mostly Cloudy", "Fog/Mist", "Light Rain"…) → a Weather Icons glyph (https://erikflowers.github.io/weather-icons/)
+// NWS text description ("Mostly Cloudy", "Fog/Mist", "Light Rain"…) → a Phosphor icon (https://phosphoricons.com, regular weight)
 function skyClass(text, isDay){
   const t=(text||'').toLowerCase(), dn=(d,n)=>isDay?d:n;
-  if (/thunder|t-storm|tstorm/.test(t)) return dn('wi-day-thunderstorm','wi-night-alt-thunderstorm');
-  if (/snow|flurr/.test(t)) return 'wi-snow';
-  if (/sleet|freezing|ice pellet|hail/.test(t)) return 'wi-sleet';
-  if (/drizzle/.test(t)) return 'wi-sprinkle';
-  if (/shower/.test(t)) return dn('wi-day-showers','wi-night-alt-showers');
-  if (/rain/.test(t)) return 'wi-rain';
-  if (/smoke/.test(t)) return 'wi-smoke';
-  if (/haze|dust/.test(t)) return dn('wi-day-haze','wi-night-fog');
-  if (/fog|mist/.test(t)) return dn('wi-day-fog','wi-night-fog');
-  if (/overcast/.test(t) || (/cloud/.test(t) && !/partly|mostly/.test(t))) return 'wi-cloudy';
-  if (/mostly cloudy/.test(t)) return dn('wi-day-cloudy','wi-night-alt-cloudy');
-  if (/partly|mostly sunny|mostly clear|few clouds/.test(t)) return dn('wi-day-sunny-overcast','wi-night-alt-partly-cloudy');
-  if (/sunny|clear|fair/.test(t)) return dn('wi-day-sunny','wi-night-clear');
-  if (/wind|breez|gust/.test(t)) return 'wi-strong-wind';
-  return dn('wi-day-sunny','wi-night-clear');
+  if (/thunder|t-storm|tstorm/.test(t)) return 'ph-cloud-lightning';
+  if (/snow|flurr|sleet|freezing|ice pellet|hail/.test(t)) return 'ph-cloud-snow';
+  if (/drizzle|shower|rain/.test(t)) return 'ph-cloud-rain';
+  if (/smoke|haze|dust|fog|mist/.test(t)) return 'ph-cloud-fog';
+  if (/overcast/.test(t) || (/cloud/.test(t) && !/partly|mostly/.test(t))) return 'ph-cloud';
+  if (/mostly cloudy|partly|mostly sunny|mostly clear|few clouds/.test(t)) return dn('ph-cloud-sun','ph-cloud-moon');
+  if (/sunny|clear|fair/.test(t)) return dn('ph-sun','ph-moon');
+  if (/wind|breez|gust/.test(t)) return 'ph-wind';
+  return dn('ph-sun','ph-moon');
 }
-const skyIcon = (text, isDay) => `<i class="wi ${skyClass(text, isDay)} sky" aria-hidden="true"></i>`;
-// Wind arrow (Weather Icons wi-wind-direction, which points north): wind "from" deg blows toward deg+180, as Weather Icons' from-N-deg classes do.
-// Calm shows Beaufort 0; a wind with no reported direction shows "n/a".
+const skyIcon = (text, isDay) => `<i class="ph ${skyClass(text, isDay)} sky" aria-hidden="true"></i>`;
+// Wind arrow (Phosphor arrow-circle-up, which points north): wind "from" deg blows toward deg+180.
+// Calm shows an empty circle; a wind with no reported direction shows a question mark.
 function windIcon(deg, calm){
-  if (calm) return '<i class="wi wi-wind-beaufort-0 windicon" aria-hidden="true"></i>';
-  if (deg==null) return '<i class="wi wi-na windicon" aria-hidden="true"></i>';
-  return `<i class="wi wi-wind-direction windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true"></i>`;
+  if (calm) return '<i class="ph ph-circle windicon" aria-hidden="true"></i>';
+  if (deg==null) return '<i class="ph ph-question windicon" aria-hidden="true"></i>';
+  return `<i class="ph ph-arrow-circle-up windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true"></i>`;
 }
 let wxToken = 0, wxLast = null;
 // Weather in the tide units: feet → °F and mph; meters → °C and km/h
