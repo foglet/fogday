@@ -201,9 +201,9 @@ function renderNow(){
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
-  const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
+  const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
-  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide), then its time and height
+  // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height
   const SLACK_MS=15*6e4;
   const slack=extremes(beach, now-SLACK_MS, now+SLACK_MS).length>0;
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
