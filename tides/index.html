@@ -123,7 +123,7 @@ title: Tides of San Francisco
   .tides .sub { display: flex; flex-direction: column; line-height: 1.3; font-size: .9rem; margin-top: auto; }
   .tides .sub b { font-weight: 600; font-size: 1rem; }
   .tides .deg { letter-spacing: 0; }  /* 64°F: no tracking gap after the degree sign */
-  .tides .hilo { letter-spacing: .05em; word-spacing: -.05em; }  /* High / low: tighter than the other small labels */
+  .tides .sub .label { letter-spacing: .04em; }  /* all-caps descriptions in the tiles (Beaufort, gusts, high / low, moon): the wind line's tight spacing */
   /* Weather, wind and moon each get their own full-width line: reading with its icon right beside it, then the description.
      The tiles share two columns (subgrid), so every description starts at the same x: 100px right of the widest reading + icon */
   /* Three shared columns (subgrid): readings | icons | descriptions. The icons are centered on one another, in a column
@@ -138,7 +138,7 @@ title: Tides of San Francisco
   .tides .trow.inline .ri > i { grid-column: 2; justify-self: center; width: auto; }  /* icons centered on one another */
   .tides .wline { display: flex; flex-wrap: wrap; }  /* Beaufort and gusts on one line */
   .tides .wline > .label { white-space: nowrap; }
-  .tides .wline > .label:not(:last-child)::after { content: "\00b7"; margin: 0 .5em; }  /* if it must wrap, the dot ends the first line */
+  .tides .wline > .label:not(:last-child)::after { content: "\00b7"; margin: 0 .35em; }  /* if it must wrap, the dot ends the first line */
   /* Loading and error messages span the whole tile, so they never widen the readings column and push the icons */
   .tides #weather > p, .tides #wind > p, .tides #moon > p { grid-column: 1 / -1; }
   .tides .trow.inline .sub { grid-column: 3; margin: 0; min-width: 0; }
@@ -214,8 +214,6 @@ title: Tides of San Francisco
     .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
     .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
     .tides i.ph.sky { font-size: 38px; }
-    .tides .wline .label { letter-spacing: .04em; }  /* so "Light breeze · No gusts" fits on one line on a phone */
-    .tides .wline > .label:not(:last-child)::after { margin: 0 .35em; }
     .tides .trow { min-height: 48px; }
     .tides .moonrow { column-gap: calc(var(--tilegap) + 24px); }  /* tile padding is 12px here */
     .tides .sky, .tides .moonicon { font-size: 34px; }
