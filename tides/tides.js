@@ -469,7 +469,9 @@ const Y0=-2.5, Y1=8;
 const ticks = () => units==='m'
   ? [-0.5,0,0.5,1,1.5,2].map(m=>[m/0.3048, m<0?'−'+(-m):String(m)])
   : [-2,0,2,4,6,8].map(f=>[f, f<0?'−'+(-f):String(f)]);
-function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:22, pb:14}; }  // room above for the "now" label, below for low-tide labels
+function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=(dayW<520?240:290)+RS_BAND; return {dayW, H, pt:22, pb:14+RS_BAND}; }  // room above for the "now" label, below for low-tide labels and the sun / moon row
+// Below the tide: a band with sunrise / sunset (top line) and moonrise / moonset (bottom line)
+const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf044'};
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
@@ -507,6 +509,14 @@ function buildStrip(){
     // Highs and lows: a light bead set into the line, 9 px across (3x the old 3 px), ringed in the water color, same for both
     // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
     labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
+  }
+  // Sun and moon rise / set under the tide: icon centered on the moment, up / down arrow, then the time in light text
+  const rsY={sun:pt+ih+16, moon:pt+ih+33};
+  const rsItem=(kind, up, ms)=>{ if (ms==null || ms<start || ms>end) return '';
+    return `<text class="rs" x="${x(ms)}" y="${rsY[kind]}"><tspan class="rsi" dx="-6">${RS_GLYPH[kind]}</tspan><tspan class="rsi rsa" dx="2">${RS_GLYPH[up?'up':'down']}</tspan><tspan dx="3">${esc(fTime.format(new Date(ms)))}</tspan></text>`; };
+  for (let d=addDays(dayOf(start),-1); dayStart(d)<end; d=addDays(d,1)){
+    const sn=sunTimes(d), mn=moonTimes(d);
+    s+=rsItem('sun',true,sn.rise)+rsItem('sun',false,sn.set)+rsItem('moon',true,mn.rise)+rsItem('moon',false,mn.set);
   }
   $('stripSvg').innerHTML = s+'</svg>';
   $('stripLab').innerHTML = labels+'</svg>';
