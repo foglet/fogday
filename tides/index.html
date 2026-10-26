@@ -85,10 +85,10 @@ title: Tides of San Francisco
   .tides .big .arrow { position: relative; top: 0; transform: rotate(180deg); }
   .tides .big .arrow.up { top: calc(var(--arrow-h) - var(--tide-fs) * .70); transform: rotate(0deg); }
   /* Smooth icon changes: glyphs crossfade (tides.js fades out, swaps, fades in), the wind arrow turns, past times fade to grey */
-  .tides i.wi, .tides i.ph { transition: opacity .16s ease; }
-  .tides i.wi.windicon, .tides i.ph.windicon { transition: opacity .16s ease, transform .5s ease; }
+  .tides i.wi, .tides i.ph, .tides i.aiga { transition: opacity .16s ease; }
+  .tides i.wi.windicon, .tides i.ph.windicon, .tides i.aiga.windicon { transition: opacity .16s ease, transform .5s ease; }
   .tides .suntimes .time, .tides i.wi.riseicon { transition: color .3s ease, opacity .16s ease; }
-  @media (prefers-reduced-motion: reduce) { .tides i.wi, .tides i.ph, .tides .windicon, .tides .suntimes .time, .tides .riseicon { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .tides i.wi, .tides i.ph, .tides i.aiga, .tides .windicon, .tides .suntimes .time, .tides .riseicon { transition: none; } }
   .tides .big .slab { font-size: var(--tide-fs); }
   .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .tides .dir { font-weight: 600; font-size: 1.2rem; }
@@ -126,6 +126,7 @@ title: Tides of San Francisco
   .tides .stack b { font-weight: 600; }
   /* Weather Icons glyphs (font): sized by font-size, colored by color */
   .tides .sky { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }
+  .tides .windicon svg { height: .85em; width: auto; fill: currentColor; display: block; }  /* AIGA wind arrow, colored by the tile's arrow color */
   .tides i.ph.sky { font-size: 44px; width: auto; }  /* Phosphor glyphs: same size as the wind arrow */
   .tides .windicon { font-size: 44px; width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; flex: none; color: var(--buoy); }
   /* Sunrise / sunset / moonrise / moonset glyph beside each label */
@@ -245,7 +246,7 @@ title: Tides of San Francisco
       <span class="station" id="station"></span>
       <span id="source"></span>
       <span data-i18n="notes">Heights above mean lower low water (MLLW); tap the tide height to switch between US and metric units (feet / meters, °F / °C, mph / km/h). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
-      <span data-i18n="credit">Weather and wind icons: <a href="https://phosphoricons.com">Phosphor Icons</a>. Moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
+      <span data-i18n="credit">Weather icons: <a href="https://phosphoricons.com">Phosphor Icons</a>. Arrows: AIGA symbol signs. Moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
       </div>
     </details>
     <span class="madeat"><span data-i18n="madeat">Made at Baker Beach</span><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button></span>

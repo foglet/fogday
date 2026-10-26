@@ -47,15 +47,15 @@ function iconPatch(a,b){
   if (nr!=null){ const or=a._rot!=null?a._rot:rot(a.getAttribute('style')); const r=or==null?nr:or+(((nr-or)%360+540)%360-180); a._rot=r; a.style.transform=`rotate(${r}deg)`; }
   else if (a._rot!=null || a.style.transform){ a._rot=null; a.style.transform=''; }
   // A different glyph: fade out, swap, fade in (the latest glyph wins if it changes again mid-fade)
-  a._next=b.className;
+  a._next=b.className; a._nextHTML=b.innerHTML;  // innerHTML: the AIGA arrow is an SVG inside its <i>
   if (a._fading || a.className===a._next) return;
   a._fading=true; a.style.opacity='0';
-  setTimeout(()=>{ a.className=a._next; a.style.opacity=''; a._fading=false; }, 160);
+  setTimeout(()=>{ a.className=a._next; a.innerHTML=a._nextHTML; a.style.opacity=''; a._fading=false; }, 160);
 }
 function patch(a,b){
   if (a.nodeType===3){ if (a.nodeValue!==b.nodeValue) a.nodeValue=b.nodeValue; return; }
   if (a.nodeType!==1) return;
-  if (a.matches('i.wi, i.ph')) return iconPatch(a,b);
+  if (a.matches('i.wi, i.ph, i.aiga')) return iconPatch(a,b);
   for (const at of [...a.attributes]) if (!b.hasAttribute(at.name)) a.removeAttribute(at.name);
   for (const at of [...b.attributes]) if (a.getAttribute(at.name)!==at.value) a.setAttribute(at.name, at.value);
   patchKids(a,b);
@@ -368,12 +368,13 @@ function skyClass(text, isDay){
   return dn('ph-sun','ph-moon');
 }
 const skyIcon = (text, isDay) => `<i class="ph ${skyClass(text, isDay)} sky" aria-hidden="true"></i>`;
-// Wind arrow (Phosphor arrow-circle-up, which points north): wind "from" deg blows toward deg+180.
-// Calm shows an empty circle; a wind with no reported direction shows a question mark.
+// Wind arrow: the same AIGA up arrow as the tide arrow (points north), turned so it shows where the wind blows: "from" deg blows toward deg+180.
+// Calm shows an empty circle; a wind with no reported direction shows a question mark (Phosphor).
+const AIGA_UP = '<svg viewBox="-500 -600 1000 1200" aria-hidden="true"><polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/></svg>';
 function windIcon(deg, calm){
   if (calm) return '<i class="ph ph-circle windicon" aria-hidden="true"></i>';
   if (deg==null) return '<i class="ph ph-question windicon" aria-hidden="true"></i>';
-  return `<i class="ph ph-arrow-circle-up windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true"></i>`;
+  return `<i class="aiga windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true">${AIGA_UP}</i>`;
 }
 let wxToken = 0, wxLast = null;
 // Weather in the tide units: feet → °F and mph; meters → °C and km/h
