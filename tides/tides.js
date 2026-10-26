@@ -292,9 +292,6 @@ function moonIcon(p){
 }
 function renderMoon(){
   const now=cursor(), m=moonInfo(now), full=m.nextFull;
-  // Moonrise / moonset for the viewed day, same format as sunrise / sunset; each greys out once it has happened, "—" if none that day
-  const mrs=moonTimes(dayOf(now));
-  const mt=(key,ms,n)=>riseItem(key, ms===null?'—':tm(ms), ms!==null&&n>=ms);
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
@@ -313,7 +310,6 @@ function renderMoon(){
       <div class="moonmain"><div class="trow"><span class="slab mid num">${Math.round(m.lit*100)}%</span>${moonIcon(m.p)}</div>
         <span class="muted">${esc(L.phases[m.ph])}</span>
         <span class="nextfull"><span class="label">${head}</span></span></div>
-      <div class="suntimes num moontimes" aria-label="${esc(L.moonAria)}">${mt('moonrise',mrs.rise,now)}${mt('moonset',mrs.set,now)}</div>
     </div>`);
 }
 
@@ -473,9 +469,7 @@ const Y0=-2.5, Y1=8;
 const ticks = () => units==='m'
   ? [-0.5,0,0.5,1,1.5,2].map(m=>[m/0.3048, m<0?'−'+(-m):String(m)])
   : [-2,0,2,4,6,8].map(f=>[f, f<0?'−'+(-f):String(f)]);
-function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=(dayW<520?240:290)+RS_BAND; return {dayW, H, pt:22, pb:14+RS_BAND}; }  // room above for the "now" label, below for low-tide labels and the sun / moon row
-// Below the tide: a band with sunrise / sunset (top line) and moonrise / moonset (bottom line)
-const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf044'};
+function chartGeom(){ const dayW=Math.max(260, $('strip').clientWidth); const H=dayW<520?240:290; return {dayW, H, pt:22, pb:14}; }  // room above for the "now" label, below for low-tide labels
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
@@ -514,14 +508,6 @@ function buildStrip(){
     // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
     labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
-  // Sun and moon rise / set under the tide: icon centered on the moment, up / down arrow, then the time in light text
-  const rsY={sun:pt+ih+16, moon:pt+ih+33};
-  const rsItem=(kind, up, ms)=>{ if (ms==null || ms<start || ms>end) return '';
-    return `<text class="rs" x="${x(ms)}" y="${rsY[kind]}"><tspan class="rsi" dx="-6">${RS_GLYPH[kind]}</tspan><tspan class="rsi rsa" dx="2">${RS_GLYPH[up?'up':'down']}</tspan><tspan dx="3">${esc(fTime.format(new Date(ms)))}</tspan></text>`; };
-  for (let d=addDays(dayOf(start),-1); dayStart(d)<end; d=addDays(d,1)){
-    const sn=sunTimes(d), mn=moonTimes(d);
-    s+=rsItem('sun',true,sn.rise)+rsItem('sun',false,sn.set)+rsItem('moon',true,mn.rise)+rsItem('moon',false,mn.set);
-  }
   $('stripSvg').innerHTML = s+'</svg>';
   $('stripLab').innerHTML = labels+'</svg>';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
@@ -559,24 +545,6 @@ function placeStrip(){
 }
 function drawStrip(){ buildStrip(); placeStrip(); }
 
-// Rise / set times, formatted like the tide times ("5:33 PM")
-// AM / PM set at the size of the Sunrise / Sunset labels
-const tm=ms=>esc(fTime.format(new Date(ms))).replace(/\s([AP]M)$/,' <span class="ampm">$1</span>');
-
-// Weather Icons glyph for a Sunrise / Sunset / Moonrise / Moonset label
-const riseIcon = key => `<i class="wi wi-${key} riseicon" aria-hidden="true"></i>`;
-// One rise / set item: icon, title, time (icon left of the title; title and time share a left edge)
-const riseItem = (key, time, past) => `<div class="${past?'past':''}">${riseIcon(key)}<span class="label">${esc(L[key])}</span><span class="time">${time}</span></div>`;
-
-/* Sunrise / sunset, top right. Each greys out once it has happened today; after sunset the sunrise slot shows tomorrow's. */
-function renderSun(){
-  const now=cursor(), t=dayOf(now), sun=sunTimes(t);
-  const afterSet = now>=sun.set, rise = afterSet ? sunTimes(addDays(t,1)).rise : sun.rise;
-  const riseDone = !afterSet && now>=sun.rise;
-  // Sunset greys out once it has happened, until the next sunrise
-  morph($('sun'), riseItem('sunrise', tm(rise), riseDone) + riseItem('sunset', tm(sun.set), afterSet));
-}
-
 /* ---- Page ---- */
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
@@ -590,7 +558,6 @@ function render(opts2){
   renderNow(); renderMoon();
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
-  renderSun();
   if (!opts2 || opts2.weather !== false) renderWeather();
 }
 
@@ -649,7 +616,7 @@ function updateTiles(){
   tileAt=performance.now(); tileTimer=0;
   const k=isLive()+'|'+Math.floor(cursor()/6e4);
   if (k===tileKey) return; tileKey=k;
-  renderNow(); renderSun(); renderMoon();
+  renderNow(); renderMoon();
   if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);
 }
 function redrawViewed(){
@@ -739,7 +706,7 @@ function glideTo(target){
 let glideTarget=null;
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; stripKey=''; drawStrip(); } }, 150); });
 setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the clock caught up with the viewed time
-  if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); if (!anim) drawStrip(); } }, 60000);  // rolls over to the new day at midnight
+  if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); if (!anim) drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ stripKey=''; drawStrip(); });   // label sizes settle once fonts load
