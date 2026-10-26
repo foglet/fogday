@@ -73,7 +73,10 @@ function queueAlign(){ if (alignQueued) return; alignQueued=true; requestAnimati
 function alignHero(){
   const hero=document.querySelector('.tides .hero'), big=document.getElementById('unitToggle'), sub=document.querySelector('.tides .tiles .trow.inline .sub');
   if (!hero || !big || !sub) return;
-  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=big.getBoundingClientRect().width+12<=x;
+  // The reading's natural width (unwrapped), not its width squeezed into the column, so a wide value (−0.5) drops below instead of wrapping
+  const fw=big.style.flexWrap, wd=big.style.width; big.style.flexWrap='nowrap'; big.style.width='max-content';
+  const need=big.getBoundingClientRect().width; big.style.flexWrap=fw; big.style.width=wd;
+  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=need+12<=x;
   hero.style.setProperty('--desc-x', x.toFixed(1)+'px');
   hero.classList.toggle('inline', fits);
 }
@@ -282,7 +285,7 @@ function renderNow(){
   const fromTop = ar ? parseFloat(getComputedStyle(ar).top)||0 : 0;
   morph($('tideNow'), `
     <button class="big" id="unitToggle" type="button" aria-label="${esc(tr('unitAria', {v: ft(lv), unit: units==='m'?L.meters:L.feet, dir: rising?L.rising:L.falling, other: units==='m'?L.feet:L.meters}))}" title="${esc(tr('unitTitle', {other: units==='m'?L.feet:L.meters}))}">
-      <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
+      <svg class="arrow ${rising?'up':'down'}" data-fd="${ft(lv).charAt(0)==='−'?'m':ft(lv).charAt(0)}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit" data-ld="${String(ft(lv)).slice(-1)}">${U()}</span>
     </button>
     <div class="hero-side"><div class="nlist">${nextLine}</div></div>`);

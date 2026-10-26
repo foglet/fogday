@@ -79,7 +79,10 @@ title: Tides of San Francisco
   .tides .big { --tide-fs: clamp(4.2rem, 19vw, 6.6rem); --arrow-h: clamp(1.8rem, 7vw, 2.6rem); }
   /* Arrow sits on the number's baseline (falling: its foot on the baseline); rising lifts it so its tip meets the
      top of the figures (Patua One figures stand .70em tall, measured) */
-  .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; margin-right: 6px; flex: none; }
+  .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; flex: none;
+    margin-right: calc(var(--tide-fs) * var(--lb, .025) * -1); }  /* about 4px of ink gap to the first figure (the row gap is 4px) */
+  /* Each Patua One figure starts with a different blank on its left: the arrow is pulled in per first figure (measured; m = minus) */
+  .tides .big .arrow[data-fd="0"] { --lb: 0.037; } .tides .big .arrow[data-fd="1"] { --lb: 0.025; } .tides .big .arrow[data-fd="2"] { --lb: 0.019; } .tides .big .arrow[data-fd="3"] { --lb: 0.021; } .tides .big .arrow[data-fd="4"] { --lb: 0.003; } .tides .big .arrow[data-fd="5"] { --lb: 0.025; } .tides .big .arrow[data-fd="6"] { --lb: 0.032; } .tides .big .arrow[data-fd="7"] { --lb: 0.014; } .tides .big .arrow[data-fd="8"] { --lb: 0.031; } .tides .big .arrow[data-fd="9"] { --lb: 0.014; } .tides .big .arrow[data-fd="m"] { --lb: 0.045; }
   /* Falling: the rising drawing turned over. A change of direction is animated in tides.js (flipArrow):
      a smooth half turn, then the arrow drops or rises to its resting spot with a soft bounce */
   .tides .big .arrow { position: relative; top: 0; transform: rotate(180deg); }
