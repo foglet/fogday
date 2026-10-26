@@ -340,7 +340,7 @@ async function renderWeather(){
     if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
     $('wind').innerHTML = `<span class="label">Wind</span>
       <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">mph</span></span>${windIcon(dir, spd===0)}</div>
-      <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="muted num">${gust?`Gusts ${gust} mph`:'No gusts reported'}</span></div>`;
+      <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} mph`:'No gusts reported'}</span></div>`;
   } catch(e) {
     if (token !== wxToken) return;
     const msg = '<p class="muted">Live weather isn’t available right now. It comes from the National Weather Service; try again in a few minutes.</p>';
