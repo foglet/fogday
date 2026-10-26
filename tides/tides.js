@@ -506,7 +506,7 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
-/* Sea life on the floor of the chart: eel grass all along, and in each screen-width of time one crab and three fish.
+/* Sea life in the chart: in each screen-width of time one crab on the floor and three fish at different depths.
    Drawn with a 2px border in the card color so they read against the waves. Placed the same way every time (seeded),
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
 function seaLife(td, start, end, TW, W, x, y, floor){
@@ -520,19 +520,11 @@ function seaLife(td, start, end, TW, W, x, y, floor){
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))) busy.push([+x(m)-6, +x(m)+80]);
   for (const e of td.ex) if (!e.high && y(e.v)+30 > floor-40) busy.push([+x(e.t)-34, +x(e.t)+34]);
   const free = (a,b) => !busy.some(([l,r]) => b>l && a<r);
+  const fishFree = cx => !td.ex.some(e => Math.abs(+x(e.t)-cx) < 40);   // fish swim anywhere in the water, so clear of every high and low and its labels
   let g = `<defs><filter id="seaRim" x="-30%" y="-30%" width="160%" height="160%">
       <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
       <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
       <feMerge><feMergeNode in="rim"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="sealife">`;
-  // Eel grass: clumps of three to five blades, swaying, 14–28px tall
-  for (let gx=8+rnd()*20; gx<TW; gx+=34+rnd()*46){
-    if (!free(gx-10, gx+10)) continue;
-    const n=3+Math.floor(rnd()*3);
-    for (let i=0;i<n;i++){
-      const bx=gx+(i-(n-1)/2)*3.2, h=14+rnd()*14, sway=(rnd()-.5)*12;
-      g+=`<path d="M${bx.toFixed(1)},${floor} q${(sway*.3).toFixed(1)},${(-h*.5).toFixed(1)} ${sway.toFixed(1)},${(-h).toFixed(1)}" fill="none" stroke="#5f8f4e" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>`;
-    }
-  }
   const crab = (cx,cy) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
       <path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/>
       <path d="M-5,-2 l-3,-5 M5,-2 l3,-5" stroke-width="1.6" fill="none"/>
@@ -545,12 +537,15 @@ function seaLife(td, start, end, TW, W, x, y, floor){
   const COLS=['#f2a33a','#e8c547','#f07f5a'];
   for (let seg=0; seg<TW; seg+=W){
     // one crab on the floor
-    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40); if (cx>TW-15 || !free(cx-14,cx+14)) continue; g+=crab(cx, floor-6); break; }
+    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40); if (cx>TW-15 || !free(cx-14,cx+14)) continue; g+=crab(cx, floor-9); break; }
     // three fish just above the grass, each under the surface
     let placed=0; const school=[];
     for (let tries=0; tries<40 && placed<3; tries++){
-      const cx=seg+16+rnd()*(W-32), cy=floor-30-rnd()*30;
-      if (cx>TW-16 || !free(cx-16,cx+16) || cy-10 < surf(cx)) continue;
+      // each fish in its own depth band of the water column at that spot: near the top, mid-water, near the floor
+      const cx=seg+16+rnd()*(W-32), top=surf(cx)+16, bot=floor-14, band=[[.05,.3],[.38,.62],[.7,.95]][placed];
+      if (bot-top < 30) continue;
+      const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
+      if (cx>TW-16 || !fishFree(cx) || !free(cx-16,cx+16)) continue;
       if (school.some(([fx,fy]) => Math.abs(fx-cx)<34 && Math.abs(fy-cy)<16)) continue;   // never touching another fish
       school.push([cx,cy]);
       g+=fish(cx, cy, rnd()<.5?1:-1, COLS[placed%COLS.length]); placed++;
