@@ -14,7 +14,7 @@ const BEACHES = {
 const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
 // Tide chart: 20 hours wide, centered on the viewed moment (now, or up to a week ahead once dragged)
 const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 7*864e5;
-/* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code beside "Made at Baker Beach" to cycle (remembered per visitor) ---- */
+/* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code beside "Made at Baker Beach." to cycle (remembered per visitor) ---- */
 const I18N = window.TIDE_I18N;
 let lang = 'en';
 try { const l=localStorage.getItem('sf-tides-lang'); if (I18N[l]) lang=l; } catch(e){}
@@ -249,12 +249,34 @@ function renderNow(){
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
   const arrow = '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>';
+  const ar=document.querySelector('#tideNow .arrow'), wasUp = ar ? ar.classList.contains('up') : null;
+  const fromTop = ar ? parseFloat(getComputedStyle(ar).top)||0 : 0;
   morph($('tideNow'), `
     <button class="big" id="unitToggle" type="button" aria-label="${esc(tr('unitAria', {v: ft(lv), unit: units==='m'?L.meters:L.feet, dir: rising?L.rising:L.falling, other: units==='m'?L.feet:L.meters}))}" title="${esc(tr('unitTitle', {other: units==='m'?L.feet:L.meters}))}">
       <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit">${U()}</span>
     </button>
     <div class="hero-side"><div class="nlist">${nextLine}</div></div>`);
+  if (ar && wasUp!==rising) flipArrow(ar, fromTop);
+}
+/* Tide arrow changing direction: a smooth half turn (always clockwise), then it drops or rises to its resting spot
+   and lands with a soft bounce: a small rebound, a smaller one, then still. */
+function flipArrow(el, fromTop){
+  if (!el.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  el.getAnimations().forEach(a=>a.cancel());
+  const toTop=parseFloat(getComputedStyle(el).top)||0, d=toTop-fromTop;
+  const a0=el._ang||0, a1=a0+180; el._ang=a1%360;
+  const up=el.classList.contains('up'), rot=a=>`rotate(${a}deg)`;
+  const px=v=>(v).toFixed(2)+'px';
+  el.animate([
+    {offset:0,    top:px(fromTop),       transform:rot(a0), easing:'cubic-bezier(.45,.05,.55,.95)'},   // spin: ease in and out
+    {offset:.5,   top:px(fromTop),       transform:rot(a1), easing:'cubic-bezier(.55,0,.85,.4)'},      // fall: gathering speed
+    {offset:.68,  top:px(toTop),         transform:rot(a1), easing:'cubic-bezier(.2,.6,.35,1)'},       // land
+    {offset:.8,   top:px(toTop-d*.10),   transform:rot(a1), easing:'cubic-bezier(.55,0,.6,1)'},        // soft rebound
+    {offset:.9,   top:px(toTop),         transform:rot(a1), easing:'cubic-bezier(.2,.6,.35,1)'},
+    {offset:.95,  top:px(toTop-d*.03),   transform:rot(a1), easing:'cubic-bezier(.55,0,.6,1)'},        // smaller rebound
+    {offset:1,    top:px(toTop),         transform:rot(a1)}
+  ], {duration:1400});
 }
 
 /* ---- Moon tile ---- */
