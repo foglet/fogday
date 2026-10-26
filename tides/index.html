@@ -90,6 +90,10 @@ title: Tides of San Francisco
   .tides .suntimes .time, .tides i.wi.riseicon { transition: color .3s ease, opacity .16s ease; }
   @media (prefers-reduced-motion: reduce) { .tides i.wi, .tides i.ph, .tides i.aiga, .tides .windicon, .tides .suntimes .time, .tides .riseicon { transition: none; } }
   .tides .big .slab { font-size: var(--tide-fs); }
+  /* The next-tide line beside the big reading: left edge on the weather descriptions below (--desc-x, set by tides.js),
+     its last line on the same baseline as the unit (FT). Falls back to below the reading when the reading is wider */
+  .tides .hero.inline { grid-template-columns: var(--desc-x) minmax(0, 1fr); column-gap: 0; align-items: last baseline; }
+  .tides .hero.inline .hero-side { grid-column: 2; }
   .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .tides .dir { font-weight: 600; font-size: 1.2rem; }
   .tides .nlist { display: flex; flex-wrap: wrap; gap: 8px 32px; }
@@ -125,7 +129,10 @@ title: Tides of San Francisco
   .tides .trow.inline .ri > .slab { grid-column: 1; }
   .tides .trow.inline .ri > i { grid-column: 2; justify-self: center; width: auto; }  /* icons centered on one another */
   .tides .wline { display: flex; flex-wrap: wrap; }  /* Beaufort and gusts on one line */
-  .tides .wline > .label + .label::before { content: "\00b7"; margin: 0 .5em; }
+  .tides .wline > .label { white-space: nowrap; }
+  .tides .wline > .label:not(:last-child)::after { content: "\00b7"; margin: 0 .5em; }  /* if it must wrap, the dot ends the first line */
+  /* Loading and error messages span the whole tile, so they never widen the readings column and push the icons */
+  .tides #weather > p, .tides #wind > p, .tides #moon > p { grid-column: 1 / -1; }
   .tides .trow.inline .sub { grid-column: 3; margin: 0; min-width: 0; }
   .tides .trow.inline .moonicon { font-size: 40px; }
   .tides .stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
@@ -200,7 +207,7 @@ title: Tides of San Francisco
     .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
     .tides i.ph.sky { font-size: 38px; }
     .tides .wline .label { letter-spacing: .04em; }  /* so "Light breeze · No gusts" fits on one line on a phone */
-    .tides .wline > .label + .label::before { margin: 0 .35em; }
+    .tides .wline > .label:not(:last-child)::after { margin: 0 .35em; }
     .tides .trow { min-height: 48px; }
     .tides .moonrow { column-gap: calc(var(--tilegap) + 24px); }  /* tile padding is 12px here */
     .tides .sky, .tides .moonicon { font-size: 34px; }

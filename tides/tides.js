@@ -66,7 +66,19 @@ function patchKids(a,b){
   if (A.length!==B.length || A.some((n,i)=>n.nodeType!==B[i].nodeType || n.nodeName!==B[i].nodeName)) { a.innerHTML=b.innerHTML; return; }
   A.forEach((n,i)=>patch(n,B[i]));
 }
-function morph(el, html){ const t=document.createElement(el.tagName); t.innerHTML=html; patchKids(el,t); }
+function morph(el, html){ const t=document.createElement(el.tagName); t.innerHTML=html; patchKids(el,t); queueAlign(); }
+// Next-tide line: put its left edge on the weather descriptions (measured), beside the big reading when it fits, else below it
+let alignQueued=false;
+function queueAlign(){ if (alignQueued) return; alignQueued=true; requestAnimationFrame(()=>{ alignQueued=false; alignHero(); }); }
+function alignHero(){
+  const hero=document.querySelector('.tides .hero'), big=document.getElementById('unitToggle'), sub=document.querySelector('.tides .tiles .trow.inline .sub');
+  if (!hero || !big || !sub) return;
+  const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=big.getBoundingClientRect().width+12<=x;
+  hero.style.setProperty('--desc-x', x.toFixed(1)+'px');
+  hero.classList.toggle('inline', fits);
+}
+addEventListener('resize', queueAlign);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueAlign);
 
 /* ---- Pacific time helpers (always SF time, whatever the visitor's clock says) ---- */
 const dtf = new Intl.DateTimeFormat('en-US', {timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
