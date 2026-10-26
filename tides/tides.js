@@ -350,7 +350,7 @@ function drawWeather(w){
   const desc = o.textDescription || w.short || '—';
   $('weather').innerHTML = `<span class="label">Weather</span>
     <div class="trow"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</div>
-    <div class="sub"><b>${esc(desc)}</b><span class="muted num">${w.hi!=null?`H ${tempNum(w.hi)}°`:''}${w.lo!=null?` · L ${tempNum(w.lo)}°`:''}</span></div>`;
+    <div class="sub"><b>${esc(desc)}</b><span class="label num">${[w.hi!=null?`High ${tempNum(w.hi)}°`:'', w.lo!=null?`Low ${tempNum(w.lo)}°`:''].filter(Boolean).join(' ')}</span></div>`;
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);
