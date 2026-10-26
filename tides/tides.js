@@ -277,7 +277,9 @@ function renderNow(){
   // The tide at the viewed moment (now, or wherever the chart has been slid to); the next high or low after it
   const now=cursor(), lv=levelAt(beach, now), ex=tideData().ex;
   const n1=ex.find(e=>e.t>now), rising=!!(n1 && n1.high);
-  const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;   // counted from the viewed moment, so it is always the next adjacent tide (never more than ~14 hours)
+  // Which tide: the next one after the viewed moment. How long until it: always from the real clock (Date.now()),
+  // so "Low tide occurs in about four hours" is true when read, even with the chart slid ahead.
+  const real=Date.now(), mins=n1 ? Math.max(0, Math.round((n1.t-real)/6e4)) : 0;
   const neg=e=>!e.high && e.v<0;
   const kind=e=>neg(e)?L.negTide:isKing(e)?L.kingTide:e.high?L.highTide:L.lowTide;
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
@@ -286,9 +288,9 @@ function renderNow(){
   // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wednesday, October 28 at 6:30 AM"
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
-  // Within four hours: the countdown. On the day after the viewed day (SF calendar): just "tomorrow", no date or time.
+  // Within four hours: the countdown. On the day after today (SF calendar, real clock): just "tomorrow", no date or time.
   // Otherwise "in N hours". (The date and time are only a fallback; the next tide is never a day away.)
-  const tomorrow = e => same(dayOf(e.t), addDays(dayOf(now), 1));
+  const tomorrow = e => same(dayOf(e.t), addDays(dayOf(real), 1));
   const when = e => mins<240 ? L.dur(mins) : tomorrow(e) ? L.tomorrow
     : mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
   // While the water is below zero at the viewed moment (slack at a negative low, or any time it's negative), the line runs on:
@@ -350,7 +352,8 @@ function moonIcon(p){
   return `<i class="wi wi-moon-alt-${MOON_PHASES[i]} moonicon" aria-hidden="true"></i>`;
 }
 function renderMoon(){
-  const now=cursor(), m=moonInfo(now), full=m.nextFull;
+  // Phase and light at the viewed moment; the countdown to the next full moon from the real clock
+  const now=Date.now(), m=moonInfo(cursor()), full=m.nextFull;
   // Calendar days in SF time. Tomorrow's date reads "is tomorrow"; on the day itself, hours and minutes.
   const pf=parts(full), pn=parts(now);
   const days=Math.round((Date.UTC(pf.y,pf.m-1,pf.d)-Date.UTC(pn.y,pn.m-1,pn.d))/864e5);
