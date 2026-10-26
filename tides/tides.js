@@ -194,14 +194,14 @@ function renderNow(){
   const n1=nx[0], rising=!!(n1 && n1.high);
   const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;
   const neg=e=>!e.high && e.v<0;
-  const kind=e=>neg(e)?'Negative tide':e.high?'high tide':'low tide';
+  const kind=e=>neg(e)?'Negative tide':e.high?'High tide':'Low tide';
   const row=(lab,e,extra,cls)=>`<div class="nrow${neg(e)?' neg':''}${cls?' '+cls:''}"><span class="label">${lab}</span><span><b class="num">${fTime.format(new Date(e.t))}</b> <span class="num muted">${fh(e.v)}${extra?` · ${extra}`:''}</span></span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
-  // otherwise the next high or low ("Next high tide" / "Next low tide", a minus low "Negative tide")
+  // otherwise the next high or low ("High tide, next at" / "Low tide, next at", a minus low "Negative tide, next at")
   const SLACK_MS=15*6e4;
   const slack=extremes(beach, now-SLACK_MS, now+SLACK_MS).length>0;
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
-    : n1 ? row(neg(n1)?'Negative tide':'Next '+kind(n1), n1, inDur(mins)) : '';
+    : n1 ? row(kind(n1)+', next at', n1, inDur(mins)) : '';
   const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
