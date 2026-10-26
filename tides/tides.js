@@ -506,9 +506,23 @@ function buildStrip(){
   $('stripSvg').innerHTML = s+'</svg>';
   $('stripLab').innerHTML = labels+'</svg>';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
-    <line x1="${W/2}" x2="${W/2}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--buoy)" stroke-width="1.6"/>
+    <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6"/>
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
+  // Every label's box in the week picture (high / low heights and times, day names), so the center line can skip them
+  stripBoxes = [...document.querySelectorAll('#stripSvg text, #stripLab text')].map(t => { const b=t.getBBox(); return [b.x, b.x+b.width, b.y, b.y+b.height]; });
+}
+let stripBoxes = [];
+// The center line, drawn in pieces: it never runs through text. Wherever a label crosses it, the line stops 3 px short
+// of the label's box and starts again 3 px past it.
+function lineAround(cx){
+  const {W, pt, ih}=stripG, M=3, gaps=[];
+  for (const [x0,x1,y0,y1] of stripBoxes) if (cx>=x0-M && cx<=x1+M) gaps.push([y0-M, y1+M]);
+  gaps.sort((a,b)=>a[0]-b[0]);
+  let y=pt-2, d='';
+  for (const [g0,g1] of gaps){ if (g0>y) d+=`M${W/2},${y.toFixed(1)}V${g0.toFixed(1)}`; y=Math.max(y,g1); }
+  if (y<pt+ih) d+=`M${W/2},${y.toFixed(1)}V${pt+ih}`;
+  return d;
 }
 // Tide height on the drawn curve (straight lines between its 10-minute points), so the dot sits exactly on the line
 function curveAt(t){
@@ -520,6 +534,7 @@ function placeStrip(){
   const now=cursor(), {W, pt, ih}=stripG;
   const tx=`translate3d(${(-((now-HALF_MS)-strip0)*stripK).toFixed(2)}px,0,0)`;
   $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
+  $('stripLine').setAttribute('d', lineAround(((now-strip0)*stripK)));   // the center, in week-picture coordinates
   $('stripDot').setAttribute('cy', (pt+(Y1-curveAt(now))/(Y1-Y0)*ih).toFixed(2));
   $('strip').setAttribute('aria-valuetext', isLive() ? L.now : fFull.format(new Date(now)));
 }
@@ -696,5 +711,6 @@ setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the
   if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); renderSun(); if (!anim) drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); }, 10*60000);
 lastW=$('strip').clientWidth;
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ stripKey=''; drawStrip(); });   // label sizes settle once fonts load
 try { render(); } catch (err) { console.error('SF Tides:', err); try { renderNow(); drawStrip(); } catch (e2) { console.error(e2); } }
 })();
