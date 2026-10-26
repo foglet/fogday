@@ -396,8 +396,12 @@ const tempNum = f => units==='m' ? Math.round((f-32)*5/9) : Math.round(f);   // 
 let knots = false;
 try { knots = localStorage.getItem('sf-tides-knots') === '1'; } catch(e){}
 const spdNum = mph => mph==null ? null : Math.round(knots ? mph*1609.344/1852 : units==='m' ? mph*1.609344 : mph);
-const spdUnit = () => knots ? 'kn' : units==='m' ? 'km/h' : 'mph';
-const spdUnitTag = () => `<span class="label spdunit" role="button" tabindex="0" title="${knots ? (units==='m'?'km/h':'mph') : 'kn'}">${spdUnit()}</span>`;
+const spdUnit = n => knots ? (n===1 ? L.knot : L.knots) : units==='m' ? 'km/h' : 'mph';   // knots spelled out, in the page's language
+// Beaufort force from the sustained wind (WMO bands in whole knots: 1, 4, 7, 11, 17, 22, 28, 34, 41, 48, 56, 64)
+const BFT = [1,4,7,11,17,22,28,34,41,48,56,64];
+const beaufort = mph => mph==null ? null : BFT.filter(k => Math.round(mph*1609.344/1852) >= k).length;
+const bftTag = mph => { const b=beaufort(mph); return b ? `<span class="label">${esc(L.beaufort[b])}</span>` : ''; };   // calm already reads "Calm"
+const spdUnitTag = n => `<span class="label spdunit" role="button" tabindex="0" title="${esc(knots ? (units==='m'?'km/h':'mph') : L.knots)}">${esc(spdUnit(n))}</span>`;
 async function renderWeather(){
   const token = ++wxToken, key = beach;
   try {
@@ -433,8 +437,8 @@ function drawForecast(w, t){
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag()}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
-    <div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit()}):L.fcSub)}</span></div>`);
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</div>
+    <div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b>${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit(top)}):L.fcSub)}</span></div>`);
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
 const wxT = t => I18N.wxText(t, lang);
@@ -458,8 +462,8 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag()}</span>${windIcon(dir, spd===0)}</div>
-    <div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit()}):L.noGusts)}</span></div>`);
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</div>
+    <div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b>${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit(gust)}):L.noGusts)}</span></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
