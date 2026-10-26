@@ -208,10 +208,12 @@ function renderNow(){
   const slack=extremes(beach, now-SLACK_MS, now+SLACK_MS).length>0;
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
     : n1 ? row(kind(n1)+' occurs '+inDur(mins), n1) : '';
-  const arrow = rising ? '<path d="M9 2 16 10h-4.5v6h-5v-6H2z"/>' : '<path d="M9 16 2 8h4.5V2h5v6H16z"/>';
+  // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
+  const arrow = rising ? '<polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/>'
+                       : '<polygon points="100,-600 100,200 500,-200 500,100 0,600 -500,100 -500,-200 -100,200 -100,-600"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
-      <svg class="arrow" viewBox="0 0 18 18" aria-hidden="true">${arrow}</svg>
+      <svg class="arrow" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
     </button>
     <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
