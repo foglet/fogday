@@ -73,8 +73,12 @@ title: Tides of San Francisco
   .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px;
     background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; justify-self: start; -webkit-tap-highlight-color: transparent; }
   .tides .big:hover .unit { color: var(--accent); }
-  .tides .big .arrow { width: clamp(1.8rem, 7vw, 2.6rem); height: clamp(1.8rem, 7vw, 2.6rem); fill: var(--water); align-self: center; margin-right: 6px; flex: none; }
-  .tides .big .slab { font-size: clamp(4.2rem, 19vw, 6.6rem); }
+  .tides .big { --tide-fs: clamp(4.2rem, 19vw, 6.6rem); --arrow-h: clamp(1.8rem, 7vw, 2.6rem); }
+  /* Arrow sits on the number's baseline (falling: its foot on the baseline); rising lifts it so its tip meets the
+     top of the figures (Patua One figures stand .70em tall, measured) */
+  .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; margin-right: 6px; flex: none; }
+  .tides .big .arrow.up { position: relative; top: calc(var(--arrow-h) - var(--tide-fs) * .70); }
+  .tides .big .slab { font-size: var(--tide-fs); }
   .tides .big .unit { font-size: 1.3rem; }
   .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .tides .dir { font-weight: 600; font-size: 1.2rem; }

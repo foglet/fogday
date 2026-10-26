@@ -213,7 +213,7 @@ function renderNow(){
                        : '<polygon points="100,-600 100,200 500,-200 500,100 0,600 -500,100 -500,-200 -100,200 -100,-600"/>';
   $('tideNow').innerHTML = `
     <button class="big" id="unitToggle" type="button" aria-label="Tide ${ft(lv)} ${units==='m'?'meters':'feet'}, ${rising?'rising':'falling'}. Tap to show ${units==='m'?'feet':'meters'}." title="Tap to show ${units==='m'?'feet':'meters'}">
-      <svg class="arrow" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
+      <svg class="arrow ${rising?'up':'down'}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="unit">${U()}</span>
     </button>
     <div class="hero-side"><div class="nlist">${nextLine}</div></div>`;
