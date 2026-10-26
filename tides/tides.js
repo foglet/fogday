@@ -72,7 +72,7 @@ const fDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'long', m
 const fWk = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short'});
 const fMd = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', month:'short', day:'numeric'});
 const fStripDay = new Intl.DateTimeFormat('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
-const fWkMd = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric'});
+const fWkMd = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'long', month:'long', day:'numeric'});  // "Wednesday, October 28"
 const fFull = new Intl.DateTimeFormat('en-US', {timeZone: TZ, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 const dayDate = day => new Date(Date.UTC(day.y,day.m-1,day.d,12));
 // Tide heights: predictions are in feet; tap the big number to switch to meters (remembered per visitor).
@@ -245,7 +245,7 @@ function renderNow(){
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
   // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height.
-  // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wed, Oct 28 at 6:30 AM"
+  // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wednesday, October 28 at 6:30 AM"
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
   const nextLine = slack ? '<div class="nrow slack"><span class="label">Slack tide</span></div>'
