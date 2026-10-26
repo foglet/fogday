@@ -47,7 +47,7 @@ function iconPatch(a,b){
   if (nr!=null){ const or=a._rot!=null?a._rot:rot(a.getAttribute('style')); const r=or==null?nr:or+(((nr-or)%360+540)%360-180); a._rot=r; a.style.transform=`rotate(${r}deg)`; }
   else if (a._rot!=null || a.style.transform){ a._rot=null; a.style.transform=''; }
   // A different glyph: fade out, swap, fade in (the latest glyph wins if it changes again mid-fade)
-  a._next=b.className; a._nextHTML=b.innerHTML;  // innerHTML: the AIGA arrow is an SVG inside its <i>
+  a._next=b.className; a._nextHTML=b.innerHTML;
   if (a._fading || a.className===a._next) return;
   a._fading=true; a.style.opacity='0';
   setTimeout(()=>{ a.className=a._next; a.innerHTML=a._nextHTML; a.style.opacity=''; a._fading=false; }, 160);
@@ -368,13 +368,12 @@ function skyClass(text, isDay){
   return dn('ph-sun','ph-moon');
 }
 const skyIcon = (text, isDay) => `<i class="ph ${skyClass(text, isDay)} sky" aria-hidden="true"></i>`;
-// Wind arrow: the same AIGA up arrow as the tide arrow (points north), turned so it shows where the wind blows: "from" deg blows toward deg+180.
-// Calm shows an empty circle; a wind with no reported direction shows a question mark (Phosphor).
-const AIGA_UP = '<svg viewBox="-500 -600 1000 1200" aria-hidden="true"><polygon points="100,600 100,-200 500,200 500,-100 0,-600 -500,-100 -500,200 -100,-200 -100,600"/></svg>';
+// Wind arrow: Phosphor arrow-circle-up (points north), same icon set as the weather icons; "from" deg blows toward deg+180.
+// Calm shows an empty circle; a wind with no reported direction shows a question mark.
 function windIcon(deg, calm){
   if (calm) return '<i class="ph ph-circle windicon" aria-hidden="true"></i>';
   if (deg==null) return '<i class="ph ph-question windicon" aria-hidden="true"></i>';
-  return `<i class="aiga windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true">${AIGA_UP}</i>`;
+  return `<i class="ph ph-arrow-circle-up windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true"></i>`;
 }
 let wxToken = 0, wxLast = null;
 // Weather in the tide units: feet → °F and mph; meters → °C and km/h
@@ -425,7 +424,7 @@ function drawForecast(w, t){
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
   const dir = p.dir ? COMPASS.indexOf(p.dir)*22.5 : null;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b>${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit(top)}):L.fcSub)}</span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir!=null&&dir>=0?dir:null, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:p.dir?tr('from',{d:dirName(p.dir)}):'—')}</b><span class="wline">${nums.length?bftTag(+nums[0]):''}<span class="label num">${esc(top?tr('upTo',{n:top,u:spdUnit(top)}):L.fcSub)}</span></span></div></div>`);
 }
 // Weather words in the page's language (icons still read the original English); high / low, compass points
 const wxT = t => I18N.wxText(t, lang);
@@ -448,7 +447,7 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b>${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit(gust)}):L.noGusts)}</span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${spd!=null?spd:'—'}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="wline">${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:gust,u:spdUnit(gust)}):L.noGusts)}</span></span></div></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
@@ -476,10 +475,9 @@ function buildStrip(){
   const day=$('strip').closest('.day'); if (day) day.style.paddingBlock = (H*0.025/0.95).toFixed(1)+'px';
 
   let s=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
-  // Midnight: a divider with the new day's name at its foot
+  // Midnight: a divider (its day name is added over the waves, below)
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1))){
     s+=`<line x1="${x(m)}" x2="${x(m)}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
-    s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
   }
   for (const [v] of ticks()) s+=`<line x1="0" x2="${TW}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="${Math.abs(v)<1e-9?1.4:1}" ${Math.abs(v)<1e-9?'':'stroke-dasharray="2 5"'}/>`;
   const pts=td.tl.map(p=>`${x(p.t)},${y(p.v).toFixed(1)}`);
@@ -488,6 +486,9 @@ function buildStrip(){
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
+  // Day names at the foot of each midnight divider, drawn over the water and waves so they stay on top
+  for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1)))
+    s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
   // Highs and lows: markers in the picture; height above, time below, in a top layer over the center line
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
