@@ -320,33 +320,46 @@ function windIcon(deg, calm){
   if (deg==null) return '<i class="wi wi-na windicon" aria-hidden="true"></i>';
   return `<i class="wi wi-wind-direction windicon" style="transform:rotate(${Math.round(deg+180)}deg)" aria-hidden="true"></i>`;
 }
-let wxToken = 0;
+let wxToken = 0, wxLast = null;
+// Weather in the tide units: feet → °F and mph; meters → °C and km/h
+const tempTxt = f => f==null ? '—' : units==='m' ? Math.round((f-32)*5/9)+'°C' : Math.round(f)+'°F';
+const tempNum = f => units==='m' ? Math.round((f-32)*5/9) : Math.round(f);   // H / L: number only
+const spdNum = mph => mph==null ? null : Math.round(units==='m' ? mph*1.609344 : mph);
+const spdUnit = () => units==='m' ? 'km/h' : 'mph';
 async function renderWeather(){
   const token = ++wxToken, key = beach;
   try {
     const w = await loadWeather(key);
     if (token !== wxToken) return;
-    const o = w.obs || {};
-    const val = x => x && x.value != null ? x.value : null;
-    const tF = val(o.temperature) != null ? Math.round(cToF(val(o.temperature))) : w.hourlyTemp;
-    const desc = o.textDescription || w.short || '—';
-    $('weather').innerHTML = `<span class="label">Weather</span>
-      <div class="trow"><span class="slab mid num">${tF!=null?tF+'°':'—'}</span>${skyIcon(desc, w.isDay)}</div>
-      <div class="sub"><b>${esc(desc)}</b><span class="muted num">${w.hi!=null?`H ${w.hi}°`:''}${w.lo!=null?` · L ${w.lo}°`:''}</span></div>`;
-    let spd = val(o.windSpeed) != null ? Math.round(kmhToMph(val(o.windSpeed))) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
-    let dir = val(o.windDirection);
-    const gust = val(o.windGust) != null ? Math.round(kmhToMph(val(o.windGust))) : null;
-    const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
-    if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
-    $('wind').innerHTML = `<span class="label">Wind</span>
-      <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">mph</span></span>${windIcon(dir, spd===0)}</div>
-      <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} mph`:'No gusts reported'}</span></div>`;
+    wxLast = {key, w};
+    drawWeather(w);
   } catch(e) {
     if (token !== wxToken) return;
+    wxLast = null;
     const msg = '<p class="muted">Live weather isn’t available right now. It comes from the National Weather Service; try again in a few minutes.</p>';
     $('weather').innerHTML = '<span class="label">Weather</span>' + msg;
     $('wind').innerHTML = '<span class="label">Wind</span>';
   }
+}
+// Draw from loaded data (also on the feet / meters toggle, without refetching)
+function drawWeather(w){
+  const o = w.obs || {};
+  const val = x => x && x.value != null ? x.value : null;
+  // Exact °F and mph; rounded only for display. Observations come in °C and km/h; the forecast in °F and mph.
+  const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
+  const desc = o.textDescription || w.short || '—';
+  $('weather').innerHTML = `<span class="label">Weather</span>
+    <div class="trow"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</div>
+    <div class="sub"><b>${esc(desc)}</b><span class="muted num">${w.hi!=null?`H ${tempNum(w.hi)}°`:''}${w.lo!=null?` · L ${tempNum(w.lo)}°`:''}</span></div>`;
+  const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
+  const spd = spdNum(mph);
+  let dir = val(o.windDirection);
+  const gust = val(o.windGust) != null ? spdNum(kmhToMph(val(o.windGust))) : null;
+  const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
+  if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
+  $('wind').innerHTML = `<span class="label">Wind</span>
+    <div class="trow"><span class="slab mid num">${spd!=null?spd:'—'}<span class="unit">${spdUnit()}</span></span>${windIcon(dir, spd===0)}</div>
+    <div class="sub"><b>${spd===0?'Calm':dirTxt?'From '+dirTxt:'—'}</b><span class="label num">${gust?`Gusts ${gust} ${spdUnit()}`:'No gusts reported'}</span></div>`;
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
@@ -443,6 +456,7 @@ $('tideNow').addEventListener('click', e=>{
   units = units==='m' ? 'ft' : 'm';
   try { localStorage.setItem('sf-tides-units', units); } catch(err){}
   render({weather:false});
+  if (wxLast && wxLast.key===beach) drawWeather(wxLast.w);  // weather follows the units too
   const b=$('unitToggle'); if (b.focus) b.focus();
 });
 /* Tap the beach name for the next beach (five, in order, then back to the first) */
