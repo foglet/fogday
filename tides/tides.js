@@ -450,7 +450,7 @@ function drawForecast(w, t){
   const d = dayOf(t), onDay = q => same(dayOf(q.s), d);
   const hi = (w.daily||[]).find(q=>q.isDay && onDay(q)), lo = (w.daily||[]).find(q=>!q.isDay && onDay(q));
   morph($('weather'), `<span class="label">${esc(L.forecast)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</span><div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</span><div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num hilo">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span></div></div>`);
   // windSpeed is "12 mph" (hourly) or "10 to 15 mph" (daily): show the low end, and the top of a range below it
   const nums = String(p.wind||'').match(/\d+/g) || [];
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
@@ -472,7 +472,7 @@ function drawWeather(w){
   const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
   const desc = o.textDescription || w.short || '—';
   morph($('weather'), `<span class="label">${esc(L.weather)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</span><div class="sub"><b>${esc(wxT(desc))}</b><span class="label num">${hiLo(w.hi, w.lo)}</span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</span><div class="sub"><b>${esc(wxT(desc))}</b><span class="label num hilo">${hiLo(w.hi, w.lo)}</span></div></div>`);
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);

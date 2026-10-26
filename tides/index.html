@@ -123,6 +123,7 @@ title: Tides of San Francisco
   .tides .sub { display: flex; flex-direction: column; line-height: 1.3; font-size: .9rem; margin-top: auto; }
   .tides .sub b { font-weight: 600; font-size: 1rem; }
   .tides .deg { letter-spacing: 0; }  /* 64°F: no tracking gap after the degree sign */
+  .tides .hilo { letter-spacing: .05em; word-spacing: -.05em; }  /* High / low: tighter than the other small labels */
   /* Weather, wind and moon each get their own full-width line: reading with its icon right beside it, then the description.
      The tiles share two columns (subgrid), so every description starts at the same x: 100px right of the widest reading + icon */
   /* Three shared columns (subgrid): readings | icons | descriptions. The icons are centered on one another, in a column
