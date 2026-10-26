@@ -259,22 +259,32 @@ function tideData(){
 }
 
 /* ---- Tide now (always the live tide; dragging the chart doesn't change it) ---- */
+/* King tides: the California King Tides Project's dates (coastal.ca.gov/kingtides), the highest predicted tides of the year.
+   Northern California days included (Dec 22, Jan 20, Jan 23). On these days the day's higher high is the king tide.
+   Update each autumn when the Coastal Commission publishes the next winter's dates. */
+const KING_DAYS = new Set(['2026-11-24','2026-11-25','2026-11-26','2026-12-22','2026-12-23','2026-12-24','2026-12-25',
+  '2027-01-20','2027-01-21','2027-01-22','2027-01-23']);
+const dayKey = ms => { const d=dayOf(ms); return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`; };
+function isKing(e){
+  if (!e.high || !KING_DAYS.has(dayKey(e.t))) return false;
+  const k=dayKey(e.t); return !tideData().ex.some(o => o.high && o!==e && dayKey(o.t)===k && o.v>e.v);
+}
 function renderNow(){
   // The tide at the viewed moment (now, or wherever the chart has been slid to); the next high or low after it
   const now=cursor(), lv=levelAt(beach, now), ex=tideData().ex;
   const n1=ex.find(e=>e.t>now), rising=!!(n1 && n1.high);
-  const mins=n1 ? Math.round((n1.t-Date.now())/6e4) : 0;   // counted from the real now
+  const mins=n1 ? Math.round((n1.t-now)/6e4) : 0;   // counted from the viewed moment, so it is always the next adjacent tide (never more than ~14 hours)
   const neg=e=>!e.high && e.v<0;
-  const kind=e=>neg(e)?L.negTide:e.high?L.highTide:L.lowTide;
+  const kind=e=>neg(e)?L.negTide:isKing(e)?L.kingTide:e.high?L.highTide:L.lowTide;
   const row=(lab,e)=>`<div class="nrow${neg(e)?' neg':''}"><span class="label">${lab}</span></div>`;
   // One line only: the next tide. Slack while it is happening (within 15 minutes either side of a high or low);
   // otherwise the next high or low: "High tide occurs in about two hours" (or Low / Negative tide); no time or height.
   // More than a day away (only when slid ahead): its date and time instead, "High tide occurs Wednesday, October 28 at 6:30 AM"
   const SLACK_MS=15*6e4;
   const slack=ex.some(e=>Math.abs(e.t-now)<=SLACK_MS);
-  // Within four hours: the countdown. Tomorrow (SF calendar day): just "tomorrow", no date or time.
-  // Later today: "in N hours". Two or more days out: its date and time.
-  const tomorrow = e => same(dayOf(e.t), addDays(dayOf(Date.now()), 1));
+  // Within four hours: the countdown. On the day after the viewed day (SF calendar): just "tomorrow", no date or time.
+  // Otherwise "in N hours". (The date and time are only a fallback; the next tide is never a day away.)
+  const tomorrow = e => same(dayOf(e.t), addDays(dayOf(now), 1));
   const when = e => mins<240 ? L.dur(mins) : tomorrow(e) ? L.tomorrow
     : mins<1440 ? L.dur(mins) : tr('dateAt', {date: fWkMd.format(new Date(e.t)), time: fTime.format(new Date(e.t))});
   // While the water is below zero at the viewed moment (slack at a negative low, or any time it's negative), the line runs on:
