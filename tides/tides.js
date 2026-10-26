@@ -77,8 +77,20 @@ function alignHero(){
   hero.style.setProperty('--desc-x', x.toFixed(1)+'px');
   hero.classList.toggle('inline', fits);
 }
-addEventListener('resize', queueAlign);
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueAlign);
+addEventListener('resize', ()=>{ queueAlign(); fitPlace(); });
+// Beach description on one line where it can be: tighten the letter spacing, then shrink the text a little (to 85%);
+// only if it still doesn't fit does it wrap as before
+function fitPlace(){
+  const el=$('place'), box=document.querySelector('.tides .top'); if (!el || !box) return;
+  el.style.letterSpacing=''; el.style.fontSize=''; el.style.whiteSpace='nowrap';
+  const room=box.clientWidth, cs=getComputedStyle(el), fs=parseFloat(cs.fontSize), ls0=parseFloat(cs.letterSpacing)||0;
+  const w=()=>el.scrollWidth;
+  if (w()<=room) return;
+  for (let ls=ls0; ls>=fs*0.02-1e-6; ls-=fs*0.01){ el.style.letterSpacing=ls.toFixed(2)+'px'; if (w()<=room) return; }
+  for (let k=0.98; k>=0.85-1e-6; k-=0.01){ el.style.fontSize=(fs*k).toFixed(2)+'px'; if (w()<=room) return; }
+  el.style.letterSpacing=''; el.style.fontSize=''; el.style.whiteSpace='';   // too long: wrap at the normal size
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ queueAlign(); fitPlace(); });
 
 /* ---- Pacific time helpers (always SF time, whatever the visitor's clock says) ---- */
 const dtf = new Intl.DateTimeFormat('en-US', {timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
@@ -467,7 +479,7 @@ function drawWeather(w){
   const dirTxt = dir!=null ? compass(dir) : (w.hourlyDir || '');
   if (dir==null && w.hourlyDir) dir = COMPASS.indexOf(w.hourlyDir)*22.5;
   morph($('wind'), `<span class="label">${esc(L.wind)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${spdValTag(spd)}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="wline">${bftTag(mph)}<span class="label num">${esc(gust?tr('gusts',{n:fmtSpd(gust),u:spdUnit(gust)}):L.noGusts)}</span></span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${spdValTag(spd)}${spdUnitTag(spd)}</span>${windIcon(dir, spd===0)}</span><div class="sub"><b>${esc(spd===0?L.calm:dirTxt?tr('from',{d:dirName(dirTxt)}):'—')}</b><span class="wline">${bftTag(mph)}${gust?`<span class="label num">${esc(tr('gusts',{n:fmtSpd(gust),u:spdUnit(gust)}))}</span>`:''}</span></div></div>`);
 }
 
 /* ---- Multi-day tide strip (swipe sideways) ---- */
@@ -567,7 +579,7 @@ function drawStrip(){ buildStrip(); placeStrip(); }
 /* ---- Page ---- */
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
-  $('place').textContent=L.place[beach];
+  $('place').textContent=L.place[beach]; fitPlace();
   $('beachName').textContent=beachName(beach);
   { const i=ORDER.indexOf(beach), n=beachName(ORDER[(i+1)%ORDER.length]); $('beachBtn').setAttribute('aria-label', tr('beachAria', {b: beachName(beach), i: i+1, n: ORDER.length, next: n})); $('beachBtn').title=tr('nextBeach', {n}); }
   $('coords').textContent=dms(b.lat,'N','S')+', '+dms(b.lon,'E','W');
