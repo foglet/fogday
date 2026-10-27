@@ -536,8 +536,12 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    beach change and return to now; language, units and resizing keep the same draw.
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
 let seaSeed = 1 + Math.floor(Math.random()*2147483646);
+/* Motion: while the chart scrolls, each creature drifts 30-45 px sideways (back and forth with the scroll, still at now)
+   and rides the tide: otters on the surface, sharks at the same share of the depth, gulls the same height above the water,
+   crabs along the floor. Each turns to face the way it moves. Paths are sampled here every 2 px; placeStrip() applies them. */
+let seaM=[], seaSZ=1;
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = seaSeed;
+  let seed = seaSeed; seaM=[];
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -573,7 +577,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <path d="M-17,1.6 q3,1.1 6.2,.5" stroke="#3e4c57" stroke-width=".6" fill="none"/>
       <circle cx="-12.2" cy="-1.6" r=".95" fill="#1b2a33"/></g>`;
   // Spread out, not grouped: at least 44px (24px on phones) sideways between any two creatures (a crab never sits under a shark)
-  const SZ = W<520 ? .8 : 1;   // phones: creatures drawn 20% smaller, so a narrow screen still fits them
+  const SZ = W<520 ? .8 : 1; seaSZ=SZ;   // phones: creatures drawn 20% smaller, so a narrow screen still fits them
   const GAP = W<520 ? 24 : 44;   // phones are narrow: a smaller gap still keeps them apart
   const taken=[], clear=(l,r) => !taken.some(([L,R]) => r+GAP>L && l-GAP<R);
   // Sea otter floating on its back at the surface (head left): brown body, pale face, paws up on its chest, tail and a hind foot
@@ -598,6 +602,15 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   const SH = {half:26*SZ, topPad:18*SZ};
   const upTo = n => Math.floor(rnd()*(n+1));
   const slope = px => Math.atan2(surf(px+6)-surf(px-6), 12)*180/Math.PI;
+  const move = (k, cx, cy, dir, ang) => {
+    const A=30+rnd()*15, lam=260+rnd()*200, sgn=rnd()<.5?1:-1, s0=surf(cx), ys=[], as=[];
+    for (let dx=-46; dx<=46; dx+=2){ const sx=surf(cx+dx); let yy=cy, a=0;
+      if (k==='otter'){ yy=sx-3*SZ; a=slope(cx+dx); }
+      else if (k==='shark') yy = Math.min(floor-6*SZ, Math.max(sx+14*SZ, sx + (cy-s0)*(floor-16-sx)/Math.max(1,floor-16-s0)));   // same share of the depth, fin under the surface
+      else if (k==='gull') yy = Math.max(pt0+14, sx-(s0-cy));                          // same height above the water
+      ys.push(+yy.toFixed(1)); as.push(+a.toFixed(1)); }
+    seaM.push({k, cx, A, lam, sgn, dir, face:dir, last:0, ys, as, el:null});
+  };
   for (let seg=0; seg<TW; seg+=W){
     let sharks=0, n;
     do n={otter:upTo(2), gull:upTo(3), shark:upTo(3), crab:upTo(2)}; while (n.otter+n.gull+n.shark+n.crab < 2);
@@ -609,23 +622,23 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
           const top=surf(cx)+SH.topPad, bot=floor-16, band=[(sharks+.05)/n.shark, (sharks+.95)/n.shark]; if (bot-top < 32) continue;
           const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
           if (!sharkFree(cx,cy) || !clear(cx-SH.half,cx+SH.half)) continue;
-          taken.push([cx-SH.half,cx+SH.half]); g+=shark(cx, cy, rnd()<.5?1:-1); sharks++; break;
+          taken.push([cx-SH.half,cx+SH.half]); { const d=rnd()<.5?1:-1; g+=shark(cx, cy, d); move('shark',cx,cy,d); } sharks++; break;
         }
         if (kind==='otter'){   // floating: belly up, riding the surface line and tilted with it
           const cy=surf(cx)-3*SZ, a=slope(cx), h=20*SZ;
           if (Math.abs(a)>(W<520?68:40) || !sharkFree(cx,cy) || !clear(cx-h,cx+h)) continue;
-          taken.push([cx-h,cx+h]); g+=otter(cx, cy, rnd()<.5?1:-1, a); break;
+          taken.push([cx-h,cx+h]); { const d=rnd()<.5?1:-1; g+=otter(cx, cy, d, a); move('otter',cx,cy,d,a); } break;
         }
         if (kind==='gull'){    // in the air, at least 22px above the water, clear of the height labels
           const lo=surf(cx)-22*SZ, hi=pt0+14; if (lo-hi < 10) continue;
           const cy=hi+(lo-hi)*rnd(), h=13*SZ;
           if (!sharkFree(cx,cy) || !clear(cx-h,cx+h)) continue;
-          taken.push([cx-h,cx+h]); g+=gull(cx, cy, rnd()<.5?1:-1); break;
+          taken.push([cx-h,cx+h]); { const d=rnd()<.5?1:-1; g+=gull(cx, cy, d); move('gull',cx,cy,d); } break;
         }
       }
     }
     // then the crabs on the floor, where they fit between the others
-    for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); break; }
+    for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); move('crab',cx,cy,1); break; }
   }
   return g+'</g>';
 }
@@ -680,6 +693,7 @@ function buildStrip(){
     s+=rsItem('sun',true,sn.rise)+rsItem('sun',false,sn.set)+rsItem('moon',true,mn.rise)+rsItem('moon',false,mn.set);
   }
   $('stripSvg').innerHTML = s+'</svg>';
+  { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
   $('stripLab').innerHTML = labels+'</svg>';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
     <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6"/>
@@ -710,9 +724,21 @@ function placeStrip(){
   const now=cursor(), {W, pt, ih}=stripG;
   const tx=`translate3d(${(-((now-HALF_MS)-strip0)*stripK).toFixed(2)}px,0,0)`;
   $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
+  moveSea(now);
   $('stripLine').setAttribute('d', lineAround(((now-strip0)*stripK)));   // the center, in week-picture coordinates
   $('stripDot').setAttribute('cy', (pt+(Y1-curveAt(now))/(Y1-Y0)*ih).toFixed(2));
   $('strip').setAttribute('aria-valuetext', isLive() ? L.now : fFull.format(new Date(now)));
+}
+function moveSea(now){
+  const sc=(now-Date.now())*stripK;   // px scrolled from now
+  for (const m of seaM){ if (!m.el) continue;
+    const dx=m.sgn*m.A*Math.sin(2*Math.PI*sc/m.lam);
+    if (Math.abs(dx-m.last)>0.05) m.face = dx<m.last ? 1 : -1;   // drawn facing left at +1
+    m.last=dx;
+    const i=Math.max(0, Math.min(m.ys.length-1, Math.round((dx+46)/2)));
+    const sz=m.k==='crab' ? `scale(${seaSZ})` : `scale(${m.face*seaSZ},${seaSZ})`;
+    m.el.setAttribute('transform', `translate(${(m.cx+dx).toFixed(1)},${m.ys[i]})${m.k==='otter'?` rotate(${m.as[i]})`:''} ${sz}`);
+  }
 }
 function drawStrip(){ buildStrip(); placeStrip(); }
 
