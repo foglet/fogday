@@ -536,9 +536,10 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    beach change and return to now; language, units and resizing keep the same draw.
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
 let seaSeed = 1 + Math.floor(Math.random()*2147483646);
-/* Motion: while the chart scrolls, each creature drifts 30-45 px sideways at its own speed (back and forth with the scroll, still at now)
-   and rides the tide: otters on the surface, sharks at the same share of the depth, gulls the same height above the water,
-   crabs along the floor. Each turns to face the way it moves. Paths are sampled here every 2 px; placeStrip() applies them. */
+/* Motion: while the chart scrolls, each creature wanders freely (no set path or axis), at a pace that differs by kind and by
+   creature and keeps changing (speeding up and slowing down), and holds still when the chart does. It rides the tide:
+   otters on the surface, sharks under it, gulls above it, crabs along the floor, each facing the way it moves.
+   The surface is sampled here every 2 px around each home; moveSea() applies the motion from placeStrip(). */
 let seaM=[], seaSZ=1;
 // Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
 const SEA_LAM={gull:[150,280], shark:[220,460], crab:[320,600], otter:[560,900]};
@@ -604,15 +605,17 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   const SH = {half:26*SZ, topPad:18*SZ};
   const upTo = n => Math.floor(rnd()*(n+1));
   const slope = px => Math.atan2(surf(px+6)-surf(px-6), 12)*180/Math.PI;
-  const move = (k, cx, cy, dir, ang) => {
-    const [l0,l1]=SEA_LAM[k];   // px of scroll per back-and-forth: shorter is faster
-    const A=30+rnd()*15, lam=l0+rnd()*(l1-l0), sgn=rnd()<.5?1:-1, s0=surf(cx), ys=[], as=[];
-    for (let dx=-46; dx<=46; dx+=2){ const sx=surf(cx+dx); let yy=cy, a=0;
-      if (k==='otter'){ yy=sx-3*SZ; a=slope(cx+dx); }
-      else if (k==='shark') yy = Math.min(floor-6*SZ, Math.max(sx+14*SZ, sx + (cy-s0)*(floor-16-sx)/Math.max(1,floor-16-s0)));   // same share of the depth, fin under the surface
-      else if (k==='gull') yy = Math.max(pt0+14, sx-(s0-cy));                          // same height above the water
-      ys.push(+yy.toFixed(1)); as.push(+a.toFixed(1)); }
-    seaM.push({k, cx, A, lam, sgn, dir, face:dir, last:0, ys, as, el:null});
+  // Free wander: x and the vertical (depth share for sharks, height above water for gulls) each follow their own mix of
+  // three waves with random lengths and phases, so no two creatures share a path and none repeats a set line.
+  const waves = (l0,l1) => [0,1,2].map(j => ({a:[.55,.3,.15][j], l:(l0+rnd()*(l1-l0))*[1,.53,.29][j], p:rnd()*6.283}));
+  const move = (k, cx, cy, dir) => {
+    const [l0,l1]=SEA_LAM[k], s0=surf(cx), S=[], A=[];
+    for (let dx=-SEA_R; dx<=SEA_R; dx+=2){ S.push(+surf(cx+dx).toFixed(1)); A.push(+slope(cx+dx).toFixed(1)); }
+    const m={k, cx, cy, dir, face:dir, last:0, S, A, el:null, ax:35+rnd()*15, wx:waves(l0,l1), wy:waves(l0,l1), floor, top:pt0+14,
+      gl:(l0+rnd()*(l1-l0))*(.6+rnd()*.8), gp:rnd()*6.283};   // its own pace rhythm: 0.2x to 1.8x of its speed
+    if (k==='shark') m.f0=(cy-s0)/Math.max(1,floor-16-s0);   // share of the depth below the surface
+    if (k==='gull') m.h0=s0-cy;                               // height above the water
+    seaM.push(m);
   };
   for (let seg=0; seg<TW; seg+=W){
     let sharks=0, n;
@@ -630,7 +633,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
         if (kind==='otter'){   // floating: belly up, riding the surface line and tilted with it
           const cy=surf(cx)-3*SZ, a=slope(cx), h=20*SZ;
           if (Math.abs(a)>(W<520?68:40) || !sharkFree(cx,cy) || !clear(cx-h,cx+h)) continue;
-          taken.push([cx-h,cx+h]); { const d=rnd()<.5?1:-1; g+=otter(cx, cy, d, a); move('otter',cx,cy,d,a); } break;
+          taken.push([cx-h,cx+h]); { const d=rnd()<.5?1:-1; g+=otter(cx, cy, d, a); move('otter',cx,cy,d); } break;
         }
         if (kind==='gull'){    // in the air, at least 22px above the water, clear of the height labels
           const lo=surf(cx)-22*SZ, hi=pt0+14; if (lo-hi < 10) continue;
@@ -732,15 +735,22 @@ function placeStrip(){
   $('stripDot').setAttribute('cy', (pt+(Y1-curveAt(now))/(Y1-Y0)*ih).toFixed(2));
   $('strip').setAttribute('aria-valuetext', isLive() ? L.now : fFull.format(new Date(now)));
 }
+const SEA_R=96;   // sampled reach either side of home, px
 function moveSea(now){
-  const sc=(now-Date.now())*stripK;   // px scrolled from now
+  const sc=(now-Date.now())*stripK;   // px scrolled from now; at now every creature is home
+  const W=(w,t)=>w.reduce((v,c)=>v+c.a*(Math.sin(6.2832*t/c.l+c.p)-Math.sin(c.p)),0);
   for (const m of seaM){ if (!m.el) continue;
-    const dx=m.sgn*m.A*Math.sin(2*Math.PI*sc/m.lam);
+    const t=sc + .8*m.gl/6.2832*(Math.sin(6.2832*sc/m.gl+m.gp)-Math.sin(m.gp));   // warped scroll: pace = 1 + 0.8 cos(...)
+    const dx=Math.max(-SEA_R, Math.min(SEA_R, m.ax*W(m.wx,t))), v=W(m.wy,t);
     if (Math.abs(dx-m.last)>0.05) m.face = dx<m.last ? 1 : -1;   // drawn facing left at +1
     m.last=dx;
-    const i=Math.max(0, Math.min(m.ys.length-1, Math.round((dx+46)/2)));
-    const sz=m.k==='crab' ? `scale(${seaSZ})` : `scale(${m.face*seaSZ},${seaSZ})`;
-    m.el.setAttribute('transform', `translate(${(m.cx+dx).toFixed(1)},${m.ys[i]})${m.k==='otter'?` rotate(${m.as[i]})`:''} ${sz}`);
+    const i=Math.round((dx+SEA_R)/2), sx=m.S[i], z=seaSZ;
+    let y=m.cy, rot='';
+    if (m.k==='otter'){ y=sx-3*z; rot=` rotate(${m.A[i]})`; }
+    else if (m.k==='shark'){ const f=Math.max(.05, Math.min(.95, m.f0+.45*v)); y=Math.min(m.floor-6*z, Math.max(sx+17*z, sx+f*(m.floor-16-sx))); }
+    else if (m.k==='gull') y=Math.max(m.top, sx-Math.max(22*z, m.h0+35*v));
+    const sz=m.k==='crab' ? `scale(${z})` : `scale(${m.face*z},${z})`;
+    m.el.setAttribute('transform', `translate(${(m.cx+dx).toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
   }
 }
 function drawStrip(){ buildStrip(); placeStrip(); }
