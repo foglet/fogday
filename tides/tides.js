@@ -303,7 +303,9 @@ function renderNow(){
     : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})+(negNow?L.stop.trim():'')), n1) : '';
   // Second line while the tide is below zero: "Visit a tide pool. Respect Mother Nature."
   // NWS king tide / coastal flood alert, above the next-tide line (in #FF5500)
-  const alertLine = ((kingAlert[beach]||{}).list||[]).map(t=>`<div class="nrow kingalert"><span class="label">${esc(t)}</span></div>`).join('');
+  // English: the NWS headline as issued. Other languages: the same alert written from its type and end time.
+  const alertText = a => lang==='en' ? a.head : a.ends ? tr('alertUntil', {ev: L.alertEv[a.t], when: tr('dateAt', {date: fWkMd.format(new Date(a.ends)), time: fTime.format(new Date(a.ends))})}) : L.alertEv[a.t];
+  const alertLine = ((kingAlert[beach]||{}).list||[]).map(a=>`<div class="nrow kingalert"><span class="label">${esc(alertText(a))}</span></div>`).join('');
   const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
@@ -389,11 +391,14 @@ async function loadKingAlert(key){
   const b=BEACHES[key];
   try {
     const j=await nws(`https://api.weather.gov/alerts/active?point=${(+b.lat).toFixed(4)},${(+b.lon).toFixed(4)}`);
-    const list=(j.features||[]).map(f=>f.properties||{})
+    // Kept as data (type and end time) as well as the NWS headline, so the line can be written in each language
+    const seen=new Set(), list=(j.features||[]).map(f=>f.properties||{})
       .filter(p=>/coastal flood/i.test(p.event||'') || /king tide/i.test((p.headline||'')+' '+(p.description||'')))
       .filter(p=>!p.ends || new Date(p.ends) > Date.now())
-      .map(p=>String((p.parameters && p.parameters.NWSheadline && p.parameters.NWSheadline[0]) || p.headline || p.event).trim());
-    kingAlert[key]={at:Date.now(), list:[...new Set(list)]};
+      .map(p=>{ const ev=p.event||'', t=/coastal flood warning/i.test(ev)?'warn':/coastal flood watch/i.test(ev)?'watch':/coastal flood advisory/i.test(ev)?'adv':/coastal flood/i.test(ev)?'stmt':'king';
+        return {t, ends:p.ends||p.expires||null, head:String((p.parameters && p.parameters.NWSheadline && p.parameters.NWSheadline[0]) || p.headline || ev).trim()}; })
+      .filter(a=>!seen.has(a.t+a.ends) && seen.add(a.t+a.ends));
+    kingAlert[key]={at:Date.now(), list};
   } catch(e){ if (!c) kingAlert[key]={at:Date.now()-8*6e4, list:[]}; return; }   // offline: try again in a couple of minutes
   if (key===beach) renderNow();
 }
