@@ -532,8 +532,8 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    layer that never moves sideways; the dot rides up and down with the tide. */
 /* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3), sea otters
    floating at the surface (0-2), gulls above the water (0-3) and crabs on the floor (0-2), at least two creatures in all;
-   about half also get a flock of 3-6 brown pelicans in a loose line, flying in from far out (small, high) to close and back,
-   sometimes skimming just above the water; two flocks that meet join into one line.
+   about half also get a flock of 3-6 brown pelicans in a loose line on a fixed heading, flying in from far out (small, high) to
+   close and back, sometimes skimming just above the water; off screen they come back from the other side; flocks that meet join.
    Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
    beach change and return to now; language, units and resizing keep the same draw.
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
@@ -788,9 +788,14 @@ function seaPath(m, sc, ms){
 }
 function moveSea(now){
   const sc=(now-Date.now())*stripK, ms=performance.now(), z=seaSZ;
+  const left=((now-HALF_MS)-strip0)*stripK, vw=stripW;   // the screen's left edge in strip coordinates, and its width
   for (const m of seaM){ if (!m.el || m.k==='pelican') continue;
     const {base, v}=seaPath(m, sc, ms);
-    const px=Math.max(-80, Math.min(seaTW+80, base)), sx=seaSurf(px);
+    // Not glued to the chart: on screen each creature eases toward its place, so it lags behind a scroll (each by its own amount)
+    const tgt=Math.max(-80, Math.min(seaTW+80, base))-left;
+    if (m.lx===undefined || m.lag===undefined){ m.lx=tgt; m.lag=.2+Math.random()*.6; m.lt=ms; }
+    const dt=Math.min(.25,(ms-m.lt)/1000); m.lt=ms; m.lx += (tgt-m.lx)*(1-Math.exp(-dt/m.lag));
+    const px=m.lx+left, sx=seaSurf(px);
     let y=m.cy, rot='';
     if (m.k==='otter'){ y=sx-3*z; rot=` rotate(${seaSlope(px).toFixed(1)})`; }
     else if (m.k==='shark'){ const f=Math.max(.05, Math.min(.95, m.f0+.45*v)); y=Math.min(m.floor-6*z, Math.max(sx+17*z, sx+f*(m.floor-16-sx))); }
@@ -798,25 +803,36 @@ function moveSea(now){
     const sz=m.k==='crab' ? `scale(${z})` : `scale(${m.face*z},${z})`;
     m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
   }
-  // Pelican flocks: each flies one path (far out and small, then close in and low, and back), birds in a line behind the leader.
+  // Pelican flocks: each keeps one heading (never turns) and flies straight across at its own speed, far out and small then close
+  // in and low and back. Once the whole line is off screen it waits 5-40 s, then comes back in from the other side, same heading.
   const F=seaFlocks.filter(f=>!f.dead);
   for (const f of F){ const P=f.P, r=seaPath(P, sc, ms);
-    f.base=r.base; f.v=r.v; f.tau=r.tau;
+    if (f.x===undefined){ f.x=P.cx-left; f.d=P.dir; f.spd=14+Math.random()*14; f.lms=ms; f.gone=0; }
+    const dt=Math.min(.1,(ms-f.lms)/1000); f.lms=ms;
+    f.v=r.v; f.tau=r.tau;
     f.dep=.5-.5*Math.cos(6.2832*r.tau/P.dP);                          // 0 far out, 1 close in
+    const ds=.35+.65*f.dep, L=(f.birds.length-1)*40*z*ds;
     const sw=Math.sin(6.2832*r.tau/P.sP+P.sp), q=Math.max(0, Math.min(1, (sw-P.sth)/.35));
     f.skim=q*q*(3-2*q)*Math.max(0, (f.dep-.6)/.4);                    // skimming the water, only when close in
+    if (f.gone){ if (ms<f.gone) continue; f.gone=0; f.x = f.d>0 ? vw+30 : -30; }   // back in from the other side (d=1 flies left)
+    f.x -= f.d*f.spd*ds*dt;                                           // far birds look slower
+    const tail=f.x+f.d*L;
+    if ((f.d>0 && Math.max(f.x,tail) < -40) || (f.d<0 && Math.min(f.x,tail) > vw+40)) f.gone=ms+(5+Math.random()*35)*1000;
+    f.base=f.x+left;
   }
-  // Two flocks that meet (close together at about the same distance out) join into one line, up to 12 birds
-  for (const a of F) for (const b of F){ if (a===b || a.dead || b.dead) continue;
-    if (Math.abs(a.base-b.base) < 70*z && Math.abs(a.dep-b.dep) < .25 && a.birds.length+b.birds.length <= 12){
+  // Two flocks that meet (same heading, close together, about the same distance out) join into one line, up to 12 birds
+  for (const a of F) for (const b of F){ if (a===b || a.dead || b.dead || a.gone || b.gone || a.d!==b.d) continue;
+    if (Math.abs(a.x-b.x) < 70*z && Math.abs(a.dep-b.dep) < .25 && a.birds.length+b.birds.length <= 12){
       for (const bd of b.birds){ bd.jt = bd.lx===undefined ? 0 : ms; bd.jx=bd.lx; bd.jy=bd.ly; bd.js=bd.ls; bd.flock=a; a.birds.push(bd); }
       b.birds=[]; b.dead=true; }
   }
   for (const f of F){ if (f.dead) continue; const P=f.P, ds=.35+.65*f.dep, k=f.skim;
-    const lead=seaSurf(Math.max(-80, Math.min(seaTW+80, f.base)));
+    for (const bd of f.birds) if (bd.el) bd.el.style.visibility = f.gone ? 'hidden' : '';
+    if (f.gone) continue;
+    const lead=seaSurf(f.base);
     f.birds.forEach((bd, i) => { if (!bd.el) return;
-      const want=i*40*z*ds*P.face; bd.ox += (want-bd.ox)*.08;          // followers swing round behind the leader on a turn
-      let px=Math.max(-80, Math.min(seaTW+80, f.base+bd.ox)); const sx=seaSurf(px);
+      const want=i*40*z*ds*f.d; bd.ox += (want-bd.ox)*.08;            // the line behind the leader, closer together when far out
+      let px=f.base+bd.ox; const sx=seaSurf(px);
       const bob=1.2*(1-.75*k)*Math.sin(6.2832*f.tau/bd.bt+bd.bp);
       const h=Math.max(8*z, P.h0+10*f.v)*(1-k) + 3.5*z*k;               // skimming: just above the waves
       const near=Math.max(P.top, Math.min(sx-(8*(1-k)+3*k)*z, (k>.5?sx:lead)-h+bd.oy*(1-k)+bob));
@@ -825,8 +841,7 @@ function moveSea(now){
       if (bd.jt){ const e=Math.min(1,(ms-bd.jt)/2500), u=e*e*(3-2*e);      // a joining bird glides into its place in the line
         px=bd.jx+(px-bd.jx)*u; y=bd.jy+(y-bd.jy)*u; s=bd.js+(s-bd.js)*u; if (e>=1) bd.jt=0; }
       bd.lx=px; bd.ly=y; bd.ls=s;
-      bd.el.style.opacity=(.55+.45*Math.min(1,(s-.35)/.65)).toFixed(2);
-      bd.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(P.face*z*s).toFixed(3)},${(z*s).toFixed(3)})`);
+      bd.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(f.d*z*s).toFixed(3)},${(z*s).toFixed(3)})`);
     });
   }
 }
