@@ -536,10 +536,12 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    beach change and return to now; language, units and resizing keep the same draw.
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
 let seaSeed = 1 + Math.floor(Math.random()*2147483646);
-/* Motion: while the chart scrolls, each creature drifts 30-45 px sideways (back and forth with the scroll, still at now)
+/* Motion: while the chart scrolls, each creature drifts 30-45 px sideways at its own speed (back and forth with the scroll, still at now)
    and rides the tide: otters on the surface, sharks at the same share of the depth, gulls the same height above the water,
    crabs along the floor. Each turns to face the way it moves. Paths are sampled here every 2 px; placeStrip() applies them. */
 let seaM=[], seaSZ=1;
+// Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
+const SEA_LAM={gull:[150,280], shark:[220,460], crab:[320,600], otter:[560,900]};
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   let seed = seaSeed; seaM=[];
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
@@ -603,7 +605,8 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   const upTo = n => Math.floor(rnd()*(n+1));
   const slope = px => Math.atan2(surf(px+6)-surf(px-6), 12)*180/Math.PI;
   const move = (k, cx, cy, dir, ang) => {
-    const A=30+rnd()*15, lam=260+rnd()*200, sgn=rnd()<.5?1:-1, s0=surf(cx), ys=[], as=[];
+    const [l0,l1]=SEA_LAM[k];   // px of scroll per back-and-forth: shorter is faster
+    const A=30+rnd()*15, lam=l0+rnd()*(l1-l0), sgn=rnd()<.5?1:-1, s0=surf(cx), ys=[], as=[];
     for (let dx=-46; dx<=46; dx+=2){ const sx=surf(cx+dx); let yy=cy, a=0;
       if (k==='otter'){ yy=sx-3*SZ; a=slope(cx+dx); }
       else if (k==='shark') yy = Math.min(floor-6*SZ, Math.max(sx+14*SZ, sx + (cy-s0)*(floor-16-sx)/Math.max(1,floor-16-s0)));   // same share of the depth, fin under the surface
