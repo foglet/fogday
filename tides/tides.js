@@ -928,6 +928,15 @@ function render(opts2){
   $('beachName').textContent=beachName(beach);
   { const i=ORDER.indexOf(beach), n=beachName(ORDER[(i+1)%ORDER.length]); $('beachBtn').setAttribute('aria-label', tr('beachAria', {b: beachName(beach), i: i+1, n: ORDER.length, next: n})); $('beachBtn').title=tr('nextBeach', {n}); }
   $('coords').textContent=dms(b.lat,'N','S')+', '+dms(b.lon,'E','W');
+  { // Tap the coordinates: the beach in the visitor's own map app (Apple Maps on iPhone / iPad / Mac, the default
+    // map app on Android via geo:, Google Maps in the browser elsewhere)
+    const c=$('coords'), n=beachName(beach), ll=`${(+b.lat).toFixed(5)},${(+b.lon).toFixed(5)}`, ua=navigator.userAgent;
+    const href = /iPhone|iPad|iPod|Macintosh/.test(ua) ? `https://maps.apple.com/?ll=${ll}&q=${encodeURIComponent(n)}`
+      : /Android/i.test(ua) ? `geo:${ll}?q=${ll}(${encodeURIComponent(n)})`
+      : `https://www.google.com/maps/search/?api=1&query=${ll}`;
+    c.href=href; if (href.startsWith('http')) c.target='_blank'; else c.removeAttribute('target');
+    c.setAttribute('aria-label', tr('mapAria', {b: n})); c.title=tr('mapAria', {b: n});
+  }
   $('station').textContent=STATION_LINE[b.st];
   $('source').textContent=L.source[b.st];
   applyStatic();
