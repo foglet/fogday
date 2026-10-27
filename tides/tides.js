@@ -922,6 +922,28 @@ function moveSea(now){
 function drawStrip(){ buildStrip(); placeStrip(); }
 
 /* ---- Page ---- */
+/* Maps on Apple devices: iOS doesn't tell a web page which map app the visitor prefers, so the first tap asks
+   (Apple Maps or Google Maps) and remembers it; a long press asks again. Google's link opens the Google Maps app when installed. */
+const APPLE_DEV=/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+let mapLinks={};
+const mapPref=()=>{ try { const v=localStorage.getItem('sf-tides-maps'); return v==='apple'||v==='google' ? v : null; } catch(e){ return null; } };
+function mapChooser(){
+  let m=document.getElementById('mapPick'); if (m){ m.remove(); return; }   // ($() would hand back a blank div)
+  m=document.createElement('div'); m.id='mapPick'; m.className='mappick'; m.setAttribute('role','group');
+  m.innerHTML=`<button type="button" data-m="apple">Apple Maps</button><button type="button" data-m="google">Google Maps</button>`;
+  $('coords').after(m);
+  m.addEventListener('click', e=>{ const k=e.target.dataset && e.target.dataset.m; if (!k) return;
+    try { localStorage.setItem('sf-tides-maps', k); } catch(err){}
+    m.remove(); const c=$('coords'); c.href=mapLinks[k]; location.href=mapLinks[k]; });
+  setTimeout(()=>document.addEventListener('pointerdown', function off(e){ if (!m.contains(e.target) && e.target!==$('coords')){ m.remove(); document.removeEventListener('pointerdown', off); } }), 0);
+}
+if (APPLE_DEV){
+  const c=$('coords'); let hold=0, held=false;
+  c.addEventListener('click', e=>{ e.preventDefault(); if (held){ held=false; return; }
+    const p=mapPref(); if (p) location.href=mapLinks[p]; else mapChooser(); });
+  c.addEventListener('pointerdown', ()=>{ held=false; clearTimeout(hold); hold=setTimeout(()=>{ held=true; const o=document.getElementById('mapPick'); if (o) o.remove(); mapChooser(); }, 600); });
+  ['pointerup','pointerleave','pointercancel'].forEach(t=>c.addEventListener(t, ()=>clearTimeout(hold)));
+}
 function render(opts2){
   const b=BEACHES[beach], t=todayKey(), isToday=same(view,t);
   $('place').textContent=L.place[beach]; fitPlace();
@@ -931,9 +953,10 @@ function render(opts2){
   { // Tap the coordinates: the beach in the visitor's own map app (Apple Maps on iPhone / iPad / Mac, the default
     // map app on Android via geo:, Google Maps in the browser elsewhere)
     const c=$('coords'), n=beachName(beach), ll=`${(+b.lat).toFixed(5)},${(+b.lon).toFixed(5)}`, ua=navigator.userAgent;
-    const href = /iPhone|iPad|iPod|Macintosh/.test(ua) ? `https://maps.apple.com/?ll=${ll}&q=${encodeURIComponent(n)}`
+    mapLinks={apple:`https://maps.apple.com/?ll=${ll}&q=${encodeURIComponent(n)}`, google:`https://www.google.com/maps/search/?api=1&query=${ll}`};
+    const href = APPLE_DEV ? mapLinks[mapPref()||'apple']
       : /Android/i.test(ua) ? `geo:${ll}?q=${ll}(${encodeURIComponent(n)})`
-      : `https://www.google.com/maps/search/?api=1&query=${ll}`;
+      : mapLinks.google;
     c.href=href; if (href.startsWith('http')) c.target='_blank'; else c.removeAttribute('target');
     c.setAttribute('aria-label', tr('mapAria', {b: n})); c.title=tr('mapAria', {b: n});
   }
