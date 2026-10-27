@@ -1,4 +1,4 @@
-/* SF Tides — translations: EN (default), FR, ES, ZH. Tap the language code beside "Made at Baker Beach." to cycle.
+/* SF Tides — translations: EN (default), FR, ES, ZH. Tap the language code left of Info to cycle.
    Each language: locale for dates and times, page text, and the few phrases built from numbers
    (tide durations, days to the full moon). Weather descriptions from the National Weather Service arrive in English;
    common ones are translated here, anything unknown is shown as sent. */

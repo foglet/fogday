@@ -14,7 +14,7 @@ const BEACHES = {
 const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
 // Tide chart: 20 hours wide, centered on the viewed moment (now, or up to 36 hours ahead once dragged)
 const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 36*36e5;
-/* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code beside "Made at Baker Beach." to cycle (remembered per visitor) ---- */
+/* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code left of Info to cycle (remembered per visitor) ---- */
 const I18N = window.TIDE_I18N;
 let lang = 'en';
 try { const l=localStorage.getItem('sf-tides-lang'); if (I18N[l]) lang=l; } catch(e){}
