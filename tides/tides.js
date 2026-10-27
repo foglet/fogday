@@ -555,7 +555,7 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    layer that never moves sideways; the dot rides up and down with the tide. */
 /* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3, no more than two on screen at a time), sea otters
    floating at the surface (removed for now), gulls high above the water (0-3, mostly alone, now and then a pair) and crabs on the floor (0-1, and only one on screen at a time), at least two creatures in all;
-   about half also get a flock of 1-12 brown pelicans in a loose line on a fixed heading, flying in from far out (small, high) to
+   about half also get a flock of 1-12 pelicans (brown, or about 40% American white; one color per flock) in a loose line on a fixed heading, flying in from far out (small, high) to
    close and back, sometimes skimming just above the water; off screen they come back from either side; flocks that meet join.
    Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
    beach change and return to now; language, units and resizing keep the same draw.
@@ -565,14 +565,14 @@ let seaSeed = 1 + Math.floor(Math.random()*2147483646);
    creature and keeps changing (speeding up and slowing down), and holds still when the chart does. It rides the tide:
    otters on the surface, sharks under it, gulls above it, crabs along the floor, each facing the way it moves.
    They also swim slowly on their own, roaming off screen and back; moveSea() runs from placeStrip() and a ~30 fps clock. */
-let seaOn={crab:new Set(), shark:new Set(), gull:new Set()}, seaPelOn=false, seaPelDir=1, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
+let seaOn={crab:new Set(), shark:new Set(), gull:new Set()}, seaPelOn=false, seaPelXY=[], seaPelDir=1, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
 // Swimming on their own, slowly: [wander pace, top roam speed in px/s]; gulls quickest, otters laziest
 const SEA_IDLE={gull:[22,24], pelican:[14,18], shark:[15,15], crab:[9,9], otter:[6,6]};
 // Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
 const SEA_CAP={crab:1, shark:2};
 const SEA_LAM={gull:[150,280], pelican:[300,560], shark:[220,460], crab:[320,600], otter:[560,900]};
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaPelDir = seaSeed%2 ? 1 : -1; seaOn={crab:new Set(), shark:new Set(), gull:new Set()}; seaPelOn=false;
+  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaPelDir = seaSeed%2 ? 1 : -1; seaOn={crab:new Set(), shark:new Set(), gull:new Set()}; seaPelOn=false; seaPelXY=[];
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -622,15 +622,19 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <path d="M-17.6,-1.4 l-2.4,-.6 M-17.6,-.9 l-2.6,.4" stroke="#3a2a1d" stroke-width=".4" fill="none"/></g>`;
   // Gull in flight (head left): white body, grey wings with dark tips, yellow beak
   // Brown pelican gliding (head left): long straight wings, grey-brown body, pale head, long yellow bill with its pouch
-  const pelican = (cx,cy,dir) => `<g class="sl-pelican" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
-      <path d="M-2,-1 Q3,-7.5 15,-7.2 L19,-6.2 Q9,-4.2 5,0 Z" fill="#6f6252"/>
-      <path d="M15,-7.2 L19,-6.2 L14.6,-5.6 Z" fill="#3b332b"/>
-      <ellipse cx="3" cy="0" rx="9" ry="2.9" fill="#8a7a66"/>
-      <path d="M11.6,-.8 l4.2,-.9 l-.3,2.2 Z" fill="#6f6252"/>
-      <path d="M-5,-1.6 Q-6.5,-1 -8,-2.4 L-5.8,-3.4 Z" fill="#8a7a66"/>
-      <circle cx="-7.2" cy="-2.4" r="2.3" fill="#f1e7c6" stroke="#8a7a66" stroke-width=".5"/>
-      <path d="M-9.2,-2.8 L-20,-1.2 L-9.2,-1.2 Z" fill="#d9a640"/>
-      <path d="M-9.2,-1.2 Q-14,1.4 -19,-1 Z" fill="#b78a3a"/><circle cx="-7.8" cy="-2.9" r=".5" fill="#1b2a33"/></g>`;
+  // Pelican gliding (head left): brown pelican (grey-brown, pale head, yellow bill) or American white pelican
+  // (white, black wingtips and trailing edge, orange bill, a thin grey outline so it shows on a light page)
+  const PEL = {brown:{wing:'#6f6252', tip:'#3b332b', body:'#8a7a66', head:'#f1e7c6', hs:'#8a7a66', bill:'#d9a640', pouch:'#b78a3a', ol:'none'},
+               white:{wing:'#f7f7f4', tip:'#1d1d1d', body:'#fbfbf8', head:'#fbfbf8', hs:'#9aa3a8', bill:'#f0962e', pouch:'#e07f22', ol:'#9aa3a8'}};
+  const pelican = (cx,cy,dir,col) => { const c=PEL[col]; return `<g class="sl-pelican" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+      <path d="M-2,-1 Q3,-7.5 15,-7.2 L19,-6.2 Q9,-4.2 5,0 Z" fill="${c.wing}" stroke="${c.ol}" stroke-width=".5"/>
+      <path d="M15,-7.2 L19,-6.2 L14.6,-5.6 Z" fill="${c.tip}"/>${col==='white' ? '<path d="M9,-6.9 L15,-7.2 L14.6,-5.6 Q11.5,-5.3 9.2,-4.6 Z" fill="#1d1d1d"/>' : ''}
+      <ellipse cx="3" cy="0" rx="9" ry="2.9" fill="${c.body}" stroke="${c.ol}" stroke-width=".5"/>
+      <path d="M11.6,-.8 l4.2,-.9 l-.3,2.2 Z" fill="${c.wing}" stroke="${c.ol}" stroke-width=".5"/>
+      <path d="M-5,-1.6 Q-6.5,-1 -8,-2.4 L-5.8,-3.4 Z" fill="${c.body}"/>
+      <circle cx="-7.2" cy="-2.4" r="2.3" fill="${c.head}" stroke="${c.hs}" stroke-width=".5"/>
+      <path d="M-9.2,-2.8 L-20,-1.2 L-9.2,-1.2 Z" fill="${c.bill}"/>
+      <path d="M-9.2,-1.2 Q-14,1.4 -19,-1 Z" fill="${c.pouch}"/><circle cx="-7.8" cy="-2.9" r=".5" fill="#1b2a33"/></g>`; };
   const gull = (cx,cy,dir) => `<g class="sl-gull" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
       <path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
       <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/>
@@ -673,8 +677,8 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       taken.push([cx-18*SZ, cx+18*SZ]);
       const P=move('pelican', cx, surf(cx)-h, d); seaM.pop();   // the flock's path; the birds below follow it
       P.sP=25+rnd()*40; P.sp=rnd()*6.283; P.sth=.15+rnd()*.55;   // its own random rhythm of skimming the water
-      const F={P, birds:[], dead:false}; seaFlocks.push(F);
-      for (let i=0; i<cnt; i++){ g+=pelican(cx+d*i*gap, ys[i], d);
+      const F={P, birds:[], dead:false, col: rnd()<.4 ? 'white' : 'brown'}; seaFlocks.push(F);   // one color per flock
+      for (let i=0; i<cnt; i++){ g+=pelican(cx+d*i*gap, ys[i], d, F.col);
         const b={k:'pelican', el:null, ox:d*i*gap, oy:oy[i], bp:rnd()*6.283, bt:2+rnd()*2, flock:F, jt:0}; seaM.push(b); F.birds.push(b); }
       break;
     }
@@ -828,7 +832,18 @@ function moveSea(now){
     const {base, v}=seaPath(m, sc, ms);
     // Not glued to the chart: on screen each creature eases toward its place, so it lags behind a scroll (each by its own amount)
     const tau=(ms-m.t0)/1000, wob = m.ox!==undefined && m.k==='gull' ? 6*z*Math.sin(6.2832*tau/m.bt+m.bp) : 0;   // grouped gulls: own wobble
-    const tgt=Math.max(-80, Math.min(seaTW+80, base+(m.k==='gull' ? (m.ox||0)+wob : 0)))-left;
+    // Gulls and pelicans don't mix: a gull that comes near a pelican on screen climbs and flies off, away from it, at speed.
+    // It keeps that distance (m.fx) once off screen, then slowly drifts back on its own wandering.
+    if (m.k==='gull'){
+      const dtf=Math.min(.1,(ms-(m.ft||ms))/1000); m.ft=ms; m.fx=m.fx||0;
+      if (!m.flee && m.lx!==undefined){ const gx=m.lx+left, gy=m.ly||m.cy;
+        const nb=seaPelXY.find(([x,y])=>Math.abs(x-gx)<110*z && Math.abs(y-gy)<70*z);
+        if (nb){ m.flee = gx>=nb[0] ? 1 : -1; m.fl=0; } }
+      if (m.flee){ m.fx += m.flee*110*z*dtf; m.fl=Math.min(1, m.fl+dtf/1.2);
+        if (m.lx<-60 || m.lx>vw+60) m.flee=0; }                         // gone off screen: done fleeing
+      else if (m.fx) m.fx *= Math.exp(-dtf/150);                         // wander back over a few minutes
+    }
+    const tgt=Math.max(-80, Math.min(seaTW+80, base+(m.k==='gull' ? (m.ox||0)+wob+m.fx : 0)))-left;
     if (m.lx===undefined || m.lag===undefined){ m.lx=tgt; m.lag=.2+Math.random()*.6; m.lt=ms; }
     const dt=Math.min(.25,(ms-m.lt)/1000); m.lt=ms; m.lx += (tgt-m.lx)*(1-Math.exp(-dt/m.lag));
     const px=m.lx+left, sx=seaSurf(px);
@@ -846,7 +861,9 @@ function moveSea(now){
     else if (m.k==='gull'){   // high and level: a gentle drift up and down in the top of the sky, no diving; never near the water
       // their own band near the top of the sky, ending 22 px above the highest water on the chart, so gulls never follow the tide down
       const gt=8*z, band=Math.max(14*z, Math.min(m.top+.3*(m.floor-m.top), seaHi-22*z)-gt), alt=m.cy-(m.oy||0)-gt;
-      y=gt+Math.max(0, Math.min(band, alt+3*z*v+1.5*z*Math.sin(6.2832*tau/(m.bt*1.3||4)+(m.bp||0)))); }
+      y=gt+Math.max(0, Math.min(band, alt+3*z*v+1.5*z*Math.sin(6.2832*tau/(m.bt*1.3||4)+(m.bp||0))));
+      if (m.flee){ y=y+(gt-y)*(m.fl||0); m.face = m.flee>0 ? -1 : 1; }    // climbing away, facing the way it flies
+      m.ly=y; }
     const sz=m.k==='crab' ? `scale(${z})` : `scale(${m.face*z},${z})`;
     m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
   }
@@ -871,13 +888,13 @@ function moveSea(now){
     if ((f.d>0 && Math.max(f.x,tail) < -40) || (f.d<0 && Math.min(f.x,tail) > vw+40)) f.gone=ms+(5+Math.random()*35)*1000;
     f.base=f.x+left;
   }
-  // Two flocks that meet (same heading, close together, about the same distance out) join into one line, up to 12 birds
-  for (const a of F) for (const b of F){ if (a===b || a.dead || b.dead || a.gone || b.gone || a.d!==b.d) continue;
+  // Two flocks that meet (same heading and color, close together, about the same distance out) join into one line, up to 12 birds
+  for (const a of F) for (const b of F){ if (a===b || a.dead || b.dead || a.gone || b.gone || a.d!==b.d || a.col!==b.col) continue;   // white and brown never join
     if (Math.abs(a.x-b.x) < 70*z && Math.abs(a.dep-b.dep) < .25 && a.birds.length+b.birds.length <= 12){
       for (const bd of b.birds){ bd.jt = bd.lx===undefined ? 0 : ms; bd.jx=bd.lx; bd.jy=bd.ly; bd.js=bd.ls; bd.flock=a; a.birds.push(bd); }
       b.birds=[]; b.dead=true; }
   }
-  let pelOn=false;
+  let pelOn=false; const pxy=[];
   for (const f of F){ if (f.dead) continue; const P=f.P, ds=.35+.65*f.dep, k=f.skim;
     for (const bd of f.birds) if (bd.el) bd.el.style.visibility = f.gone ? 'hidden' : '';
     if (f.gone) continue;
@@ -892,11 +909,11 @@ function moveSea(now){
       let y=far+(near-far)*f.dep, s=ds;
       if (bd.jt){ const e=Math.min(1,(ms-bd.jt)/2500), u=e*e*(3-2*e);      // a joining bird glides into its place in the line
         px=bd.jx+(px-bd.jx)*u; y=bd.jy+(y-bd.jy)*u; s=bd.js+(s-bd.js)*u; if (e>=1) bd.jt=0; }
-      bd.lx=px; bd.ly=y; bd.ls=s; if (px-left>-20 && px-left<vw+20) pelOn=true;
+      bd.lx=px; bd.ly=y; bd.ls=s; if (px-left>-20 && px-left<vw+20){ pelOn=true; pxy.push([px,y]); }
       bd.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(f.d*z*s).toFixed(3)},${(z*s).toFixed(3)})`);
     });
   }
-  seaPelOn=pelOn;
+  seaPelOn=pelOn; seaPelXY=pxy;
 }
 // The slow swim runs on its own at ~30 frames a second (paused in background tabs; off for reduced motion)
 { let last=0; const still = matchMedia && matchMedia('(prefers-reduced-motion: reduce)');
