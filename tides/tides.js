@@ -531,7 +531,7 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
 /* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3), sea otters
-   floating at the surface (0-2), gulls above the water (0-3) and crabs on the floor (0-2), at least two creatures in all;
+   floating at the surface (0-2), gulls above the water (0-3) and crabs on the floor (0-1, and only one on screen at a time), at least two creatures in all;
    about half also get a flock of 3-6 brown pelicans in a loose line on a fixed heading, flying in from far out (small, high) to
    close and back, sometimes skimming just above the water; off screen they come back from either side; flocks that meet join.
    Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
@@ -542,13 +542,13 @@ let seaSeed = 1 + Math.floor(Math.random()*2147483646);
    creature and keeps changing (speeding up and slowing down), and holds still when the chart does. It rides the tide:
    otters on the surface, sharks under it, gulls above it, crabs along the floor, each facing the way it moves.
    They also swim slowly on their own, roaming off screen and back; moveSea() runs from placeStrip() and a ~30 fps clock. */
-let seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
+let seaCrab=null, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
 // Swimming on their own, slowly: [wander pace, top roam speed in px/s]; gulls quickest, otters laziest
 const SEA_IDLE={gull:[22,24], pelican:[14,18], shark:[15,15], crab:[9,9], otter:[6,6]};
 // Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
 const SEA_LAM={gull:[150,280], pelican:[300,560], shark:[220,460], crab:[320,600], otter:[560,900]};
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = seaSeed; seaM=[]; seaFlocks=[];
+  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaCrab=null;
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -636,7 +636,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   };
   for (let seg=0; seg<TW; seg+=W){
     let sharks=0, n;
-    do n={otter:upTo(2), gull:upTo(3), shark:upTo(3), crab:upTo(2)}; while (n.otter+n.gull+n.shark+n.crab < 2);
+    do n={otter:upTo(2), gull:upTo(3), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
     // About half the screen-widths get a group of 3-6 pelicans in a loose line, low over the water, leader in front
     if (rnd()<.5) for (let tries=0; tries<60; tries++){
       const cnt=3+Math.floor(rnd()*4), d=rnd()<.5?1:-1, gap=40*SZ, span=(cnt-1)*gap;
@@ -796,6 +796,12 @@ function moveSea(now){
     if (m.lx===undefined || m.lag===undefined){ m.lx=tgt; m.lag=.2+Math.random()*.6; m.lt=ms; }
     const dt=Math.min(.25,(ms-m.lt)/1000); m.lt=ms; m.lx += (tgt-m.lx)*(1-Math.exp(-dt/m.lag));
     const px=m.lx+left, sx=seaSurf(px);
+    if (m.k==='crab'){   // one crab on screen at a time: another shows only by walking in from an edge after this one has gone
+      const on = m.lx>-20 && m.lx<vw+20;
+      if (seaCrab===m){ if (!on) seaCrab=null; }
+      else if (on && !seaCrab && !m.wasOn) seaCrab=m;
+      m.wasOn=on; m.el.style.visibility = (seaCrab===m || !on) ? '' : 'hidden';
+    }
     let y=m.cy, rot='';
     if (m.k==='otter'){ y=sx-3*z; rot=` rotate(${seaSlope(px).toFixed(1)})`; }
     else if (m.k==='shark'){ const f=Math.max(.05, Math.min(.95, m.f0+.45*v)); y=Math.min(m.floor-6*z, Math.max(sx+17*z, sx+f*(m.floor-16-sx))); }
