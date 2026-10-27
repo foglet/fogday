@@ -533,7 +533,7 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3), sea otters
    floating at the surface (0-2), gulls above the water (0-3) and crabs on the floor (0-2), at least two creatures in all;
    about half also get a flock of 3-6 brown pelicans in a loose line on a fixed heading, flying in from far out (small, high) to
-   close and back, sometimes skimming just above the water; off screen they come back from the other side; flocks that meet join.
+   close and back, sometimes skimming just above the water; off screen they come back from either side; flocks that meet join.
    Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
    beach change and return to now; language, units and resizing keep the same draw.
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
@@ -804,7 +804,7 @@ function moveSea(now){
     m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
   }
   // Pelican flocks: each keeps one heading (never turns) and flies straight across at its own speed, far out and small then close
-  // in and low and back. Once the whole line is off screen it waits 5-40 s, then comes back in from the other side, same heading.
+  // in and low and back. Once the whole line is off screen it waits 5-40 s, then comes back in from the left or the right, at random.
   const F=seaFlocks.filter(f=>!f.dead);
   for (const f of F){ const P=f.P, r=seaPath(P, sc, ms);
     if (f.x===undefined){ f.x=P.cx-left; f.d=P.dir; f.spd=14+Math.random()*14; f.lms=ms; f.gone=0; }
@@ -814,7 +814,8 @@ function moveSea(now){
     const ds=.35+.65*f.dep, L=(f.birds.length-1)*40*z*ds;
     const sw=Math.sin(6.2832*r.tau/P.sP+P.sp), q=Math.max(0, Math.min(1, (sw-P.sth)/.35));
     f.skim=q*q*(3-2*q)*Math.max(0, (f.dep-.6)/.4);                    // skimming the water, only when close in
-    if (f.gone){ if (ms<f.gone) continue; f.gone=0; f.x = f.d>0 ? vw+30 : -30; }   // back in from the other side (d=1 flies left)
+    if (f.gone){ if (ms<f.gone) continue; f.gone=0;                  // back in from the left or the right, at random (turned while away)
+      f.d = Math.random()<.5 ? 1 : -1; f.x = f.d>0 ? vw+30 : -30; }  // d=1 flies left, so it enters at the right edge
     f.x -= f.d*f.spd*ds*dt;                                           // far birds look slower
     const tail=f.x+f.d*L;
     if ((f.d>0 && Math.max(f.x,tail) < -40) || (f.d<0 && Math.min(f.x,tail) > vw+40)) f.gone=ms+(5+Math.random()*35)*1000;
