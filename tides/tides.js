@@ -530,9 +530,9 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
-/* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3), sea otters
-   floating at the surface (removed for now), 0-2 groups of 1-12 gulls above the water (loose strings or clumps) and crabs on the floor (0-1, and only one on screen at a time), at least two creatures in all;
-   about half also get a flock of 3-6 brown pelicans in a loose line on a fixed heading, flying in from far out (small, high) to
+/* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3, no more than two on screen at a time), sea otters
+   floating at the surface (removed for now), gulls high above the water (0-3, mostly alone, now and then a pair) and crabs on the floor (0-1, and only one on screen at a time), at least two creatures in all;
+   about half also get a flock of 1-12 brown pelicans in a loose line on a fixed heading, flying in from far out (small, high) to
    close and back, sometimes skimming just above the water; off screen they come back from either side; flocks that meet join.
    Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
    beach change and return to now; language, units and resizing keep the same draw.
@@ -542,13 +542,14 @@ let seaSeed = 1 + Math.floor(Math.random()*2147483646);
    creature and keeps changing (speeding up and slowing down), and holds still when the chart does. It rides the tide:
    otters on the surface, sharks under it, gulls above it, crabs along the floor, each facing the way it moves.
    They also swim slowly on their own, roaming off screen and back; moveSea() runs from placeStrip() and a ~30 fps clock. */
-let seaCrab=null, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
+let seaOn={crab:new Set(), shark:new Set()}, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
 // Swimming on their own, slowly: [wander pace, top roam speed in px/s]; gulls quickest, otters laziest
 const SEA_IDLE={gull:[22,24], pelican:[14,18], shark:[15,15], crab:[9,9], otter:[6,6]};
 // Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
+const SEA_CAP={crab:1, shark:2};
 const SEA_LAM={gull:[150,280], pelican:[300,560], shark:[220,460], crab:[320,600], otter:[560,900]};
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaCrab=null;
+  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaOn={crab:new Set(), shark:new Set()};
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -618,6 +619,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   // then sharks, then crabs. Sharks each get their own depth band; every creature keeps its sideways distance from the rest.
   const SH = {half:26*SZ, topPad:18*SZ};
   const upTo = n => Math.floor(rnd()*(n+1));
+  const wHi = Math.min(...td.tl.map(p=>y(p.v)));   // the highest the water gets on this chart
   const slope = px => Math.atan2(surf(px+6)-surf(px-6), 12)*180/Math.PI;
   // Free wander: x and the vertical (depth share for sharks, height above water for gulls) each follow their own mix of
   // three waves with random lengths and phases, so no two creatures share a path and none repeats a set line.
@@ -636,16 +638,16 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   };
   for (let seg=0; seg<TW; seg+=W){
     let sharks=0, n;
-    do n={otter:0, gull:upTo(2), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
-    // About half the screen-widths get a group of 3-6 pelicans in a loose line, low over the water, leader in front
+    do n={otter:0, gull:upTo(3), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
+    // About half the screen-widths get a group of 1-12 pelicans in a loose line, low over the water, leader in front
     if (rnd()<.5) for (let tries=0; tries<60; tries++){
-      const cnt=3+Math.floor(rnd()*4), d=rnd()<.5?1:-1, gap=40*SZ, span=(cnt-1)*gap;
+      const cnt=[1,2,3,3,4,4,5,6,7,8,10,12][Math.floor(rnd()*12)], d=rnd()<.5?1:-1, gap=40*SZ, span=(cnt-1)*gap;   // 1-12, mixed
       const cx=seg+40+rnd()*(W-80), x0=Math.min(cx, cx+d*span), x1=Math.max(cx, cx+d*span);
-      if (x0<20 || x1>TW-20 || !clear(x0-18*SZ, x1+18*SZ)) continue;
+      if (cx<20 || cx>TW-20 || !clear(cx-18*SZ, cx+18*SZ)) continue;   // room for the leader; a long line may trail off screen
       const h=(10+rnd()*20)*SZ, oy=[...Array(cnt)].map((_,i)=> i? (rnd()-.5)*6*SZ - i*1.2*SZ : 0);
       const ys=[...Array(cnt)].map((_,i)=> surf(cx+d*i*gap)-h+oy[i]);
-      if (ys.some(v=>v<pt0+14) || ys.some((v,i)=>!sharkFree(cx+d*i*gap, v))) continue;
-      taken.push([x0-18*SZ, x1+18*SZ]);
+      if (ys[0]<pt0+14 || !sharkFree(cx, ys[0])) continue;
+      taken.push([cx-18*SZ, cx+18*SZ]);
       const P=move('pelican', cx, surf(cx)-h, d); seaM.pop();   // the flock's path; the birds below follow it
       P.sP=25+rnd()*40; P.sp=rnd()*6.283; P.sth=.15+rnd()*.55;   // its own random rhythm of skimming the water
       const F={P, birds:[], dead:false}; seaFlocks.push(F);
@@ -669,17 +671,16 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
           taken.push([cx-h,cx+h]); { const d=rnd()<.5?1:-1; g+=otter(cx, cy, d, a); move('otter',cx,cy,d); } break;
         }
         if (kind==='gull'){    // in the air, at least 22px above the water, clear of the height labels
-          const lo=surf(cx)-22*SZ, hi=pt0+14; if (lo-hi < 10) continue;
+          const hi=8*SZ, lo=Math.max(hi+14*SZ, Math.min(pt0+14+.3*(floor-pt0-14), wHi-22*SZ));   // high up, above the highest water on the chart
           const cy=hi+(lo-hi)*rnd(), h=13*SZ;
           if (!sharkFree(cx,cy) || !clear(cx-h,cx+h)) continue;
           taken.push([cx-h,cx+h]);
           { const d=rnd()<.5?1:-1; g+=gull(cx, cy, d); const L=move('gull',cx,cy,d);
-            // A group of 1-12 sharing the lead gull's path (mostly small, sometimes long): a loose string or a clump
-            const cnt=[1,1,2,2,3,3,4,5,6,8,10,12][Math.floor(rnd()*12)], string=rnd()<.5, gap=(16+rnd()*10)*SZ;
+            // Gulls fly mostly alone; now and then a loose pair shares a path
+            const cnt = rnd()<.15 ? 2 : 1;
             for (let j=1; j<cnt; j++){
-              const ox = string ? d*j*gap + (rnd()-.5)*8*SZ : (rnd()-.5)*Math.sqrt(cnt)*34*SZ;
-              const oy = string ? (rnd()-.5)*10*SZ + j*(rnd()-.5)*2*SZ : (rnd()-.5)*Math.sqrt(cnt)*12*SZ;
-              const y0=Math.max(pt0+14, cy-oy);
+              const ox = d*(26+rnd()*30)*SZ, oy = (rnd()-.5)*14*SZ;
+              const y0=Math.max(8*SZ, cy-oy);
               g+=gull(cx+ox, y0, d);
               seaM.push(Object.assign({}, L, {ox, oy, bp:rnd()*6.283, bt:2.5+rnd()*3, el:null, lx:undefined, lag:undefined}));
             } }
@@ -710,7 +711,7 @@ function buildStrip(){
     s+=`<line x1="${x(m)}" x2="${x(m)}" y1="${pt-2}" y2="${pt+ih}" stroke="var(--line)" stroke-width="1"/>`;
   }
   const pts=td.tl.map(p=>`${x(p.t)},${y(p.v).toFixed(1)}`);
-  seaPts=td.tl.map(p=>[+x(p.t), y(p.v)]);   // the tide line, for creatures roaming anywhere along it
+  seaPts=td.tl.map(p=>[+x(p.t), y(p.v)]); seaHi=Math.min(...seaPts.map(p=>p[1]));   // the tide line, for creatures roaming anywhere along it
   // Height lines (dotted, and the solid zero line) only in the air: clipped to the area above the water, so below the surface you see only waves
   s+=`<defs><clipPath id="tideAir"><path d="M0,0 L0,${y(td.tl[0].v).toFixed(1)} L${pts.join(' L')} L${TW},${y(td.tl[td.tl.length-1].v).toFixed(1)} L${TW},0 Z"/></clipPath></defs>`;
   for (const [v] of ticks()) s+= Math.abs(v)<1e-9
@@ -808,16 +809,19 @@ function moveSea(now){
     if (m.lx===undefined || m.lag===undefined){ m.lx=tgt; m.lag=.2+Math.random()*.6; m.lt=ms; }
     const dt=Math.min(.25,(ms-m.lt)/1000); m.lt=ms; m.lx += (tgt-m.lx)*(1-Math.exp(-dt/m.lag));
     const px=m.lx+left, sx=seaSurf(px);
-    if (m.k==='crab'){   // one crab on screen at a time: another shows only by walking in from an edge after this one has gone
-      const on = m.lx>-20 && m.lx<vw+20;
-      if (seaCrab===m){ if (!on) seaCrab=null; }
-      else if (on && !seaCrab && !m.wasOn) seaCrab=m;
-      m.wasOn=on; m.el.style.visibility = (seaCrab===m || !on) ? '' : 'hidden';
+    if (seaOn[m.k]){   // at most 1 crab and 2 great whites on screen: another shows only by coming in from an edge once there's room
+      const on = m.lx>-30 && m.lx<vw+30, S=seaOn[m.k], cap=SEA_CAP[m.k];
+      if (S.has(m)){ if (!on) S.delete(m); }
+      else if (on && !m.wasOn && S.size<cap) S.add(m);
+      m.wasOn=on; m.el.style.visibility = (S.has(m) || !on) ? '' : 'hidden';
     }
     let y=m.cy, rot='';
     if (m.k==='otter'){ y=sx-3*z; rot=` rotate(${seaSlope(px).toFixed(1)})`; }
     else if (m.k==='shark'){ const f=Math.max(.05, Math.min(.95, m.f0+.45*v)); y=Math.min(m.floor-6*z, Math.max(sx+17*z, sx+f*(m.floor-16-sx))); }
-    else if (m.k==='gull') y=Math.min(sx-12*z, Math.max(m.top, sx-Math.max(22*z, m.h0+(m.oy||0)+35*v+3*z*Math.sin(6.2832*tau/(m.bt*1.3||4)+(m.bp||0)))));   // never touching the water
+    else if (m.k==='gull'){   // high and level: a gentle drift up and down in the top of the sky, no diving; never near the water
+      // their own band near the top of the sky, ending 22 px above the highest water on the chart, so gulls never follow the tide down
+      const gt=8*z, band=Math.max(14*z, Math.min(m.top+.3*(m.floor-m.top), seaHi-22*z)-gt), alt=m.cy-(m.oy||0)-gt;
+      y=gt+Math.max(0, Math.min(band, alt+3*z*v+1.5*z*Math.sin(6.2832*tau/(m.bt*1.3||4)+(m.bp||0)))); }
     const sz=m.k==='crab' ? `scale(${z})` : `scale(${m.face*z},${z})`;
     m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
   }
