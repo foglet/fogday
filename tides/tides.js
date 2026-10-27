@@ -78,7 +78,7 @@ function alignHero(){
   const need=big.getBoundingClientRect().width; big.style.flexWrap=fw; big.style.width=wd;
   // Beside only if every line of the tide text fits on one line there; otherwise it goes below, where it has the full width
   const room=hero.getBoundingClientRect().width-(sub.getBoundingClientRect().left-hero.getBoundingClientRect().left);
-  const widest=Math.max(0, ...[...hero.querySelectorAll('.hero-side .nrow .label')].map(l=>{
+  const widest=Math.max(0, ...[...hero.querySelectorAll('.hero-side .nrow:not(.kingalert) .label')].map(l=>{
     const ws=l.style.whiteSpace; l.style.whiteSpace='nowrap'; const r=document.createRange(); r.selectNodeContents(l); const w=r.getBoundingClientRect().width; l.style.whiteSpace=ws; return w; }));
   const x=sub.getBoundingClientRect().left-hero.getBoundingClientRect().left, fits=need+6<=x && widest<=room;
   hero.style.setProperty('--desc-x', x.toFixed(1)+'px');
@@ -302,6 +302,8 @@ function renderNow(){
   const nextLine = far ? `<div class="nrow"><span class="label">${esc(L.farTide)}</span></div><div class="nrow"><span class="label">${esc(L.comeBack)}</span></div>` : slack ? `<div class="nrow slack${negNow?' neg':''}"><span class="label">${esc(L.slack+(negNow?L.stop.trim():''))}</span></div>`
     : n1 ? row(esc(tr('next', {kind: kind(n1), when: when(n1)})+(negNow?L.stop.trim():'')), n1) : '';
   // Second line while the tide is below zero: "Visit a tide pool. Respect Mother Nature."
+  // NWS king tide / coastal flood alert, above the next-tide line (in #FF5500)
+  const alertLine = ((kingAlert[beach]||{}).list||[]).map(t=>`<div class="nrow kingalert"><span class="label">${esc(t)}</span></div>`).join('');
   const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
@@ -313,7 +315,7 @@ function renderNow(){
       <svg class="arrow ${rising?'up':'down'}" data-fd="${ft(lv).charAt(0)==='−'?'m':ft(lv).charAt(0)}" viewBox="-500 -600 1000 1200" aria-hidden="true">${arrow}</svg>
       <span class="slab grad num">${ft(lv)}</span><span class="label spdunit" data-ld="${String(ft(lv)).slice(-1)}">${U()}</span>
     </button>
-    <div class="hero-side"><div class="nlist">${nextLine}${poolLine}</div></div>`);
+    <div class="hero-side"><div class="nlist">${alertLine}${nextLine}${poolLine}</div></div>`);
   if (ar && wasUp!==rising) flipArrow(ar, fromTop);
 }
 /* Tide arrow changing direction: a smooth half turn (always clockwise), then it drops or rises to its resting spot
@@ -378,6 +380,22 @@ async function nws(url){
   const r = await fetch(url, {headers:{'Accept':'application/geo+json'}});
   if (!r.ok) throw new Error('NWS ' + r.status);
   return r.json();
+}
+/* King tides: while the NWS has an active coastal flood (or king tide) alert for the beach, its headline shows in #FF5500
+   above the next-tide line. Checked with the weather and every 10 minutes; nothing shows if there is none or the NWS is unreachable. */
+const kingAlert = {};
+async function loadKingAlert(key){
+  const c=kingAlert[key]; if (c && Date.now()-c.at < 10*6e4) return;
+  const b=BEACHES[key];
+  try {
+    const j=await nws(`https://api.weather.gov/alerts/active?point=${(+b.lat).toFixed(4)},${(+b.lon).toFixed(4)}`);
+    const list=(j.features||[]).map(f=>f.properties||{})
+      .filter(p=>/coastal flood/i.test(p.event||'') || /king tide/i.test((p.headline||'')+' '+(p.description||'')))
+      .filter(p=>!p.ends || new Date(p.ends) > Date.now())
+      .map(p=>String((p.parameters && p.parameters.NWSheadline && p.parameters.NWSheadline[0]) || p.headline || p.event).trim());
+    kingAlert[key]={at:Date.now(), list:[...new Set(list)]};
+  } catch(e){ if (!c) kingAlert[key]={at:Date.now()-8*6e4, list:[]}; return; }   // offline: try again in a couple of minutes
+  if (key===beach) renderNow();
 }
 async function loadWeather(key){
   const c = wxCache[key];
@@ -542,14 +560,14 @@ let seaSeed = 1 + Math.floor(Math.random()*2147483646);
    creature and keeps changing (speeding up and slowing down), and holds still when the chart does. It rides the tide:
    otters on the surface, sharks under it, gulls above it, crabs along the floor, each facing the way it moves.
    They also swim slowly on their own, roaming off screen and back; moveSea() runs from placeStrip() and a ~30 fps clock. */
-let seaOn={crab:new Set(), shark:new Set()}, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
+let seaOn={crab:new Set(), shark:new Set(), gull:new Set()}, seaPelOn=false, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
 // Swimming on their own, slowly: [wander pace, top roam speed in px/s]; gulls quickest, otters laziest
 const SEA_IDLE={gull:[22,24], pelican:[14,18], shark:[15,15], crab:[9,9], otter:[6,6]};
 // Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
 const SEA_CAP={crab:1, shark:2};
 const SEA_LAM={gull:[150,280], pelican:[300,560], shark:[220,460], crab:[320,600], otter:[560,900]};
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaOn={crab:new Set(), shark:new Set()};
+  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaOn={crab:new Set(), shark:new Set(), gull:new Set()}; seaPelOn=false;
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -809,8 +827,10 @@ function moveSea(now){
     if (m.lx===undefined || m.lag===undefined){ m.lx=tgt; m.lag=.2+Math.random()*.6; m.lt=ms; }
     const dt=Math.min(.25,(ms-m.lt)/1000); m.lt=ms; m.lx += (tgt-m.lx)*(1-Math.exp(-dt/m.lag));
     const px=m.lx+left, sx=seaSurf(px);
-    if (seaOn[m.k]){   // at most 1 crab and 2 great whites on screen: another shows only by coming in from an edge once there's room
-      const on = m.lx>-30 && m.lx<vw+30, S=seaOn[m.k], cap=SEA_CAP[m.k];
+    // At most 1 crab and 2 great whites on screen, and while pelicans are on screen only 1 gull: another shows only by
+    // coming in from an edge once there's room (gulls already showing finish their flight)
+    if (seaOn[m.k]){
+      const on = m.lx>-30 && m.lx<vw+30, S=seaOn[m.k], cap = m.k==='gull' ? (seaPelOn ? 1 : 99) : SEA_CAP[m.k];
       if (S.has(m)){ if (!on) S.delete(m); }
       else if (on && !m.wasOn && S.size<cap) S.add(m);
       m.wasOn=on; m.el.style.visibility = (S.has(m) || !on) ? '' : 'hidden';
@@ -849,6 +869,7 @@ function moveSea(now){
       for (const bd of b.birds){ bd.jt = bd.lx===undefined ? 0 : ms; bd.jx=bd.lx; bd.jy=bd.ly; bd.js=bd.ls; bd.flock=a; a.birds.push(bd); }
       b.birds=[]; b.dead=true; }
   }
+  let pelOn=false;
   for (const f of F){ if (f.dead) continue; const P=f.P, ds=.35+.65*f.dep, k=f.skim;
     for (const bd of f.birds) if (bd.el) bd.el.style.visibility = f.gone ? 'hidden' : '';
     if (f.gone) continue;
@@ -863,10 +884,11 @@ function moveSea(now){
       let y=far+(near-far)*f.dep, s=ds;
       if (bd.jt){ const e=Math.min(1,(ms-bd.jt)/2500), u=e*e*(3-2*e);      // a joining bird glides into its place in the line
         px=bd.jx+(px-bd.jx)*u; y=bd.jy+(y-bd.jy)*u; s=bd.js+(s-bd.js)*u; if (e>=1) bd.jt=0; }
-      bd.lx=px; bd.ly=y; bd.ls=s;
+      bd.lx=px; bd.ly=y; bd.ls=s; if (px-left>-20 && px-left<vw+20) pelOn=true;
       bd.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(f.d*z*s).toFixed(3)},${(z*s).toFixed(3)})`);
     });
   }
+  seaPelOn=pelOn;
 }
 // The slow swim runs on its own at ~30 frames a second (paused in background tabs; off for reduced motion)
 { let last=0; const still = matchMedia && matchMedia('(prefers-reduced-motion: reduce)');
@@ -888,6 +910,7 @@ function render(opts2){
   drawStrip();
   const s=dayStart(view), e=dayStart(addDays(view,1));
   if (!opts2 || opts2.weather !== false) renderWeather();
+  loadKingAlert(beach);
 }
 
 $('tideNow').addEventListener('click', e=>{
@@ -1086,7 +1109,7 @@ let glideTarget=null;
 let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; stripKey=''; drawStrip(); } }, 150); });
 setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the clock caught up with the viewed time
   if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); if (!anim) drawStrip(); } }, 60000);  // rolls over to the new day at midnight
-setInterval(()=>{ renderWeather(); }, 10*60000);
+setInterval(()=>{ renderWeather(); loadKingAlert(beach); }, 10*60000);
 lastW=$('strip').clientWidth;
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ stripKey=''; drawStrip(); });   // label sizes settle once fonts load
 try { render(); } catch (err) { console.error('SF Tides:', err); try { renderNow(); drawStrip(); } catch (e2) { console.error(e2); } }
