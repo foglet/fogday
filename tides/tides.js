@@ -560,14 +560,14 @@ let seaSeed = 1 + Math.floor(Math.random()*2147483646);
    creature and keeps changing (speeding up and slowing down), and holds still when the chart does. It rides the tide:
    otters on the surface, sharks under it, gulls above it, crabs along the floor, each facing the way it moves.
    They also swim slowly on their own, roaming off screen and back; moveSea() runs from placeStrip() and a ~30 fps clock. */
-let seaOn={crab:new Set(), shark:new Set(), gull:new Set()}, seaPelOn=false, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
+let seaOn={crab:new Set(), shark:new Set(), gull:new Set()}, seaPelOn=false, seaPelDir=1, seaHi=0, seaM=[], seaFlocks=[], seaSZ=1, seaTW=1, seaPts=[];
 // Swimming on their own, slowly: [wander pace, top roam speed in px/s]; gulls quickest, otters laziest
 const SEA_IDLE={gull:[22,24], pelican:[14,18], shark:[15,15], crab:[9,9], otter:[6,6]};
 // Speeds differ by kind and by creature: gulls dart, sharks cruise, crabs scuttle, otters drift (about 6x from fastest to slowest)
 const SEA_CAP={crab:1, shark:2};
 const SEA_LAM={gull:[150,280], pelican:[300,560], shark:[220,460], crab:[320,600], otter:[560,900]};
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaOn={crab:new Set(), shark:new Set(), gull:new Set()}; seaPelOn=false;
+  let seed = seaSeed; seaM=[]; seaFlocks=[]; seaPelDir = seaSeed%2 ? 1 : -1; seaOn={crab:new Set(), shark:new Set(), gull:new Set()}; seaPelOn=false;
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -659,7 +659,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
     do n={otter:0, gull:upTo(3), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
     // About half the screen-widths get a group of 1-12 pelicans in a loose line, low over the water, leader in front
     if (rnd()<.5) for (let tries=0; tries<60; tries++){
-      const cnt=[1,2,3,3,4,4,5,6,7,8,10,12][Math.floor(rnd()*12)], d=rnd()<.5?1:-1, gap=40*SZ, span=(cnt-1)*gap;   // 1-12, mixed
+      const cnt=[1,2,3,3,4,4,5,6,7,8,10,12][Math.floor(rnd()*12)], d=seaPelDir, gap=40*SZ, span=(cnt-1)*gap;   // 1-12, mixed; all flocks share one heading
       const cx=seg+40+rnd()*(W-80), x0=Math.min(cx, cx+d*span), x1=Math.max(cx, cx+d*span);
       if (cx<20 || cx>TW-20 || !clear(cx-18*SZ, cx+18*SZ)) continue;   // room for the leader; a long line may trail off screen
       const h=(10+rnd()*20)*SZ, oy=[...Array(cnt)].map((_,i)=> i? (rnd()-.5)*6*SZ - i*1.2*SZ : 0);
@@ -856,8 +856,11 @@ function moveSea(now){
     const ds=.35+.65*f.dep, L=(f.birds.length-1)*40*z*ds;
     const sw=Math.sin(6.2832*r.tau/P.sP+P.sp), q=Math.max(0, Math.min(1, (sw-P.sth)/.35));
     f.skim=q*q*(3-2*q)*Math.max(0, (f.dep-.6)/.4);                    // skimming the water, only when close in
-    if (f.gone){ if (ms<f.gone) continue; f.gone=0;                  // back in from the left or the right, at random (turned while away)
-      f.d = Math.random()<.5 ? 1 : -1; f.x = f.d>0 ? vw+30 : -30; }  // d=1 flies left, so it enters at the right edge
+    if (f.gone){ if (ms<f.gone) continue; f.gone=0;
+      // Pelicans never fly opposite ways at once: a returning flock takes the shared heading; only with no other flock
+      // in the air can it come back from either side (turned while away). d=1 flies left, so it enters at the right edge.
+      if (!F.some(o=>o!==f && !o.dead && !o.gone)) seaPelDir = Math.random()<.5 ? 1 : -1;
+      f.d = seaPelDir; f.x = f.d>0 ? vw+30 : -30; }
     f.x -= f.d*f.spd*ds*dt;                                           // far birds look slower
     const tail=f.x+f.d*L;
     if ((f.d>0 && Math.max(f.x,tail) < -40) || (f.d<0 && Math.min(f.x,tail) > vw+40)) f.gone=ms+(5+Math.random()*35)*1000;
