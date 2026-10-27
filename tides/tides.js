@@ -770,7 +770,20 @@ function applyStatic(){
   const next=I18N.order[(I18N.order.indexOf(lang)+1)%I18N.order.length], b=$('langBtn');
   b.textContent = lang.toUpperCase();
   b.setAttribute('aria-label', tr('langAria', {next: I18N[next].name})); b.title = I18N[next].name;
+  applySea();
 }
+/* Flip-flops beside "Made at Baker Beach": tap to hide / show the sea life (sharks, crab, otter, gull); only toggles a class, no redraw */
+let seaOn=true;
+try { seaOn = localStorage.getItem('sf-tides-sea') !== '0'; } catch(e){}
+function applySea(){
+  $('strip').classList.toggle('nosea', !seaOn);
+  const b=$('seaBtn'), t=seaOn?L.seaHide:L.seaShow;
+  b.setAttribute('aria-pressed', seaOn?'true':'false'); b.setAttribute('aria-label', t); b.title=t;
+}
+$('seaBtn').addEventListener('click', ()=>{
+  seaOn=!seaOn; try { localStorage.setItem('sf-tides-sea', seaOn?'1':'0'); } catch(err){}
+  applySea();
+});
 /* Tap the language code (EN → FR → ES → ZH → EN), like the units: the whole page redraws in the new language */
 $('langBtn').addEventListener('click', ()=>{
   lang = I18N.order[(I18N.order.indexOf(lang)+1)%I18N.order.length]; L = I18N[lang];
