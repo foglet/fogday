@@ -555,14 +555,14 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
       <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
       <feMerge><feMergeNode in="rim"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="sealife">`;
-  const crab = (cx,cy) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${SZ})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
+  const crab = (cx,cy) => `<g class="sl-crab" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${SZ})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
       <path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/>
       <path d="M-5,-2 l-3,-5 M5,-2 l3,-5" stroke-width="1.6" fill="none"/>
       <circle cx="-8.5" cy="-8" r="2.6" stroke="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
       <ellipse cx="0" cy="0" rx="7.5" ry="4.8" stroke="none"/>
       <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`;
   // Great white shark, facing left (scale -1 turns it): slate-grey back, white underside, dorsal and pectoral fins, forked tail
-  const shark = (cx,cy,dir) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+  const shark = (cx,cy,dir) => `<g class="sl-shark" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
       <path d="M-1,-5.8 L3,-12.5 L6.5,-5.4 Z" fill="#5d6f7d"/>
       <path d="M-18,0 C-15,-4 -8,-6 0,-6 C8,-6 13,-3 16,-1 L23.5,-8.5 L21,0 L23.5,6.5 L16,2 C10,5 -6,6 -13,4 C-16,3 -18,1 -18,0 Z" fill="#6f8191"/>
       <path d="M-17.4,1.3 C-10,5.6 6,5.2 15.2,2.2 C8,6.2 -8,6.4 -13,4.2 C-15.6,3.2 -17.2,2.2 -17.4,1.3 Z" fill="#f2f4f5"/>
@@ -575,7 +575,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   const GAP = W<520 ? 24 : 44;   // phones are narrow: a smaller gap still keeps them apart
   const taken=[], clear=(l,r) => !taken.some(([L,R]) => r+GAP>L && l-GAP<R);
   // Sea otter floating on its back at the surface (head left): brown body, pale face, paws up on its chest, tail and a hind foot
-  const otter = (cx,cy,dir,ang) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+  const otter = (cx,cy,dir,ang) => `<g class="sl-otter" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
       <ellipse cx="15" cy="0.5" rx="5.5" ry="2" fill="#5a3d2a" transform="rotate(-8 15 0.5)"/>
       <ellipse cx="0" cy="0" rx="13" ry="4.6" fill="#6b4a33"/>
       <ellipse cx="10.5" cy="-4" rx="2.2" ry="1.4" fill="#5a3d2a"/>
@@ -584,7 +584,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <circle cx="-16.6" cy="-2.6" r=".8" fill="#1b2a33"/><circle cx="-13.6" cy="-4.4" r=".7" fill="#1b2a33"/>
       <path d="M-17.6,-1.4 l-2.4,-.6 M-17.6,-.9 l-2.6,.4" stroke="#3a2a1d" stroke-width=".4" fill="none"/></g>`;
   // Gull in flight (head left): white body, grey wings with dark tips, yellow beak
-  const gull = (cx,cy,dir) => `<g transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+  const gull = (cx,cy,dir) => `<g class="sl-gull" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
       <path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
       <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/>
       <ellipse cx="0" cy="0" rx="6" ry="2.3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
@@ -772,17 +772,31 @@ function applyStatic(){
   b.setAttribute('aria-label', tr('langAria', {next: I18N[next].name})); b.title = I18N[next].name;
   applySea();
 }
-/* Flip-flops beside "Made at Baker Beach": tap to hide / show the sea life (sharks, crab, otter, gull); only toggles a class, no redraw */
-let seaOn=true;
-try { seaOn = localStorage.getItem('sf-tides-sea') !== '0'; } catch(e){}
+/* Flip-flops beside "Made at Baker Beach": count fast taps (within 350 ms of each other).
+   1 tap: all sea life (hide all if every kind is showing, else show all); 2: crabs; 3: the otter; 4: sharks.
+   Only toggles classes on the chart (no redraw); the hidden kinds are remembered per visitor. */
+const SEA_KINDS=['crab','otter','shark','gull'], SEA_TAP={2:'crab',3:'otter',4:'shark'};
+let seaHidden=new Set();
+try { const v=localStorage.getItem('sf-tides-sea');
+  if (v==='0') seaHidden=new Set(SEA_KINDS);   // the first version stored on / off
+  else if (v && v!=='1') seaHidden=new Set(v.split(',').filter(k=>SEA_KINDS.includes(k)));
+} catch(e){}
 function applySea(){
-  $('strip').classList.toggle('nosea', !seaOn);
-  const b=$('seaBtn'), t=seaOn?L.seaHide:L.seaShow;
-  b.setAttribute('aria-pressed', seaOn?'true':'false'); b.setAttribute('aria-label', t); b.title=t;
+  const st=$('strip'); for (const k of SEA_KINDS) st.classList.toggle('no-'+k, seaHidden.has(k));
+  const b=$('seaBtn'), n=seaHidden.size;
+  b.setAttribute('aria-pressed', n===0?'true': n===SEA_KINDS.length?'false':'mixed');
+  b.setAttribute('aria-label', L.seaHelp); b.title=L.seaHelp;
 }
+let seaTaps=0, seaTimer=0;
 $('seaBtn').addEventListener('click', ()=>{
-  seaOn=!seaOn; try { localStorage.setItem('sf-tides-sea', seaOn?'1':'0'); } catch(err){}
-  applySea();
+  seaTaps++; clearTimeout(seaTimer);
+  seaTimer=setTimeout(()=>{
+    const n=seaTaps; seaTaps=0;
+    if (n===1) seaHidden = seaHidden.size ? new Set() : new Set(SEA_KINDS);
+    else { const k=SEA_TAP[Math.min(n,4)]; if (seaHidden.has(k)) seaHidden.delete(k); else seaHidden.add(k); }
+    try { localStorage.setItem('sf-tides-sea', seaHidden.size ? [...seaHidden].join(',') : '1'); } catch(err){}
+    applySea();
+  }, 350);
 });
 /* Tap the language code (EN → FR → ES → ZH → EN), like the units: the whole page redraws in the new language */
 $('langBtn').addEventListener('click', ()=>{

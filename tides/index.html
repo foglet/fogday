@@ -202,12 +202,13 @@ title: Tides of San Francisco
   .tides .langbtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; color: var(--accent); -webkit-tap-highlight-color: transparent; }
   .tides .langbtn:hover { opacity: .8; }
-  /* Flip-flops beside the credit: tap to hide / show the sea life in the tide chart (remembered per visitor) */
-  .tides .seabtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: var(--accent); line-height: 0; align-self: center;
+  /* Flip-flops beside the credit: 1 tap all sea life, 2 crabs, 3 otter, 4 sharks (remembered per visitor) */
+  .tides .seabtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: var(--accent); line-height: 0; align-self: center; touch-action: manipulation;
     -webkit-tap-highlight-color: transparent; }
   .tides .seabtn:hover { opacity: .8; }
   .tides .seabtn[aria-pressed="false"] { color: var(--muted); opacity: .55; }
-  .tides .strip.nosea .sealife { display: none; }
+  .tides .seabtn[aria-pressed="mixed"] { opacity: .7; }
+  .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
@@ -278,7 +279,7 @@ title: Tides of San Francisco
       <span data-i18n="credit">Weather and wind icons: <a href="https://phosphoricons.com">Phosphor Icons</a>. Tide arrow: AIGA symbol signs. Moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
       </div>
     </details>
-    <span class="madeat"><span data-i18n="madeat">Made at Baker Beach</span><button class="seabtn" id="seaBtn" type="button" aria-pressed="true" aria-label="Hide sea life" title="Hide sea life"><svg viewBox="0 0 26 24" width="20" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5C11 2.5 12 5.5 11.5 9.5C11 12.5 11.5 15.5 11.5 17.5C11.5 20 10 21 8 21C6 21 4.5 20 4.5 17.5C4.5 15 5 12.5 4.5 9.5C4 5.5 5 2.5 8 2.5Z"/><path d="M4.9 11L8 5.5L11.1 11"/><path d="M18 4C21 4 22 7 21.5 11C21 14 21.5 17 21.5 19C21.5 21.5 20 22.5 18 22.5C16 22.5 14.5 21.5 14.5 19C14.5 16.5 15 14 14.5 11C14 7 15 4 18 4Z"/><path d="M14.9 12.5L18 7L21.1 12.5"/></svg></button><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button></span>
+    <span class="madeat"><span data-i18n="madeat">Made at Baker Beach</span><button class="seabtn" id="seaBtn" type="button" aria-pressed="true" aria-label="Sea life: tap to hide or show all; 2 taps crabs, 3 the otter, 4 sharks" title="Sea life: tap to hide or show all; 2 taps crabs, 3 the otter, 4 sharks"><svg viewBox="0 0 26 24" width="20" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5C11 2.5 12 5.5 11.5 9.5C11 12.5 11.5 15.5 11.5 17.5C11.5 20 10 21 8 21C6 21 4.5 20 4.5 17.5C4.5 15 5 12.5 4.5 9.5C4 5.5 5 2.5 8 2.5Z"/><path d="M4.9 11L8 5.5L11.1 11"/><path d="M18 4C21 4 22 7 21.5 11C21 14 21.5 17 21.5 19C21.5 21.5 20 22.5 18 22.5C16 22.5 14.5 21.5 14.5 19C14.5 16.5 15 14 14.5 11C14 7 15 4 18 4Z"/><path d="M14.9 12.5L18 7L21.1 12.5"/></svg></button><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button></span>
     </div>
   </div>
 </main>
