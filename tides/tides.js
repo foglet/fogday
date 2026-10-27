@@ -636,7 +636,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   };
   for (let seg=0; seg<TW; seg+=W){
     let sharks=0, n;
-    do n={otter:upTo(2), gull:upTo(3), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
+    do n={otter:0, gull:upTo(3), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
     // About half the screen-widths get a group of 3-6 pelicans in a loose line, low over the water, leader in front
     if (rnd()<.5) for (let tries=0; tries<60; tries++){
       const cnt=3+Math.floor(rnd()*4), d=rnd()<.5?1:-1, gap=40*SZ, span=(cnt-1)*gap;
@@ -920,9 +920,9 @@ function applyStatic(){
   applySea();
 }
 /* Flip-flops beside "Made at Baker Beach": count fast taps (within 350 ms of each other).
-   1 tap: all sea life (hide all if every kind is showing, else show all); 2: crabs; 3: the otter; 4: sharks.
+   1 tap: all sea life (hide all if every kind is showing, else show all); 2: crabs; 4: sharks (3 was the otters, removed for now).
    Only toggles classes on the chart (no redraw); the hidden kinds are remembered per visitor. */
-const SEA_KINDS=['crab','otter','shark','gull','pelican'], SEA_TAP={2:'crab',3:'otter',4:'shark'};
+const SEA_KINDS=['crab','otter','shark','gull','pelican'], SEA_TAP={2:'crab',4:'shark'};   // otters removed for now (restore: 3:'otter', otter:upTo(2) in seaLife, and the labels)
 let seaHidden=new Set();
 try { const v=localStorage.getItem('sf-tides-sea');
   if (v==='0') seaHidden=new Set(SEA_KINDS);   // the first version stored on / off
@@ -940,7 +940,7 @@ $('seaBtn').addEventListener('click', ()=>{
   seaTimer=setTimeout(()=>{
     const n=seaTaps; seaTaps=0;
     if (n===1) seaHidden = seaHidden.size ? new Set() : new Set(SEA_KINDS);
-    else { const k=SEA_TAP[Math.min(n,4)]; if (seaHidden.has(k)) seaHidden.delete(k); else seaHidden.add(k); }
+    else { const k=SEA_TAP[Math.min(n,4)]; if (!k) return; if (seaHidden.has(k)) seaHidden.delete(k); else seaHidden.add(k); }
     try { localStorage.setItem('sf-tides-sea', seaHidden.size ? [...seaHidden].join(',') : '1'); } catch(err){}
     applySea();
   }, 350);
