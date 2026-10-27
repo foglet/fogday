@@ -530,12 +530,14 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
 /* The whole week is drawn once (per beach, units, width and hour) as one wide picture; dragging only slides it
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
-/* Sea life in the chart: in each screen-width of time two great white sharks at different depths, a sea otter floating at the surface,
-   a gull above the water, and a crab on the floor.
-   Drawn with a 2px border in the card color so they read against the waves. Placed the same way every time (seeded),
+/* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3), sea otters
+   floating at the surface (0-2), gulls above the water (0-3) and crabs on the floor (0-2), at least two creatures in all.
+   Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
+   beach change and return to now; language, units and resizing keep the same draw.
    clear of the day names and of the low-tide labels, and the fish always under the surface. */
+let seaSeed = 1 + Math.floor(Math.random()*2147483646);
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
-  let seed = Math.floor(start/36e5) % 2147483647 || 1;
+  let seed = seaSeed;
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
   const k = TW/(end-start), tAt = px => start + px/k;
   const surf = px => { const t=tAt(px), tl=td.tl; let i=tl.findIndex(p=>p.t>=t); if (i<0) i=tl.length-1; if (i<1) i=1;
@@ -591,17 +593,20 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <circle cx="-5.6" cy="-0.6" r="2" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
       <path d="M-7.4,-0.6 l-2.4,.5 l2.3,.5 Z" fill="#f2b632"/><circle cx="-6.2" cy="-1.1" r=".55" fill="#1b2a33"/>
       <path d="M5.5,0 l3.4,-1 l-.2,2.2 Z" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/></g>`;
-  // Each screen-width: the otter at the surface and a gull in the air first (so even a narrow phone shows them), then two sharks, then the crab.
-  // Sharks sit in depth bands (upper / lower water); every creature keeps its sideways distance from the rest.
-  const SH = {half:26*SZ, topPad:18*SZ, bands:[[.05,.42],[.58,.95]]};
+  // Each screen-width: random counts; otters at the surface and gulls in the air first (so even a narrow phone shows them),
+  // then sharks, then crabs. Sharks each get their own depth band; every creature keeps its sideways distance from the rest.
+  const SH = {half:26*SZ, topPad:18*SZ};
+  const upTo = n => Math.floor(rnd()*(n+1));
   const slope = px => Math.atan2(surf(px+6)-surf(px-6), 12)*180/Math.PI;
   for (let seg=0; seg<TW; seg+=W){
-    let sharks=0;
-    for (const kind of ['otter','gull','shark','shark']){
+    let sharks=0, n;
+    do n={otter:upTo(2), gull:upTo(3), shark:upTo(3), crab:upTo(2)}; while (n.otter+n.gull+n.shark+n.crab < 2);
+    const kinds=[...Array(n.otter).fill('otter'), ...Array(n.gull).fill('gull'), ...Array(n.shark).fill('shark')];
+    for (const kind of kinds){
       for (let tries=0; tries<200; tries++){
         const cx=seg+30+rnd()*(W-60); if (cx>TW-30) continue;   // label and day-name boxes are checked with each creature's height below
         if (kind==='shark'){
-          const top=surf(cx)+SH.topPad, bot=floor-16, band=SH.bands[sharks]; if (bot-top < 32) continue;
+          const top=surf(cx)+SH.topPad, bot=floor-16, band=[(sharks+.05)/n.shark, (sharks+.95)/n.shark]; if (bot-top < 32) continue;
           const cy=top+(bot-top)*(band[0]+rnd()*(band[1]-band[0]));
           if (!sharkFree(cx,cy) || !clear(cx-SH.half,cx+SH.half)) continue;
           taken.push([cx-SH.half,cx+SH.half]); g+=shark(cx, cy, rnd()<.5?1:-1); sharks++; break;
@@ -619,15 +624,15 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
         }
       }
     }
-    // then one crab on the floor, where it fits between the others
-    for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); break; }
+    // then the crabs on the floor, where they fit between the others
+    for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); break; }
   }
   return g+'</g>';
 }
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
   const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
-  const key=[beach, units, lang, W, td.hr].join('|');
+  const key=[beach, units, lang, W, td.hr, seaSeed].join('|');
   if (key===stripKey) return;
   stripKey=key; stripW=W; stripG={W, H, pt, ih};
   const start=td.tl[0].t, end=td.tl[td.tl.length-1].t, k=W/SPAN_MS, TW=Math.ceil((end-start)*k);
@@ -811,7 +816,7 @@ $('langBtn').addEventListener('click', ()=>{
 const ORDER=Object.keys(BEACHES);
 $('beachBtn').addEventListener('click', ()=>{
   beach=ORDER[(ORDER.indexOf(beach)+1)%ORDER.length];
-  render();
+  newSea(); render();
 });
 /* ---- Drag the chart sideways to look ahead, up to 36 hours; it stops at now going back.
    The tide panel, sun, moon and forecast follow the center line. ---- */
@@ -834,9 +839,14 @@ function setCursor(t){
   const now=Date.now();
   t=Math.min(t, now+MAX_AHEAD_MS);
   scrub = t <= now+6e4 ? null : t;   // within a minute of now is live again
+  if (scrub!==null) seaAway=true;
   if (!frame) frame=requestAnimationFrame(redrawViewed);
   return t>now && t<now+MAX_AHEAD_MS;   // false once it hits an end
 }
+/* New sea life when the chart comes back to now (tap, Home, or a drag / fling / glide that ends at now), and on a beach change */
+let seaAway=false;
+function newSea(){ seaSeed = 1 + Math.floor(Math.random()*2147483646); stripKey=''; }
+function settled(){ if (scrub===null && seaAway){ seaAway=false; newSea(); drawStrip(); } }
 /* Motion: a fling keeps gliding and slows to a stop; keys and Home / End glide to their target */
 let anim=0;
 const stopAnim=()=>{ if (anim) cancelAnimationFrame(anim); anim=0; };
@@ -846,7 +856,7 @@ function fling(v){            // v: time per millisecond of real time
     v*=Math.exp(-dt/325);       // the same easing as an iPhone list fling
     const moving=setCursor(cursor()+v*dt);
     if (moving && Math.abs(v*stripK)>0.02) anim=requestAnimationFrame(step);
-    else { anim=0; const s=snapTime(cursor()); if (s!==cursor()) glideTo(s); } };   // a fling that stops near a high or low settles onto it
+    else { anim=0; const s=snapTime(cursor()); if (s!==cursor()) glideTo(s); else settled(); } };   // a fling that stops near a high or low settles onto it
   anim=requestAnimationFrame(step);
 }
 /* Snap: within 8 px of a high or low, the center line locks onto it (dragging on past releases it) */
@@ -859,7 +869,7 @@ function snapTime(t){
 function glideTo(target){
   stopAnim(); const from=cursor(), t0=performance.now(), D=320;
   const step=ts=>{ const p=Math.min(1,(ts-t0)/D), e=1-Math.pow(1-p,3);
-    setCursor(from+(target-from)*e); anim = p<1 ? requestAnimationFrame(step) : 0; };
+    setCursor(from+(target-from)*e); anim = p<1 ? requestAnimationFrame(step) : 0; if (!anim) settled(); };
   anim=requestAnimationFrame(step);
 }
 {
@@ -890,6 +900,7 @@ function glideTo(target){
     // A tap (no real movement, quick): glide back to the current time
     if (e.type==='pointerup' && drag.moved<6 && performance.now()-drag.at<500) glideTo(Date.now());
     drag=null; strip.classList.remove('dragging');
+    if (!anim) settled();   // let go right at now, with no fling or glide to follow
   };
   strip.addEventListener('pointerup', end); strip.addEventListener('pointercancel', end);
   // Trackpad: a sideways scroll moves through time too (the trackpad supplies its own glide)
@@ -897,7 +908,9 @@ function glideTo(target){
     if (Math.abs(e.deltaX)<=Math.abs(e.deltaY)) return;
     e.preventDefault(); stopAnim();
     setCursor(cursor() + e.deltaX/stripK);
+    clearTimeout(wheelEnd); wheelEnd=setTimeout(()=>{ if (!anim) settled(); }, 250);
   }, {passive:false});
+  let wheelEnd=0;
   // Keys: ← / → an hour, Shift for a day; Home is now, End 36 hours ahead
   strip.addEventListener('keydown', e=>{
     const step=e.shiftKey?864e5:36e5, k=e.key, base=anim&&glideTarget!=null?glideTarget:cursor();
