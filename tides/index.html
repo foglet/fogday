@@ -148,12 +148,6 @@ title: Tides of San Francisco
   .tides .wline { display: flex; flex-wrap: wrap; }  /* Beaufort and gusts on one line */
   .tides .wline > .label { white-space: nowrap; }
   .tides .wline > .label:not(:last-child)::after { content: "\00b7"; margin: 0 .35em; }  /* if it must wrap, the dot ends the first line */
-  /* Rain / visibility / pressure line: each item after the first starts with a dot; an item that wraps to a new line
-     has its dot pushed past the left edge and clipped, so a wrapped line never starts (or ends) with a dot */
-  .tides .wxwrap { display: block; overflow: hidden; }
-  .tides .wxline { display: flex; flex-wrap: wrap; margin-left: -.8rem; }  /* rem: same width as the dot below, whatever the font size */
-  .tides .wxline > .label { white-space: nowrap; }
-  .tides .wxline > .label::before { content: "\00b7"; display: inline-block; width: .8rem; text-align: center; letter-spacing: 0; }
   /* Loading and error messages span the whole tile, so they never widen the readings column and push the icons */
   .tides #weather > p, .tides #wind > p, .tides #moon > p { grid-column: 1 / -1; }
   .tides .trow.inline .sub { grid-column: 3; margin: 0; min-width: 0; }

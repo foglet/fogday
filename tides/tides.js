@@ -548,7 +548,7 @@ const wxT = t => I18N.wxText(t, lang);
 const hiLo = (hi, lo) => { const deg=units==='m'?'°C':'°F';   // "High 64°F Low 52°F", same units as the temperature
   // No letter spacing after the °, so the label's tracking doesn't open a gap: 64°F, not 64° F
   return esc([hi!=null?tr('high',{n:tempNum(hi),deg}):'', lo!=null?tr('low',{n:tempNum(lo),deg}):''].filter(Boolean).join(' ')).replace(/°/g,'<span class="deg">°</span>'); };
-// Rain chance, visibility and pressure: one small line under the high / low, styled like the wind tile's Beaufort / gusts line.
+// Rain chance, visibility and pressure: each on its own small line under the high / low, in the same label style.
 // Visibility arrives in meters, pressure in pascals; shown in miles and inches of mercury (feet) or km and hPa (meters).
 // Pressure trend from the reading about 3 hours earlier: rising / falling at 0.5 hPa or more, otherwise steady.
 const presOf = o => o ? (o.barometricPressure && o.barometricPressure.value != null ? o.barometricPressure.value
@@ -559,7 +559,7 @@ function wxExtra(rain, visM, pa, paPrev){
   if (visM!=null) { const v = m ? visM/1000 : visM/1609.344; parts.push(tr('vis',{n:v<10?(Math.round(v*10)/10).toString():String(Math.round(v)), u:m?'km':'mi'})); }
   if (pa!=null) { const d = paPrev!=null ? (pa-paPrev)/100 : null, arr = d==null ? '' : d>=0.5 ? ' ↑' : d<=-0.5 ? ' ↓' : ' →';
     parts.push(tr('pres',{n:m?String(Math.round(pa/100)):(pa/3386.389).toFixed(2), u:m?'hPa':'in'})+arr); }
-  return parts.length ? `<span class="wxwrap"><span class="wxline">${parts.map(t=>`<span class="label num">${esc(t)}</span>`).join('')}</span></span>` : '';
+  return parts.map(t=>`<span class="label num">${esc(t)}</span>`).join('');   // one per line, under the high / low
 }
 const dirName = d => { const i=COMPASS.indexOf(d); return i<0 ? d : L.compass[i]; };
 function drawWeather(w){
