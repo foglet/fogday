@@ -228,6 +228,7 @@ title: Tides of San Francisco
   /* Sharks: tail swishes from its base, body sways a touch. Crabs: claws wave and snap, legs shuffle, eyes wink.
      All driven at random from tides.js (seaParts), so no two moves repeat; the keyframes below are no longer used. */
   .tides .stail { transform-box: fill-box; transform-origin: 0% 50%; }
+  .tides .otail { transform-box: fill-box; transform-origin: 0% 50%; } .tides .obody { transform-box: fill-box; transform-origin: 40% 50%; }
   .tides .sbody { transform-box: fill-box; transform-origin: 40% 50%; }
   @keyframes sharkTail { 0%, 100% { transform: rotate(-13deg); } 50% { transform: rotate(13deg); } }
   @keyframes sharkSway { 0%, 100% { transform: rotate(1.6deg); } 50% { transform: rotate(-1.6deg); } }
@@ -253,7 +254,7 @@ title: Tides of San Francisco
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pg-gull { display: inline; } :root:not([data-theme="light"]) .tides .pg-corm { display: none; } }
   :root[data-theme="dark"] .tides .pg-gull { display: inline; } :root[data-theme="dark"] .tides .pg-corm { display: none; }
   @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .pgw, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
-  .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican { display: none; }
+  .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican, .tides .strip.no-orca .sl-orca { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }

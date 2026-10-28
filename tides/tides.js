@@ -829,8 +829,58 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
     // then the crabs on the floor, where they fit between the others
     for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); move('crab',cx,cy,1); break; }
   }
-  return g+'</g>';
+  // Orcas (a pod of five, see seaOrcas): black, white eye patch and belly, grey saddle, tall dorsal fin; facing left like the
+  // sharks. Drawn hidden; they swim in at random times.
+  const orca = () => `<g class="sl-orca" style="visibility:hidden" filter="url(#seaRim)"><g class="obody">
+      <g class="otail"><path d="M19,-1.2 C23,-2.5 26,-5 29,-6 C28,-3 27.6,-1 27.4,.3 C27.6,1.6 28,3.6 29,6.2 C26,5 23,3 19,2 Z" fill="#15191c"/></g>
+      <path d="M-3,-6.6 C-2,-12 -1.4,-16 -2.2,-19 C1.8,-15 4.6,-10 6,-6.6 Z" fill="#15191c"/>
+      <path d="M-24,0 C-23,-4.5 -16,-7 -6,-7 C6,-7 15,-4 20,-1.2 L20,2 C14,5 2,7.4 -8,7 C-17,6.6 -23,4 -24,0 Z" fill="#15191c"/>
+      <path d="M-22,2.4 C-16,5.6 -5,6.6 3,5.6 C8,5 12,2.4 13.5,.2 C10,3.4 5,4.2 1,3.8 C-6,3.2 -14,3.8 -22,2.4 Z" fill="#f4f5f3"/>
+      <ellipse cx="-15.4" cy="-3.2" rx="3.4" ry="1.3" fill="#f4f5f3" transform="rotate(-12 -15.4 -3.2)"/>
+      <ellipse cx="3.4" cy="-5.9" rx="4.6" ry="1.1" fill="#8e989c"/>
+      <ellipse cx="-10" cy="7" rx="3.6" ry="1.7" fill="#15191c" transform="rotate(25 -10 7)"/></g></g>`;
+  return g+'</g><g class="orcas">'+[0,1,2,3,4].map(orca).join('')+'</g>';
 }
+/* Orcas: now and then (first within 15-90 s, then every 1-5 min, at random) a pod of five swims across the screen at mid
+   depth, loosely strung out, each at its own depth and pace, the pod speeding up and slowing down in random bouts. When they
+   show up the great whites leave: every shark on screen bolts away from the pod, and none comes back on screen until the
+   pod has been gone 20-60 s. In screen coordinates, like the pelicans, so they cross the screen whatever the chart does. */
+let seaOrca={on:false, next:0, els:[], b:[], away:0};
+function seaOrcas(ms, dt, left, vw){
+  const O=seaOrca, R=Math.random, z=seaSZ, st=$('strip');
+  if (!O.els.length || !stripG) return;
+  if (!O.next) O.next=ms+(15+R()*75)*1000;
+  if (seaStill && seaStill.matches){ if (O.on){ O.on=false; O.els.forEach(e=>e.style.visibility='hidden'); } return; }
+  if (!O.on){ if (ms<O.next) return;
+    O.on=true; O.d=R()<.5?1:-1; O.x = O.d>0 ? vw+40 : -40; O.spd=20+R()*20; O.sg=O.spd; O.bt=0;   // d=1 swims left, in from the right
+    let off=0; O.b=O.els.map((el,i)=>{ if (i) off+=(36+R()*30)*z;
+      return {el, ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined}; }); }
+  if (ms>O.bt){ O.bt=ms+(2+R()*6)*1000; O.sg = R()<.15 ? 6+R()*8 : 16+R()*34; }   // bouts: cruising, now and then a lull
+  O.spd += (O.sg-O.spd)*(1-Math.exp(-dt/2));
+  O.x -= O.d*O.spd*dt;
+  const floor=stripG.pt+stripG.ih; let any=false, sum=0;
+  for (const o of O.b){
+    const sxp = O.x + O.d*o.ox + 10*z*seaN(o.nx, 4, dt);                     // strung out behind the leader, each drifting
+    o.lx = o.lx===undefined ? sxp : o.lx+(sxp-o.lx)*(1-Math.exp(-dt/.6));
+    // body always under water; in shallow water only the tall dorsal fin breaks the surface
+    const px=o.lx+left, sx=seaSurf(px), top=sx+10*z, bot=Math.max(top, floor-8*z);
+    const f=Math.max(.05, Math.min(.95, o.f0+.3*seaN(o.nd, 5, dt)));
+    const y = bot>top ? top+f*(bot-top) : (top+bot)/2;
+    // flukes beat up and down from the tail stock, faster when the pod hurries
+    const sp=Math.min(1.4, O.spd/40), fr=(.35+.8*sp)*(1+.3*seaN(o.nf, 3, dt)); o.ph += 6.2832*fr*dt;
+    const a=(6+7*sp)*(1+.3*seaN(o.na, 3, dt)), s=Math.sin(o.ph);
+    const tl=o.el.querySelector('.otail'), bd=o.el.querySelector('.obody');
+    if (tl) tl.style.transform=`rotate(${(a*s).toFixed(1)}deg)`; if (bd) bd.style.transform=`rotate(${(-.08*a*s).toFixed(2)}deg)`;
+    o.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${O.d*z*.95},${z*.95})`);
+    o.el.style.visibility=''; o.qx=px; o.qy=y;
+    if (o.lx>-60 && o.lx<vw+60){ any=true; } sum+=o.lx;
+  }
+  O.cx=sum/O.b.length;   // the pod's middle, on screen
+  // Gone once every orca has passed the far edge
+  const far = O.d>0 ? Math.max(...O.b.map(o=>o.lx)) < -60 : Math.min(...O.b.map(o=>o.lx)) > vw+60;
+  if (far){ O.on=false; O.next=ms+(60+R()*240)*1000; O.away=ms+(20+R()*40)*1000; O.els.forEach(e=>e.style.visibility='hidden'); }
+}
+const sharksAway = ms => seaOrca.on || ms<seaOrca.away;
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
   const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
@@ -887,6 +937,7 @@ function buildStrip(){
   }
   $('stripSvg').innerHTML = s+'</svg>';
   { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
+  seaOrca.els=[...$('stripSvg').querySelectorAll('.sl-orca')]; if (seaOrca.on) seaOrca.b.forEach((o,i)=>{ o.el=seaOrca.els[i]; });
   $('stripLab').innerHTML = labels+'</svg>';
   seaHoles='';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
@@ -905,7 +956,7 @@ function buildStrip(){
 let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], seaHoles = '';
 /* A creature passing in front of a value (a tide height, a tide time, a day name; not the sun / moon times) hides that value until it has
    passed, so they never overlap. Boxes around each creature, unscaled: [half width, above, below] its anchor point. */
-const SEA_BOX={shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
+const SEA_BOX={orca:[26,19,9], shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
 function seaHideLabels(){
   if (!stripG || !stripTexts.length) return;
   const left=((cursor()-HALF_MS)-strip0)*stripK, vw=stripW, z=seaSZ, M=5, st=$('strip'), B=[];   // 5 px clear on each side
@@ -913,6 +964,7 @@ function seaHideLabels(){
   for (const m of seaM){ if (!m.el || m.qx===undefined || m.el.style.visibility==='hidden' || st.classList.contains('no-'+m.k)) continue;
     if (m.qx<left-60 || m.qx>left+vw+60) continue;
     add(m.k, m.qx, m.qy, z*(m.qs||1)); }
+  if (seaOrca.on && !st.classList.contains('no-orca')) for (const o of seaOrca.b) if (o.qx!==undefined) add('orca', o.qx, o.qy, z*.95);
   // The time pole fades out where a creature passes in front of it (not the bird that perches on it): fully gone across
   // the creature and its 5 px, easing back in over 4 px beyond, top and bottom softened
   { const cx=left+vw/2; let holes='';
@@ -970,6 +1022,14 @@ function seaPath(m, sc, ms){
 let seaLast=0, seaLeft=null, seaStir=0;
 function seaStep(m, ms, dt, stir){
   if (m.lead){ m.v=seaN(m.nv, 3, dt); m.face=m.lead.face; return m.lead.x; }   // a gull flying with a partner keeps to its path
+  if (m.k==='shark'){
+    const onS = m.lx!==undefined && m.lx>-60 && m.lx<stripW+60;
+    if (sharksAway(ms)){
+      if (!m.fled && onS){                                               // orcas: an on-screen shark bolts away from the pod, fast
+        const O=seaOrca, from = O.on && O.cx!==undefined ? O.cx : stripW/2;
+        m.fled=m.flee=true; m.tvx=(m.lx<from ? -1 : 1)*(55+Math.random()*30); m.acc=.35; m.bt=Infinity; }
+      else if (m.flee && !onS){ m.flee=false; m.bt=0; } }               // off screen: wanders again, kept off screen until all clear
+    else if (m.fled){ m.fled=false; if (m.flee){ m.flee=false; m.bt=0; } } }
   if (!(m.bt>ms)) seaBout(m, ms);
   m.vx += (m.tvx*(1+stir) - m.vx)*(1-Math.exp(-dt/m.acc));
   m.x += m.vx*dt;
@@ -984,6 +1044,7 @@ function moveSea(now){
   const left=((now-HALF_MS)-strip0)*stripK, vw=stripW;   // the screen's left edge in strip coordinates, and its width
   // Scrolling stirs them up: faster for a while, settling over a couple of seconds
   if (seaLeft!==null && dt>0) seaStir=Math.max(seaStir*Math.exp(-dt/1.8), Math.min(2.5, Math.abs(left-seaLeft)/dt/600)); seaLeft=left;
+  seaOrcas(ms, dt, left, vw);
   for (const m of seaM){ if (!m.el || m.k==='pelican') continue;
     const base=seaStep(m, ms, dt, seaStir), v=m.v;
     // Not glued to the chart: on screen each creature eases toward its place, so it lags behind a scroll (each by its own amount)
@@ -1006,7 +1067,7 @@ function moveSea(now){
     // At most 1 crab and 2 great whites on screen, and while pelicans are on screen only 1 gull: another shows only by
     // coming in from an edge once there's room (gulls already showing finish their flight)
     if (seaOn[m.k]){
-      const on = m.lx>-30 && m.lx<vw+30, S=seaOn[m.k], cap = m.k==='gull' ? (seaPelOn ? 1 : 99) : SEA_CAP[m.k];
+      const on = m.lx>-30 && m.lx<vw+30, S=seaOn[m.k], cap = m.k==='gull' ? (seaPelOn ? 1 : 99) : m.k==='shark' && sharksAway(ms) ? 0 : SEA_CAP[m.k];
       if (S.has(m)){ if (!on) S.delete(m); }
       else if (on && !m.wasOn && S.size<cap) S.add(m);
       m.wasOn=on; m.el.style.visibility = (S.has(m) || !on) ? '' : 'hidden';
@@ -1276,7 +1337,7 @@ function applyStatic(){
 /* Flip-flops beside "Made at Baker Beach": count fast taps (within 350 ms of each other).
    1 tap: all sea life (hide all if every kind is showing, else show all); 2: crabs; 4: sharks (3 was the otters, removed for now).
    Only toggles classes on the chart (no redraw); the hidden kinds are remembered per visitor. */
-const SEA_KINDS=['crab','otter','shark','gull','pelican'], SEA_TAP={2:'crab',4:'shark'};   // otters removed for now (restore: 3:'otter', otter:upTo(2) in seaLife, and the labels)
+const SEA_KINDS=['crab','otter','shark','gull','pelican','orca'], SEA_TAP={2:'crab',4:'shark'};   // otters removed for now (restore: 3:'otter', otter:upTo(2) in seaLife, and the labels)
 let seaHidden=new Set();
 try { const v=localStorage.getItem('sf-tides-sea');
   if (v==='0') seaHidden=new Set(SEA_KINDS);   // the first version stored on / off
