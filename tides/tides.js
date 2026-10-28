@@ -775,6 +775,7 @@ function buildStrip(){
   { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
   $('stripLab').innerHTML = labels+'</svg>';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+    ${POLE_GULL}
     <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6"/>
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
@@ -784,12 +785,14 @@ function buildStrip(){
 let stripBoxes = [];
 // The center line, drawn in pieces: it never runs through text. Wherever a label crosses it, the line stops 3 px short
 // of the label's box and starts again 3 px past it.
+let stripPoleTop=0;
 function lineAround(cx){
   const {W, pt, ih}=stripG, M=3, gaps=[];
   for (const [x0,x1,y0,y1] of stripBoxes) if (cx>=x0-M && cx<=x1+M) gaps.push([y0-M, y1+M]);
   gaps.sort((a,b)=>a[0]-b[0]);
-  let y=pt-2, d='';
-  for (const [g0,g1] of gaps){ if (g0>y) d+=`M${W/2},${y.toFixed(1)}V${g0.toFixed(1)}`; y=Math.max(y,g1); }
+  let y=pt-2, d='', top=null;
+  for (const [g0,g1] of gaps){ if (g0>y){ d+=`M${W/2},${y.toFixed(1)}V${g0.toFixed(1)}`; if (top===null) top=y; } y=Math.max(y,g1); }
+  stripPoleTop = top!==null ? top : y;   // where the visible pole starts: the resting gull stands here
   if (y<pt+ih) d+=`M${W/2},${y.toFixed(1)}V${pt+ih}`;
   return d;
 }
@@ -805,6 +808,7 @@ function placeStrip(){
   $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
   moveSea(now);
   $('stripLine').setAttribute('d', lineAround(((now-strip0)*stripK)));   // the center, in week-picture coordinates
+  pgDraw();
   $('stripDot').setAttribute('cy', (pt+(Y1-curveAt(now))/(Y1-Y0)*ih).toFixed(2));
   $('strip').setAttribute('aria-valuetext', isLive() ? L.now : fFull.format(new Date(now)));
 }
@@ -920,6 +924,57 @@ function moveSea(now){
   const tick = ts => { requestAnimationFrame(tick); if (ts-last<33 || (still && still.matches) || !stripG || !seaM.length) return; last=ts; moveSea(cursor()); };
   requestAnimationFrame(tick); }
 function drawStrip(){ buildStrip(); placeStrip(); }
+/* A gull resting on top of the orange timeline pole. Sliding the timeline startles it: it takes off to one side,
+   climbing, and flies off screen. Once the timeline has been left alone for 4 s it flies back in and lands.
+   Drawn in the fixed overlay (stripCur), so it stays with the pole; counts as a gull for the flip-flops. */
+const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
+  <g id="pgSit"><path d="M-1,0 L-1.6,-5.5 M2,0 L1.4,-5.5" stroke="#e5a48a" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+    <ellipse cx=".5" cy="-9" rx="6.6" ry="4" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
+    <path d="M-2.5,-11.2 Q4,-12.8 9.4,-8.6 L6.4,-7 Q2,-9.2 -2.5,-9.2 Z" fill="#8f9aa3"/><path d="M8.4,-9.2 l3.6,1 l-3.3,1.1 Z" fill="#2f3a42"/>
+    <circle cx="-5" cy="-14" r="3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
+    <path d="M-7.9,-14.4 l-3,.6 l3,.7 Z" fill="#f2b632"/><circle cx="-5.8" cy="-14.8" r=".55" fill="#1b2a33"/></g>
+  <g id="pgFly" style="display:none"><path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
+    <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/>
+    <ellipse cx="0" cy="0" rx="6" ry="2.3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
+    <circle cx="-5.6" cy="-0.6" r="2" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
+    <path d="M-7.4,-0.6 l-2.4,.5 l2.3,.5 Z" fill="#f2b632"/><circle cx="-6.2" cy="-1.1" r=".55" fill="#1b2a33"/>
+    <path d="M5.5,0 l3.4,-1 l-.2,2.2 Z" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/></g></g>`;
+const PG={st:'perch', x:0, y:0, dir:1, face:1, v:0, slideAt:0, raf:0, lt:0, t0:0, sx:0, sy:0};
+function pgDraw(){
+  const g=document.getElementById('poleGull'); if (!g || !stripG) return;
+  const z=seaSZ, W=stripG.W, perch=PG.st==='perch';
+  if (perch){ PG.x=W/2; PG.y=stripPoleTop; PG.face=1; }
+  g.style.visibility = PG.st==='gone' ? 'hidden' : '';
+  g.querySelector('#pgSit').style.display = perch ? '' : 'none';
+  g.querySelector('#pgFly').style.display = perch ? 'none' : '';
+  g.setAttribute('transform', `translate(${PG.x.toFixed(1)},${PG.y.toFixed(1)}) scale(${(PG.face*z).toFixed(2)},${z})`);
+}
+function poleGullScare(){
+  PG.slideAt=performance.now();
+  if (PG.st==='perch' || PG.st==='in'){ PG.st='off'; PG.dir=Math.random()<.5?1:-1; PG.v=40; PG.lt=0; pgRun(); }
+}
+function pgRun(){ if (!PG.raf) PG.raf=requestAnimationFrame(pgTick); }
+function pgTick(ts){
+  PG.raf=0; if (!stripG) return;
+  const W=stripG.W, dt=PG.lt ? Math.min(.05,(ts-PG.lt)/1000) : 0; PG.lt=ts;
+  const still = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (PG.st==='off'){                                      // take off: speed up to the side, climbing toward the top
+    if (still){ PG.st='gone'; }
+    else { PG.v=Math.min(170, PG.v+260*dt); PG.x+=PG.dir*PG.v*dt; PG.y+=(6-PG.y)*Math.min(1,dt*1.6); PG.face = PG.dir>0 ? -1 : 1;
+      if (PG.x<-30 || PG.x>W+30) PG.st='gone'; }
+  } else if (PG.st==='gone'){                              // away until the timeline has been left alone for 4 s
+    if (performance.now()-PG.slideAt > 4000){
+      if (still){ PG.st='perch'; }
+      else { const side=Math.random()<.5?1:-1; PG.st='in'; PG.t0=ts; PG.sx = side>0 ? W+30 : -30; PG.sy=8; PG.x=PG.sx; PG.y=PG.sy; PG.face = side>0 ? 1 : -1; }
+    }
+  } else if (PG.st==='in'){                                // glide back in over 3.5 s, descending onto the pole
+    const p=Math.min(1,(ts-PG.t0)/3500), ex=1-Math.pow(1-p,2), ey=p*p*(3-2*p);
+    PG.x=PG.sx+(W/2-PG.sx)*ex; PG.y=PG.sy+(stripPoleTop-PG.sy)*ey;
+    if (p>=1) PG.st='perch';
+  }
+  pgDraw();
+  if (PG.st!=='perch') pgRun();
+}
 
 /* ---- Page ---- */
 /* Maps on Apple devices: iOS doesn't tell a web page which map app the visitor prefers, so the first tap asks
@@ -1074,6 +1129,7 @@ function redrawViewed(){
   if (wait<=0) updateTiles(); else if (!tileTimer) tileTimer=setTimeout(updateTiles, wait);
 }
 function setCursor(t){
+  poleGullScare();   // sliding the timeline: the gull on the pole flies off
   const now=Date.now();
   t=Math.min(t, now+MAX_AHEAD_MS);
   scrub = t <= now+6e4 ? null : t;   // within a minute of now is live again
