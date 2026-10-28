@@ -891,9 +891,27 @@ function buildStrip(){
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
   // Every label's box in the week picture (high / low heights and times, day names), so the center line can skip them
-  stripBoxes = [...document.querySelectorAll('#stripSvg text, #stripLab text')].map(t => { const b=t.getBBox(); return [b.x, b.x+b.width, b.y, b.y+b.height]; });
+  stripTexts = [...document.querySelectorAll('#stripSvg text, #stripLab text')]; stripHid = stripTexts.map(()=>false);
+  stripCan = stripTexts.map(t => /\b(labt|lab|dayl)\b/.test(t.getAttribute('class')||''));   // only tide heights, tide times and day names hide
+  stripBoxes = stripTexts.map(t => { const b=t.getBBox(); return [b.x, b.x+b.width, b.y, b.y+b.height]; });
 }
-let stripBoxes = [];
+let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [];
+/* A creature passing in front of a value (a tide height, a tide time, a day name; not the sun / moon times) hides that value until it has
+   passed, so they never overlap. Boxes around each creature, unscaled: [half width, above, below] its anchor point. */
+const SEA_BOX={shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
+function seaHideLabels(){
+  if (!stripG || !stripTexts.length) return;
+  const left=((cursor()-HALF_MS)-strip0)*stripK, vw=stripW, z=seaSZ, M=2, st=$('strip'), B=[];
+  const add=(k, x, y, s) => { const [w,a,b]=SEA_BOX[k]; B.push([x-w*s-M, x+w*s+M, y-a*s-M, y+b*s+M]); };
+  for (const m of seaM){ if (!m.el || m.qx===undefined || m.el.style.visibility==='hidden' || st.classList.contains('no-'+m.k)) continue;
+    if (m.qx<left-60 || m.qx>left+vw+60) continue;
+    add(m.k, m.qx, m.qy, z*(m.qs||1)); }
+  if (PG.st!=='gone' && !st.classList.contains('no-gull')){ const [w,a,b]=PG_BOX, x=PG.x+left; B.push([x-w*z-M, x+w*z+M, PG.y-a*z-M, PG.y+b*z+M]); }
+  stripBoxes.forEach(([x0,x1,y0,y1], i) => { if (!stripCan[i]) return;
+    if (x1<left-40 || x0>left+vw+40){ if (stripHid[i]){ stripHid[i]=false; stripTexts[i].classList.remove('sea-hid'); } return; }
+    const hit=B.some(([l,r,t,b]) => x1>l && x0<r && y1>t && y0<b);
+    if (hit!==stripHid[i]){ stripHid[i]=hit; stripTexts[i].classList.toggle('sea-hid', hit); } });
+}
 // The center line, drawn in pieces: it never runs through text. Wherever a label crosses it, the line stops 3 px short
 // of the label's box and starts again 3 px past it.
 let stripPoleTop=0; const POLE_TRIM=12;
@@ -990,7 +1008,7 @@ function moveSea(now){
       if (m.flee){ y=y+(gt-y)*(m.fl||0); m.face = m.flee>0 ? -1 : 1; }    // climbing away, facing the way it flies
       m.ly=y; }
     const sz=m.k==='crab' ? `scale(${z})` : `scale(${m.face*z},${z})`;
-    m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
+    m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`); m.qx=px; m.qy=y;
     if ((m.k==='shark' || m.k==='crab') && m.lx>-40 && m.lx<vw+40) seaParts(m, ms, dt);   // on screen only
   }
   // Pelican flocks (unchanged): each keeps one heading (never turns) and flies straight across at its own speed, far out and small then close
@@ -1044,11 +1062,12 @@ function moveSea(now){
       let y=far+(near-far)*f.dep, s=ds;
       if (bd.jt){ const e=Math.min(1,(ms-bd.jt)/2500), u=e*e*(3-2*e);      // a joining bird glides into its place in the line
         px=bd.jx+(px-bd.jx)*u; y=bd.jy+(y-bd.jy)*u; s=bd.js+(s-bd.js)*u; if (e>=1) bd.jt=0; }
-      bd.lx=px; bd.ly=y; bd.ls=s; if (px-left>-20 && px-left<vw+20){ pelOn=true; pxy.push([px,y]); }
+      bd.lx=px; bd.ly=y; bd.ls=s; bd.qx=px; bd.qy=y; bd.qs=s; if (px-left>-20 && px-left<vw+20){ pelOn=true; pxy.push([px,y]); }
       bd.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(f.d*z*s).toFixed(3)},${(z*s).toFixed(3)})`);
     });
   }
   seaPelOn=pelOn; seaPelXY=pxy;
+  seaHideLabels();
 }
 // The slow swim runs on its own at ~30 frames a second (paused in background tabs; off for reduced motion)
 { let last=0; const still = matchMedia && matchMedia('(prefers-reduced-motion: reduce)');
@@ -1110,6 +1129,7 @@ function pgDraw(){
   const fly=g.querySelector('#pgFly'); fly.style.display = perch ? 'none' : '';
   fly.classList.toggle('glide', PG.st==='in' && PG.v<40);   // wings held out on the final glide to the pole
   g.setAttribute('transform', `translate(${PG.x.toFixed(1)},${PG.y.toFixed(1)}) scale(${(PG.face*z).toFixed(2)},${z})`);
+  seaHideLabels();
 }
 function poleGullScare(){
   PG.slideAt=performance.now();
