@@ -407,8 +407,9 @@ async function loadWeather(key){
   if (c && Date.now()-c.at < 10*6e4) return c.data;
   const b = BEACHES[key];
   const pt = (await nws(`https://api.weather.gov/points/${b.lat},${b.lon}`)).properties;
-  const [daily, hourly, stations] = await Promise.all([
-    nws(pt.forecast).catch(()=>null), nws(pt.forecastHourly).catch(()=>null), nws(pt.observationStations).catch(()=>null)
+  const [daily, hourly, stations, grid] = await Promise.all([
+    nws(pt.forecast).catch(()=>null), nws(pt.forecastHourly).catch(()=>null), nws(pt.observationStations).catch(()=>null),
+    nws(pt.forecastGridData).catch(()=>null)
   ]);
   let obs = null, prev = null, stationName = '';
   for (const f of (stations && stations.features || []).slice(0, 3)) {
@@ -422,6 +423,31 @@ async function loadWeather(key){
       }
     } catch(e) {}
   }
+  // Pressure: the temperature station often has none (SF Downtown reports neither pressure nor visibility), so take it
+  // from the nearest station that does, skipping hilltop stations (station pressure up there reads far too low);
+  // the trend compares that same station's reading about 3 hours earlier.
+  let pres = presOf(obs), presPrev = presOf(prev);
+  if (pres == null) {
+    for (const f of (stations && stations.features || []).slice(0, 10)) {
+      const el = f.properties.elevation && f.properties.elevation.value;
+      if (el != null && el > 300) continue;
+      try {
+        const list = ((await nws(`https://api.weather.gov/stations/${f.properties.stationIdentifier}/observations?limit=24`)).features || [])
+          .map(o => o.properties).filter(o => presOf(o) != null);
+        if (list.length && Date.now()-new Date(list[0].timestamp) < 3*36e5) {
+          const t0 = +new Date(list[0].timestamp), p3 = list.find(o => t0-new Date(o.timestamp) >= 2.5*36e5);
+          pres = presOf(list[0]); presPrev = p3 ? presOf(p3) : null; break;
+        }
+      } catch(e) {}
+    }
+  }
+  // Visibility: the station's reading when it has one, otherwise the NWS forecast grid for the beach itself
+  // (closer to the beach's own fog than an airport miles away)
+  const gridAt = (layer, t) => { for (const v of (layer && layer.values) || []) { const [s, d] = String(v.validTime).split('/');
+    const m = /P(?:(\d+)D)?(?:T(?:(\d+)H)?)?/.exec(d||'') || [], s0 = +new Date(s), e0 = s0 + ((+m[1]||0)*24 + (+m[2]||0))*36e5;
+    if (t >= s0 && t < e0) return v.value; } return null; };
+  const ov = obs && obs.visibility && obs.visibility.value != null ? obs.visibility.value : null;
+  const vis = ov != null ? ov : gridAt(grid && grid.properties.visibility, Date.now());
   const periods = daily && daily.properties.periods || [];
   const today = periods.find(p=>p.isDaytime), tonight = periods.find(p=>!p.isDaytime);
   const hperiods = hourly && hourly.properties.periods || [];
@@ -431,7 +457,7 @@ async function loadWeather(key){
     isDay:p.isDaytime, wind:p.windSpeed, dir:p.windDirection,
     rain:p.probabilityOfPrecipitation ? p.probabilityOfPrecipitation.value : null});
   const data = {hourly: hperiods.map(slim), daily: periods.map(slim),
-    obs, prev, stationName, hi: today && today.temperature, lo: tonight && tonight.temperature,
+    obs, prev, stationName, vis, pres, presPrev, hi: today && today.temperature, lo: tonight && tonight.temperature,
     short: h0 && h0.shortForecast, rain: h0 && h0.probabilityOfPrecipitation ? h0.probabilityOfPrecipitation.value : null,
     hourlyTemp: h0 && h0.temperature, hourlyWind: h0 && h0.windSpeed, hourlyDir: h0 && h0.windDirection, isDay: h0 ? h0.isDaytime : true};
   wxCache[key] = {at: Date.now(), data};
@@ -544,7 +570,7 @@ function drawWeather(w){
   const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
   const desc = o.textDescription || w.short || '—';
   morph($('weather'), `<span class="label">${esc(L.weather)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</span><div class="sub"><b>${esc(wxT(desc))}</b><span class="label num hilo">${hiLo(w.hi, w.lo)}</span>${wxExtra(w.rain, val(o.visibility), presOf(o), presOf(w.prev))}</div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</span><div class="sub"><b>${esc(wxT(desc))}</b><span class="label num hilo">${hiLo(w.hi, w.lo)}</span>${wxExtra(w.rain, w.vis, w.pres, w.presPrev)}</div></div>`);
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);
