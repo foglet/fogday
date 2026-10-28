@@ -229,7 +229,7 @@ window.TIDE_I18N = {
     compass:['北','北东北','东北','东东北','东','东东南','东南','南东南','南','南西南','西南','西西南','西','西西北','西北','北西北'],
     slack:'平潮', highTide:'高潮', kingTide:'国王潮', lowTide:'低潮', negTide:'负潮', stop:'。', tidePool:'去探访潮池。尊重大自然。',
     next:'{kind}：{when}', dateAt:'{date} {time}', mapAria:'在地图中打开{b}',
-    alertUntil:'{ev}，有效至{when}', advKingTag:'King Tides', advKing:'沿海洪水公告，持续至{when}', alertEv:{adv:'沿海洪水公告', warn:'沿海洪水警告', watch:'沿海洪水监视', stmt:'沿海洪水声明', king:'国王潮声明'},
+    alertUntil:'{ev}，有效至{when}', advKingTag:'国王潮', advKing:'沿海洪水公告，持续至{when}', alertEv:{adv:'沿海洪水公告', warn:'沿海洪水警告', watch:'沿海洪水监视', stmt:'沿海洪水声明', king:'国王潮声明'},
     dur: durWith({soon:'即将到来', m10:'约十分钟后', m20:'约二十分钟后', m30:'约三十分钟后', m45:'约四十五分钟后', few:'几小时后',
       hrs:h=>zhM(h)+'小时后', about:h=>'约'+zhM(h)+'小时后', more:h=>zhM(h)+'个多小时后'}),
     phases:['新月','蛾眉月','上弦月','盈凸月','满月','亏凸月','下弦月','残月'],
