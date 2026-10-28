@@ -592,7 +592,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
       <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
       <feMerge><feMergeNode in="rim"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="sealife">`;
-  // Alive: claws wave and snap (each its own rhythm), legs shuffle
+  // Alive: claws wave and snap (each its own rhythm), legs shuffle, eyes on stalks each wink now and then
   const crab = (cx,cy) => { const a=`animation-delay:-${(rnd()*3).toFixed(2)}s;animation-duration:${(2.2+rnd()*1.6).toFixed(2)}s`, b=`animation-delay:-${(rnd()*3).toFixed(2)}s;animation-duration:${(2.2+rnd()*1.6).toFixed(2)}s`;
     return `<g class="sl-crab" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${SZ})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
       <g class="clegs" style="animation-delay:-${(rnd()).toFixed(2)}s"><path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/></g>
@@ -601,7 +601,9 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <g class="claw r" style="${b}"><path d="M5,-2 l3,-5" stroke-width="1.6" fill="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
         <path class="pinch" d="M9.6,-10.2 l1.6,-2.4" stroke-width="1.3" fill="none" style="${b}"/></g>
       <ellipse cx="0" cy="0" rx="7.5" ry="4.8" stroke="none"/>
-      <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`; };
+      <path d="M-2,-4 L-2.6,-7.6 M2,-4 L2.6,-7.6" stroke-width="1.1" fill="none"/>
+      ${[-1,1].map(sd=>`<g class="ceye" style="animation-delay:-${(rnd()*9).toFixed(2)}s;animation-duration:${(4+rnd()*5).toFixed(2)}s">
+        <circle cx="${sd*2.7}" cy="-8.4" r="1.55" fill="#ffffff" stroke="#b9472a" stroke-width=".4"/><circle cx="${sd*2.9}" cy="-8.6" r=".8" fill="#1b2a33" stroke="none"/></g>`).join('')}</g>`; };
   // Great white shark, facing left (scale -1 turns it): slate-grey back, white underside, dorsal and pectoral fins, forked tail
   // Alive: the tail swishes from its base and the body sways a little with it
   const shark = (cx,cy,dir) => { const t=`animation-delay:-${(rnd()*1.4).toFixed(2)}s;animation-duration:${(.9+rnd()*.6).toFixed(2)}s`;
