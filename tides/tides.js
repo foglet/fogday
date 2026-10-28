@@ -836,9 +836,10 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <path class="ofin-m" d="M-4.2,-6.6 C-3.4,-12 -2.4,-18 -1.8,-24.5 C.8,-18.5 3.6,-12 6.2,-6.6 Z" fill="#15191c"/>
       <path class="ofin-f" d="M-3,-6.6 C-2,-10.5 -1.4,-13.4 -3.2,-15.8 C1,-13 4.4,-9.6 6,-6.6 Z" fill="#15191c"/>
       <path d="M-24,0 C-23,-4.5 -16,-7 -6,-7 C6,-7 15,-4 20,-1.2 L20,2 C14,5 2,7.4 -8,7 C-17,6.6 -23,4 -24,0 Z" fill="#15191c"/>
-      <path d="M-22,2.4 C-16,5.6 -5,6.6 3,5.6 C8,5 12,2.4 13.5,.2 C10,3.4 5,4.2 1,3.8 C-6,3.2 -14,3.8 -22,2.4 Z" fill="#f4f5f3"/>
-      <ellipse cx="-15.4" cy="-3.2" rx="3.4" ry="1.3" fill="#f4f5f3" transform="rotate(-12 -15.4 -3.2)"/>
-      <ellipse cx="3.4" cy="-5.9" rx="4.6" ry="1.1" fill="#8e989c"/>
+      <path class="obel" d="M-22,2.4 C-16,5.6 -5,6.6 3,5.6 C8,5 12,2.4 13.5,.2 C10,3.4 5,4.2 1,3.8 C-6,3.2 -14,3.8 -22,2.4 Z" fill="#f4f5f3"/>
+      <path class="oeye" d="M-18.8,-2.8 C-17,-4.6 -14,-4.6 -12,-3.6 C-13.4,-2.2 -16.6,-1.8 -18.8,-2.8 Z" fill="#f4f5f3"/>
+      <path class="osad" d="M-1.2,-6.3 Q3.4,-6.9 8,-6 Q4.8,-4.4 2.2,-4.9 Q.2,-5.2 -1.2,-6.3 Z" fill="#8e989c"/>
+      <g class="oscar" fill="none" stroke="#59636a" stroke-width=".35" stroke-linecap="round"></g>
       <ellipse cx="-10" cy="7" rx="3.6" ry="1.7" fill="#15191c" transform="rotate(25 -10 7)"/></g></g>`;
   return g+'</g><g class="orcas">'+[...Array(10)].map(orca).join('')+'</g><g class="splashes sl-splash"></g>';
 }
@@ -891,8 +892,8 @@ function seaOrcas(ms, dt, left, vw){
     O.els.forEach(e=>e.style.visibility='hidden');
     O.nj = R()<.75 ? ms+(3+R()*9)*1000 : Infinity;   // most pods put on a show; the first leap comes 3-12 s in
     let off=0; O.b=O.els.slice(0,n).map((el,i)=>{ if (i) off+=(36+R()*30)*z;
-      const m=males.has(i); el.classList.toggle('male', m); el.classList.toggle('female', !m);
-      return {el, male:m, sc:(m ? 1.08 : .92)*(.95+R()*.1), ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined, jdx:0, rot:0, j:null}; }); }
+      const m=males.has(i); el.classList.toggle('male', m); el.classList.toggle('female', !m); const mk=orcaMarks(el);   // its own markings
+      return {el, mk, male:m, sc:(m ? 1.08 : .92)*(.95+R()*.1), ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined, jdx:0, rot:0, j:null}; }); }
   // Breaching, at random: one orca on screen (not near the edges) leaps out, the next leap 5-25 s later
   if (ms>O.nj){ const c=O.b.filter(o=>!o.j && o.lx>70 && o.lx<vw-70);
     if (c.length){ const o=c[Math.floor(R()*c.length)];
@@ -939,6 +940,40 @@ function seaOrcas(ms, dt, left, vw){
   if (far){ O.on=false; O.next=ms+(60+R()*240)*1000; O.away=ms+(20+R()*40)*1000; O.els.forEach(e=>e.style.visibility='hidden'); }
 }
 const sharksAway = ms => seaOrca.on || ms<seaOrca.away;
+/* Every orca's markings are its own, like the photo-ID catalogs researchers keep: eye patch (size, length, tilt, its teardrop
+   tail), saddle patch behind the fin (width, depth, place, sometimes notched or open), the white flank sweep (reach and
+   curve), and on some a few rake scars. Each new pattern is checked against every one already shown this visit. */
+let seaOrcaSeen=new Set();
+function orcaMarks(el){
+  const R=Math.random, f=v=>v.toFixed(2), q=v=>Math.round(v*4);
+  let key, P;
+  for (let tries=0; tries<50; tries++){
+    P={ex:-15.6+(R()-.5)*2.2, ey:-3.2+(R()-.5)*.9, el:2.2+R()*2.2, eh:.9+R()*.9, et:(R()-.5)*1.3, er:-24+R()*22,
+       sx:1+R()*4.6, sw:2.8+R()*3.8, sh:.9+R()*1.2, sn:R()<.35 ? .25+R()*.5 : 0, so:R()<.2,
+       bx:10+R()*5.5, by:-1.3+R()*2.7, bi:3.1+R()*1.6, bc:-22.6+R()*1.4, sc:R()<.45 ? 1+Math.floor(R()*3) : 0};
+    key=[P.ex,P.ey,P.el,P.eh,P.et,P.er/8,P.sx,P.sw,P.sh,P.sn*4,P.so?1:0,P.bx,P.by,P.bi].map(q).join(',');
+    if (!seaOrcaSeen.has(key)) break; }
+  seaOrcaSeen.add(key);
+  const {ex,ey,el:L,eh:H,et:T}=P;
+  el.querySelector('.oeye').setAttribute('d', `M${f(ex-L)},${f(ey+H*.25)} C${f(ex-L*.5)},${f(ey-H)} ${f(ex+L*.6)},${f(ey-H)} ${f(ex+L)},${f(ey-H*T)} C${f(ex+L*.4)},${f(ey+H*.6)} ${f(ex-L*.4)},${f(ey+H*.9)} ${f(ex-L)},${f(ey+H*.25)} Z`);
+  el.querySelector('.oeye').setAttribute('transform', `rotate(${f(P.er)} ${f(ex)} ${f(ey)})`);
+  const {sx,sw:W,sh:S,sn:N}=P;
+  // saddle: a pale crescent along the back; a notch bites into its lower edge on some
+  el.querySelector('.osad').setAttribute('d', N
+    ? `M${f(sx-W)},-6.3 Q${f(sx)},-6.95 ${f(sx+W)},-6 Q${f(sx+W*.45)},${f(-6+S*1.5)} ${f(sx+W*.1)},${f(-6.1+S*(1-N))} Q${f(sx-W*.15)},${f(-6.1+S*1.3)} ${f(sx-W*.45)},${f(-6.1+S)} Q${f(sx-W*.8)},${f(-6.1+S*.7)} ${f(sx-W)},-6.3 Z`
+    : `M${f(sx-W)},-6.3 Q${f(sx)},-6.95 ${f(sx+W)},-6 Q${f(sx+W*.3)},${f(-6+S*1.6)} ${f(sx-W*.2)},${f(-6.1+S)} Q${f(sx-W*.7)},${f(-6.1+S*.8)} ${f(sx-W)},-6.3 Z`);
+  el.querySelector('.osad').setAttribute('fill', P.so ? '#b8c0c3' : '#9aa4a8');   // an "open" saddle is paler
+  el.querySelector('.obel').setAttribute('d', `M${f(P.bc)},2.4 C-16,5.6 -5,6.6 3,5.6 C8,5 ${f(P.bx-1.5)},${f(P.by+2.2)} ${f(P.bx)},${f(P.by)} C${f(P.bx-3.5)},${f(P.by+3.2)} 5,${f(P.bi+.4)} 1,${f(P.bi)} C-6,${f(P.bi-.6)} -14,3.8 ${f(P.bc)},2.4 Z`);
+  // rake scars: short parallel scratches, like tooth marks from another orca
+  let sc=''; for (let i=0;i<P.sc;i++){ const x=-13+R()*24, y=-4.5+R()*5.5, l=2+R()*3, a=(R()-.5)*.8, n=1+Math.floor(R()*3);
+    for (let j=0;j<n;j++){ const dx=j*.7, dy=j*.5; sc+=`<path d="M${f(x+dx)},${f(y+dy)} q${f(l/2)},${f(a*l-.3)} ${f(l)},${f(a*l)}"/>`; } }
+  el.querySelector('.oscar').innerHTML=sc;
+  return orcaMarkCopy(el);
+}
+// Its markings as drawn, to put back if the chart is redrawn mid-pass (a resize)
+const ORCA_MK=[['.oeye','d'],['.oeye','transform'],['.osad','d'],['.osad','fill'],['.obel','d']];
+const orcaMarkCopy = el => ({a:ORCA_MK.map(([c,k])=>el.querySelector(c).getAttribute(k)), s:el.querySelector('.oscar').innerHTML});
+function orcaMarkPut(el, mk){ if (!mk) return; ORCA_MK.forEach(([c,k],i)=>el.querySelector(c).setAttribute(k, mk.a[i])); el.querySelector('.oscar').innerHTML=mk.s; }
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
   const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
@@ -995,7 +1030,7 @@ function buildStrip(){
   }
   $('stripSvg').innerHTML = s+'</svg>';
   { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
-  seaOrca.els=[...$('stripSvg').querySelectorAll('.sl-orca')]; if (seaOrca.on) seaOrca.b.forEach((o,i)=>{ o.el=seaOrca.els[i]; o.el.classList.toggle('male', o.male); o.el.classList.toggle('female', !o.male); });
+  seaOrca.els=[...$('stripSvg').querySelectorAll('.sl-orca')]; if (seaOrca.on) seaOrca.b.forEach((o,i)=>{ o.el=seaOrca.els[i]; o.el.classList.toggle('male', o.male); o.el.classList.toggle('female', !o.male); orcaMarkPut(o.el, o.mk); });
   $('stripLab').innerHTML = labels+'</svg>';
   seaHoles='';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
