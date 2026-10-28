@@ -1055,12 +1055,14 @@ function moveSea(now){
   const tick = ts => { requestAnimationFrame(tick); if (ts-last<33 || (still && still.matches) || !stripG || !seaM.length) return; last=ts; moveSea(cursor()); };
   requestAnimationFrame(tick); }
 function drawStrip(){ buildStrip(); placeStrip(); }
-/* A gull resting on top of the orange timeline pole. Sliding the timeline startles it: after a moment it hops off to one side,
+/* A gull resting on top of the orange timeline pole (a double-crested cormorant instead on a light page, where the white
+   gull hardly shows; CSS picks which one, so it follows the theme). Sliding the timeline startles it: after a moment it hops off to one side,
    gathering speed and climbing, and flies off screen. Once the timeline has been left alone for 4 s it flies back in at an
    easy pace and slows smoothly to land.
    Drawn in the fixed overlay (stripCur), so it stays with the pole; counts as a gull for the flip-flops. */
 const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
   <g id="pgSit">
+    <g class="pg-gull">
     <path d="M-1.2,-6.1 L-1,0 M1.4,-6.2 L1.2,0" stroke="#e39a82" stroke-width="1.05" stroke-linecap="round" fill="none"/>
     <path d="M-2.6,0 h2.9 M-.1,0 h2.9" stroke="#e39a82" stroke-width=".9" stroke-linecap="round" fill="none"/>
     <path d="M-8.7,-15.6 C-8.4,-17.8 -6.2,-18.6 -4.6,-18.1 C-3.1,-17.6 -2.6,-16.2 -2.3,-14.8 C-1.5,-13.6 2,-12.6 6,-11.8 L12.6,-10.4 L11.8,-9.6 C9,-9.2 6.6,-7.4 3,-6.3 C-.5,-5.6 -4.2,-6.2 -6.6,-8.2 C-8.3,-9.6 -9,-11.6 -8.9,-13.4 C-8.9,-14.3 -8.8,-15 -8.7,-15.6 Z" fill="#ffffff" stroke="#9aa4ab" stroke-width=".5"/>
@@ -1069,13 +1071,35 @@ const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
     <path d="M8.4,-11.3 L14.8,-10.4 L9.4,-9.1 Z" fill="#2b343b"/><circle cx="13.1" cy="-10.35" r=".45" fill="#ffffff"/>
     <path d="M-8.6,-15.5 L-11.9,-14.9 C-12.2,-14.8 -12.2,-14.2 -11.8,-14.1 L-8.7,-14.1 Z" fill="#f2b632"/><circle cx="-11.1" cy="-14.3" r=".45" fill="#d9472b"/>
     <circle cx="-6.4" cy="-15.9" r=".62" fill="#1b2a33"/></g>
+    <g class="pg-corm">
+    <path d="M-1,-3.2 L-1.1,0 M1.2,-3.2 L1.1,0" stroke="#2a2c2d" stroke-width="1.05" stroke-linecap="round" fill="none"/>
+    <path d="M-2.8,0 h3 M-.2,0 h3" stroke="#2a2c2d" stroke-width=".95" stroke-linecap="round" fill="none"/>
+    <path d="M2.2,-6.4 L6.4,1.2 L4.4,1.6 L.8,-4.4 Z" fill="#1d2124"/>
+    <ellipse cx=".2" cy="-8.2" rx="3.7" ry="6.4" fill="#25292c" transform="rotate(-14 .2 -8.2)"/>
+    <path d="M.6,-12.6 C2.6,-11 3.6,-7.6 3.1,-4.6 C1.8,-6.6 .4,-9.4 .6,-12.6 Z" fill="#3b3a30"/>
+    <path d="M-.6,-12.8 C-1.6,-15 -3.6,-16.2 -3.4,-18.6" stroke="#25292c" stroke-width="2.7" stroke-linecap="round" fill="none"/>
+    <circle cx="-3.8" cy="-19.5" r="2.15" fill="#25292c"/>
+    <path d="M-5.6,-20.1 L-10.4,-19.7 C-11,-19.6 -11.1,-18.9 -10.6,-18.8 L-5.6,-18.7 Z" fill="#55554b"/>
+    <path d="M-5.5,-18.8 Q-5.1,-17.3 -3.5,-17.7 L-4.4,-19.1 Z" fill="#f0962e"/>
+    <circle cx="-4.4" cy="-20.1" r=".6" fill="#3fb6a8"/></g></g>
   <g id="pgFly" style="display:none">
+    <g class="pg-gull">
     <g class="pgw far"><path d="M-1.6,-2 C0,-5.6 3.4,-8.4 7.6,-10.2 L9.2,-9.8 C6.4,-7.6 4,-4.8 2.2,-1.6 Z" fill="#7d8891"/></g>
     <path d="M-9,-1.2 C-8.6,-3 -6.6,-3.6 -5,-3 C-2,-2.4 4,-2.2 9,-1.6 L12.6,-1.2 L9,.2 C5,1.6 -1,2.2 -5,1.6 C-7.4,1.2 -8.8,.2 -9,-1.2 Z" fill="#ffffff" stroke="#9aa4ab" stroke-width=".5"/>
     <path d="M9.4,-1.5 L12.6,-1.2 L9.6,-.4 Z" fill="#2b343b"/>
     <path d="M-8.9,-1.7 L-12,-1.1 L-8.8,-.6 Z" fill="#f2b632"/><circle cx="-6.6" cy="-1.9" r=".55" fill="#1b2a33"/>
     <g class="pgw near"><path d="M-2.4,-2.2 C-.6,-6.6 3.4,-10.6 9,-13.2 L11.6,-12.6 C7.6,-9.6 4.6,-5.6 2.4,-1.6 Z" fill="#8f9aa3" stroke="#7d8891" stroke-width=".3"/>
-      <path d="M8.2,-12.8 L11.6,-12.6 L9.6,-10.6 Z" fill="#2b343b"/><path d="M-1.6,-2.4 C.4,-6.2 3.6,-9.4 7.6,-11.6" stroke="#ffffff" stroke-width=".5" fill="none"/></g></g></g>`;
+      <path d="M8.2,-12.8 L11.6,-12.6 L9.6,-10.6 Z" fill="#2b343b"/><path d="M-1.6,-2.4 C.4,-6.2 3.6,-9.4 7.6,-11.6" stroke="#ffffff" stroke-width=".5" fill="none"/></g></g>
+    <g class="pg-corm">
+    <g class="pgw far"><path d="M-1.6,-2 C0,-5.6 3.4,-8.4 7.6,-10.2 L9.2,-9.8 C6.4,-7.6 4,-4.8 2.2,-1.6 Z" fill="#1d2124"/></g>
+    <path d="M7.4,-1.2 L12.4,-1.8 L12.4,.6 L7.4,.4 Z" fill="#1d2124"/>
+    <ellipse cx="1.2" cy="-.5" rx="7" ry="2.3" fill="#25292c"/>
+    <path d="M-5,-1 L-10.6,-1.6" stroke="#25292c" stroke-width="1.9" stroke-linecap="round" fill="none"/>
+    <circle cx="-11.6" cy="-1.7" r="1.65" fill="#25292c"/>
+    <path d="M-12.9,-2.2 L-16.6,-1.7 C-17,-1.6 -17,-1.1 -16.6,-1.1 L-12.9,-1.1 Z" fill="#55554b"/>
+    <path d="M-12.8,-1.1 Q-12.4,0 -11.2,-.4 L-11.8,-1.2 Z" fill="#f0962e"/><circle cx="-12" cy="-2.1" r=".5" fill="#3fb6a8"/>
+    <g class="pgw near"><path d="M-2.4,-2.2 C-.6,-6.6 3.4,-10.6 9,-13.2 L11.6,-12.6 C7.6,-9.6 4.6,-5.6 2.4,-1.6 Z" fill="#2c3033" stroke="#1d2124" stroke-width=".3"/>
+      <path d="M-1.6,-2.4 C.4,-6.2 3.6,-9.4 7.6,-11.6" stroke="#4a4740" stroke-width=".5" fill="none"/></g></g></g></g>`;
 const PG={st:'perch', x:0, y:0, dir:1, face:1, v:0, vy:0, wait:0, slideAt:0, raf:0, lt:0, t0:0, sx:0, sy:0};
 function pgDraw(){
   const g=document.getElementById('poleGull'); if (!g || !stripG) return;

@@ -243,6 +243,10 @@ title: Tides of San Francisco
   @keyframes pgFlap { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(90deg); } }   /* + lowers the wing: 0 raised, ~30 level, 90 down */
   @keyframes pgFlapFar { 0%, 100% { transform: rotate(-18deg) scale(.92); } 50% { transform: rotate(58deg) scale(.92); } }
   .tides #pgFly.glide .pgw { animation: none; transform: rotate(28deg); } .tides #pgFly.glide .pgw.far { transform: rotate(22deg) scale(.92); }
+  /* The bird on the pole: a cormorant on a light page, the gull on a dark one */
+  .tides .pg-gull { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pg-gull { display: inline; } :root:not([data-theme="light"]) .tides .pg-corm { display: none; } }
+  :root[data-theme="dark"] .tides .pg-gull { display: inline; } :root[data-theme="dark"] .tides .pg-corm { display: none; }
   @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .pgw, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
   .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
