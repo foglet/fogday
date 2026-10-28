@@ -308,11 +308,13 @@ function renderNow(){
   // (English keeps the NWS's own end time; other languages format the alert's end time)
   const advUntil = a => a.t==='adv' && /coastal flood advisory (?:is )?(?:now |remains )?in effect until (.+?)[.\s]*$/i.exec(a.head.replace(/^[.\s]+/, ''));
   const alertWhen = a => tr('dateAt', {date: fWkMd.format(new Date(a.ends)), time: fTime.format(new Date(a.ends))});
-  const alertText = a => { const m = advUntil(a);
-    if (lang==='en') return m ? tr('advKing', {when: m[1]}) : a.head;
-    if (m && a.ends) return tr('advKing', {when: alertWhen(a)});
-    return a.ends ? tr('alertUntil', {ev: L.alertEv[a.t], when: alertWhen(a)}) : L.alertEv[a.t]; };
-  const alertLine = ((kingAlert[beach]||{}).list||[]).map(a=>`<div class="nrow kingalert"><span class="label">${esc(alertText(a))}</span></div>`).join('');
+  // King tides: a big warning, so "King tides" (with its translation outside English) gets its own line in blue,
+  // as large as the weather and wind descriptions; the advisory follows in the alert's small capitals
+  const kingLine = when => `<b class="kt">${esc(L.advKingTag)}</b><span class="label">${esc(tr('advKing', {when}))}</span>`;
+  const alertHtml = a => { const m = advUntil(a);
+    if (m && (lang==='en' || a.ends)) return kingLine(lang==='en' ? m[1] : alertWhen(a));
+    return `<span class="label">${esc(lang==='en' ? a.head : a.ends ? tr('alertUntil', {ev: L.alertEv[a.t], when: alertWhen(a)}) : L.alertEv[a.t])}</span>`; };
+  const alertLine = ((kingAlert[beach]||{}).list||[]).map(a=>`<div class="nrow kingalert">${alertHtml(a)}</div>`).join('');
   const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
   // (drawn rising; falling turns it over with a CSS rotation, so a change of direction animates)
