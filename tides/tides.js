@@ -903,12 +903,17 @@ function seaOrcas(ms, dt, left, vw){
     if (c.length){ const o=c[Math.floor(R()*c.length)];
       o.j={t0:ms, a:.9+R()*.5, h:(30+R()*25)*z*(o.male?1.1:1), boost:(40+R()*40)*z}; }
     O.nj = ms+(5+R()*20)*1000; }
-  if (ms>O.bt){ O.bt=ms+(2+R()*6)*1000; O.sg = R()<.15 ? 6+R()*8 : 16+R()*34; }   // bouts: cruising, now and then a lull
-  O.spd += (O.sg-O.spd)*(1-Math.exp(-dt/2));
+  // Bouts at random: cruising, now and then a slow spell, and (once the pod is on screen) sometimes lingering: almost
+  // stopping for up to 5 s (1.5-5), barely drifting, while each orca mills about
+  if (ms>O.bt){ const r=R(), here = O.cx!==undefined && O.cx>vw*.15 && O.cx<vw*.85;
+    if (here && r<.22){ O.bt=ms+(1.5+R()*3.5)*1000; O.sg=(R()-.5)*1.5; O.lgT=1; }
+    else { O.bt=ms+(2+R()*6)*1000; O.sg = r<.37 ? 6+R()*8 : 16+R()*34; O.lgT=0; } }
+  O.spd += (O.sg-O.spd)*(1-Math.exp(-dt/(O.lgT ? .8 : 2)));
+  O.lg = (O.lg||0) + ((O.lgT||0)-(O.lg||0))*(1-Math.exp(-dt/1.2));   // 0 travelling, 1 lingering
   O.x -= O.d*O.spd*dt;
   const floor=stripG.pt+stripG.ih; let any=false, sum=0;
   for (const o of O.b){
-    const sxp = O.x + O.d*o.ox + 10*z*seaN(o.nx, 4, dt);                     // strung out behind the leader, each drifting
+    const sxp = O.x + O.d*o.ox*(1+.25*O.lg) + (10+22*O.lg)*z*seaN(o.nx, 4, dt);   // strung out behind the leader, each drifting (milling about when lingering)
     o.lx = o.lx===undefined ? sxp : o.lx+(sxp-o.lx)*(1-Math.exp(-dt/.6));
     // body always under water; in shallow water only the tall dorsal fin breaks the surface
     const px=o.lx+left+o.jdx, sx=seaSurf(px), top=sx+10*z, bot=Math.max(top, floor-8*z);
@@ -933,12 +938,12 @@ function seaOrcas(ms, dt, left, vw){
         if (w>=1 && bo<.05) o.j=null; }
       o.jdx -= O.d*J.boost*bo*dt; J.bo=bo;
       // pitch with the path: nose up rising, nose down falling (drawn facing left, so the sign follows the heading)
-      if (o.py!==undefined && dt>0){ const vy=(y-o.py)/dt, vx=O.spd+J.boost*bo;
+      if (o.py!==undefined && dt>0){ const vy=(y-o.py)/dt, vx=Math.max(8, O.spd+J.boost*bo);
         const want=Math.max(-75, Math.min(75, Math.atan2(-vy, vx)*57.3)); o.rot += (want-o.rot)*(1-Math.exp(-dt/.1)); } }
     else { o.rot += (0-o.rot)*(1-Math.exp(-dt/.4)); o.jdx *= Math.exp(-dt/3); }
     o.py=y;
     // flukes beat up and down from the tail stock, faster when the pod hurries
-    const sp=Math.min(1.4, O.spd/40), fr=(.35+.8*sp)*(1+.3*seaN(o.nf, 3, dt)); o.ph += 6.2832*fr*dt;
+    const sp=Math.max(.15, Math.min(1.4, Math.abs(O.spd)/40)), fr=(.35+.8*sp)*(1+.3*seaN(o.nf, 3, dt)); o.ph += 6.2832*fr*dt;
     const a=(6+7*sp)*(1+.3*seaN(o.na, 3, dt))*(air ? .25 : o.j ? 1.6 : 1), s=Math.sin(o.ph);   // hard beats to surge up, still in the air
     const tl=o.el.querySelector('.otail'), bd=o.el.querySelector('.obody');
     if (tl) tl.style.transform=`rotate(${(a*s).toFixed(1)}deg)`; if (bd) bd.style.transform=`rotate(${(-.08*a*s).toFixed(2)}deg)`;
