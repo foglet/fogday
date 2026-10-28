@@ -428,7 +428,8 @@ async function loadWeather(key){
   const h0 = hperiods[0];
   // Forecast periods kept for dragging ahead: hourly (about 6½ days), then the twice-daily periods (about 7 days)
   const slim = p => ({s:+new Date(p.startTime), e:+new Date(p.endTime), temp:p.temperature, short:p.shortForecast,
-    isDay:p.isDaytime, wind:p.windSpeed, dir:p.windDirection});
+    isDay:p.isDaytime, wind:p.windSpeed, dir:p.windDirection,
+    rain:p.probabilityOfPrecipitation ? p.probabilityOfPrecipitation.value : null});
   const data = {hourly: hperiods.map(slim), daily: periods.map(slim),
     obs, prev, stationName, hi: today && today.temperature, lo: tonight && tonight.temperature,
     short: h0 && h0.shortForecast, rain: h0 && h0.probabilityOfPrecipitation ? h0.probabilityOfPrecipitation.value : null,
@@ -508,7 +509,7 @@ function drawForecast(w, t){
   const d = dayOf(t), onDay = q => same(dayOf(q.s), d);
   const hi = (w.daily||[]).find(q=>q.isDay && onDay(q)), lo = (w.daily||[]).find(q=>!q.isDay && onDay(q));
   morph($('weather'), `<span class="label">${esc(L.forecast)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</span><div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num hilo">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(p.temp)}</span>${skyIcon(p.short, p.isDay)}</span><div class="sub"><b>${esc(wxT(p.short)||'—')}</b><span class="label num hilo">${hiLo(hi&&hi.temp, lo&&lo.temp)}</span>${wxExtra(p.rain, null, null, null)}</div></div>`);
   // windSpeed is "12 mph" (hourly) or "10 to 15 mph" (daily): show the low end, and the top of a range below it
   const nums = String(p.wind||'').match(/\d+/g) || [];
   const spd = nums.length ? spdNum(+nums[0]) : null, top = nums.length>1 ? spdNum(+nums[nums.length-1]) : null;
@@ -521,6 +522,19 @@ const wxT = t => I18N.wxText(t, lang);
 const hiLo = (hi, lo) => { const deg=units==='m'?'°C':'°F';   // "High 64°F Low 52°F", same units as the temperature
   // No letter spacing after the °, so the label's tracking doesn't open a gap: 64°F, not 64° F
   return esc([hi!=null?tr('high',{n:tempNum(hi),deg}):'', lo!=null?tr('low',{n:tempNum(lo),deg}):''].filter(Boolean).join(' ')).replace(/°/g,'<span class="deg">°</span>'); };
+// Rain chance, visibility and pressure: one small line under the high / low, styled like the wind tile's Beaufort / gusts line.
+// Visibility arrives in meters, pressure in pascals; shown in miles and inches of mercury (feet) or km and hPa (meters).
+// Pressure trend from the reading about 3 hours earlier: rising / falling at 0.5 hPa or more, otherwise steady.
+const presOf = o => o ? (o.barometricPressure && o.barometricPressure.value != null ? o.barometricPressure.value
+  : o.seaLevelPressure && o.seaLevelPressure.value != null ? o.seaLevelPressure.value : null) : null;
+function wxExtra(rain, visM, pa, paPrev){
+  const m = units==='m', parts = [];
+  if (rain!=null) parts.push(tr('rain',{n:Math.round(rain)}));
+  if (visM!=null) { const v = m ? visM/1000 : visM/1609.344; parts.push(tr('vis',{n:v<10?(Math.round(v*10)/10).toString():String(Math.round(v)), u:m?'km':'mi'})); }
+  if (pa!=null) { const d = paPrev!=null ? (pa-paPrev)/100 : null, arr = d==null ? '' : d>=0.5 ? ' ↑' : d<=-0.5 ? ' ↓' : ' →';
+    parts.push(tr('pres',{n:m?String(Math.round(pa/100)):(pa/3386.389).toFixed(2), u:m?'hPa':'in'})+arr); }
+  return parts.length ? `<span class="wline">${parts.map(t=>`<span class="label num">${esc(t)}</span>`).join('')}</span>` : '';
+}
 const dirName = d => { const i=COMPASS.indexOf(d); return i<0 ? d : L.compass[i]; };
 function drawWeather(w){
   if (!isLive()) return drawForecast(w, cursor());
@@ -530,7 +544,7 @@ function drawWeather(w){
   const f = val(o.temperature) != null ? cToF(val(o.temperature)) : w.hourlyTemp;
   const desc = o.textDescription || w.short || '—';
   morph($('weather'), `<span class="label">${esc(L.weather)}</span>
-    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</span><div class="sub"><b>${esc(wxT(desc))}</b><span class="label num hilo">${hiLo(w.hi, w.lo)}</span></div></div>`);
+    <div class="trow inline"><span class="ri"><span class="slab mid num">${tempTxt(f)}</span>${skyIcon(desc, w.isDay)}</span><div class="sub"><b>${esc(wxT(desc))}</b><span class="label num hilo">${hiLo(w.hi, w.lo)}</span>${wxExtra(w.rain, val(o.visibility), presOf(o), presOf(w.prev))}</div></div>`);
   const mph = val(o.windSpeed) != null ? kmhToMph(val(o.windSpeed)) : (w.hourlyWind ? parseInt(w.hourlyWind,10) : null);
   const spd = spdNum(mph);
   let dir = val(o.windDirection);
