@@ -18,6 +18,7 @@ title: Tides of San Francisco
      Site colors and fonts come from fogday.css; only tide-specific colors are defined here. */
   .tides {
     --water: var(--accent);
+    --tl1: #2f7fc1; --tl2: #22a37c; --tl3: #2f7fc1; --tl4: #22a37c; --tl5: #1b3f75;   /* tide line: blue, green, blue, green, dark blue */
     --water-fill: color-mix(in srgb, var(--accent) 15%, transparent);
     --night: rgb(28 40 48 / .06);
     --buoy: #d9622b;            /* channel buoy: the "now" marker */
@@ -28,9 +29,11 @@ title: Tides of San Francisco
     display: flex; flex-direction: column; gap: 24px; padding-block: 22px 36px;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides {
-    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); } }
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted);
+    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; } }
   :root[data-theme="dark"] .tides {
-    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); }
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted);
+    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; }
 
   .tides .num { font-variant-numeric: tabular-nums; }
   .tides .muted { color: var(--muted); }

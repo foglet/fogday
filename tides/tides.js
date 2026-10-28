@@ -863,7 +863,10 @@ function buildStrip(){
   // Day names at the foot of each midnight divider, drawn over the water and waves so they stay on top
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1)))
     s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
-  s+=`<path d="M${pts.join(' L')}" fill="none" stroke="var(--water)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  // The tide line: a blue, green, blue, green, dark blue gradient from the top of the chart down to the floor
+  s+=`<defs><linearGradient id="tideLineGrad" gradientUnits="userSpaceOnUse" x1="0" y1="${pt}" x2="0" y2="${pt+ih}">${
+    ['--tl1','--tl2','--tl3','--tl4','--tl5'].map((v,i)=>`<stop offset="${i*25}%" style="stop-color:var(${v})"/>`).join('')}</linearGradient></defs>`;
+  s+=`<path d="M${pts.join(' L')}" fill="none" stroke="url(#tideLineGrad)" stroke-width="2.4" stroke-linejoin="round"/>`;
   s+=seaLife(td, start, end, TW, W, x, y, pt+ih, pt);   // after the tide line, so the otter floats on top of it
   // Highs and lows: markers in the picture; height above, time below, in a top layer over the center line
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
@@ -885,9 +888,13 @@ function buildStrip(){
   $('stripSvg').innerHTML = s+'</svg>';
   { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
   $('stripLab').innerHTML = labels+'</svg>';
+  seaHoles='';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
     ${POLE_GULL}
-    <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6"/>
+    <defs><filter id="poleSoft" x="-50%" y="-20%" width="200%" height="140%"><feGaussianBlur stdDeviation="0 1.6"/></filter>
+      <mask id="poleMask" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
+      <g id="poleHoles" filter="url(#poleSoft)"></g></mask></defs>
+    <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6" mask="url(#poleMask)"/>
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
   // Every label's box in the week picture (high / low heights and times, day names), so the center line can skip them
@@ -895,17 +902,23 @@ function buildStrip(){
   stripCan = stripTexts.map(t => /\b(labt|lab|dayl)\b/.test(t.getAttribute('class')||''));   // only tide heights, tide times and day names hide
   stripBoxes = stripTexts.map(t => { const b=t.getBBox(); return [b.x, b.x+b.width, b.y, b.y+b.height]; });
 }
-let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [];
+let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], seaHoles = '';
 /* A creature passing in front of a value (a tide height, a tide time, a day name; not the sun / moon times) hides that value until it has
    passed, so they never overlap. Boxes around each creature, unscaled: [half width, above, below] its anchor point. */
 const SEA_BOX={shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
 function seaHideLabels(){
   if (!stripG || !stripTexts.length) return;
-  const left=((cursor()-HALF_MS)-strip0)*stripK, vw=stripW, z=seaSZ, M=2, st=$('strip'), B=[];
+  const left=((cursor()-HALF_MS)-strip0)*stripK, vw=stripW, z=seaSZ, M=5, st=$('strip'), B=[];   // 5 px clear on each side
   const add=(k, x, y, s) => { const [w,a,b]=SEA_BOX[k]; B.push([x-w*s-M, x+w*s+M, y-a*s-M, y+b*s+M]); };
   for (const m of seaM){ if (!m.el || m.qx===undefined || m.el.style.visibility==='hidden' || st.classList.contains('no-'+m.k)) continue;
     if (m.qx<left-60 || m.qx>left+vw+60) continue;
     add(m.k, m.qx, m.qy, z*(m.qs||1)); }
+  // The time pole fades out where a creature passes in front of it (not the bird that perches on it): fully gone across
+  // the creature and its 5 px, easing back in over 4 px beyond, top and bottom softened
+  { const cx=left+vw/2; let holes='';
+    for (const [l,r,t,b] of B){ const out=Math.max(l-cx, cx-r); if (out>=4) continue;
+      const o=Math.min(1, 1-out/4); holes+=`<rect x="${(vw/2-3).toFixed(1)}" y="${t.toFixed(1)}" width="6" height="${(b-t).toFixed(1)}" fill="#000" fill-opacity="${o.toFixed(2)}"/>`; }
+    if (holes!==seaHoles){ seaHoles=holes; const h=document.getElementById('poleHoles'); if (h) h.innerHTML=holes; } }
   if (PG.st!=='gone' && !st.classList.contains('no-gull')){ const [w,a,b]=PG_BOX, x=PG.x+left; B.push([x-w*z-M, x+w*z+M, PG.y-a*z-M, PG.y+b*z+M]); }
   stripBoxes.forEach(([x0,x1,y0,y1], i) => { if (!stripCan[i]) return;
     if (x1<left-40 || x0>left+vw+40){ if (stripHid[i]){ stripHid[i]=false; stripTexts[i].classList.remove('sea-hid'); } return; }
