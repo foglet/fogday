@@ -1010,7 +1010,7 @@ function buildStrip(){
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
     const ex=x(e.t), ey=y(e.v);
-    s+=`<circle cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="var(--water)" stroke-width="1.6"/>`;
+    s+=`<circle class="tmk" cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="var(--water)" stroke-width="1.6"/>`;
     // Highs and lows: a light bead set into the line, 9 px across (3x the old 3 px), ringed in the water color, same for both
     // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
     labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
@@ -1040,9 +1040,13 @@ function buildStrip(){
   stripTexts = [...document.querySelectorAll('#stripSvg text, #stripLab text')]; stripHid = stripTexts.map(()=>false);
   stripCan = stripTexts.map(t => /\b(labt|lab|dayl)\b/.test(t.getAttribute('class')||''));   // only tide heights, tide times and day names hide
   stripBoxes = stripTexts.map(t => { const b=t.getBBox(); return [b.x, b.x+b.width, b.y, b.y+b.height]; });
+  // the high / low markers too (not the current-time dot, which is never hidden)
+  stripMk = [...document.querySelectorAll('#stripSvg .tmk')]; stripMkHid = stripMk.map(()=>false);
+  stripMkBox = stripMk.map(c => { const x=+c.getAttribute('cx'), y=+c.getAttribute('cy'), r=5.3; return [x-r, x+r, y-r, y+r]; });
 }
-let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], seaHoles = '';
-/* A creature passing in front of a value (a tide height, a tide time, a day name; not the sun / moon times) hides that value until it has
+let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], seaHoles = '', stripMk = [], stripMkBox = [], stripMkHid = [];
+/* A creature passing in front of a value (a tide height, a tide time, a day name, a high / low marker; not the sun / moon
+   times, nor the current-time dot) hides that value until it has
    passed, so they never overlap. Boxes around each creature, unscaled: [half width, above, below] its anchor point. */
 const SEA_BOX={orcaM:[26,26,9], orcaF:[26,17,9], shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
 function seaHideLabels(){
@@ -1059,6 +1063,10 @@ function seaHideLabels(){
     for (const [l,r,t,b] of B){ const out=Math.max(l-cx, cx-r); if (out>=4) continue;
       const o=Math.min(1, 1-out/4); holes+=`<rect x="${(vw/2-3).toFixed(1)}" y="${t.toFixed(1)}" width="6" height="${(b-t).toFixed(1)}" fill="#000" fill-opacity="${o.toFixed(2)}"/>`; }
     if (holes!==seaHoles){ seaHoles=holes; const h=document.getElementById('poleHoles'); if (h) h.innerHTML=holes; } }
+  // High / low markers: hidden while sea life passes in front of them. Not for the bird on the pole, which may perch on one.
+  stripMkBox.forEach(([x0,x1,y0,y1], i) => {
+    const hit = !(x1<left-40 || x0>left+vw+40) && B.some(([l,r,t,b]) => x1>l && x0<r && y1>t && y0<b);
+    if (hit!==stripMkHid[i]){ stripMkHid[i]=hit; stripMk[i].classList.toggle('sea-hid', hit); } });
   if (PG.st!=='gone' && !st.classList.contains('no-gull')){ const [w,a,b]=PG_BOX, x=PG.x+left; B.push([x-w*z-M, x+w*z+M, PG.y-a*z-M, PG.y+b*z+M]); }
   stripBoxes.forEach(([x0,x1,y0,y1], i) => { if (!stripCan[i]) return;
     if (x1<left-40 || x0>left+vw+40){ if (stripHid[i]){ stripHid[i]=false; stripTexts[i].classList.remove('sea-hid'); } return; }
