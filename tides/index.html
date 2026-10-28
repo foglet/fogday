@@ -220,22 +220,22 @@ title: Tides of San Francisco
   @keyframes seaFlap { 0% { transform: scaleY(1); } 6% { transform: scaleY(-.5); } 12% { transform: scaleY(1); } 18% { transform: scaleY(-.5); }
     24% { transform: scaleY(1); } 30% { transform: scaleY(-.5); } 36%, 100% { transform: scaleY(.92); } }
   @keyframes seaBeat { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-.55); } }
-  /* Sharks: tail swishes from its base, body sways a touch. Crabs: claws wave and snap, legs shuffle. */
-  .tides .stail { transform-box: fill-box; transform-origin: 0% 50%; animation: sharkTail 1.2s ease-in-out infinite; }
-  .tides .sbody { transform-box: fill-box; transform-origin: 40% 50%; animation: sharkSway 1.2s ease-in-out infinite; }
+  /* Sharks: tail swishes from its base, body sways a touch. Crabs: claws wave and snap, legs shuffle, eyes wink.
+     All driven at random from tides.js (seaParts), so no two moves repeat; the keyframes below are no longer used. */
+  .tides .stail { transform-box: fill-box; transform-origin: 0% 50%; }
+  .tides .sbody { transform-box: fill-box; transform-origin: 40% 50%; }
   @keyframes sharkTail { 0%, 100% { transform: rotate(-13deg); } 50% { transform: rotate(13deg); } }
   @keyframes sharkSway { 0%, 100% { transform: rotate(1.6deg); } 50% { transform: rotate(-1.6deg); } }
-  .tides .claw { transform-box: fill-box; animation: clawL 2.8s ease-in-out infinite; }
-  .tides .claw.l { transform-origin: 100% 100%; } .tides .claw.r { transform-origin: 0% 100%; animation-name: clawR; }
+  .tides .claw { transform-box: fill-box; }
+  .tides .claw.l { transform-origin: 100% 100%; } .tides .claw.r { transform-origin: 0% 100%; }
   @keyframes clawL { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-16deg); } 30% { transform: rotate(-6deg); } 40% { transform: rotate(-16deg); } 60% { transform: rotate(8deg); } }
   @keyframes clawR { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(16deg); } 30% { transform: rotate(6deg); } 40% { transform: rotate(16deg); } 60% { transform: rotate(-8deg); } }
-  .tides .pinch { transform-box: fill-box; transform-origin: 0% 100%; animation: pinch 2.8s ease-in-out infinite; }
+  .tides .pinch { transform-box: fill-box; transform-origin: 0% 100%; }
   .tides .claw.r .pinch { transform-origin: 0% 100%; }
   @keyframes pinch { 0%, 15%, 25%, 35%, 45%, 100% { transform: rotate(0); } 20%, 40% { transform: rotate(-28deg); } }
-  .tides .clegs { animation: crabLegs .5s steps(2) infinite; }
   @keyframes crabLegs { 0% { transform: translateX(-.5px); } 100% { transform: translateX(.5px); } }
-  /* Crab eyes: each winks on its own (a quick close and open once every 4-9 s) */
-  .tides .ceye { transform-box: fill-box; transform-origin: 50% 50%; animation: crabWink 6s linear infinite; }
+  /* Crab eyes: each winks on its own, at random moments */
+  .tides .ceye { transform-box: fill-box; transform-origin: 50% 50%; }
   @keyframes crabWink { 0%, 93%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(.12); } }
   /* Pole gull in flight (side view): wings swing from the shoulder, up and down; held out to glide on the way in to land */
   .tides .pgw { transform-box: fill-box; transform-origin: 8% 100%; animation: pgFlap .38s ease-in-out infinite; }

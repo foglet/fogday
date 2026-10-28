@@ -636,8 +636,38 @@ function seaBout(m, ms){
   if (m.nomad){ if (m.tvx) d = r()<.85 ? Math.sign(m.tvx) : -Math.sign(m.tvx); }   // a nomad mostly keeps going the way it was going
   else { const off=m.x-m.home; if (Math.abs(off)>m.R && r()<.8) d=-Math.sign(off); if (r()<.15) m.R=stripW*(r()<.35 ? 1.2+r()*1.3 : .2+r()*.7); }
   m.tvx=d*sp; m.acc=.25+r()*1.6;
-  if (m.el && m.el.getAnimations){ const rate=(.55+1.3*sp/s1)*(.8+r()*.4);
-    for (const a of m.el.getAnimations({subtree:true})) try { a.updatePlaybackRate ? a.updatePlaybackRate(rate) : a.playbackRate=rate; } catch(e){} }
+}
+/* Tails, claws, legs and eyes, at random (no CSS loops): a shark's tail swishes faster and wider the faster it swims, with a
+   beat and a reach that keep drifting; a crab's claws wander and snap at random moments, its legs shuffle as it walks (and
+   now and then standing still), and each eye winks on its own at random. */
+const seaStill = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+function seaParts(m, ms, dt){
+  if (!dt || (seaStill && seaStill.matches)) return;
+  const r=Math.random, P=m.parts || (m.parts = m.k==='shark'
+    ? {tail:m.el.querySelector('.stail'), body:m.el.querySelector('.sbody'), ph:r()*6.283, nf:{}, na:{}}
+    : {claws:[...m.el.querySelectorAll('.claw')].map(el=>({el, pin:el.querySelector('.pinch'), n:{}, snap:0, next:ms+r()*3000})),
+       legs:m.el.querySelector('.clegs'), lp:0, eyes:[...m.el.querySelectorAll('.ceye')].map(el=>({el, next:ms+1000+r()*8000, w:0}))});
+  const sp=Math.min(1.5, Math.abs(m.vx)/38);
+  if (m.k==='shark'){
+    const f=(.45+1.3*sp)*(1+.35*seaN(P.nf, 2.5, dt));                  // beats a second, drifting
+    P.ph += 6.2832*f*dt;
+    const a=(7+9*sp)*(1+.3*seaN(P.na, 3, dt)), s=Math.sin(P.ph);
+    if (P.tail) P.tail.style.transform=`rotate(${(a*s).toFixed(1)}deg)`;
+    if (P.body) P.body.style.transform=`rotate(${(-.13*a*s).toFixed(2)}deg)`;
+    return; }
+  // Crab claws: each wanders on its own; snaps (one or two quick pinches) come at random moments, more often on the move
+  P.claws.forEach((c, i) => { const sd = i ? 1 : -1;
+    if (ms>c.next){ c.snap=ms; c.dbl=r()<.4; c.next=ms+(.8+r()*4.5/(1+2*sp))*1000; }
+    const ang=sd*(5+11*seaN(c.n, 1.4, dt));
+    const e=(ms-c.snap)/1000, pin = e<.14 || (c.dbl && e>.24 && e<.38) ? -28 : 0;
+    c.el.style.transform=`rotate(${ang.toFixed(1)}deg)`; if (c.pin) c.pin.style.transform=`rotate(${pin}deg)`; });
+  // Legs: a shuffle step every 3 px walked, and a fidget now and then while it stands
+  P.lp += Math.abs(m.vx)*dt/3 + (r()<dt*.6 ? 1 : 0);
+  if (P.legs) P.legs.style.transform=`translateX(${Math.floor(P.lp)%2 ? .5 : -.5}px)`;
+  // Eyes: each winks on its own, every 2-11 s at random, sometimes a double wink
+  for (const y of P.eyes){ if (ms>y.next){ y.w=ms; y.dbl=r()<.2; y.next=ms+(2+r()*9)*1000; }
+    const e=(ms-y.w)/1000, shut = e<.13 || (y.dbl && e>.24 && e<.36);
+    y.el.style.transform = shut ? 'scaleY(.12)' : ''; }
 }
 function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   let seed = seaSeed; seaM=[]; seaFlocks=[]; seaPelDir = seaSeed%2 ? 1 : -1; seaOn={crab:new Set(), shark:new Set(), gull:new Set()}; seaPelOn=false; seaPelXY=[];
@@ -961,6 +991,7 @@ function moveSea(now){
       m.ly=y; }
     const sz=m.k==='crab' ? `scale(${z})` : `scale(${m.face*z},${z})`;
     m.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)})${rot} ${sz}`);
+    if ((m.k==='shark' || m.k==='crab') && m.lx>-40 && m.lx<vw+40) seaParts(m, ms, dt);   // on screen only
   }
   // Pelican flocks (unchanged): each keeps one heading (never turns) and flies straight across at its own speed, far out and small then close
   // in and low and back. Once the whole line is off screen it waits 5-40 s, then comes back in from the left or the right, at random.
