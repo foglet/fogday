@@ -236,7 +236,13 @@ title: Tides of San Francisco
   /* Crab eyes: each winks on its own (a quick close and open once every 4-9 s) */
   .tides .ceye { transform-box: fill-box; transform-origin: 50% 50%; animation: crabWink 6s linear infinite; }
   @keyframes crabWink { 0%, 93%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(.12); } }
-  @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
+  /* Pole gull in flight (side view): wings swing from the shoulder, up and down; held out to glide on the way in to land */
+  .tides .pgw { transform-box: fill-box; transform-origin: 8% 100%; animation: pgFlap .38s ease-in-out infinite; }
+  .tides .pgw.far { animation-name: pgFlapFar; }
+  @keyframes pgFlap { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(90deg); } }   /* + lowers the wing: 0 raised, ~30 level, 90 down */
+  @keyframes pgFlapFar { 0%, 100% { transform: rotate(-18deg) scale(.92); } 50% { transform: rotate(58deg) scale(.92); } }
+  .tides #pgFly.glide .pgw { animation: none; transform: rotate(28deg); } .tides #pgFly.glide .pgw.far { transform: rotate(22deg) scale(.92); }
+  @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .pgw, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
   .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;

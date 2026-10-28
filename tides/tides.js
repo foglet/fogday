@@ -939,25 +939,31 @@ function drawStrip(){ buildStrip(); placeStrip(); }
    easy pace and slows smoothly to land.
    Drawn in the fixed overlay (stripCur), so it stays with the pole; counts as a gull for the flip-flops. */
 const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
-  <g id="pgSit"><path d="M-1,0 L-1.6,-5.5 M2,0 L1.4,-5.5" stroke="#e5a48a" stroke-width="1.1" stroke-linecap="round" fill="none"/>
-    <ellipse cx=".5" cy="-9" rx="6.6" ry="4" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
-    <path d="M-2.5,-11.2 Q4,-12.8 9.4,-8.6 L6.4,-7 Q2,-9.2 -2.5,-9.2 Z" fill="#8f9aa3"/><path d="M8.4,-9.2 l3.6,1 l-3.3,1.1 Z" fill="#2f3a42"/>
-    <circle cx="-5" cy="-14" r="3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
-    <path d="M-7.9,-14.4 l-3,.6 l3,.7 Z" fill="#f2b632"/><circle cx="-5.8" cy="-14.8" r=".55" fill="#1b2a33"/></g>
-  <g id="pgFly" style="display:none"><g class="wing fast"><path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
-    <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/></g>
-    <ellipse cx="0" cy="0" rx="6" ry="2.3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
-    <circle cx="-5.6" cy="-0.6" r="2" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
-    <path d="M-7.4,-0.6 l-2.4,.5 l2.3,.5 Z" fill="#f2b632"/><circle cx="-6.2" cy="-1.1" r=".55" fill="#1b2a33"/>
-    <path d="M5.5,0 l3.4,-1 l-.2,2.2 Z" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/></g></g>`;
+  <g id="pgSit">
+    <path d="M-1.2,-6.1 L-1,0 M1.4,-6.2 L1.2,0" stroke="#e39a82" stroke-width="1.05" stroke-linecap="round" fill="none"/>
+    <path d="M-2.6,0 h2.9 M-.1,0 h2.9" stroke="#e39a82" stroke-width=".9" stroke-linecap="round" fill="none"/>
+    <path d="M-8.7,-15.6 C-8.4,-17.8 -6.2,-18.6 -4.6,-18.1 C-3.1,-17.6 -2.6,-16.2 -2.3,-14.8 C-1.5,-13.6 2,-12.6 6,-11.8 L12.6,-10.4 L11.8,-9.6 C9,-9.2 6.6,-7.4 3,-6.3 C-.5,-5.6 -4.2,-6.2 -6.6,-8.2 C-8.3,-9.6 -9,-11.6 -8.9,-13.4 C-8.9,-14.3 -8.8,-15 -8.7,-15.6 Z" fill="#ffffff" stroke="#9aa4ab" stroke-width=".5"/>
+    <path d="M-2.2,-14.2 C1,-13.2 5,-12.4 8.6,-11.4 L13.6,-10.6 C10.4,-9.4 7.6,-8.6 4.6,-8.4 C1.6,-8.2 -.8,-9.4 -2,-11.2 C-2.6,-12.2 -2.6,-13.4 -2.2,-14.2 Z" fill="#8f9aa3"/>
+    <path d="M-1.4,-10.4 C1.2,-8.9 4.6,-8.5 8,-9.3" stroke="#ffffff" stroke-width=".6" fill="none"/>
+    <path d="M8.4,-11.3 L14.8,-10.4 L9.4,-9.1 Z" fill="#2b343b"/><circle cx="13.1" cy="-10.35" r=".45" fill="#ffffff"/>
+    <path d="M-8.6,-15.5 L-11.9,-14.9 C-12.2,-14.8 -12.2,-14.2 -11.8,-14.1 L-8.7,-14.1 Z" fill="#f2b632"/><circle cx="-11.1" cy="-14.3" r=".45" fill="#d9472b"/>
+    <circle cx="-6.4" cy="-15.9" r=".62" fill="#1b2a33"/></g>
+  <g id="pgFly" style="display:none">
+    <g class="pgw far"><path d="M-1.6,-2 C0,-5.6 3.4,-8.4 7.6,-10.2 L9.2,-9.8 C6.4,-7.6 4,-4.8 2.2,-1.6 Z" fill="#7d8891"/></g>
+    <path d="M-9,-1.2 C-8.6,-3 -6.6,-3.6 -5,-3 C-2,-2.4 4,-2.2 9,-1.6 L12.6,-1.2 L9,.2 C5,1.6 -1,2.2 -5,1.6 C-7.4,1.2 -8.8,.2 -9,-1.2 Z" fill="#ffffff" stroke="#9aa4ab" stroke-width=".5"/>
+    <path d="M9.4,-1.5 L12.6,-1.2 L9.6,-.4 Z" fill="#2b343b"/>
+    <path d="M-8.9,-1.7 L-12,-1.1 L-8.8,-.6 Z" fill="#f2b632"/><circle cx="-6.6" cy="-1.9" r=".55" fill="#1b2a33"/>
+    <g class="pgw near"><path d="M-2.4,-2.2 C-.6,-6.6 3.4,-10.6 9,-13.2 L11.6,-12.6 C7.6,-9.6 4.6,-5.6 2.4,-1.6 Z" fill="#8f9aa3" stroke="#7d8891" stroke-width=".3"/>
+      <path d="M8.2,-12.8 L11.6,-12.6 L9.6,-10.6 Z" fill="#2b343b"/><path d="M-1.6,-2.4 C.4,-6.2 3.6,-9.4 7.6,-11.6" stroke="#ffffff" stroke-width=".5" fill="none"/></g></g></g>`;
 const PG={st:'perch', x:0, y:0, dir:1, face:1, v:0, vy:0, wait:0, slideAt:0, raf:0, lt:0, t0:0, sx:0, sy:0};
 function pgDraw(){
   const g=document.getElementById('poleGull'); if (!g || !stripG) return;
   const z=seaSZ, W=stripG.W, perch=PG.st==='perch' || PG.st==='wary';   // still standing while wary
-  if (perch){ PG.x=W/2; PG.y=stripPoleTop; PG.face=1; }
+  if (perch){ PG.x=W/2; PG.y=stripPoleTop; }   // stands facing the way it flew in
   g.style.visibility = PG.st==='gone' ? 'hidden' : '';
   g.querySelector('#pgSit').style.display = perch ? '' : 'none';
-  g.querySelector('#pgFly').style.display = perch ? 'none' : '';
+  const fly=g.querySelector('#pgFly'); fly.style.display = perch ? 'none' : '';
+  fly.classList.toggle('glide', PG.st==='in' && PG.v<40);   // wings held out on the final glide to the pole
   g.setAttribute('transform', `translate(${PG.x.toFixed(1)},${PG.y.toFixed(1)}) scale(${(PG.face*z).toFixed(2)},${z})`);
 }
 function poleGullScare(){
