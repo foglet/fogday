@@ -840,15 +840,44 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <ellipse cx="-15.4" cy="-3.2" rx="3.4" ry="1.3" fill="#f4f5f3" transform="rotate(-12 -15.4 -3.2)"/>
       <ellipse cx="3.4" cy="-5.9" rx="4.6" ry="1.1" fill="#8e989c"/>
       <ellipse cx="-10" cy="7" rx="3.6" ry="1.7" fill="#15191c" transform="rotate(25 -10 7)"/></g></g>`;
-  return g+'</g><g class="orcas">'+[...Array(10)].map(orca).join('')+'</g>';
+  return g+'</g><g class="orcas">'+[...Array(10)].map(orca).join('')+'</g><g class="splashes sl-splash"></g>';
 }
 /* Orcas: now and then (first within 15-90 s, then every 1-5 min, at random) a pod of 1-10 swims across the screen at mid
    depth, loosely strung out, each at its own depth and pace, the pod speeding up and slowing down in random bouts. When they
    show up the great whites leave: every shark on screen bolts away from the pod, and none comes back on screen until the
    pod has been gone 20-60 s. In screen coordinates, like the pelicans, so they cross the screen whatever the chart does. */
 let seaOrca={on:false, next:0, els:[], b:[], away:0};
+/* A splash where an orca hits the water (size 1; .55 for the spray as it leaves): a crown of water that rises and falls back,
+   droplets thrown up and out that fall under gravity and vanish into the sea, and two rings spreading on the surface.
+   About 1.2 s; drawn in the week picture, so it stays where it happened. */
+let seaSplashes=[];
+function seaSplash(x, sy, k){
+  const L=document.querySelector('#stripSvg .splashes'); if (!L) return;
+  const z=seaSZ*k, R=Math.random, n=Math.round(6+10*k), g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  const drops=[...Array(n)].map(()=>({x:0, y:0, vx:(R()-.5)*170*z, vy:-(70+R()*170)*z, r:(.9+R()*1.5)*Math.max(.7,z)}));
+  g.innerHTML = `<ellipse class="spr" cx="0" cy="0" rx="1" ry="1"/><ellipse class="spr" cx="0" cy="0" rx="1" ry="1"/>
+    <path class="spc" d="M-10,0 C-8,-3 -7,-6 -8.4,-9 C-6,-6.4 -5,-4.4 -4,-3.2 C-3.2,-6 -2.6,-9 -2,-12.5 C-1,-8.4 -.5,-5.6 0,-4.4 C.5,-5.6 1,-8.4 2,-12.5 C2.6,-9 3.2,-6 4,-3.2 C5,-4.4 6,-6.4 8.4,-9 C7,-6 8,-3 10,0 Z"/>
+    ${drops.map(d=>`<circle class="spd" r="${d.r.toFixed(2)}"/>`).join('')}`;
+  g.setAttribute('transform', `translate(${x.toFixed(1)},${sy.toFixed(1)})`); L.appendChild(g);
+  seaSplashes.push({g, t0:performance.now(), z, sy, drops, rings:[...g.querySelectorAll('.spr')], crown:g.querySelector('.spc'), dots:[...g.querySelectorAll('.spd')], d:1.1+.3*k});
+}
+function seaSplashStep(ms, dt){
+  seaSplashes = seaSplashes.filter(S => { const t=(ms-S.t0)/1000;
+    if (t>S.d || !S.g.isConnected){ S.g.remove(); return false; }
+    const z=S.z, u=t/S.d;
+    // the crown: up fast, then sinking back and widening
+    const hu=Math.sin(Math.PI*Math.min(1, t/(.62*S.d))), w=(.9+1.1*u)*z*1.7;
+    S.crown.setAttribute('transform', `scale(${w.toFixed(3)},${Math.max(.001, 2.3*hu*z).toFixed(3)})`); S.crown.style.opacity=(1-u*u).toFixed(3);
+    S.rings.forEach((r,i)=>{ const v=Math.max(0, u-.12*i)/(1-.12*i), rx=(6+30*v)*z;
+      r.setAttribute('rx', rx.toFixed(1)); r.setAttribute('ry', (rx*.22).toFixed(1)); r.style.opacity=(v>0 ? .9*(1-v) : 0).toFixed(3); });
+    S.drops.forEach((d,i)=>{ d.vy += 430*Math.max(.6,z)*dt; d.x += d.vx*dt; d.y += d.vy*dt;
+      const el=S.dots[i], gone = d.vy>0 && d.y>1;                  // back in the sea
+      el.setAttribute('cx', d.x.toFixed(1)); el.setAttribute('cy', d.y.toFixed(1)); el.style.opacity = gone ? 0 : (1-.5*u).toFixed(3); });
+    return true; });
+}
 function seaOrcas(ms, dt, left, vw){
   const O=seaOrca, R=Math.random, z=seaSZ, st=$('strip');
+  if (seaSplashes.length) seaSplashStep(ms, dt);
   if (!O.els.length || !stripG) return;
   if (!O.next) O.next=ms+(15+R()*75)*1000;
   if (seaStill && seaStill.matches){ if (O.on){ O.on=false; O.els.forEach(e=>e.style.visibility='hidden'); } return; }
@@ -860,9 +889,15 @@ function seaOrcas(ms, dt, left, vw){
     const nm = n===1 ? (R()<.6 ? 1 : 0) : Math.min(n-1, R()<.1 ? 0 : 1+Math.floor(R()*Math.min(3, Math.ceil(n/3))));
     const males=new Set(); while (males.size<nm) males.add(Math.floor(R()*n));
     O.els.forEach(e=>e.style.visibility='hidden');
+    O.nj = R()<.75 ? ms+(3+R()*9)*1000 : Infinity;   // most pods put on a show; the first leap comes 3-12 s in
     let off=0; O.b=O.els.slice(0,n).map((el,i)=>{ if (i) off+=(36+R()*30)*z;
       const m=males.has(i); el.classList.toggle('male', m); el.classList.toggle('female', !m);
-      return {el, male:m, sc:(m ? 1.08 : .92)*(.95+R()*.1), ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined}; }); }
+      return {el, male:m, sc:(m ? 1.08 : .92)*(.95+R()*.1), ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined, jdx:0, rot:0, j:null}; }); }
+  // Breaching, at random: one orca on screen (not near the edges) leaps out, the next leap 5-25 s later
+  if (ms>O.nj){ const c=O.b.filter(o=>!o.j && o.lx>70 && o.lx<vw-70);
+    if (c.length){ const o=c[Math.floor(R()*c.length)];
+      o.j={t0:ms, r:.45+R()*.2, a:.9+R()*.5, dv:.7+R()*.3, h:(30+R()*25)*z*(o.male?1.1:1), boost:(40+R()*40)*z}; }
+    O.nj = ms+(5+R()*20)*1000; }
   if (ms>O.bt){ O.bt=ms+(2+R()*6)*1000; O.sg = R()<.15 ? 6+R()*8 : 16+R()*34; }   // bouts: cruising, now and then a lull
   O.spd += (O.sg-O.spd)*(1-Math.exp(-dt/2));
   O.x -= O.d*O.spd*dt;
@@ -871,15 +906,30 @@ function seaOrcas(ms, dt, left, vw){
     const sxp = O.x + O.d*o.ox + 10*z*seaN(o.nx, 4, dt);                     // strung out behind the leader, each drifting
     o.lx = o.lx===undefined ? sxp : o.lx+(sxp-o.lx)*(1-Math.exp(-dt/.6));
     // body always under water; in shallow water only the tall dorsal fin breaks the surface
-    const px=o.lx+left, sx=seaSurf(px), top=sx+10*z, bot=Math.max(top, floor-8*z);
+    const px=o.lx+left+o.jdx, sx=seaSurf(px), top=sx+10*z, bot=Math.max(top, floor-8*z);
     const f=Math.max(.05, Math.min(.95, o.f0+.3*seaN(o.nd, 5, dt)));
-    const y = bot>top ? top+f*(bot-top) : (top+bot)/2;
+    let y = bot>top ? top+f*(bot-top) : (top+bot)/2, air=false;
+    /* A breach: it surges up from its depth, leaves the water nose up (a little spray), flies an arc 30-55 px over the
+       surface pitching with its path, and comes down nose first into a splash; then glides back down to its depth.
+       It shoots ahead of its place in the line while leaping and drifts back after. */
+    if (o.j){ const J=o.j, t=(ms-J.t0)/1000, s0=sx+3*z;
+      if (t<J.r){ const e=t/J.r; y=y+(s0-y)*e*e; o.jdx -= O.d*J.boost*e*dt; }
+      else if (t<J.r+J.a){ const a=(t-J.r)/J.a; air=true; y=s0-J.h*4*a*(1-a); o.jdx -= O.d*J.boost*dt;
+        if (!J.out){ J.out=true; seaSplash(px, sx, .55); } }
+      else if (t<J.r+J.a+J.dv){ if (!J.in){ J.in=true; seaSplash(px, sx, 1); }
+        const e=(t-J.r-J.a)/J.dv; y=s0+(y-s0)*(1-(1-e)*(1-e)); }
+      else o.j=null;
+      // pitch with the path: nose up rising, nose down falling (drawn facing left, so the sign follows the heading)
+      if (o.py!==undefined && dt>0){ const vy=(y-o.py)/dt, vx=O.spd+(air||t<J.r ? J.boost : 0);
+        const want=Math.max(-75, Math.min(75, Math.atan2(-vy, vx)*57.3)); o.rot += (want-o.rot)*(1-Math.exp(-dt/.08)); } }
+    else { o.rot += (0-o.rot)*(1-Math.exp(-dt/.4)); o.jdx *= Math.exp(-dt/3); }
+    o.py=y;
     // flukes beat up and down from the tail stock, faster when the pod hurries
     const sp=Math.min(1.4, O.spd/40), fr=(.35+.8*sp)*(1+.3*seaN(o.nf, 3, dt)); o.ph += 6.2832*fr*dt;
-    const a=(6+7*sp)*(1+.3*seaN(o.na, 3, dt)), s=Math.sin(o.ph);
+    const a=(6+7*sp)*(1+.3*seaN(o.na, 3, dt))*(air ? .25 : o.j ? 1.6 : 1), s=Math.sin(o.ph);   // hard beats to surge up, still in the air
     const tl=o.el.querySelector('.otail'), bd=o.el.querySelector('.obody');
     if (tl) tl.style.transform=`rotate(${(a*s).toFixed(1)}deg)`; if (bd) bd.style.transform=`rotate(${(-.08*a*s).toFixed(2)}deg)`;
-    o.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(O.d*z*o.sc).toFixed(3)},${(z*o.sc).toFixed(3)})`);
+    o.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) rotate(${(O.d*o.rot).toFixed(1)}) scale(${(O.d*z*o.sc).toFixed(3)},${(z*o.sc).toFixed(3)})`);
     o.el.style.visibility=''; o.qx=px; o.qy=y;
     if (o.lx>-60 && o.lx<vw+60){ any=true; } sum+=o.lx;
   }
@@ -1385,6 +1435,8 @@ $('seaBtn').addEventListener('click', ()=>{
     else { const k=SEA_TAP[Math.min(n,4)]; if (!k) return; if (seaHidden.has(k)) seaHidden.delete(k); else seaHidden.add(k); }
     try { localStorage.setItem('sf-tides-sea', seaHidden.size ? [...seaHidden].join(',') : '1'); } catch(err){}
     applySea();
+    // Tapping the flip-flops calls the orcas: if they're showing and no pod is around, one swims in right away
+    if (!seaHidden.has('orca') && !seaOrca.on) seaOrca.next = performance.now();
   }, 350);
 });
 /* Tap the language code (EN → FR → ES → ZH → EN), like the units: the whole page redraws in the new language */

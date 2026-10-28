@@ -230,6 +230,9 @@ title: Tides of San Francisco
   .tides .stail { transform-box: fill-box; transform-origin: 0% 50%; }
   /* Orcas: males have the tall straight dorsal fin, females the shorter curved one */
   .tides .sl-orca .ofin-m, .tides .sl-orca.male .ofin-f { display: none; } .tides .sl-orca.male .ofin-m { display: inline; }
+  /* Orca splash: white water, edged in the water color */
+  .tides .spc { fill: #fff; fill-opacity: .9; stroke: var(--water); stroke-width: .35; } .tides .spd { fill: #fff; stroke: var(--water); stroke-width: .5; }
+  .tides .spr { fill: none; stroke: var(--water); stroke-width: 1.1; }
   .tides .otail { transform-box: fill-box; transform-origin: 0% 50%; } .tides .obody { transform-box: fill-box; transform-origin: 40% 50%; }
   .tides .sbody { transform-box: fill-box; transform-origin: 40% 50%; }
   @keyframes sharkTail { 0%, 100% { transform: rotate(-13deg); } 50% { transform: rotate(13deg); } }
@@ -260,7 +263,7 @@ title: Tides of San Francisco
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pg-gull { display: inline; } :root:not([data-theme="light"]) .tides .pg-corm { display: none; } }
   :root[data-theme="dark"] .tides .pg-gull { display: inline; } :root[data-theme="dark"] .tides .pg-corm { display: none; }
   @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .pgw, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
-  .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican, .tides .strip.no-orca .sl-orca { display: none; }
+  .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican, .tides .strip.no-orca .sl-orca, .tides .strip.no-orca .sl-splash { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
