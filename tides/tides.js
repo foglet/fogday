@@ -554,7 +554,7 @@ const RS_BAND=38, RS_GLYPH={sun:'\uf00d', moon:'\uf02e', up:'\uf058', down:'\uf0
    sideways with a GPU transform, so moving through time stays smooth. The center line and its dot are a separate
    layer that never moves sideways; the dot rides up and down with the tide. */
 /* Sea life in the chart: in each screen-width of time a random mix of great white sharks at different depths (0-3, no more than two on screen at a time), sea otters
-   floating at the surface (removed for now), gulls high above the water (0-3, mostly alone, now and then a pair) and crabs on the floor (0-1, and only one on screen at a time), at least two creatures in all;
+   floating at the surface (removed for now), gulls removed (one gull only, the one resting on the timeline pole; restore: gull:upTo(3)) and crabs on the floor (0-1, and only one on screen at a time), at least two creatures in all;
    about half also get a flock of 1-12 pelicans (brown, or about 40% American white; one color per flock) in a loose line on a fixed heading, flying in from far out (small, high) to
    close and back, sometimes skimming just above the water; off screen they come back from either side; flocks that meet join.
    Drawn with a 2px border in the card color so they read against the waves. A new random draw (seaSeed) on each page load,
@@ -674,7 +674,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   };
   for (let seg=0; seg<TW; seg+=W){
     let sharks=0, n;
-    do n={otter:0, gull:upTo(3), shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
+    do n={otter:0, gull:0 /* only the pole gull for now */, shark:upTo(3), crab:upTo(1)}; while (n.otter+n.gull+n.shark+n.crab < 2);
     // About half the screen-widths get a group of 1-12 pelicans in a loose line, low over the water, leader in front
     if (rnd()<.5) for (let tries=0; tries<60; tries++){
       const cnt=[1,2,3,3,4,4,5,6,7,8,10,12][Math.floor(rnd()*12)], d=seaPelDir, gap=40*SZ, span=(cnt-1)*gap;   // 1-12, mixed; all flocks share one heading
