@@ -829,7 +829,7 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
     // then the crabs on the floor, where they fit between the others
     for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); move('crab',cx,cy,1); break; }
   }
-  // Orcas (a pod of five, see seaOrcas): black, white eye patch and belly, grey saddle; facing left like the sharks.
+  // Orcas (pods of 1-10, see seaOrcas): black, white eye patch and belly, grey saddle; facing left like the sharks.
   // Males: the tall, straight dorsal fin and a bigger body; females: a shorter, curved fin. Drawn hidden; they swim in at random.
   const orca = () => `<g class="sl-orca" style="visibility:hidden" filter="url(#seaRim)"><g class="obody">
       <g class="otail"><path d="M19,-1.2 C23,-2.5 26,-5 29,-6 C28,-3 27.6,-1 27.4,.3 C27.6,1.6 28,3.6 29,6.2 C26,5 23,3 19,2 Z" fill="#15191c"/></g>
@@ -840,9 +840,9 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <ellipse cx="-15.4" cy="-3.2" rx="3.4" ry="1.3" fill="#f4f5f3" transform="rotate(-12 -15.4 -3.2)"/>
       <ellipse cx="3.4" cy="-5.9" rx="4.6" ry="1.1" fill="#8e989c"/>
       <ellipse cx="-10" cy="7" rx="3.6" ry="1.7" fill="#15191c" transform="rotate(25 -10 7)"/></g></g>`;
-  return g+'</g><g class="orcas">'+[0,1,2,3,4].map(orca).join('')+'</g>';
+  return g+'</g><g class="orcas">'+[...Array(10)].map(orca).join('')+'</g>';
 }
-/* Orcas: now and then (first within 15-90 s, then every 1-5 min, at random) a pod of five swims across the screen at mid
+/* Orcas: now and then (first within 15-90 s, then every 1-5 min, at random) a pod of 1-10 swims across the screen at mid
    depth, loosely strung out, each at its own depth and pace, the pod speeding up and slowing down in random bouts. When they
    show up the great whites leave: every shark on screen bolts away from the pod, and none comes back on screen until the
    pod has been gone 20-60 s. In screen coordinates, like the pelicans, so they cross the screen whatever the chart does. */
@@ -854,9 +854,13 @@ function seaOrcas(ms, dt, left, vw){
   if (seaStill && seaStill.matches){ if (O.on){ O.on=false; O.els.forEach(e=>e.style.visibility='hidden'); } return; }
   if (!O.on){ if (ms<O.next) return;
     O.on=true; O.d=R()<.5?1:-1; O.x = O.d>0 ? vw+40 : -40; O.spd=20+R()*20; O.sg=O.spd; O.bt=0;   // d=1 swims left, in from the right
-    // Who's in the pod: mostly females, usually one or two males (none now and then), anywhere in the line
-    const nm = R()<.1 ? 0 : R()<.65 ? 1 : 2, males=new Set(); while (males.size<nm) males.add(Math.floor(R()*O.els.length));
-    let off=0; O.b=O.els.map((el,i)=>{ if (i) off+=(36+R()*30)*z;
+    // How many: 1-10, mixed (a lone orca now and then, a big pod of ten sometimes)
+    const n=[1,1,2,3,3,4,4,5,5,6,7,8,9,10][Math.floor(R()*14)];
+    // Who: a lone orca is usually a male; a pod is mostly females with one to three males (none now and then), anywhere in the line
+    const nm = n===1 ? (R()<.6 ? 1 : 0) : Math.min(n-1, R()<.1 ? 0 : 1+Math.floor(R()*Math.min(3, Math.ceil(n/3))));
+    const males=new Set(); while (males.size<nm) males.add(Math.floor(R()*n));
+    O.els.forEach(e=>e.style.visibility='hidden');
+    let off=0; O.b=O.els.slice(0,n).map((el,i)=>{ if (i) off+=(36+R()*30)*z;
       const m=males.has(i); el.classList.toggle('male', m); el.classList.toggle('female', !m);
       return {el, male:m, sc:(m ? 1.08 : .92)*(.95+R()*.1), ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined}; }); }
   if (ms>O.bt){ O.bt=ms+(2+R()*6)*1000; O.sg = R()<.15 ? 6+R()*8 : 16+R()*34; }   // bouts: cruising, now and then a lull
@@ -941,7 +945,7 @@ function buildStrip(){
   }
   $('stripSvg').innerHTML = s+'</svg>';
   { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
-  seaOrca.els=[...$('stripSvg').querySelectorAll('.sl-orca')]; if (seaOrca.on) seaOrca.b.forEach((o,i)=>{ o.el=seaOrca.els[i]; });
+  seaOrca.els=[...$('stripSvg').querySelectorAll('.sl-orca')]; if (seaOrca.on) seaOrca.b.forEach((o,i)=>{ o.el=seaOrca.els[i]; o.el.classList.toggle('male', o.male); o.el.classList.toggle('female', !o.male); });
   $('stripLab').innerHTML = labels+'</svg>';
   seaHoles='';
   $('stripCur').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
