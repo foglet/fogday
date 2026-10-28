@@ -215,7 +215,7 @@ title: Tides of San Francisco
   .tides .langbtn { float: left; background: none; border: 0; padding: 6px 16px 6px 0; margin: 0; cursor: pointer; font-size: .75rem; font-weight: 600;
     letter-spacing: .14em; color: var(--accent); -webkit-tap-highlight-color: transparent; }
   .tides .langbtn:hover { opacity: .8; }
-  /* Flip-flops after the credit, in its color (no on / off look): 1 tap all sea life, 2 crabs, 4 sharks (remembered per visitor) */
+  /* Flip-flops after the credit, in its color (no on / off look): 1 tap all sea life, 2 crabs, 3 orcas, 4 sharks (remembered per visitor) */
   .tides .seabtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: inherit; line-height: 0; align-self: center; touch-action: manipulation;
     -webkit-tap-highlight-color: transparent; }
   /* Wings flap, beating around their root at the body: gulls a few quick beats then a glide, pelicans slow deep beats
@@ -248,6 +248,10 @@ title: Tides of San Francisco
   .tides .pgw.far { animation-name: pgFlapFar; }
   @keyframes pgFlap { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(90deg); } }   /* + lowers the wing: 0 raised, ~30 level, 90 down */
   @keyframes pgFlapFar { 0%, 100% { transform: rotate(-18deg) scale(.92); } 50% { transform: rotate(58deg) scale(.92); } }
+  /* Landing flare: slow, deep beats with the wings swept high, braking onto the pole */
+  .tides #pgFly.flare .pgw { animation: pgFlare .6s ease-in-out infinite; } .tides #pgFly.flare .pgw.far { animation-name: pgFlareFar; }
+  @keyframes pgFlare { 0%, 100% { transform: rotate(-60deg); } 50% { transform: rotate(40deg); } }
+  @keyframes pgFlareFar { 0%, 100% { transform: rotate(-48deg) scale(.92); } 50% { transform: rotate(30deg) scale(.92); } }
   .tides #pgFly.glide .pgw { animation: none; transform: rotate(28deg); } .tides #pgFly.glide .pgw.far { transform: rotate(22deg) scale(.92); }
   /* The bird on the pole: a cormorant on a light page, the gull on a dark one */
   .tides .pg-gull { display: none; }

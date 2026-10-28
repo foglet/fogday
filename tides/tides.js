@@ -1199,9 +1199,23 @@ function pgDraw(){
   const z=seaSZ, W=stripG.W, perch=PG.st==='perch' || PG.st==='wary';   // still standing while wary
   if (perch){ PG.x=W/2; PG.y=stripPoleTop; }   // stands facing the way it flew in
   g.style.visibility = PG.st==='gone' ? 'hidden' : '';
-  g.querySelector('#pgSit').style.display = perch ? '' : 'none';
-  const fly=g.querySelector('#pgFly'); fly.style.display = perch ? 'none' : '';
+  const sit=g.querySelector('#pgSit'), fly=g.querySelector('#pgFly'), landing=PG.st==='land';
+  sit.style.display = perch||landing ? '' : 'none'; fly.style.display = perch ? 'none' : '';
   fly.classList.toggle('glide', PG.st==='in' && PG.v<40);   // wings held out on the final glide to the pole
+  if (landing){
+    /* Landing, not a jump cut: it flares (nose up, slow deep wingbeats) as it drops the last few px onto the pole, the flying
+       bird gives way to the sitting one, which touches down crouched and tilted back, then rises and settles, a little past
+       upright and back. Pivots: the sitting bird at its feet, the flying one at its middle. */
+    const u=PG.u||0, cl=v=>Math.max(0,Math.min(1,v)), sm=v=>{ v=cl(v); return v*v*(3-2*v); };
+    const back=v=>{ v=cl(v); const c=1.7; return 1+(c+1)*(v-1)**3+c*(v-1)**2; };
+    fly.classList.toggle('flare', u<.6);
+    // flaring, its body rises to where the sitting bird's body will be (legs down), so the hand-over doesn't jump
+    fly.style.opacity=(1-sm((u-.36)/.16)).toFixed(3); fly.style.transform=`translate(0,${(-9*sm(u/.36)).toFixed(2)}px) rotate(${(24*sm(u/.32)).toFixed(1)}deg)`;
+    const k=back((u-.42)/.58);
+    sit.style.opacity=sm((u-.33)/.15).toFixed(3);
+    sit.style.transform=`rotate(${(11*(1-sm((u-.42)/.5))).toFixed(1)}deg) scale(${(1+.07*(1-k)).toFixed(3)},${(.78+.22*k).toFixed(3)})`;
+  } else if (fly.style.opacity || sit.style.opacity){
+    fly.classList.remove('flare'); fly.style.opacity=fly.style.transform=sit.style.opacity=sit.style.transform=''; }
   g.setAttribute('transform', `translate(${PG.x.toFixed(1)},${PG.y.toFixed(1)}) scale(${(PG.face*z).toFixed(2)},${z})`);
   seaHideLabels();
 }
@@ -1209,7 +1223,7 @@ function poleGullScare(){
   PG.slideAt=performance.now();
   // Not straight away: a moment on the pole first (0.4-0.9 s), then a hop and an easy start; a bird coming in turns away gently
   if (PG.st==='perch'){ PG.st='wary'; PG.t0=performance.now(); PG.wait=400+Math.random()*500; PG.lt=0; pgRun(); }
-  else if (PG.st==='in'){ PG.st='off'; PG.dir = PG.x<stripG.W/2 ? -1 : 1; PG.lt=0; pgRun(); }
+  else if (PG.st==='in' || PG.st==='land'){ PG.st='off'; PG.dir = PG.x<stripG.W/2 ? -1 : 1; PG.lt=0; pgRun(); }
 }
 function pgRun(){ if (!PG.raf) PG.raf=requestAnimationFrame(pgTick); }
 function pgTick(ts){
@@ -1233,8 +1247,13 @@ function pgTick(ts){
     PG.v=Math.max(4, Math.min(PG.v, 70, Math.sqrt(2*A*d)));
     const step=Math.min(d, PG.v*dt); PG.x += Math.sign(tx-PG.x)*step;
     const done=1-Math.min(1, Math.abs(tx-PG.x)/Math.abs(tx-PG.sx)), e=done*done*(3-2*done);   // glide down along the way
-    PG.y=PG.sy+(stripPoleTop-PG.sy)*e;
-    if (Math.abs(tx-PG.x)<.3){ PG.x=tx; PG.y=stripPoleTop; PG.st='perch'; }
+    const hov=5*seaSZ;                                         // it comes in a little above the pole, then flares down onto it
+    PG.y=PG.sy+(stripPoleTop-hov-PG.sy)*e;
+    if (Math.abs(tx-PG.x)<.3){ PG.x=tx; PG.st='land'; PG.t0=performance.now(); PG.ld=1300+Math.random()*500; PG.u=0; }
+  } else if (PG.st==='land'){                              // the landing (drawn in pgDraw), 1.3-1.8 s
+    const u=Math.min(1,(performance.now()-PG.t0)/PG.ld), dn=Math.min(1,u/.42), hov=5*seaSZ;
+    PG.u=u; PG.x=W/2; PG.y=stripPoleTop-hov*(1-dn*dn*(3-2*dn));
+    if (u>=1){ PG.st='perch'; PG.u=0; }
   }
   pgDraw();
   if (PG.st!=='perch') pgRun();
@@ -1335,9 +1354,9 @@ function applyStatic(){
   applySea();
 }
 /* Flip-flops beside "Made at Baker Beach": count fast taps (within 350 ms of each other).
-   1 tap: all sea life (hide all if every kind is showing, else show all); 2: crabs; 4: sharks (3 was the otters, removed for now).
+   1 tap: all sea life (hide all if every kind is showing, else show all); 2: crabs; 3: orcas; 4: sharks.
    Only toggles classes on the chart (no redraw); the hidden kinds are remembered per visitor. */
-const SEA_KINDS=['crab','otter','shark','gull','pelican','orca'], SEA_TAP={2:'crab',4:'shark'};   // otters removed for now (restore: 3:'otter', otter:upTo(2) in seaLife, and the labels)
+const SEA_KINDS=['crab','otter','shark','gull','pelican','orca'], SEA_TAP={2:'crab',3:'orca',4:'shark'};   // 3 taps were the otters (removed for now; restore: otter:upTo(2) in seaLife and a tap of their own)
 let seaHidden=new Set();
 try { const v=localStorage.getItem('sf-tides-sea');
   if (v==='0') seaHidden=new Set(SEA_KINDS);   // the first version stored on / off
