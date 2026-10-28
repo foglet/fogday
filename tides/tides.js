@@ -592,21 +592,28 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="r"/>
       <feFlood style="flood-color:var(--surface)"/><feComposite in2="r" operator="in" result="rim"/>
       <feMerge><feMergeNode in="rim"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="sealife">`;
-  const crab = (cx,cy) => `<g class="sl-crab" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${SZ})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
-      <path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/>
-      <path d="M-5,-2 l-3,-5 M5,-2 l3,-5" stroke-width="1.6" fill="none"/>
-      <circle cx="-8.5" cy="-8" r="2.6" stroke="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
+  // Alive: claws wave and snap (each its own rhythm), legs shuffle
+  const crab = (cx,cy) => { const a=`animation-delay:-${(rnd()*3).toFixed(2)}s;animation-duration:${(2.2+rnd()*1.6).toFixed(2)}s`, b=`animation-delay:-${(rnd()*3).toFixed(2)}s;animation-duration:${(2.2+rnd()*1.6).toFixed(2)}s`;
+    return `<g class="sl-crab" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${SZ})" filter="url(#seaRim)" fill="#d9603b" stroke="#d9603b" stroke-linecap="round">
+      <g class="clegs" style="animation-delay:-${(rnd()).toFixed(2)}s"><path d="M-6,1 l-4,3 M-5,2.5 l-3,4 M6,1 l4,3 M5,2.5 l3,4" stroke-width="1.4" fill="none"/></g>
+      <g class="claw l" style="${a}"><path d="M-5,-2 l-3,-5" stroke-width="1.6" fill="none"/><circle cx="-8.5" cy="-8" r="2.6" stroke="none"/>
+        <path class="pinch" d="M-9.6,-10.2 l-1.6,-2.4" stroke-width="1.3" fill="none" style="${a}"/></g>
+      <g class="claw r" style="${b}"><path d="M5,-2 l3,-5" stroke-width="1.6" fill="none"/><circle cx="8.5" cy="-8" r="2.6" stroke="none"/>
+        <path class="pinch" d="M9.6,-10.2 l1.6,-2.4" stroke-width="1.3" fill="none" style="${b}"/></g>
       <ellipse cx="0" cy="0" rx="7.5" ry="4.8" stroke="none"/>
-      <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`;
+      <circle cx="-2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/><circle cx="2.2" cy="-4.6" r="1" fill="#1b2a33" stroke="none"/></g>`; };
   // Great white shark, facing left (scale -1 turns it): slate-grey back, white underside, dorsal and pectoral fins, forked tail
-  const shark = (cx,cy,dir) => `<g class="sl-shark" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+  // Alive: the tail swishes from its base and the body sways a little with it
+  const shark = (cx,cy,dir) => { const t=`animation-delay:-${(rnd()*1.4).toFixed(2)}s;animation-duration:${(.9+rnd()*.6).toFixed(2)}s`;
+    return `<g class="sl-shark" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)"><g class="sbody" style="${t}">
+      <g class="stail" style="${t}"><path d="M14.6,-1.6 L23.5,-8.5 L21,0 L23.5,6.5 L14.6,2.6 Z" fill="#6f8191"/></g>
       <path d="M-1,-5.8 L3,-12.5 L6.5,-5.4 Z" fill="#5d6f7d"/>
-      <path d="M-18,0 C-15,-4 -8,-6 0,-6 C8,-6 13,-3 16,-1 L23.5,-8.5 L21,0 L23.5,6.5 L16,2 C10,5 -6,6 -13,4 C-16,3 -18,1 -18,0 Z" fill="#6f8191"/>
+      <path d="M-18,0 C-15,-4 -8,-6 0,-6 C8,-6 13,-3 16,-1 L16,2 C10,5 -6,6 -13,4 C-16,3 -18,1 -18,0 Z" fill="#6f8191"/>
       <path d="M-17.4,1.3 C-10,5.6 6,5.2 15.2,2.2 C8,6.2 -8,6.4 -13,4.2 C-15.6,3.2 -17.2,2.2 -17.4,1.3 Z" fill="#f2f4f5"/>
       <path d="M-4,3.6 L-0.5,9.5 L2.6,4.1 Z" fill="#5d6f7d"/>
       <path d="M-8.6,-2.2 v3 M-7.2,-2.4 v3 M-5.8,-2.5 v3" stroke="#3e4c57" stroke-width=".6" fill="none"/>
       <path d="M-17,1.6 q3,1.1 6.2,.5" stroke="#3e4c57" stroke-width=".6" fill="none"/>
-      <circle cx="-12.2" cy="-1.6" r=".95" fill="#1b2a33"/></g>`;
+      <circle cx="-12.2" cy="-1.6" r=".95" fill="#1b2a33"/></g></g>`; };
   // Spread out, not grouped: at least 44px (24px on phones) sideways between any two creatures (a crab never sits under a shark)
   const SZ = W<520 ? .8 : 1; seaSZ=SZ; seaTW=TW;   // phones: creatures drawn 20% smaller, so a narrow screen still fits them
   const GAP = W<520 ? 24 : 44;   // phones are narrow: a smaller gap still keeps them apart
