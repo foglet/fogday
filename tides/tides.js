@@ -1013,7 +1013,7 @@ function buildStrip(){
     s+=`<circle class="tmk" cx="${ex}" cy="${ey}" r="4.5" fill="var(--surface)" stroke="var(--water)" stroke-width="1.6"/>`;
     // Highs and lows: a light bead set into the line, 9 px across (3x the old 3 px), ringed in the water color, same for both
     // Height above, time below, each at least 2 px clear of the slider dot (radius 7.1 px with its ring) when it sits on this point
-    labels+=`<text class="labt" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
+    labels+=`<text class="labt" data-t="${+e.t}" x="${ex}" y="${ey-12.5}" text-anchor="middle">${fh(e.v)}</text><text class="lab" data-t="${+e.t}" x="${ex}" y="${ey+22}" text-anchor="middle">${fShort(e.t)}</text>`;
   }
   // Sun and moon rise / set under the tide: icon centered on the moment, up / down arrow, then the time in light text
   const rsY={sun:pt+ih+16, moon:pt+ih+33};
@@ -1041,15 +1041,21 @@ function buildStrip(){
   stripCan = stripTexts.map(t => /\b(labt|lab|dayl)\b/.test(t.getAttribute('class')||''));   // only tide heights, tide times and day names hide
   stripBoxes = stripTexts.map(t => { const b=t.getBBox(); return [b.x, b.x+b.width, b.y, b.y+b.height]; });
   // the high / low markers too (not the current-time dot, which is never hidden)
+  stripT = stripTexts.map(t => t.dataset && t.dataset.t ? +t.dataset.t : null); stripPast = stripTexts.map(()=>false); stripPastCheck();
   stripMk = [...document.querySelectorAll('#stripSvg .tmk')]; stripMkHid = stripMk.map(()=>false);
   stripMkBox = stripMk.map(c => { const x=+c.getAttribute('cx'), y=+c.getAttribute('cy'), r=5.3; return [x-r, x+r, y-r, y+r]; });
 }
-let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], seaHoles = '', stripMk = [], stripMkBox = [], stripMkHid = [];
+let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], stripT = [], stripPast = [], seaHoles = '', stripMk = [], stripMkBox = [], stripMkHid = [];
 /* A creature passing in front of a value (a tide height, a tide time, a day name, a high / low marker; not the sun / moon
    times, nor the current-time dot) hides that value until it has
    passed, so they never overlap. Boxes around each creature, unscaled: [half width, above, below] its anchor point. */
 const SEA_BOX={orcaM:[26,26,9], orcaF:[26,17,9], shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
+// A tide that passed more than an hour ago shows only its marker: its time and height are hidden (later tides keep theirs)
+function stripPastCheck(){ const now=Date.now();
+  let ch=false; stripT.forEach((t,i) => { const p = t!==null && t<=now-36e5; if (p!==stripPast[i]){ stripPast[i]=p; ch=true; stripTexts[i].classList.toggle('past', p); } });
+  const ln=document.getElementById('stripLine'); if (ch && ln && stripG) ln.setAttribute('d', lineAround((cursor()-strip0)*stripK)); }
 function seaHideLabels(){
+  stripPastCheck();
   if (!stripG || !stripTexts.length) return;
   const left=((cursor()-HALF_MS)-strip0)*stripK, vw=stripW, z=seaSZ, M=5, st=$('strip'), B=[];   // 5 px clear on each side
   const add=(k, x, y, s) => { const [w,a,b]=SEA_BOX[k]; B.push([x-w*s-M, x+w*s+M, y-a*s-M, y+b*s+M]); };
@@ -1078,7 +1084,7 @@ function seaHideLabels(){
 let stripPoleTop=0; const POLE_TRIM=12;
 function lineAround(cx){
   const {W, pt, ih}=stripG, M=3, gaps=[];
-  for (const [x0,x1,y0,y1] of stripBoxes) if (cx>=x0-M && cx<=x1+M) gaps.push([y0-M, y1+M]);
+  stripBoxes.forEach(([x0,x1,y0,y1], i) => { if (!stripPast[i] && cx>=x0-M && cx<=x1+M) gaps.push([y0-M, y1+M]); });
   gaps.sort((a,b)=>a[0]-b[0]);
   let y=pt-2+POLE_TRIM*seaSZ, d='', top=null;   // pole shortened at the top so the resting gull fits beneath the chart's top edge
   for (const [g0,g1] of gaps){ if (g0>y){ d+=`M${W/2},${y.toFixed(1)}V${g0.toFixed(1)}`; if (top===null) top=y; } y=Math.max(y,g1); }
