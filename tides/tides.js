@@ -829,11 +829,12 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
     // then the crabs on the floor, where they fit between the others
     for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); move('crab',cx,cy,1); break; }
   }
-  // Orcas (a pod of five, see seaOrcas): black, white eye patch and belly, grey saddle, tall dorsal fin; facing left like the
-  // sharks. Drawn hidden; they swim in at random times.
+  // Orcas (a pod of five, see seaOrcas): black, white eye patch and belly, grey saddle; facing left like the sharks.
+  // Males: the tall, straight dorsal fin and a bigger body; females: a shorter, curved fin. Drawn hidden; they swim in at random.
   const orca = () => `<g class="sl-orca" style="visibility:hidden" filter="url(#seaRim)"><g class="obody">
       <g class="otail"><path d="M19,-1.2 C23,-2.5 26,-5 29,-6 C28,-3 27.6,-1 27.4,.3 C27.6,1.6 28,3.6 29,6.2 C26,5 23,3 19,2 Z" fill="#15191c"/></g>
-      <path d="M-3,-6.6 C-2,-12 -1.4,-16 -2.2,-19 C1.8,-15 4.6,-10 6,-6.6 Z" fill="#15191c"/>
+      <path class="ofin-m" d="M-4.2,-6.6 C-3.4,-12 -2.4,-18 -1.8,-24.5 C.8,-18.5 3.6,-12 6.2,-6.6 Z" fill="#15191c"/>
+      <path class="ofin-f" d="M-3,-6.6 C-2,-10.5 -1.4,-13.4 -3.2,-15.8 C1,-13 4.4,-9.6 6,-6.6 Z" fill="#15191c"/>
       <path d="M-24,0 C-23,-4.5 -16,-7 -6,-7 C6,-7 15,-4 20,-1.2 L20,2 C14,5 2,7.4 -8,7 C-17,6.6 -23,4 -24,0 Z" fill="#15191c"/>
       <path d="M-22,2.4 C-16,5.6 -5,6.6 3,5.6 C8,5 12,2.4 13.5,.2 C10,3.4 5,4.2 1,3.8 C-6,3.2 -14,3.8 -22,2.4 Z" fill="#f4f5f3"/>
       <ellipse cx="-15.4" cy="-3.2" rx="3.4" ry="1.3" fill="#f4f5f3" transform="rotate(-12 -15.4 -3.2)"/>
@@ -853,8 +854,11 @@ function seaOrcas(ms, dt, left, vw){
   if (seaStill && seaStill.matches){ if (O.on){ O.on=false; O.els.forEach(e=>e.style.visibility='hidden'); } return; }
   if (!O.on){ if (ms<O.next) return;
     O.on=true; O.d=R()<.5?1:-1; O.x = O.d>0 ? vw+40 : -40; O.spd=20+R()*20; O.sg=O.spd; O.bt=0;   // d=1 swims left, in from the right
+    // Who's in the pod: mostly females, usually one or two males (none now and then), anywhere in the line
+    const nm = R()<.1 ? 0 : R()<.65 ? 1 : 2, males=new Set(); while (males.size<nm) males.add(Math.floor(R()*O.els.length));
     let off=0; O.b=O.els.map((el,i)=>{ if (i) off+=(36+R()*30)*z;
-      return {el, ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined}; }); }
+      const m=males.has(i); el.classList.toggle('male', m); el.classList.toggle('female', !m);
+      return {el, male:m, sc:(m ? 1.08 : .92)*(.95+R()*.1), ox:off, oy:0, nx:{}, nd:{}, nf:{}, na:{}, ph:R()*6.283, f0:.3+R()*.4, lx:undefined}; }); }
   if (ms>O.bt){ O.bt=ms+(2+R()*6)*1000; O.sg = R()<.15 ? 6+R()*8 : 16+R()*34; }   // bouts: cruising, now and then a lull
   O.spd += (O.sg-O.spd)*(1-Math.exp(-dt/2));
   O.x -= O.d*O.spd*dt;
@@ -871,7 +875,7 @@ function seaOrcas(ms, dt, left, vw){
     const a=(6+7*sp)*(1+.3*seaN(o.na, 3, dt)), s=Math.sin(o.ph);
     const tl=o.el.querySelector('.otail'), bd=o.el.querySelector('.obody');
     if (tl) tl.style.transform=`rotate(${(a*s).toFixed(1)}deg)`; if (bd) bd.style.transform=`rotate(${(-.08*a*s).toFixed(2)}deg)`;
-    o.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${O.d*z*.95},${z*.95})`);
+    o.el.setAttribute('transform', `translate(${px.toFixed(1)},${y.toFixed(1)}) scale(${(O.d*z*o.sc).toFixed(3)},${(z*o.sc).toFixed(3)})`);
     o.el.style.visibility=''; o.qx=px; o.qy=y;
     if (o.lx>-60 && o.lx<vw+60){ any=true; } sum+=o.lx;
   }
@@ -956,7 +960,7 @@ function buildStrip(){
 let stripBoxes = [], stripTexts = [], stripHid = [], stripCan = [], seaHoles = '';
 /* A creature passing in front of a value (a tide height, a tide time, a day name; not the sun / moon times) hides that value until it has
    passed, so they never overlap. Boxes around each creature, unscaled: [half width, above, below] its anchor point. */
-const SEA_BOX={orca:[26,19,9], shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
+const SEA_BOX={orcaM:[26,26,9], orcaF:[26,17,9], shark:[24,13,10], crab:[11,13,7], pelican:[20,8,3], gull:[13,10,2], otter:[20,6,5]}, PG_BOX=[17,22,2];
 function seaHideLabels(){
   if (!stripG || !stripTexts.length) return;
   const left=((cursor()-HALF_MS)-strip0)*stripK, vw=stripW, z=seaSZ, M=5, st=$('strip'), B=[];   // 5 px clear on each side
@@ -964,7 +968,7 @@ function seaHideLabels(){
   for (const m of seaM){ if (!m.el || m.qx===undefined || m.el.style.visibility==='hidden' || st.classList.contains('no-'+m.k)) continue;
     if (m.qx<left-60 || m.qx>left+vw+60) continue;
     add(m.k, m.qx, m.qy, z*(m.qs||1)); }
-  if (seaOrca.on && !st.classList.contains('no-orca')) for (const o of seaOrca.b) if (o.qx!==undefined) add('orca', o.qx, o.qy, z*.95);
+  if (seaOrca.on && !st.classList.contains('no-orca')) for (const o of seaOrca.b) if (o.qx!==undefined) add(o.male ? 'orcaM' : 'orcaF', o.qx, o.qy, z*o.sc);
   // The time pole fades out where a creature passes in front of it (not the bird that perches on it): fully gone across
   // the creature and its 5 px, easing back in over 4 px beyond, top and bottom softened
   { const cx=left+vw/2; let holes='';

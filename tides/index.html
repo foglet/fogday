@@ -228,6 +228,8 @@ title: Tides of San Francisco
   /* Sharks: tail swishes from its base, body sways a touch. Crabs: claws wave and snap, legs shuffle, eyes wink.
      All driven at random from tides.js (seaParts), so no two moves repeat; the keyframes below are no longer used. */
   .tides .stail { transform-box: fill-box; transform-origin: 0% 50%; }
+  /* Orcas: males have the tall straight dorsal fin, females the shorter curved one */
+  .tides .sl-orca .ofin-m, .tides .sl-orca.male .ofin-f { display: none; } .tides .sl-orca.male .ofin-m { display: inline; }
   .tides .otail { transform-box: fill-box; transform-origin: 0% 50%; } .tides .obody { transform-box: fill-box; transform-origin: 40% 50%; }
   .tides .sbody { transform-box: fill-box; transform-origin: 40% 50%; }
   @keyframes sharkTail { 0%, 100% { transform: rotate(-13deg); } 50% { transform: rotate(13deg); } }
