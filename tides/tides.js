@@ -533,7 +533,7 @@ function wxExtra(rain, visM, pa, paPrev){
   if (visM!=null) { const v = m ? visM/1000 : visM/1609.344; parts.push(tr('vis',{n:v<10?(Math.round(v*10)/10).toString():String(Math.round(v)), u:m?'km':'mi'})); }
   if (pa!=null) { const d = paPrev!=null ? (pa-paPrev)/100 : null, arr = d==null ? '' : d>=0.5 ? ' ↑' : d<=-0.5 ? ' ↓' : ' →';
     parts.push(tr('pres',{n:m?String(Math.round(pa/100)):(pa/3386.389).toFixed(2), u:m?'hPa':'in'})+arr); }
-  return parts.length ? `<span class="wline">${parts.map(t=>`<span class="label num">${esc(t)}</span>`).join('')}</span>` : '';
+  return parts.length ? `<span class="wxwrap"><span class="wxline">${parts.map(t=>`<span class="label num">${esc(t)}</span>`).join('')}</span></span>` : '';
 }
 const dirName = d => { const i=COMPASS.indexOf(d); return i<0 ? d : L.compass[i]; };
 function drawWeather(w){
