@@ -212,6 +212,14 @@ title: Tides of San Francisco
   /* Flip-flops after the credit, in its color (no on / off look): 1 tap all sea life, 2 crabs, 4 sharks (remembered per visitor) */
   .tides .seabtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: inherit; line-height: 0; align-self: center; touch-action: manipulation;
     -webkit-tap-highlight-color: transparent; }
+  /* Wings flap, beating around their root at the body: gulls a few quick beats then a glide, pelicans slow deep beats
+     then a long glide (rippling back along a flock), the gull leaving the pole steadily. Each bird has its own timing. */
+  .tides .wing { transform-box: fill-box; transform-origin: 50% 100%; animation: seaFlap 2.6s ease-in-out infinite; }
+  .tides .wing.fast { animation: seaBeat .34s ease-in-out infinite; }
+  @keyframes seaFlap { 0% { transform: scaleY(1); } 6% { transform: scaleY(-.5); } 12% { transform: scaleY(1); } 18% { transform: scaleY(-.5); }
+    24% { transform: scaleY(1); } 30% { transform: scaleY(-.5); } 36%, 100% { transform: scaleY(.92); } }
+  @keyframes seaBeat { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-.55); } }
+  @media (prefers-reduced-motion: reduce) { .tides .wing { animation: none; } }
   .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;

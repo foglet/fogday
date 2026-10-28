@@ -626,9 +626,9 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
   // (white, black wingtips and trailing edge, orange bill, a thin grey outline so it shows on a light page)
   const PEL = {brown:{wing:'#6f6252', tip:'#3b332b', body:'#8a7a66', head:'#f1e7c6', hs:'#8a7a66', bill:'#d9a640', pouch:'#b78a3a', ol:'none'},
                white:{wing:'#f7f7f4', tip:'#1d1d1d', body:'#fbfbf8', head:'#fbfbf8', hs:'#9aa3a8', bill:'#f0962e', pouch:'#e07f22', ol:'#9aa3a8'}};
-  const pelican = (cx,cy,dir,col) => { const c=PEL[col]; return `<g class="sl-pelican" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
-      <path d="M-2,-1 Q3,-7.5 15,-7.2 L19,-6.2 Q9,-4.2 5,0 Z" fill="${c.wing}" stroke="${c.ol}" stroke-width=".5"/>
-      <path d="M15,-7.2 L19,-6.2 L14.6,-5.6 Z" fill="${c.tip}"/>${col==='white' ? '<path d="M9,-6.9 L15,-7.2 L14.6,-5.6 Q11.5,-5.3 9.2,-4.6 Z" fill="#1d1d1d"/>' : ''}
+  const pelican = (cx,cy,dir,col,dl,du) => { const c=PEL[col]; return `<g class="sl-pelican" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
+      <g class="wing slow" style="animation-delay:-${dl.toFixed(2)}s;animation-duration:${du.toFixed(2)}s"><path d="M-2,-1 Q3,-7.5 15,-7.2 L19,-6.2 Q9,-4.2 5,0 Z" fill="${c.wing}" stroke="${c.ol}" stroke-width=".5"/>
+      <path d="M15,-7.2 L19,-6.2 L14.6,-5.6 Z" fill="${c.tip}"/>${col==='white' ? '<path d="M9,-6.9 L15,-7.2 L14.6,-5.6 Q11.5,-5.3 9.2,-4.6 Z" fill="#1d1d1d"/>' : ''}</g>
       <ellipse cx="3" cy="0" rx="9" ry="2.9" fill="${c.body}" stroke="${c.ol}" stroke-width=".5"/>
       <path d="M11.6,-.8 l4.2,-.9 l-.3,2.2 Z" fill="${c.wing}" stroke="${c.ol}" stroke-width=".5"/>
       <path d="M-5,-1.6 Q-6.5,-1 -8,-2.4 L-5.8,-3.4 Z" fill="${c.body}"/>
@@ -636,8 +636,8 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       <path d="M-9.2,-2.8 L-20,-1.2 L-9.2,-1.2 Z" fill="${c.bill}"/>
       <path d="M-9.2,-1.2 Q-14,1.4 -19,-1 Z" fill="${c.pouch}"/><circle cx="-7.8" cy="-2.9" r=".5" fill="#1b2a33"/></g>`; };
   const gull = (cx,cy,dir) => `<g class="sl-gull" transform="translate(${cx.toFixed(1)},${cy.toFixed(1)}) scale(${dir*SZ},${SZ})" filter="url(#seaRim)">
-      <path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
-      <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/>
+      <g class="wing" style="animation-delay:-${(rnd()*2.6).toFixed(2)}s;animation-duration:${(2.3+rnd()*.7).toFixed(2)}s"><path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
+      <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/></g>
       <ellipse cx="0" cy="0" rx="6" ry="2.3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
       <circle cx="-5.6" cy="-0.6" r="2" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
       <path d="M-7.4,-0.6 l-2.4,.5 l2.3,.5 Z" fill="#f2b632"/><circle cx="-6.2" cy="-1.1" r=".55" fill="#1b2a33"/>
@@ -678,7 +678,8 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
       const P=move('pelican', cx, surf(cx)-h, d); seaM.pop();   // the flock's path; the birds below follow it
       P.sP=25+rnd()*40; P.sp=rnd()*6.283; P.sth=.15+rnd()*.55;   // its own random rhythm of skimming the water
       const F={P, birds:[], dead:false, col: rnd()<.4 ? 'white' : 'brown'}; seaFlocks.push(F);   // one color per flock
-      for (let i=0; i<cnt; i++){ g+=pelican(cx+d*i*gap, ys[i], d, F.col);
+      const du=4.2+rnd()*1.6, d0=rnd()*du;   // one flap-and-glide rhythm per flock, rippling from the leader back
+      for (let i=0; i<cnt; i++){ g+=pelican(cx+d*i*gap, ys[i], d, F.col, (d0 - i*.16 + 99*du)%du, du);
         const b={k:'pelican', el:null, ox:d*i*gap, oy:oy[i], bp:rnd()*6.283, bt:2+rnd()*2, flock:F, jt:0}; seaM.push(b); F.birds.push(b); }
       break;
     }
@@ -924,8 +925,9 @@ function moveSea(now){
   const tick = ts => { requestAnimationFrame(tick); if (ts-last<33 || (still && still.matches) || !stripG || !seaM.length) return; last=ts; moveSea(cursor()); };
   requestAnimationFrame(tick); }
 function drawStrip(){ buildStrip(); placeStrip(); }
-/* A gull resting on top of the orange timeline pole. Sliding the timeline startles it: it takes off to one side,
-   climbing, and flies off screen. Once the timeline has been left alone for 4 s it flies back in and lands.
+/* A gull resting on top of the orange timeline pole. Sliding the timeline startles it: after a moment it hops off to one side,
+   gathering speed and climbing, and flies off screen. Once the timeline has been left alone for 4 s it flies back in at an
+   easy pace and slows smoothly to land.
    Drawn in the fixed overlay (stripCur), so it stays with the pole; counts as a gull for the flip-flops. */
 const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
   <g id="pgSit"><path d="M-1,0 L-1.6,-5.5 M2,0 L1.4,-5.5" stroke="#e5a48a" stroke-width="1.1" stroke-linecap="round" fill="none"/>
@@ -933,16 +935,16 @@ const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
     <path d="M-2.5,-11.2 Q4,-12.8 9.4,-8.6 L6.4,-7 Q2,-9.2 -2.5,-9.2 Z" fill="#8f9aa3"/><path d="M8.4,-9.2 l3.6,1 l-3.3,1.1 Z" fill="#2f3a42"/>
     <circle cx="-5" cy="-14" r="3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
     <path d="M-7.9,-14.4 l-3,.6 l3,.7 Z" fill="#f2b632"/><circle cx="-5.8" cy="-14.8" r=".55" fill="#1b2a33"/></g>
-  <g id="pgFly" style="display:none"><path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
-    <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/>
+  <g id="pgFly" style="display:none"><g class="wing fast"><path d="M-12,-5 Q-7,-10 -1,-1.5 Q5,-10 11,-5.5 Q5,-7.4 0,0.5 Q-6,-7 -12,-5 Z" fill="#8f9aa3"/>
+    <path d="M-12,-5 l2.6,-1.6 l.6,2 Z M11,-5.5 l-2.4,-1.8 l-.8,1.9 Z" fill="#2f3a42"/></g>
     <ellipse cx="0" cy="0" rx="6" ry="2.3" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
     <circle cx="-5.6" cy="-0.6" r="2" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/>
     <path d="M-7.4,-0.6 l-2.4,.5 l2.3,.5 Z" fill="#f2b632"/><circle cx="-6.2" cy="-1.1" r=".55" fill="#1b2a33"/>
     <path d="M5.5,0 l3.4,-1 l-.2,2.2 Z" fill="#ffffff" stroke="#8f9aa3" stroke-width=".5"/></g></g>`;
-const PG={st:'perch', x:0, y:0, dir:1, face:1, v:0, slideAt:0, raf:0, lt:0, t0:0, sx:0, sy:0};
+const PG={st:'perch', x:0, y:0, dir:1, face:1, v:0, vy:0, wait:0, slideAt:0, raf:0, lt:0, t0:0, sx:0, sy:0};
 function pgDraw(){
   const g=document.getElementById('poleGull'); if (!g || !stripG) return;
-  const z=seaSZ, W=stripG.W, perch=PG.st==='perch';
+  const z=seaSZ, W=stripG.W, perch=PG.st==='perch' || PG.st==='wary';   // still standing while wary
   if (perch){ PG.x=W/2; PG.y=stripPoleTop; PG.face=1; }
   g.style.visibility = PG.st==='gone' ? 'hidden' : '';
   g.querySelector('#pgSit').style.display = perch ? '' : 'none';
@@ -951,26 +953,34 @@ function pgDraw(){
 }
 function poleGullScare(){
   PG.slideAt=performance.now();
-  if (PG.st==='perch' || PG.st==='in'){ PG.st='off'; PG.dir=Math.random()<.5?1:-1; PG.v=40; PG.lt=0; pgRun(); }
+  // Not straight away: a moment on the pole first (0.4-0.9 s), then a hop and an easy start; a bird coming in turns away gently
+  if (PG.st==='perch'){ PG.st='wary'; PG.t0=performance.now(); PG.wait=400+Math.random()*500; PG.lt=0; pgRun(); }
+  else if (PG.st==='in'){ PG.st='off'; PG.dir = PG.x<stripG.W/2 ? -1 : 1; PG.lt=0; pgRun(); }
 }
 function pgRun(){ if (!PG.raf) PG.raf=requestAnimationFrame(pgTick); }
 function pgTick(ts){
   PG.raf=0; if (!stripG) return;
   const W=stripG.W, dt=PG.lt ? Math.min(.05,(ts-PG.lt)/1000) : 0; PG.lt=ts;
   const still = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (PG.st==='off'){                                      // take off: speed up to the side, climbing toward the top
+  if (PG.st==='wary'){                                     // still on the pole for a moment, then a hop and off
+    if (ts-PG.t0 > PG.wait){ if (still) PG.st='gone'; else { PG.st='off'; PG.dir=Math.random()<.5?1:-1; PG.v=12; PG.vy=-28; } }
+  } else if (PG.st==='off'){                               // take off: an easy start, gathering speed, climbing toward the top
     if (still){ PG.st='gone'; }
-    else { PG.v=Math.min(170, PG.v+260*dt); PG.x+=PG.dir*PG.v*dt; PG.y+=(6-PG.y)*Math.min(1,dt*1.6); PG.face = PG.dir>0 ? -1 : 1;
+    else { PG.v=Math.min(140, PG.v+75*dt); PG.x+=PG.dir*PG.v*dt;
+      PG.vy=(PG.vy||0)+(((6-PG.y)*.9)-(PG.vy||0))*Math.min(1,dt*2); PG.y=Math.max(4, PG.y+PG.vy*dt); PG.face = PG.dir>0 ? -1 : 1;
       if (PG.x<-30 || PG.x>W+30) PG.st='gone'; }
   } else if (PG.st==='gone'){                              // away until the timeline has been left alone for 4 s
     if (performance.now()-PG.slideAt > 4000){
       if (still){ PG.st='perch'; }
-      else { const side=Math.random()<.5?1:-1; PG.st='in'; PG.t0=ts; PG.sx = side>0 ? W+30 : -30; PG.sy=8; PG.x=PG.sx; PG.y=PG.sy; PG.face = side>0 ? 1 : -1; }
+      else { const side=Math.random()<.5?1:-1; PG.st='in'; PG.sx = side>0 ? W+30 : -30; PG.sy=8; PG.x=PG.sx; PG.y=PG.sy; PG.v=70; PG.face = side>0 ? 1 : -1; }
     }
-  } else if (PG.st==='in'){                                // glide back in over 3.5 s, descending onto the pole
-    const p=Math.min(1,(ts-PG.t0)/3500), ex=1-Math.pow(1-p,2), ey=p*p*(3-2*p);
-    PG.x=PG.sx+(W/2-PG.sx)*ex; PG.y=PG.sy+(stripPoleTop-PG.sy)*ey;
-    if (p>=1) PG.st='perch';
+  } else if (PG.st==='in'){                                // fly back in at an easy 70 px/s, then slow steadily to land
+    const tx=W/2, d=Math.abs(tx-PG.x), A=30;                  // gentle braking (px/s²): speed falls smoothly to zero at the pole
+    PG.v=Math.max(4, Math.min(PG.v, 70, Math.sqrt(2*A*d)));
+    const step=Math.min(d, PG.v*dt); PG.x += Math.sign(tx-PG.x)*step;
+    const done=1-Math.min(1, Math.abs(tx-PG.x)/Math.abs(tx-PG.sx)), e=done*done*(3-2*done);   // glide down along the way
+    PG.y=PG.sy+(stripPoleTop-PG.sy)*e;
+    if (Math.abs(tx-PG.x)<.3){ PG.x=tx; PG.y=stripPoleTop; PG.st='perch'; }
   }
   pgDraw();
   if (PG.st!=='perch') pgRun();
