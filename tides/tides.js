@@ -304,7 +304,14 @@ function renderNow(){
   // Second line while the tide is below zero: "Visit a tide pool. Respect Mother Nature."
   // NWS king tide / coastal flood alert, above the next-tide line (in #FF5500)
   // English: the NWS headline as issued. Other languages: the same alert written from its type and end time.
-  const alertText = a => lang==='en' ? a.head : a.ends ? tr('alertUntil', {ev: L.alertEv[a.t], when: tr('dateAt', {date: fWkMd.format(new Date(a.ends)), time: fTime.format(new Date(a.ends))})}) : L.alertEv[a.t];
+  // A coastal flood advisory in effect until a time reads as a king tide notice: "King tides. Coastal flood advisory now through 6 PM PDT Saturday"
+  // (English keeps the NWS's own end time; other languages format the alert's end time)
+  const advUntil = a => a.t==='adv' && /coastal flood advisory (?:is )?(?:now |remains )?in effect until (.+?)[.\s]*$/i.exec(a.head.replace(/^[.\s]+/, ''));
+  const alertWhen = a => tr('dateAt', {date: fWkMd.format(new Date(a.ends)), time: fTime.format(new Date(a.ends))});
+  const alertText = a => { const m = advUntil(a);
+    if (lang==='en') return m ? tr('advKing', {when: m[1]}) : a.head;
+    if (m && a.ends) return tr('advKing', {when: alertWhen(a)});
+    return a.ends ? tr('alertUntil', {ev: L.alertEv[a.t], when: alertWhen(a)}) : L.alertEv[a.t]; };
   const alertLine = ((kingAlert[beach]||{}).list||[]).map(a=>`<div class="nrow kingalert"><span class="label">${esc(alertText(a))}</span></div>`).join('');
   const poolLine = negNow ? `<div class="nrow neg"><span class="label">${esc(L.tidePool)}</span></div>` : '';
   // AIGA symbol-sign arrows (public domain, Wikimedia Commons: Aiga_uparrow.svg / Aiga_downarrow.svg), drawn in a -500 -600 1000 1200 box
