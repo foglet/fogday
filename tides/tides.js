@@ -785,12 +785,12 @@ function buildStrip(){
 let stripBoxes = [];
 // The center line, drawn in pieces: it never runs through text. Wherever a label crosses it, the line stops 3 px short
 // of the label's box and starts again 3 px past it.
-let stripPoleTop=0;
+let stripPoleTop=0; const POLE_TRIM=12;
 function lineAround(cx){
   const {W, pt, ih}=stripG, M=3, gaps=[];
   for (const [x0,x1,y0,y1] of stripBoxes) if (cx>=x0-M && cx<=x1+M) gaps.push([y0-M, y1+M]);
   gaps.sort((a,b)=>a[0]-b[0]);
-  let y=pt-2, d='', top=null;
+  let y=pt-2+POLE_TRIM*seaSZ, d='', top=null;   // pole shortened at the top so the resting gull fits beneath the chart's top edge
   for (const [g0,g1] of gaps){ if (g0>y){ d+=`M${W/2},${y.toFixed(1)}V${g0.toFixed(1)}`; if (top===null) top=y; } y=Math.max(y,g1); }
   stripPoleTop = top!==null ? top : y;   // where the visible pole starts: the resting gull stands here
   if (y<pt+ih) d+=`M${W/2},${y.toFixed(1)}V${pt+ih}`;
