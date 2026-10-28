@@ -851,28 +851,33 @@ let seaOrca={on:false, next:0, els:[], b:[], away:0};
    droplets thrown up and out that fall under gravity and vanish into the sea, and two rings spreading on the surface.
    About 1.2 s; drawn in the week picture, so it stays where it happened. */
 let seaSplashes=[];
-function seaSplash(x, sy, k){
+function seaSplash(x, sy, k, dir){
   const L=document.querySelector('#stripSvg .splashes'); if (!L) return;
-  const z=seaSZ*k, R=Math.random, n=Math.round(6+10*k), g=document.createElementNS('http://www.w3.org/2000/svg','g');
-  const drops=[...Array(n)].map(()=>({x:0, y:0, vx:(R()-.5)*170*z, vy:-(70+R()*170)*z, r:(.9+R()*1.5)*Math.max(.7,z)}));
-  g.innerHTML = `<ellipse class="spr" cx="0" cy="0" rx="1" ry="1"/><ellipse class="spr" cx="0" cy="0" rx="1" ry="1"/>
-    <path class="spc" d="M-10,0 C-8,-3 -7,-6 -8.4,-9 C-6,-6.4 -5,-4.4 -4,-3.2 C-3.2,-6 -2.6,-9 -2,-12.5 C-1,-8.4 -.5,-5.6 0,-4.4 C.5,-5.6 1,-8.4 2,-12.5 C2.6,-9 3.2,-6 4,-3.2 C5,-4.4 6,-6.4 8.4,-9 C7,-6 8,-3 10,0 Z"/>
+  const z=seaSZ*k, R=Math.random, n=Math.round(6+9*k), g=document.createElementNS('http://www.w3.org/2000/svg','g'), fw=-(dir||0)*25*z;   // thrown a little the way it was going
+  const drops=[...Array(n)].map(()=>({x:(R()-.5)*6*z, y:0, vx:(R()-.5)*150*z+fw, vy:-(60+R()*150)*z, r:(.8+R()*1.3)*Math.max(.7,z), f:1}));
+  g.innerHTML = `<ellipse class="spf" cx="0" cy="0" rx="1" ry="1"/><ellipse class="spr" cx="0" cy="0" rx="1" ry="1"/><ellipse class="spr" cx="0" cy="0" rx="1" ry="1"/>
+    <path class="spc" d="M-11,0 C-9.4,-1.6 -8.8,-4.4 -9,-7 C-7.2,-5.4 -5.8,-4.2 -4.6,-3.6 C-4.2,-6.2 -3.2,-8.6 -1.8,-10.2 C-1.1,-7.8 -.5,-5.4 0,-4.6 C.5,-5.4 1.1,-7.8 1.8,-10.2 C3.2,-8.6 4.2,-6.2 4.6,-3.6 C5.8,-4.2 7.2,-5.4 9,-7 C8.8,-4.4 9.4,-1.6 11,0 Q0,1.6 -11,0 Z"/>
     ${drops.map(d=>`<circle class="spd" r="${d.r.toFixed(2)}"/>`).join('')}`;
   g.setAttribute('transform', `translate(${x.toFixed(1)},${sy.toFixed(1)})`); L.appendChild(g);
-  seaSplashes.push({g, t0:performance.now(), z, sy, drops, rings:[...g.querySelectorAll('.spr')], crown:g.querySelector('.spc'), dots:[...g.querySelectorAll('.spd')], d:1.1+.3*k});
+  seaSplashes.push({g, t0:performance.now(), z, sy, drops, rings:[...g.querySelectorAll('.spr')], foam:g.querySelector('.spf'), crown:g.querySelector('.spc'), dots:[...g.querySelectorAll('.spd')], d:1.3+.4*k});
 }
 function seaSplashStep(ms, dt){
   seaSplashes = seaSplashes.filter(S => { const t=(ms-S.t0)/1000;
     if (t>S.d || !S.g.isConnected){ S.g.remove(); return false; }
-    const z=S.z, u=t/S.d;
-    // the crown: up fast, then sinking back and widening
-    const hu=Math.sin(Math.PI*Math.min(1, t/(.62*S.d))), w=(.9+1.1*u)*z*1.7;
-    S.crown.setAttribute('transform', `scale(${w.toFixed(3)},${Math.max(.001, 2.3*hu*z).toFixed(3)})`); S.crown.style.opacity=(1-u*u).toFixed(3);
-    S.rings.forEach((r,i)=>{ const v=Math.max(0, u-.12*i)/(1-.12*i), rx=(6+30*v)*z;
-      r.setAttribute('rx', rx.toFixed(1)); r.setAttribute('ry', (rx*.22).toFixed(1)); r.style.opacity=(v>0 ? .9*(1-v) : 0).toFixed(3); });
+    const z=S.z, u=t/S.d, sm=v=>{ v=Math.max(0,Math.min(1,v)); return v*v*(3-2*v); };
+    // the crown: swells up (easing out), hangs, and slumps back (easing in) as it spreads and thins
+    const up=Math.min(1, u/.3), dn=Math.max(0, (u-.3)/.5), hu=(1-(1-up)**2)*(1-sm(dn)), w=(.8+.9*(1-(1-Math.min(1,u/.6))**2))*z*1.7;
+    S.crown.setAttribute('transform', `scale(${w.toFixed(3)},${Math.max(.001, 2.2*hu*z).toFixed(3)})`); S.crown.style.opacity=(.95*(1-sm((u-.35)/.5))).toFixed(3);
+    // foam: a patch of white water spreading on the surface, fading last
+    const fu=1-(1-Math.min(1,u/.7))**2; S.foam.setAttribute('rx', ((5+16*fu)*z).toFixed(1)); S.foam.setAttribute('ry', ((1.4+1*fu)*z).toFixed(1));
+    S.foam.style.opacity=(.75*sm(u/.08)*(1-sm((u-.4)/.6))).toFixed(3);
+    S.rings.forEach((r,i)=>{ const v=Math.max(0, u-.14*i)/(1-.14*i), e=1-(1-v)**2, rx=(6+30*e)*z;
+      r.setAttribute('rx', rx.toFixed(1)); r.setAttribute('ry', (rx*.22).toFixed(1)); r.style.opacity=(v>0 ? .8*(1-sm(v)) : 0).toFixed(3); });
+    // droplets: up and out, falling under gravity, shrinking; each fades out as it drops back into the sea
     S.drops.forEach((d,i)=>{ d.vy += 430*Math.max(.6,z)*dt; d.x += d.vx*dt; d.y += d.vy*dt;
-      const el=S.dots[i], gone = d.vy>0 && d.y>1;                  // back in the sea
-      el.setAttribute('cx', d.x.toFixed(1)); el.setAttribute('cy', d.y.toFixed(1)); el.style.opacity = gone ? 0 : (1-.5*u).toFixed(3); });
+      if (d.vy>0 && d.y>0) d.f=Math.max(0, d.f-dt/.12);
+      const el=S.dots[i]; el.setAttribute('cx', d.x.toFixed(1)); el.setAttribute('cy', Math.min(d.y, 1.5).toFixed(1));
+      el.setAttribute('r', (d.r*(1-.45*u)).toFixed(2)); el.style.opacity=(d.f*(1-.4*u)).toFixed(3); });
     return true; });
 }
 function seaOrcas(ms, dt, left, vw){
@@ -896,7 +901,7 @@ function seaOrcas(ms, dt, left, vw){
   // Breaching, at random: one orca on screen (not near the edges) leaps out, the next leap 5-25 s later
   if (ms>O.nj){ const c=O.b.filter(o=>!o.j && o.lx>70 && o.lx<vw-70);
     if (c.length){ const o=c[Math.floor(R()*c.length)];
-      o.j={t0:ms, r:.45+R()*.2, a:.9+R()*.5, dv:.7+R()*.3, h:(30+R()*25)*z*(o.male?1.1:1), boost:(40+R()*40)*z}; }
+      o.j={t0:ms, a:.9+R()*.5, h:(30+R()*25)*z*(o.male?1.1:1), boost:(40+R()*40)*z}; }
     O.nj = ms+(5+R()*20)*1000; }
   if (ms>O.bt){ O.bt=ms+(2+R()*6)*1000; O.sg = R()<.15 ? 6+R()*8 : 16+R()*34; }   // bouts: cruising, now and then a lull
   O.spd += (O.sg-O.spd)*(1-Math.exp(-dt/2));
@@ -912,16 +917,24 @@ function seaOrcas(ms, dt, left, vw){
     /* A breach: it surges up from its depth, leaves the water nose up (a little spray), flies an arc 30-55 px over the
        surface pitching with its path, and comes down nose first into a splash; then glides back down to its depth.
        It shoots ahead of its place in the line while leaping and drifts back after. */
-    if (o.j){ const J=o.j, t=(ms-J.t0)/1000, s0=sx+3*z;
-      if (t<J.r){ const e=t/J.r; y=y+(s0-y)*e*e; o.jdx -= O.d*J.boost*e*dt; }
-      else if (t<J.r+J.a){ const a=(t-J.r)/J.a; air=true; y=s0-J.h*4*a*(1-a); o.jdx -= O.d*J.boost*dt;
-        if (!J.out){ J.out=true; seaSplash(px, sx, .55); } }
-      else if (t<J.r+J.a+J.dv){ if (!J.in){ J.in=true; seaSplash(px, sx, 1); }
-        const e=(t-J.r-J.a)/J.dv; y=s0+(y-s0)*(1-(1-e)*(1-e)); }
-      else o.j=null;
+    if (o.j){ const J=o.j, s0=sx+3*z, yd=y;
+      if (J.vl===undefined){ J.vl=4*J.h/J.a; J.r=Math.max(.25, Math.min(1.2, 2*Math.max(4*z, yd-s0)/J.vl)); }   // launch speed = landing speed
+      const t=(ms-J.t0)/1000; let bo;   // bo: share of the forward push
+      if (t<J.r){ const e=t/J.r; y=yd-(yd-s0)*e*e; bo=e; }                     // speeding up toward the surface, leaving it at launch speed
+      else if (t<J.r+J.a){ const a=(t-J.r)/J.a; air=true; y=s0-J.h*4*a*(1-a); bo=1;
+        if (!J.out){ J.out=true; seaSplash(px, sx, .55, O.d); } }
+      else { const tl=t-J.r-J.a;
+        if (!J.in){ J.in=true; seaSplash(px, sx, 1, O.d); }
+        // Into the water at the speed it fell, slowing under water (no stop at the surface): it carries on down, deeper than
+        // its swimming depth if the water is shallow enough to need it, then eases back to where it swims
+        const yv=Math.max(yd, Math.min(s0+16*z, floor-6*z)), tau=Math.max(.08, (yv-s0)/J.vl);
+        const yi=yv-(yv-s0)*Math.exp(-tl/tau), w=Math.max(0, Math.min(1, (tl-tau)/(3*tau+.7))), ws=w*w*(3-2*w);
+        y=yi+(yd-yi)*ws; bo=Math.exp(-tl/.55);
+        if (w>=1 && bo<.05) o.j=null; }
+      o.jdx -= O.d*J.boost*bo*dt; J.bo=bo;
       // pitch with the path: nose up rising, nose down falling (drawn facing left, so the sign follows the heading)
-      if (o.py!==undefined && dt>0){ const vy=(y-o.py)/dt, vx=O.spd+(air||t<J.r ? J.boost : 0);
-        const want=Math.max(-75, Math.min(75, Math.atan2(-vy, vx)*57.3)); o.rot += (want-o.rot)*(1-Math.exp(-dt/.08)); } }
+      if (o.py!==undefined && dt>0){ const vy=(y-o.py)/dt, vx=O.spd+J.boost*bo;
+        const want=Math.max(-75, Math.min(75, Math.atan2(-vy, vx)*57.3)); o.rot += (want-o.rot)*(1-Math.exp(-dt/.1)); } }
     else { o.rot += (0-o.rot)*(1-Math.exp(-dt/.4)); o.jdx *= Math.exp(-dt/3); }
     o.py=y;
     // flukes beat up and down from the tail stock, faster when the pod hurries
