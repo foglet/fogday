@@ -34,12 +34,20 @@ title: Tides of San Francisco
   :root[data-theme="dark"] .tides {
     --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted);
     --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; }
-  /* Dark mode only: the title gradient (beach name, big tide number) runs top to bottom in a random
-     green + blue pair, picked on every load by the script at the end of <head> (--rg1 / --rg2). Lightness 66–80% keeps
-     both stops at least 6:1 on the navy --bg. Falls back to the site's sky blues without the script. */
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides {
-    --title-1: var(--rg1, #7cc4f0); --title-2: var(--rg2, #bfe6fb); --tdir: to bottom; } }
-  :root[data-theme="dark"] .tides { --title-1: var(--rg1, #7cc4f0); --title-2: var(--rg2, #bfe6fb); --tdir: to bottom; }
+
+  /* Dark mode only: the page background is a random green + blue gradient, top to bottom, picked on
+     every load by the script at the end of <head> (--rg-top / --rg-bot). Fixed to the window, so the
+     fade under the top bar matches the top color and the fixed footer matches the bottom one.
+     Lightness 8–12% keeps the tiles (--surface) a shade lighter and muted text above 5.6:1.
+     Without the script, it stays the site's plain navy. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
+    :root:not([data-theme="light"]) body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
+    :root:not([data-theme="light"]) footer { background: var(--rg-bot, var(--bg)); }
+  }
+  :root[data-theme="dark"] body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
+  :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
+  :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
 
   .tides .num { font-variant-numeric: tabular-nums; }
   .tides .muted { color: var(--muted); }
@@ -48,7 +56,7 @@ title: Tides of San Francisco
   .tides .big:focus, .tides .big:focus-visible { outline: none; }  /* the tide number never shows a focus border */
   .tides .label { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .tides .slab { font-family: var(--font-logo); font-weight: 400; line-height: .9; }
-  .tides .grad { background-image: linear-gradient(var(--tdir, to right), var(--title-1), var(--title-2));
+  .tides .grad { background-image: linear-gradient(to right, var(--title-1), var(--title-2));
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; }
   .tides .unit { font-family: var(--font-ui); font-size: 1rem; color: var(--muted); margin-left: 4px; }
 
@@ -71,7 +79,7 @@ title: Tides of San Francisco
   .tides .beachbtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; color: var(--ink);
     font: 600 clamp(1.6rem, 6.5vw, 2rem)/1.2 var(--font-ui); -webkit-tap-highlight-color: transparent; }
   /* Beach name in the site's sky-blue title gradient (same as the header title) */
-  .tides #beachName { background-image: linear-gradient(var(--tdir, to right), var(--title-1), var(--title-2));
+  .tides #beachName { background-image: linear-gradient(to right, var(--title-1), var(--title-2));
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .1em .05em; margin: -.1em -.05em; }
   .tides .beachbtn:hover #beachName { opacity: .8; }
   .tides .beachbtn:active #beachName { opacity: .6; }
@@ -296,13 +304,13 @@ title: Tides of San Francisco
   @media (max-width: 340px) { .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
   </style>
 <script>
-  // Random dark-mode title gradient: one green stop and one blue stop, in random order, top to bottom.
+  // Random dark-mode page background: one green stop and one blue stop, in random order, top to bottom.
   (function () {
     var r = function (a, b) { return Math.round(a + Math.random() * (b - a)); };
-    var hsl = function (h0, h1) { return 'hsl(' + r(h0, h1) + ' ' + r(50, 75) + '% ' + r(66, 80) + '%)'; };
-    var g = hsl(135, 165), b = hsl(195, 215), s = document.documentElement.style;
-    var swap = Math.random() < .5;
-    s.setProperty('--rg1', swap ? b : g); s.setProperty('--rg2', swap ? g : b);
+    var g = 'hsl(' + r(135, 165) + ' ' + r(40, 65) + '% ' + r(8, 10) + '%)';
+    var b = 'hsl(' + r(195, 215) + ' ' + r(40, 65) + '% ' + r(9, 12) + '%)';
+    var swap = Math.random() < .5, st = document.documentElement.style;
+    st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-bot', swap ? g : b);
   })();
 </script>
 </head>
