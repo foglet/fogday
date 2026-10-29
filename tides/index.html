@@ -29,16 +29,17 @@ title: Tides of San Francisco
     display: flex; flex-direction: column; gap: 24px; padding-block: 22px 36px;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides {
-    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted);
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
     --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; } }
   :root[data-theme="dark"] .tides {
-    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted);
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
     --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; }
 
   /* Dark mode only: the page background is a random green + blue gradient, top to bottom, picked on
      every load by the script at the end of <head> (--rg-top / --rg-bot). Fixed to the window, so the
      fade under the top bar matches the top color and the fixed footer matches the bottom one.
-     Lightness 8–12% keeps muted text above 5.6:1.
+     Lightness 12–14% green, 14–17% blue keeps muted text at 4.7:1 or better; --line is a translucent light
+     so the dotted rules and chart height lines show on any of them.
      Without the script, it stays the site's plain navy. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
@@ -322,8 +323,8 @@ title: Tides of San Francisco
   // Random dark-mode page background: one green stop and one blue stop, in random order, top to bottom.
   (function () {
     var r = function (a, b) { return Math.round(a + Math.random() * (b - a)); };
-    var g = 'hsl(' + r(135, 165) + ' ' + r(40, 65) + '% ' + r(8, 10) + '%)';
-    var b = 'hsl(' + r(195, 215) + ' ' + r(40, 65) + '% ' + r(9, 12) + '%)';
+    var g = 'hsl(' + r(135, 165) + ' ' + r(40, 65) + '% ' + r(12, 14) + '%)';
+    var b = 'hsl(' + r(195, 215) + ' ' + r(40, 65) + '% ' + r(14, 17) + '%)';
     var swap = Math.random() < .5, st = document.documentElement.style;
     st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-bot', swap ? g : b);
   })();
