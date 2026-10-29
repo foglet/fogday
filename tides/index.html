@@ -139,7 +139,9 @@ title: Tides of San Francisco
   .tides .tiles + .day { margin-top: calc(var(--tilegap) - 24px); }  /* chart sits the same distance below the moon tile as the tiles are from each other (24px = .tides gap) */
   .tides .tile { background: var(--surface); border: 0; border-radius: 12px; padding: 14px 16px 16px;
     display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
-  .tides #weather.tile { background: rgb(255 255 255 / .25); }  /* weather panel: white, 75% see-through, light and dark mode */
+  /* Weather panel, dark mode only: white, 75% see-through */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides #weather.tile { background: rgb(255 255 255 / .25); } }
+  :root[data-theme="dark"] .tides #weather.tile { background: rgb(255 255 255 / .25); }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
   .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }  /* as tall as the wind icon, so the temperature and wind speed share a line */
   .tides .slab.mid { font-size: clamp(2.3rem, 9vw, 2.9rem); }
