@@ -140,18 +140,18 @@ title: Tides of San Francisco
   .tides .tile { background: var(--surface); border: 0; border-radius: 12px; padding: 14px 16px 16px;
     display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
   /* Dark mode only: panels (weather, wind, moon, tide chart) have no fill and no border, and the rule above the
-     footer is gone, so the page gradient shows through. The rule under the tide value stays: a white hairline,
-     28px above and below it.
+     footer is gone, so the page gradient shows through. The rule under the tide value stays, drawn like the tide chart's
+     height lines (1px, 2px dash / 5px gap, --line), 28px above and below it.
      Panel text drops its padding so it lines up with the beach name and tide value, and every section
      (top, tide value, weather, wind, moon, chart) is spaced by the same 28px gap.
      --surface becomes the gradient's midpoint, so the chart's label halos and marker dots blend in. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .tides { --surface: color-mix(in srgb, var(--rg-top, #16202a) 50%, var(--rg-bot, #16202a)); }
-    :root:not([data-theme="light"]) .tides :is(.tile, .day) { background: transparent; border: 0; } :root:not([data-theme="light"]) .tides .tile { padding: 0; } :root:not([data-theme="light"]) .tides { gap: 28px; --tilegap: 28px; } :root:not([data-theme="light"]) .tides .hero { padding-bottom: 28px; border-bottom: 1px solid rgb(255 255 255 / .16); } :root:not([data-theme="light"]) .tides .tiles + .day { margin-top: 0; }
+    :root:not([data-theme="light"]) .tides :is(.tile, .day) { background: transparent; border: 0; } :root:not([data-theme="light"]) .tides .tile { padding: 0; } :root:not([data-theme="light"]) .tides { gap: 28px; --tilegap: 28px; } :root:not([data-theme="light"]) .tides .hero { padding-bottom: 28px; border-bottom: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; } :root:not([data-theme="light"]) .tides .tiles + .day { margin-top: 0; }
     :root:not([data-theme="light"]) footer { border: 0; }
   }
   :root[data-theme="dark"] .tides { --surface: color-mix(in srgb, var(--rg-top, #16202a) 50%, var(--rg-bot, #16202a)); }
-  :root[data-theme="dark"] .tides :is(.tile, .day) { background: transparent; border: 0; } :root[data-theme="dark"] .tides .tile { padding: 0; } :root[data-theme="dark"] .tides { gap: 28px; --tilegap: 28px; } :root[data-theme="dark"] .tides .hero { padding-bottom: 28px; border-bottom: 1px solid rgb(255 255 255 / .16); } :root[data-theme="dark"] .tides .tiles + .day { margin-top: 0; }
+  :root[data-theme="dark"] .tides :is(.tile, .day) { background: transparent; border: 0; } :root[data-theme="dark"] .tides .tile { padding: 0; } :root[data-theme="dark"] .tides { gap: 28px; --tilegap: 28px; } :root[data-theme="dark"] .tides .hero { padding-bottom: 28px; border-bottom: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; } :root[data-theme="dark"] .tides .tiles + .day { margin-top: 0; }
   :root[data-theme="dark"] footer { border: 0; }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
   .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }  /* as tall as the wind icon, so the temperature and wind speed share a line */
