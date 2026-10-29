@@ -1092,7 +1092,7 @@ function seaHideLabels(){
   stripMkBox.forEach(([x0,x1,y0,y1], i) => {
     const hit = !(x1<left-40 || x0>left+vw+40) && B.some(([l,r,t,b]) => x1>l && x0<r && y1>t && y0<b);
     if (hit!==stripMkHid[i]){ stripMkHid[i]=hit; stripMk[i].classList.toggle('sea-hid', hit); } });
-  if (PG.st!=='gone' && !st.classList.contains('no-gull')){ const [w,a,b]=PG_BOX, x=PG.x+left; B.push([x-w*z-M, x+w*z+M, PG.y-a*z-M, PG.y+b*z+M]); }
+  if (PG.st!=='gone'){ const [w,a,b]=PG_BOX, x=PG.x+left; B.push([x-w*z-M, x+w*z+M, PG.y-a*z-M, PG.y+b*z+M]); }
   stripBoxes.forEach(([x0,x1,y0,y1], i) => { if (!stripCan[i]) return;
     if (x1<left-40 || x0>left+vw+40){ if (stripHid[i]){ stripHid[i]=false; stripTexts[i].classList.remove('sea-hid'); } return; }
     const hit=B.some(([l,r,t,b]) => x1>l && x0<r && y1>t && y0<b);
@@ -1274,7 +1274,8 @@ function drawStrip(){ buildStrip(); placeStrip(); }
    gathering speed and climbing, and flies off screen. Once the timeline has been left alone for 4 s it flies back in at an
    easy pace and slows smoothly to land.
    Drawn in the fixed overlay (stripCur), so it stays with the pole; counts as a gull for the flip-flops. */
-const POLE_GULL = `<g id="poleGull" class="sl-gull" filter="url(#seaRim)">
+// Always on the pole: not hidden by the flip-flops (restore that: class="sl-gull" on #poleGull)
+const POLE_GULL = `<g id="poleGull" filter="url(#seaRim)">
   <g id="pgSit">
     <g class="pg-gull">
     <path d="M-1.2,-6.1 L-1,0 M1.4,-6.2 L1.2,0" stroke="#e39a82" stroke-width="1.05" stroke-linecap="round" fill="none"/>
@@ -1535,7 +1536,7 @@ function redrawViewed(){
   if (wait<=0) updateTiles(); else if (!tileTimer) tileTimer=setTimeout(updateTiles, wait);
 }
 function setCursor(t){
-  poleGullScare();   // sliding the timeline: the gull on the pole flies off
+  // The bird stays on the pole now, always (Oct 2026); restore the fly-off with: poleGullScare();
   const now=Date.now();
   t=Math.min(t, now+MAX_AHEAD_MS);
   scrub = t <= now+6e4 ? null : t;   // within a minute of now is live again
