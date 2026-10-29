@@ -16,6 +16,12 @@ title: Tides of San Francisco
   /* SF Tides, in the site's own identity: Patua One slab numbers in the sky-blue title gradient,
      condition tiles, and a day tide curve.
      Site colors and fonts come from fogday.css; only tide-specific colors are defined here. */
+  /* Chinese: Heiti, falling back to Kaiti. Latin fonts stay first so numbers and Latin text keep the
+     site look; they have no Chinese glyphs, so the browser takes those from Heiti (or Kaiti). */
+  :root:lang(zh) {
+    --font-ui: "Fira Sans", "Heiti SC", STHeiti, SimHei, "Kaiti SC", STKaiti, KaiTi, sans-serif;
+    --font-logo: "Patua One", "Heiti SC", STHeiti, SimHei, "Kaiti SC", STKaiti, KaiTi, serif;
+  }
   .tides {
     --water: var(--accent);
     --tl1: #2f7fc1; --tl2: #22a37c; --tl3: #2f7fc1; --tl4: #22a37c; --tl5: #1b3f75;   /* tide line: blue, green, blue, green, dark blue */
