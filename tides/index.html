@@ -233,7 +233,7 @@ title: Tides of San Francisco
   .tides .rsa { font-size: 13px; }
   /* A value with a creature passing in front of it fades out until it has passed (tides.js, seaHideLabels) */
   .tides .lab, .tides .labt, .tides .dayl, .tides .tmk { transition: opacity .25s; } .tides text.sea-hid, .tides circle.sea-hid { opacity: 0; }
-  .tides text.past { visibility: hidden; }   /* a tide that passed over an hour ago: no time or height, just its marker */
+  .tides text.past, .tides circle.past { visibility: hidden; }   /* a tide that passed over an hour ago: no marker, time or height */
   .tides .labt { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }  /* halo over lines on the heights; the times have none */
   .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
 
