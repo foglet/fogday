@@ -141,14 +141,15 @@ title: Tides of San Francisco
     display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
   /* Dark mode only: panels (weather, wind, moon, tide chart) have no fill and no border, and the rule under
      the tide value and above the footer is gone, so the page gradient shows through uninterrupted.
+     Panel text drops its side padding so it lines up with the beach name and tide value.
      --surface becomes the gradient's midpoint, so the chart's label halos and marker dots blend in. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .tides { --surface: color-mix(in srgb, var(--rg-top, #16202a) 50%, var(--rg-bot, #16202a)); }
-    :root:not([data-theme="light"]) .tides :is(.tile, .day) { background: transparent; border: 0; }
+    :root:not([data-theme="light"]) .tides :is(.tile, .day) { background: transparent; border: 0; } :root:not([data-theme="light"]) .tides .tile { padding-inline: 0; }
     :root:not([data-theme="light"]) .tides .hero, :root:not([data-theme="light"]) footer { border: 0; }
   }
   :root[data-theme="dark"] .tides { --surface: color-mix(in srgb, var(--rg-top, #16202a) 50%, var(--rg-bot, #16202a)); }
-  :root[data-theme="dark"] .tides :is(.tile, .day) { background: transparent; border: 0; }
+  :root[data-theme="dark"] .tides :is(.tile, .day) { background: transparent; border: 0; } :root[data-theme="dark"] .tides .tile { padding-inline: 0; }
   :root[data-theme="dark"] .tides .hero, :root[data-theme="dark"] footer { border: 0; }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
   .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }  /* as tall as the wind icon, so the temperature and wind speed share a line */
