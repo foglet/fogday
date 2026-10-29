@@ -36,17 +36,17 @@ title: Tides of San Francisco
     --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; }
 
   /* Dark mode only: the page background is a random two-blue gradient, top to bottom, picked on
-     every load by the script at the end of <head> (--rg-top / --rg-bot). Fixed to the window, so the
+     every load by the script at the end of <head> (--rg-top / --rg-mid / --rg-bot). Fixed to the window, so the
      fade under the top bar matches the top color and the fixed footer matches the bottom one.
      Lightness 14–16% (sea blue) and 15–18% (deeper blue) keeps muted text at 4.6:1 or better; --line is a translucent light
      so the dotted rules and chart height lines show on any of them.
      Without the script, it stays the site's plain navy. */
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
+    :root:not([data-theme="light"]) body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-mid, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
     :root:not([data-theme="light"]) body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
     :root:not([data-theme="light"]) footer { background: var(--rg-bot, var(--bg)); }
   }
-  :root[data-theme="dark"] body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
+  :root[data-theme="dark"] body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-mid, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
   :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
   :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
 
@@ -148,11 +148,11 @@ title: Tides of San Francisco
      (top, tide value, weather, wind, moon, chart) is spaced by the same 28px gap.
      --surface becomes the gradient's midpoint, so the chart's label halos and marker dots blend in. */
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .tides { --surface: color-mix(in srgb, var(--rg-top, #16202a) 50%, var(--rg-bot, #16202a)); }
+    :root:not([data-theme="light"]) .tides { --surface: var(--rg-mid, #16202a); }
     :root:not([data-theme="light"]) .tides :is(.tile, .day) { background: transparent; border: 0; } :root:not([data-theme="light"]) .tides .tile { padding: 0; } :root:not([data-theme="light"]) .tides { gap: 28px; --tilegap: 28px; } :root:not([data-theme="light"]) .tides .hero { padding-bottom: 28px; border-bottom: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; } :root:not([data-theme="light"]) .tides .tiles + .day { margin-top: 0; } :root:not([data-theme="light"]) .tides :is(#weather, #wind, #moon) { padding-inline: 16px; } :root:not([data-theme="light"]) .tides :is(#weather, #wind) { padding-bottom: 28px; border-radius: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; }
     :root:not([data-theme="light"]) footer { border: 0; }
   }
-  :root[data-theme="dark"] .tides { --surface: color-mix(in srgb, var(--rg-top, #16202a) 50%, var(--rg-bot, #16202a)); }
+  :root[data-theme="dark"] .tides { --surface: var(--rg-mid, #16202a); }
   :root[data-theme="dark"] .tides :is(.tile, .day) { background: transparent; border: 0; } :root[data-theme="dark"] .tides .tile { padding: 0; } :root[data-theme="dark"] .tides { gap: 28px; --tilegap: 28px; } :root[data-theme="dark"] .tides .hero { padding-bottom: 28px; border-bottom: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; } :root[data-theme="dark"] .tides .tiles + .day { margin-top: 0; } :root[data-theme="dark"] .tides :is(#weather, #wind, #moon) { padding-inline: 16px; } :root[data-theme="dark"] .tides :is(#weather, #wind) { padding-bottom: 28px; border-radius: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; }
   :root[data-theme="dark"] footer { border: 0; }
   .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
@@ -320,13 +320,14 @@ title: Tides of San Francisco
   @media (max-width: 340px) { .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
   </style>
 <script>
-  // Random dark-mode page background: two blue stops (greens dropped Oct 2026; restore: hue 135-165, lightness 12-14), in random order, top to bottom.
+  // Random dark-mode page background: three blue stops: sea blue and deeper blue at the ends, any blue in the middle (greens dropped Oct 2026; restore: hue 135-165, lightness 12-14), in random order, top to bottom.
   (function () {
     var r = function (a, b) { return Math.round(a + Math.random() * (b - a)); };
     var g = 'hsl(' + r(188, 202) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // a sea blue (was the green stop)
     var b = 'hsl(' + r(208, 228) + ' ' + r(40, 65) + '% ' + r(15, 18) + '%)';   // a deeper blue
+    var m = 'hsl(' + r(188, 228) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // the middle stop: any blue (16% max is safe for all of them)
     var swap = Math.random() < .5, st = document.documentElement.style;
-    st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-bot', swap ? g : b);
+    st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-mid', m); st.setProperty('--rg-bot', swap ? g : b);
   })();
 </script>
 </head>
