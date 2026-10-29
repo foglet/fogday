@@ -35,10 +35,10 @@ title: Tides of San Francisco
     --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
     --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; }
 
-  /* Dark mode only: the page background is a random green + blue gradient, top to bottom, picked on
+  /* Dark mode only: the page background is a random two-blue gradient, top to bottom, picked on
      every load by the script at the end of <head> (--rg-top / --rg-bot). Fixed to the window, so the
      fade under the top bar matches the top color and the fixed footer matches the bottom one.
-     Lightness 12–14% green, 14–17% blue keeps muted text at 4.7:1 or better; --line is a translucent light
+     Lightness 14–16% (sea blue) and 15–18% (deeper blue) keeps muted text at 4.6:1 or better; --line is a translucent light
      so the dotted rules and chart height lines show on any of them.
      Without the script, it stays the site's plain navy. */
   @media (prefers-color-scheme: dark) {
@@ -320,11 +320,11 @@ title: Tides of San Francisco
   @media (max-width: 340px) { .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
   </style>
 <script>
-  // Random dark-mode page background: one green stop and one blue stop, in random order, top to bottom.
+  // Random dark-mode page background: two blue stops (greens dropped Oct 2026; restore: hue 135-165, lightness 12-14), in random order, top to bottom.
   (function () {
     var r = function (a, b) { return Math.round(a + Math.random() * (b - a)); };
-    var g = 'hsl(' + r(135, 165) + ' ' + r(40, 65) + '% ' + r(12, 14) + '%)';
-    var b = 'hsl(' + r(195, 215) + ' ' + r(40, 65) + '% ' + r(14, 17) + '%)';
+    var g = 'hsl(' + r(188, 202) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // a sea blue (was the green stop)
+    var b = 'hsl(' + r(208, 228) + ' ' + r(40, 65) + '% ' + r(15, 18) + '%)';   // a deeper blue
     var swap = Math.random() < .5, st = document.documentElement.style;
     st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-bot', swap ? g : b);
   })();
