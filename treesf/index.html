@@ -102,16 +102,30 @@ zoom: 11.8
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
   @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 
-  /* Controls, bottom left above the Mapbox logo (below the map on upright phones) */
+  /* The legend, bottom left above the Mapbox logo (below the map on upright phones), as on /transit/ and the atlas:
+     shut, it is just its title; open, a frosted panel with the total, every species and its green, and Info. */
   .controls {
     position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 320px;
     max-width: calc(100% - 24px - var(--sal) - var(--sar));
     border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 8px;
-    padding: 12px 14px 14px; display: grid; gap: 12px;
+    transition: background-color .18s ease, border-color .18s ease;
   }
-  .label { font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }   /* the transit legend's title */
+  .controls:has(.map-legend:not([open])) { width: auto; background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
+                        font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend > summary::after { content: " +"; color: var(--muted); }
+  .map-legend[open] > summary::after { content: " –"; }
+  .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+  .legend-body { padding: 0 14px 12px; display: grid; gap: 10px; }
   .sky-text { color: #4a90c8; }
-  .summary { margin: -4px 0 0; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .species { list-style: none; margin: 0; padding: 0 4px 0 0; display: grid; gap: 6px; font-size: .9rem;
+             max-height: calc(100vh - 300px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain; }
+  .species li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .species .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c); }   /* the atlas's legend dot */
+  .controls > .status { padding: 0 14px 12px; }
 
   /* View switch: two uppercase segments */
   .axis { display: flex; justify-content: space-between; gap: 8px; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -289,9 +303,11 @@ zoom: 11.8
     .oa-detail-panel > div { padding: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
     .oa-detail-panel[hidden] { display: none; }
 
-    .controls { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
-                padding-block: 16px calc(24px + var(--sab)); gap: 16px; }
-    .summary { font-size: 1rem; }
+    .controls, .controls:has(.map-legend:not([open])) { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
+                padding-block: 6px calc(16px + var(--sab)); padding-left: max(2px, var(--sal)); padding-right: max(2px, var(--sar)); }
+    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .summary, .species { font-size: 1rem; }
+    .species { max-height: none; overflow: visible; }   /* the page scrolls instead */
     .axis { font-size: .85rem; }
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
@@ -349,15 +365,19 @@ zoom: 11.8
 <section id="tree-card" class="tree-card" aria-live="polite" hidden></section>  <!-- the tapped tree, on phones -->
 <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
 
-<section class="card controls" id="controls" aria-label="Map controls">
-  <div class="label"><span class="sky-text">Street trees</span></div>
-  <p class="summary" id="summary">Loading the city's tree list…</p>
-
-  <p class="status" id="status" role="status">Loading trees…</p>
-  <details class="notes">  <!-- Info, as on /tides/: shut until tapped -->
-    <summary>Info</summary>
-    <p class="note">Tap a tree for its species. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+<section class="controls map-legend-panel" id="controls" aria-label="Legend">
+  <details class="map-legend" id="legend">  <!-- shut until tapped, as on /transit/ and oysteratlas.com -->
+    <summary><span class="sky-text">Street Trees</span></summary>
+    <div class="legend-body">
+      <p class="summary" id="summary">Loading the city's tree list…</p>
+      <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
+      <details class="notes">  <!-- Info, as on /tides/ -->
+        <summary>Info</summary>
+        <p class="note">Each species has its own green. Tap a tree for its name. A faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+      </details>
+    </div>
   </details>
+  <p class="status" id="status" role="status">Loading trees…</p>
 </section>
 
 <script>
@@ -388,6 +408,23 @@ window.addEventListener('DOMContentLoaded', function () {
 
   // Year color ramp, all greens: deep forest (oldest) → leaf → spring green (newest). Stops spread over the data's year span.
   var RAMP = ['#2f7a45', '#3f9e4f', '#74c25a', '#b9e886'];
+  /* Each species its own green: hues 80°–160°, lightness and saturation stepped by golden-ratio sequences so
+     neighbors in the list differ; the most common species come first and get the most separated greens. */
+  function greens(n) {
+    var out = [], seen = {};
+    function hex(h, s, l) {
+      s /= 100; l /= 100;
+      var k = function (m) { return (m + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
+      var f = function (m) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(m) - 3, Math.min(9 - k(m), 1))))).toString(16).padStart(2, '0'); };
+      return '#' + f(0) + f(8) + f(4);
+    }
+    for (var i = 0; i < n; i++) {
+      var h = 80 + ((i * 0.618034) % 1) * 80, sat = 40 + ((i * 0.754878 + 0.3) % 1) * 45, l = 34 + ((i * 0.381966 + 0.5) % 1) * 42, c = hex(h, sat, l);
+      while (seen[c]) { l = l >= 76 ? 34 : l + 0.6; c = hex(h, sat, l); }   // every species gets a hex of its own
+      seen[c] = 1; out.push(c);
+    }
+    return out;
+  }
   var BIG_RING = '#b9e886';   // the ring around big trees: the ramp's spring green
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
@@ -432,7 +469,7 @@ window.addEventListener('DOMContentLoaded', function () {
   function build(rows) {
     var h = rows[0], ix = {};
     h.forEach(function (k, i) { ix[k] = i; });
-    var feats = [], perYear = {};
+    var feats = [], perYear = {}, spCount = {}, spOf = [];
     for (var r = 1; r < rows.length; r++) {
       var row = rows[r];
       var pt = (row[ix.planttype] || '').toLowerCase();
@@ -443,12 +480,19 @@ window.addEventListener('DOMContentLoaded', function () {
       var id = info.length;
       info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
                   st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
+      var sk = (row[ix.species] || '').trim() || 'Unknown'; spCount[sk] = (spCount[sk] || 0) + 1; spOf.push(sk);
       feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, b: +row[ix.mapdbh] > 24 ? 1 : 0 } });   // b: trunk over two feet across (mapdbh is in inches)
       if (y) perYear[y] = (perYear[y] || 0) + 1;
       var nb = row[ix.analysis_neighborhood];
       if (nb) { var hs = hoodSum[nb] || (hoodSum[nb] = [0, 0, 0]); hs[0] += lon; hs[1] += lat; hs[2]++; }
     }
-    return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear };
+    // Species, most trees first; each gets its green, stored on its trees for the map to draw
+    var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
+    var gs = greens(list.length), colorOf = {};
+    list.forEach(function (k, i) { colorOf[k] = gs[i]; });
+    feats.forEach(function (f, i) { f.properties.c = colorOf[spOf[i]]; });
+    var species = list.map(function (k) { return { key: k, n: spCount[k], color: colorOf[k] }; });
+    return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
   }
 
   // Slider floor: the earliest year with a meaningful number of plantings (skips a few stray early dates).
@@ -676,18 +720,18 @@ window.addEventListener('DOMContentLoaded', function () {
           0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#b9e886', 1, '#e2ffc4']
       }
     });
-    /* Big trees, trunk more than two feet in diameter (about 5,800): a 10px ring, 80% transparent, drawn under the dot */
+    /* Big trees, trunk more than two feet in diameter (about 5,800): a 10px ring, 90% transparent, drawn under the dot */
     map.addLayer({
       id: 'trees-big', type: 'circle', source: 'trees', filter: ['==', ['get', 'b'], 1],
       paint: { 'circle-radius': radius(1), 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 10,
-               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.2 }
+               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.1 }
     });
     map.addLayer({
       id: 'trees-dots', type: 'circle', source: 'trees',
       paint: {
-        'circle-color': colorExpr(),
+        'circle-color': ['get', 'c'],   // the tree's species green
         'circle-radius': radius(1),
-        'circle-opacity': ['case', ['==', ['get', 'y'], 0], 0.7, 0.9],
+        'circle-opacity': 0.9,
         'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2, 0],
         'circle-stroke-color': '#ffffff'
       }
@@ -715,8 +759,8 @@ window.addEventListener('DOMContentLoaded', function () {
     map.setFilter('trees-heat', f);
     // In density mode, dots appear only once you zoom in close enough to pick a tree
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
-      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, ['case', ['==', ['get', 'y'], 0], 0.7, 0.9]]
-      : ['case', ['==', ['get', 'y'], 0], 0.7, 0.9]);
+      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, 0.9]
+      : 0.9);
     map.setLayoutProperty('trees-heat', 'visibility', state.mode === 'density' ? 'visible' : 'none');
     updateCount(); drawBars();
   }
@@ -729,6 +773,17 @@ window.addEventListener('DOMContentLoaded', function () {
     return n;
   }
   function updateCount() {}   // no year readout: the map shows every tree
+  function fillSpecies(list) {   // the legend: every species with its green, most common first
+    var ul = $('species'), frag = document.createDocumentFragment();
+    list.forEach(function (sp) {
+      var li = document.createElement('li'), dot = document.createElement('span'), name = document.createElement('span'), nm = splitSpecies(sp.key === 'Unknown' ? '' : sp.key);
+      dot.className = 'dot'; dot.style.setProperty('--c', sp.color);
+      name.className = 'name'; name.textContent = sp.key === 'Unknown' ? 'Species not recorded' : nm.common;
+      if (nm.latin && nm.latin !== nm.common) li.title = nm.latin;
+      li.appendChild(dot); li.appendChild(name); frag.appendChild(li);
+    });
+    ul.textContent = ''; ul.appendChild(frag);
+  }
   function drawBars() {}
 
   /* ---------- Controls ---------- */
@@ -737,7 +792,8 @@ window.addEventListener('DOMContentLoaded', function () {
     document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
   }
   window.addEventListener('resize', function () { sheetHeight(); drawBars(); });
-  document.querySelector('.notes').addEventListener('toggle', sheetHeight);   // Info opening grows the card; the spot card stays above it
+  document.querySelector('.notes').addEventListener('toggle', sheetHeight);
+  $('legend').addEventListener('toggle', sheetHeight);   // Info opening grows the card; the spot card stays above it
   sheetHeight();
 
   /* ---------- Popups ---------- */
@@ -972,6 +1028,7 @@ window.addEventListener('DOMContentLoaded', function () {
     $('summary').textContent = fmt.format(state.total) + ' street trees';
     $('status').hidden = true;
     addLayers(built.fc);
+    fillSpecies(built.species);
     fillNeighborhoods(neighborhoods());
     hoodsP.then(function (g) { if (g) addHoodLayers(g); });   // boundaries are extra: the map works without them
     sheetHeight();
