@@ -15,5 +15,7 @@
   url: /eastbeach/
 - name: SF Tide Chart
   url: /tides/
+- name: SF Street Trees
+  url: /treesf/
 - name: A Spy Map
   url: /spy/

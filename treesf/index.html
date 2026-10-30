@@ -1,7 +1,7 @@
 ---
-layout: null   # self-contained map page
-title: Street Trees of San Francisco
-description: Where and when San Francisco's street trees were planted. 144,000 trees from the city's Street Tree List, colored by planting year. A map by Fogday Studios.
+layout: null   # self-contained map page in the Transit Connected / Oyster Atlas interface, not the shared map layout
+title: SF Street Trees
+description: Where and when San Francisco's street trees were planted, from the city's Street Tree List. A map by Fogday Studios.
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 center: [-122.4425, 37.7585]
 zoom: 11.8
@@ -14,23 +14,25 @@ zoom: 11.8
 <title>{{ page.title }} · Fogday Studios</title>
 <meta name="description" content="{{ page.description }}">
 <meta name="robots" content="index,follow">
-<meta name="theme-color" content="#0a1712">
+<meta name="theme-color" content="#021724">
 
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&family=Patua+One&display=swap">
 
 <style>
-  /* Street Trees of San Francisco — one self-contained page. Always dark: points read best on a dark city.
-     Layout: full-bleed map; title card top left; control card bottom left (a bottom sheet on phones). */
+  /* SF Street Trees — the Transit Connected / Oyster Atlas interface (fogday.com/transit, oysteratlas.com), one
+     self-contained page. Always dark. Class names follow those pages (oa-…, tc-…) so fixes copy between them.
+     Numbers in Patua One with the site's sky-blue title gradient, as on fogday.com/tides. */
   :root {
-    --bg: #0a1712; --panel: #11231b; --ink: #e4ece6; --muted: #93a89b; --line: #26402f; --accent: #c8e35a;
-    --undated: #6d7d74;
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --title-1: #7cc4f0; --title-2: #bfe6fb;   /* fogday.css dark mode title gradient */
+    --undated: #5d7180;
     --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
-    --display: "Fira Sans", "Source Sans 3", Seravek, "Segoe UI", Arial, sans-serif;
+    --font-logo: "Patua One", "Rockwell", "Roboto Slab", Georgia, serif;
     color-scheme: dark;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
@@ -40,38 +42,101 @@ zoom: 11.8
   body { overflow: hidden; }
   #map { position: fixed; inset: 0; }
 
-  .card {
-    position: fixed; z-index: 2;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
+  /* Frosted panels over the map */
+  .title, .controls {
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    border: 1px solid var(--line); border-radius: 10px;
+    color: var(--ink);
   }
-  .title { top: calc(12px + var(--sat)); left: calc(12px + var(--sal)); padding: 10px 14px 11px; max-width: min(360px, calc(100vw - 24px - var(--sal) - var(--sar))); }
-  .title h1 { margin: 0; font: 500 1.15rem/1.15 var(--display); letter-spacing: .01em; text-wrap: balance; }
-  .title p { margin: 3px 0 0; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
-  .title a { color: inherit; }
 
-  .controls { left: calc(12px + var(--sal)); bottom: calc(36px + var(--sab)); width: 360px; padding: 12px 14px 14px; display: grid; gap: 12px; }
+  /* Title, top left (centered on phones), as on /transit/: tap it to fly home */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .title-text { background-image: linear-gradient(to right, #2f7fc1, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
+  .maps-btn {
+    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: #4a90c8;
+  }
+  .maps-btn svg { transition: transform .2s ease; }
+  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
+  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The maps menu: the same drop-down as on /transit/ and the other map pages (list from _data/maps.yml) */
+  .maps-menu {
+    --surface: #1e2a36; --site-line: #2a3846;
+    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
+    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px;
+    animation: maps-menu-in .16s ease-out;
+  }
+  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  .maps-menu[hidden] { display: none; }
+  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
+  .maps-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .12em;
+  }
+  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .maps-menu a:hover { color: #ff5500; }
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: var(--title-1); }
+  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }
+  .maps-menu .ext {
+    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
+    -webkit-mask: url("{{ '/assets/icons/Aiga_forwardandrightarrow.svg' | relative_url }}") center / contain no-repeat;
+            mask: url("{{ '/assets/icons/Aiga_forwardandrightarrow.svg' | relative_url }}") center / contain no-repeat;
+  }
+  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
+  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
+  @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
+  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 
-  /* Mode switch: two segments */
-  .modes { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  /* Controls, bottom left above the Mapbox logo (a bottom sheet on phones) */
+  .controls {
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 320px;
+    max-width: calc(100% - 24px - var(--sal) - var(--sar));
+    border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 8px;
+    padding: 12px 14px 14px; display: grid; gap: 12px;
+  }
+  .label { font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }   /* the transit legend's title */
+  .sky-text { color: #4a90c8; }
+  .summary { margin: -4px 0 0; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+
+  /* View switch: two uppercase segments */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
   .modes button {
-    font: 600 .9rem/1 var(--font); color: var(--muted); background: transparent; border: 0; padding: 9px 6px; cursor: pointer;
+    font: 700 .74rem/1 var(--font); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); background: transparent; border: 0; padding: 10px 6px; cursor: pointer;
   }
   .modes button + button { border-left: 1px solid var(--line); }
+  .modes button:hover { color: var(--ink); }
   .modes button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  /* Year readout + play */
+  /* Year readout: the number in Patua One with the title gradient, as the tide on /tides/ */
   .yearrow { display: flex; align-items: end; justify-content: space-between; gap: 10px; }
-  .yearread { display: grid; gap: 1px; min-width: 0; }
-  .yearread .lbl { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .yearread .yr { font: 700 1.9rem/1 var(--display); font-variant-numeric: tabular-nums; }
+  .yearread { display: grid; gap: 4px; min-width: 0; }
+  .yearread .lbl { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .yearread .yr { font: 400 2.6rem/.9 var(--font-logo); font-variant-numeric: tabular-nums;
+    background-image: linear-gradient(to right, var(--title-1), var(--title-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; width: fit-content; }
   .yearread .n { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
   .play {
     flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
-    background: var(--panel); color: var(--ink); cursor: pointer; display: grid; place-items: center;
+    background: var(--panel); color: #4a90c8; cursor: pointer; display: grid; place-items: center;
   }
+  .play:hover { color: var(--accent); }
+  .play:disabled { opacity: .5; cursor: default; }
   .play svg { width: 16px; height: 16px; fill: currentColor; }
 
   /* Plantings-per-year bars sit on the slider track */
@@ -80,62 +145,112 @@ zoom: 11.8
   input[type=range] { width: 100%; margin: 0; accent-color: var(--accent); }
   .axis { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  .legend { display: grid; gap: 6px; font-size: .85rem; }
-  .ramp { height: 8px; border-radius: 4px; }
-  .legend .axis { margin-top: -2px; }
+  .legend { display: grid; gap: 6px; font-size: .9rem; }
+  .ramp { height: 6px; border-radius: 3px; }
   .check { display: flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
   .check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
   .swatch { width: 9px; height: 9px; border-radius: 50%; background: var(--undated); flex: none; }
 
-  .status { font-size: .85rem; color: var(--muted); }
-  .status.error { color: #f0a58c; }
+  .status { font-size: .85rem; color: var(--muted); margin: 0; }
+  .status.error { color: #f08a52; }
   .note { font-size: .78rem; color: var(--muted); margin: 0; }
+  .note a { color: inherit; }
+  .note a:hover { color: var(--ink); }
 
-  /* Popup */
+  /* Tapped spot, above the controls (same card as /transit/ and the Oyster Atlas): place, coordinates, local time.
+     No panel: each line gets its own frosted background, only as wide as its text; flush left with the controls' text */
+  .oa-detail-panel {
+    position: fixed; z-index: 2; left: calc(19px + var(--sal)); bottom: calc(58px + var(--sab) + var(--ctrl, 0px));
+    max-width: min(306px, calc(100vw - 38px - var(--sal) - var(--sar))); font-size: .9rem; line-height: 1.35;
+  }
+  .oa-detail-panel[hidden] { display: none; }
+  .oa-detail-panel > div {
+    width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .oa-detail-name { font-weight: 700; }
+  .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .oa-detail-offset { color: var(--muted); }
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+  .oa-detail-ampm { font-size: .667em; }
+  .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
+  /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
+  .tc-spot-wrap { pointer-events: none; }
+  .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
+
+  /* Tree popup */
   .mapboxgl-popup-content { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 400 .9rem/1.35 var(--font); box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
   .mapboxgl-popup-tip { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
   .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; padding: 2px 7px; }
-  .pop h2 { margin: 0 18px 1px 0; font: 600 1rem/1.2 var(--display); }
+  .mapboxgl-popup-close-button:hover { color: var(--accent); background: transparent; }
+  .pop h2 { margin: 0 18px 1px 0; font: 700 1rem/1.2 var(--font); }
   .pop .latin { font-style: italic; color: var(--muted); }
   .pop dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: .85rem; }
-  .pop dt { color: var(--muted); }
+  .pop dt { color: var(--muted); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; align-self: center; }
   .pop dd { margin: 0; font-variant-numeric: tabular-nums; }
 
+  /* Mapbox corners clear the home indicator and notch; controls in the panel color with the muted icon tint, as on /transit/ */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
   .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: var(--sab); }
-  .mapboxgl-ctrl-bottom-left { left: var(--sal); bottom: var(--sab); }
-  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid var(--line); box-shadow: none; }
-  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(1) hue-rotate(180deg) brightness(.9); }
+  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group button { width: 30px; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint); }
+  .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
+  .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
+  .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
 
-  /* Phones: controls become a bottom sheet that can fold */
-  @media (max-width: 560px) {
-    .controls {
-      left: 0; right: 0; bottom: 0; width: auto; border-radius: 14px 14px 0 0; border-bottom: 0;
-      padding: 10px max(16px, calc(12px + var(--sal))) calc(12px + var(--sab)) max(16px, calc(12px + var(--sar)));
-    }
-    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--sheet, 0px) + 6px); }
-    .mapboxgl-ctrl-bottom-left { bottom: calc(var(--sheet, 0px)); }
-    .title { right: calc(12px + var(--sar)); max-width: none; }
-    .controls.folded .fold-hide { display: none; }
-  }
+  /* Phones: controls become a bottom sheet that folds to the year readout */
   .grip { display: none; }
   @media (max-width: 560px) {
+    .controls {
+      left: 0; right: 0; bottom: 0; width: auto; max-width: none; border-radius: 12px 12px 0 0; border-bottom: 0;
+      padding: 10px max(16px, calc(12px + var(--sar))) calc(12px + var(--sab)) max(16px, calc(12px + var(--sal)));
+    }
+    .controls.folded .fold-hide { display: none; }
+    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--sheet, 0px) + 6px); }
+    .mapboxgl-ctrl-bottom-left { bottom: var(--sheet, 0px); }
+    .oa-detail-panel { left: calc(16px + var(--sal)); bottom: calc(var(--sheet, 0px) + 8px); }
     .grip { display: block; justify-self: center; width: 44px; height: 18px; border: 0; background: transparent; cursor: pointer; padding: 0; margin: -4px 0 -6px; }
     .grip::before { content: ""; display: block; margin: 7px auto 0; width: 36px; height: 4px; border-radius: 2px; background: var(--line); }
   }
-  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
 </style>
 </head>
 <body>
 
-<div id="map" role="region" aria-label="Map of San Francisco street trees"></div>
+<div id="map" role="region" aria-label="{{ page.title }} map"></div>
+<!-- Recolors Mapbox's zoom icons to the muted icon color (from /transit/) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="oa-ctrl-tint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="-0.6017 0 0 0 0.6813  -0.6817 0 0 0 0.7753  -0.7400 0 0 0 0.8420  0 0 0 1 0"/>
+  </filter>
+</svg>
 
-<header class="card title">
-  <h1>Street Trees of San Francisco</h1>
-  <p id="summary">Loading the city's tree list…</p>
-</header>
+<div class="top">
+  <div class="title-row">
+    <h1 style="margin:0;display:flex"><button type="button" class="title" data-home title="Back to the whole city"><span class="title-text">{{ page.title }}</span></button></h1>
+    <button type="button" class="maps-btn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>  <!-- the list comes from _data/maps.yml, same as the other map pages -->
+      <ul>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% endfor %}
+        <li class="all"><a href="{{ '/maps/' | relative_url }}">All maps →</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
 
 <section class="card controls" id="controls" aria-label="Map controls">
   <button class="grip" id="grip" aria-label="Show or hide controls" aria-expanded="true"></button>
+
+  <div class="label"><span class="sky-text">Street trees</span></div>
+  <p class="summary" id="summary">Loading the city's tree list…</p>
 
   <div class="modes" role="group" aria-label="Map view">
     <button id="mode-year" aria-pressed="true">By planting year</button>
@@ -166,7 +281,7 @@ zoom: 11.8
   </div>
 
   <p class="status" id="status" role="status">Downloading trees from DataSF…</p>
-  <p class="note fold-hide">Tap a tree for its species and address. Data: <a href="https://data.sf.gov/d/tkzw-k3nq" style="color:inherit">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+  <p class="note fold-hide">Tap a tree for its species and address. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
 </section>
 
 <script>
@@ -260,6 +375,26 @@ window.addEventListener('DOMContentLoaded', function () {
   });
   map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
 
+  /* The title flies back to the whole city */
+  document.querySelector('[data-home]').addEventListener('click', function () {
+    if (calm.matches) map.jumpTo(HOME); else map.flyTo(Object.assign({ speed: 1.2, curve: 1.42, essential: true }, HOME));
+  });
+
+  /* All-maps menu, as on /transit/: the chevron beside the title */
+  var mapsBtn = document.querySelector('.maps-btn'), mapsMenu = $('maps-menu');
+  function setMaps(open) {
+    if (open === (mapsBtn.getAttribute('aria-expanded') === 'true')) return;
+    mapsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    mapsMenu.hidden = !open;
+  }
+  mapsBtn.addEventListener('click', function () { setMaps(mapsBtn.getAttribute('aria-expanded') !== 'true'); });
+  /* A tap that only shuts the menu shouldn't also show the tapped spot (checked before the menu shuts) */
+  var menuWasOpen = false;
+  document.addEventListener('pointerdown', function (e) {
+    menuWasOpen = !mapsMenu.hidden;
+    if (!mapsBtn.contains(e.target) && !mapsMenu.contains(e.target)) setMaps(false);
+  }, true);
+
   var state = { mode: 'year', year: THIS_YEAR, undated: true, span: [1970, THIS_YEAR], perYear: {}, total: 0, dated: 0 };
 
   function colorExpr() {
@@ -285,7 +420,7 @@ window.addEventListener('DOMContentLoaded', function () {
         'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 13, 8, 16, 18],
         'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0.9, 17, 0],
         'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
-          0, 'rgba(10,23,18,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#d6e65a', 1, '#fff7c2']
+          0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#d6e65a', 1, '#fff7c2']
       }
     });
     map.addLayer({
@@ -385,9 +520,10 @@ window.addEventListener('DOMContentLoaded', function () {
     var c = $('controls'), folded = c.classList.toggle('folded');
     $('grip').setAttribute('aria-expanded', !folded); sheetHeight(); drawBars();
   });
-  function sheetHeight() {
-    var mobile = window.matchMedia('(max-width: 560px)').matches;
-    document.documentElement.style.setProperty('--sheet', mobile ? $('controls').offsetHeight + 'px' : '0px');
+  function sheetHeight() {   // --sheet: the phone bottom sheet; --ctrl: the desktop control card (the spot card sits above either)
+    var mobile = window.matchMedia('(max-width: 560px)').matches, h = $('controls').offsetHeight + 'px';
+    document.documentElement.style.setProperty('--sheet', mobile ? h : '0px');
+    document.documentElement.style.setProperty('--ctrl', h);
   }
   window.addEventListener('resize', function () { sheetHeight(); drawBars(); });
   sheetHeight();
@@ -406,6 +542,7 @@ window.addEventListener('DOMContentLoaded', function () {
     return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
   map.on('click', 'trees-dots', function (e) {
+    if (menuWasOpen) return;
     var f = e.features[0], t = info[f.id]; if (!t) return;
     if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false });
     selected = f.id; map.setFeatureState({ source: 'trees', id: selected }, { sel: true });
@@ -423,6 +560,125 @@ window.addEventListener('DOMContentLoaded', function () {
   popup.on('close', function () { if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false }); selected = null; });
   map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
+
+  /* ---------- Tapped spot (copied from fogday.com/transit) ----------
+     Tap the map: above the controls, show where that is —
+       Bernal Heights, San Francisco, CA, United States
+       37°44′38″N 122°24′55″W
+       3:18 PM GMT-7   (time larger)
+     Place names: Mapbox reverse geocoding (English), with the neighborhood in front (the transit map stops at the city).
+     Time zone: always Pacific here (the map can't leave the Bay Area), so tz-lookup isn't loaded.
+     The dot fades over 15s; the card stays and its clock ticks. A new tap replaces it; Escape clears it.
+     A tap on a tree also opens the tree's popup. */
+  var ZONE = 'America/Los_Angeles';
+  var LINE_IN = [{ opacity: 0, transform: 'translateY(18px)', easing: 'cubic-bezier(.2,.7,.35,1)' },
+                 { opacity: 1, transform: 'translateY(-2px)', offset: .78, easing: 'ease-in-out' },
+                 { opacity: 1, transform: 'none' }];
+  function slideLines(els) {
+    els = Array.prototype.slice.call(els);
+    var gap = els.length > 1 ? Math.min(60, 380 / (els.length - 1)) : 0, at = 0;
+    return els.map(function (el, i) {
+      if (i) at += gap + (Math.random() * 2 - 1) * Math.min(15, gap / 3);
+      return el.animate(LINE_IN, { duration: 420, delay: Math.max(0, at), fill: 'backwards' });
+    });
+  }
+  var spotCard = $('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotAnim = null;
+  /* The dot sits inside a wrapper: Mapbox sets the marker element's own opacity, so the fade runs on the inner dot. */
+  var spotWrap = document.createElement('div'), spotDot = document.createElement('div');
+  spotWrap.className = 'tc-spot-wrap'; spotDot.className = 'tc-spot'; spotWrap.appendChild(spotDot);
+  var spotMarker = new mapboxgl.Marker({ element: spotWrap });
+  var SPOT_LIFE = 15000, spotLife = 0, spotFade = null;
+  function spotStop() { clearTimeout(spotLife); if (spotFade) { spotFade.cancel(); spotFade = null; } }
+  function spotStart() {
+    spotStop();
+    if (!calm.matches && spotDot.animate)
+      spotFade = spotDot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPOT_LIFE, easing: 'linear', fill: 'forwards' });
+    spotLife = setTimeout(function () { spotStop(); spotMarker.remove(); }, SPOT_LIFE);
+  }
+  function placeName(lng, lat) {
+    var url = 'https://api.mapbox.com/search/geocode/v6/reverse?longitude=' + lng + '&latitude=' + lat +
+              '&language=en&access_token=' + mapboxgl.accessToken;
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+      var c = {};   // every level found, from the features themselves and their context
+      (j.features || []).forEach(function (f) {
+        var p = f.properties || {};
+        Object.keys(p.context || {}).forEach(function (k) { if (!c[k]) c[k] = p.context[k]; });
+        if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
+      });
+      var hood = c.neighborhood, city = c.place || c.locality || c.district, region = c.region, country = c.country;
+      var rc = region && region.region_code;
+      var st = region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
+      var parts = [hood && hood.name, city && city.name, st, country && country.name].filter(Boolean)
+                    .filter(function (n, i, a) { return a.indexOf(n) === i; });
+      return parts.length ? parts.join(', ') : 'Open water';
+    }).catch(function () { return 'Place name unavailable'; });
+  }
+  function offsetText(zone) {   // GMT-7
+    try {
+      var o = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(new Date())
+                .filter(function (p) { return p.type === 'timeZoneName'; })[0].value;
+      return o === 'GMT' ? 'GMT+0' : o;
+    } catch (e) { return zone; }
+  }
+  function setTime(el, zone) {   // 3:18 PM, with AM/PM at 2/3 the size of the digits
+    el.textContent = '';
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(new Date());
+      var digits = parts.filter(function (p) { return p.type !== 'dayPeriod'; }).map(function (p) { return p.value; }).join('').trim();
+      var period = parts.filter(function (p) { return p.type === 'dayPeriod'; }).map(function (p) { return p.value; }).join('');
+      el.appendChild(document.createTextNode(digits));
+      if (period) { var ap = document.createElement('span'); ap.className = 'oa-detail-ampm'; ap.textContent = period;
+                    el.appendChild(document.createTextNode(' ')); el.appendChild(ap); }
+    } catch (e) {}
+  }
+  function tick() {   // refresh on each new minute (the offset too, for daylight saving)
+    clearTimeout(spotTimer);
+    var t = spotCard.querySelector('.oa-detail-time'), o = spotCard.querySelector('.oa-detail-offset');
+    if (!t) return;
+    setTime(t, ZONE); o.textContent = offsetText(ZONE);
+    spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
+  }
+  /* 37°44′38″N 122°24′55″W — degrees, minutes, seconds (rounded to the second) */
+  function dms(v, pos, neg) {
+    var t = Math.round(Math.abs(v) * 3600), d = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    return two(d) + '°' + two(m) + '′' + two(sec) + '″' + (v < 0 ? neg : pos);
+  }
+  function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
+  function showSpot(lngLat) {
+    var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
+    spotMarker.setLngLat(ll).addTo(map); spotStart();
+    placeName(lng, lat).then(function (name) {
+      if (mine !== spotTurn) return;   // a newer tap, or a clear, won
+      if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
+      spotCard.textContent = '';
+      spotCard.appendChild(line('oa-detail-name', name));
+      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      var clock = document.createElement('div'), tm = document.createElement('span'), off = document.createElement('span');
+      clock.className = 'oa-detail-clock'; tm.className = 'oa-detail-time'; off.className = 'oa-detail-offset';
+      setTime(tm, ZONE); off.textContent = offsetText(ZONE);
+      clock.appendChild(tm); clock.appendChild(document.createTextNode(' ')); clock.appendChild(off);
+      spotCard.appendChild(clock);
+      spotCard.hidden = false;
+      if (!calm.matches && spotCard.animate) slideLines(spotCard.children);
+      tick();
+    });
+  }
+  function clearSpot() {   // leaves as one piece: 180ms fade + 16px drop
+    spotTurn++; clearTimeout(spotTimer); spotStop(); spotMarker.remove();
+    if (spotCard.hidden || spotAnim) return;
+    if (calm.matches || !spotCard.animate) { spotCard.hidden = true; return; }
+    spotAnim = spotCard.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(16px)' }],
+                                { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    spotAnim.onfinish = function () { var a = spotAnim; spotAnim = null; spotCard.hidden = true; spotCard.textContent = ''; a.cancel(); };
+  }
+  map.on('click', function (e) { if (!menuWasOpen) showSpot(e.lngLat); });
+  document.addEventListener('keydown', function (e) {   // one Escape shuts one thing: the menu, then the popup, then the spot
+    if (e.key !== 'Escape') return;
+    if (!mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); }
+    else if (popup.isOpen()) popup.remove();
+    else if (!spotCard.hidden) clearSpot();
+  });
 
   /* ---------- Load ---------- */
   var dataP = fetch(DATA_URL).then(function (r) {
