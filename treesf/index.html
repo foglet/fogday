@@ -204,6 +204,7 @@ zoom: 11.8
   /* Tree popup */
   .mapboxgl-popup-content { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 400 .9rem/1.35 var(--font); box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
   .mapboxgl-popup-tip { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
+  .hover-pop { pointer-events: none; }   /* the hover popup never gets in the pointer's way */
   .pop h2 { margin: 0 0 1px; font: 700 1rem/1.2 var(--font); }
   .pop .latin { color: var(--muted); }
 
@@ -1126,6 +1127,26 @@ window.addEventListener('DOMContentLoaded', function () {
   popup.on('close', function () { if (!PHONE.matches) markTree(null); });
   map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
+  /* Hover (mouse and trackpad): resting the pointer right on a tree shows its name, no click needed. It goes when the
+     pointer leaves the dot; a clicked tree keeps its own popup. Touch screens keep tap. Faded trees (another species
+     picked) don't answer hover. */
+  var canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+  var hoverPop = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px', offset: 8, className: 'hover-pop' });
+  var hoverId = null;
+  function hoverOff() { hoverId = null; hoverPop.remove(); }
+  map.on('mousemove', 'trees-dots', function (e) {
+    if (!canHover.matches || PHONE.matches) return;
+    var f = null;
+    for (var n = 0; n < e.features.length; n++) { var x = e.features[n]; if (pickK == null || x.properties.k === pickK) { f = x; break; } }
+    if (!f || f.id === selected) { hoverOff(); return; }   // the clicked tree already shows its popup
+    if (f.id === hoverId) return;
+    var t = info[f.id]; if (!t) return;
+    hoverId = f.id;
+    hoverPop.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
+  });
+  map.on('mouseleave', 'trees-dots', hoverOff);
+  map.on('movestart', hoverOff);
+  map.on('click', hoverOff);
 
   /* ---------- Tapped spot (copied from fogday.com/transit) ----------
      Tap the map: above the controls, show where that is —
