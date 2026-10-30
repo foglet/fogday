@@ -1032,9 +1032,17 @@ window.addEventListener('DOMContentLoaded', function () {
     });
     return { html: h.join(' '), text: t.join(' ') };
   }
+  /* Common names without the word "tree": the whole site is trees, so Olive Tree reads Olive, Ornamental Pear Tree
+     'Chanticleer' reads Ornamental Pear 'Chanticleer'. Kept where "tree" is part of the plant's name and dropping it
+     would name a different plant or nothing (Strawberry Tree, Tea Tree, Tulip Tree, Maidenhair Tree, Tree of Heaven…). */
+  var TREE_IN_NAME = /(xmas|christmas|strawberry|maidenhair|primrose|tea|golden rain|tulip|flame|gold medallion|silk|floss|smoke|dragon|cabbage|scholar|bottle|silver|umbrella|monkey hand|fringe|pepper|sea urchin|empress|puka|puke|coral|china doll|snowdrop|firewheel|crown of gold|candelabra|drumstick|lilac|not) trees?\b|\btree (fern|aloe|of heaven)|^trees?$/i;
+  function dropTree(name) {
+    if (!name || TREE_IN_NAME.test(name)) return name;
+    return name.replace(/\s+trees?\b/gi, '').replace(/\s{2,}/g, ' ').trim() || name;
+  }
   function splitSpecies(s) {
     var p = s.split('::').map(function (x) { return x.trim(); });
-    return { latin: p[0] || '', common: p[1] || p[0] || 'Unknown species' };
+    return { latin: p[0] || '', common: dropTree(p[1]) || p[0] || 'Unknown species' };
   }
   function prettyDate(s) {
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
