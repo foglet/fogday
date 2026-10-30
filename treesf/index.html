@@ -936,7 +936,7 @@ window.addEventListener('DOMContentLoaded', function () {
     [].forEach.call(document.querySelectorAll('.sortby button'), function (b) {
       var on = b.dataset.sort === sortBy;
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.querySelector('.ord').textContent = on ? (sortAZ ? ' A–Z' : ' ↓') : '';
+      b.querySelector('.ord').textContent = on && !sortAZ ? ' ↓' : '';   // ↓ = most trees first; A–Z needs no mark
       b.title = on ? (sortAZ ? 'Sorted A–Z; tap for most trees first' : 'Most trees first; tap to sort A–Z') : 'Show ' + b.textContent.trim().toLowerCase() + 's';
     });
     try { localStorage.setItem('treesf-sort2', sortBy + ':' + (sortAZ ? 'az' : 'count')); } catch (e) {}
@@ -1183,7 +1183,7 @@ window.addEventListener('DOMContentLoaded', function () {
     return two(d) + '°' + two(m) + '′' + two(sec) + '″' + (v < 0 ? neg : pos);
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
-  /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates / Native to California (a native tree) */
+  /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates */
   function showSpot(lngLat, tree) {   // tree: the tapped tree's feature, if any
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
     spotMarker.setLngLat(ll).addTo(map); spotStart();
@@ -1194,7 +1194,6 @@ window.addEventListener('DOMContentLoaded', function () {
       if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
       spotCard.appendChild(line(pl.hood ? 'oa-detail-city' : 'oa-detail-name', pl.city));
       spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
-      if (tree && tree.properties && tree.properties.n === 1) spotCard.appendChild(line('oa-detail-native', 'Native to California'));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
