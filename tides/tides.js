@@ -987,30 +987,57 @@ function orcaMarks(el){
 const ORCA_MK=[['.oeye','d'],['.oeye','transform'],['.osad','d'],['.osad','fill'],['.obel','d']];
 const orcaMarkCopy = el => ({a:ORCA_MK.map(([c,k])=>el.querySelector(c).getAttribute(k))});
 function orcaMarkPut(el, mk){ if (!mk) return; ORCA_MK.forEach(([c,k],i)=>el.querySelector(c).setAttribute(k, mk.a[i])); }
-/* Eelgrass (Zostera marina) along the floor of the tide picture: loose clumps of long, thin ribbon blades, each clump
-   swaying slowly on its own beat. Clipped to the water, so blades stay under the surface at the lowest tides. Gaps left
-   under the day names and under any low whose time label sits near the floor, so those stay readable. Drawn behind the
-   sea life (crabs walk in front of it). Its own seeded RNG (from seaSeed), so it doesn't shift where the creatures go. */
+/* Eelgrass (Zostera marina) along the floor of the tide picture: loose clumps of long, thin ribbon blades in a green
+   gradient (dark at the root, light at the tip). Clipped to the water, so blades stay under the surface at the lowest
+   tides. Gaps left under the day names and under any low whose time label sits near the floor, so those stay readable.
+   Two layers: most blades behind the sea life, about a third in front of it, so a crab walks in among them.
+   Its own seeded RNG (from seaSeed), so it doesn't shift where the creatures go. The sway is random, not a loop: see eelSway. */
+let eelB=[], eelFloor=0, eelG={}, eelPh=0, eelPv={};
+function eelD(m, sw){
+  // a ribbon that rises, bends one way and lays its tip over the other; sw bends it, more toward the tip
+  const f=eelFloor, h=m.h, L=m.lean, r=Math.min(.9, Math.abs(sw)/h);
+  const c1x=m.bx-L*.4+sw*.12, c1y=f-h*.45, p1x=m.bx+L*.3+sw*.45, p1y=f-h*.7*(1-.15*r*r);
+  const tx=m.bx+L+sw, ty=f-h*(1-.45*r*r);
+  return `M${m.bx.toFixed(1)},${f+1} Q${c1x.toFixed(1)},${c1y.toFixed(1)} ${p1x.toFixed(1)},${p1y.toFixed(1)} Q${(2*p1x-c1x).toFixed(1)},${(2*p1y-c1y).toFixed(1)} ${tx.toFixed(1)},${ty.toFixed(1)}`;
+}
 function eelgrass(td, TW, x, y, floor, waterD){
   let seed = (seaSeed*48271) % 2147483647 || 1;
   const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
+  eelB=[]; eelFloor=floor; eelG={}; eelPv={};
   const busy=[];
   for (let d=dayOf(td.tl[0].t), m=dayStart(addDays(d,1)); m<td.tl[td.tl.length-1].t; d=addDays(d,1), m=dayStart(addDays(d,1))) busy.push([+x(m)-4, +x(m)+78]);
   for (const e of td.ex) if (!e.high && y(e.v)+30 > floor-24) busy.push([+x(e.t)-30, +x(e.t)+30]);
   const free = px => !busy.some(([l,r]) => px>l-6 && px<r+6);
-  let g=`<defs><clipPath id="tideWater"><path d="${waterD}"/></clipPath></defs><g class="eelgrass" clip-path="url(#tideWater)">`;
+  let back='', front='', c=0;
   for (let cx=4+rnd()*12; cx<TW-4; cx+=10+rnd()*34){
     if (!free(cx) || rnd()<.12) continue;              // gaps here and there, so it reads as beds, not a hedge
-    const n=3+Math.floor(rnd()*4), tall=12+rnd()*14;
-    let b='';
+    const n=3+Math.floor(rnd()*4), tall=12+rnd()*14, clump={n:{}, amp:.6+rnd()*.8}; c++;
     for (let i=0; i<n; i++){
-      const bx=cx+(i-(n-1)/2)*1.6+(rnd()-.5)*1.2, h=tall*(.55+rnd()*.5), lean=(rnd()-.5)*h*.55, w=(1.1+rnd()*.6).toFixed(2);
-      // a ribbon that rises, bends one way and lays its tip over the other: an S of two curves
-      b+=`<path d="M${bx.toFixed(1)},${floor+1} Q${(bx-lean*.4).toFixed(1)},${(floor-h*.45).toFixed(1)} ${(bx+lean*.3).toFixed(1)},${(floor-h*.7).toFixed(1)} T${(bx+lean).toFixed(1)},${(floor-h).toFixed(1)}" stroke-width="${w}"/>`;
+      const m={bx:cx+(i-(n-1)/2)*1.6+(rnd()-.5)*1.2, cl:clump, nv:{}, sw:0};
+      m.h=tall*(.55+rnd()*.5); m.lean=(rnd()-.5)*m.h*.55; m.flex=.7+rnd()*.6;
+      const el=`<path data-eg="${eelB.length}" d="${eelD(m,0)}" stroke-width="${(1.1+rnd()*.6).toFixed(2)}"/>`;
+      if (rnd()<.34) front+=el; else back+=el;        // about a third in front of the crab
+      eelB.push(m);
     }
-    g+=`<g class="eg" style="animation-delay:-${(rnd()*6).toFixed(2)}s;animation-duration:${(4.5+rnd()*3).toFixed(2)}s">${b}</g>`;
   }
-  return g+'</g>';
+  const grad=`<defs><clipPath id="tideWater"><path d="${waterD}"/></clipPath>
+    <linearGradient id="eelGrad" gradientUnits="userSpaceOnUse" x1="0" y1="${floor}" x2="0" y2="${floor-26}">
+    <stop offset="0" style="stop-color:var(--eg1)"/><stop offset=".5" style="stop-color:var(--eg2)"/><stop offset="1" style="stop-color:var(--eg3)"/></linearGradient></defs>`;
+  return {back: grad+`<g class="eelgrass" clip-path="url(#tideWater)">${back}</g>`, front: `<g class="eelgrass" clip-path="url(#tideWater)">${front}</g>`};
+}
+/* Random sway, never a repeating loop: a slow current over the whole bed whose strength and direction wander (and pass
+   along the bed as a swell), a gust now and then, each clump's own drift and each blade's own flutter. Scrolling the
+   timeline stirs it, like the creatures. Only blades on screen are moved. */
+function eelSway(left, vw, dt){
+  if (!eelB.length || !dt) return;
+  const cur=seaN(eelG, 7, dt), gust=Math.max(0, seaN(eelPv, 4, dt))**3*1.6, sp=.6+.5*(seaN(eelG.s||(eelG.s={}), 9, dt)+1);
+  eelPh += dt*sp*1.3;
+  for (const m of eelB){ if (!m.el || m.bx<left-30 || m.bx>left+vw+30) continue;
+    const swell=Math.sin(eelPh - m.bx/110), own=seaN(m.cl.n, 3.5, dt), fl=seaN(m.nv, 1.4, dt);
+    const want=m.h*m.flex*(.16*cur + .12*swell*(.5+Math.abs(cur)) + .14*own*m.cl.amp + .07*fl + .2*gust*(cur<0?-1:1))*(1+.35*seaStir);
+    m.sw += (want-m.sw)*(1-Math.exp(-dt/.35));          // blades lag the water a little
+    m.el.setAttribute('d', eelD(m, m.sw));
+  }
 }
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
@@ -1041,7 +1068,7 @@ function buildStrip(){
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
-  s+=eelgrass(td, TW, x, y, pt+ih, waterD);
+  const eel=eelgrass(td, TW, x, y, pt+ih, waterD); s+=eel.back;
   // Day names at the foot of each midnight divider, drawn over the water and waves so they stay on top
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1)))
     s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
@@ -1050,6 +1077,7 @@ function buildStrip(){
     ['--tl1','--tl2','--tl3','--tl4','--tl5'].map((v,i)=>`<stop offset="${i*25}%" style="stop-color:var(${v})"/>`).join('')}</linearGradient></defs>`;
   s+=`<path d="M${pts.join(' L')}" fill="none" stroke="url(#tideLineGrad)" stroke-width="2.4" stroke-linejoin="round"/>`;
   s+=seaLife(td, start, end, TW, W, x, y, pt+ih, pt);   // after the tide line, so the otter floats on top of it
+  s+=eel.front;   // a few blades in front of the sea life, so the crab walks among them
   // Highs and lows: markers in the picture; height above, time below, in a top layer over the center line
   let labels=`<svg viewBox="0 0 ${TW} ${H}" width="${TW}" height="${H}" aria-hidden="true">`;
   for (const e of td.ex){
@@ -1069,6 +1097,7 @@ function buildStrip(){
   }
   $('stripSvg').innerHTML = s+'</svg>';
   { const els=$('stripSvg').querySelectorAll('.sealife > g'); seaM.forEach((m,i)=>{ m.el=els[i]||null; }); }
+  $('stripSvg').querySelectorAll('[data-eg]').forEach(p=>{ eelB[+p.dataset.eg].el=p; });
   seaOrca.els=[...$('stripSvg').querySelectorAll('.sl-orca')]; if (seaOrca.on) seaOrca.b.forEach((o,i)=>{ o.el=seaOrca.els[i]; o.el.classList.toggle('male', o.male); o.el.classList.toggle('female', !o.male); orcaMarkPut(o.el, o.mk); });
   $('stripLab').innerHTML = labels+'</svg>';
   seaHoles='';
@@ -1192,6 +1221,7 @@ function moveSea(now){
   // Scrolling stirs them up: faster for a while, settling over a couple of seconds
   if (seaLeft!==null && dt>0) seaStir=Math.max(seaStir*Math.exp(-dt/1.8), Math.min(2.5, Math.abs(left-seaLeft)/dt/600)); seaLeft=left;
   seaOrcas(ms, dt, left, vw);
+  eelSway(left, vw, dt);
   for (const m of seaM){ if (!m.el || m.k==='pelican') continue;
     const base=seaStep(m, ms, dt, seaStir), v=m.v;
     // Not glued to the chart: on screen each creature eases toward its place, so it lags behind a scroll (each by its own amount)

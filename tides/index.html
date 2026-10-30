@@ -31,16 +31,16 @@ title: Tides of San Francisco
     --sand: #a77d37;            /* low tides, minus tides */
     --sand-bg: rgb(181 139 69 / .15);
     --moon-lit: #f3ebd3; --moon-dark: #c3cfd0;
-    --eelgrass: #4f8a4a;        /* eelgrass on the floor of the tide chart */
+    --eg1: #2f5f34; --eg2: #4f8a4a; --eg3: #9cc46a;   /* eelgrass on the chart floor: root, middle, tip */
     --past: color-mix(in srgb, var(--muted) 45%, var(--bg));  /* lighter grey for times already past */
     display: flex; flex-direction: column; gap: 24px; padding-block: 22px 36px;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides {
     --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
-    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; --eelgrass: #6fae66; } }
+    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; --eg1: #3f7a44; --eg2: #6fae66; --eg3: #b9df84; } }
   :root[data-theme="dark"] .tides {
     --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
-    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; --eelgrass: #6fae66; }
+    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; --eg1: #3f7a44; --eg2: #6fae66; --eg3: #b9df84; }
 
   /* Dark mode only: the page background is a random two-blue gradient, top to bottom, picked on
      every load by the script at the end of <head> (--rg-top / --rg-mid / --rg-bot). Fixed to the window, so the
@@ -301,11 +301,8 @@ title: Tides of San Francisco
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pg-gull { display: inline; } :root:not([data-theme="light"]) .tides .pg-corm { display: none; } }
   :root[data-theme="dark"] .tides .pg-gull { display: inline; } :root[data-theme="dark"] .tides .pg-corm { display: none; }
   @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .pgw, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
-  /* Eelgrass on the chart floor: each clump bends from its base, slowly, on its own beat */
-  .tides .eelgrass { fill: none; stroke: var(--eelgrass); stroke-linecap: round; stroke-opacity: .8; }
-  .tides .eg { transform-box: fill-box; transform-origin: 50% 100%; animation: egSway 5.5s ease-in-out infinite alternate; }
-  @keyframes egSway { from { transform: skewX(-5deg); } to { transform: skewX(5deg); } }
-  @media (prefers-reduced-motion: reduce) { .tides .eg { animation: none; } }
+  /* Eelgrass on the chart floor: green gradient strokes; the sway is drawn by the script (eelSway) */
+  .tides .eelgrass { fill: none; stroke: url(#eelGrad); stroke-linecap: round; stroke-opacity: .88; }
   .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican, .tides .strip.no-orca .sl-orca, .tides .strip.no-orca .sl-splash { display: none; }
   .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
   .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
