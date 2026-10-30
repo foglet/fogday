@@ -280,7 +280,7 @@ zoom: 11.8
     <label class="check"><input type="checkbox" id="undated" checked><span class="swatch"></span><span id="undatedlbl">Show trees with no planting date</span></label>
   </div>
 
-  <p class="status" id="status" role="status">Downloading trees from DataSF…</p>
+  <p class="status" id="status" role="status">Loading trees…</p>
   <p class="note fold-hide">Tap a tree for its species and address. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
 </section>
 
@@ -292,9 +292,13 @@ window.addEventListener('DOMContentLoaded', function () {
   var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }} };
   var THIS_YEAR = new Date().getFullYear();
 
-  // Only the columns the map needs, live from DataSF. planttype is filtered in build() (the data mixes "Tree" and "tree").
-  // description holds the address ("112 Judson Ave | Tree 1"); mapdbh is trunk diameter in inches.
-  var DATA_URL ='https://data.sf.gov/resource/tkzw-k3nq.csv?$select=' +
+  /* The trees come from trees.csv beside this page: a copy of the DataSF Street Tree List, refreshed every three
+     months by .github/workflows/treesf-refresh.yml (same columns and filter as DATA_URL). If that copy can't be read,
+     the page asks DataSF directly.
+     planttype is filtered in build() too (the data mixes "Tree" and "tree").
+     description holds the address ("112 Judson Ave | Tree 1"); mapdbh is trunk diameter in inches. */
+  var LOCAL_URL = '{{ "/treesf/trees.csv" | relative_url }}';
+  var DATA_URL = 'https://data.sf.gov/resource/tkzw-k3nq.csv?$select=' +
     ['treeid', 'species', 'description', 'planteddate', 'latitude', 'longitude', 'legalstatus', 'mapdbh', 'analysis_neighborhood', 'planttype'].join(',') +
     '&$where=latitude%20IS%20NOT%20NULL&$limit=1000000';
 
@@ -681,11 +685,19 @@ window.addEventListener('DOMContentLoaded', function () {
   });
 
   /* ---------- Load ---------- */
-  var dataP = fetch(DATA_URL).then(function (r) {
-    if (!r.ok) throw new Error('DataSF answered ' + r.status);
-    $('status').textContent = 'Reading trees…';
-    return r.text();
-  });
+  function getCSV(url, who) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error(who + ' answered ' + r.status);
+      return r.text();
+    }).then(function (t) {
+      if (!/^"?treeid"?,/.test(t)) throw new Error(who + ' sent something other than the tree list');
+      return t;
+    });
+  }
+  var dataP = getCSV(LOCAL_URL, 'fogday.com').catch(function () {
+    $('status').textContent = 'Downloading trees from DataSF…';
+    return getCSV(DATA_URL, 'DataSF');
+  }).then(function (t) { $('status').textContent = 'Reading trees…'; return t; });
   var styleP = new Promise(function (res) { map.on('load', res); });
 
   Promise.all([dataP, styleP]).then(function (v) {

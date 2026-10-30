@@ -1,0 +1,62 @@
+# Refreshes treesf/trees.csv, the copy of the DataSF Street Tree List that fogday.com/treesf/ reads.
+# The list changes slowly, so it runs every three months (Jan, Apr, Jul, Oct 1, 6:17 AM Pacific standard time).
+# It also runs when this file changes, which makes the first copy, and on demand from the Actions tab.
+# Same columns and filter as DATA_URL in treesf/index.html; keep the two in step.
+name: Refresh SF street trees
+
+on:
+  schedule:
+    - cron: "17 14 1 1,4,7,10 *"   # UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/treesf-refresh.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: treesf-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download the Street Tree List
+        run: |
+          cols="treeid,species,description,planteddate,latitude,longitude,legalstatus,mapdbh,analysis_neighborhood,planttype"
+          # Ordered by tree id so each refresh's git diff shows only real changes
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 20 --max-time 600 --compressed \
+            --get "https://data.sf.gov/resource/tkzw-k3nq.csv" \
+            --data-urlencode "\$select=${cols}" \
+            --data-urlencode "\$where=latitude IS NOT NULL" \
+            --data-urlencode "\$order=treeid" \
+            --data-urlencode "\$limit=1000000" \
+            -o /tmp/trees.csv
+
+      - name: Check it before replacing the copy
+        run: |
+          head -1 /tmp/trees.csv
+          head -1 /tmp/trees.csv | grep -q '^"treeid","species","description","planteddate","latitude","longitude"' \
+            || { echo "::error::Unexpected header; columns may have been renamed"; exit 1; }
+          rows=$(( $(wc -l < /tmp/trees.csv) - 1 ))
+          echo "rows=$rows"
+          # About 144,500 trees in Oct 2026. A much smaller file means a broken download, not a real change.
+          [ "$rows" -ge 100000 ] || { echo "::error::Only $rows rows; keeping the current copy"; exit 1; }
+          size=$(stat -c %s /tmp/trees.csv)
+          echo "bytes=$size"
+          [ "$size" -lt 90000000 ] || { echo "::error::File is ${size} bytes, near GitHub's 100 MB limit"; exit 1; }
+          mv /tmp/trees.csv treesf/trees.csv
+
+      - name: Commit if the list changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add treesf/trees.csv
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -m "SF Street Trees: refresh trees.csv from DataSF ($(date -u +%Y-%m-%d))"
+          git push
