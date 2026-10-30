@@ -138,7 +138,7 @@ zoom: 11.8
   .sortby button:hover { color: var(--accent); }
   .sortby button[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
   .sortby button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
-  .species .name.latin { font-style: italic; }
+  .latin i { font-style: italic; }   /* botanical names: genus and epithets italic; ×, ranks, spp. and cultivars upright */
   .leafkey { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
   .leafkey .dot { width: 10px; height: 10px; }
   .leafkey .dot + .dot, .leafkey .dot:not(:first-child) { margin-left: 8px; }
@@ -196,7 +196,7 @@ zoom: 11.8
   .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; padding: 2px 7px; }
   .mapboxgl-popup-close-button:hover { color: var(--accent); background: transparent; }
   .pop h2 { margin: 0 18px 1px 0; font: 700 1rem/1.2 var(--font); }
-  .pop .latin { font-style: italic; color: var(--muted); }
+  .pop .latin { color: var(--muted); }
 
   /* Mapbox corners clear the home indicator and notch; controls in the panel color with the muted icon tint, as on /transit/ */
   .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
@@ -320,7 +320,7 @@ zoom: 11.8
     .tree-card { display: block; padding-block: 14px 12px; border-bottom: 1px solid var(--line); }
     .tree-card[hidden] { display: none; }
     .tree-card h2 { margin: 0; font: 700 1.3rem/1.2 var(--font); }
-    .tree-card .latin { font-style: italic; color: var(--muted); }
+    .tree-card .latin { color: var(--muted); }
 
     /* The spot card: its lines sit flush left on the page, no frosting needed */
     .oa-detail-panel { padding-block: 12px; font-size: 1rem; border-bottom: 1px solid var(--line); }
@@ -858,7 +858,7 @@ window.addEventListener('DOMContentLoaded', function () {
   var byName = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
   function sorter(key) {
     if (key === 'common') return function (a, b) { return byName.compare(splitSpecies(a.key).common, splitSpecies(b.key).common) || b.n - a.n; };
-    if (key === 'latin') return function (a, b) { return byName.compare(splitSpecies(a.key).latin, splitSpecies(b.key).latin) || b.n - a.n; };
+    if (key === 'latin') return function (a, b) { return byName.compare(latinName(splitSpecies(a.key).latin).text, latinName(splitSpecies(b.key).latin).text) || b.n - a.n; };
     return function (a, b) { return b.n - a.n; };
   }
   function setSort(key) {
@@ -891,9 +891,10 @@ window.addEventListener('DOMContentLoaded', function () {
       var li = document.createElement('li'), dot = document.createElement('span'), name = document.createElement('span'), nm = splitSpecies(sp.key === 'Unknown' ? '' : sp.key);
       dot.className = 'dot' + (sp.native ? ' native' : ''); dot.style.setProperty('--c', sp.color);
       var latinFirst = sortBy === 'latin' && sp.key !== 'Unknown' && nm.latin;
+      var ln = latinName(nm.latin);
       name.className = 'name' + (latinFirst ? ' latin' : '');
-      name.textContent = sp.key === 'Unknown' ? 'Species not recorded' : latinFirst ? nm.latin : nm.common;
-      var other = latinFirst ? nm.common : nm.latin;
+      if (latinFirst) name.innerHTML = ln.html; else name.textContent = sp.key === 'Unknown' ? 'Species not recorded' : nm.common;
+      var other = latinFirst ? nm.common : ln.text;
       if (other && other !== name.textContent) li.title = other;
       var btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'pick'; btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -933,6 +934,30 @@ window.addEventListener('DOMContentLoaded', function () {
   var popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px', offset: 8 });
   var selected = null;
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  /* Botanical names written the standard way (ICN / ICNCP): genus capitalized and italic, species and lower epithets
+     lowercase and italic; the hybrid sign ×, ranks (subsp., var., f.) and spp. upright; cultivar names upright in
+     single quotes with their capitals. The data's own spelling is cleaned up on the way: "x" → ×, "ssp" → subsp.,
+     "Sps"/"spps" → spp., curly or double quotes → ‘ ’. Returns { html, text }. */
+  var NOT_TAXON = /^(tree\(s\)|planting site|pave\b|shrub|stump|vacant|unknown|other)/i;
+  function latinName(raw) {
+    var src = (raw || '').trim();
+    if (!src || NOT_TAXON.test(src)) return { html: esc(src), text: src };
+    var toks = src.replace(/[\u2018\u2019\u201c\u201d"]/g, "'").match(/'[^']*'?|\([^)]*\)|[^\s]+/g) || [], h = [], t = [];
+    toks.forEach(function (w, n) {
+      var lw = w.toLowerCase().replace(/\.$/, ''), out, txt;
+      if (w.charAt(0) === "'") { var cv = w.replace(/'/g, '').trim(); txt = '\u2018' + cv + '\u2019'; out = esc(txt); }
+      else if (lw === 'x' || w === '\u00d7') { txt = '\u00d7'; out = txt; }
+      else if (/^(spp|sp|sps|spps|species)$/.test(lw)) { txt = 'spp.'; out = txt; }
+      else if (/^(ssp|subsp)$/.test(lw)) { txt = 'subsp.'; out = txt; }
+      else if (/^(var|f|cv)$/.test(lw)) { txt = lw + '.'; out = txt; }
+      else if (w.charAt(0) === '(') { txt = w; out = '(<i>' + esc(w.slice(1, -1)) + '</i>)'; }   // a synonym genus, e.g. Myrica (Morella)
+      else if (n === 0) { txt = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); out = '<i>' + esc(txt) + '</i>'; }
+      else if (/^[A-Z][a-z]+$/.test(w) && n > 1 && /^'|\u2018/.test(t[t.length - 1] || '') === false && /^[A-Z]/.test(toks[n - 1]) && toks[n - 1].charAt(0) !== "'") { txt = w; out = esc(w); }   // a capitalized cultivar word left unquoted
+      else { txt = w.toLowerCase(); out = '<i>' + esc(txt) + '</i>'; }
+      h.push(out); t.push(txt);
+    });
+    return { html: h.join(' '), text: t.join(' ') };
+  }
   function splitSpecies(s) {
     var p = s.split('::').map(function (x) { return x.trim(); });
     return { latin: p[0] || '', common: p[1] || p[0] || 'Unknown species' };
@@ -951,7 +976,7 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   function treeHTML(t, tag) {
     var sp = splitSpecies(t.sp);   // name and Latin name; "Native to California" goes on the spot card
-    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '');
+    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + latinName(sp.latin).html + '</div>' : '');
   }
   function showTree(f) {
     var t = info[f.id]; if (!t) return;
