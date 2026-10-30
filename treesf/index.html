@@ -133,10 +133,21 @@ zoom: 11.8
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; width: fit-content; }
   .yearread .n { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-  /* Plantings-per-year bars sit on the slider track */
-  .timeline { display: grid; gap: 4px; }
-  #bars { width: 100%; height: 54px; display: block; }
-  input[type=range] { width: 100%; margin: 0; accent-color: var(--leaf); }
+  /* The year strip, worked like the tide chart on /tides/: a bar per year (trees planted), colored by how many,
+     slides sideways under a fixed orange pole. Drag or fling it; it settles on a year. Tap it to jump to today. */
+  .ystrip { position: relative; overflow: hidden; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none;
+            border-radius: 6px; -webkit-tap-highlight-color: transparent; }
+  .ystrip.dragging { cursor: grabbing; }
+  .ystrip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ystrip svg { display: block; overflow: visible; }
+  #ysSvg { will-change: transform; }
+  #ysCur { position: absolute; top: 0; left: 0; pointer-events: none; }
+  .ystrip .tick { font: 400 11px var(--font); fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .ystrip .lab { font: 600 12px var(--font); fill: var(--ink); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+  .ystrip rect.later { opacity: .22; }   /* years after the one on view: not planted yet */
+  .ystrip rect { transition: opacity .15s; }
+  .ys-key { display: flex; align-items: center; gap: 8px; font-size: .75rem; color: var(--muted); }
+  .ys-key .dens { flex: 1; height: 6px; border-radius: 3px; max-width: 120px; }
   .axis { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
   .legend { display: grid; gap: 6px; font-size: .9rem; }
@@ -334,8 +345,6 @@ zoom: 11.8
     .summary { font-size: 1rem; }
     .modes button { min-height: 44px; font-size: .82rem; }
     .yearread .yr { font-size: 3rem; }
-    #bars { height: 64px; }
-    input[type=range] { height: 32px; }
     .axis { font-size: .85rem; }
     .legend, .check { font-size: 1rem; }
     .check { min-height: 44px; }
@@ -417,15 +426,14 @@ zoom: 11.8
     </div>
   </div>
 
-  <div class="timeline">
-    <canvas id="bars" aria-hidden="true"></canvas>
-    <input type="range" id="year" min="1970" max="2026" value="2026" step="1" aria-label="Show trees planted through this year" disabled>
-    <div class="axis"><span id="ymin">1970</span><span>Trees planted per year</span><span id="ymax">2026</span></div>
+  <div class="ystrip" id="ystrip" tabindex="0" role="slider" aria-label="Year. Drag sideways or use the arrow keys to add trees year by year. Tap to jump to today." aria-valuemin="1972" aria-valuemax="2026" aria-valuenow="1972">
+    <svg id="ysSvg" aria-hidden="true"></svg><svg id="ysCur" aria-hidden="true"></svg>
   </div>
+  <div class="ys-key"><span>Trees planted per year</span><span class="dens" id="dens"></span><span>few → many</span></div>
 
   <div class="legend" id="legend">
     <div class="ramp" id="ramp"></div>
-    <div class="axis"><span id="rmin">older</span><span id="rmax">newer</span></div>
+    <div class="axis"><span id="rmin">older</span><span>Dot color: year planted</span><span id="rmax">newer</span></div>
     <label class="check"><input type="checkbox" id="undated" checked><span class="swatch"></span><span id="undatedlbl">Show trees with no planting date</span></label>
   </div>
 
@@ -775,38 +783,140 @@ window.addEventListener('DOMContentLoaded', function () {
     $('count').textContent = fmt.format(n) + ' dated trees' + (state.undated ? ' + ' + fmt.format(undatedN) + ' undated' : '');
   }
 
-  function drawBars() {
-    var cv = $('bars'), dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
-    if (!w) return;
-    cv.width = w * dpr; cv.height = h * dpr;
-    var g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-    var lo = state.span[0], hi = state.span[1], n = hi - lo + 1, max = 1;
-    for (var y = lo; y <= hi; y++) max = Math.max(max, state.perYear[y] || 0);
-    var css = getComputedStyle(document.documentElement);
-    var on = css.getPropertyValue('--leaf').trim(), off = css.getPropertyValue('--line').trim();
-    var bw = w / n;
-    for (y = lo; y <= hi; y++) {
-      var v = state.perYear[y] || 0, bh = v ? Math.max(1.5, (v / max) * (h - 2)) : 0;
-      g.fillStyle = y <= state.year ? on : off;
-      g.fillRect((y - lo) * bw + 0.5, h - bh, Math.max(1, bw - 1), bh);
-    }
-    // Ramp chip under the legend matches the dot colors
-    $('ramp').style.background = 'linear-gradient(90deg,' + RAMP.join(',') + ')';
+  /* ---------- Year strip (the tide chart's slider, /tides/) ----------
+     One picture of every year's plantings is drawn once per width; moving through the years only slides it under the
+     fixed pole in the middle. cur is the year on view as a float while it moves; the map shows Math.round(cur). */
+  var DENS = ['#1f4a33', '#2f7a45', '#5fae55', '#a7dd7a', '#e2ffc4'];   // bar color by how many trees: few (deep) → many (pale)
+  var BUOY = '#f08a52';   // the pole and dot: the tide chart's buoy orange
+  var ys = $('ystrip'), ysSvg = $('ysSvg'), ysCur = $('ysCur'), ysKey = '', ysG = null, cur = 0, ysBars = [];
+  function densColor(f) {   // f in 0..1 → a green on the DENS scale
+    var x = Math.max(0, Math.min(1, f)) * (DENS.length - 1), i = Math.min(DENS.length - 2, Math.floor(x)), t = x - i;
+    function c(h, k) { return parseInt(h.slice(1 + 2 * k, 3 + 2 * k), 16); }
+    var rgb = [0, 1, 2].map(function (k) { return Math.round(c(DENS[i], k) + (c(DENS[i + 1], k) - c(DENS[i], k)) * t); });
+    return 'rgb(' + rgb.join(',') + ')';
   }
+  function drawBars() {   // (re)builds the strip picture when its width changes; otherwise just places it
+    var W = ys.clientWidth; if (!W || !state.total) return;
+    var lo = state.span[0], hi = state.span[1], key = W + ':' + lo + ':' + hi;
+    if (key !== ysKey) {
+      ysKey = key;
+      var colW = Math.max(12, Math.round(W / (PHONE.matches ? 14 : 18))), H = PHONE.matches ? 120 : 100, pt = 24, pb = 20, ih = H - pt - pb;
+      var max = 1; for (var y = lo; y <= hi; y++) max = Math.max(max, state.perYear[y] || 0);
+      ysG = { W: W, H: H, colW: colW, pt: pt, ih: ih, max: max };
+      var n = hi - lo + 1, PW = n * colW, out = '';
+      out += '<line x1="0" x2="' + PW + '" y1="' + (pt + ih + .5) + '" y2="' + (pt + ih + .5) + '" stroke="var(--line)"/>';
+      for (y = lo; y <= hi; y++) {
+        var v = state.perYear[y] || 0, f = Math.sqrt(v / max), bh = v ? Math.max(2, (v / max) * ih) : 0, x = (y - lo) * colW;
+        out += '<rect data-y="' + y + '" x="' + (x + 1.5) + '" y="' + (pt + ih - bh).toFixed(1) + '" width="' + (colW - 3) + '" height="' + bh.toFixed(1) + '" rx="1.5" fill="' + densColor(f) + '"/>';
+        if (y % 10 === 0 || y === lo) out += '<text class="tick" x="' + (x + colW / 2) + '" y="' + (H - 5) + '" text-anchor="middle">' + y + '</text>';
+        else if (y % 5 === 0) out += '<line x1="' + (x + colW / 2) + '" x2="' + (x + colW / 2) + '" y1="' + (pt + ih + 1) + '" y2="' + (pt + ih + 5) + '" stroke="var(--muted)"/>';
+      }
+      ysSvg.setAttribute('width', PW); ysSvg.setAttribute('height', H); ysSvg.setAttribute('viewBox', '0 0 ' + PW + ' ' + H);
+      ysSvg.innerHTML = out; ysBars = [].slice.call(ysSvg.querySelectorAll('rect'));
+      ysCur.setAttribute('width', W); ysCur.setAttribute('height', H); ysCur.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      ysCur.innerHTML = '<line id="ysPole" x1="' + W / 2 + '" x2="' + W / 2 + '" y1="' + (pt - 2) + '" y2="' + (pt + ih) + '" stroke="' + BUOY + '" stroke-width="1.6"/>' +
+        '<circle id="ysDot" cx="' + W / 2 + '" cy="' + (pt + ih) + '" r="5.5" fill="' + BUOY + '" stroke="var(--bg)" stroke-width="2"/>' +
+        '<text id="ysLab" class="lab" x="' + W / 2 + '" y="' + (pt - 8) + '" text-anchor="middle"></text>';
+      ys.style.height = H + 'px';
+      $('dens').style.background = 'linear-gradient(90deg,' + DENS.join(',') + ')';
+      $('ramp').style.background = 'linear-gradient(90deg,' + RAMP.join(',') + ')';
+    }
+    placeStrip();
+  }
+  function placeStrip() {
+    if (!ysG) return;
+    var g = ysG, lo = state.span[0], yr = Math.round(cur), v = state.perYear[yr] || 0;
+    ysSvg.style.transform = 'translate3d(' + (g.W / 2 - (cur - lo + .5) * g.colW).toFixed(2) + 'px,0,0)';
+    ysBars.forEach(function (r) { var later = +r.dataset.y > yr; if (later !== r.classList.contains('later')) r.classList.toggle('later', later); });
+    var bh = v ? Math.max(2, (v / g.max) * g.ih) : 0;
+    $('ysDot').setAttribute('cy', (g.pt + g.ih - bh).toFixed(1));
+    $('ysLab').textContent = v ? fmt.format(v) + ' planted' : 'none dated';
+    ys.setAttribute('aria-valuenow', yr);
+    ys.setAttribute('aria-valuetext', yr + ': ' + fmt.format(v) + ' trees planted');
+  }
+  /* Move the year on view; the map follows whenever it crosses into a new year (new trees pop in going forward) */
+  function setCur(c) {
+    var lo = state.span[0], hi = state.span[1];
+    cur = Math.max(lo, Math.min(hi, c));
+    var y = Math.round(cur);
+    if (y !== state.year) { var was = state.year; state.year = y; applyFilter(); popIn(was, y); }
+    placeStrip();
+    return cur > lo && cur < hi;   // false once it hits an end
+  }
+  /* Motion, as on the tide chart: a fling glides and slows (iPhone easing), then settles onto the nearest year */
+  var ysAnim = 0;
+  function ysStop() { if (ysAnim) cancelAnimationFrame(ysAnim); ysAnim = 0; }
+  function glideTo(target) {
+    ysStop(); var from = cur, t0 = performance.now(), D = calm.matches ? 0 : 320;
+    (function step(ts) { var p = D ? Math.min(1, (ts - t0) / D) : 1, e = 1 - Math.pow(1 - p, 3);
+      setCur(from + (target - from) * e); ysAnim = p < 1 ? requestAnimationFrame(step) : 0; })(t0);
+  }
+  function fling(v) {   // v: years per millisecond
+    ysStop(); var last = performance.now();
+    ysAnim = requestAnimationFrame(function step(ts) {
+      var dt = Math.min(40, ts - last); last = ts; v *= Math.exp(-dt / 325);
+      var moving = setCur(cur + v * dt);
+      if (moving && Math.abs(v * ysG.colW) > 0.02) ysAnim = requestAnimationFrame(step);
+      else { ysAnim = 0; glideTo(Math.round(cur)); }
+    });
+  }
+  (function () {
+    var drag = null;
+    ys.addEventListener('pointerdown', function (e) {
+      if (e.button > 0 || !ysG) return;
+      ysStop();
+      drag = { x: e.clientX, y: e.clientY, c: cur, id: e.pointerId, at: performance.now(), moved: 0, hist: [[performance.now(), e.clientX]] };
+      ys.setPointerCapture && ys.setPointerCapture(e.pointerId);
+      ys.classList.add('dragging');
+    });
+    ys.addEventListener('pointermove', function (e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      var now = performance.now(); drag.hist.push([now, e.clientX]);
+      drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x, e.clientY - drag.y));
+      while (drag.hist.length > 2 && now - drag.hist[0][0] > 100) drag.hist.shift();
+      setCur(drag.c - (e.clientX - drag.x) / ysG.colW);   // drag left to move ahead in time
+    });
+    function end(e) {
+      if (!drag) return;
+      var h = drag.hist, a = h[0], b = h[h.length - 1], dt = b[0] - a[0], flung = false;
+      // Let go while moving: keep going at the finger's speed
+      if (e.type === 'pointerup' && dt > 0 && performance.now() - b[0] < 60) { var v = -(b[1] - a[1]) / dt / ysG.colW; if (Math.abs(v * ysG.colW) > 0.15 && !calm.matches) { fling(v); flung = true; } }
+      // A tap (no real movement, quick): glide to today, as the tide chart's tap returns to now
+      if (e.type === 'pointerup' && drag.moved < 6 && performance.now() - drag.at < 500) { glideTo(state.span[1]); flung = true; }
+      drag = null; ys.classList.remove('dragging');
+      if (!flung) glideTo(Math.round(cur));
+    }
+    ys.addEventListener('pointerup', end); ys.addEventListener('pointercancel', end);
+    // Trackpad: a sideways scroll moves through the years too
+    var wheelEnd = 0;
+    ys.addEventListener('wheel', function (e) {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || !ysG) return;
+      e.preventDefault(); ysStop(); setCur(cur + e.deltaX / ysG.colW);
+      clearTimeout(wheelEnd); wheelEnd = setTimeout(function () { glideTo(Math.round(cur)); }, 250);
+    }, { passive: false });
+    // Keys: ← / → a year, Shift for ten; Home the first year, End today
+    ys.addEventListener('keydown', function (e) {
+      var k = e.key, base = Math.round(cur), step = e.shiftKey ? 10 : 1, to;
+      if (k === 'ArrowRight' || k === 'ArrowUp') to = base + step;
+      else if (k === 'ArrowLeft' || k === 'ArrowDown') to = base - step;
+      else if (k === 'Home') to = state.span[0];
+      else if (k === 'End') to = state.span[1];
+      else return;
+      e.preventDefault(); glideTo(Math.max(state.span[0], Math.min(state.span[1], to)));
+    });
+  })();
 
   /* ---------- Controls ---------- */
   function setMode(m) {
     state.mode = m;
     $('mode-year').setAttribute('aria-pressed', m === 'year');
     $('mode-density').setAttribute('aria-pressed', m === 'density');
-    $('legend').querySelector('.ramp').style.opacity = m === 'year' ? 1 : 0.35;
+    $('ramp').style.opacity = m === 'year' ? 1 : 0.35;
     applyFilter();
   }
   $('mode-year').addEventListener('click', function () { setMode('year'); });
   $('mode-density').addEventListener('click', function () { setMode('density'); });
 
-  var slider = $('year');
-  slider.addEventListener('input', function () { var was = state.year; state.year = +slider.value; applyFilter(); popIn(was, state.year); });
   $('undated').addEventListener('change', function (e) { state.undated = e.target.checked; applyFilter(); });
 
   var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
@@ -1019,9 +1129,9 @@ window.addEventListener('DOMContentLoaded', function () {
     for (var y in state.perYear) if (+y < state.span[0]) { state.perYear[state.span[0]] = (state.perYear[state.span[0]] || 0) + state.perYear[y]; delete state.perYear[y]; }
     built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
     state.year = state.span[0];   // opens on the base (undated trees and the earliest plantings); slide forward to watch trees arrive
-    slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false;
-    $('ymin').textContent = $('rmin').textContent = state.span[0];
-    $('ymax').textContent = $('rmax').textContent = state.span[1];
+    cur = state.year;
+    ys.setAttribute('aria-valuemin', state.span[0]); ys.setAttribute('aria-valuemax', state.span[1]);
+    $('rmin').textContent = state.span[0]; $('rmax').textContent = state.span[1];
     $('undatedlbl').textContent = 'Show ' + fmt.format(state.total - state.dated) + ' trees with no planting date';
     $('summary').textContent = fmt.format(state.total) + ' street trees · ' + fmt.format(state.dated) + ' with a planting date';
     $('status').hidden = true;
