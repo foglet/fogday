@@ -357,14 +357,14 @@ zoom: 11.8
   </div>
 </div>
 <div class="oa-search oa-collapsed" role="search" hidden>  <!-- starts closed: just the magnifying glass -->
-  <div class="oa-field" title="Search San Francisco">
+  <div class="oa-field" title="Search trees and places">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input id="oa-search-input" class="oa-input" type="search"
            role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="oa-search-results"
-           autocomplete="off" spellcheck="false" placeholder="E.g., 280 King St or Noe Valley" aria-label="Search for an address, street or neighborhood">
+           autocomplete="off" spellcheck="false" placeholder="E.g., Coast Live Oak, Quercus or Noe Valley" aria-label="Search for a tree species, an address, a street or a neighborhood">
   </div>
   <p id="oa-search-status" class="oa-status" aria-live="polite"></p>
-  <ul id="oa-search-results" class="oa-results" role="listbox" aria-label="Matching places"></ul>
+  <ul id="oa-search-results" class="oa-results" role="listbox" aria-label="Matching trees and places"></ul>
 </div>
 <!-- Recolors Mapbox's zoom icons to the muted icon color (from /transit/) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -608,10 +608,14 @@ window.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ---------- Map ---------- */
+  /* The map stays on the City and County of San Francisco: the peninsula from Ocean Beach to the bay shore, and
+     Treasure and Yerba Buena Islands, with a little water around them. (The Farallon Islands, also in the county,
+     have no street trees.) */
+  var SF_BOUNDS = [[-122.555, 37.695], [-122.345, 37.838]];
   mapboxgl.accessToken = TOKEN;
   var map = new mapboxgl.Map({
     container: 'map', style: 'mapbox://styles/mapbox/dark-v11',
-    center: HOME.center, zoom: HOME.zoom, minZoom: 10, maxBounds: [[-122.75, 37.6], [-122.2, 37.9]],
+    center: HOME.center, zoom: HOME.zoom, minZoom: 11, maxBounds: SF_BOUNDS,
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
   /* Bottom-right stack, as on oysteratlas.com, top to bottom: search, folded map (Neighborhoods), zoom.
@@ -694,7 +698,7 @@ window.addEventListener('DOMContentLoaded', function () {
      shows the spot card, and opens the nearest tree if one is in reach. */
   var search = (function () {
     var input = $('oa-search-input'), list = $('oa-search-results'), status = $('oa-search-status'), field = searchCard.querySelector('.oa-field');
-    var HINT = 'Type an address, street or neighborhood', shown = [], active = -1, timer = 0, turn = 0;
+    var HINT = 'Type a tree (common or Latin name), an address or a neighborhood', shown = [], active = -1, timer = 0, turn = 0;
     var BBOX = '-122.5155,37.7080,-122.3570,37.8120';   // San Francisco
     function setStatus(t) { status.textContent = t; }
     function minimize(keepFocus) {
@@ -715,15 +719,43 @@ window.addEventListener('DOMContentLoaded', function () {
         li.className = 'oa-result'; li.id = 'oa-opt-' + i; li.setAttribute('role', 'option'); li.dataset.index = i;
         name.className = 'oa-name'; name.textContent = f.name;
         where.className = 'oa-where'; where.textContent = f.where;
+        if (f.sp) {   // a species: its green dot first, its Latin name on hover
+          var dot = document.createElement('span'); dot.className = 'dot' + (f.sp.native ? ' native' : ''); dot.style.setProperty('--c', f.sp.color);
+          li.appendChild(dot); if (f.latin) li.title = f.latin;
+        }
         li.appendChild(name); li.appendChild(where); list.appendChild(li);
       });
       setActive(-1);
       input.setAttribute('aria-expanded', shown.length ? 'true' : 'false');
     }
     var ZOOM = { address: 17.5, street: 16, neighborhood: 14.6, locality: 14.6, postcode: 14, place: 12 };
+    /* Species matches, from the trees on this map: by common or Latin name, ignoring case and accents. Names that
+       start with what was typed come first, then a word that starts with it, then anywhere; ties go to more trees. */
+    function fold(t) { return (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+    function speciesHits(q) {
+      var fq = fold(q); if (fq.length < 2) return [];
+      var hits = [];
+      speciesList.forEach(function (sp) {
+        if (sp.key === 'Unknown') return;
+        var nm = splitSpecies(sp.key), latin = latinName(nm.latin).text, best = 9;
+        [nm.common, latin].forEach(function (t) {
+          var ft = fold(t), at = ft.indexOf(fq);
+          if (at < 0) return;
+          var rank = at === 0 ? 0 : /[\s'(‘-]/.test(ft.charAt(at - 1)) ? 1 : 2;
+          if (rank < best) best = rank;
+        });
+        if (best < 9) hits.push({ rank: best, sp: sp, name: nm.common, latin: latin });
+      });
+      hits.sort(function (a, b) { return a.rank - b.rank || b.sp.n - a.sp.n; });
+      return hits.slice(0, 6).map(function (h) {
+        return { sp: h.sp, name: h.name, latin: h.latin, where: fmt.format(h.sp.n) + (h.sp.n === 1 ? ' tree' : ' trees') };
+      });
+    }
     function lookup() {
       var q = input.value.trim(), mine = ++turn;
       if (!q) { shown = []; render(); setStatus(HINT); return; }
+      var trees = speciesHits(q);
+      shown = trees; render(); if (trees.length) setStatus('');   // species show at once; places follow
       var url = 'https://api.mapbox.com/search/geocode/v6/forward?q=' + encodeURIComponent(q) +
                 '&bbox=' + BBOX + '&proximity=' + HOME.center.join(',') + '&types=address,street,neighborhood,locality,postcode' +
                 '&language=en&limit=6&autocomplete=true&access_token=' + mapboxgl.accessToken;
@@ -736,14 +768,15 @@ window.addEventListener('DOMContentLoaded', function () {
         });
       }).catch(function () { return null; }).then(function (p) {
         if (mine !== turn) return;   // a newer keystroke won
-        shown = p || []; render();
+        shown = trees.concat(p || []); render();
         if (shown.length) setStatus('');
-        else setStatus(p === null ? 'Search isn’t available right now.' : 'Nothing in San Francisco matches “' + q + '”.');
+        else setStatus(p === null ? 'No tree matches, and place search isn’t available right now.' : 'No tree or place in San Francisco matches “' + q + '”.');
       });
     }
     function pick(i, byKeyboard) {
       var f = shown[i];
       if (!f) return;
+      if (f.sp) { pickSpecies(f.sp); minimize(byKeyboard); return; }   // a species: every tree of it, as from the legend
       clearSpot(); clearTree();
       var t = spotTurn;   // the place's details appear on landing, unless a tap came first
       map.once('moveend', function () {
