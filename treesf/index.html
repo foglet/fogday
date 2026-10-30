@@ -101,7 +101,7 @@ zoom: 11.8
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
   @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 
-  /* Controls, bottom left above the Mapbox logo (a bottom sheet on phones) */
+  /* Controls, bottom left above the Mapbox logo (below the map on upright phones) */
   .controls {
     position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 320px;
     max-width: calc(100% - 24px - var(--sal) - var(--sar));
@@ -201,19 +201,49 @@ zoom: 11.8
   .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
   .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
 
-  /* Phones: controls become a bottom sheet that folds to the year readout */
-  .grip { display: none; }
-  @media (max-width: 560px) {
-    .controls {
-      left: 0; right: 0; bottom: 0; width: auto; max-width: none; border-radius: 12px 12px 0 0; border-bottom: 0;
-      padding: 10px max(16px, calc(12px + var(--sar))) calc(12px + var(--sab)) max(16px, calc(12px + var(--sal)));
+  /* Tree details on phones: in the page below the map (desktop uses the popup) */
+  .tree-card { display: none; }
+
+  /* Phones held upright: the map is a square across the top half of the screen and the page scrolls below it,
+     with the tree, the tapped spot and the controls in larger type. Phones on their side keep the full-screen map. */
+  @media (max-width: 759px) and (orientation: portrait) {
+    html, body { height: auto; }
+    body { overflow: auto; font-size: 1.0625rem; }
+    #map { position: relative; inset: auto; width: min(100vw, 50dvh); aspect-ratio: 1; margin: 0 auto; }
+    .top { position: absolute; }   /* rides on the map and scrolls away with it */
+    .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { bottom: 0; }
+
+    .tree-card, .oa-detail-panel, .controls {
+      position: static; width: auto; max-width: none; margin: 0;
+      padding-left: max(16px, var(--sal)); padding-right: max(16px, var(--sar));
     }
-    .controls.folded .fold-hide { display: none; }
-    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--sheet, 0px) + 6px); }
-    .mapboxgl-ctrl-bottom-left { bottom: var(--sheet, 0px); }
-    .oa-detail-panel { left: calc(16px + var(--sal)); bottom: calc(var(--sheet, 0px) + 8px); }
-    .grip { display: block; justify-self: center; width: 44px; height: 18px; border: 0; background: transparent; cursor: pointer; padding: 0; margin: -4px 0 -6px; }
-    .grip::before { content: ""; display: block; margin: 7px auto 0; width: 36px; height: 4px; border-radius: 2px; background: var(--line); }
+    .tree-card { display: block; padding-block: 14px 12px; border-bottom: 1px solid var(--line); }
+    .tree-card[hidden] { display: none; }
+    .tree-card h2 { margin: 0; font: 700 1.3rem/1.2 var(--font); }
+    .tree-card .latin { font-style: italic; color: var(--muted); }
+    .tree-card dl { margin: 10px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; }
+    .tree-card dt { color: var(--muted); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; align-self: center; }
+    .tree-card dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+    /* The spot card: its lines sit flush left on the page, no frosting needed */
+    .oa-detail-panel { padding-block: 12px; font-size: 1rem; border-bottom: 1px solid var(--line); }
+    .oa-detail-panel > div { padding: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .oa-detail-panel[hidden] { display: none; }
+
+    .controls { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
+                padding-block: 16px calc(24px + var(--sab)); gap: 16px; }
+    .summary { font-size: 1rem; }
+    .modes button { min-height: 44px; font-size: .82rem; }
+    .yearread .yr { font-size: 3rem; }
+    .play { width: 48px; height: 48px; }
+    .play svg { width: 18px; height: 18px; }
+    #bars { height: 64px; }
+    input[type=range] { height: 32px; }
+    .axis { font-size: .85rem; }
+    .legend, .check { font-size: 1rem; }
+    .check { min-height: 44px; }
+    .check input { width: 20px; height: 20px; }
+    .note { font-size: .88rem; line-height: 1.45; }
   }
   @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
 </style>
@@ -244,11 +274,10 @@ zoom: 11.8
   </div>
 </div>
 
+<section id="tree-card" class="tree-card" aria-live="polite" hidden></section>  <!-- the tapped tree, on phones -->
 <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
 
 <section class="card controls" id="controls" aria-label="Map controls">
-  <button class="grip" id="grip" aria-label="Show or hide controls" aria-expanded="true"></button>
-
   <div class="label"><span class="sky-text">Street trees</span></div>
   <p class="summary" id="summary">Loading the city's tree list…</p>
 
@@ -268,20 +297,20 @@ zoom: 11.8
     </button>
   </div>
 
-  <div class="timeline fold-hide">
+  <div class="timeline">
     <canvas id="bars" aria-hidden="true"></canvas>
     <input type="range" id="year" min="1970" max="2026" value="2026" step="1" aria-label="Show trees planted through this year" disabled>
     <div class="axis"><span id="ymin">1970</span><span>Trees planted per year</span><span id="ymax">2026</span></div>
   </div>
 
-  <div class="legend fold-hide" id="legend">
+  <div class="legend" id="legend">
     <div class="ramp" id="ramp"></div>
     <div class="axis"><span id="rmin">older</span><span id="rmax">newer</span></div>
     <label class="check"><input type="checkbox" id="undated" checked><span class="swatch"></span><span id="undatedlbl">Show trees with no planting date</span></label>
   </div>
 
   <p class="status" id="status" role="status">Loading trees…</p>
-  <p class="note fold-hide">Tap a tree for its species and address. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+  <p class="note">Tap a tree for its species and address. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
 </section>
 
 <script>
@@ -519,21 +548,15 @@ window.addEventListener('DOMContentLoaded', function () {
     }, tick);
   });
 
-  // Phone bottom sheet folds to the year readout
-  $('grip').addEventListener('click', function () {
-    var c = $('controls'), folded = c.classList.toggle('folded');
-    $('grip').setAttribute('aria-expanded', !folded); sheetHeight(); drawBars();
-  });
-  function sheetHeight() {   // --sheet: the phone bottom sheet; --ctrl: the desktop control card (the spot card sits above either)
-    var mobile = window.matchMedia('(max-width: 560px)').matches, h = $('controls').offsetHeight + 'px';
-    document.documentElement.style.setProperty('--sheet', mobile ? h : '0px');
-    document.documentElement.style.setProperty('--ctrl', h);
+  var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
+  function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
+    document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
   }
   window.addEventListener('resize', function () { sheetHeight(); drawBars(); });
   sheetHeight();
 
   /* ---------- Popups ---------- */
-  var popup = new mapboxgl.Popup({ closeButton: true, maxWidth: '280px', offset: 8 });
+  var popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px', offset: 8 });
   var selected = null;
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function splitSpecies(s) {
@@ -545,23 +568,43 @@ window.addEventListener('DOMContentLoaded', function () {
     if (!m) return '';
     return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
-  map.on('click', 'trees-dots', function (e) {
-    if (menuWasOpen) return;
-    var f = e.features[0], t = info[f.id]; if (!t) return;
+  /* The tapped tree: details in a popup on the map, or below the map on phones (readable, and not covering a small map) */
+  var treeCard = $('tree-card');
+  function markTree(id) {
     if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false });
-    selected = f.id; map.setFeatureState({ source: 'trees', id: selected }, { sel: true });
+    selected = id;
+    if (id != null) map.setFeatureState({ source: 'trees', id: id }, { sel: true });
+  }
+  function treeHTML(t, tag) {
     var sp = splitSpecies(t.sp), addr = t.ad.split('|')[0].trim();
     var rows = [
       ['Planted', prettyDate(t.d) || 'No date on record'],
       ['Address', addr], ['Neighborhood', t.nb],
       ['Trunk', t.dbh && +t.dbh > 0 ? t.dbh + ' in. diameter' : ''], ['Status', t.st]
     ].filter(function (r) { return r[1]; });
-    popup.setLngLat(f.geometry.coordinates).setHTML(
-      '<div class="pop"><h2>' + esc(sp.common) + '</h2>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '') +
-      '<dl>' + rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl></div>'
-    ).addTo(map);
-  });
-  popup.on('close', function () { if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false }); selected = null; });
+    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '') +
+      '<dl>' + rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>';
+  }
+  function showTree(f) {
+    var t = info[f.id]; if (!t) return;
+    markTree(f.id);
+    if (PHONE.matches) { popup.remove(); markTree(f.id); treeCard.innerHTML = treeHTML(t, 'h2'); treeCard.hidden = false; }
+    else popup.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
+  }
+  function clearTree() { popup.remove(); treeCard.hidden = true; treeCard.textContent = ''; markTree(null); }
+  /* The nearest tree to a tap, within a finger's reach on phones (dots there are small) */
+  function treeAt(pt) {
+    if (!map.getLayer('trees-dots')) return null;
+    var r = PHONE.matches ? 14 : 5;
+    var fs = map.queryRenderedFeatures([[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]], { layers: ['trees-dots'] });
+    var best = null, bd = Infinity;
+    fs.forEach(function (f) {
+      var p = map.project(f.geometry.coordinates), d = (p.x - pt.x) * (p.x - pt.x) + (p.y - pt.y) * (p.y - pt.y);
+      if (d < bd) { bd = d; best = f; }
+    });
+    return best;
+  }
+  popup.on('close', function () { if (!PHONE.matches) markTree(null); });
   map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
 
@@ -676,11 +719,16 @@ window.addEventListener('DOMContentLoaded', function () {
                                 { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
     spotAnim.onfinish = function () { var a = spotAnim; spotAnim = null; spotCard.hidden = true; spotCard.textContent = ''; a.cancel(); };
   }
-  map.on('click', function (e) { if (!menuWasOpen) showSpot(e.lngLat); });
+  map.on('click', function (e) {
+    if (menuWasOpen) return;
+    var f = treeAt(e.point);
+    if (f) { showTree(f); showSpot(mapboxgl.LngLat.convert(f.geometry.coordinates)); }
+    else { clearTree(); showSpot(e.lngLat); }
+  });
   document.addEventListener('keydown', function (e) {   // one Escape shuts one thing: the menu, then the popup, then the spot
     if (e.key !== 'Escape') return;
     if (!mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); }
-    else if (popup.isOpen()) popup.remove();
+    else if (popup.isOpen() || !treeCard.hidden) clearTree();
     else if (!spotCard.hidden) clearSpot();
   });
 
