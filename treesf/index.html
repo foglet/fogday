@@ -131,13 +131,18 @@ zoom: 11.8
   .yearslide input[type=range]:focus-visible::-moz-range-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .axis { display: flex; justify-content: space-between; gap: 8px; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .legend { display: grid; gap: 6px; font-size: .9rem; }
-  .check { display: flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
-  .check input { accent-color: var(--leaf); width: 16px; height: 16px; margin: 0; }
-  .swatch { width: 9px; height: 9px; border-radius: 50%; background: var(--undated); flex: none; }
 
   .status { font-size: .85rem; color: var(--muted); margin: 0; }
   .status.error { color: #f08a52; }
+  /* Info: a small uppercase toggle that opens the notes, as on /tides/ */
+  .notes { color: var(--muted); }
+  .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; }
+  .notes summary::-webkit-details-marker { display: none; }
+  .notes summary::after { content: " +"; }
+  .notes[open] summary::after { content: " –"; }
+  .notes summary:hover { color: var(--accent); }
+  .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .notes .note { padding-top: 4px; }
   .note { font-size: .78rem; color: var(--muted); margin: 0; }
   .note a { color: inherit; }
   .note a:hover { color: var(--ink); }
@@ -325,9 +330,7 @@ zoom: 11.8
     .summary { font-size: 1rem; }
     .yearslide input[type=range] { height: 44px; --thumb: 26px; }
     .axis { font-size: .85rem; }
-    .legend, .check { font-size: 1rem; }
-    .check { min-height: 44px; }
-    .check input { width: 20px; height: 20px; }
+    .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
   @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
@@ -397,12 +400,12 @@ zoom: 11.8
     <input type="range" id="year" min="1972" max="2026" step="1" value="1972" aria-label="Year planted: the map shows trees planted through this year" disabled>
   </div>
 
-  <div class="legend" id="legend">
-    <label class="check"><input type="checkbox" id="undated" checked><span class="swatch"></span><span id="undatedlbl">Show trees with no planting date</span></label>
-  </div>
 
   <p class="status" id="status" role="status">Loading trees…</p>
-  <p class="note">Tap a tree for its species. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+  <details class="notes">  <!-- Info, as on /tides/: shut until tapped -->
+    <summary>Info</summary>
+    <p class="note">Tap a tree for its species. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed. Trees with no planting date are always shown.</p>
+  </details>
 </section>
 
 <script>
@@ -751,13 +754,13 @@ window.addEventListener('DOMContentLoaded', function () {
   var slider = $('year');
   slider.addEventListener('input', function () { var was = state.year; state.year = +slider.value; applyFilter(); popIn(was, state.year); });
 
-  $('undated').addEventListener('change', function (e) { state.undated = e.target.checked; applyFilter(); });
 
   var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
   function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
     document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
   }
   window.addEventListener('resize', function () { sheetHeight(); drawBars(); });
+  document.querySelector('.notes').addEventListener('toggle', sheetHeight);   // Info opening grows the card; the spot card stays above it
   sheetHeight();
 
   /* ---------- Popups ---------- */
@@ -956,7 +959,6 @@ window.addEventListener('DOMContentLoaded', function () {
     built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
     state.year = state.span[0];   // opens on the base (undated trees and the earliest plantings); slide forward to watch trees arrive
     slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false;
-    $('undatedlbl').textContent = 'Show ' + fmt.format(state.total - state.dated) + ' trees with no planting date';
     $('summary').textContent = fmt.format(state.total) + ' street trees · ' + fmt.format(state.dated) + ' with a planting date';
     $('status').hidden = true;
     addLayers(built.fc);
