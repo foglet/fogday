@@ -523,6 +523,22 @@ window.addEventListener('DOMContentLoaded', function () {
       var nb = row[ix.analysis_neighborhood];
       if (nb) { var hs = hoodSum[nb] || (hoodSum[nb] = [0, 0, 0]); hs[0] += lon; hs[1] += lat; hs[2]++; }
     }
+    /* One species, one entry: the data writes some species several ways ("Eriobotrya deflexa :: Bronze Loquat",
+       "eriobotrya deflexa", "Eriobotrya deflexa"; "Agonis flexuosa :: Peppermint Willow", "agonis flexuosa").
+       Spellings with the same botanical name (ignoring case, curly quotes and spacing) join the most common
+       spelling that has a common name. */
+    function latinKey(k) { return k.split('::')[0].replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase(); }
+    var best = {};
+    Object.keys(spCount).forEach(function (k) {
+      if (k === 'Unknown') return;
+      var lk = latinKey(k), b = best[lk], named = k.indexOf('::') > 0 && k.split('::')[1].trim();
+      var bNamed = b && b.indexOf('::') > 0 && b.split('::')[1].trim();
+      if (!b || (named && !bNamed) || (!!named === !!bNamed && spCount[k] > spCount[b])) best[lk] = k;
+    });
+    var merged = {};
+    spOf = spOf.map(function (k) { var m = k === 'Unknown' ? k : best[latinKey(k)]; merged[m] = (merged[m] || 0) + 1; return m; });
+    spCount = merged;
+    spOf.forEach(function (k, i) { info[i].sp = k === 'Unknown' ? '' : k; });   // the tree panel shows the joined name too
     // Species, most trees first; each gets its green, stored on its trees for the map to draw
     var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
     var gs = greens(list.length), colorOf = {};
