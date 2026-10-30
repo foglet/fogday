@@ -1,6 +1,7 @@
 ---
 layout: null   # self-contained map page in the Transit Connected / Oyster Atlas interface, not the shared map layout
 title: San Francisco Tree Canopy
+short_title: SF Tree Canopy   # the name in the title button on small screens
 description: Where and when San Francisco's street trees were planted, from the city's Street Tree List. A map by Fogday Studios.
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 center: [-122.4425, 37.7585]
@@ -99,7 +100,12 @@ zoom: 11.8
   .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
   .maps-menu .all a { color: var(--muted); font-size: .9rem; }
   @media (pointer: coarse) { .maps-btn { width: 44px; } }
-  @media (max-width: 374px) { .title { font-size: .98rem; letter-spacing: .08em; padding: 8px 10px; } }   /* the long title still fits small phones */
+  /* Small screens show the short name, SF Tree Canopy (the full name stays for screen readers) */
+  .t-short { display: none; }
+  @media (max-width: 480px) {
+    .t-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .t-short { display: inline; }
+  }
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
   @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 
@@ -377,7 +383,7 @@ zoom: 11.8
 
 <div class="top">
   <div class="title-row">
-    <h1 style="margin:0;display:flex"><button type="button" class="title" data-home title="Back to the whole city"><span class="title-text">{{ page.title }}</span></button></h1>
+    <h1 style="margin:0;display:flex"><button type="button" class="title" data-home title="Back to the whole city"><span class="title-text"><span class="t-full">{{ page.title }}</span><span class="t-short" aria-hidden="true">{{ page.short_title }}</span></span></button></h1>
     <button type="button" class="maps-btn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
       <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
