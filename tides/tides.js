@@ -987,6 +987,31 @@ function orcaMarks(el){
 const ORCA_MK=[['.oeye','d'],['.oeye','transform'],['.osad','d'],['.osad','fill'],['.obel','d']];
 const orcaMarkCopy = el => ({a:ORCA_MK.map(([c,k])=>el.querySelector(c).getAttribute(k))});
 function orcaMarkPut(el, mk){ if (!mk) return; ORCA_MK.forEach(([c,k],i)=>el.querySelector(c).setAttribute(k, mk.a[i])); }
+/* Eelgrass (Zostera marina) along the floor of the tide picture: loose clumps of long, thin ribbon blades, each clump
+   swaying slowly on its own beat. Clipped to the water, so blades stay under the surface at the lowest tides. Gaps left
+   under the day names and under any low whose time label sits near the floor, so those stay readable. Drawn behind the
+   sea life (crabs walk in front of it). Its own seeded RNG (from seaSeed), so it doesn't shift where the creatures go. */
+function eelgrass(td, TW, x, y, floor, waterD){
+  let seed = (seaSeed*48271) % 2147483647 || 1;
+  const rnd = () => (seed = seed*16807 % 2147483647) / 2147483647;
+  const busy=[];
+  for (let d=dayOf(td.tl[0].t), m=dayStart(addDays(d,1)); m<td.tl[td.tl.length-1].t; d=addDays(d,1), m=dayStart(addDays(d,1))) busy.push([+x(m)-4, +x(m)+78]);
+  for (const e of td.ex) if (!e.high && y(e.v)+30 > floor-24) busy.push([+x(e.t)-30, +x(e.t)+30]);
+  const free = px => !busy.some(([l,r]) => px>l-6 && px<r+6);
+  let g=`<defs><clipPath id="tideWater"><path d="${waterD}"/></clipPath></defs><g class="eelgrass" clip-path="url(#tideWater)">`;
+  for (let cx=4+rnd()*12; cx<TW-4; cx+=10+rnd()*34){
+    if (!free(cx) || rnd()<.12) continue;              // gaps here and there, so it reads as beds, not a hedge
+    const n=3+Math.floor(rnd()*4), tall=12+rnd()*14;
+    let b='';
+    for (let i=0; i<n; i++){
+      const bx=cx+(i-(n-1)/2)*1.6+(rnd()-.5)*1.2, h=tall*(.55+rnd()*.5), lean=(rnd()-.5)*h*.55, w=(1.1+rnd()*.6).toFixed(2);
+      // a ribbon that rises, bends one way and lays its tip over the other: an S of two curves
+      b+=`<path d="M${bx.toFixed(1)},${floor+1} Q${(bx-lean*.4).toFixed(1)},${(floor-h*.45).toFixed(1)} ${(bx+lean*.3).toFixed(1)},${(floor-h*.7).toFixed(1)} T${(bx+lean).toFixed(1)},${(floor-h).toFixed(1)}" stroke-width="${w}"/>`;
+    }
+    g+=`<g class="eg" style="animation-delay:-${(rnd()*6).toFixed(2)}s;animation-duration:${(4.5+rnd()*3).toFixed(2)}s">${b}</g>`;
+  }
+  return g+'</g>';
+}
 let stripKey='', strip0=0, stripK=1, stripG=null, stripTl=null;
 function buildStrip(){
   const g=chartGeom(), {dayW:W, H, pt, pb}=g, ih=H-pt-pb, td=tideData();
@@ -1016,6 +1041,7 @@ function buildStrip(){
   // Horizontal waves inside the water: flat sine lines, 3 px apart (24 px wavelength, ±0.6 px swell)
   s+=`<defs><pattern id="tideWaves" width="24" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.5 C4 0.9 8 0.9 12 1.5 S20 2.1 24 1.5" fill="none" stroke="var(--water)" stroke-width="0.8" stroke-opacity="0.35"/></pattern></defs>`;
   s+=`<path d="${waterD}" fill="url(#tideWaves)"/>`;
+  s+=eelgrass(td, TW, x, y, pt+ih, waterD);
   // Day names at the foot of each midnight divider, drawn over the water and waves so they stay on top
   for (let d=dayOf(start), m=dayStart(addDays(d,1)); m<end; d=addDays(d,1), m=dayStart(addDays(d,1)))
     s+=`<text class="dayl" x="${(+x(m)+5).toFixed(1)}" y="${pt+ih-6}">${fDayName.format(new Date(m))}</text>`;
