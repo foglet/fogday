@@ -699,12 +699,28 @@ window.addEventListener('DOMContentLoaded', function () {
     (function walk(c) { if (typeof c[0] === 'number') { b[0] = Math.min(b[0], c[0]); b[1] = Math.min(b[1], c[1]); b[2] = Math.max(b[2], c[0]); b[3] = Math.max(b[3], c[1]); } else c.forEach(walk); })(f.geometry.coordinates);
     return [[b[0], b[1]], [b[2], b[3]]];
   }
+  /* The outline fades over 15 seconds and is then gone (as the tapped-spot dot does). A new pick starts it again.
+     Reduced motion: no fade; it simply goes at 15 seconds. */
+  var HOOD_LIFE = 15000, HOOD_OPACITY = 0.5, hoodFade = 0, hoodEnd = 0;
+  function hoodStop() { cancelAnimationFrame(hoodFade); clearTimeout(hoodEnd); hoodFade = 0; }
+  function setHoodOpacity(o) { if (map.getLayer('hood-line')) map.setPaintProperty('hood-line', 'line-opacity', o); }
   function setHoodLine(name) {
+    hoodStop();
     hoodOn = name || '';
     if (map.getLayer('hood-line')) {
       var f = ['==', ['get', 'nhood'], hoodOn];
       map.setFilter('hood-line', f);
     }
+    setHoodOpacity(HOOD_OPACITY);
+    if (!hoodOn) return;
+    hoodEnd = setTimeout(function () { setHoodLine(''); }, HOOD_LIFE);
+    if (calm.matches) return;
+    var t0 = performance.now();
+    (function step(now) {
+      var t = Math.min(1, (now - t0) / HOOD_LIFE);
+      setHoodOpacity(HOOD_OPACITY * (1 - t));
+      if (t < 1) hoodFade = requestAnimationFrame(step);
+    })(t0);
   }
   function showHood(h) {
     setHoodLine(h.name);
