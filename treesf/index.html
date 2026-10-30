@@ -189,8 +189,7 @@ zoom: 11.8
   .oa-detail-name { font-weight: 700; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: var(--muted); }
-  .oa-detail-city, .oa-detail-native { margin-top: 2px; }
-  .oa-detail-native { color: #b9e886; font-weight: 600; }
+  .oa-detail-city { margin-top: 2px; }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
   .oa-detail-ampm { font-size: .667em; }
   .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
@@ -1052,7 +1051,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (id != null) map.setFeatureState({ source: 'trees', id: id }, { sel: true });
   }
   function treeHTML(t, tag) {
-    var sp = splitSpecies(t.sp);   // name and Latin name; "Native to California" goes on the spot card
+    var sp = splitSpecies(t.sp);   // name and Latin name
     return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + latinName(sp.latin).html + '</div>' : '');
   }
   function showTree(f) {
