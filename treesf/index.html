@@ -116,7 +116,7 @@ zoom: 11.8
   /* View switch: two uppercase segments */
   /* Year, then a simple slider: the year at 1.5em bold on the left */
   .yearslide { display: flex; align-items: center; gap: 12px; }
-  .yearslide .yr { flex: none; min-width: 4ch; font: 700 1.5em/1 var(--font); font-variant-numeric: tabular-nums; color: var(--ink); }
+  .yearslide .yr { flex: none; min-width: 4ch; font: 700 20pt/1 var(--font); font-variant-numeric: tabular-nums; color: var(--ink); }
   /* The slider's track is the dot-color key: the year greens, oldest at left */
   .yearslide input[type=range] { --thumb: 20px; flex: 1; min-width: 0; margin: 0; height: 28px; cursor: pointer;
     -webkit-appearance: none; appearance: none; background: transparent; }
@@ -175,22 +175,19 @@ zoom: 11.8
   .mapboxgl-popup-close-button:hover { color: var(--accent); background: transparent; }
   .pop h2 { margin: 0 18px 1px 0; font: 700 1rem/1.2 var(--font); }
   .pop .latin { font-style: italic; color: var(--muted); }
-  .pop dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: .85rem; }
-  .pop dt { color: var(--muted); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; align-self: center; }
-  .pop dd { margin: 0; font-variant-numeric: tabular-nums; }
 
   /* Mapbox corners clear the home indicator and notch; controls in the panel color with the muted icon tint, as on /transit/ */
   .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
   .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: var(--sab); }
-  /* ---- Bottom-right controls, copied from oysteratlas.com: background toggle, search glass, folded map (Neighborhoods),
-     zoom + compass. Same panel, 50% border and muted icons on each; outline mode drops the panels. ---- */
+  /* ---- Bottom-right controls, copied from oysteratlas.com: search glass, folded map (Neighborhoods), + and −.
+     Same panel, 50% border and muted icons on each. ---- */
   .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); box-shadow: none; }
   .mapboxgl-map .mapboxgl-ctrl-group button { width: 30px; }
   .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
   .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 8%, transparent); }
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint); }
-  /* Thin zoom + compass: stroked redraws of Mapbox's icons on a 24-unit grid at 18px, so every line is 1.5px.
-     Drawn dark (#333) like Mapbox's, so the tint filter recolors them. Compass: solid north, outline south. */
+  /* Thin + and −: stroked redraws of Mapbox's icons on a 24-unit grid at 18px, so every line is 1.5px.
+     Drawn dark (#333) like Mapbox's, so the tint filter recolors them. */
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { background-size: 18px 18px; }
   .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E");
@@ -198,12 +195,8 @@ zoom: 11.8
   .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 12h16'/%3E%3C/svg%3E");
   }
-  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E");
-  }
-
   /* Folded-map button: opens the Neighborhoods menu to its left */
-  .oa-regions[hidden], .oa-bgtoggle[hidden], .oa-search[hidden] { display: none; }
+  .oa-regions[hidden], .oa-search[hidden] { display: none; }
   .mapboxgl-ctrl.oa-regions { position: relative; }
   .oa-pin {
     display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 32px; height: 32px; padding: 0;
@@ -263,17 +256,7 @@ zoom: 11.8
   .oa-search.oa-collapsed .oa-field { width: 32px; height: 32px; border-radius: 4px; gap: 0; padding: 0; justify-content: center; cursor: pointer; }
   .oa-search.oa-collapsed .oa-input { flex: 0 0 0; width: 0; padding: 0; opacity: 0; }
 
-  /* Outline mode (the toggle at the top of the stack): no panels or borders, just icons with a navy halo */
-  .oa-outline .mapboxgl-ctrl-group { background: transparent; border-color: transparent; }
-  .oa-outline .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
-  .oa-outline .oa-pin { background: transparent; border-color: transparent; }
-  .oa-outline .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: transparent; }
-  .oa-outline .mapboxgl-ctrl.oa-search.oa-collapsed .oa-field { background: transparent; border-color: transparent; }
-  .oa-outline .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
-  .oa-outline .oa-pin svg, .oa-outline .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
-  .oa-outline .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { background-size: 20px 20px; }
-
-  /* Touch screens: 44-point targets. Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it). */
+  /* Touch screens: 44-point targets. Phones pinch to zoom, so + and − go. */
   @media (pointer: coarse) {
     .oa-pin { width: 44px; height: 44px; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
@@ -286,7 +269,7 @@ zoom: 11.8
   }
   @media (pointer: coarse), (max-width: 759px) {
     .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
-    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; height: 42px; }
+    .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group { display: none; }   /* + and − were its only buttons */
   }
   /* Map credits, muted: smaller text on the panels' navy (the Mapbox logo itself is left alone) */
   .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4; background: color-mix(in srgb, var(--bg) 90%, transparent); }
@@ -316,9 +299,6 @@ zoom: 11.8
     .tree-card[hidden] { display: none; }
     .tree-card h2 { margin: 0; font: 700 1.3rem/1.2 var(--font); }
     .tree-card .latin { font-style: italic; color: var(--muted); }
-    .tree-card dl { margin: 10px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; }
-    .tree-card dt { color: var(--muted); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; align-self: center; }
-    .tree-card dd { margin: 0; font-variant-numeric: tabular-nums; }
 
     /* The spot card: its lines sit flush left on the page, no frosting needed */
     .oa-detail-panel { padding-block: 12px; font-size: 1rem; border-bottom: 1px solid var(--line); }
@@ -349,11 +329,6 @@ zoom: 11.8
     <p class="oa-regions-title"><span class="sky-text">Neighborhoods</span></p>
     <ul aria-label="Fly to a neighborhood"></ul>  <!-- filled from the tree list's neighborhoods -->
   </div>
-</div>
-<div class="oa-bgtoggle" hidden>  <!-- top of the stack: dark panels ⇄ outlines only -->
-  <button type="button" class="oa-pin" aria-pressed="false" aria-label="Outline-only controls" title="Outline-only controls">
-    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 14L14 4M10 20L20 10"/></svg>
-  </button>
 </div>
 <div class="oa-search oa-collapsed" role="search" hidden>  <!-- starts closed: just the magnifying glass -->
   <div class="oa-field" title="Search San Francisco">
@@ -509,25 +484,17 @@ window.addEventListener('DOMContentLoaded', function () {
     center: HOME.center, zoom: HOME.zoom, minZoom: 10, maxBounds: [[-122.75, 37.6], [-122.2, 37.9]],
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
-  /* Bottom-right stack, as on oysteratlas.com, top to bottom: background toggle, search, folded map (Neighborhoods),
-     zoom + compass. Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
-  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');   // zoom + compass (zoom hidden on phones, CSS)
+  /* Bottom-right stack, as on oysteratlas.com, top to bottom: search, folded map (Neighborhoods), zoom.
+     Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first.
+     No compass, so the map doesn't rotate or tilt either: north stays up. */
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');   // + and − (hidden on phones, CSS)
+  map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.touchPitch && map.touchPitch.disable(); map.keyboard.disableRotation && map.keyboard.disableRotation();
   function asControl(el) {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
   }
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
-  var bgCtrl = document.querySelector('.oa-bgtoggle');     asControl(bgCtrl);
-  /* Background toggle: dark panels (default) or outlines only, remembered in this browser */
-  var bgBtn = bgCtrl.querySelector('button'), mapEl = map.getContainer();
-  function setOutline(on) { mapEl.classList.toggle('oa-outline', on); bgBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
-  try { setOutline(localStorage.getItem('treesf-controls') === 'outline'); } catch (e) {}
-  bgBtn.addEventListener('click', function () {
-    var on = !mapEl.classList.contains('oa-outline'); setOutline(on);
-    try { localStorage.setItem('treesf-controls', on ? 'outline' : 'dark'); } catch (e) {}
-  });
-
   /* The title flies back to the whole city */
   document.querySelector('[data-home]').addEventListener('click', function () {
     if (calm.matches) map.jumpTo(HOME); else map.flyTo(Object.assign({ speed: 1.2, curve: 1.42, essential: true }, HOME));
@@ -784,12 +751,8 @@ window.addEventListener('DOMContentLoaded', function () {
     if (id != null) map.setFeatureState({ source: 'trees', id: id }, { sel: true });
   }
   function treeHTML(t, tag) {
-    var sp = splitSpecies(t.sp), addr = t.ad.split('|')[0].trim();
-    var rows = [
-      ['Status', t.st]   // planted, address, neighborhood and trunk are not shown
-    ].filter(function (r) { return r[1]; });
-    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '') +
-      '<dl>' + rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>';
+    var sp = splitSpecies(t.sp);   // the name and Latin name only; no other details are shown
+    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '');
   }
   function showTree(f) {
     var t = info[f.id]; if (!t) return;
@@ -948,6 +911,14 @@ window.addEventListener('DOMContentLoaded', function () {
     return getCSV(DATA_URL, 'DataSF');
   }).then(function (t) { $('status').textContent = 'Reading trees…'; return t; });
   var styleP = new Promise(function (res) { map.on('load', res); });
+  /* Map credits: on a narrow map Mapbox shows them as an (i) button but opens them on load. Fold them to just the
+     button, as the Oyster Atlas shows; tapping (i) still opens them. */
+  map.once('load', function () {
+    var a = map.getContainer().querySelector('.mapboxgl-ctrl-attrib.mapboxgl-compact');
+    if (!a) return;
+    a.classList.remove('mapboxgl-compact-show'); a.removeAttribute('open');
+    var b = a.querySelector('.mapboxgl-ctrl-attrib-button'); if (b) { b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-pressed', 'false'); }
+  });
 
   Promise.all([dataP, styleP]).then(function (v) {
     var built = build(parseCSV(v[0]));
