@@ -1,6 +1,6 @@
 ---
 layout: null   # self-contained map page in the Transit Connected / Oyster Atlas interface, not the shared map layout
-title: SF Street Trees
+title: San Francisco Tree Canopy
 description: Where and when San Francisco's street trees were planted, from the city's Street Tree List. A map by Fogday Studios.
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 center: [-122.4425, 37.7585]
@@ -24,7 +24,7 @@ zoom: 11.8
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&family=Patua+One&display=swap">
 
 <style>
-  /* SF Street Trees — the Transit Connected / Oyster Atlas interface (fogday.com/transit, oysteratlas.com), one
+  /* San Francisco Tree Canopy — the Transit Connected / Oyster Atlas interface (fogday.com/transit, oysteratlas.com), one
      self-contained page. Always dark. Class names follow those pages (oa-…, tc-…) so fixes copy between them.
      Numbers in Patua One with the site's sky-blue title gradient, as on fogday.com/tides. */
   :root {
@@ -99,6 +99,7 @@ zoom: 11.8
   .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
   .maps-menu .all a { color: var(--muted); font-size: .9rem; }
   @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  @media (max-width: 374px) { .title { font-size: .98rem; letter-spacing: .08em; padding: 8px 10px; } }   /* the long title still fits small phones */
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
   @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 
