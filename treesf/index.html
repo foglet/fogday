@@ -30,7 +30,8 @@ zoom: 11.8
   :root {
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
     --title-1: #7cc4f0; --title-2: #bfe6fb;   /* fogday.css dark mode title gradient */
-    --undated: #5d7180;
+    --undated: #3f5e4a;   /* trees with no planting date: a dark, grey green */
+    --leaf: #6fbf5a;      /* the slider and the per-year bars, in the trees' green */
     --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
     --font-logo: "Patua One", "Rockwell", "Roboto Slab", Georgia, serif;
     color-scheme: dark;
@@ -131,24 +132,17 @@ zoom: 11.8
     background-image: linear-gradient(to right, var(--title-1), var(--title-2));
     -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; width: fit-content; }
   .yearread .n { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .play {
-    flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
-    background: var(--panel); color: #4a90c8; cursor: pointer; display: grid; place-items: center;
-  }
-  .play:hover { color: var(--accent); }
-  .play:disabled { opacity: .5; cursor: default; }
-  .play svg { width: 16px; height: 16px; fill: currentColor; }
 
   /* Plantings-per-year bars sit on the slider track */
   .timeline { display: grid; gap: 4px; }
   #bars { width: 100%; height: 54px; display: block; }
-  input[type=range] { width: 100%; margin: 0; accent-color: var(--accent); }
+  input[type=range] { width: 100%; margin: 0; accent-color: var(--leaf); }
   .axis { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
   .legend { display: grid; gap: 6px; font-size: .9rem; }
   .ramp { height: 6px; border-radius: 3px; }
   .check { display: flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
-  .check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+  .check input { accent-color: var(--leaf); width: 16px; height: 16px; margin: 0; }
   .swatch { width: 9px; height: 9px; border-radius: 50%; background: var(--undated); flex: none; }
 
   .status { font-size: .85rem; color: var(--muted); margin: 0; }
@@ -235,8 +229,6 @@ zoom: 11.8
     .summary { font-size: 1rem; }
     .modes button { min-height: 44px; font-size: .82rem; }
     .yearread .yr { font-size: 3rem; }
-    .play { width: 48px; height: 48px; }
-    .play svg { width: 18px; height: 18px; }
     #bars { height: 64px; }
     input[type=range] { height: 32px; }
     .axis { font-size: .85rem; }
@@ -292,9 +284,6 @@ zoom: 11.8
       <span class="yr" id="yr">—</span>
       <span class="n" id="count">&nbsp;</span>
     </div>
-    <button class="play" id="play" aria-label="Play planting over time" disabled>
-      <svg viewBox="0 0 16 16" id="playicon"><path d="M4 2.5v11l9-5.5z"/></svg>
-    </button>
   </div>
 
   <div class="timeline">
@@ -334,8 +323,9 @@ window.addEventListener('DOMContentLoaded', function () {
   var $ = function (id) { return document.getElementById(id); };
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  // Year color ramp: blue (older) → teal → green → yellow (newest). Stops are placed on the data's year span.
-  var RAMP = ['#3d72d9', '#22a69a', '#7cc94e', '#e9e44a'];
+  // Year color ramp, all greens: deep forest (oldest) → leaf → spring green (newest). Stops spread over the data's year span.
+  var RAMP = ['#2f7a45', '#3f9e4f', '#74c25a', '#b9e886'];
+  var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
   /* ---------- CSV ---------- */
   function parseCSV(text) {
@@ -442,6 +432,28 @@ window.addEventListener('DOMContentLoaded', function () {
     return state.undated ? ['any', ['==', ['get', 'y'], 0], dated] : dated;
   }
 
+  function radius(k) {   // the dot size at each zoom, times k
+    return ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6 * k, 13, 1.4 * k, 16, 3.6 * k, 19, 9 * k];
+  }
+
+  /* New trees pop in: moving the slider forward from one year to a later one, the trees planted in between
+     grow in at 3x their size in pale green and settle over 0.7 s. Moving back simply removes trees.
+     Reduced motion: no pop. */
+  var popRaf = 0;
+  function popIn(from, to) {
+    cancelAnimationFrame(popRaf);
+    if (!map.getLayer('trees-pop')) return;
+    if (to <= from || calm.matches || state.mode !== 'year') { map.setPaintProperty('trees-pop', 'circle-opacity', 0); return; }
+    map.setFilter('trees-pop', ['all', ['>', ['get', 'y'], from], ['<=', ['get', 'y'], to]]);
+    var t0 = performance.now(), DUR = 700;
+    (function frame(now) {
+      var t = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - t, 3);   // ease out
+      map.setPaintProperty('trees-pop', 'circle-radius', radius(3 - 2 * e));
+      map.setPaintProperty('trees-pop', 'circle-opacity', 0.95 * (1 - t * t));
+      if (t < 1) popRaf = requestAnimationFrame(frame);
+    })(t0);
+  }
+
   function addLayers(fc) {
     map.addSource('trees', { type: 'geojson', data: fc });
     map.addLayer({
@@ -453,18 +465,24 @@ window.addEventListener('DOMContentLoaded', function () {
         'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 13, 8, 16, 18],
         'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0.9, 17, 0],
         'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
-          0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#d6e65a', 1, '#fff7c2']
+          0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#b9e886', 1, '#e2ffc4']
       }
     });
     map.addLayer({
       id: 'trees-dots', type: 'circle', source: 'trees',
       paint: {
         'circle-color': colorExpr(),
-        'circle-radius': ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6, 13, 1.4, 16, 3.6, 19, 9],
-        'circle-opacity': ['case', ['==', ['get', 'y'], 0], 0.55, 0.9],
+        'circle-radius': radius(1),
+        'circle-opacity': ['case', ['==', ['get', 'y'], 0], 0.7, 0.9],
         'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2, 0],
         'circle-stroke-color': '#ffffff'
       }
+    });
+    /* Trees the slider just added, drawn over the rest: they pop in large and pale, then shrink and fade to show the
+       ramp color beneath (popIn, below) */
+    map.addLayer({
+      id: 'trees-pop', type: 'circle', source: 'trees', filter: ['==', ['get', 'y'], -1],
+      paint: { 'circle-color': POP, 'circle-radius': radius(1), 'circle-opacity': 0 }
     });
     applyFilter();
   }
@@ -476,8 +494,8 @@ window.addEventListener('DOMContentLoaded', function () {
     map.setFilter('trees-heat', f);
     // In density mode, dots appear only once you zoom in close enough to pick a tree
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
-      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, ['case', ['==', ['get', 'y'], 0], 0.55, 0.9]]
-      : ['case', ['==', ['get', 'y'], 0], 0.55, 0.9]);
+      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, ['case', ['==', ['get', 'y'], 0], 0.7, 0.9]]
+      : ['case', ['==', ['get', 'y'], 0], 0.7, 0.9]);
     map.setLayoutProperty('trees-heat', 'visibility', state.mode === 'density' ? 'visible' : 'none');
     updateCount(); drawBars();
   }
@@ -504,7 +522,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var lo = state.span[0], hi = state.span[1], n = hi - lo + 1, max = 1;
     for (var y = lo; y <= hi; y++) max = Math.max(max, state.perYear[y] || 0);
     var css = getComputedStyle(document.documentElement);
-    var on = css.getPropertyValue('--accent').trim(), off = css.getPropertyValue('--line').trim();
+    var on = css.getPropertyValue('--leaf').trim(), off = css.getPropertyValue('--line').trim();
     var bw = w / n;
     for (y = lo; y <= hi; y++) {
       var v = state.perYear[y] || 0, bh = v ? Math.max(1.5, (v / max) * (h - 2)) : 0;
@@ -527,26 +545,8 @@ window.addEventListener('DOMContentLoaded', function () {
   $('mode-density').addEventListener('click', function () { setMode('density'); });
 
   var slider = $('year');
-  slider.addEventListener('input', function () { stop(); state.year = +slider.value; applyFilter(); });
+  slider.addEventListener('input', function () { var was = state.year; state.year = +slider.value; applyFilter(); popIn(was, state.year); });
   $('undated').addEventListener('change', function (e) { state.undated = e.target.checked; applyFilter(); });
-
-  var timer = null;
-  function setPlayIcon(playing) {
-    $('playicon').innerHTML = playing ? '<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/>' : '<path d="M4 2.5v11l9-5.5z"/>';
-    $('play').setAttribute('aria-label', playing ? 'Pause' : 'Play planting over time');
-  }
-  function stop() { if (timer) { clearInterval(timer); timer = null; setPlayIcon(false); } }
-  $('play').addEventListener('click', function () {
-    if (timer) { stop(); return; }
-    if (state.year >= state.span[1]) state.year = state.span[0];
-    setPlayIcon(true);
-    var tick = calm.matches ? 900 : 260;
-    timer = setInterval(function () {
-      state.year = Math.min(state.span[1], state.year + 1);
-      slider.value = state.year; applyFilter();
-      if (state.year >= state.span[1]) stop();
-    }, tick);
-  });
 
   var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
   function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
@@ -756,8 +756,8 @@ window.addEventListener('DOMContentLoaded', function () {
     // Stray dates before the slider floor still show; they sit at the floor year
     for (var y in state.perYear) if (+y < state.span[0]) { state.perYear[state.span[0]] = (state.perYear[state.span[0]] || 0) + state.perYear[y]; delete state.perYear[y]; }
     built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
-    state.year = state.span[1];
-    slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false; $('play').disabled = false;
+    state.year = state.span[0];   // opens on the base (undated trees and the earliest plantings); slide forward to watch trees arrive
+    slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false;
     $('ymin').textContent = $('rmin').textContent = state.span[0];
     $('ymax').textContent = $('rmax').textContent = state.span[1];
     $('undatedlbl').textContent = 'Show ' + fmt.format(state.total - state.dated) + ' trees with no planting date';
