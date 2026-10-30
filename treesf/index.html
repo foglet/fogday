@@ -173,6 +173,8 @@ zoom: 11.8
   .oa-detail-name { font-weight: 700; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: var(--muted); }
+  .oa-detail-city, .oa-detail-native { margin-top: 2px; }
+  .oa-detail-native { color: #b9e886; font-weight: 600; }
   .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
   .oa-detail-ampm { font-size: .667em; }
   .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
@@ -676,7 +678,7 @@ window.addEventListener('DOMContentLoaded', function () {
       map.once('moveend', function () {
         if (t !== spotTurn) return;
         var tree = f.zoom >= 16 ? treeAt(map.project(f.center)) : null;
-        if (tree) { showTree(tree); showSpot(mapboxgl.LngLat.convert(tree.geometry.coordinates)); }
+        if (tree) { showTree(tree); showSpot(mapboxgl.LngLat.convert(tree.geometry.coordinates), tree); }
         else showSpot(mapboxgl.LngLat.convert(f.center));
       });
       var view = { center: f.center, zoom: f.zoom, bearing: 0 };
@@ -884,9 +886,8 @@ window.addEventListener('DOMContentLoaded', function () {
     if (id != null) map.setFeatureState({ source: 'trees', id: id }, { sel: true });
   }
   function treeHTML(t, tag) {
-    var sp = splitSpecies(t.sp), nat = t.sp.trim() && isNative(t.sp);   // name, Latin name, and native or not
-    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '') +
-      (t.sp.trim() ? '<div class="origin' + (nat ? ' native' : '') + '">' + (nat ? 'California native' : 'Not native to California') + '</div>' : '');
+    var sp = splitSpecies(t.sp);   // name and Latin name; "Native to California" goes on the spot card
+    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '');
   }
   function showTree(f) {
     var t = info[f.id]; if (!t) return;
@@ -945,7 +946,29 @@ window.addEventListener('DOMContentLoaded', function () {
       spotFade = spotDot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPOT_LIFE, easing: 'linear', fill: 'forwards' });
     spotLife = setTimeout(function () { spotStop(); spotMarker.remove(); }, SPOT_LIFE);
   }
+  /* The analysis neighborhood a point falls in (the same 41 as the legend and the red outline), from the boundaries */
+  function hoodAt(lng, lat) {
+    if (!hoodGeo) return '';
+    function inRing(r) {   // ray casting
+      var inside = false;
+      for (var a = 0, b = r.length - 1; a < r.length; b = a++) {
+        var xa = r[a][0], ya = r[a][1], xb = r[b][0], yb = r[b][1];
+        if ((ya > lat) !== (yb > lat) && lng < (xb - xa) * (lat - ya) / (yb - ya) + xa) inside = !inside;
+      }
+      return inside;
+    }
+    function inPoly(rings) { if (!inRing(rings[0])) return false; for (var k = 1; k < rings.length; k++) if (inRing(rings[k])) return false; return true; }
+    for (var n = 0; n < hoodGeo.features.length; n++) {
+      var g = hoodGeo.features[n].geometry; if (!g) continue;
+      var polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+      for (var q = 0; q < polys.length; q++) if (inPoly(polys[q])) return hoodGeo.features[n].properties.nhood || '';
+    }
+    return '';
+  }
+  /* The spot's place: { hood, city } — the neighborhood (the city's own boundaries first, then Mapbox's), and the
+     city with its state code from Mapbox reverse geocoding ("San Francisco, CA"). */
   function placeName(lng, lat) {
+    var ours = hoodAt(+lng, +lat);
     var url = 'https://api.mapbox.com/search/geocode/v6/reverse?longitude=' + lng + '&latitude=' + lat +
               '&language=en&access_token=' + mapboxgl.accessToken;
     return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
@@ -955,13 +978,12 @@ window.addEventListener('DOMContentLoaded', function () {
         Object.keys(p.context || {}).forEach(function (k) { if (!c[k]) c[k] = p.context[k]; });
         if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
       });
-      var hood = c.neighborhood, city = c.place || c.locality || c.district, region = c.region, country = c.country;
+      var city = c.place || c.locality || c.district, region = c.region;
       var rc = region && region.region_code;
       var st = region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
-      var parts = [hood && hood.name, city && city.name, st, country && country.name].filter(Boolean)
-                    .filter(function (n, i, a) { return a.indexOf(n) === i; });
-      return parts.length ? parts.join(', ') : 'Open water';
-    }).catch(function () { return 'Place name unavailable'; });
+      var cityLine = [city && city.name, st].filter(Boolean).join(', ');
+      return { hood: ours || (c.neighborhood && c.neighborhood.name) || '', city: cityLine || (ours ? 'San Francisco, CA' : 'Open water') };
+    }).catch(function () { return { hood: ours, city: ours ? 'San Francisco, CA' : 'Place name unavailable' }; });
   }
   function offsetText(zone) {   // GMT-7
     try {
@@ -995,15 +1017,18 @@ window.addEventListener('DOMContentLoaded', function () {
     return two(d) + '°' + two(m) + '′' + two(sec) + '″' + (v < 0 ? neg : pos);
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
-  function showSpot(lngLat) {
+  /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates / Native to California (a native tree) */
+  function showSpot(lngLat, tree) {   // tree: the tapped tree's feature, if any
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
     spotMarker.setLngLat(ll).addTo(map); spotStart();
-    placeName(lng, lat).then(function (name) {
+    placeName(lng, lat).then(function (pl) {
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
-      spotCard.appendChild(line('oa-detail-name', name));
+      if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
+      spotCard.appendChild(line(pl.hood ? 'oa-detail-city' : 'oa-detail-name', pl.city));
       spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      if (tree && tree.properties && tree.properties.n === 1) spotCard.appendChild(line('oa-detail-native', 'Native to California'));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
@@ -1019,7 +1044,7 @@ window.addEventListener('DOMContentLoaded', function () {
   map.on('click', function (e) {
     if (menuWasOpen) return;
     var f = treeAt(e.point);
-    if (f) { showTree(f); showSpot(mapboxgl.LngLat.convert(f.geometry.coordinates)); }
+    if (f) { showTree(f); showSpot(mapboxgl.LngLat.convert(f.geometry.coordinates), f); }
     else { clearTree(); showSpot(e.lngLat); }
   });
   document.addEventListener('keydown', function (e) {   // one Escape shuts one thing: the menu, then the popup, then the spot
