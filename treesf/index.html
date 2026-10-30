@@ -676,11 +676,11 @@ window.addEventListener('DOMContentLoaded', function () {
           0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#b9e886', 1, '#e2ffc4']
       }
     });
-    /* Big trees, trunk more than two feet in diameter (about 5,800): a 10px ring, 80% opaque, drawn under the dot */
+    /* Big trees, trunk more than two feet in diameter (about 5,800): a 10px ring, 80% transparent, drawn under the dot */
     map.addLayer({
       id: 'trees-big', type: 'circle', source: 'trees', filter: ['==', ['get', 'b'], 1],
       paint: { 'circle-radius': radius(1), 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 10,
-               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.8 }
+               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.2 }
     });
     map.addLayer({
       id: 'trees-dots', type: 'circle', source: 'trees',
