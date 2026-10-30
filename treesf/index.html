@@ -64,7 +64,7 @@ zoom: 11.8
   .maps-btn {
     display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    color: #4a90c8;
+    color: #7fff00;   /* chartreuse, the end of the title's gradient */
   }
   .maps-btn svg { transition: transform .2s ease; }
   .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -90,7 +90,7 @@ zoom: 11.8
   }
   .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
   .maps-menu a:hover { color: #ff5500; }
-  .maps-menu a[aria-current="page"] { font-weight: 700; color: var(--title-1); }
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: #7fff00; }   /* this map, in chartreuse */
   .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }
   .maps-menu .ext {
     flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
