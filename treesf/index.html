@@ -123,6 +123,12 @@ zoom: 11.8
   .species { list-style: none; margin: 0; padding: 0 4px 0 0; display: grid; gap: 6px; font-size: .9rem;
              max-height: calc(100vh - 300px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain; }
   .species li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .species .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; cursor: pointer; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
+  .species .pick:hover .name { color: var(--accent); }
+  .species .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .species .pick[aria-pressed="true"] { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+  .species .pick[aria-pressed="true"] .name { font-weight: 700; }
+  .species .cnt { margin-left: auto; padding-left: 8px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
   .species .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
   .species li.group { display: block; margin-top: 8px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .species li.group:first-child { margin-top: 0; }
@@ -325,6 +331,7 @@ zoom: 11.8
     .sortby { font-size: .95rem; column-gap: 16px; }
     .sortby button { padding: 10px 0; }
     .species { max-height: none; overflow: visible; }   /* the page scrolls instead */
+    .species .pick { min-height: 36px; }
     .axis { font-size: .85rem; }
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
@@ -396,7 +403,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+        <p class="note">Each species has its own green; tap one in the list to see where it grows. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
       </details>
     </div>
   </details>
@@ -520,8 +527,15 @@ window.addEventListener('DOMContentLoaded', function () {
     var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
     var gs = greens(list.length), colorOf = {};
     list.forEach(function (k, i) { colorOf[k] = gs[i]; });
-    feats.forEach(function (f, i) { f.properties.c = colorOf[spOf[i]]; if (spOf[i] !== 'Unknown' && isNative(spOf[i])) f.properties.n = 1; });   // n: California native
-    var species = list.map(function (k) { return { key: k, n: spCount[k], color: colorOf[k], native: isNative(k) }; });
+    var rank = {}, ext = {};
+    list.forEach(function (k, i) { rank[k] = i; ext[k] = [Infinity, Infinity, -Infinity, -Infinity]; });
+    feats.forEach(function (f, i) {
+      var k = spOf[i], c = f.geometry.coordinates, e = ext[k];
+      f.properties.c = colorOf[k]; f.properties.k = rank[k];   // k: the species' number, for the legend's pick
+      if (k !== 'Unknown' && isNative(k)) f.properties.n = 1;   // n: California native
+      e[0] = Math.min(e[0], c[0]); e[1] = Math.min(e[1], c[1]); e[2] = Math.max(e[2], c[0]); e[3] = Math.max(e[3], c[1]);
+    });
+    var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
     return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
   }
 
@@ -554,7 +568,7 @@ window.addEventListener('DOMContentLoaded', function () {
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
   /* The title flies back to the whole city */
   document.querySelector('[data-home]').addEventListener('click', function () {
-    setHoodLine('');
+    setHoodLine(''); if (pickK != null) pickSpecies(null);
     if (calm.matches) map.jumpTo(HOME); else map.flyTo(Object.assign({ speed: 1.2, curve: 1.42, essential: true }, HOME));
   });
 
@@ -790,9 +804,11 @@ window.addEventListener('DOMContentLoaded', function () {
     map.setFilter('trees-dots', f);
     map.setFilter('trees-heat', f);
     // In density mode, dots appear only once you zoom in close enough to pick a tree
+    // A species picked in the legend: its trees full strength, every other tree faded back
+    var op = pickK == null ? 0.9 : ['case', ['==', ['get', 'k'], pickK], 1, 0.07];
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
-      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, 0.9]
-      : 0.9);
+      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, op] : op);
+    map.setFilter('trees-big', pickK == null ? ['==', ['get', 'b'], 1] : ['all', ['==', ['get', 'b'], 1], ['==', ['get', 'k'], pickK]]);
     map.setLayoutProperty('trees-heat', 'visibility', state.mode === 'density' ? 'visible' : 'none');
     updateCount(); drawBars();
   }
@@ -839,8 +855,10 @@ window.addEventListener('DOMContentLoaded', function () {
       frag.appendChild(hd);
       g[1].forEach(addRow);
     });
-    ul.textContent = ''; ul.appendChild(frag);
+    var keep = ul.scrollTop;   // re-sorting or picking keeps the list where it was
+    ul.textContent = ''; ul.appendChild(frag); ul.scrollTop = keep;
     function addRow(sp) {
+      var on = pickK === sp.i;
       var li = document.createElement('li'), dot = document.createElement('span'), name = document.createElement('span'), nm = splitSpecies(sp.key === 'Unknown' ? '' : sp.key);
       dot.className = 'dot' + (sp.native ? ' native' : ''); dot.style.setProperty('--c', sp.color);
       var latinFirst = sortBy === 'latin' && sp.key !== 'Unknown' && nm.latin;
@@ -848,10 +866,29 @@ window.addEventListener('DOMContentLoaded', function () {
       name.textContent = sp.key === 'Unknown' ? 'Species not recorded' : latinFirst ? nm.latin : nm.common;
       var other = latinFirst ? nm.common : nm.latin;
       if (other && other !== name.textContent) li.title = other;
-      li.appendChild(dot); li.appendChild(name); frag.appendChild(li);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'pick'; btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.title = (li.title ? li.title + ' · ' : '') + fmt.format(sp.n) + (sp.n === 1 ? ' tree' : ' trees') + (on ? ' · tap to show all trees' : ' · tap to see where they grow');
+      btn.appendChild(dot); btn.appendChild(name);
+      if (on) { var cnt = document.createElement('span'); cnt.className = 'cnt'; cnt.textContent = fmt.format(sp.n); btn.appendChild(cnt); }
+      btn.addEventListener('click', function () { pickSpecies(on ? null : sp); });
+      li.removeAttribute('title'); li.appendChild(btn); frag.appendChild(li);
     }
   }
   function drawBars() {}
+  /* Tap a species in the legend to see its distribution: the map fits its trees and fades every other tree.
+     Tap it again, tap the title, or press Escape to show all trees. On phones the page scrolls up to the map. */
+  var pickK = null;
+  function pickSpecies(sp) {
+    pickK = sp ? sp.i : null;
+    clearTree(); clearSpot();
+    applyFilter(); fillSpecies(speciesList);
+    if (!sp) return;
+    if (PHONE.matches) window.scrollTo({ top: 0, behavior: calm.matches ? 'auto' : 'smooth' });
+    var b = sp.bounds, one = b[0][0] === b[1][0] && b[0][1] === b[1][1];
+    if (one) map.flyTo({ center: b[0], zoom: 17, duration: calm.matches ? 0 : 1200, essential: true });
+    else map.fitBounds(b, { padding: PHONE.matches ? 28 : 70, maxZoom: 16.5, duration: calm.matches ? 0 : 1200, essential: true });
+  }
 
   /* ---------- Controls ---------- */
   var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
@@ -1052,6 +1089,7 @@ window.addEventListener('DOMContentLoaded', function () {
     else if (popup.isOpen() || !treeCard.hidden) clearTree();
     else if (!spotCard.hidden) clearSpot();
     else if (hoodOn) setHoodLine('');
+    else if (pickK != null) pickSpecies(null);
   });
 
   /* ---------- Load ---------- */
