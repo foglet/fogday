@@ -516,6 +516,32 @@ window.addEventListener('DOMContentLoaded', function () {
   function neighborhoods() {
     return Object.keys(hoodSum).sort().map(function (n) { var h = hoodSum[n]; return { name: n, center: [h[0] / h[2], h[1] / h[2]] }; });
   }
+  /* Spelling fixes for botanical names the data gets wrong (each checked against the accepted name), applied before
+     species are joined, so a misspelling joins its species: e.g. Acer buergeranum → Acer buergerianum,
+     Podocarpus gracilor → Podocarpus gracilior, Gingko → Ginkgo. Junk after a closing quote ('Musashino'l site) and
+     stray spaces inside quotes go too. Synonyms (two accepted names for one tree) are left as the data has them. */
+  var FIX_WORDS = { plantanus: 'Platanus', patanus: 'Platanus', gingko: 'Ginkgo', pistachia: 'Pistacia', michaelia: 'Michelia',
+    leucodendron: 'Leucadendron', casurina: 'Casuarina', canandensis: 'canadensis', europea: 'europaea', persicaum: 'persica',
+    buergeranum: 'buergerianum', gracilor: 'gracilior', patersonia: 'patersonii', pattersonia: 'patersonii', chinesis: 'chinensis',
+    soulangiana: 'soulangeana', aspleniifolius: 'asplenifolius', chitalpatashkentensis: 'Chitalpa tashkentensis' };
+  var FIX_CULTIVARS = { fastigata: 'Fastigiata', vannessa: 'Vanessa' };
+  function fixLatin(latin) {
+    var t = latin.replace(/[\u2018\u2019\u201c\u201d"]/g, "'")
+      .replace(/('[^']*')[a-z].*$/, '$1')                                // junk run onto a closing quote ('Musashino'l site), not O'Neill
+      .replace(/'\s*([^']*?)\s*'/g, "'$1'")                              // stray spaces inside quotes
+      .replace(/\s+/g, ' ').trim();
+    t = t.replace(/[A-Za-z]+/g, function (w) { var f = FIX_WORDS[w.toLowerCase()]; return f || w; });
+    t = t.replace(/'([^']*)'/g, function (m, cv) { var f = FIX_CULTIVARS[cv.toLowerCase()]; return f ? "'" + f + "'" : m; });
+    t = t.replace(/^Platanus hispanica\b/i, 'Platanus x hispanica')
+         .replace(/^Chionanthus retusa\b/i, 'Chionanthus retusus')
+         .replace(/^Lyonothamnus floribundus (?:ssp\.?|subsp\.?)?\s*asplenifolius/i, 'Lyonothamnus floribundus subsp. asplenifolius');
+    return t;
+  }
+  function fixSpecies(raw) {
+    var k = (raw || '').trim(); if (!k) return '';
+    var i = k.indexOf('::'), latin = i >= 0 ? k.slice(0, i) : k, rest = i >= 0 ? k.slice(i) : '';
+    var f = fixLatin(latin); return rest ? f + ' ' + rest : f;
+  }
   function build(rows) {
     var h = rows[0], ix = {};
     h.forEach(function (k, i) { ix[k] = i; });
@@ -530,7 +556,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var id = info.length;
       info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
                   st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
-      var sk = (row[ix.species] || '').trim() || 'Unknown'; spCount[sk] = (spCount[sk] || 0) + 1; spOf.push(sk);
+      var sk = fixSpecies(row[ix.species]) || 'Unknown'; spCount[sk] = (spCount[sk] || 0) + 1; spOf.push(sk);
       feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, b: +row[ix.mapdbh] > 24 ? 1 : 0 } });   // b: trunk over two feet across (mapdbh is in inches)
       if (y) perYear[y] = (perYear[y] || 0) + 1;
       var nb = row[ix.analysis_neighborhood];
@@ -540,12 +566,12 @@ window.addEventListener('DOMContentLoaded', function () {
        "eriobotrya deflexa", "Eriobotrya deflexa"; "Agonis flexuosa :: Peppermint Willow", "agonis flexuosa").
        Spellings with the same botanical name (ignoring case, curly quotes and spacing) join the most common
        spelling that has a common name. */
-    function latinKey(k) { return k.split('::')[0].replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase(); }
+    function latinKey(k) { return k.split('::')[0].replace(/[\u2018\u2019\u201c\u201d"]/g, "'").replace(/\bssp\.?(?=\s)/gi, 'subsp.').replace(/\s+/g, ' ').trim().toLowerCase(); }
     var best = {};
     Object.keys(spCount).forEach(function (k) {
       if (k === 'Unknown') return;
-      var lk = latinKey(k), b = best[lk], named = k.indexOf('::') > 0 && k.split('::')[1].trim();
-      var bNamed = b && b.indexOf('::') > 0 && b.split('::')[1].trim();
+      function nameOf(x) { var n = x && x.indexOf('::') > 0 && x.split('::')[1].trim(); return n && !/^planting site/i.test(n) ? n : ''; }   // "Planting Site (plant)" is not a name
+      var lk = latinKey(k), b = best[lk], named = nameOf(k), bNamed = nameOf(b);
       if (!b || (named && !bNamed) || (!!named === !!bNamed && spCount[k] > spCount[b])) best[lk] = k;
     });
     var merged = {};
