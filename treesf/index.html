@@ -205,6 +205,10 @@ zoom: 11.8
   .mapboxgl-popup-content { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 400 .9rem/1.35 var(--font); box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
   .mapboxgl-popup-tip { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
   .hover-pop { pointer-events: none; }   /* the hover popup never gets in the pointer's way */
+  /* It eases in: a short fade with a 4px rise (on the card and its tip, since Mapbox positions the popup itself) */
+  .hover-pop .mapboxgl-popup-content, .hover-pop .mapboxgl-popup-tip { animation: pop-in .2s cubic-bezier(.2,.7,.35,1) both; }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .hover-pop .mapboxgl-popup-content, .hover-pop .mapboxgl-popup-tip { animation: none; } }
   .pop h2 { margin: 0 0 1px; font: 700 1rem/1.2 var(--font); }
   .pop .latin { color: var(--muted); }
 
@@ -1142,6 +1146,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (f.id === hoverId) return;
     var t = info[f.id]; if (!t) return;
     hoverId = f.id;
+    hoverPop.remove();   // re-added, so each new tree's popup eases in afresh
     hoverPop.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
   });
   map.on('mouseleave', 'trees-dots', hoverOff);
