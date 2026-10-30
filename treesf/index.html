@@ -407,7 +407,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
       </details>
     </div>
   </details>
@@ -542,6 +542,9 @@ window.addEventListener('DOMContentLoaded', function () {
     var i = k.indexOf('::'), latin = i >= 0 ? k.slice(0, i) : k, rest = i >= 0 ? k.slice(i) : '';
     var f = fixLatin(latin); return rest ? f + ' ' + rest : f;
   }
+  /* Not trees: the list also records empty planting sites, stumps, paved-over sites and shrubs. A tree that isn't
+     there isn't on the map or in the count. Rows with no species ("Tree(s)") are real trees and stay. */
+  var NOT_A_TREE = /planting site|potential site|\bstump\b|\bpaved?\b|pavedtemp|\bshrub\b/i;
   function build(rows) {
     var h = rows[0], ix = {};
     h.forEach(function (k, i) { ix[k] = i; });
@@ -552,6 +555,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (pt && pt !== 'tree') continue;
       var lat = +row[ix.latitude], lon = +row[ix.longitude];
       if (!(lat > 37.6 && lat < 37.85 && lon > -122.53 && lon < -122.34)) continue;   // inside San Francisco
+      if (NOT_A_TREE.test((row[ix.species] || '').trim())) continue;   // no tree here
       var y = yearOf(row[ix.planteddate]);
       var id = info.length;
       info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
