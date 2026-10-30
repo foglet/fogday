@@ -114,22 +114,6 @@ zoom: 11.8
   .summary { margin: -4px 0 0; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
 
   /* View switch: two uppercase segments */
-  /* Year, then a simple slider: the year at 1.5em bold on the left */
-  .yearslide { display: flex; align-items: center; gap: 12px; }
-  .yearslide .yr { flex: none; min-width: 4ch; font: 700 20pt/1 var(--font); font-variant-numeric: tabular-nums; color: var(--ink); }
-  /* The slider's track is the dot-color key: the year greens, oldest at left */
-  .yearslide input[type=range] { --thumb: 20px; flex: 1; min-width: 0; margin: 0; height: 28px; cursor: pointer;
-    -webkit-appearance: none; appearance: none; background: transparent; }
-  .yearslide input[type=range]:disabled { cursor: default; opacity: .5; }
-  .yearslide input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: var(--ramp, var(--line)); }
-  .yearslide input[type=range]::-moz-range-track { height: 8px; border-radius: 4px; background: var(--ramp, var(--line)); }
-  .yearslide input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: var(--thumb); height: var(--thumb);
-    margin-top: calc(4px - var(--thumb) / 2); border-radius: 50%; background: var(--ink); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--line); }
-  .yearslide input[type=range]::-moz-range-thumb { width: var(--thumb); height: var(--thumb); border-radius: 50%; background: var(--ink); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--line); box-sizing: border-box; }
-  .yearslide input[type=range]:focus-visible { outline: none; }
-  .yearslide input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .yearslide input[type=range]:focus-visible::-moz-range-thumb { outline: 2px solid var(--accent); outline-offset: 2px; }
-
   .axis { display: flex; justify-content: space-between; gap: 8px; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
   .status { font-size: .85rem; color: var(--muted); margin: 0; }
@@ -308,7 +292,6 @@ zoom: 11.8
     .controls { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
                 padding-block: 16px calc(24px + var(--sab)); gap: 16px; }
     .summary { font-size: 1rem; }
-    .yearslide input[type=range] { height: 44px; --thumb: 26px; }
     .axis { font-size: .85rem; }
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
@@ -370,16 +353,10 @@ zoom: 11.8
   <div class="label"><span class="sky-text">Street trees</span></div>
   <p class="summary" id="summary">Loading the city's tree list…</p>
 
-  <div class="yearslide">
-    <output class="yr" id="yr" for="year" aria-live="off">—</output>
-    <input type="range" id="year" min="1972" max="2026" step="1" value="1972" aria-label="Year planted: the map shows trees planted through this year" disabled>
-  </div>
-
-
   <p class="status" id="status" role="status">Loading trees…</p>
   <details class="notes">  <!-- Info, as on /tides/: shut until tapped -->
     <summary>Info</summary>
-    <p class="note">Tap a tree for its species. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed. Trees with no planting date are always shown.</p>
+    <p class="note">Tap a tree for its species. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
   </details>
 </section>
 
@@ -746,18 +723,10 @@ window.addEventListener('DOMContentLoaded', function () {
     for (var y in state.perYear) if (+y <= state.year) n += state.perYear[y];
     return n;
   }
-  function updateCount() { $('yr').textContent = state.year; }
-
-  function drawBars() {   // the year-color key under the slider
-    $('year').style.setProperty('--ramp', 'linear-gradient(90deg,' + RAMP.join(',') + ')');
-  }
+  function updateCount() {}   // no year readout: the map shows every tree
+  function drawBars() {}
 
   /* ---------- Controls ---------- */
-  /* The slider: the map shows trees planted through its year (new ones pop in going forward) */
-  var slider = $('year');
-  slider.addEventListener('input', function () { var was = state.year; state.year = +slider.value; applyFilter(); popIn(was, state.year); });
-
-
   var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
   function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
     document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
@@ -995,8 +964,7 @@ window.addEventListener('DOMContentLoaded', function () {
     built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
     state.span[1] = Math.max(state.span[1], THIS_YEAR);
     state.year = state.span[1];   // opens on this year: today's trees. Slide back to see the city before later plantings
-    slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false;
-    $('summary').textContent = fmt.format(state.total) + ' street trees · ' + fmt.format(state.dated) + ' with a planting date';
+    $('summary').textContent = fmt.format(state.total) + ' street trees';
     $('status').hidden = true;
     addLayers(built.fc);
     fillNeighborhoods(neighborhoods());
