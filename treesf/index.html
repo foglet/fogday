@@ -124,6 +124,11 @@ zoom: 11.8
              max-height: calc(100vh - 300px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain; }
   .species li { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .species .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .species li.group { display: block; margin-top: 8px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .species li.group:first-child { margin-top: 0; }
+  .origin-sum { margin: -6px 0 0; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .origin { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .origin.native { color: #b9e886; }
   .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c); }   /* the atlas's legend dot */
   .controls > .status { padding: 0 14px 12px; }
 
@@ -370,10 +375,11 @@ zoom: 11.8
     <summary><span class="sky-text">Street Trees</span></summary>
     <div class="legend-body">
       <p class="summary" id="summary">Loading the city's tree list…</p>
+      <p class="origin-sum" id="origin"></p>
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green. Tap a tree for its name. A faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+        <p class="note">Each species has its own green. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
       </details>
     </div>
   </details>
@@ -425,6 +431,11 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     return out;
   }
+  /* California natives: species that grow wild somewhere in California, and cultivars of them (as Public Works'
+     street tree list marks "CA Native"). The city's data has no such field; this list is matched on the botanical name. */
+  var NATIVE = /^(Quercus (agrifolia|lobata|kelloggii|douglasii|chrysolepis|wislizeni|wislizenii|engelmannii|tomentella\b|garryana)|Arbutus menziesii|Aesculus californica|Platanus racemosa|Heteromeles|Umbellularia|Cercis occidentalis|Sequoia sempervirens|Sequoiadendron|(Cupressus|Hesperocyparis) (macrocarpa|forbesii|arizonica|sargentii|goveniana|abramsiana|macnabiana)|Pinus (radiata|torreyana|coulteri|attenuata|sabiniana|muricata|contorta|ponderosa|jeffreyi|lambertiana|monophylla)|Acer (macrophyllum|circinatum)|Alnus (rhombifolia|rubra)|Populus (fremontii|trichocarpa|tremuloides)|Juglans (hindsii|californica)|Lyonothamnus|Ceanothus|(Rhamnus|Frangula) californica|Prunus (ilicifolia|lyonii)|Fremontodendron|Sambucus (mexicana|cerulea|caerulea)|Cercocarpus|Garrya|(Myrica|Morella) californica|Calocedrus|Pseudotsuga menziesii|Salix lasiolepis|Cornus nuttallii(?! x)|Chilopsis|Washingtonia filifera|Torreya californica|Thuja plicata|Chamaecyparis lawsoniana|Fraxinus (latifolia|velutina|dipetala)|Lithocarpus densiflorus|Notholithocarpus|Arctostaphylos)/i;
+  var NOT_NATIVE = /tomentellaocarpa/i;   // a garbled name in the data (an Indian laurel fig), not an island oak
+  function isNative(key) { var latin = key.split('::')[0].trim(); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
   var BIG_RING = '#b9e886';   // the ring around big trees: the ramp's spring green
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
@@ -491,7 +502,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var gs = greens(list.length), colorOf = {};
     list.forEach(function (k, i) { colorOf[k] = gs[i]; });
     feats.forEach(function (f, i) { f.properties.c = colorOf[spOf[i]]; });
-    var species = list.map(function (k) { return { key: k, n: spCount[k], color: colorOf[k] }; });
+    var species = list.map(function (k) { return { key: k, n: spCount[k], color: colorOf[k], native: isNative(k) }; });
     return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
   }
 
@@ -773,16 +784,28 @@ window.addEventListener('DOMContentLoaded', function () {
     return n;
   }
   function updateCount() {}   // no year readout: the map shows every tree
-  function fillSpecies(list) {   // the legend: every species with its green, most common first
+  function fillSpecies(list) {   // the legend: California natives, then the rest; each species with its green, most common first
     var ul = $('species'), frag = document.createDocumentFragment();
-    list.forEach(function (sp) {
+    var groups = [['California native', list.filter(function (x) { return x.native; })],
+                  ['Not native', list.filter(function (x) { return !x.native && x.key !== 'Unknown'; })],
+                  ['Species not recorded', list.filter(function (x) { return x.key === 'Unknown'; })]];
+    var natN = groups[0][1].reduce(function (a, x) { return a + x.n; }, 0), notN = groups[1][1].reduce(function (a, x) { return a + x.n; }, 0);
+    $('origin').textContent = fmt.format(natN) + ' California native · ' + fmt.format(notN) + ' not native';
+    groups.forEach(function (g) {
+      if (!g[1].length) return;
+      var n = g[1].reduce(function (a, x) { return a + x.n; }, 0), hd = document.createElement('li');
+      hd.className = 'group'; hd.textContent = g[0] + ' · ' + fmt.format(n) + (g[1].length > 1 ? ' trees, ' + g[1].length + ' species' : ' trees');
+      frag.appendChild(hd);
+      g[1].forEach(addRow);
+    });
+    ul.textContent = ''; ul.appendChild(frag);
+    function addRow(sp) {
       var li = document.createElement('li'), dot = document.createElement('span'), name = document.createElement('span'), nm = splitSpecies(sp.key === 'Unknown' ? '' : sp.key);
       dot.className = 'dot'; dot.style.setProperty('--c', sp.color);
       name.className = 'name'; name.textContent = sp.key === 'Unknown' ? 'Species not recorded' : nm.common;
       if (nm.latin && nm.latin !== nm.common) li.title = nm.latin;
       li.appendChild(dot); li.appendChild(name); frag.appendChild(li);
-    });
-    ul.textContent = ''; ul.appendChild(frag);
+    }
   }
   function drawBars() {}
 
@@ -817,8 +840,9 @@ window.addEventListener('DOMContentLoaded', function () {
     if (id != null) map.setFeatureState({ source: 'trees', id: id }, { sel: true });
   }
   function treeHTML(t, tag) {
-    var sp = splitSpecies(t.sp);   // the name and Latin name only; no other details are shown
-    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '');
+    var sp = splitSpecies(t.sp), nat = t.sp.trim() && isNative(t.sp);   // name, Latin name, and native or not
+    return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '') +
+      (t.sp.trim() ? '<div class="origin' + (nat ? ' native' : '') + '">' + (nat ? 'California native' : 'Not native to California') + '</div>' : '');
   }
   function showTree(f) {
     var t = info[f.id]; if (!t) return;
