@@ -200,9 +200,7 @@ zoom: 11.8
   /* Tree popup */
   .mapboxgl-popup-content { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 400 .9rem/1.35 var(--font); box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
   .mapboxgl-popup-tip { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
-  .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; padding: 2px 7px; }
-  .mapboxgl-popup-close-button:hover { color: var(--accent); background: transparent; }
-  .pop h2 { margin: 0 18px 1px 0; font: 700 1rem/1.2 var(--font); }
+  .pop h2 { margin: 0 0 1px; font: 700 1rem/1.2 var(--font); }
   .pop .latin { color: var(--muted); }
 
   /* Mapbox corners clear the home indicator and notch; controls in the panel color with the muted icon tint, as on /transit/ */
@@ -1007,7 +1005,7 @@ window.addEventListener('DOMContentLoaded', function () {
   sheetHeight();
 
   /* ---------- Popups ---------- */
-  var popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px', offset: 8 });
+  var popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px', offset: 8 });   // no X: a tap elsewhere on the map or Escape closes it
   var selected = null;
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   /* Botanical names written the standard way (ICN / ICNCP): genus capitalized and italic, species and lower epithets
