@@ -105,7 +105,7 @@ zoom: 11.8
   /* The legend, bottom left above the Mapbox logo (below the map on upright phones), as on /transit/ and the atlas:
      shut, it is just its title; open, a frosted panel with the total, every species and its green, and Info. */
   .controls {
-    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 320px;
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 330px;
     max-width: calc(100% - 24px - var(--sal) - var(--sar));
     border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 8px;
     transition: background-color .18s ease, border-color .18s ease;
@@ -128,7 +128,6 @@ zoom: 11.8
   .species li.group:first-child { margin-top: 0; }
   /* Sort: three plain text buttons; the one in use is bold ink, the others muted */
   .sortby { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 2px; font-size: .8rem; }
-  .sortby .lbl { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .sortby button { all: unset; cursor: pointer; color: var(--muted); padding: 2px 0; }
   .sortby button:hover { color: var(--accent); }
   .sortby button[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
@@ -163,7 +162,7 @@ zoom: 11.8
      No panel: each line gets its own frosted background, only as wide as its text; flush left with the controls' text */
   .oa-detail-panel {
     position: fixed; z-index: 2; left: calc(19px + var(--sal)); bottom: calc(58px + var(--sab) + var(--ctrl, 0px));
-    max-width: min(306px, calc(100vw - 38px - var(--sal) - var(--sar))); font-size: .9rem; line-height: 1.35;
+    max-width: min(316px, calc(100vw - 38px - var(--sal) - var(--sar))); font-size: .9rem; line-height: 1.35;
   }
   .oa-detail-panel[hidden] { display: none; }
   .oa-detail-panel > div {
@@ -390,7 +389,6 @@ zoom: 11.8
       <p class="summary" id="summary">Loading the city's tree list…</p>
       <p class="origin-sum" id="origin"></p>
       <div class="sortby" role="group" aria-label="Sort the species">
-        <span class="lbl">Sort</span>
         <button type="button" data-sort="count" aria-pressed="true">Most trees</button>
         <button type="button" data-sort="common" aria-pressed="false">Common name</button>
         <button type="button" data-sort="latin" aria-pressed="false">Latin name</button>
