@@ -653,7 +653,7 @@ window.addEventListener('DOMContentLoaded', function () {
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
   /* The title flies back to the whole city */
   document.querySelector('[data-home]').addEventListener('click', function () {
-    setHoodLine(''); if (pickK != null) pickSpecies(null);
+    setHoodLine(''); lastHood = ''; if (pickK != null) pickSpecies(null);
     if (calm.matches) map.jumpTo(HOME); else map.flyTo(Object.assign({ speed: 1.2, curve: 1.42, essential: true }, HOME));
   });
 
@@ -702,6 +702,15 @@ window.addEventListener('DOMContentLoaded', function () {
   /* The outline fades over 15 seconds and is then gone (as the tapped-spot dot does). A new pick starts it again.
      Reduced motion: no fade; it simply goes at 15 seconds. */
   var HOOD_LIFE = 15000, HOOD_OPACITY = 0.5, hoodFade = 0, hoodEnd = 0;
+  /* Neighborhoods show only when asked for: picked from the folded-map menu, found by search, or walked into. Walking:
+     after one has been shown, panning the map's middle into a neighborhood next to it outlines that one (and so on,
+     neighbor to neighbor). The title (whole city) or Escape ends the walk. Nothing shows on load. */
+  var lastHood = '';
+  map.on('moveend', function (e) {
+    if (!e.originalEvent || !lastHood || map.getZoom() < 13) return;   // only the visitor's own panning
+    var c = map.getCenter(), here = hoodAt(c.lng, c.lat);
+    if (here && here !== hoodOn && here !== lastHood && hoodNext[lastHood] && hoodNext[lastHood][here]) setHoodLine(here);
+  });
   function hoodStop() { cancelAnimationFrame(hoodFade); clearTimeout(hoodEnd); hoodFade = 0; }
   function setHoodOpacity(o) { if (map.getLayer('hood-line')) map.setPaintProperty('hood-line', 'line-opacity', o); }
   function setHoodLine(name) {
@@ -713,6 +722,7 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     setHoodOpacity(HOOD_OPACITY);
     if (!hoodOn) return;
+    lastHood = hoodOn;
     hoodEnd = setTimeout(function () { setHoodLine(''); }, HOOD_LIFE);
     if (calm.matches) return;
     var t0 = performance.now();
@@ -802,7 +812,7 @@ window.addEventListener('DOMContentLoaded', function () {
           var p = f.properties || {};
           var hood = p.context && p.context.neighborhood && p.context.neighborhood.name;
           return { name: p.name || p.full_address || q, where: p.feature_type === 'neighborhood' ? 'Neighborhood' : (hood || ''),
-                   center: f.geometry.coordinates, zoom: ZOOM[p.feature_type] || 16 };
+                   center: f.geometry.coordinates, zoom: ZOOM[p.feature_type] || 16, type: p.feature_type };
         });
       }).catch(function () { return null; }).then(function (p) {
         if (mine !== turn) return;   // a newer keystroke won
@@ -819,6 +829,10 @@ window.addEventListener('DOMContentLoaded', function () {
       var t = spotTurn;   // the place's details appear on landing, unless a tap came first
       map.once('moveend', function () {
         if (t !== spotTurn) return;
+        if (f.type === 'neighborhood' || f.type === 'locality') {   // a neighborhood: its outline, from the city's boundaries
+          var nh = hoodAt(f.center[0], f.center[1]);
+          if (nh) { var bb = hoodBounds(nh); setHoodLine(nh); if (bb) map.fitBounds(bb, { padding: PHONE.matches ? 28 : 60, maxZoom: 16, duration: calm.matches ? 0 : 900, essential: true }); return; }
+        }
         var tree = f.zoom >= 16 ? treeAt(map.project(f.center)) : null;
         if (tree) { showTree(tree); showSpot(mapboxgl.LngLat.convert(tree.geometry.coordinates), tree); }
         else showSpot(mapboxgl.LngLat.convert(f.center));
@@ -929,8 +943,29 @@ window.addEventListener('DOMContentLoaded', function () {
     });
     applyFilter();
   }
+  /* Which neighborhoods touch: they share boundary points in the city's file (two or more in common) */
+  var hoodNext = {};
+  function buildAdjacency(geo) {
+    var at = {};
+    geo.features.forEach(function (f) {
+      var name = f.properties && f.properties.nhood, g = f.geometry; if (!name || !g) return;
+      (function walk(c) { if (typeof c[0] === 'number') { var k = c[0].toFixed(5) + ',' + c[1].toFixed(5); (at[k] = at[k] || {})[name] = 1; } else c.forEach(walk); })(g.coordinates);
+    });
+    var shared = {};
+    Object.keys(at).forEach(function (k) {
+      var names = Object.keys(at[k]);
+      for (var a = 0; a < names.length; a++) for (var b = a + 1; b < names.length; b++) {
+        var key = names[a] < names[b] ? names[a] + '|' + names[b] : names[b] + '|' + names[a];
+        shared[key] = (shared[key] || 0) + 1;
+      }
+    });
+    Object.keys(shared).forEach(function (key) {
+      if (shared[key] < 2) return;
+      var p = key.split('|'); (hoodNext[p[0]] = hoodNext[p[0]] || {})[p[1]] = 1; (hoodNext[p[1]] = hoodNext[p[1]] || {})[p[0]] = 1;
+    });
+  }
   function addHoodLayers(geo) {   // the picked neighborhood's boundary: red at 50%, 3px at most (thinner when zoomed out)
-    hoodGeo = geo;
+    hoodGeo = geo; buildAdjacency(geo);
     map.addSource('hoods', { type: 'geojson', data: geo });
     map.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: ['==', ['get', 'nhood'], hoodOn],
       layout: { 'line-join': 'round' },
@@ -1313,7 +1348,7 @@ window.addEventListener('DOMContentLoaded', function () {
     else if (isOpen()) { setPop(false); pin.focus(); }
     else if (popup.isOpen() || !treeCard.hidden) clearTree();
     else if (!spotCard.hidden) clearSpot();
-    else if (hoodOn) setHoodLine('');
+    else if (hoodOn || lastHood) { setHoodLine(''); lastHood = ''; }
     else if (pickK != null) pickSpecies(null);
   });
 
@@ -1343,6 +1378,8 @@ window.addEventListener('DOMContentLoaded', function () {
       var id = l.id, t = l.type;
       try {
         if (/^trees|^hood/.test(id)) return;
+        // No neighborhood names from the base map: a neighborhood shows only when picked, searched or walked into
+        if (t === 'symbol' && /settlement-subdivision|neighbou?rhood/.test(id)) { map.setLayoutProperty(id, 'visibility', 'none'); return; }
         if (t === 'background') map.setPaintProperty(id, 'background-color', NAVY.land);
         else if (t === 'fill') {
           var c = /water/.test(id) ? NAVY.water : /building/.test(id) ? NAVY.building : /park|pitch|landcover|national|wood|grass|golf|cemetery/.test(id) ? NAVY.park : NAVY.land;
