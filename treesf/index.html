@@ -397,6 +397,11 @@ window.addEventListener('DOMContentLoaded', function () {
      planttype is filtered in build() too (the data mixes "Tree" and "tree").
      description holds the address ("112 Judson Ave | Tree 1"); mapdbh is trunk diameter in inches. */
   var LOCAL_URL = '{{ "/treesf/trees.csv" | relative_url }}';
+  /* Neighborhood boundaries: DataSF Analysis Neighborhoods, the same 41 names the tree list uses. A copy sits beside
+     this page (refreshed with the trees); if it can't be read, the page asks DataSF. */
+  var HOODS_LOCAL = '{{ "/treesf/neighborhoods.geojson" | relative_url }}';
+  var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
+  var HOOD_RED = '#e5372e';
   var DATA_URL = 'https://data.sf.gov/resource/tkzw-k3nq.csv?$select=' +
     ['treeid', 'species', 'description', 'planteddate', 'latitude', 'longitude', 'legalstatus', 'mapdbh', 'analysis_neighborhood', 'planttype'].join(',') +
     '&$where=latitude%20IS%20NOT%20NULL&$limit=1000000';
@@ -497,6 +502,7 @@ window.addEventListener('DOMContentLoaded', function () {
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
   /* The title flies back to the whole city */
   document.querySelector('[data-home]').addEventListener('click', function () {
+    setHoodLine('');
     if (calm.matches) map.jumpTo(HOME); else map.flyTo(Object.assign({ speed: 1.2, curve: 1.42, essential: true }, HOME));
   });
 
@@ -529,11 +535,32 @@ window.addEventListener('DOMContentLoaded', function () {
     hoods.forEach(function (h) {
       var li = document.createElement('li'), b = document.createElement('button'), sp = document.createElement('span');
       b.type = 'button'; sp.textContent = h.name; b.appendChild(sp); li.appendChild(b); popList.appendChild(li);
-      b.addEventListener('click', function () {
-        setPop(false); clearSpot(); clearTree();
-        if (calm.matches) map.jumpTo({ center: h.center, zoom: 14.6 }); else map.flyTo({ center: h.center, zoom: 14.6, speed: 1.4, essential: true });
-      });
+      b.addEventListener('click', function () { setPop(false); clearSpot(); clearTree(); showHood(h); });
     });
+  }
+  /* A picked neighborhood: a red line around its boundary, and the map fits it. Without boundaries, it flies to the
+     middle of the neighborhood's trees. The line stays until another pick, the title (whole city) or Escape. */
+  var hoodGeo = null, hoodOn = '';
+  function hoodBounds(name) {
+    var f = hoodGeo && hoodGeo.features.filter(function (x) { return x.properties && x.properties.nhood === name; })[0];
+    if (!f || !f.geometry) return null;
+    var b = [Infinity, Infinity, -Infinity, -Infinity];
+    (function walk(c) { if (typeof c[0] === 'number') { b[0] = Math.min(b[0], c[0]); b[1] = Math.min(b[1], c[1]); b[2] = Math.max(b[2], c[0]); b[3] = Math.max(b[3], c[1]); } else c.forEach(walk); })(f.geometry.coordinates);
+    return [[b[0], b[1]], [b[2], b[3]]];
+  }
+  function setHoodLine(name) {
+    hoodOn = name || '';
+    if (map.getLayer('hood-line')) {
+      var f = ['==', ['get', 'nhood'], hoodOn];
+      map.setFilter('hood-line', f); map.setFilter('hood-casing', f);
+    }
+  }
+  function showHood(h) {
+    setHoodLine(h.name);
+    var bb = hoodBounds(h.name), pad = PHONE.matches ? 28 : 60;
+    if (bb) map.fitBounds(bb, { padding: pad, maxZoom: 16, duration: calm.matches ? 0 : 1400, essential: true });
+    else if (calm.matches) map.jumpTo({ center: h.center, zoom: 14.6 });
+    else map.flyTo({ center: h.center, zoom: 14.6, speed: 1.4, essential: true });
   }
   pin.addEventListener('click', function () { setPop(!isOpen()); });
   document.addEventListener('pointerdown', function (e) { if (isOpen() && !regionsCtrl.contains(e.target)) setPop(false); }, true);
@@ -688,6 +715,15 @@ window.addEventListener('DOMContentLoaded', function () {
       paint: { 'circle-color': POP, 'circle-radius': radius(1), 'circle-opacity': 0 }
     });
     applyFilter();
+  }
+  function addHoodLayers(geo) {   // the picked neighborhood's boundary: red, over a dark casing so it reads over the trees
+    hoodGeo = geo;
+    map.addSource('hoods', { type: 'geojson', data: geo });
+    var none = ['==', ['get', 'nhood'], hoodOn];
+    map.addLayer({ id: 'hood-casing', type: 'line', source: 'hoods', filter: none,
+      layout: { 'line-join': 'round' }, paint: { 'line-color': '#021724', 'line-opacity': .7, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 16, 7] } });
+    map.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: none,
+      layout: { 'line-join': 'round' }, paint: { 'line-color': HOOD_RED, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 3.5] } });
   }
 
   function applyFilter() {
@@ -894,6 +930,7 @@ window.addEventListener('DOMContentLoaded', function () {
     else if (isOpen()) { setPop(false); pin.focus(); }
     else if (popup.isOpen() || !treeCard.hidden) clearTree();
     else if (!spotCard.hidden) clearSpot();
+    else if (hoodOn) setHoodLine('');
   });
 
   /* ---------- Load ---------- */
@@ -906,10 +943,38 @@ window.addEventListener('DOMContentLoaded', function () {
       return t;
     });
   }
+  function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
+  var hoodsP = getJSON(HOODS_LOCAL).catch(function () { return getJSON(HOODS_URL); })
+    .then(function (g) { return g && g.features && g.features.length ? g : null; }).catch(function () { return null; });
   var dataP = getCSV(LOCAL_URL, 'fogday.com').catch(function () {
     $('status').textContent = 'Downloading trees from DataSF…';
     return getCSV(DATA_URL, 'DataSF');
   }).then(function (t) { $('status').textContent = 'Reading trees…'; return t; });
+  /* Dark blue base map: Mapbox's dark style is grey, so its land, water, roads and buildings are recolored to the
+     page's navy on load (the transit and atlas pages' blue). Labels keep their color with a navy halo. */
+  var NAVY = { land: '#0b2233', water: '#021724', park: '#0d2a33', road: '#1b3a54', roadMinor: '#15314a', building: '#12304a', halo: '#021724' };
+  function navyBase() {
+    var ls = (map.getStyle() && map.getStyle().layers) || [];
+    ls.forEach(function (l) {
+      var id = l.id, t = l.type;
+      try {
+        if (/^trees|^hood/.test(id)) return;
+        if (t === 'background') map.setPaintProperty(id, 'background-color', NAVY.land);
+        else if (t === 'fill') {
+          var c = /water/.test(id) ? NAVY.water : /building/.test(id) ? NAVY.building : /park|pitch|landcover|national|wood|grass|golf|cemetery/.test(id) ? NAVY.park : NAVY.land;
+          map.setPaintProperty(id, 'fill-color', c);
+        }
+        else if (t === 'fill-extrusion') map.setPaintProperty(id, 'fill-extrusion-color', NAVY.building);
+        else if (t === 'line') {
+          var lc = /water/.test(id) ? NAVY.water : /admin|boundary/.test(id) ? null
+                 : /street|minor|path|service|track|pedestrian|steps/.test(id) ? NAVY.roadMinor : /road|bridge|tunnel|motorway|trunk|primary|secondary|tertiary|rail/.test(id) ? NAVY.road : null;
+          if (lc) map.setPaintProperty(id, 'line-color', lc);
+        }
+        else if (t === 'symbol' && l.layout && l.layout['text-field']) map.setPaintProperty(id, 'text-halo-color', NAVY.halo);
+      } catch (e) {}   // a layer without that paint property is left as it is
+    });
+  }
+  map.on('style.load', navyBase);
   var styleP = new Promise(function (res) { map.on('load', res); });
   /* Map credits: on a narrow map Mapbox shows them as an (i) button but opens them on load. Fold them to just the
      button, as the Oyster Atlas shows; tapping (i) still opens them. */
@@ -928,12 +993,14 @@ window.addEventListener('DOMContentLoaded', function () {
     // Stray dates before the slider floor still show; they sit at the floor year
     for (var y in state.perYear) if (+y < state.span[0]) { state.perYear[state.span[0]] = (state.perYear[state.span[0]] || 0) + state.perYear[y]; delete state.perYear[y]; }
     built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
-    state.year = state.span[0];   // opens on the base (undated trees and the earliest plantings); slide forward to watch trees arrive
+    state.span[1] = Math.max(state.span[1], THIS_YEAR);
+    state.year = state.span[1];   // opens on this year: today's trees. Slide back to see the city before later plantings
     slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false;
     $('summary').textContent = fmt.format(state.total) + ' street trees · ' + fmt.format(state.dated) + ' with a planting date';
     $('status').hidden = true;
     addLayers(built.fc);
     fillNeighborhoods(neighborhoods());
+    hoodsP.then(function (g) { if (g) addHoodLayers(g); });   // boundaries are extra: the map works without them
     sheetHeight();
   }).catch(function (err) {
     var s = $('status'); s.classList.add('error');
