@@ -128,7 +128,7 @@ zoom: 11.8
   .sky-text { color: #4a90c8; }
   .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
   .species { list-style: none; margin: 0 -6px; padding: 2px 6px; display: grid; gap: 6px; font-size: .9rem;
-             max-height: calc(100vh - 300px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain; }
+             max-height: max(72px, calc(100vh - var(--legend-top, 360px) - var(--sat) - var(--sab))); overflow-y: auto; overscroll-behavior: contain; }
   .species li { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .species .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; cursor: pointer; border-radius: 4px; padding: 2px 4px; }
   .species .pick:hover .name { color: var(--accent); }
@@ -150,6 +150,10 @@ zoom: 11.8
   .leafkey { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
   .leafkey .dot { width: 10px; height: 10px; }
   .leafkey .dot + .dot, .leafkey .dot:not(:first-child) { margin-left: 8px; }
+  .origin-pick { display: flex; flex-wrap: wrap; column-gap: 14px; row-gap: 2px; font-size: .85rem; margin-top: -2px; }
+  .origin-pick label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--muted); }
+  .origin-pick label:has(input:checked) { color: var(--ink); }
+  .origin-pick input { margin: 0; width: 15px; height: 15px; accent-color: #6fbf5a; cursor: pointer; }
   .origin-sum { margin: -6px 0 0; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
   .origin { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .origin.native { color: #b9e886; }
@@ -337,6 +341,9 @@ zoom: 11.8
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .summary, .species { font-size: 1rem; }
     .sortby { font-size: .95rem; column-gap: 16px; }
+    .origin-pick { font-size: .95rem; column-gap: 18px; }
+    .origin-pick label { min-height: 40px; }
+    .origin-pick input { width: 18px; height: 18px; }
     .sortby button { padding: 10px 0; }
     .species { max-height: none; overflow: visible; }   /* the page scrolls instead */
     .species .pick { min-height: 36px; }
@@ -403,6 +410,11 @@ zoom: 11.8
     <div class="legend-body">
       <p class="summary" id="summary">Loading the city's tree list…</p>
       <p class="origin-sum" id="origin"></p>
+      <div class="origin-pick" role="radiogroup" aria-label="Which trees to show">   <!-- not remembered: every load opens on Both -->
+        <label><input type="radio" name="origin" value="both" checked autocomplete="off"> Both</label>
+        <label><input type="radio" name="origin" value="native" autocomplete="off"> Native</label>
+        <label><input type="radio" name="origin" value="non" autocomplete="off"> Non-native</label>
+      </div>
       <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Darker greens: evergreen <span class="dot" style="--c:#9fd77a"></span>Lighter: deciduous</p>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="common" aria-pressed="true">Common name<span class="ord"></span></button>
@@ -596,6 +608,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var k = spOf[i], c = f.geometry.coordinates, e = ext[k];
       f.properties.c = colorOf[k]; f.properties.k = rank[k];   // k: the species' number, for the legend's pick
       if (k !== 'Unknown' && isNative(k)) f.properties.n = 1;   // n: California native
+      if (k === 'Unknown') f.properties.u = 1;                  // u: species not recorded (neither native nor non-native)
       e[0] = Math.min(e[0], c[0]); e[1] = Math.min(e[1], c[1]); e[2] = Math.max(e[2], c[0]); e[3] = Math.max(e[3], c[1]);
     });
     var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), deciduous: isDeciduous(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
@@ -819,9 +832,18 @@ window.addEventListener('DOMContentLoaded', function () {
     return ['case', ['==', ['get', 'y'], 0], getComputedStyle(document.documentElement).getPropertyValue('--undated').trim() || '#6d7d74', e];
   }
 
+  /* Native / Non-native / Both, from the legend's radio buttons. Both shows every tree, including those with no
+     species recorded; Native and Non-native show only trees known to be one or the other. Always opens on Both. */
+  var origin = 'both';
+  function originExpr() {
+    if (origin === 'native') return ['==', ['get', 'n'], 1];
+    if (origin === 'non') return ['all', ['!=', ['coalesce', ['get', 'n'], 0], 1], ['!=', ['coalesce', ['get', 'u'], 0], 1]];
+    return true;
+  }
   function filterExpr() {
     var dated = ['all', ['>', ['get', 'y'], 0], ['<=', ['get', 'y'], state.year]];
-    return state.undated ? ['any', ['==', ['get', 'y'], 0], dated] : dated;
+    var when = state.undated ? ['any', ['==', ['get', 'y'], 0], dated] : dated;
+    return origin === 'both' ? when : ['all', when, originExpr()];
   }
 
   function radius(k) {   // the dot size at each zoom, times k
@@ -904,7 +926,8 @@ window.addEventListener('DOMContentLoaded', function () {
     var op = pickK == null ? 0.9 : ['case', ['==', ['get', 'k'], pickK], 1, 0.07];
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
       ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, op] : op);
-    map.setFilter('trees-big', pickK == null ? ['==', ['get', 'b'], 1] : ['all', ['==', ['get', 'b'], 1], ['==', ['get', 'k'], pickK]]);
+    var big = ['all', ['==', ['get', 'b'], 1], originExpr()];
+    map.setFilter('trees-big', pickK == null ? big : big.concat([['==', ['get', 'k'], pickK]]));
     map.setLayoutProperty('trees-heat', 'visibility', state.mode === 'density' ? 'visible' : 'none');
     updateCount(); drawBars();
   }
@@ -951,8 +974,9 @@ window.addEventListener('DOMContentLoaded', function () {
                   ['Species not recorded', list.filter(function (x) { return x.key === 'Unknown'; })]];
     var natN = groups[0][1].reduce(function (a, x) { return a + x.n; }, 0), notN = groups[1][1].reduce(function (a, x) { return a + x.n; }, 0);
     $('origin').textContent = fmt.format(natN) + ' California native · ' + fmt.format(notN) + ' not native';
-    groups.forEach(function (g) {
+    groups.forEach(function (g, gi) {
       if (!g[1].length) return;
+      if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice
       var n = g[1].reduce(function (a, x) { return a + x.n; }, 0), hd = document.createElement('li');
       hd.className = 'group'; hd.textContent = g[0] + ' · ' + fmt.format(n) + (g[1].length > 1 ? ' trees, ' + g[1].length + ' species' : ' trees');
       frag.appendChild(hd);
@@ -983,6 +1007,16 @@ window.addEventListener('DOMContentLoaded', function () {
   /* Tap a species in the legend to see its distribution: the map fits its trees and fades every other tree.
      Tap it again, tap the title, or press Escape to show all trees. On phones the page scrolls up to the map. */
   var pickK = null;
+  [].forEach.call(document.querySelectorAll('.origin-pick input'), function (r) {
+    r.addEventListener('change', function () {
+      if (!r.checked) return;
+      origin = r.value;
+      // a picked species outside the new choice is let go
+      if (pickK != null) { var sp = speciesList.filter(function (x) { return x.i === pickK; })[0];
+        if (sp && ((origin === 'native' && !sp.native) || (origin === 'non' && (sp.native || sp.key === 'Unknown')))) pickK = null; }
+      clearTree(); applyFilter(); fillSpecies(speciesList); sheetHeight();
+    });
+  });
   function pickSpecies(sp) {
     pickK = sp ? sp.i : null;
     clearTree(); clearSpot();
@@ -1001,7 +1035,17 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   window.addEventListener('resize', function () { sheetHeight(); drawBars(); });
   document.querySelector('.notes').addEventListener('toggle', sheetHeight);
-  $('legend').addEventListener('toggle', sheetHeight);   // Info opening grows the card; the spot card stays above it
+  $('legend').addEventListener('toggle', sheetHeight);
+  /* Desktop: the open legend's list stops short of the title at the top; --legend-top is everything else the legend
+     and the title take up (measured, since fonts and wrapping vary) */
+  function fitLegend() {
+    if (PHONE.matches || !$('legend').open) return;
+    var ul = $('species'), card = $('controls'), title = document.querySelector('.top');
+    var other = card.offsetHeight - ul.offsetHeight, above = title.getBoundingClientRect().bottom + 12, below = window.innerHeight - card.getBoundingClientRect().bottom;
+    document.documentElement.style.setProperty('--legend-top', Math.ceil(other + above + below) + 'px');
+  }
+  $('legend').addEventListener('toggle', fitLegend); window.addEventListener('resize', fitLegend);
+  document.querySelector('.notes').addEventListener('toggle', fitLegend);   // Info opening grows the card; the spot card stays above it
   sheetHeight();
 
   /* ---------- Popups ---------- */
@@ -1193,6 +1237,10 @@ window.addEventListener('DOMContentLoaded', function () {
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
     spotMarker.setLngLat(ll).addTo(map); spotStart();
     placeName(lng, lat).then(function (pl) {
+      // A tree knows its own neighborhood (the city's list records it); that wins over the boundary lookup, which can
+      // miss trees on a boundary street or in a gap between the polygons
+      var own = tree && info[tree.id] && info[tree.id].nb;
+      if (own) { pl.hood = own; if (/^(Open water|Place name unavailable)$/.test(pl.city)) pl.city = 'San Francisco, CA'; }
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
