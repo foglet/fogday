@@ -388,6 +388,7 @@ window.addEventListener('DOMContentLoaded', function () {
 
   // Year color ramp, all greens: deep forest (oldest) → leaf → spring green (newest). Stops spread over the data's year span.
   var RAMP = ['#2f7a45', '#3f9e4f', '#74c25a', '#b9e886'];
+  var BIG_RING = '#b9e886';   // the ring around big trees: the ramp's spring green
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
   /* ---------- CSV ---------- */
@@ -442,7 +443,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var id = info.length;
       info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
                   st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
-      feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y } });
+      feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, b: +row[ix.mapdbh] > 24 ? 1 : 0 } });   // b: trunk over two feet across (mapdbh is in inches)
       if (y) perYear[y] = (perYear[y] || 0) + 1;
       var nb = row[ix.analysis_neighborhood];
       if (nb) { var hs = hoodSum[nb] || (hoodSum[nb] = [0, 0, 0]); hs[0] += lon; hs[1] += lat; hs[2]++; }
@@ -674,6 +675,12 @@ window.addEventListener('DOMContentLoaded', function () {
         'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
           0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#b9e886', 1, '#e2ffc4']
       }
+    });
+    /* Big trees, trunk more than two feet in diameter (about 5,800): a 10px ring, 80% opaque, drawn under the dot */
+    map.addLayer({
+      id: 'trees-big', type: 'circle', source: 'trees', filter: ['==', ['get', 'b'], 1],
+      paint: { 'circle-radius': radius(1), 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 10,
+               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.8 }
     });
     map.addLayer({
       id: 'trees-dots', type: 'circle', source: 'trees',
