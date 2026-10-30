@@ -529,7 +529,7 @@ window.addEventListener('DOMContentLoaded', function () {
     hoodOn = name || '';
     if (map.getLayer('hood-line')) {
       var f = ['==', ['get', 'nhood'], hoodOn];
-      map.setFilter('hood-line', f); map.setFilter('hood-casing', f);
+      map.setFilter('hood-line', f);
     }
   }
   function showHood(h) {
@@ -693,14 +693,12 @@ window.addEventListener('DOMContentLoaded', function () {
     });
     applyFilter();
   }
-  function addHoodLayers(geo) {   // the picked neighborhood's boundary: red, over a dark casing so it reads over the trees
+  function addHoodLayers(geo) {   // the picked neighborhood's boundary: red at 50%, 3px at most (thinner when zoomed out)
     hoodGeo = geo;
     map.addSource('hoods', { type: 'geojson', data: geo });
-    var none = ['==', ['get', 'nhood'], hoodOn];
-    map.addLayer({ id: 'hood-casing', type: 'line', source: 'hoods', filter: none,
-      layout: { 'line-join': 'round' }, paint: { 'line-color': '#021724', 'line-opacity': .7, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 16, 7] } });
-    map.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: none,
-      layout: { 'line-join': 'round' }, paint: { 'line-color': HOOD_RED, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 3.5] } });
+    map.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: ['==', ['get', 'nhood'], hoodOn],
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': HOOD_RED, 'line-opacity': 0.5, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 15, 3] } });
   }
 
   function applyFilter() {
