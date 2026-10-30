@@ -138,6 +138,7 @@ zoom: 11.8
   .origin { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .origin.native { color: #b9e886; }
   .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c); }   /* the atlas's legend dot */
+  .dot.native { box-shadow: 0 0 0 1.5px #f1ffe3; }   /* the map's light outline on natives */
   .controls > .status { padding: 0 14px 12px; }
 
   /* View switch: two uppercase segments */
@@ -395,7 +396,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+        <p class="note">Each species has its own green. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
       </details>
     </div>
   </details>
@@ -452,6 +453,8 @@ window.addEventListener('DOMContentLoaded', function () {
   var NATIVE = /^(Quercus (agrifolia|lobata|kelloggii|douglasii|chrysolepis|wislizeni|wislizenii|engelmannii|tomentella\b|garryana)|Arbutus menziesii|Aesculus californica|Platanus racemosa|Heteromeles|Umbellularia|Cercis occidentalis|Sequoia sempervirens|Sequoiadendron|(Cupressus|Hesperocyparis) (macrocarpa|forbesii|arizonica|sargentii|goveniana|abramsiana|macnabiana)|Pinus (radiata|torreyana|coulteri|attenuata|sabiniana|muricata|contorta|ponderosa|jeffreyi|lambertiana|monophylla)|Acer (macrophyllum|circinatum)|Alnus (rhombifolia|rubra)|Populus (fremontii|trichocarpa|tremuloides)|Juglans (hindsii|californica)|Lyonothamnus|Ceanothus|(Rhamnus|Frangula) californica|Prunus (ilicifolia|lyonii)|Fremontodendron|Sambucus (mexicana|cerulea|caerulea)|Cercocarpus|Garrya|(Myrica|Morella) californica|Calocedrus|Pseudotsuga menziesii|Salix lasiolepis|Cornus nuttallii(?! x)|Chilopsis|Washingtonia filifera|Torreya californica|Thuja plicata|Chamaecyparis lawsoniana|Fraxinus (latifolia|velutina|dipetala)|Lithocarpus densiflorus|Notholithocarpus|Arctostaphylos)/i;
   var NOT_NATIVE = /tomentellaocarpa/i;   // a garbled name in the data (an Indian laurel fig), not an island oak
   function isNative(key) { var latin = key.split('::')[0].trim(); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
+  var NATIVE_LINE = '#f1ffe3';   // the light outline on California natives
+  function nativeStroke(w) { return ['case', ['boolean', ['feature-state', 'sel'], false], 2, ['==', ['get', 'n'], 1], w, 0]; }
   var BIG_RING = '#b9e886';   // the ring around big trees: the ramp's spring green
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
@@ -517,7 +520,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
     var gs = greens(list.length), colorOf = {};
     list.forEach(function (k, i) { colorOf[k] = gs[i]; });
-    feats.forEach(function (f, i) { f.properties.c = colorOf[spOf[i]]; });
+    feats.forEach(function (f, i) { f.properties.c = colorOf[spOf[i]]; if (spOf[i] !== 'Unknown' && isNative(spOf[i])) f.properties.n = 1; });   // n: California native
     var species = list.map(function (k) { return { key: k, n: spCount[k], color: colorOf[k], native: isNative(k) }; });
     return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
   }
@@ -759,8 +762,10 @@ window.addEventListener('DOMContentLoaded', function () {
         'circle-color': ['get', 'c'],   // the tree's species green
         'circle-radius': radius(1),
         'circle-opacity': 0.9,
-        'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2, 0],
-        'circle-stroke-color': '#ffffff'
+        /* California natives get a light outline (thin when zoomed out); the tapped tree a 2px white one */
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, nativeStroke(0.6), 16, nativeStroke(1.4)],
+        'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#ffffff', NATIVE_LINE],
+        'circle-stroke-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0.85]
       }
     });
     /* Trees the slider just added, drawn over the rest: they pop in large and pale, then shrink and fade to show the
@@ -837,7 +842,7 @@ window.addEventListener('DOMContentLoaded', function () {
     ul.textContent = ''; ul.appendChild(frag);
     function addRow(sp) {
       var li = document.createElement('li'), dot = document.createElement('span'), name = document.createElement('span'), nm = splitSpecies(sp.key === 'Unknown' ? '' : sp.key);
-      dot.className = 'dot'; dot.style.setProperty('--c', sp.color);
+      dot.className = 'dot' + (sp.native ? ' native' : ''); dot.style.setProperty('--c', sp.color);
       var latinFirst = sortBy === 'latin' && sp.key !== 'Unknown' && nm.latin;
       name.className = 'name' + (latinFirst ? ' latin' : '');
       name.textContent = sp.key === 'Unknown' ? 'Species not recorded' : latinFirst ? nm.latin : nm.common;
