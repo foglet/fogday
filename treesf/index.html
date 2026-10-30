@@ -1,0 +1,460 @@
+---
+layout: null   # self-contained map page
+title: Street Trees of San Francisco
+description: Where and when San Francisco's street trees were planted. 144,000 trees from the city's Street Tree List, colored by planting year. A map by Fogday Studios.
+access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
+center: [-122.4425, 37.7585]
+zoom: 11.8
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#0a1712">
+
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&display=swap">
+
+<style>
+  /* Street Trees of San Francisco — one self-contained page. Always dark: points read best on a dark city.
+     Layout: full-bleed map; title card top left; control card bottom left (a bottom sheet on phones). */
+  :root {
+    --bg: #0a1712; --panel: #11231b; --ink: #e4ece6; --muted: #93a89b; --line: #26402f; --accent: #c8e35a;
+    --undated: #6d7d74;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    --display: "Fira Sans", "Source Sans 3", Seravek, "Segoe UI", Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; }
+  #map { position: fixed; inset: 0; }
+
+  .card {
+    position: fixed; z-index: 2;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border: 1px solid var(--line); border-radius: 10px;
+  }
+  .title { top: calc(12px + var(--sat)); left: calc(12px + var(--sal)); padding: 10px 14px 11px; max-width: min(360px, calc(100vw - 24px - var(--sal) - var(--sar))); }
+  .title h1 { margin: 0; font: 500 1.15rem/1.15 var(--display); letter-spacing: .01em; text-wrap: balance; }
+  .title p { margin: 3px 0 0; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .title a { color: inherit; }
+
+  .controls { left: calc(12px + var(--sal)); bottom: calc(36px + var(--sab)); width: 360px; padding: 12px 14px 14px; display: grid; gap: 12px; }
+
+  /* Mode switch: two segments */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .modes button {
+    font: 600 .9rem/1 var(--font); color: var(--muted); background: transparent; border: 0; padding: 9px 6px; cursor: pointer;
+  }
+  .modes button + button { border-left: 1px solid var(--line); }
+  .modes button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Year readout + play */
+  .yearrow { display: flex; align-items: end; justify-content: space-between; gap: 10px; }
+  .yearread { display: grid; gap: 1px; min-width: 0; }
+  .yearread .lbl { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .yearread .yr { font: 700 1.9rem/1 var(--display); font-variant-numeric: tabular-nums; }
+  .yearread .n { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .play {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); cursor: pointer; display: grid; place-items: center;
+  }
+  .play svg { width: 16px; height: 16px; fill: currentColor; }
+
+  /* Plantings-per-year bars sit on the slider track */
+  .timeline { display: grid; gap: 4px; }
+  #bars { width: 100%; height: 54px; display: block; }
+  input[type=range] { width: 100%; margin: 0; accent-color: var(--accent); }
+  .axis { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .legend { display: grid; gap: 6px; font-size: .85rem; }
+  .ramp { height: 8px; border-radius: 4px; }
+  .legend .axis { margin-top: -2px; }
+  .check { display: flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; }
+  .check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+  .swatch { width: 9px; height: 9px; border-radius: 50%; background: var(--undated); flex: none; }
+
+  .status { font-size: .85rem; color: var(--muted); }
+  .status.error { color: #f0a58c; }
+  .note { font-size: .78rem; color: var(--muted); margin: 0; }
+
+  /* Popup */
+  .mapboxgl-popup-content { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 400 .9rem/1.35 var(--font); box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
+  .mapboxgl-popup-tip { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
+  .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; padding: 2px 7px; }
+  .pop h2 { margin: 0 18px 1px 0; font: 600 1rem/1.2 var(--display); }
+  .pop .latin { font-style: italic; color: var(--muted); }
+  .pop dl { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: .85rem; }
+  .pop dt { color: var(--muted); }
+  .pop dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: var(--sab); }
+  .mapboxgl-ctrl-bottom-left { left: var(--sal); bottom: var(--sab); }
+  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid var(--line); box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(1) hue-rotate(180deg) brightness(.9); }
+
+  /* Phones: controls become a bottom sheet that can fold */
+  @media (max-width: 560px) {
+    .controls {
+      left: 0; right: 0; bottom: 0; width: auto; border-radius: 14px 14px 0 0; border-bottom: 0;
+      padding: 10px max(16px, calc(12px + var(--sal))) calc(12px + var(--sab)) max(16px, calc(12px + var(--sar)));
+    }
+    .mapboxgl-ctrl-bottom-right { bottom: calc(var(--sheet, 0px) + 6px); }
+    .mapboxgl-ctrl-bottom-left { bottom: calc(var(--sheet, 0px)); }
+    .title { right: calc(12px + var(--sar)); max-width: none; }
+    .controls.folded .fold-hide { display: none; }
+  }
+  .grip { display: none; }
+  @media (max-width: 560px) {
+    .grip { display: block; justify-self: center; width: 44px; height: 18px; border: 0; background: transparent; cursor: pointer; padding: 0; margin: -4px 0 -6px; }
+    .grip::before { content: ""; display: block; margin: 7px auto 0; width: 36px; height: 4px; border-radius: 2px; background: var(--line); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<div id="map" role="region" aria-label="Map of San Francisco street trees"></div>
+
+<header class="card title">
+  <h1>Street Trees of San Francisco</h1>
+  <p id="summary">Loading the city's tree list…</p>
+</header>
+
+<section class="card controls" id="controls" aria-label="Map controls">
+  <button class="grip" id="grip" aria-label="Show or hide controls" aria-expanded="true"></button>
+
+  <div class="modes" role="group" aria-label="Map view">
+    <button id="mode-year" aria-pressed="true">By planting year</button>
+    <button id="mode-density" aria-pressed="false">Density</button>
+  </div>
+
+  <div class="yearrow">
+    <div class="yearread">
+      <span class="lbl">Planted through</span>
+      <span class="yr" id="yr">—</span>
+      <span class="n" id="count">&nbsp;</span>
+    </div>
+    <button class="play" id="play" aria-label="Play planting over time" disabled>
+      <svg viewBox="0 0 16 16" id="playicon"><path d="M4 2.5v11l9-5.5z"/></svg>
+    </button>
+  </div>
+
+  <div class="timeline fold-hide">
+    <canvas id="bars" aria-hidden="true"></canvas>
+    <input type="range" id="year" min="1970" max="2026" value="2026" step="1" aria-label="Show trees planted through this year" disabled>
+    <div class="axis"><span id="ymin">1970</span><span>Trees planted per year</span><span id="ymax">2026</span></div>
+  </div>
+
+  <div class="legend fold-hide" id="legend">
+    <div class="ramp" id="ramp"></div>
+    <div class="axis"><span id="rmin">older</span><span id="rmax">newer</span></div>
+    <label class="check"><input type="checkbox" id="undated" checked><span class="swatch"></span><span id="undatedlbl">Show trees with no planting date</span></label>
+  </div>
+
+  <p class="status" id="status" role="status">Downloading trees from DataSF…</p>
+  <p class="note fold-hide">Tap a tree for its species and address. Data: <a href="https://data.sf.gov/d/tkzw-k3nq" style="color:inherit">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+</section>
+
+<script>
+// Runs after the deferred Mapbox GL script has loaded
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  var TOKEN = '{{ page.access_token }}';
+  var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }} };
+  var THIS_YEAR = new Date().getFullYear();
+
+  // Only the columns the map needs, live from DataSF. planttype is filtered in build() (the data mixes "Tree" and "tree").
+  // description holds the address ("112 Judson Ave | Tree 1"); mapdbh is trunk diameter in inches.
+  var DATA_URL ='https://data.sf.gov/resource/tkzw-k3nq.csv?$select=' +
+    ['treeid', 'species', 'description', 'planteddate', 'latitude', 'longitude', 'legalstatus', 'mapdbh', 'analysis_neighborhood', 'planttype'].join(',') +
+    '&$where=latitude%20IS%20NOT%20NULL&$limit=1000000';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Year color ramp: blue (older) → teal → green → yellow (newest). Stops are placed on the data's year span.
+  var RAMP = ['#3d72d9', '#22a69a', '#7cc94e', '#e9e44a'];
+
+  /* ---------- CSV ---------- */
+  function parseCSV(text) {
+    var rows = [], row = [], field = '', i = 0, q = false, c, n = text.length;
+    while (i < n) {
+      c = text.charCodeAt(i);
+      if (q) {
+        if (c === 34) { if (text.charCodeAt(i + 1) === 34) { field += '"'; i += 2; continue; } q = false; i++; continue; }
+        field += text[i]; i++; continue;
+      }
+      if (c === 34) { q = true; i++; continue; }
+      if (c === 44) { row.push(field); field = ''; i++; continue; }
+      if (c === 10 || c === 13) {
+        row.push(field); field = '';
+        if (row.length > 1 || row[0] !== '') rows.push(row);
+        row = [];
+        if (c === 13 && text.charCodeAt(i + 1) === 10) i++;
+        i++; continue;
+      }
+      field += text[i]; i++;
+    }
+    if (field !== '' || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function yearOf(s) {
+    var m = /(\d{4})/.exec(s || '');
+    if (!m) return 0;
+    var y = +m[1];
+    return (y >= 1900 && y <= THIS_YEAR) ? y : 0;   // bad or future dates count as undated
+  }
+
+  /* ---------- Build features ---------- */
+  var info = [];   // per-tree details for popups, indexed by feature id
+  function build(rows) {
+    var h = rows[0], ix = {};
+    h.forEach(function (k, i) { ix[k] = i; });
+    var feats = [], perYear = {};
+    for (var r = 1; r < rows.length; r++) {
+      var row = rows[r];
+      var pt = (row[ix.planttype] || '').toLowerCase();
+      if (pt && pt !== 'tree') continue;
+      var lat = +row[ix.latitude], lon = +row[ix.longitude];
+      if (!(lat > 37.6 && lat < 37.85 && lon > -122.53 && lon < -122.34)) continue;   // inside San Francisco
+      var y = yearOf(row[ix.planteddate]);
+      var id = info.length;
+      info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
+                  st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
+      feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y } });
+      if (y) perYear[y] = (perYear[y] || 0) + 1;
+    }
+    return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear };
+  }
+
+  // Slider floor: the earliest year with a meaningful number of plantings (skips a few stray early dates).
+  function yearSpan(perYear) {
+    var ys = Object.keys(perYear).map(Number).sort(function (a, b) { return a - b; });
+    if (!ys.length) return [1970, THIS_YEAR];
+    var total = ys.reduce(function (s, y) { return s + perYear[y]; }, 0), acc = 0, lo = ys[0];
+    for (var i = 0; i < ys.length; i++) { acc += perYear[ys[i]]; if (acc / total >= 0.005) { lo = ys[i]; break; } }
+    return [lo, ys[ys.length - 1]];
+  }
+
+  /* ---------- Map ---------- */
+  mapboxgl.accessToken = TOKEN;
+  var map = new mapboxgl.Map({
+    container: 'map', style: 'mapbox://styles/mapbox/dark-v11',
+    center: HOME.center, zoom: HOME.zoom, minZoom: 10, maxBounds: [[-122.75, 37.6], [-122.2, 37.9]],
+    customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
+  });
+  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+  var state = { mode: 'year', year: THIS_YEAR, undated: true, span: [1970, THIS_YEAR], perYear: {}, total: 0, dated: 0 };
+
+  function colorExpr() {
+    var lo = state.span[0], hi = Math.max(state.span[1], lo + 3), step = (hi - lo) / (RAMP.length - 1);
+    var e = ['interpolate', ['linear'], ['get', 'y']];
+    RAMP.forEach(function (c, i) { e.push(Math.round(lo + step * i * 100) / 100, c); });
+    return ['case', ['==', ['get', 'y'], 0], getComputedStyle(document.documentElement).getPropertyValue('--undated').trim() || '#6d7d74', e];
+  }
+
+  function filterExpr() {
+    var dated = ['all', ['>', ['get', 'y'], 0], ['<=', ['get', 'y'], state.year]];
+    return state.undated ? ['any', ['==', ['get', 'y'], 0], dated] : dated;
+  }
+
+  function addLayers(fc) {
+    map.addSource('trees', { type: 'geojson', data: fc });
+    map.addLayer({
+      id: 'trees-heat', type: 'heatmap', source: 'trees', maxzoom: 17,
+      layout: { visibility: 'none' },
+      paint: {
+        'heatmap-weight': 0.6,
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 16, 2.2],
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 13, 8, 16, 18],
+        'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0.9, 17, 0],
+        'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(10,23,18,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#d6e65a', 1, '#fff7c2']
+      }
+    });
+    map.addLayer({
+      id: 'trees-dots', type: 'circle', source: 'trees',
+      paint: {
+        'circle-color': colorExpr(),
+        'circle-radius': ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6, 13, 1.4, 16, 3.6, 19, 9],
+        'circle-opacity': ['case', ['==', ['get', 'y'], 0], 0.55, 0.9],
+        'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2, 0],
+        'circle-stroke-color': '#ffffff'
+      }
+    });
+    applyFilter();
+  }
+
+  function applyFilter() {
+    if (!map.getLayer('trees-dots')) return;
+    var f = filterExpr();
+    map.setFilter('trees-dots', f);
+    map.setFilter('trees-heat', f);
+    // In density mode, dots appear only once you zoom in close enough to pick a tree
+    map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
+      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, ['case', ['==', ['get', 'y'], 0], 0.55, 0.9]]
+      : ['case', ['==', ['get', 'y'], 0], 0.55, 0.9]);
+    map.setLayoutProperty('trees-heat', 'visibility', state.mode === 'density' ? 'visible' : 'none');
+    updateCount(); drawBars();
+  }
+
+  /* ---------- Readouts ---------- */
+  var fmt = new Intl.NumberFormat('en-US');
+  function shownCount() {
+    var n = 0;
+    for (var y in state.perYear) if (+y <= state.year) n += state.perYear[y];
+    return n;
+  }
+  function updateCount() {
+    var n = shownCount();
+    $('yr').textContent = state.year >= state.span[1] ? 'Today' : state.year;
+    var undatedN = state.total - state.dated;
+    $('count').textContent = fmt.format(n) + ' dated trees' + (state.undated ? ' + ' + fmt.format(undatedN) + ' undated' : '');
+  }
+
+  function drawBars() {
+    var cv = $('bars'), dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (!w) return;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    var lo = state.span[0], hi = state.span[1], n = hi - lo + 1, max = 1;
+    for (var y = lo; y <= hi; y++) max = Math.max(max, state.perYear[y] || 0);
+    var css = getComputedStyle(document.documentElement);
+    var on = css.getPropertyValue('--accent').trim(), off = css.getPropertyValue('--line').trim();
+    var bw = w / n;
+    for (y = lo; y <= hi; y++) {
+      var v = state.perYear[y] || 0, bh = v ? Math.max(1.5, (v / max) * (h - 2)) : 0;
+      g.fillStyle = y <= state.year ? on : off;
+      g.fillRect((y - lo) * bw + 0.5, h - bh, Math.max(1, bw - 1), bh);
+    }
+    // Ramp chip under the legend matches the dot colors
+    $('ramp').style.background = 'linear-gradient(90deg,' + RAMP.join(',') + ')';
+  }
+
+  /* ---------- Controls ---------- */
+  function setMode(m) {
+    state.mode = m;
+    $('mode-year').setAttribute('aria-pressed', m === 'year');
+    $('mode-density').setAttribute('aria-pressed', m === 'density');
+    $('legend').querySelector('.ramp').style.opacity = m === 'year' ? 1 : 0.35;
+    applyFilter();
+  }
+  $('mode-year').addEventListener('click', function () { setMode('year'); });
+  $('mode-density').addEventListener('click', function () { setMode('density'); });
+
+  var slider = $('year');
+  slider.addEventListener('input', function () { stop(); state.year = +slider.value; applyFilter(); });
+  $('undated').addEventListener('change', function (e) { state.undated = e.target.checked; applyFilter(); });
+
+  var timer = null;
+  function setPlayIcon(playing) {
+    $('playicon').innerHTML = playing ? '<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/>' : '<path d="M4 2.5v11l9-5.5z"/>';
+    $('play').setAttribute('aria-label', playing ? 'Pause' : 'Play planting over time');
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; setPlayIcon(false); } }
+  $('play').addEventListener('click', function () {
+    if (timer) { stop(); return; }
+    if (state.year >= state.span[1]) state.year = state.span[0];
+    setPlayIcon(true);
+    var tick = calm.matches ? 900 : 260;
+    timer = setInterval(function () {
+      state.year = Math.min(state.span[1], state.year + 1);
+      slider.value = state.year; applyFilter();
+      if (state.year >= state.span[1]) stop();
+    }, tick);
+  });
+
+  // Phone bottom sheet folds to the year readout
+  $('grip').addEventListener('click', function () {
+    var c = $('controls'), folded = c.classList.toggle('folded');
+    $('grip').setAttribute('aria-expanded', !folded); sheetHeight(); drawBars();
+  });
+  function sheetHeight() {
+    var mobile = window.matchMedia('(max-width: 560px)').matches;
+    document.documentElement.style.setProperty('--sheet', mobile ? $('controls').offsetHeight + 'px' : '0px');
+  }
+  window.addEventListener('resize', function () { sheetHeight(); drawBars(); });
+  sheetHeight();
+
+  /* ---------- Popups ---------- */
+  var popup = new mapboxgl.Popup({ closeButton: true, maxWidth: '280px', offset: 8 });
+  var selected = null;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function splitSpecies(s) {
+    var p = s.split('::').map(function (x) { return x.trim(); });
+    return { latin: p[0] || '', common: p[1] || p[0] || 'Unknown species' };
+  }
+  function prettyDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
+    if (!m) return '';
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  map.on('click', 'trees-dots', function (e) {
+    var f = e.features[0], t = info[f.id]; if (!t) return;
+    if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false });
+    selected = f.id; map.setFeatureState({ source: 'trees', id: selected }, { sel: true });
+    var sp = splitSpecies(t.sp), addr = t.ad.split('|')[0].trim();
+    var rows = [
+      ['Planted', prettyDate(t.d) || 'No date on record'],
+      ['Address', addr], ['Neighborhood', t.nb],
+      ['Trunk', t.dbh && +t.dbh > 0 ? t.dbh + ' in. diameter' : ''], ['Status', t.st]
+    ].filter(function (r) { return r[1]; });
+    popup.setLngLat(f.geometry.coordinates).setHTML(
+      '<div class="pop"><h2>' + esc(sp.common) + '</h2>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + esc(sp.latin) + '</div>' : '') +
+      '<dl>' + rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl></div>'
+    ).addTo(map);
+  });
+  popup.on('close', function () { if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false }); selected = null; });
+  map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
+
+  /* ---------- Load ---------- */
+  var dataP = fetch(DATA_URL).then(function (r) {
+    if (!r.ok) throw new Error('DataSF answered ' + r.status);
+    $('status').textContent = 'Reading trees…';
+    return r.text();
+  });
+  var styleP = new Promise(function (res) { map.on('load', res); });
+
+  Promise.all([dataP, styleP]).then(function (v) {
+    var built = build(parseCSV(v[0]));
+    state.perYear = built.perYear; state.total = built.fc.features.length;
+    state.dated = Object.keys(built.perYear).reduce(function (s, y) { return s + built.perYear[y]; }, 0);
+    state.span = yearSpan(built.perYear);
+    // Stray dates before the slider floor still show; they sit at the floor year
+    for (var y in state.perYear) if (+y < state.span[0]) { state.perYear[state.span[0]] = (state.perYear[state.span[0]] || 0) + state.perYear[y]; delete state.perYear[y]; }
+    built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
+    state.year = state.span[1];
+    slider.min = state.span[0]; slider.max = state.span[1]; slider.value = state.year; slider.disabled = false; $('play').disabled = false;
+    $('ymin').textContent = $('rmin').textContent = state.span[0];
+    $('ymax').textContent = $('rmax').textContent = state.span[1];
+    $('undatedlbl').textContent = 'Show ' + fmt.format(state.total - state.dated) + ' trees with no planting date';
+    $('summary').textContent = fmt.format(state.total) + ' street trees · ' + fmt.format(state.dated) + ' with a planting date';
+    $('status').hidden = true;
+    addLayers(built.fc);
+    sheetHeight();
+  }).catch(function (err) {
+    var s = $('status'); s.classList.add('error');
+    s.textContent = 'The tree list did not load (' + err.message + '). Check your connection and reload the page.';
+    $('summary').textContent = 'Tree data unavailable';
+  });
+});
+</script>
+</body>
+</html>
