@@ -105,12 +105,12 @@ zoom: 11.8
   /* The legend, bottom left above the Mapbox logo (below the map on upright phones), as on /transit/ and the atlas:
      shut, it is just its title; open, a frosted panel with the total, every species and its green, and Info. */
   .controls {
-    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 330px;
-    max-width: calc(100% - 24px - var(--sal) - var(--sar));
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: max-content; min-width: 330px;
+    max-width: min(420px, calc(100% - 24px - var(--sal) - var(--sar)));
     border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 8px;
     transition: background-color .18s ease, border-color .18s ease;
   }
-  .controls:has(.map-legend:not([open])) { width: auto; background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
                         font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
   .map-legend summary::-webkit-details-marker { display: none; }
@@ -120,10 +120,10 @@ zoom: 11.8
   .legend-body { padding: 0 14px 12px; display: grid; gap: 10px; }
   .sky-text { color: #4a90c8; }
   .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
-  .species { list-style: none; margin: 0; padding: 0 4px 0 0; display: grid; gap: 6px; font-size: .9rem;
+  .species { list-style: none; margin: 0 -6px; padding: 2px 6px; display: grid; gap: 6px; font-size: .9rem;
              max-height: calc(100vh - 300px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain; }
   .species li { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .species .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; cursor: pointer; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
+  .species .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; cursor: pointer; border-radius: 4px; padding: 2px 4px; }
   .species .pick:hover .name { color: var(--accent); }
   .species .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .species .pick[aria-pressed="true"] { background: color-mix(in srgb, var(--ink) 10%, transparent); }
@@ -324,7 +324,7 @@ zoom: 11.8
     .oa-detail-panel > div { padding: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
     .oa-detail-panel[hidden] { display: none; }
 
-    .controls, .controls:has(.map-legend:not([open])) { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
+    .controls, .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; max-width: none; background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
                 padding-block: 6px calc(16px + var(--sab)); padding-left: max(2px, var(--sal)); padding-right: max(2px, var(--sar)); }
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .summary, .species { font-size: 1rem; }
