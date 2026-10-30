@@ -139,6 +139,9 @@ zoom: 11.8
   .sortby button[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
   .sortby button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
   .species .name.latin { font-style: italic; }
+  .leafkey { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+  .leafkey .dot { width: 10px; height: 10px; }
+  .leafkey .dot + .dot, .leafkey .dot:not(:first-child) { margin-left: 8px; }
   .origin-sum { margin: -6px 0 0; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
   .origin { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .origin.native { color: #b9e886; }
@@ -395,6 +398,7 @@ zoom: 11.8
     <div class="legend-body">
       <p class="summary" id="summary">Loading the city's tree list…</p>
       <p class="origin-sum" id="origin"></p>
+      <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Darker greens: evergreen <span class="dot" style="--c:#9fd77a"></span>Lighter: deciduous</p>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="count" aria-pressed="true">Most trees</button>
         <button type="button" data-sort="common" aria-pressed="false">Common name</button>
@@ -403,7 +407,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green; tap one in the list to see where it grows. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city's tree data doesn't say, so Fogday matched it on botanical names. Tap a tree for its name. A light outline marks California natives; a faint ring marks trees over two feet across. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Street trees only; park and private trees are mostly not listed.</p>
       </details>
     </div>
   </details>
@@ -440,19 +444,23 @@ window.addEventListener('DOMContentLoaded', function () {
   var RAMP = ['#2f7a45', '#3f9e4f', '#74c25a', '#b9e886'];
   /* Each species its own green: hues 80°–160°, lightness and saturation stepped by golden-ratio sequences so
      neighbors in the list differ; the most common species come first and get the most separated greens. */
-  function greens(n) {
-    var out = [], seen = {};
+  /* Each species its own green: hues 80°–160°, saturation and lightness stepped by golden-ratio sequences so neighbors
+     in the list differ. Evergreens take the darker greens (lightness 26–46%), deciduous trees the lighter (50–78%).
+     The most common species come first and get the most separated greens. */
+  function greens(dark) {   // dark: one true/false per species (true = evergreen)
+    var out = [], seen = {}, nd = 0, nl = 0;
     function hex(h, s, l) {
       s /= 100; l /= 100;
       var k = function (m) { return (m + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
       var f = function (m) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(m) - 3, Math.min(9 - k(m), 1))))).toString(16).padStart(2, '0'); };
       return '#' + f(0) + f(8) + f(4);
     }
-    for (var i = 0; i < n; i++) {
-      var h = 80 + ((i * 0.618034) % 1) * 80, sat = 40 + ((i * 0.754878 + 0.3) % 1) * 45, l = 34 + ((i * 0.381966 + 0.5) % 1) * 42, c = hex(h, sat, l);
-      while (seen[c]) { l = l >= 76 ? 34 : l + 0.6; c = hex(h, sat, l); }   // every species gets a hex of its own
+    dark.forEach(function (d) {
+      var i = d ? nd++ : nl++, lo = d ? 26 : 50, span = d ? 20 : 28;   // evergreens 26–46% (any darker vanishes on the navy map)
+      var h = 80 + ((i * 0.618034) % 1) * 80, sat = 40 + ((i * 0.754878 + 0.3) % 1) * 45, l = lo + ((i * 0.381966 + 0.5) % 1) * span, c = hex(h, sat, l);
+      while (seen[c]) { l = l >= lo + span ? lo : l + 0.4; c = hex(h, sat, l); }   // every species gets a hex of its own
       seen[c] = 1; out.push(c);
-    }
+    });
     return out;
   }
   /* California natives: species that grow wild somewhere in California, and cultivars of them (as Public Works'
@@ -462,6 +470,11 @@ window.addEventListener('DOMContentLoaded', function () {
   function isNative(key) { var latin = key.split('::')[0].trim(); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
   var NATIVE_LINE = '#f1ffe3';   // the light outline on California natives
   function nativeStroke(w) { return ['case', ['boolean', ['feature-state', 'sel'], false], 2, ['==', ['get', 'n'], 1], w, 0]; }
+  /* Deciduous species (they drop their leaves for winter); everything else is treated as evergreen. Like natives,
+     the city's data doesn't say, so this is matched on the botanical name. Semi-evergreens that go bare here
+     (Chinese elm, jacaranda) count as deciduous; Evergreen pear and Shamel (evergreen) ash do not. */
+  var DECIDUOUS = /^(Platanus|Ginkgo|Pyrus(?! kawakamii)|Ulmus|Acer|Liquidambar|Gleditsia|Fraxinus(?! uhdei)|Betula|Malus|Crataegus|Cercis|Lagerstroemia|Jacaranda|Tilia|Zelkova|Aesculus|Koelreuteria|Pistacia chinensis|Celtis|Styphnolobium|Sophora japonica|Robinia|Catalpa|Morus|Populus|Salix|Alnus|Juglans|Liriodendron|Cornus|Carpinus|Fagus|Nyssa|Cotinus|Parrotia|Albizia|Erythrina|Tabebuia|Handroanthus|Chitalpa|Chilopsis|Melia|Ailanthus|Sapium|Triadica|Metasequoia|Taxodium|Larix|Punica|Ficus carica|Diospyros|Halesia|Amelanchier|Sorbus|Syringa|Paulownia|Toona|Sambucus|Cercidiphyllum|Hamamelis|Ostrya|Gymnocladus|Cladrastis|Laburnum|Firmiana|Hovenia|Idesia|Prunus (cerasifera|serrulata|blireiana|x ?blireiana|yedoensis|x ?yedoensis|subhirtella|sargentii|avium|persica|armeniaca|domestica|mume|cerasus|virginiana|padus|dulcis|campanulata|'|x |sp|spp|serotina|incisa|okame|×)|Quercus (lobata|douglasii|rubra|coccinea|palustris|robur|frainetto|garryana|kelloggii|macrocarpa|phellos|shumardii|alba|bicolor|cerris|velutina|texana|nuttallii|muehlenbergii|acutissima|imbricaria|x)|Magnolia (soulangeana|soulangiana|x ?soulang|stellata|kobus|denudata|liliiflora|'Ann'|'Butterflies'|acuminata|x ?loebneri|loebneri|sprengeri|campbellii|'Galaxy'|'Jane'|'Elizabeth')|Davidia|Cydonia|Mespilus|Eucommia|Pterocarya|Carya|Castanea|Sassafras|Maclura|Broussonetia|Kalopanax|Phellodendron|Tamarix|Ziziphus|Asimina|Oxydendrum|Stewartia|Styrax japonicus|Aralia|Rhus typhina|Clerodendrum trichotomum|Poncirus|Xanthoceras|Tetradium)/i;
+  function isDeciduous(key) { return DECIDUOUS.test(key.split('::')[0].trim()); }
   var BIG_RING = '#b9e886';   // the ring around big trees: the ramp's spring green
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
@@ -541,7 +554,7 @@ window.addEventListener('DOMContentLoaded', function () {
     spOf.forEach(function (k, i) { info[i].sp = k === 'Unknown' ? '' : k; });   // the tree panel shows the joined name too
     // Species, most trees first; each gets its green, stored on its trees for the map to draw
     var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
-    var gs = greens(list.length), colorOf = {};
+    var gs = greens(list.map(function (k) { return !isDeciduous(k); })), colorOf = {};
     list.forEach(function (k, i) { colorOf[k] = gs[i]; });
     var rank = {}, ext = {};
     list.forEach(function (k, i) { rank[k] = i; ext[k] = [Infinity, Infinity, -Infinity, -Infinity]; });
@@ -551,7 +564,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (k !== 'Unknown' && isNative(k)) f.properties.n = 1;   // n: California native
       e[0] = Math.min(e[0], c[0]); e[1] = Math.min(e[1], c[1]); e[2] = Math.max(e[2], c[0]); e[3] = Math.max(e[3], c[1]);
     });
-    var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
+    var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), deciduous: isDeciduous(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
     return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
   }
 
