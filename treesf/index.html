@@ -424,11 +424,11 @@ zoom: 11.8
       <p class="summary" id="summary">Loading the city's tree list…</p>
       <p class="origin-sum" id="origin"></p>
       <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Evergreen <span class="dot" style="--c:#9fd77a"></span>Deciduous</p>
-      <div class="origin-pick" role="radiogroup" aria-label="Which trees to show">   <!-- not remembered: every load opens on Both -->
+      <div class="origin-pick" role="radiogroup" aria-label="Which trees to show">   <!-- not remembered: every load opens on All -->
         <label><input type="radio" name="origin" value="native" autocomplete="off"> Native</label>
         <label><input type="radio" name="origin" value="non" autocomplete="off"> Non-native</label>
-        <label><input type="radio" name="origin" value="rare" autocomplete="off"> Landmark and Rare</label>
-        <label><input type="radio" name="origin" value="both" checked autocomplete="off"> Both</label>
+        <label><input type="radio" name="origin" value="rare" autocomplete="off"> Rare/Landmark</label>
+        <label><input type="radio" name="origin" value="both" checked autocomplete="off"> All</label>
       </div>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="common" aria-pressed="true">Common name<span class="ord"></span></button>
@@ -946,8 +946,8 @@ window.addEventListener('DOMContentLoaded', function () {
     var os = $('origin');
     var rareTotal = Object.keys(rareN).reduce(function (a, k) { return a + rareN[k]; }, 0);
     os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' native elsewhere'
-      : origin === 'rare' ? fmt.format(rareTotal) + ' landmark and rare trees, compiled by Mike Sullivan' : '';
-    if (origin === 'rare') groups = [['Landmark and Rare', list.filter(function (x) { return rareN[x.i]; })
+      : origin === 'rare' ? fmt.format(rareTotal) + ' rare/landmark trees, compiled by Mike Sullivan' : '';
+    if (origin === 'rare') groups = [['Rare/Landmark', list.filter(function (x) { return rareN[x.i]; })
       .map(function (x) { var c = Object.create(x); c.n = rareN[x.i]; c.bounds = rareB[x.i] || x.bounds; return c; })]];
     os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
