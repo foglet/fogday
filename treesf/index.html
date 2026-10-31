@@ -932,7 +932,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var natN = groups[0][1].reduce(function (a, x) { return a + x.n; }, 0), notN = groups[1][1].reduce(function (a, x) { return a + x.n; }, 0);
     // Under the total: the native count with Native picked, the non-native count with Non-native; nothing with Both
     var os = $('origin');
-    os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' not native' : '';
+    os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' native elsewhere' : '';
     os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
       if (!g[1].length) return;
