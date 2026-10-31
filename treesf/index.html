@@ -1164,6 +1164,11 @@ window.addEventListener('DOMContentLoaded', function () {
     }
   }
   $('legend').addEventListener('toggle', fitLegend); window.addEventListener('resize', fitLegend);
+  /* The legend opens closed on every load, phones included: a page brought back from the browser's history (iPhone
+     Safari keeps the last state) is shut again too. */
+  function shutLegend() { $('legend').open = false; sheetHeight(); }
+  shutLegend();
+  window.addEventListener('pageshow', function (e) { if (e.persisted) shutLegend(); });
   document.querySelector('.notes').addEventListener('toggle', fitLegend);   // Info opening grows the card; the spot card stays above it
   sheetHeight();
 
