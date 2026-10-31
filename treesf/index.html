@@ -1345,12 +1345,16 @@ window.addEventListener('DOMContentLoaded', function () {
   /* Dark blue base map: Mapbox's dark style is grey, so its land, water, roads and buildings are recolored to the
      page's navy on load (the transit and atlas pages' blue). Labels keep their color with a navy halo. */
   var NAVY = { land: '#0b2233', water: '#021724', park: '#0d2a33', road: '#1b3a54', roadMinor: '#15314a', building: '#12304a', halo: '#021724' };
+  var STREETS_FROM = 14;   // zoom where streets appear
   function navyBase() {
     var ls = (map.getStyle() && map.getStyle().layers) || [];
     ls.forEach(function (l) {
       var id = l.id, t = l.type;
       try {
         if (/^trees|^hood/.test(id)) return;
+        // Streets (lines, names and route shields) only from zoom 14 in; parks and their names show at every zoom
+        if ((t === 'line' || t === 'symbol') && /road|street|bridge|tunnel|motorway|trunk|primary|secondary|tertiary|path|pedestrian|steps|service|track|turning|shield/.test(id) && !/park|ferry/.test(id))
+          map.setLayerZoomRange(id, Math.max(STREETS_FROM, l.minzoom || 0), l.maxzoom == null ? 24 : l.maxzoom);
         // No neighborhood names from the base map: a neighborhood shows only when picked, searched or walked into
         if (t === 'symbol' && /settlement-subdivision|neighbou?rhood/.test(id)) { map.setLayoutProperty(id, 'visibility', 'none'); return; }
         if (t === 'background') map.setPaintProperty(id, 'background-color', NAVY.land);
