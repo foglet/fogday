@@ -183,7 +183,11 @@ order.forEach(function (i, j) {
   var nb = info[i].nb; out.h.push(nb in hoodIx ? hoodIx[nb] : -1);
   out.g += f.properties.g;   // one digit per tree, in output order
   var rare = info[i].rare;
-  if (rare) out.r.push([j, rare.detail, rare.image_url || rare.closeup_url, rare.description.split(' | ')[0]]);
+  if (rare) {   // place: the address; left out when the note already says it (trees placed by coordinates and a note)
+    var place = rare.description.split(' | ')[0].trim(), note = (rare.detail || '').trim();
+    if (note.toLowerCase().indexOf(place.toLowerCase()) >= 0) place = '';   // the note already says it
+    out.r.push([j, note, rare.image_url || rare.closeup_url, place]);
+  }
 });
 fs.writeFileSync(path.join(DIR, 'trees.json'), JSON.stringify(out));
 

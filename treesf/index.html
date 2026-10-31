@@ -1117,7 +1117,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (t.rare) {   // Rare/Landmark: the tag on hover; the note, photo and credit once tapped
       h += '<div class="rare-tag">Rare/Landmark</div>';
       if (!brief) {
-        var note = [t.rare.place, t.rare.note].filter(Boolean).map(esc).join(' · ');
+        var pl = t.rare.place || '', nt = t.rare.note || '', note = [nt.toLowerCase().indexOf(pl.toLowerCase()) >= 0 ? '' : pl, nt].filter(Boolean).map(esc).join(' · ');   // no address the note already gives
         if (note) h += '<div class="rare-note">' + note + '</div>';
         if (/^https:\/\//.test(t.rare.photo || '')) h += '<div class="rare-note"><a href="' + esc(t.rare.photo) + '" target="_blank" rel="noopener">Photo</a></div>';
         h += '<div class="rare-credit">Compiled by <a href="https://www.sftrees.com/landmark-trees" target="_blank" rel="noopener">Mike Sullivan</a></div>';
