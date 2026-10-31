@@ -355,6 +355,11 @@ zoom: 11.8
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
+  /* iPhone 15 Pro (393 × 852) and smaller, either way up: the open legend leaves out the species list and its sort,
+     which don't fit; species can still be found with search */
+  @media (max-width: 393px), (max-height: 393px) {
+    .map-legend .species, .map-legend .sortby { display: none; }
+  }
   @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
 </style>
 </head>
@@ -1006,6 +1011,7 @@ window.addEventListener('DOMContentLoaded', function () {
   $('legend').addEventListener('toggle', sheetHeight);
   /* Desktop: the open legend's list stops short of the title at the top; --legend-top is everything else the legend
      and the title take up (measured, since fonts and wrapping vary) */
+  var SMALL = window.matchMedia('(max-width: 393px), (max-height: 393px)');   // iPhone 15 Pro and smaller: no species list (same as the CSS)
   var LIST_ROWS = 20;   // species rows visible in the open legend before it scrolls
   function fitLegend() {
     if (!$('legend').open) return;
@@ -1014,6 +1020,7 @@ window.addEventListener('DOMContentLoaded', function () {
     document.documentElement.style.setProperty('--legend-top', Math.ceil(other + above + below) + 'px');
     // Open, the legend shows its usual contents plus twenty species at a time; the list scrolls for the rest
     ul.style.maxHeight = '';
+    if (SMALL.matches) return;   // the list is hidden on small screens (see the CSS)
     var row = ul.querySelector('li:not(.group)'), gap = parseFloat(getComputedStyle(ul).rowGap) || 0;
     var hd = ul.querySelector('li.group'), hdH = hd ? hd.offsetHeight + gap + (parseFloat(getComputedStyle(hd).marginTop) || 0) : 0;   // the group heading above the first rows
     if (row) { var cap = LIST_ROWS * (row.offsetHeight + gap) - gap + hdH + 4, room = parseFloat(getComputedStyle(ul).maxHeight) || cap;
