@@ -4,11 +4,14 @@
    run it by hand after changing anything here:   node .github/scripts/treesf-build.js
    This is the one place the tree data is cleaned: non-trees dropped, misspelled botanical names fixed, spellings of
    one species joined, each species given its green, California natives and deciduous trees marked. The page only
-   draws the result. */
+   draws the result.
+   Landmark and Rare: treesf/rare-trees.csv (a hand-kept list of notable trees, same first ten columns as trees.csv).
+   A row whose treeid is in the city list marks that tree; any other row (treeid "rare-…") is a tree the city list
+   doesn't have, such as in the Presidio, and is added. Each marked tree carries the list's note and photo. */
 'use strict';
 var fs = require('fs'), path = require('path');
 var ROOT = path.join(__dirname, '..', '..'), DIR = path.join(ROOT, 'treesf');
-var info = [], hoodSum = {};
+var info = [], hoodSum = {}, rareOf = {};   // rareOf: treeid → its rare-trees.csv row (as an object)
 
 /* Trunk-size group from mapdbh (diameter at breast height, inches), the same three bands as DataSF's dbhrange:
    1 = 3–10", 2 = 11–20", 3 = 21" and up. 0 = no diameter recorded; DataSF files those under 3, but they get their
@@ -95,11 +98,12 @@ function build(rows) {
     if (pt && pt !== 'tree') continue;
     var lat = +row[ix.latitude], lon = +row[ix.longitude];
     if (!(lat > 37.6 && lat < 37.85 && lon > -122.53 && lon < -122.34)) continue;   // inside San Francisco
-    if (NOT_A_TREE.test((row[ix.species] || '').trim())) continue;   // no tree here
+    var rare = rareOf[row[ix.treeid]];
+    if (!rare && NOT_A_TREE.test((row[ix.species] || '').trim())) continue;   // no tree here (the rare list is hand-checked)
     var y = 0;   // planting dates aren't used on the map
     var id = info.length;
     info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
-                st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
+                st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '', rare: rare || null });
     var sk = fixSpecies(row[ix.species]) || 'Unknown'; spCount[sk] = (spCount[sk] || 0) + 1; spOf.push(sk);
     feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, g: dbhGroup(row[ix.mapdbh]) } });   // g: trunk-size group (see dbhGroup)
     if (y) perYear[y] = (perYear[y] || 0) + 1;
@@ -140,7 +144,18 @@ function build(rows) {
 }
 
 /* ---- Write ---- */
-var built = build(parseCSV(fs.readFileSync(path.join(DIR, 'trees.csv'), 'utf8')));
+var cityRows = parseCSV(fs.readFileSync(path.join(DIR, 'trees.csv'), 'utf8'));
+var rp = path.join(DIR, 'rare-trees.csv');
+if (fs.existsSync(rp)) {
+  var rr = parseCSV(fs.readFileSync(rp, 'utf8')), rh = rr[0], have = {}, ti = cityRows[0].indexOf('treeid');
+  cityRows.forEach(function (r) { have[r[ti]] = 1; });
+  rr.slice(1).forEach(function (r) {
+    var o = {}; rh.forEach(function (k, i) { o[k] = r[i] || ''; });
+    rareOf[o.treeid] = o;
+    if (!have[o.treeid]) cityRows.push(cityRows[0].map(function (k) { return o[k] || ''; }));   // not in the city list: add it
+  });
+}
+var built = build(cityRows);
 var feats = built.fc.features, S = built.species;
 // Neighborhoods A–Z, each with the middle of its trees; a tree points to its neighborhood by number
 var hoods = Object.keys(hoodSum).sort(), hoodIx = {};
@@ -155,7 +170,7 @@ var out = { v: 1, built: new Date().toISOString().slice(0, 10), lon0: LON0, lat0
   species: S.map(function (s) { var b = s.bounds; return [s.key, s.n, s.color, s.native ? 1 : 0, s.deciduous ? 1 : 0,
     +b[0][0].toFixed(5), +b[0][1].toFixed(5), +b[1][0].toFixed(5), +b[1][1].toFixed(5)]; }),
   hoods: hoods.map(function (n) { var h = hoodSum[n]; return [n, +(h[0] / h[2]).toFixed(5), +(h[1] / h[2]).toFixed(5)]; }),
-  dx: [], dy: [], k: [], h: [], g: '' };
+  dx: [], dy: [], k: [], h: [], g: '', r: [] };   // r: Landmark and Rare trees, [position, note, photo, place]
 var px = 0, py = 0;
 order.forEach(function (i, j) {
   var f = feats[i], c = f.geometry.coordinates, x = Math.round((c[0] - LON0) * Q), y = Math.round((c[1] - LAT0) * Q);
@@ -163,6 +178,8 @@ order.forEach(function (i, j) {
   out.k.push(f.properties.k);
   var nb = info[i].nb; out.h.push(nb in hoodIx ? hoodIx[nb] : -1);
   out.g += f.properties.g;   // one digit per tree, in output order
+  var rare = info[i].rare;
+  if (rare) out.r.push([j, rare.detail, rare.image_url || rare.closeup_url, rare.description.split(' | ')[0]]);
 });
 fs.writeFileSync(path.join(DIR, 'trees.json'), JSON.stringify(out));
 
@@ -174,5 +191,5 @@ if (fs.existsSync(gp)) {
   g.features.forEach(function (f) { f.properties = { nhood: f.properties.nhood }; });
   fs.writeFileSync(gp, JSON.stringify(g));
 }
-console.log('trees=' + feats.length + ' species=' + S.length + ' neighborhoods=' + hoods.length +
+console.log('trees=' + feats.length + ' species=' + S.length + ' rare=' + out.r.length + ' neighborhoods=' + hoods.length +
   ' trees.json=' + fs.statSync(path.join(DIR, 'trees.json')).size + ' bytes');
