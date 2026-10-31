@@ -307,7 +307,9 @@ zoom: 11.8
     .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
     .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group { display: none; }   /* + and − were its only buttons */
   }
-  /* Map credits, muted: smaller text on the panels' navy (the Mapbox logo itself is left alone) */
+  /* Map credits (© Mapbox © OpenStreetMap · © Fogday Studios | @fogfish), styled as on /transit/ and oysteratlas.com:
+     muted to sit back — smaller text, soft color, the panels' navy behind. The Mapbox logo is left alone.
+     Phones fold the credits into an (i) button, lightened to show on the navy; Mapbox opens and folds it as there. */
   .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4; background: color-mix(in srgb, var(--bg) 90%, transparent); }
   .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
   .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
@@ -1368,14 +1370,6 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   map.on('style.load', navyBase);
   var styleP = new Promise(function (res) { map.on('load', res); });
-  /* Map credits: on a narrow map Mapbox shows them as an (i) button but opens them on load. Fold them to just the
-     button, as the Oyster Atlas shows; tapping (i) still opens them. */
-  map.once('load', function () {
-    var a = map.getContainer().querySelector('.mapboxgl-ctrl-attrib.mapboxgl-compact');
-    if (!a) return;
-    a.classList.remove('mapboxgl-compact-show'); a.removeAttribute('open');
-    var b = a.querySelector('.mapboxgl-ctrl-attrib-button'); if (b) { b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-pressed', 'false'); }
-  });
 
   Promise.all([dataP, styleP]).then(function (v) {
     var built = build(parseCSV(v[0]));
