@@ -57,7 +57,7 @@ title: Tides of San Francisco
   :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
   :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
 
-  /* Dark mode, on two of every three loads (the third keeps the random blue gradient above): an animated NEAT
+  /* Dark mode, on two of every four loads (the others keep the random blue gradient above): an animated NEAT
      gradient (WebGL canvas, two configs at the end of <body>) sits behind the page.
      Fixed to the window, under everything. Once it's running the script adds .neat-on to <html>, the body
      goes transparent so the canvas shows, and --rg-* become NEAT's background color, so the top fade, the
@@ -69,6 +69,20 @@ title: Tides of San Francisco
   }
   :root.neat-on[data-theme="dark"] #gradient { display: block; }
   :root.neat-on[data-theme="dark"] body { background: transparent; }
+
+  /* Dark mode, the fourth pick: the page keeps the random blue gradient and NEAT fills the tide chart instead.
+     The script moves the canvas into the chart section and adds .neat-chart to <html>. The canvas fills the
+     section behind the chart; --surface goes clear there, so label halos, creature rims and marker dots don't
+     draw blue patches over the moving colors. */
+  :root.neat-chart .tides .day { position: relative; isolation: isolate; }
+  :root.neat-chart .tides .day > #gradient { position: absolute; inset: 0; z-index: 0; }
+  :root.neat-chart .tides .day > .chartbox { position: relative; z-index: 1; }
+  @media (prefers-color-scheme: dark) {
+    :root.neat-chart:not([data-theme="light"]) .tides .day > #gradient { display: block; }
+    :root.neat-chart:not([data-theme="light"]) .tides .day { --surface: transparent; }
+  }
+  :root.neat-chart[data-theme="dark"] .tides .day > #gradient { display: block; }
+  :root.neat-chart[data-theme="dark"] .tides .day { --surface: transparent; }
 
   .tides .num { font-variant-numeric: tabular-nums; }
   .tides .muted { color: var(--muted); }
@@ -460,14 +474,16 @@ title: Tides of San Francisco
   };
 
   // Second NEAT export (violet, iridescent, chromatic aberration, light grain): only these keys differ from the first.
-  // Each page load picks one of three backgrounds, equal odds: the random blue CSS gradient (set in <head>), NEAT 1 or NEAT 2.
+  // Each page load picks one of four looks, equal odds: the random blue CSS gradient (set in <head>), NEAT 1 or NEAT 2
+  // behind the page, or the random blue gradient with NEAT 1 or 2 (half and half) inside the tide chart.
   const config2 = {
     colors: config.colors.map((c, i) => (i === 5 ? { color: '#891290', enabled: true } : c)),
     shadows: 4, backgroundColor: '#7446D9', grainIntensity: 0.075, yOffset: 3406,
     iridescenceEnabled: true, iridescenceIntensity: 0.7, chromaticAberration: 1.5,
   };
-  const pick = Math.floor(Math.random() * 3);   // 0: blue CSS gradient (NEAT never loads), 1: NEAT 1, 2: NEAT 2
-  if (pick === 2) Object.assign(config, config2);
+  const pick = Math.floor(Math.random() * 4);   // 0: blue CSS gradient (NEAT never loads), 1: NEAT 1, 2: NEAT 2, 3: blue + NEAT in the chart
+  const inChart = pick === 3;
+  if (pick === 2 || (inChart && Math.random() < .5)) Object.assign(config, config2);
 
   const root = document.documentElement;
   const canvas = document.getElementById('gradient');
@@ -483,11 +499,15 @@ title: Tides of San Francisco
   // running against the deleted GL objects.
   function start() {
     if (gradient || !isDark()) return;
+    if (inChart) document.querySelector('.tides .day').prepend(canvas);   // before building, so NEAT sizes it to the chart
     try {
       gradient = new NeatGradient({ ref: canvas, ...config, speed: stillMQ.matches ? 0 : config.speed });
     } catch (e) { gradient = null; return; }   // no WebGL: keep the random blue gradient
-    for (const v of ['--rg-top', '--rg-mid', '--rg-bot']) root.style.setProperty(v, config.backgroundColor);
-    root.classList.add('neat-on');
+    if (inChart) { root.classList.add('neat-chart'); }
+    else {
+      for (const v of ['--rg-top', '--rg-mid', '--rg-bot']) root.style.setProperty(v, config.backgroundColor);
+      root.classList.add('neat-on');
+    }
     onScroll();
     addEventListener('scroll', onScroll, { passive: true });
   }
