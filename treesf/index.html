@@ -1018,7 +1018,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var f = pickK == null ? filterExpr() : ['all', filterExpr(), ['==', ['get', 'k'], pickK]];
     map.setFilter('trees-dots', f);
     map.setFilter('trees-heat', f);
-    var op = 0.9;
+    var op = 0.9; if (fadeRaf) { map.setFilter('trees-heat', f); var big0 = ['all', ['==', ['get', 'b'], 1], originExpr()]; map.setFilter('trees-big', pickK == null ? big0 : big0.concat([['==', ['get', 'k'], pickK]])); updateCount(); return; }   // a fade is running; it sets the opacity
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
       ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, op] : op);
     var big = ['all', ['==', ['get', 'b'], 1], originExpr()];
@@ -1112,10 +1112,26 @@ window.addEventListener('DOMContentLoaded', function () {
       clearTree(); applyFilter(); fillSpecies(speciesList); sheetHeight();
     });
   });
+  /* The other trees ease out (fade to nothing, quick then slow) before they leave the map; showing all again, they
+     ease back in. 0.45 s; reduced motion: no fade. */
+  var fadeRaf = 0, FADE_MS = 450;
+  function fadeOthers(k, from, to, done) {
+    cancelAnimationFrame(fadeRaf);
+    if (calm.matches || !map.getLayer('trees-dots')) { done && done(); return; }
+    var t0 = performance.now();
+    (function step(now) {
+      var t = Math.min(1, (now - t0) / FADE_MS), e = 1 - Math.pow(1 - t, 3), a = from + (to - from) * e;
+      map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], k], 0.9, a]);
+      if (t < 1) fadeRaf = requestAnimationFrame(step);
+      else { fadeRaf = 0; map.setPaintProperty('trees-dots', 'circle-opacity', 0.9); done && done(); }
+    })(t0);
+  }
   function pickSpecies(sp) {
-    pickK = sp ? sp.i : null;
+    var was = pickK;
     clearTree(); clearSpot();
-    applyFilter(); fillSpecies(speciesList);
+    if (sp && was == null) { pickK = sp.i; fillSpecies(speciesList); fadeOthers(sp.i, 0.9, 0, applyFilter); }   // fade the rest, then hide them
+    else if (!sp && was != null) { pickK = null; applyFilter(); fillSpecies(speciesList); map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], was], 0.9, 0]); fadeOthers(was, 0, 0.9); }   // all back, easing in
+    else { pickK = sp ? sp.i : null; applyFilter(); fillSpecies(speciesList); }   // one species to another: a straight swap
     if (!sp) return;
     var b = sp.bounds, one = b[0][0] === b[1][0] && b[0][1] === b[1][1];
     if (one) map.flyTo({ center: b[0], zoom: 17, duration: calm.matches ? 0 : 1200, essential: true });
