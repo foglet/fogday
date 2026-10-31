@@ -378,7 +378,7 @@ zoom: 11.8
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input id="oa-search-input" class="oa-input" type="search"
            role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="oa-search-results"
-           autocomplete="off" spellcheck="false" placeholder="E.g., Coast Live Oak, Quercus or Noe Valley" aria-label="Search for a tree species, an address, a street or a neighborhood">
+           autocomplete="off" spellcheck="false" placeholder="E.g., Coast Live Oak, native or Noe Valley" aria-label="Search for a tree species, an address, a street or a neighborhood">
   </div>
   <p id="oa-search-status" class="oa-status" aria-live="polite"></p>
   <ul id="oa-search-results" class="oa-results" role="listbox" aria-label="Matching trees and places"></ul>
@@ -788,7 +788,7 @@ window.addEventListener('DOMContentLoaded', function () {
      shows the spot card, and opens the nearest tree if one is in reach. */
   var search = (function () {
     var input = $('oa-search-input'), list = $('oa-search-results'), status = $('oa-search-status'), field = searchCard.querySelector('.oa-field');
-    var HINT = 'Type a tree (common or Latin name), an address or a neighborhood', shown = [], active = -1, timer = 0, turn = 0;
+    var HINT = 'Type a tree (common or Latin name), native or non-native, an address or a neighborhood', shown = [], active = -1, timer = 0, turn = 0;
     var BBOX = '-122.5155,37.7080,-122.3570,37.8120';   // San Francisco
     function setStatus(t) { status.textContent = t; }
     function minimize(keepFocus) {
@@ -813,6 +813,9 @@ window.addEventListener('DOMContentLoaded', function () {
           var dot = document.createElement('span'); dot.className = 'dot' + (f.sp.native ? ' native' : ''); dot.style.setProperty('--c', f.sp.color);
           li.appendChild(dot); if (f.latin) li.title = f.latin;
         }
+        if (f.origin) {   // native / non-native: a dot in each look
+          var od = document.createElement('span'); od.className = 'dot' + (f.origin === 'native' ? ' native' : ''); od.style.setProperty('--c', f.origin === 'non' ? '#4f8a4a' : '#6fbf5a'); li.appendChild(od);
+        }
         li.appendChild(name); li.appendChild(where); list.appendChild(li);
       });
       setActive(-1);
@@ -822,9 +825,21 @@ window.addEventListener('DOMContentLoaded', function () {
     /* Species matches, from the trees on this map: by common or Latin name, ignoring case and accents. Names that
        start with what was typed come first, then a word that starts with it, then anywhere; ties go to more trees. */
     function fold(t) { return (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+    /* "native", "non-native", "exotic", "introduced", "all": rows that show all native or all non-native trees
+       (the legend's radio buttons, from search, which is handy on a phone with the legend shut) */
+    function originHits(fq) {
+      var nat = 0, non = 0;
+      speciesList.forEach(function (x) { if (x.native) nat += x.n; else if (x.key !== 'Unknown') non += x.n; });
+      var out = [];
+      var wantNon = /^(non|not|ex|intro|alien)/.test(fq) || fq.indexOf('non') >= 0, wantNat = !wantNon && /^(nat|cali|ca n|indig)/.test(fq);
+      if (wantNat) out.push({ origin: 'native', name: 'California native trees', where: fmt.format(nat) + ' trees' });
+      if (wantNon) out.push({ origin: 'non', name: 'Non-native trees', where: fmt.format(non) + ' trees' });
+      if (/^(all|both|every)/.test(fq)) out.push({ origin: 'both', name: 'All trees', where: fmt.format(nat + non + (speciesList.filter(function (x) { return x.key === 'Unknown'; })[0] || { n: 0 }).n) + ' trees' });
+      return out;
+    }
     function speciesHits(q) {
       var fq = fold(q); if (fq.length < 2) return [];
-      var hits = [];
+      var hits = [], first = originHits(fq);
       speciesList.forEach(function (sp) {
         if (sp.key === 'Unknown') return;
         var nm = splitSpecies(sp.key), latin = latinName(nm.latin).text, best = 9;
@@ -837,9 +852,9 @@ window.addEventListener('DOMContentLoaded', function () {
         if (best < 9) hits.push({ rank: best, sp: sp, name: nm.common, latin: latin });
       });
       hits.sort(function (a, b) { return a.rank - b.rank || b.sp.n - a.sp.n; });
-      return hits.slice(0, 6).map(function (h) {
+      return first.concat(hits.slice(0, 6 - first.length).map(function (h) {
         return { sp: h.sp, name: h.name, latin: h.latin, where: fmt.format(h.sp.n) + (h.sp.n === 1 ? ' tree' : ' trees') };
-      });
+      }));
     }
     function lookup() {
       var q = input.value.trim(), mine = ++turn;
@@ -867,6 +882,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var f = shown[i];
       if (!f) return;
       if (f.sp) { pickSpecies(f.sp); minimize(byKeyboard); return; }   // a species: every tree of it, as from the legend
+      if (f.origin) { var r = document.querySelector('.origin-pick input[value="' + f.origin + '"]'); if (r) { r.checked = true; r.click(); } minimize(byKeyboard); return; }   // native / non-native / all, as the radios
       clearSpot(); clearTree();
       var t = spotTurn;   // the place's details appear on landing, unless a tap came first
       map.once('moveend', function () {
