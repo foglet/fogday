@@ -1150,6 +1150,7 @@ window.addEventListener('DOMContentLoaded', function () {
     else if (!sp && was != null) { pickK = null; applyFilter(); fillSpecies(speciesList); map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], was], 0.9, 0]); fadeOthers(was, 0, 0.9); }   // all back, easing in
     else { pickK = sp ? sp.i : null; applyFilter(); fillSpecies(speciesList); }   // one species to another: a straight swap
     if (!sp) return;
+    if ($('legend').open) { $('legend').open = false; sheetHeight(); }   // picking a species folds the legend, so the map is clear
     var b = sp.bounds, one = b[0][0] === b[1][0] && b[0][1] === b[1][1];
     if (one) map.flyTo({ center: b[0], zoom: 17, duration: calm.matches ? 0 : 1200, essential: true });
     else map.fitBounds(b, { padding: PHONE.matches ? 28 : 70, maxZoom: 16.5, duration: calm.matches ? 0 : 1200, essential: true });
