@@ -1014,12 +1014,11 @@ window.addEventListener('DOMContentLoaded', function () {
 
   function applyFilter() {
     if (!map.getLayer('trees-dots')) return;
-    var f = filterExpr();
+    // A species picked in the legend or search: only its trees are on the map
+    var f = pickK == null ? filterExpr() : ['all', filterExpr(), ['==', ['get', 'k'], pickK]];
     map.setFilter('trees-dots', f);
     map.setFilter('trees-heat', f);
-    // In density mode, dots appear only once you zoom in close enough to pick a tree
-    // A species picked in the legend: its trees full strength, every other tree faded back
-    var op = pickK == null ? 0.9 : ['case', ['==', ['get', 'k'], pickK], 1, 0.07];
+    var op = 0.9;
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
       ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, op] : op);
     var big = ['all', ['==', ['get', 'b'], 1], originExpr()];
@@ -1100,7 +1099,7 @@ window.addEventListener('DOMContentLoaded', function () {
     }
   }
   function drawBars() {}
-  /* Tap a species in the legend to see its distribution: the map fits its trees and fades every other tree.
+  /* Tap a species in the legend to see its distribution: the map fits its trees and shows only those.
      Tap it again, tap the title, or press Escape to show all trees. On phones the page scrolls up to the map. */
   var pickK = null;
   [].forEach.call(document.querySelectorAll('.origin-pick input'), function (r) {
@@ -1220,8 +1219,7 @@ window.addEventListener('DOMContentLoaded', function () {
   map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
   /* Hover (mouse and trackpad): resting the pointer right on a tree shows its name, no click needed. It goes when the
-     pointer leaves the dot; a clicked tree keeps its own popup. Touch screens keep tap. Faded trees (another species
-     picked) don't answer hover. */
+     pointer leaves the dot; a clicked tree keeps its own popup. Touch screens keep tap. Only trees on show answer hover. */
   var canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
   var hoverPop = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, maxWidth: '280px', offset: 8, className: 'hover-pop' });
   var hoverId = null;
@@ -1229,7 +1227,7 @@ window.addEventListener('DOMContentLoaded', function () {
   map.on('mousemove', 'trees-dots', function (e) {
     if (!canHover.matches || PHONE.matches) return;
     var f = null;
-    for (var n = 0; n < e.features.length; n++) { var x = e.features[n]; if (pickK == null || x.properties.k === pickK) { f = x; break; } }
+    if (e.features.length) f = e.features[0];   // only shown trees answer
     if (!f || f.id === selected) { hoverOff(); return; }   // the clicked tree already shows its popup
     if (f.id === hoverId) return;
     var t = info[f.id]; if (!t) return;
