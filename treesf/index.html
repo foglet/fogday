@@ -1081,7 +1081,7 @@ window.addEventListener('DOMContentLoaded', function () {
       else if (/^(ssp|subsp)$/.test(lw)) { txt = 'subsp.'; out = txt; }
       else if (/^(var|f|cv)$/.test(lw)) { txt = lw + '.'; out = txt; }
       else if (w.charAt(0) === '(') { txt = w; out = '(<i>' + esc(w.slice(1, -1)) + '</i>)'; }   // a synonym genus, e.g. Myrica (Morella)
-      else if (n === 0) { txt = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); out = '<i>' + esc(txt) + '</i>'; }
+      else if (n === 0 || (n === 1 && t[0] === '\u00d7')) { txt = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); out = '<i>' + esc(txt) + '</i>'; }
       else if (/^[A-Z][a-z]+$/.test(w) && n > 1 && /^'|\u2018/.test(t[t.length - 1] || '') === false && /^[A-Z]/.test(toks[n - 1]) && toks[n - 1].charAt(0) !== "'") { txt = w; out = esc(w); }   // a capitalized cultivar word left unquoted
       else { txt = w.toLowerCase(); out = '<i>' + esc(txt) + '</i>'; }
       h.push(out); t.push(txt);

@@ -40,9 +40,10 @@ function greens(dark) {   // dark: one true/false per species (true = evergreen)
 }
 var NATIVE = /^(Quercus (agrifolia|lobata|kelloggii|douglasii|chrysolepis|wislizeni|wislizenii|engelmannii|tomentella\b|garryana)|Arbutus menziesii|Aesculus californica|Platanus racemosa|Heteromeles|Umbellularia|Cercis occidentalis|Sequoia sempervirens|Sequoiadendron|(Cupressus|Hesperocyparis) (macrocarpa|forbesii|arizonica|sargentii|goveniana|abramsiana|macnabiana)|Pinus (radiata|torreyana|coulteri|attenuata|sabiniana|muricata|contorta|ponderosa|jeffreyi|lambertiana|monophylla)|Acer (macrophyllum|circinatum)|Alnus (rhombifolia|rubra)|Populus (fremontii|trichocarpa|tremuloides)|Juglans (hindsii|californica)|Lyonothamnus|Ceanothus|(Rhamnus|Frangula) californica|Prunus (ilicifolia|lyonii)|Fremontodendron|Sambucus (mexicana|cerulea|caerulea)|Cercocarpus|Garrya|(Myrica|Morella) californica|Calocedrus|Pseudotsuga menziesii|Salix lasiolepis|Cornus nuttallii(?! x)|Chilopsis|Washingtonia filifera|Torreya californica|Thuja plicata|Chamaecyparis lawsoniana|Fraxinus (latifolia|velutina|dipetala)|Lithocarpus densiflorus|Notholithocarpus|Arctostaphylos)/i;
 var NOT_NATIVE = /tomentellaocarpa/i;   // a garbled name in the data (an Indian laurel fig), not an island oak
-function isNative(key) { var latin = key.split('::')[0].trim(); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
+function bare(latin) { return latin.replace(/^[x\u00d7]\s+/i, ''); }   // "× Chitalpa …" is still Chitalpa
+function isNative(key) { var latin = bare(key.split('::')[0].trim()); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
 var DECIDUOUS = /^(Platanus|Ginkgo|Pyrus(?! kawakamii)|Ulmus|Acer|Liquidambar|Gleditsia|Fraxinus(?! uhdei)|Betula|Malus|Crataegus|Cercis|Lagerstroemia|Jacaranda|Tilia|Zelkova|Aesculus|Koelreuteria|Pistacia chinensis|Celtis|Styphnolobium|Sophora japonica|Robinia|Catalpa|Morus|Populus|Salix|Alnus|Juglans|Liriodendron|Cornus|Carpinus|Fagus|Nyssa|Cotinus|Parrotia|Albizia|Erythrina|Tabebuia|Handroanthus|Chitalpa|Chilopsis|Melia|Ailanthus|Sapium|Triadica|Metasequoia|Taxodium|Larix|Punica|Ficus carica|Diospyros|Halesia|Amelanchier|Sorbus|Syringa|Paulownia|Toona|Sambucus|Cercidiphyllum|Hamamelis|Ostrya|Gymnocladus|Cladrastis|Laburnum|Firmiana|Hovenia|Idesia|Prunus (cerasifera|serrulata|blireiana|x ?blireiana|yedoensis|x ?yedoensis|subhirtella|sargentii|avium|persica|armeniaca|domestica|mume|cerasus|virginiana|padus|dulcis|campanulata|'|x |sp|spp|serotina|incisa|okame|×)|Quercus (lobata|douglasii|rubra|coccinea|palustris|robur|frainetto|garryana|kelloggii|macrocarpa|phellos|shumardii|alba|bicolor|cerris|velutina|texana|nuttallii|muehlenbergii|acutissima|imbricaria|x)|Magnolia (soulangeana|soulangiana|x ?soulang|stellata|kobus|denudata|liliiflora|'Ann'|'Butterflies'|acuminata|x ?loebneri|loebneri|sprengeri|campbellii|'Galaxy'|'Jane'|'Elizabeth')|Davidia|Cydonia|Mespilus|Eucommia|Pterocarya|Carya|Castanea|Sassafras|Maclura|Broussonetia|Kalopanax|Phellodendron|Tamarix|Ziziphus|Asimina|Oxydendrum|Stewartia|Styrax japonicus|Aralia|Rhus typhina|Clerodendrum trichotomum|Poncirus|Xanthoceras|Tetradium)/i;
-function isDeciduous(key) { return DECIDUOUS.test(key.split('::')[0].trim()); }
+function isDeciduous(key) { return DECIDUOUS.test(bare(key.split('::')[0].trim())); }
 function parseCSV(text) {
   var rows = [], row = [], field = '', i = 0, q = false, c, n = text.length;
   while (i < n) {
@@ -114,7 +115,7 @@ function build(rows) {
      "eriobotrya deflexa", "Eriobotrya deflexa"; "Agonis flexuosa :: Peppermint Willow", "agonis flexuosa").
      Spellings with the same botanical name (ignoring case, curly quotes and spacing) join the most common
      spelling that has a common name. */
-  function latinKey(k) { return k.split('::')[0].replace(/[\u2018\u2019\u201c\u201d"]/g, "'").replace(/\bssp\.?(?=\s)/gi, 'subsp.').replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function latinKey(k) { return bare(k.split('::')[0].trim()).replace(/[\u2018\u2019\u201c\u201d"]/g, "'").replace(/\bssp\.?(?=\s)/gi, 'subsp.').replace(/\s+/g, ' ').trim().toLowerCase(); }
   var best = {};
   Object.keys(spCount).forEach(function (k) {
     if (k === 'Unknown') return;
