@@ -437,7 +437,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city’s tree data doesn’t indicate; we matched botanical names to California species. Tap a tree for its name. A light outline marks California natives. A faint ring shows trunk size: narrow for 3–10 inches across, wider for 11–20, widest for 21 and up; a thin gray outline means no size was recorded. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Landmark and Rare trees compiled by <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; the trees on his list that aren't in the city's, including some in the Presidio, are added from his addresses and notes, placed by street address where no exact spot is known. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city’s tree data doesn’t indicate; we matched botanical names to California species. Tap a tree for its name. A light outline marks California natives. A faint ring shows trunk size: narrow for 3–10 inches across, wider for 11–20, widest for 21 and up; a thin gray outline means no size was recorded. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Rare/Landmark trees compiled by <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; the trees on his list that aren't in the city's, including some in the Presidio, are added from his addresses and notes, placed by street address where no exact spot is known. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
       </details>
     </div>
   </details>
@@ -481,7 +481,7 @@ window.addEventListener('DOMContentLoaded', function () {
   /* ---------- Trees ---------- */
   /* trees.json → the map's features, the species list and the neighborhoods. Positions are stored as whole steps of
      1e-5 degrees, each a small step from the tree before (see the build script). */
-  var treeSp = null, treeHood = null, hoodNames = [], rareInfo = {}, rareN = {}, rareB = {};   // Landmark and Rare: notes by tree, counts by species
+  var treeSp = null, treeHood = null, hoodNames = [], rareInfo = {}, rareN = {}, rareB = {};   // Rare/Landmark: notes by tree, counts by species
   function treeInfo(id) {   // what the popup and spot card need for one tree
     var sp = speciesList[treeSp[id]];
     return { sp: sp && sp.key !== 'Unknown' ? sp.key : '', nb: treeHood[id] >= 0 ? hoodNames[treeHood[id]] : '', rare: rareInfo[id] || null };
@@ -501,7 +501,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var sp = species[d.k[i]], p = { c: sp.color, k: sp.i, g: grp[i] };
       if (sp.native) p.n = 1;                       // n: California native
       if (sp.key === 'Unknown') p.u = 1;             // u: species not recorded
-      if (rareInfo[i]) p.r = 1;                      // r: Landmark and Rare (Mike Sullivan's list)
+      if (rareInfo[i]) p.r = 1;                      // r: Rare/Landmark (Mike Sullivan's list)
       if (rareInfo[i]) { var rb = rareB[d.k[i]] || (rareB[d.k[i]] = [[180, 90], [-180, -90]]), lx = d.lon0 + x / d.q, ly = d.lat0 + y / d.q;
         rb[0][0] = Math.min(rb[0][0], lx); rb[0][1] = Math.min(rb[0][1], ly); rb[1][0] = Math.max(rb[1][0], lx); rb[1][1] = Math.max(rb[1][1], ly); }
       feats[i] = { type: 'Feature', id: i, geometry: { type: 'Point', coordinates: [d.lon0 + x / d.q, d.lat0 + y / d.q] }, properties: p };
@@ -716,7 +716,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var wantNon = /^(non|not|ex|intro|alien)/.test(fq) || fq.indexOf('non') >= 0, wantNat = !wantNon && /^(nat|cali|ca n|indig)/.test(fq);
       if (wantNat) out.push({ origin: 'native', name: 'California native trees', where: fmt.format(nat) + ' trees' });
       if (wantNon) out.push({ origin: 'non', name: 'Non-native trees', where: fmt.format(non) + ' trees' });
-      if (/^(rare|landm|notab|special)/.test(fq)) out.push({ origin: 'rare', name: 'Landmark and Rare trees', where: fmt.format(Object.keys(rareN).reduce(function (a, k) { return a + rareN[k]; }, 0)) + ' trees' });
+      if (/^(rare|landm|notab|special)/.test(fq)) out.push({ origin: 'rare', name: 'Rare/Landmark trees', where: fmt.format(Object.keys(rareN).reduce(function (a, k) { return a + rareN[k]; }, 0)) + ' trees' });
       if (/^(all|both|every)/.test(fq)) out.push({ origin: 'both', name: 'All trees', where: fmt.format(nat + non + (speciesList.filter(function (x) { return x.key === 'Unknown'; })[0] || { n: 0 }).n) + ' trees' });
       return out;
     }
@@ -952,7 +952,7 @@ window.addEventListener('DOMContentLoaded', function () {
     os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
       if (!g[1].length) return;
-      if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice (Landmark and Rare has one group)
+      if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice (Rare/Landmark has one group)
       var n = g[1].reduce(function (a, x) { return a + x.n; }, 0), hd = document.createElement('li');
       hd.className = 'group'; hd.textContent = g[0] + ' · ' + fmt.format(n) + (g[1].length > 1 ? ' trees, ' + g[1].length + ' species' : ' trees');
       frag.appendChild(hd);
@@ -1114,8 +1114,8 @@ window.addEventListener('DOMContentLoaded', function () {
   function treeHTML(t, tag, brief) {
     var sp = splitSpecies(t.sp);   // name and Latin name
     var h = '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + latinName(sp.latin).html + '</div>' : '');
-    if (t.rare) {   // Landmark and Rare: the tag on hover; the note, photo and credit once tapped
-      h += '<div class="rare-tag">Landmark and Rare</div>';
+    if (t.rare) {   // Rare/Landmark: the tag on hover; the note, photo and credit once tapped
+      h += '<div class="rare-tag">Rare/Landmark</div>';
       if (!brief) {
         var note = [t.rare.place, t.rare.note].filter(Boolean).map(esc).join(' · ');
         if (note) h += '<div class="rare-note">' + note + '</div>';

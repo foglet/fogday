@@ -5,7 +5,7 @@
    This is the one place the tree data is cleaned: non-trees dropped, misspelled botanical names fixed, spellings of
    one species joined, each species given its green, California natives and deciduous trees marked. The page only
    draws the result.
-   Landmark and Rare: treesf/rare-trees.csv (a hand-kept list of notable trees, same first ten columns as trees.csv).
+   Rare/Landmark: treesf/rare-trees.csv (a hand-kept list of notable trees, same first ten columns as trees.csv).
    A row whose treeid is in the city list marks that tree; any other row (treeid "rare-…") is a tree the city list
    doesn't have, such as in the Presidio, and is added. Each marked tree carries the list's note and photo. */
 'use strict';
@@ -170,7 +170,7 @@ var out = { v: 1, built: new Date().toISOString().slice(0, 10), lon0: LON0, lat0
   species: S.map(function (s) { var b = s.bounds; return [s.key, s.n, s.color, s.native ? 1 : 0, s.deciduous ? 1 : 0,
     +b[0][0].toFixed(5), +b[0][1].toFixed(5), +b[1][0].toFixed(5), +b[1][1].toFixed(5)]; }),
   hoods: hoods.map(function (n) { var h = hoodSum[n]; return [n, +(h[0] / h[2]).toFixed(5), +(h[1] / h[2]).toFixed(5)]; }),
-  dx: [], dy: [], k: [], h: [], g: '', r: [] };   // r: Landmark and Rare trees, [position, note, photo, place]
+  dx: [], dy: [], k: [], h: [], g: '', r: [] };   // r: Rare/Landmark trees, [position, note, photo, place]
 var px = 0, py = 0;
 order.forEach(function (i, j) {
   var f = feats[i], c = f.geometry.coordinates, x = Math.round((c[0] - LON0) * Q), y = Math.round((c[1] - LAT0) * Q);
