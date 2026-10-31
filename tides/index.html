@@ -57,8 +57,8 @@ title: Tides of San Francisco
   :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
   :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
 
-  /* Dark mode, on three of every five loads (the others keep the random blue gradient above): an animated NEAT
-     gradient (WebGL canvas, configs at the end of <body>) sits behind the page.
+  /* Dark mode, on half of all loads (the other half keeps the random blue gradient above): an animated NEAT
+     gradient (WebGL canvas, config at the end of <body>) sits behind the page.
      Fixed to the window, under everything. Once it's running the script adds .neat-on to <html>, the body
      goes transparent so the canvas shows, and --rg-* become NEAT's background color, so the top fade, the
      footer and the chart's label halos match it. If WebGL fails, the random blue gradient above stays. */
@@ -69,19 +69,6 @@ title: Tides of San Francisco
   }
   :root.neat-on[data-theme="dark"] #gradient { display: block; }
   :root.neat-on[data-theme="dark"] body { background: transparent; }
-
-  /* Dark mode, the fourth pick: the page keeps the random blue gradient and NEAT fills the water under the tide line.
-     The script moves the canvas into #stripNeat and adds .neat-chart to <html>. #stripNeat sits under the chart,
-     clipped to the water and sliding with the week; tides.js sizes, clips and moves it (buildStrip, placeStrip).
-     --surface goes clear in the chart, so label halos, creature rims and marker dots don't draw patches over it. */
-  .tides #stripNeat { position: absolute; top: 0; left: 0; display: none; pointer-events: none; will-change: transform; }
-  .tides #stripNeat > #gradient { position: absolute; top: 0; left: 0; display: block; }
-  @media (prefers-color-scheme: dark) {
-    :root.neat-chart:not([data-theme="light"]) .tides #stripNeat { display: block; }
-    :root.neat-chart:not([data-theme="light"]) .tides .day { --surface: transparent; }
-  }
-  :root.neat-chart[data-theme="dark"] .tides #stripNeat { display: block; }
-  :root.neat-chart[data-theme="dark"] .tides .day { --surface: transparent; }
 
   .tides .num { font-variant-numeric: tabular-nums; }
   .tides .muted { color: var(--muted); }
@@ -402,7 +389,7 @@ title: Tides of San Francisco
     <section class="day" aria-label="Tide chart" data-i18n-aria="chartSection">
       <div class="chartbox">
         <div class="strip" id="strip">
-          <div id="stripInner"><div id="stripNeat"></div><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
+          <div id="stripInner"><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
         </div>
       </div>
     </section>
@@ -430,34 +417,36 @@ title: Tides of San Francisco
 <script src="{{ '/tides/stations.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script src="{{ '/tides/tides.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script type="module">
-  // Dark-mode background: NEAT animated gradient (neat.rebase.pro), config as exported Oct 2026.
-  // Runs only while the page is dark (system setting or the theme toggle); destroyed in light mode to spare the GPU.
-  // Reduced motion: one still frame. Scrolling shifts the waves (yOffset), as in NEAT's export.
+  // Dark-mode background, on half of all loads (the other half keeps the random blue gradient set in <head>):
+  // Monterey, an animated NEAT gradient (neat.rebase.pro) behind the page: a deep-violet twisted ribbon, as exported Oct 2026.
+  // (cameraLock: false is as exported; NEAT 1.1.0 stores it but doesn't use it, so the camera stays put.)
+  // Runs only while the page is dark (system setting or the theme toggle). Reduced motion: one still frame.
+  // Scrolling shifts the waves (yOffset), as in NEAT's export.
   import { NeatGradient } from "{{ '/tides/neat/neat.es.js' | relative_url }}?v={{ site.time | date: '%s' }}";
 
-  const config = {
+  const config = {   // Monterey
     colors: [
-      { color: '#AB2036', enabled: true },
-      { color: '#4CB4BB', enabled: true },
-      { color: '#FFC600', enabled: false },
-      { color: '#47269E', enabled: true },
-      { color: '#2E0EC7', enabled: true },
-      { color: '#B819C3', enabled: true },
+      { color: '#130437', enabled: true },
+      { color: '#B34BD0', enabled: true },
+      { color: '#210751', enabled: true },
+      { color: '#3511A5', enabled: true },
+      { color: '#8F3E8D', enabled: false },
+      { color: '#FF9A9E', enabled: false },
     ],
-    speed: 2.5, horizontalPressure: 3, verticalPressure: 4,
-    waveFrequencyX: 2, waveFrequencyY: 3, waveAmplitude: 5,
+    speed: 4, horizontalPressure: 7, verticalPressure: 3,
+    waveFrequencyX: 0, waveFrequencyY: 0, waveAmplitude: 0,
     secondaryWaveEnabled: false, secondaryWaveFrequencyX: 3, secondaryWaveFrequencyY: 3, secondaryWaveAmplitude: 5,
     secondaryWaveSpeed: 0.6, secondaryWaveAngle: 1,
-    shadows: 1, highlights: 5, colorBrightness: 1, colorSaturation: 7,
-    wireframe: true, antialias: false, colorBlending: 8,
-    backgroundColor: '#003FFF', backgroundAlpha: 1,
-    grainScale: 0, grainSparsity: 0, grainIntensity: 0, grainSpeed: 1,
-    resolution: 0.7, renderScale: 1.7,
-    yOffset: 1488, yOffsetWaveMultiplier: 4, yOffsetColorMultiplier: 4, yOffsetFlowMultiplier: 4,
-    flowDistortionA: 0, flowDistortionB: 0, flowScale: 1, flowEase: 0, flowEnabled: true,
+    shadows: 4, highlights: 0, colorBrightness: 1.95, colorSaturation: 2,
+    wireframe: false, antialias: false, colorBlending: 9,
+    backgroundColor: '#210751', backgroundAlpha: 1,
+    grainScale: 6, grainSparsity: 0, grainIntensity: 0.125, grainSpeed: 0,
+    resolution: 1.15, renderScale: 1.05,
+    yOffset: 132, yOffsetWaveMultiplier: 4.5, yOffsetColorMultiplier: 4.8, yOffsetFlowMultiplier: 5.2,
+    flowDistortionA: 0.4, flowDistortionB: 10, flowScale: 3.3, flowEase: 0.37, flowEnabled: true,
     enableProceduralTexture: false, transparentTextureVoid: false, textureMode: 'bitmap', bakeEdgeSoftness: 1,
-    textureVoidLikelihood: 0.45, textureVoidWidthMin: 200, textureVoidWidthMax: 486, textureBandDensity: 2.15,
-    textureColorBlending: 0.01, textureSeed: 333, textureEase: 0.5, proceduralBackgroundColor: '#000000',
+    textureVoidLikelihood: 0.06, textureVoidWidthMin: 10, textureVoidWidthMax: 500, textureBandDensity: 0.8,
+    textureColorBlending: 0.06, textureSeed: 333, textureEase: 0.38, proceduralBackgroundColor: '#003FFF',
     textureShapeTriangles: 20, textureShapeCircles: 15, textureShapeBars: 15, textureShapeSquiggles: 10,
     domainWarpEnabled: false, domainWarpIntensity: 0, domainWarpScale: 3,
     vignetteIntensity: 0, vignetteRadius: 0.8,
@@ -465,62 +454,14 @@ title: Tides of San Francisco
     iridescenceEnabled: false, iridescenceIntensity: 0.5, iridescenceSpeed: 1,
     prismEdgeEnabled: false, prismEdgeIntensity: 0.5, prismEdgeThinness: 3, prismEdgeSpread: 1, prismEdgeSpeed: 0.5, prismEdgeRipple: 1,
     bloomIntensity: 0, bloomThreshold: 0.7, chromaticAberration: 0,
-    shapeType: 'plane', shapeRotationX: 0, shapeRotationY: 0, shapeRotationZ: 0, shapeAutoRotateSpeedX: 0, shapeAutoRotateSpeedY: 0,
+    shapeType: 'ribbon', shapeRotationX: 0, shapeRotationY: 0, shapeRotationZ: 0, shapeAutoRotateSpeedX: 0, shapeAutoRotateSpeedY: 0,
     sphereRadius: 15, torusRadius: 15, torusTube: 5, cylinderRadius: 10, cylinderHeight: 40,
-    planeBend: 0, planeTwist: 0, silhouetteFade: 0.25, cylinderFade: 0.08, ribbonFade: 0.05,
-    flatShading: true, cameraLock: true,
-    cameraX: 0, cameraY: 0, cameraZ: 0, cameraRotationX: 0, cameraRotationY: 0, cameraRotationZ: 0, cameraZoom: 1,
+    planeBend: 1.7, planeTwist: 5, silhouetteFade: 0.2, cylinderFade: 0.08, ribbonFade: 0.23,
+    flatShading: false, cameraLock: false,
+    cameraX: 15, cameraY: 0.5, cameraZ: 0, cameraRotationX: 0, cameraRotationY: 0, cameraRotationZ: 0, cameraZoom: 1.45,
   };
 
-  // Second NEAT export (violet, iridescent, chromatic aberration, light grain): only these keys differ from the first.
-  // Each page load picks one of five looks, equal odds: the random blue CSS gradient (set in <head>), NEAT 1 or NEAT 2
-  // behind the page, the random blue gradient with NEAT 3 in the water under the tide line, or NEAT 3 behind the page.
-  const config2 = {
-    colors: config.colors.map((c, i) => (i === 5 ? { color: '#891290', enabled: true } : c)),
-    shadows: 4, backgroundColor: '#7446D9', grainIntensity: 0.075, yOffset: 3406,
-    iridescenceEnabled: true, iridescenceIntensity: 0.7, chromaticAberration: 1.5,
-  };
-  // Third NEAT export (whites and creams over sky blue, soft grain, domain warp): the water in pick 4. A whole config
-  // of its own, as exported (it has no renderScale, so NEAT's default applies).
-  const config3 = {
-    colors: [
-      { color: '#FFFFFF', enabled: true },
-      { color: '#EFE2CE', enabled: true },
-      { color: '#D5ECEB', enabled: true },
-      { color: '#E4E4E4', enabled: true },
-      { color: '#F6FFFF', enabled: true },
-    ],
-    speed: 2, horizontalPressure: 4, verticalPressure: 5,
-    waveFrequencyX: 4, waveFrequencyY: 3, waveAmplitude: 2,
-    secondaryWaveEnabled: false, secondaryWaveFrequencyX: 3, secondaryWaveFrequencyY: 3, secondaryWaveAmplitude: 5,
-    secondaryWaveSpeed: 0.6, secondaryWaveAngle: 1,
-    shadows: 5, highlights: 7, colorBrightness: 1, colorSaturation: -3,
-    wireframe: true, antialias: false, colorBlending: 7,
-    backgroundColor: '#00A2FF', backgroundAlpha: 1,
-    grainScale: 100, grainSparsity: 0, grainIntensity: 0.05, grainSpeed: 0.3,
-    resolution: 0.35,
-    yOffset: 0, yOffsetWaveMultiplier: 5, yOffsetColorMultiplier: 4.5, yOffsetFlowMultiplier: 5.5,
-    flowDistortionA: 0.4, flowDistortionB: 3, flowScale: 3.3, flowEase: 0.53, flowEnabled: true,
-    enableProceduralTexture: false, transparentTextureVoid: false, textureMode: 'bitmap', bakeEdgeSoftness: 1,
-    textureVoidLikelihood: 0.06, textureVoidWidthMin: 10, textureVoidWidthMax: 500, textureBandDensity: 0.8,
-    textureColorBlending: 0.06, textureSeed: 333, textureEase: 0.48, proceduralBackgroundColor: '#003FFF',
-    textureShapeTriangles: 20, textureShapeCircles: 15, textureShapeBars: 15, textureShapeSquiggles: 10,
-    domainWarpEnabled: true, domainWarpIntensity: 0.05, domainWarpScale: 0.5,
-    vignetteIntensity: 0, vignetteRadius: 0.8,
-    fresnelEnabled: false, fresnelPower: 2, fresnelIntensity: 0.5, fresnelColor: '#FFFFFF',
-    iridescenceEnabled: false, iridescenceIntensity: 0.5, iridescenceSpeed: 1,
-    prismEdgeEnabled: false, prismEdgeIntensity: 0.5, prismEdgeThinness: 3, prismEdgeSpread: 1, prismEdgeSpeed: 0.5, prismEdgeRipple: 1,
-    bloomIntensity: 0, bloomThreshold: 0.7, chromaticAberration: 0,
-    shapeType: 'plane', shapeRotationX: 0, shapeRotationY: 0, shapeRotationZ: 0, shapeAutoRotateSpeedX: 0, shapeAutoRotateSpeedY: 0,
-    sphereRadius: 15, torusRadius: 15, torusTube: 5, cylinderRadius: 10, cylinderHeight: 40,
-    planeBend: 0, planeTwist: 0, silhouetteFade: 0.25, cylinderFade: 0.08, ribbonFade: 0.05,
-    flatShading: true, cameraLock: true,
-    cameraX: 0, cameraY: 0, cameraZ: 0, cameraRotationX: 0, cameraRotationY: 0, cameraRotationZ: 0, cameraZoom: 1,
-  };
-  const pick = Math.floor(Math.random() * 5);   // 0: blue CSS gradient (NEAT never loads), 1: NEAT 1, 2: NEAT 2, 3: blue + NEAT 3 in the water, 4: NEAT 3 full screen
-  const inChart = pick === 3;
-  if (pick === 2) Object.assign(config, config2);
-  if (pick >= 3) { for (const k in config) delete config[k]; Object.assign(config, config3); }   // picks 4 and 5: NEAT 3 alone, nothing left over from NEAT 1
+  const useNeat = Math.random() < .5;   // false: the random blue CSS gradient stays and NEAT never loads
 
   const root = document.documentElement;
   const canvas = document.getElementById('gradient');
@@ -536,26 +477,16 @@ title: Tides of San Francisco
   // running against the deleted GL objects.
   function start() {
     if (gradient || !isDark()) return;
-    if (inChart) {   // into the water layer, sized and placed now (tides.js keeps it so from here on), before NEAT reads its size
-      const nz = document.getElementById('stripNeat'), off = -parseFloat((nz.style.transform.match(/\((-?[\d.]+)px/) || [0, 0])[1]);   // "translate3d(-123.4px,0,0)" -> 123.4
-      nz.append(canvas);
-      canvas.style.width = document.getElementById('strip').clientWidth + 'px';
-      canvas.style.height = nz.style.height || document.getElementById('stripInner').style.height;
-      canvas.style.transform = `translate3d(${off.toFixed(2)}px,0,0)`;
-    }
     try {
       gradient = new NeatGradient({ ref: canvas, ...config, speed: stillMQ.matches ? 0 : config.speed });
     } catch (e) { gradient = null; return; }   // no WebGL: keep the random blue gradient
-    if (inChart) { root.classList.add('neat-chart'); }
-    else {
-      for (const v of ['--rg-top', '--rg-mid', '--rg-bot']) root.style.setProperty(v, config.backgroundColor);
-      root.classList.add('neat-on');
-    }
+    for (const v of ['--rg-top', '--rg-mid', '--rg-bot']) root.style.setProperty(v, config.backgroundColor);
+    root.classList.add('neat-on');
     onScroll();
     addEventListener('scroll', onScroll, { passive: true });
   }
 
-  if (pick !== 0) {
+  if (useNeat) {
     start();
     darkMQ.addEventListener('change', start);
     new MutationObserver(start).observe(root, { attributes: true, attributeFilter: ['data-theme'] });

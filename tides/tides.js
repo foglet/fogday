@@ -1110,11 +1110,6 @@ function buildStrip(){
     <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6" mask="url(#poleMask)"/>
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
-  // NEAT in the water (dark mode, one of the page's random looks): #stripNeat is a week-wide layer under the chart,
-  // clipped to the water, and slides with the week (placeStrip). Its canvas is one chart wide and slides back the
-  // other way, so the gradient holds still while the water moves over it.
-  { const nz=$('stripNeat'); if (nz){ nz.style.width=TW+'px'; nz.style.height=H+'px'; nz.style.clipPath=`path('${waterD}')`;
-      const c=nz.firstElementChild; if (c){ c.style.width=W+'px'; c.style.height=H+'px'; } } }
   // Every label's box in the week picture (high / low heights and times, day names), so the center line can skip them
   stripTexts = [...document.querySelectorAll('#stripSvg text, #stripLab text')]; stripHid = stripTexts.map(()=>false);
   stripCan = stripTexts.map(t => /\b(labt|lab|dayl)\b/.test(t.getAttribute('class')||''));   // only tide heights, tide times and day names hide
@@ -1180,9 +1175,8 @@ function curveAt(t){
 // Slide the week so the viewed moment sits under the center line, and move the dot to the tide there
 function placeStrip(){
   const now=cursor(), {W, pt, ih}=stripG;
-  const off=((now-HALF_MS)-strip0)*stripK, tx=`translate3d(${(-off).toFixed(2)}px,0,0)`;
+  const tx=`translate3d(${(-((now-HALF_MS)-strip0)*stripK).toFixed(2)}px,0,0)`;
   $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
-  { const nz=$('stripNeat'); if (nz){ nz.style.transform=tx; if (nz.firstElementChild) nz.firstElementChild.style.transform=`translate3d(${off.toFixed(2)}px,0,0)`; } }
   moveSea(now);
   $('stripLine').setAttribute('d', lineAround(((now-strip0)*stripK)));   // the center, in week-picture coordinates
   pgDraw();
