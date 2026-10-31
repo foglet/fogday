@@ -350,7 +350,8 @@ zoom: 11.8
     .origin-pick { font-size: .95rem; column-gap: 18px; }
     .origin-pick label { min-height: 40px; }
     .origin-pick input { width: 18px; height: 18px; }
-    .species .pick { min-height: 36px; }
+    .species { gap: 3px; }
+    .species .pick { min-height: 26px; }   /* compact rows so fifteen species fit on a phone screen */
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
@@ -1079,6 +1080,7 @@ window.addEventListener('DOMContentLoaded', function () {
     });
     var keep = ul.scrollTop;   // re-sorting or picking keeps the list where it was
     ul.textContent = ''; ul.appendChild(frag); ul.scrollTop = keep;
+    if (typeof fitLegend === 'function') fitLegend();
     function addRow(sp) {
       var on = pickK === sp.i;
       var li = document.createElement('li'), dot = document.createElement('span'), name = document.createElement('span'), nm = splitSpecies(sp.key === 'Unknown' ? '' : sp.key);
@@ -1103,13 +1105,12 @@ window.addEventListener('DOMContentLoaded', function () {
      Tap it again, tap the title, or press Escape to show all trees. On phones the page scrolls up to the map. */
   var pickK = null;
   [].forEach.call(document.querySelectorAll('.origin-pick input'), function (r) {
-    r.addEventListener('change', function () {
+    r.addEventListener('click', function () {   // click, not change: tapping the radio already chosen also lets go of a pick
       if (!r.checked) return;
       origin = r.value;
-      // a picked species outside the new choice is let go
-      if (pickK != null) { var sp = speciesList.filter(function (x) { return x.i === pickK; })[0];
-        if (sp && ((origin === 'native' && !sp.native) || (origin === 'non' && (sp.native || sp.key === 'Unknown')))) pickK = null; }
-      clearTree(); applyFilter(); fillSpecies(speciesList); sheetHeight();
+      // choosing Native, Non-native or Both shows those trees and lets go of any single species or tree picked
+      cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
+      clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
     });
   });
   /* The other trees ease out (fade to nothing, quick then slow) before they leave the map; showing all again, they
@@ -1153,6 +1154,14 @@ window.addEventListener('DOMContentLoaded', function () {
     var ul = $('species'), card = $('controls'), title = document.querySelector('.top');
     var other = card.offsetHeight - ul.offsetHeight, above = title.getBoundingClientRect().bottom + 12, below = window.innerHeight - card.getBoundingClientRect().bottom;
     document.documentElement.style.setProperty('--legend-top', Math.ceil(other + above + below) + 'px');
+    // Phones: the list shows at most fifteen species at a time (it scrolls for the rest)
+    ul.style.maxHeight = '';
+    if (PHONE.matches) {
+      var row = ul.querySelector('li:not(.group)'), gap = parseFloat(getComputedStyle(ul).rowGap) || 0;
+      var hd = ul.querySelector('li.group'), hdH = hd ? hd.offsetHeight + gap + (parseFloat(getComputedStyle(hd).marginTop) || 0) : 0;   // the group heading above the first rows
+      if (row) { var cap = 15 * (row.offsetHeight + gap) - gap + hdH + 4, room = parseFloat(getComputedStyle(ul).maxHeight) || cap;
+        ul.style.maxHeight = Math.min(cap, room) + 'px'; }   // never taller than the screen allows either
+    }
   }
   $('legend').addEventListener('toggle', fitLegend); window.addEventListener('resize', fitLegend);
   document.querySelector('.notes').addEventListener('toggle', fitLegend);   // Info opening grows the card; the spot card stays above it
