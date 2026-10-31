@@ -57,7 +57,21 @@ title: Tides of San Francisco
   :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
   :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
 
-  /* Dark mode, on half of all loads (the other half keeps the random blue gradient above): an animated NEAT
+  /* Dark mode, the green look (.rg-green on <html>, one load in three): the same three-stop gradient, in dark greens,
+     runs through the header and footer too. The header loses its bottom line, and the fixed footer is painted with
+     the page gradient pinned to the window, so it shows exactly the slice of gradient behind it: no band, no seam.
+     The page itself (<html>) gets the gradient as well, over the site's navy, so the scrollbar gutter and the
+     overscroll bounce past the top or bottom are green too; the scrollbar's track goes clear over it, with a light thumb. */
+  @media (prefers-color-scheme: dark) {
+    :root.rg-green:not([data-theme="light"]) { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; scrollbar-color: rgb(255 255 255 / .28) transparent; }
+    :root.rg-green:not([data-theme="light"]) header { border-bottom: 0; }
+    :root.rg-green:not([data-theme="light"]) footer { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; }
+  }
+  :root.rg-green[data-theme="dark"] { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; scrollbar-color: rgb(255 255 255 / .28) transparent; }
+  :root.rg-green[data-theme="dark"] header { border-bottom: 0; }
+  :root.rg-green[data-theme="dark"] footer { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; }
+
+  /* Dark mode, on a third of loads (data-look="neat"; the others keep the random gradient above): an animated NEAT
      gradient (WebGL canvas, config at the end of <body>) sits behind the page.
      Fixed to the window, under everything. Once it's running the script adds .neat-on to <html>, the body
      goes transparent so the canvas shows, and --rg-* become NEAT's background color, so the top fade, the
@@ -348,13 +362,24 @@ title: Tides of San Francisco
   @media (max-width: 340px) { .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
   </style>
 <script>
-  // Random dark-mode page background: three blue stops: sea blue and deeper blue at the ends, any blue in the middle (greens dropped Oct 2026; restore: hue 135-165, lightness 12-14), in random order, top to bottom.
+  // Dark-mode look, picked on every load, equal odds (data-look on <html>):
+  //   blue:  three blue stops: sea blue and deeper blue at the ends, any blue in the middle, in random order, top to bottom.
+  //   neat:  Monterey, the NEAT gradient (script at the end of <body>); the blue stops stay as its no-WebGL fallback.
+  //   green: three dark green stops (hue 135-165, lightness 12-14), each its own green; also runs through the header and footer.
   (function () {
     var r = function (a, b) { return Math.round(a + Math.random() * (b - a)); };
-    var g = 'hsl(' + r(188, 202) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // a sea blue (was the green stop)
+    var root = document.documentElement, st = root.style, look = ['blue', 'neat', 'green'][Math.floor(Math.random() * 3)];
+    root.dataset.look = look;
+    if (look === 'green') {
+      var gr = function () { return 'hsl(' + r(135, 165) + ' ' + r(40, 65) + '% ' + r(12, 14) + '%)'; };
+      st.setProperty('--rg-top', gr()); st.setProperty('--rg-mid', gr()); st.setProperty('--rg-bot', gr());
+      root.classList.add('rg-green');
+      return;
+    }
+    var g = 'hsl(' + r(188, 202) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // a sea blue
     var b = 'hsl(' + r(208, 228) + ' ' + r(40, 65) + '% ' + r(15, 18) + '%)';   // a deeper blue
     var m = 'hsl(' + r(188, 228) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // the middle stop: any blue (16% max is safe for all of them)
-    var swap = Math.random() < .5, st = document.documentElement.style;
+    var swap = Math.random() < .5;
     st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-mid', m); st.setProperty('--rg-bot', swap ? g : b);
   })();
 </script>
@@ -417,7 +442,7 @@ title: Tides of San Francisco
 <script src="{{ '/tides/stations.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script src="{{ '/tides/tides.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script type="module">
-  // Dark-mode background, on half of all loads (the other half keeps the random blue gradient set in <head>):
+  // Dark-mode background, on a third of loads (the look is picked in <head>; the others are the blue or green gradient):
   // Monterey, an animated NEAT gradient (neat.rebase.pro) behind the page: a deep-violet twisted ribbon, as exported Oct 2026.
   // (cameraLock: false is as exported; NEAT 1.1.0 stores it but doesn't use it, so the camera stays put.)
   // Runs only while the page is dark (system setting or the theme toggle). Reduced motion: one still frame.
@@ -461,7 +486,7 @@ title: Tides of San Francisco
     cameraX: 15, cameraY: 0.5, cameraZ: 0, cameraRotationX: 0, cameraRotationY: 0, cameraRotationZ: 0, cameraZoom: 1.45,
   };
 
-  const useNeat = Math.random() < .5;   // false: the random blue CSS gradient stays and NEAT never loads
+  const useNeat = document.documentElement.dataset.look === 'neat';   // picked in <head>; otherwise NEAT never loads
 
   const root = document.documentElement;
   const canvas = document.getElementById('gradient');
