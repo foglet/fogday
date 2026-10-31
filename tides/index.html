@@ -57,8 +57,8 @@ title: Tides of San Francisco
   :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
   :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
 
-  /* Dark mode, on two of every four loads (the others keep the random blue gradient above): an animated NEAT
-     gradient (WebGL canvas, two configs at the end of <body>) sits behind the page.
+  /* Dark mode, on three of every five loads (the others keep the random blue gradient above): an animated NEAT
+     gradient (WebGL canvas, configs at the end of <body>) sits behind the page.
      Fixed to the window, under everything. Once it's running the script adds .neat-on to <html>, the body
      goes transparent so the canvas shows, and --rg-* become NEAT's background color, so the top fade, the
      footer and the chart's label halos match it. If WebGL fails, the random blue gradient above stays. */
@@ -473,8 +473,8 @@ title: Tides of San Francisco
   };
 
   // Second NEAT export (violet, iridescent, chromatic aberration, light grain): only these keys differ from the first.
-  // Each page load picks one of four looks, equal odds: the random blue CSS gradient (set in <head>), NEAT 1 or NEAT 2
-  // behind the page, or the random blue gradient with NEAT 3 in the water under the tide line.
+  // Each page load picks one of five looks, equal odds: the random blue CSS gradient (set in <head>), NEAT 1 or NEAT 2
+  // behind the page, the random blue gradient with NEAT 3 in the water under the tide line, or NEAT 3 behind the page.
   const config2 = {
     colors: config.colors.map((c, i) => (i === 5 ? { color: '#891290', enabled: true } : c)),
     shadows: 4, backgroundColor: '#7446D9', grainIntensity: 0.075, yOffset: 3406,
@@ -517,10 +517,10 @@ title: Tides of San Francisco
     flatShading: true, cameraLock: true,
     cameraX: 0, cameraY: 0, cameraZ: 0, cameraRotationX: 0, cameraRotationY: 0, cameraRotationZ: 0, cameraZoom: 1,
   };
-  const pick = Math.floor(Math.random() * 4);   // 0: blue CSS gradient (NEAT never loads), 1: NEAT 1, 2: NEAT 2, 3: blue + NEAT 3 in the water
+  const pick = Math.floor(Math.random() * 5);   // 0: blue CSS gradient (NEAT never loads), 1: NEAT 1, 2: NEAT 2, 3: blue + NEAT 3 in the water, 4: NEAT 3 full screen
   const inChart = pick === 3;
   if (pick === 2) Object.assign(config, config2);
-  if (inChart) { for (const k in config) delete config[k]; Object.assign(config, config3); }   // pick 4: NEAT 3 alone, nothing left over from NEAT 1
+  if (pick >= 3) { for (const k in config) delete config[k]; Object.assign(config, config3); }   // picks 4 and 5: NEAT 3 alone, nothing left over from NEAT 1
 
   const root = document.documentElement;
   const canvas = document.getElementById('gradient');
