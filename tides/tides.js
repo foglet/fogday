@@ -1682,7 +1682,9 @@ function glideTo(target){
   });
 }
 let glideTarget=null;
-let rt, lastW=0; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; stripKey=''; drawStrip(); } }, 150); });
+let rt, lastW=0; const onStripResize=()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const w=$('strip').clientWidth; if (w!==lastW){ lastW=w; stripKey=''; drawStrip(); } }, 150); };
+addEventListener('resize', onStripResize);
+if (window.ResizeObserver) new ResizeObserver(onStripResize).observe($('strip'));   // also redraws when the chart's width changes without a window resize (dark mode makes it full bleed)
 setInterval(()=>{ if (scrub!==null && scrub<=Date.now()+6e4) scrub=null;  // the clock caught up with the viewed time
   if (!same(view,todayKey())) { view=todayKey(); render({weather:false}); } else { renderNow(); renderMoon(); if (!anim) drawStrip(); } }, 60000);  // rolls over to the new day at midnight
 setInterval(()=>{ renderWeather(); loadKingAlert(beach); }, 10*60000);

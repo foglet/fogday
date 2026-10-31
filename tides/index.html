@@ -236,6 +236,12 @@ title: Tides of San Francisco
 
   /* Day card with the swipeable strip */
   .tides .day { background: var(--surface); border: 0; border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }  /* chart fills 100% of the card width (rounded corners clip it); tides.js sets the top/bottom padding */
+  /* Dark mode on phones: the tide chart runs edge to edge. It steps out over .wrap's 20px side padding (at this
+     width .wrap fills the window), with square corners. tides.js redraws the chart when its width changes. */
+  @media (max-width: 520px) {
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .day { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
+    :root[data-theme="dark"] .tides .day { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+  }
   .tides .chartbox { display: block; }  /* height labels sit inside the chart, so no side gutter */
   .tides .strip { overflow: hidden; min-width: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }  /* drag sideways through time; vertical swipes still scroll the page */
   .tides .strip.dragging { cursor: grabbing; }
