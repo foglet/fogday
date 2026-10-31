@@ -442,193 +442,53 @@ window.addEventListener('DOMContentLoaded', function () {
   var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }} };
   var THIS_YEAR = new Date().getFullYear();
 
-  /* The trees come from trees.csv beside this page: a copy of the DataSF Street Tree List, refreshed every three
-     months by .github/workflows/treesf-refresh.yml (same columns and filter as DATA_URL). If that copy can't be read,
-     the page asks DataSF directly.
-     planttype is filtered in build() too (the data mixes "Tree" and "tree").
-     description holds the address ("112 Judson Ave | Tree 1"); mapdbh is trunk diameter in inches. */
-  var LOCAL_URL = '{{ "/treesf/trees.csv" | relative_url }}';
+  /* The trees come from trees.json beside this page: the DataSF Street Tree List, already cleaned (non-trees dropped,
+     names fixed, species joined, colors and native / deciduous marked) by .github/scripts/treesf-build.js, which the
+     quarterly refresh (.github/workflows/treesf-refresh.yml) runs. The page only draws it. */
+  var TREES_URL = '{{ "/treesf/trees.json" | relative_url }}';
   /* Neighborhood boundaries: DataSF Analysis Neighborhoods, the same 41 names the tree list uses. A copy sits beside
      this page (refreshed with the trees); if it can't be read, the page asks DataSF. */
   var HOODS_LOCAL = '{{ "/treesf/neighborhoods.geojson" | relative_url }}';
   var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
   var HOOD_RED = '#e5372e';
-  var DATA_URL = 'https://data.sf.gov/resource/tkzw-k3nq.csv?$select=' +
-    ['treeid', 'species', 'description', 'planteddate', 'latitude', 'longitude', 'legalstatus', 'mapdbh', 'analysis_neighborhood', 'planttype'].join(',') +
-    '&$where=latitude%20IS%20NOT%20NULL&$limit=1000000';
 
   var $ = function (id) { return document.getElementById(id); };
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   // Year color ramp, all greens: deep forest (oldest) → leaf → spring green (newest). Stops spread over the data's year span.
   var RAMP = ['#2f7a45', '#3f9e4f', '#74c25a', '#b9e886'];
-  /* Each species its own green: hues 80°–160°, lightness and saturation stepped by golden-ratio sequences so
-     neighbors in the list differ; the most common species come first and get the most separated greens. */
-  /* Each species its own green: hues 80°–160°, saturation and lightness stepped by golden-ratio sequences so neighbors
-     in the list differ. Evergreens take the darker greens (lightness 26–46%), deciduous trees the lighter (50–78%).
-     The most common species come first and get the most separated greens. */
-  function greens(dark) {   // dark: one true/false per species (true = evergreen)
-    var out = [], seen = {}, nd = 0, nl = 0;
-    function hex(h, s, l) {
-      s /= 100; l /= 100;
-      var k = function (m) { return (m + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
-      var f = function (m) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(m) - 3, Math.min(9 - k(m), 1))))).toString(16).padStart(2, '0'); };
-      return '#' + f(0) + f(8) + f(4);
-    }
-    dark.forEach(function (d) {
-      var i = d ? nd++ : nl++, lo = d ? 26 : 50, span = d ? 20 : 28;   // evergreens 26–46% (any darker vanishes on the navy map)
-      var h = 80 + ((i * 0.618034) % 1) * 80, sat = 40 + ((i * 0.754878 + 0.3) % 1) * 45, l = lo + ((i * 0.381966 + 0.5) % 1) * span, c = hex(h, sat, l);
-      while (seen[c]) { l = l >= lo + span ? lo : l + 0.4; c = hex(h, sat, l); }   // every species gets a hex of its own
-      seen[c] = 1; out.push(c);
-    });
-    return out;
-  }
-  /* California natives: species that grow wild somewhere in California, and cultivars of them (as Public Works'
-     street tree list marks "CA Native"). The city's data has no such field; this list is matched on the botanical name. */
-  var NATIVE = /^(Quercus (agrifolia|lobata|kelloggii|douglasii|chrysolepis|wislizeni|wislizenii|engelmannii|tomentella\b|garryana)|Arbutus menziesii|Aesculus californica|Platanus racemosa|Heteromeles|Umbellularia|Cercis occidentalis|Sequoia sempervirens|Sequoiadendron|(Cupressus|Hesperocyparis) (macrocarpa|forbesii|arizonica|sargentii|goveniana|abramsiana|macnabiana)|Pinus (radiata|torreyana|coulteri|attenuata|sabiniana|muricata|contorta|ponderosa|jeffreyi|lambertiana|monophylla)|Acer (macrophyllum|circinatum)|Alnus (rhombifolia|rubra)|Populus (fremontii|trichocarpa|tremuloides)|Juglans (hindsii|californica)|Lyonothamnus|Ceanothus|(Rhamnus|Frangula) californica|Prunus (ilicifolia|lyonii)|Fremontodendron|Sambucus (mexicana|cerulea|caerulea)|Cercocarpus|Garrya|(Myrica|Morella) californica|Calocedrus|Pseudotsuga menziesii|Salix lasiolepis|Cornus nuttallii(?! x)|Chilopsis|Washingtonia filifera|Torreya californica|Thuja plicata|Chamaecyparis lawsoniana|Fraxinus (latifolia|velutina|dipetala)|Lithocarpus densiflorus|Notholithocarpus|Arctostaphylos)/i;
-  var NOT_NATIVE = /tomentellaocarpa/i;   // a garbled name in the data (an Indian laurel fig), not an island oak
-  function isNative(key) { var latin = key.split('::')[0].trim(); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
   var NATIVE_LINE = '#f1ffe3';   // the light outline on California natives
   function nativeStroke(w) { return ['case', ['boolean', ['feature-state', 'sel'], false], 2, ['==', ['get', 'n'], 1], w, 0]; }
-  /* Deciduous species (they drop their leaves for winter); everything else is treated as evergreen. Like natives,
-     the city's data doesn't say, so this is matched on the botanical name. Semi-evergreens that go bare here
-     (Chinese elm, jacaranda) count as deciduous; Evergreen pear and Shamel (evergreen) ash do not. */
-  var DECIDUOUS = /^(Platanus|Ginkgo|Pyrus(?! kawakamii)|Ulmus|Acer|Liquidambar|Gleditsia|Fraxinus(?! uhdei)|Betula|Malus|Crataegus|Cercis|Lagerstroemia|Jacaranda|Tilia|Zelkova|Aesculus|Koelreuteria|Pistacia chinensis|Celtis|Styphnolobium|Sophora japonica|Robinia|Catalpa|Morus|Populus|Salix|Alnus|Juglans|Liriodendron|Cornus|Carpinus|Fagus|Nyssa|Cotinus|Parrotia|Albizia|Erythrina|Tabebuia|Handroanthus|Chitalpa|Chilopsis|Melia|Ailanthus|Sapium|Triadica|Metasequoia|Taxodium|Larix|Punica|Ficus carica|Diospyros|Halesia|Amelanchier|Sorbus|Syringa|Paulownia|Toona|Sambucus|Cercidiphyllum|Hamamelis|Ostrya|Gymnocladus|Cladrastis|Laburnum|Firmiana|Hovenia|Idesia|Prunus (cerasifera|serrulata|blireiana|x ?blireiana|yedoensis|x ?yedoensis|subhirtella|sargentii|avium|persica|armeniaca|domestica|mume|cerasus|virginiana|padus|dulcis|campanulata|'|x |sp|spp|serotina|incisa|okame|×)|Quercus (lobata|douglasii|rubra|coccinea|palustris|robur|frainetto|garryana|kelloggii|macrocarpa|phellos|shumardii|alba|bicolor|cerris|velutina|texana|nuttallii|muehlenbergii|acutissima|imbricaria|x)|Magnolia (soulangeana|soulangiana|x ?soulang|stellata|kobus|denudata|liliiflora|'Ann'|'Butterflies'|acuminata|x ?loebneri|loebneri|sprengeri|campbellii|'Galaxy'|'Jane'|'Elizabeth')|Davidia|Cydonia|Mespilus|Eucommia|Pterocarya|Carya|Castanea|Sassafras|Maclura|Broussonetia|Kalopanax|Phellodendron|Tamarix|Ziziphus|Asimina|Oxydendrum|Stewartia|Styrax japonicus|Aralia|Rhus typhina|Clerodendrum trichotomum|Poncirus|Xanthoceras|Tetradium)/i;
-  function isDeciduous(key) { return DECIDUOUS.test(key.split('::')[0].trim()); }
   var BIG_RING = '#b9e886';   // the ring around big trees: the ramp's spring green
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
 
-  /* ---------- CSV ---------- */
-  function parseCSV(text) {
-    var rows = [], row = [], field = '', i = 0, q = false, c, n = text.length;
-    while (i < n) {
-      c = text.charCodeAt(i);
-      if (q) {
-        if (c === 34) { if (text.charCodeAt(i + 1) === 34) { field += '"'; i += 2; continue; } q = false; i++; continue; }
-        field += text[i]; i++; continue;
-      }
-      if (c === 34) { q = true; i++; continue; }
-      if (c === 44) { row.push(field); field = ''; i++; continue; }
-      if (c === 10 || c === 13) {
-        row.push(field); field = '';
-        if (row.length > 1 || row[0] !== '') rows.push(row);
-        row = [];
-        if (c === 13 && text.charCodeAt(i + 1) === 10) i++;
-        i++; continue;
-      }
-      field += text[i]; i++;
-    }
-    if (field !== '' || row.length) { row.push(field); rows.push(row); }
-    return rows;
+  /* ---------- Trees ---------- */
+  /* trees.json → the map's features, the species list and the neighborhoods. Positions are stored as whole steps of
+     1e-5 degrees, each a small step from the tree before (see the build script). */
+  var treeSp = null, treeHood = null, hoodNames = [];
+  function treeInfo(id) {   // what the popup and spot card need for one tree
+    var sp = speciesList[treeSp[id]];
+    return { sp: sp && sp.key !== 'Unknown' ? sp.key : '', nb: treeHood[id] >= 0 ? hoodNames[treeHood[id]] : '' };
   }
-
-  function yearOf(s) {
-    var m = /(\d{4})/.exec(s || '');
-    if (!m) return 0;
-    var y = +m[1];
-    return (y >= 1900 && y <= THIS_YEAR) ? y : 0;   // bad or future dates count as undated
-  }
-
-  /* ---------- Build features ---------- */
-  var info = [];   // per-tree details for popups, indexed by feature id
-  /* Each neighborhood's middle: the average position of its trees */
-  var hoodSum = {};
-  function neighborhoods() {
-    return Object.keys(hoodSum).sort().map(function (n) { var h = hoodSum[n]; return { name: n, center: [h[0] / h[2], h[1] / h[2]] }; });
-  }
-  /* Spelling fixes for botanical names the data gets wrong (each checked against the accepted name), applied before
-     species are joined, so a misspelling joins its species: e.g. Acer buergeranum → Acer buergerianum,
-     Podocarpus gracilor → Podocarpus gracilior, Gingko → Ginkgo. Junk after a closing quote ('Musashino'l site) and
-     stray spaces inside quotes go too. Synonyms (two accepted names for one tree) are left as the data has them. */
-  var FIX_WORDS = { plantanus: 'Platanus', patanus: 'Platanus', gingko: 'Ginkgo', pistachia: 'Pistacia', michaelia: 'Michelia',
-    leucodendron: 'Leucadendron', casurina: 'Casuarina', canandensis: 'canadensis', europea: 'europaea', persicaum: 'persica',
-    buergeranum: 'buergerianum', gracilor: 'gracilior', patersonia: 'patersonii', pattersonia: 'patersonii', chinesis: 'chinensis',
-    soulangiana: 'soulangeana', aspleniifolius: 'asplenifolius', chitalpatashkentensis: 'Chitalpa tashkentensis' };
-  var FIX_CULTIVARS = { fastigata: 'Fastigiata', vannessa: 'Vanessa' };
-  function fixLatin(latin) {
-    var t = latin.replace(/[\u2018\u2019\u201c\u201d"]/g, "'")
-      .replace(/('[^']*')[a-z].*$/, '$1')                                // junk run onto a closing quote ('Musashino'l site), not O'Neill
-      .replace(/'\s*([^']*?)\s*'/g, "'$1'")                              // stray spaces inside quotes
-      .replace(/\s+/g, ' ').trim();
-    t = t.replace(/[A-Za-z]+/g, function (w) { var f = FIX_WORDS[w.toLowerCase()]; return f || w; });
-    t = t.replace(/'([^']*)'/g, function (m, cv) { var f = FIX_CULTIVARS[cv.toLowerCase()]; return f ? "'" + f + "'" : m; });
-    t = t.replace(/^Platanus hispanica\b/i, 'Platanus x hispanica')
-         .replace(/^Chionanthus retusa\b/i, 'Chionanthus retusus')
-         .replace(/^Lyonothamnus floribundus (?:ssp\.?|subsp\.?)?\s*asplenifolius/i, 'Lyonothamnus floribundus subsp. asplenifolius');
-    return t;
-  }
-  function fixSpecies(raw) {
-    var k = (raw || '').trim(); if (!k) return '';
-    var i = k.indexOf('::'), latin = i >= 0 ? k.slice(0, i) : k, rest = i >= 0 ? k.slice(i) : '';
-    var f = fixLatin(latin); return rest ? f + ' ' + rest : f;
-  }
-  /* Not trees: the list also records empty planting sites, stumps, paved-over sites and shrubs. A tree that isn't
-     there isn't on the map or in the count. Rows with no species ("Tree(s)") are real trees and stay. */
-  var NOT_A_TREE = /planting site|potential site|\bstump\b|\bpaved?\b|pavedtemp|\bshrub\b/i;
-  function build(rows) {
-    var h = rows[0], ix = {};
-    h.forEach(function (k, i) { ix[k] = i; });
-    var feats = [], perYear = {}, spCount = {}, spOf = [];
-    for (var r = 1; r < rows.length; r++) {
-      var row = rows[r];
-      var pt = (row[ix.planttype] || '').toLowerCase();
-      if (pt && pt !== 'tree') continue;
-      var lat = +row[ix.latitude], lon = +row[ix.longitude];
-      if (!(lat > 37.6 && lat < 37.85 && lon > -122.53 && lon < -122.34)) continue;   // inside San Francisco
-      if (NOT_A_TREE.test((row[ix.species] || '').trim())) continue;   // no tree here
-      var y = yearOf(row[ix.planteddate]);
-      var id = info.length;
-      info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
-                  st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
-      var sk = fixSpecies(row[ix.species]) || 'Unknown'; spCount[sk] = (spCount[sk] || 0) + 1; spOf.push(sk);
-      feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, b: +row[ix.mapdbh] > 24 ? 1 : 0 } });   // b: trunk over two feet across (mapdbh is in inches)
-      if (y) perYear[y] = (perYear[y] || 0) + 1;
-      var nb = row[ix.analysis_neighborhood];
-      if (nb) { var hs = hoodSum[nb] || (hoodSum[nb] = [0, 0, 0]); hs[0] += lon; hs[1] += lat; hs[2]++; }
-    }
-    /* One species, one entry: the data writes some species several ways ("Eriobotrya deflexa :: Bronze Loquat",
-       "eriobotrya deflexa", "Eriobotrya deflexa"; "Agonis flexuosa :: Peppermint Willow", "agonis flexuosa").
-       Spellings with the same botanical name (ignoring case, curly quotes and spacing) join the most common
-       spelling that has a common name. */
-    function latinKey(k) { return k.split('::')[0].replace(/[\u2018\u2019\u201c\u201d"]/g, "'").replace(/\bssp\.?(?=\s)/gi, 'subsp.').replace(/\s+/g, ' ').trim().toLowerCase(); }
-    var best = {};
-    Object.keys(spCount).forEach(function (k) {
-      if (k === 'Unknown') return;
-      function nameOf(x) { var n = x && x.indexOf('::') > 0 && x.split('::')[1].trim(); return n && !/^planting site/i.test(n) ? n : ''; }   // "Planting Site (plant)" is not a name
-      var lk = latinKey(k), b = best[lk], named = nameOf(k), bNamed = nameOf(b);
-      if (!b || (named && !bNamed) || (!!named === !!bNamed && spCount[k] > spCount[b])) best[lk] = k;
+  function decode(d) {
+    var n = d.k.length, feats = new Array(n), x = 0, y = 0, big = new Uint8Array(n);
+    d.big.forEach(function (i) { big[i] = 1; });
+    var species = d.species.map(function (s, i) {
+      return { key: s[0], i: i, n: s[1], color: s[2], native: !!s[3], deciduous: !!s[4], bounds: [[s[5], s[6]], [s[7], s[8]]] };
     });
-    var merged = {};
-    spOf = spOf.map(function (k) { var m = k === 'Unknown' ? k : best[latinKey(k)]; merged[m] = (merged[m] || 0) + 1; return m; });
-    spCount = merged;
-    spOf.forEach(function (k, i) { info[i].sp = k === 'Unknown' ? '' : k; });   // the tree panel shows the joined name too
-    // Species, most trees first; each gets its green, stored on its trees for the map to draw
-    var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
-    var gs = greens(list.map(function (k) { return !isDeciduous(k); })), colorOf = {};
-    list.forEach(function (k, i) { colorOf[k] = gs[i]; });
-    var rank = {}, ext = {};
-    list.forEach(function (k, i) { rank[k] = i; ext[k] = [Infinity, Infinity, -Infinity, -Infinity]; });
-    feats.forEach(function (f, i) {
-      var k = spOf[i], c = f.geometry.coordinates, e = ext[k];
-      f.properties.c = colorOf[k]; f.properties.k = rank[k];   // k: the species' number, for the legend's pick
-      if (k !== 'Unknown' && isNative(k)) f.properties.n = 1;   // n: California native
-      if (k === 'Unknown') f.properties.u = 1;                  // u: species not recorded (neither native nor non-native)
-      e[0] = Math.min(e[0], c[0]); e[1] = Math.min(e[1], c[1]); e[2] = Math.max(e[2], c[0]); e[3] = Math.max(e[3], c[1]);
-    });
-    var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), deciduous: isDeciduous(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
-    return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
+    treeSp = d.k; treeHood = d.h; hoodNames = d.hoods.map(function (h) { return h[0]; });
+    for (var i = 0; i < n; i++) {
+      x += d.dx[i]; y += d.dy[i];
+      var sp = species[d.k[i]], p = { c: sp.color, k: sp.i, b: big[i] };
+      if (sp.native) p.n = 1;                       // n: California native
+      if (sp.key === 'Unknown') p.u = 1;             // u: species not recorded
+      feats[i] = { type: 'Feature', id: i, geometry: { type: 'Point', coordinates: [d.lon0 + x / d.q, d.lat0 + y / d.q] }, properties: p };
+    }
+    return { fc: { type: 'FeatureCollection', features: feats }, species: species,
+             hoods: d.hoods.map(function (h) { return { name: h[0], center: [h[1], h[2]] }; }) };
   }
 
-  // Slider floor: the earliest year with a meaningful number of plantings (skips a few stray early dates).
-  function yearSpan(perYear) {
-    var ys = Object.keys(perYear).map(Number).sort(function (a, b) { return a - b; });
-    if (!ys.length) return [1970, THIS_YEAR];
-    var total = ys.reduce(function (s, y) { return s + perYear[y]; }, 0), acc = 0, lo = ys[0];
-    for (var i = 0; i < ys.length; i++) { acc += perYear[ys[i]]; if (acc / total >= 0.005) { lo = ys[i]; break; } }
-    return [lo, ys[ys.length - 1]];
-  }
-
-  /* ---------- Map ---------- */
+  /* ---------- Map ---------- */  /* ---------- Map ---------- */
   /* The map stays on the City and County of San Francisco: the peninsula from Ocean Beach to the bay shore, and
      Treasure and Yerba Buena Islands, with a little water around them. (The Farallon Islands, also in the county,
      have no street trees.) */
@@ -917,12 +777,6 @@ window.addEventListener('DOMContentLoaded', function () {
 
   var state = { mode: 'year', year: THIS_YEAR, undated: true, span: [1970, THIS_YEAR], perYear: {}, total: 0, dated: 0 };
 
-  function colorExpr() {
-    var lo = state.span[0], hi = Math.max(state.span[1], lo + 3), step = (hi - lo) / (RAMP.length - 1);
-    var e = ['interpolate', ['linear'], ['get', 'y']];
-    RAMP.forEach(function (c, i) { e.push(Math.round(lo + step * i * 100) / 100, c); });
-    return ['case', ['==', ['get', 'y'], 0], getComputedStyle(document.documentElement).getPropertyValue('--undated').trim() || '#6d7d74', e];
-  }
 
   /* Native / Non-native / Both, from the legend's radio buttons. Both shows every tree, including those with no
      species recorded; Native and Non-native show only trees known to be one or the other. Always opens on Both. */
@@ -932,33 +786,12 @@ window.addEventListener('DOMContentLoaded', function () {
     if (origin === 'non') return ['all', ['!=', ['coalesce', ['get', 'n'], 0], 1], ['!=', ['coalesce', ['get', 'u'], 0], 1]];
     return true;
   }
-  function filterExpr() {
-    var dated = ['all', ['>', ['get', 'y'], 0], ['<=', ['get', 'y'], state.year]];
-    var when = state.undated ? ['any', ['==', ['get', 'y'], 0], dated] : dated;
-    return origin === 'both' ? when : ['all', when, originExpr()];
-  }
+  function filterExpr() { return origin === 'both' ? ['has', 'k'] : ['all', ['has', 'k'], originExpr()]; }
 
   function radius(k) {   // the dot size at each zoom, times k
     return ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6 * k, 13, 1.4 * k, 16, 3.6 * k, 19, 9 * k];
   }
 
-  /* New trees pop in: moving the slider forward from one year to a later one, the trees planted in between
-     grow in at 3x their size in pale green and settle over 0.7 s. Moving back simply removes trees.
-     Reduced motion: no pop. */
-  var popRaf = 0;
-  function popIn(from, to) {
-    cancelAnimationFrame(popRaf);
-    if (!map.getLayer('trees-pop')) return;
-    if (to <= from || calm.matches || state.mode !== 'year') { map.setPaintProperty('trees-pop', 'circle-opacity', 0); return; }
-    map.setFilter('trees-pop', ['all', ['>', ['get', 'y'], from], ['<=', ['get', 'y'], to]]);
-    var t0 = performance.now(), DUR = 700;
-    (function frame(now) {
-      var t = Math.min(1, (now - t0) / DUR), e = 1 - Math.pow(1 - t, 3);   // ease out
-      map.setPaintProperty('trees-pop', 'circle-radius', radius(3 - 2 * e));
-      map.setPaintProperty('trees-pop', 'circle-opacity', 0.95 * (1 - t * t));
-      if (t < 1) popRaf = requestAnimationFrame(frame);
-    })(t0);
-  }
 
   function addLayers(fc) {
     map.addSource('trees', { type: 'geojson', data: fc });
@@ -991,12 +824,6 @@ window.addEventListener('DOMContentLoaded', function () {
         'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#ffffff', NATIVE_LINE],
         'circle-stroke-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0.85]
       }
-    });
-    /* Trees the slider just added, drawn over the rest: they pop in large and pale, then shrink and fade to show the
-       ramp color beneath (popIn, below) */
-    map.addLayer({
-      id: 'trees-pop', type: 'circle', source: 'trees', filter: ['==', ['get', 'y'], -1],
-      paint: { 'circle-color': POP, 'circle-radius': radius(1), 'circle-opacity': 0 }
     });
     applyFilter();
   }
@@ -1046,11 +873,6 @@ window.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- Readouts ---------- */
   var fmt = new Intl.NumberFormat('en-US');
-  function shownCount() {
-    var n = 0;
-    for (var y in state.perYear) if (+y <= state.year) n += state.perYear[y];
-    return n;
-  }
   function updateCount() {}   // no year readout: the map shows every tree
   /* The legend's names and order. Two buttons, Common name and Latin name: tapping one shows that name, most trees
      first; tapping it again sorts it A–Z, and once more goes back to most trees. Opens on common names, most trees
@@ -1245,7 +1067,7 @@ window.addEventListener('DOMContentLoaded', function () {
     return '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + latinName(sp.latin).html + '</div>' : '');
   }
   function showTree(f) {
-    var t = info[f.id]; if (!t) return;
+    var t = treeInfo(f.id); if (!t) return;
     markTree(f.id);
     popup.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
   }
@@ -1277,7 +1099,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (e.features.length) f = e.features[0];   // only shown trees answer
     if (!f || f.id === selected) { hoverOff(); return; }   // the clicked tree already shows its popup
     if (f.id === hoverId) return;
-    var t = info[f.id]; if (!t) return;
+    var t = treeInfo(f.id); if (!t) return;
     hoverId = f.id;
     hoverPop.remove();   // re-added, so each new tree's popup eases in afresh
     hoverPop.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
@@ -1398,7 +1220,7 @@ window.addEventListener('DOMContentLoaded', function () {
     placeName(lng, lat).then(function (pl) {
       // A tree knows its own neighborhood (the city's list records it); that wins over the boundary lookup, which can
       // miss trees on a boundary street or in a gap between the polygons
-      var own = tree && info[tree.id] && info[tree.id].nb;
+      var own = tree && treeInfo(tree.id).nb;
       if (own) { pl.hood = own; if (/^(Open water|Place name unavailable)$/.test(pl.city)) pl.city = 'San Francisco, CA'; }
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
@@ -1457,22 +1279,13 @@ window.addEventListener('DOMContentLoaded', function () {
   });
 
   /* ---------- Load ---------- */
-  function getCSV(url, who) {
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error(who + ' answered ' + r.status);
-      return r.text();
-    }).then(function (t) {
-      if (!/^"?treeid"?,/.test(t)) throw new Error(who + ' sent something other than the tree list');
-      return t;
-    });
-  }
   function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
   var hoodsP = getJSON(HOODS_LOCAL).catch(function () { return getJSON(HOODS_URL); })
     .then(function (g) { return g && g.features && g.features.length ? g : null; }).catch(function () { return null; });
-  var dataP = getCSV(LOCAL_URL, 'fogday.com').catch(function () {
-    $('status').textContent = 'Downloading trees from DataSF…';
-    return getCSV(DATA_URL, 'DataSF');
-  }).then(function (t) { $('status').textContent = 'Reading trees…'; return t; });
+  var dataP = fetch(TREES_URL).then(function (r) {
+    if (!r.ok) throw new Error('fogday.com answered ' + r.status);
+    return r.json();
+  });
   /* Dark blue base map: Mapbox's dark style is grey, so its land, water, roads and buildings are recolored to the
      page's navy on load (the transit and atlas pages' blue). Labels keep their color with a navy halo. */
   var NAVY = { land: '#0b2233', water: '#021724', park: '#0d2a33', road: '#1b3a54', roadMinor: '#15314a', building: '#12304a', halo: '#021724' };
@@ -1525,20 +1338,13 @@ window.addEventListener('DOMContentLoaded', function () {
   });
 
   Promise.all([dataP, styleP]).then(function (v) {
-    var built = build(parseCSV(v[0]));
-    state.perYear = built.perYear; state.total = built.fc.features.length;
-    state.dated = Object.keys(built.perYear).reduce(function (s, y) { return s + built.perYear[y]; }, 0);
-    state.span = yearSpan(built.perYear);
-    // Stray dates before the slider floor still show; they sit at the floor year
-    for (var y in state.perYear) if (+y < state.span[0]) { state.perYear[state.span[0]] = (state.perYear[state.span[0]] || 0) + state.perYear[y]; delete state.perYear[y]; }
-    built.fc.features.forEach(function (f) { if (f.properties.y && f.properties.y < state.span[0]) f.properties.y = state.span[0]; });
-    state.span[1] = Math.max(state.span[1], THIS_YEAR);
-    state.year = state.span[1];   // opens on this year: today's trees. Slide back to see the city before later plantings
+    var built = decode(v[0]);
+    state.total = built.fc.features.length;
     $('summary').textContent = fmt.format(state.total) + ' street trees';
     $('status').hidden = true;
     addLayers(built.fc);
     setSort(sortBy, sortAZ); fillSpecies(built.species);
-    fillNeighborhoods(neighborhoods());
+    fillNeighborhoods(built.hoods);
     hoodsP.then(function (g) { if (g) addHoodLayers(g); });   // boundaries are extra: the map works without them
     sheetHeight();
   }).catch(function (err) {

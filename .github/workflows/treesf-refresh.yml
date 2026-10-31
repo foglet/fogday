@@ -1,8 +1,8 @@
 # Refreshes treesf/trees.csv (the DataSF Street Tree List) and treesf/neighborhoods.geojson (DataSF Analysis
-# Neighborhoods, the 41 areas the tree list names), the copies that fogday.com/treesf/ reads.
+# Neighborhoods, the 41 areas the tree list names), then builds treesf/trees.json, the cleaned file the page reads
+# (.github/scripts/treesf-build.js).
 # The list changes slowly, so it runs every three months (Jan, Apr, Jul, Oct 1, 6:17 AM Pacific standard time).
 # It also runs when this file changes, which makes the first copy, and on demand from the Actions tab.
-# Same columns and filter as DATA_URL in treesf/index.html; keep the two in step.
 name: Refresh SF street trees
 
 on:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [".github/workflows/treesf-refresh.yml"]
+    paths: [".github/workflows/treesf-refresh.yml", ".github/scripts/treesf-build.js"]
 
 permissions:
   contents: write
@@ -67,11 +67,18 @@ jobs:
           [ "$n" -ge 35 ] || { echo "::error::Only $n neighborhoods; keeping the current copy"; exit 1; }
           jq -c . /tmp/neighborhoods.geojson > treesf/neighborhoods.geojson
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build trees.json for the page
+        run: node .github/scripts/treesf-build.js
+
       - name: Commit if anything changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add treesf/trees.csv treesf/neighborhoods.geojson
+          git add treesf/trees.csv treesf/neighborhoods.geojson treesf/trees.json
           if git diff --cached --quiet; then echo "No change"; exit 0; fi
           git commit -m "SF Street Trees: refresh tree list and neighborhoods from DataSF ($(date -u +%Y-%m-%d))"
           git push
