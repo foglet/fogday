@@ -899,7 +899,7 @@ window.addEventListener('DOMContentLoaded', function () {
   function updateCount() {}   // no year readout: the map shows every tree
   /* The legend's names and order. Two buttons, Common name and Latin name: tapping one shows that name, most trees
      first; tapping it again sorts it A–Z, and once more goes back to most trees. Opens on common names, most trees
-     first. Each group (native, not native) is sorted on its own. The choice is remembered in this browser. */
+     first. Each group (native, native elsewhere) is sorted on its own. The choice is remembered in this browser. */
   var speciesList = [], sortBy = 'common', sortAZ = false;
   try { var saved = (localStorage.getItem('treesf-sort2') || '').split(':'); if (/^(common|latin)$/.test(saved[0])) { sortBy = saved[0]; sortAZ = saved[1] === 'az'; } } catch (e) {}
   var byName = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
@@ -927,7 +927,7 @@ window.addEventListener('DOMContentLoaded', function () {
     list = list.slice().sort(sorter());
     var ul = $('species'), frag = document.createDocumentFragment();
     var groups = [['California native', list.filter(function (x) { return x.native; })],
-                  ['Not native', list.filter(function (x) { return !x.native && x.key !== 'Unknown'; })],
+                  ['Native elsewhere', list.filter(function (x) { return !x.native && x.key !== 'Unknown'; })],
                   ['Species not recorded', list.filter(function (x) { return x.key === 'Unknown'; })]];
     var natN = groups[0][1].reduce(function (a, x) { return a + x.n; }, 0), notN = groups[1][1].reduce(function (a, x) { return a + x.n; }, 0);
     // Under the total: the native count with Native picked, the non-native count with Non-native; nothing with Both
