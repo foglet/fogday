@@ -10,6 +10,15 @@ var fs = require('fs'), path = require('path');
 var ROOT = path.join(__dirname, '..', '..'), DIR = path.join(ROOT, 'treesf');
 var info = [], hoodSum = {};
 
+/* Trunk-size group from mapdbh (diameter at breast height, inches), the same three bands as DataSF's dbhrange:
+   1 = 3–10", 2 = 11–20", 3 = 21" and up. 0 = no diameter recorded; DataSF files those under 3, but they get their
+   own style on the map so they don't read as big trees. */
+function dbhGroup(v) {
+  var d = +v;
+  if (!(d > 0)) return 0;
+  return d <= 10 ? 1 : d <= 20 ? 2 : 3;
+}
+
 function greens(dark) {   // dark: one true/false per species (true = evergreen)
   var out = [], seen = {}, nd = 0, nl = 0;
   function hex(h, s, l) {
@@ -92,7 +101,7 @@ function build(rows) {
     info.push({ sp: row[ix.species] || '', ad: row[ix.description] || '', d: row[ix.planteddate] || '',
                 st: row[ix.legalstatus] || '', dbh: row[ix.mapdbh] || '', nb: row[ix.analysis_neighborhood] || '' });
     var sk = fixSpecies(row[ix.species]) || 'Unknown'; spCount[sk] = (spCount[sk] || 0) + 1; spOf.push(sk);
-    feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, b: +row[ix.mapdbh] > 24 ? 1 : 0 } });   // b: trunk over two feet across (mapdbh is in inches)
+    feats.push({ type: 'Feature', id: id, geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { y: y, g: dbhGroup(row[ix.mapdbh]) } });   // g: trunk-size group (see dbhGroup)
     if (y) perYear[y] = (perYear[y] || 0) + 1;
     var nb = row[ix.analysis_neighborhood];
     if (nb) { var hs = hoodSum[nb] || (hoodSum[nb] = [0, 0, 0]); hs[0] += lon; hs[1] += lat; hs[2]++; }
@@ -146,14 +155,14 @@ var out = { v: 1, built: new Date().toISOString().slice(0, 10), lon0: LON0, lat0
   species: S.map(function (s) { var b = s.bounds; return [s.key, s.n, s.color, s.native ? 1 : 0, s.deciduous ? 1 : 0,
     +b[0][0].toFixed(5), +b[0][1].toFixed(5), +b[1][0].toFixed(5), +b[1][1].toFixed(5)]; }),
   hoods: hoods.map(function (n) { var h = hoodSum[n]; return [n, +(h[0] / h[2]).toFixed(5), +(h[1] / h[2]).toFixed(5)]; }),
-  dx: [], dy: [], k: [], h: [], big: [] };
+  dx: [], dy: [], k: [], h: [], g: '' };
 var px = 0, py = 0;
 order.forEach(function (i, j) {
   var f = feats[i], c = f.geometry.coordinates, x = Math.round((c[0] - LON0) * Q), y = Math.round((c[1] - LAT0) * Q);
   out.dx.push(x - px); out.dy.push(y - py); px = x; py = y;
   out.k.push(f.properties.k);
   var nb = info[i].nb; out.h.push(nb in hoodIx ? hoodIx[nb] : -1);
-  if (f.properties.b) out.big.push(j);
+  out.g += f.properties.g;   // one digit per tree, in output order
 });
 fs.writeFileSync(path.join(DIR, 'trees.json'), JSON.stringify(out));
 
