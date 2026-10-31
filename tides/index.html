@@ -70,18 +70,17 @@ title: Tides of San Francisco
   :root.neat-on[data-theme="dark"] #gradient { display: block; }
   :root.neat-on[data-theme="dark"] body { background: transparent; }
 
-  /* Dark mode, the fourth pick: the page keeps the random blue gradient and NEAT fills the tide chart instead.
-     The script moves the canvas into the chart section and adds .neat-chart to <html>. The canvas fills the
-     section behind the chart; --surface goes clear there, so label halos, creature rims and marker dots don't
-     draw blue patches over the moving colors. */
-  :root.neat-chart .tides .day { position: relative; isolation: isolate; }
-  :root.neat-chart .tides .day > #gradient { position: absolute; inset: 0; z-index: 0; }
-  :root.neat-chart .tides .day > .chartbox { position: relative; z-index: 1; }
+  /* Dark mode, the fourth pick: the page keeps the random blue gradient and NEAT fills the water under the tide line.
+     The script moves the canvas into #stripNeat and adds .neat-chart to <html>. #stripNeat sits under the chart,
+     clipped to the water and sliding with the week; tides.js sizes, clips and moves it (buildStrip, placeStrip).
+     --surface goes clear in the chart, so label halos, creature rims and marker dots don't draw patches over it. */
+  .tides #stripNeat { position: absolute; top: 0; left: 0; display: none; pointer-events: none; will-change: transform; }
+  .tides #stripNeat > #gradient { position: absolute; top: 0; left: 0; display: block; }
   @media (prefers-color-scheme: dark) {
-    :root.neat-chart:not([data-theme="light"]) .tides .day > #gradient { display: block; }
+    :root.neat-chart:not([data-theme="light"]) .tides #stripNeat { display: block; }
     :root.neat-chart:not([data-theme="light"]) .tides .day { --surface: transparent; }
   }
-  :root.neat-chart[data-theme="dark"] .tides .day > #gradient { display: block; }
+  :root.neat-chart[data-theme="dark"] .tides #stripNeat { display: block; }
   :root.neat-chart[data-theme="dark"] .tides .day { --surface: transparent; }
 
   .tides .num { font-variant-numeric: tabular-nums; }
@@ -403,7 +402,7 @@ title: Tides of San Francisco
     <section class="day" aria-label="Tide chart" data-i18n-aria="chartSection">
       <div class="chartbox">
         <div class="strip" id="strip">
-          <div id="stripInner"><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
+          <div id="stripInner"><div id="stripNeat"></div><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
         </div>
       </div>
     </section>
@@ -499,7 +498,13 @@ title: Tides of San Francisco
   // running against the deleted GL objects.
   function start() {
     if (gradient || !isDark()) return;
-    if (inChart) document.querySelector('.tides .day').prepend(canvas);   // before building, so NEAT sizes it to the chart
+    if (inChart) {   // into the water layer, sized and placed now (tides.js keeps it so from here on), before NEAT reads its size
+      const nz = document.getElementById('stripNeat'), off = -parseFloat((nz.style.transform.match(/\((-?[\d.]+)px/) || [0, 0])[1]);   // "translate3d(-123.4px,0,0)" -> 123.4
+      nz.append(canvas);
+      canvas.style.width = document.getElementById('strip').clientWidth + 'px';
+      canvas.style.height = nz.style.height || document.getElementById('stripInner').style.height;
+      canvas.style.transform = `translate3d(${off.toFixed(2)}px,0,0)`;
+    }
     try {
       gradient = new NeatGradient({ ref: canvas, ...config, speed: stillMQ.matches ? 0 : config.speed });
     } catch (e) { gradient = null; return; }   // no WebGL: keep the random blue gradient

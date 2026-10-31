@@ -830,11 +830,12 @@ function seaLife(td, start, end, TW, W, x, y, floor, pt0){
     for (let c=0; c<n.crab; c++) for (let tries=0; tries<12; tries++){ const cx=seg+20+rnd()*(W-40), cy=floor-9*SZ; if (cx>TW-15 || !free(cx-14,cx+14) || !clear(cx-14*SZ,cx+14*SZ)) continue; taken.push([cx-14*SZ,cx+14*SZ]); g+=crab(cx, cy); move('crab',cx,cy,1); break; }
   }
   // Orcas (pods of 1-10, see seaOrcas): black, white eye patch and belly, grey saddle; facing left like the sharks.
-  // Males: the tall, straight dorsal fin and a bigger body; females: a shorter, curved fin. Drawn hidden; they swim in at random.
+  // Males: the tall, straight dorsal fin and a bigger body; females: a shorter, curved fin. Both fins sweep back, tips toward
+  // the tail (fixed Oct 2026: they leaned toward the head). Drawn hidden; they swim in at random.
   const orca = () => `<g class="sl-orca" style="visibility:hidden" filter="url(#seaRim)"><g class="obody">
       <g class="otail"><path d="M19,-1.2 C23,-2.5 26,-5 29,-6 C28,-3 27.6,-1 27.4,.3 C27.6,1.6 28,3.6 29,6.2 C26,5 23,3 19,2 Z" fill="#15191c"/></g>
-      <path class="ofin-m" d="M-4.2,-6.6 C-3.4,-12 -2.4,-18 -1.8,-24.5 C.8,-18.5 3.6,-12 6.2,-6.6 Z" fill="#15191c"/>
-      <path class="ofin-f" d="M-3,-6.6 C-2,-10.5 -1.4,-13.4 -3.2,-15.8 C1,-13 4.4,-9.6 6,-6.6 Z" fill="#15191c"/>
+      <path class="ofin-m" d="M6.2,-6.6 C5.4,-12 4.4,-18 3.8,-24.5 C1.2,-18.5 -1.6,-12 -4.2,-6.6 Z" fill="#15191c"/>
+      <path class="ofin-f" d="M6,-6.6 C5,-10.5 4.4,-13.4 6.2,-15.8 C2,-13 -1.4,-9.6 -3,-6.6 Z" fill="#15191c"/>
       <path d="M-24,0 C-23,-4.5 -16,-7 -6,-7 C6,-7 15,-4 20,-1.2 L20,2 C14,5 2,7.4 -8,7 C-17,6.6 -23,4 -24,0 Z" fill="#15191c"/>
       <path class="obel" d="M-22,2.4 C-16,5.6 -5,6.6 3,5.6 C8,5 12,2.4 13.5,.2 C10,3.4 5,4.2 1,3.8 C-6,3.2 -14,3.8 -22,2.4 Z" fill="#f4f5f3"/>
       <path class="oeye" d="M-18.8,-2.8 C-17,-4.6 -14,-4.6 -12,-3.6 C-13.4,-2.2 -16.6,-1.8 -18.8,-2.8 Z" fill="#f4f5f3"/>
@@ -1109,6 +1110,11 @@ function buildStrip(){
     <path id="stripLine" d="" fill="none" stroke="var(--buoy)" stroke-width="1.6" mask="url(#poleMask)"/>
     <circle id="stripDot" cx="${W/2}" cy="0" r="6" fill="var(--buoy)" stroke="var(--surface)" stroke-width="2.2"/></svg>`;
   $('stripInner').style.height = H+'px';
+  // NEAT in the water (dark mode, one of the page's random looks): #stripNeat is a week-wide layer under the chart,
+  // clipped to the water, and slides with the week (placeStrip). Its canvas is one chart wide and slides back the
+  // other way, so the gradient holds still while the water moves over it.
+  { const nz=$('stripNeat'); if (nz){ nz.style.width=TW+'px'; nz.style.height=H+'px'; nz.style.clipPath=`path('${waterD}')`;
+      const c=nz.firstElementChild; if (c){ c.style.width=W+'px'; c.style.height=H+'px'; } } }
   // Every label's box in the week picture (high / low heights and times, day names), so the center line can skip them
   stripTexts = [...document.querySelectorAll('#stripSvg text, #stripLab text')]; stripHid = stripTexts.map(()=>false);
   stripCan = stripTexts.map(t => /\b(labt|lab|dayl)\b/.test(t.getAttribute('class')||''));   // only tide heights, tide times and day names hide
@@ -1174,8 +1180,9 @@ function curveAt(t){
 // Slide the week so the viewed moment sits under the center line, and move the dot to the tide there
 function placeStrip(){
   const now=cursor(), {W, pt, ih}=stripG;
-  const tx=`translate3d(${(-((now-HALF_MS)-strip0)*stripK).toFixed(2)}px,0,0)`;
+  const off=((now-HALF_MS)-strip0)*stripK, tx=`translate3d(${(-off).toFixed(2)}px,0,0)`;
   $('stripSvg').style.transform = tx; $('stripLab').style.transform = tx;
+  { const nz=$('stripNeat'); if (nz){ nz.style.transform=tx; if (nz.firstElementChild) nz.firstElementChild.style.transform=`translate3d(${off.toFixed(2)}px,0,0)`; } }
   moveSea(now);
   $('stripLine').setAttribute('d', lineAround(((now-strip0)*stripK)));   // the center, in week-picture coordinates
   pgDraw();
