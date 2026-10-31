@@ -971,7 +971,10 @@ window.addEventListener('DOMContentLoaded', function () {
       origin = r.value;
       // choosing Native, Non-native or Both shows those trees and lets go of any single species or tree picked
       cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
-      clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
+      clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList);
+      // iPhone 15 Pro and smaller: picking Native or Non-native folds the legend, so the map is clear
+      if (SMALL.matches && origin !== 'both') $('legend').open = false;
+      sheetHeight();
     });
   });
   /* The other trees ease out (fade to nothing, quick then slow) before they leave the map; showing all again, they
