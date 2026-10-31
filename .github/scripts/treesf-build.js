@@ -123,6 +123,9 @@ function build(rows) {
     var lk = latinKey(k), b = best[lk], named = nameOf(k), bNamed = nameOf(b);
     if (!b || (named && !bNamed) || (!!named === !!bNamed && spCount[k] > spCount[b])) best[lk] = k;
   });
+  /* Names the data gets wrong or shortens: a species' botanical name → its full name for the map */
+  var NAMES = { 'chiranthodendron pentadactylon': "Chiranthodendron pentadactylon :: Monkey's Hand Tree, Mexican Hand Tree, Devil's Hand Tree" };
+  Object.keys(NAMES).forEach(function (lk) { if (best[lk]) { spCount[NAMES[lk]] = 0; best[lk] = NAMES[lk]; } });
   var merged = {};
   spOf = spOf.map(function (k) { var m = k === 'Unknown' ? k : best[latinKey(k)]; merged[m] = (merged[m] || 0) + 1; return m; });
   spCount = merged;
