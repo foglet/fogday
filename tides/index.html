@@ -474,7 +474,7 @@ title: Tides of San Francisco
 
   // Second NEAT export (violet, iridescent, chromatic aberration, light grain): only these keys differ from the first.
   // Each page load picks one of four looks, equal odds: the random blue CSS gradient (set in <head>), NEAT 1 or NEAT 2
-  // behind the page, or the random blue gradient with NEAT 1 or 2 (half and half) inside the tide chart.
+  // behind the page, or the random blue gradient with NEAT 2 in the water under the tide line.
   const config2 = {
     colors: config.colors.map((c, i) => (i === 5 ? { color: '#891290', enabled: true } : c)),
     shadows: 4, backgroundColor: '#7446D9', grainIntensity: 0.075, yOffset: 3406,
@@ -482,7 +482,7 @@ title: Tides of San Francisco
   };
   const pick = Math.floor(Math.random() * 4);   // 0: blue CSS gradient (NEAT never loads), 1: NEAT 1, 2: NEAT 2, 3: blue + NEAT in the chart
   const inChart = pick === 3;
-  if (pick === 2 || (inChart && Math.random() < .5)) Object.assign(config, config2);
+  if (pick === 2 || inChart) Object.assign(config, config2);   // pick 4 always uses NEAT 2 (Oct 2026)
 
   const root = document.documentElement;
   const canvas = document.getElementById('gradient');
