@@ -930,7 +930,10 @@ window.addEventListener('DOMContentLoaded', function () {
                   ['Not native', list.filter(function (x) { return !x.native && x.key !== 'Unknown'; })],
                   ['Species not recorded', list.filter(function (x) { return x.key === 'Unknown'; })]];
     var natN = groups[0][1].reduce(function (a, x) { return a + x.n; }, 0), notN = groups[1][1].reduce(function (a, x) { return a + x.n; }, 0);
-    $('origin').textContent = fmt.format(natN) + ' California native · ' + fmt.format(notN) + ' not native';
+    // Under the total: the native count with Native picked, the non-native count with Non-native; nothing with Both
+    var os = $('origin');
+    os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' not native' : '';
+    os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
       if (!g[1].length) return;
       if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice
