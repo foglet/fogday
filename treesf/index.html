@@ -313,46 +313,21 @@ zoom: 11.8
   .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
   .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
 
-  /* Tree details on phones: in the page below the map (desktop uses the popup) */
-  .tree-card { display: none; }
 
-  /* Phones held upright: the map is a square across the top half of the screen and the page scrolls below it,
-     with the tree, the tapped spot and the controls in larger type. Phones on their side keep the full-screen map. */
-  @media (max-width: 759px) and (orientation: portrait) {
-    html, body { height: auto; }
-    body { overflow: auto; font-size: 1.0625rem; }
-    #map { position: relative; inset: auto; width: min(100vw, 50dvh); aspect-ratio: 1; margin: 0 auto; }
-    .top { position: absolute; }   /* rides on the map and scrolls away with it */
-    .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { bottom: 0; }
-    .oa-regions-pop { max-height: calc(min(100vw, 50dvh) - 90px); }   /* the menu stays inside the square map, below the title */
-    .oa-results { max-height: calc(min(100vw, 50dvh) - 140px); }
-
-    .tree-card, .oa-detail-panel, .controls {
-      position: static; width: auto; max-width: none; margin: 0;
-      padding-left: max(16px, var(--sal)); padding-right: max(16px, var(--sar));
-    }
-    .tree-card { display: block; padding-block: 14px 12px; border-bottom: 1px solid var(--line); }
-    .tree-card[hidden] { display: none; }
-    .tree-card h2 { margin: 0; font: 700 1.3rem/1.2 var(--font); }
-    .tree-card .latin { color: var(--muted); }
-
-    /* The spot card: its lines sit flush left on the page, no frosting needed */
-    .oa-detail-panel { padding-block: 12px; font-size: 1rem; border-bottom: 1px solid var(--line); }
-    .oa-detail-panel > div { padding: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-    .oa-detail-panel[hidden] { display: none; }
-
-    .controls, .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; max-width: none; background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; border-radius: 0;
-                padding-block: 6px calc(16px + var(--sab)); padding-left: max(2px, var(--sal)); padding-right: max(2px, var(--sar)); }
+  /* Phones: the full-screen map, as on oysteratlas.com and /transit/; the legend, spot card and tree popup float over
+     it. The legend spans the width (less the side gutters) and its list scrolls inside it; touch targets are 44px. */
+  @media (max-width: 759px) {
+    .controls { right: calc(66px + var(--sar)); width: auto; min-width: 0; max-width: none; }   /* clear of the 44px search / neighborhoods buttons on the right */
+    .controls:has(.map-legend:not([open])) { right: auto; }
+    .oa-detail-panel { max-width: calc(100vw - 38px - var(--sal) - var(--sar)); }
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .summary, .species { font-size: 1rem; }
     .sortby { font-size: .95rem; column-gap: 16px; }
+    .sortby button { padding: 8px 0; }
     .origin-pick { font-size: .95rem; column-gap: 18px; }
     .origin-pick label { min-height: 40px; }
     .origin-pick input { width: 18px; height: 18px; }
-    .sortby button { padding: 10px 0; }
-    .species { max-height: none; overflow: visible; }   /* the page scrolls instead */
     .species .pick { min-height: 36px; }
-    .axis { font-size: .85rem; }
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
@@ -406,7 +381,6 @@ zoom: 11.8
   </div>
 </div>
 
-<section id="tree-card" class="tree-card" aria-live="polite" hidden></section>  <!-- the tapped tree, on phones -->
 <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
 
 <section class="controls map-legend-panel" id="controls" aria-label="Legend">
@@ -1078,14 +1052,13 @@ window.addEventListener('DOMContentLoaded', function () {
     clearTree(); clearSpot();
     applyFilter(); fillSpecies(speciesList);
     if (!sp) return;
-    if (PHONE.matches) window.scrollTo({ top: 0, behavior: calm.matches ? 'auto' : 'smooth' });
     var b = sp.bounds, one = b[0][0] === b[1][0] && b[0][1] === b[1][1];
     if (one) map.flyTo({ center: b[0], zoom: 17, duration: calm.matches ? 0 : 1200, essential: true });
     else map.fitBounds(b, { padding: PHONE.matches ? 28 : 70, maxZoom: 16.5, duration: calm.matches ? 0 : 1200, essential: true });
   }
 
   /* ---------- Controls ---------- */
-  var PHONE = window.matchMedia('(max-width: 759px) and (orientation: portrait)');   // same as the CSS
+  var PHONE = window.matchMedia('(max-width: 759px)');   // small screens: wider tap reach, tighter fit padding (same as the CSS)
   function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
     document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
   }
@@ -1095,7 +1068,7 @@ window.addEventListener('DOMContentLoaded', function () {
   /* Desktop: the open legend's list stops short of the title at the top; --legend-top is everything else the legend
      and the title take up (measured, since fonts and wrapping vary) */
   function fitLegend() {
-    if (PHONE.matches || !$('legend').open) return;
+    if (!$('legend').open) return;
     var ul = $('species'), card = $('controls'), title = document.querySelector('.top');
     var other = card.offsetHeight - ul.offsetHeight, above = title.getBoundingClientRect().bottom + 12, below = window.innerHeight - card.getBoundingClientRect().bottom;
     document.documentElement.style.setProperty('--legend-top', Math.ceil(other + above + below) + 'px');
@@ -1150,7 +1123,6 @@ window.addEventListener('DOMContentLoaded', function () {
     return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
   /* The tapped tree: details in a popup on the map, or below the map on phones (readable, and not covering a small map) */
-  var treeCard = $('tree-card');
   function markTree(id) {
     if (selected != null) map.setFeatureState({ source: 'trees', id: selected }, { sel: false });
     selected = id;
@@ -1163,10 +1135,9 @@ window.addEventListener('DOMContentLoaded', function () {
   function showTree(f) {
     var t = info[f.id]; if (!t) return;
     markTree(f.id);
-    if (PHONE.matches) { popup.remove(); markTree(f.id); treeCard.innerHTML = treeHTML(t, 'h2'); treeCard.hidden = false; }
-    else popup.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
+    popup.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
   }
-  function clearTree() { popup.remove(); treeCard.hidden = true; treeCard.textContent = ''; markTree(null); }
+  function clearTree() { popup.remove(); markTree(null); }
   /* The nearest tree to a tap, within a finger's reach on phones (dots there are small) */
   function treeAt(pt) {
     if (!map.getLayer('trees-dots')) return null;
@@ -1179,7 +1150,7 @@ window.addEventListener('DOMContentLoaded', function () {
     });
     return best;
   }
-  popup.on('close', function () { if (!PHONE.matches) markTree(null); });
+  popup.on('close', function () { markTree(null); });
   map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
   /* Hover (mouse and trackpad): resting the pointer right on a tree shows its name, no click needed. It goes when the
@@ -1346,7 +1317,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (e.key !== 'Escape') return;
     if (!mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); }
     else if (isOpen()) { setPop(false); pin.focus(); }
-    else if (popup.isOpen() || !treeCard.hidden) clearTree();
+    else if (popup.isOpen()) clearTree();
     else if (!spotCard.hidden) clearSpot();
     else if (hoodOn || lastHood) { setHoodLine(''); lastHood = ''; }
     else if (pickK != null) pickSpecies(null);
