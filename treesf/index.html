@@ -428,7 +428,6 @@ zoom: 11.8
       <div class="origin-pick" role="radiogroup" aria-label="Which trees to show">   <!-- not remembered: every load opens on All -->
         <label><input type="radio" name="origin" value="native" autocomplete="off"> Native</label>
         <label><input type="radio" name="origin" value="non" autocomplete="off"> Non-native</label>
-        <label><input type="radio" name="origin" value="rare" autocomplete="off"> Rare/Landmark</label>
         <label><input type="radio" name="origin" value="both" checked autocomplete="off"> All</label>
       </div>
       <div class="sortby" role="group" aria-label="Sort the species">
@@ -726,7 +725,6 @@ window.addEventListener('DOMContentLoaded', function () {
       var wantNon = /^(non|not|ex|intro|alien)/.test(fq) || fq.indexOf('non') >= 0, wantNat = !wantNon && /^(nat|cali|ca n|indig)/.test(fq);
       if (wantNat) out.push({ origin: 'native', name: 'California native trees', where: fmt.format(nat) + ' trees' });
       if (wantNon) out.push({ origin: 'non', name: 'Non-native trees', where: fmt.format(non) + ' trees' });
-      if (/^(rare|landm|notab|special)/.test(fq)) out.push({ origin: 'rare', name: 'Rare/Landmark trees', where: fmt.format(Object.keys(rareN).reduce(function (a, k) { return a + rareN[k]; }, 0)) + ' trees' });
       if (/^(all|both|every)/.test(fq)) out.push({ origin: 'both', name: 'All trees', where: fmt.format(nat + non + (speciesList.filter(function (x) { return x.key === 'Unknown'; })[0] || { n: 0 }).n) + ' trees' });
       return out;
     }
@@ -812,12 +810,13 @@ window.addEventListener('DOMContentLoaded', function () {
 
 
   /* Native / Non-native / Both, from the legend's radio buttons. Both shows every tree, including those with no
-     species recorded; Native and Non-native show only trees known to be one or the other. Always opens on Both. */
+     species recorded; Native and Non-native show only trees known to be one or the other. Rare/Landmark trees always
+     show, whichever is picked. Always opens on Both. */
   var origin = 'both';
+  var RARE = ['==', ['get', 'r'], 1];
   function originExpr() {
-    if (origin === 'native') return ['==', ['get', 'n'], 1];
-    if (origin === 'rare') return ['==', ['get', 'r'], 1];
-    if (origin === 'non') return ['all', ['!=', ['coalesce', ['get', 'n'], 0], 1], ['!=', ['coalesce', ['get', 'u'], 0], 1]];
+    if (origin === 'native') return ['any', ['==', ['get', 'n'], 1], RARE];
+    if (origin === 'non') return ['any', ['all', ['!=', ['coalesce', ['get', 'n'], 0], 1], ['!=', ['coalesce', ['get', 'u'], 0], 1]], RARE];
     return true;
   }
   function filterExpr() { return origin === 'both' ? ['has', 'k'] : ['all', ['has', 'k'], originExpr()]; }
@@ -954,15 +953,11 @@ window.addEventListener('DOMContentLoaded', function () {
     var natN = groups[0][1].reduce(function (a, x) { return a + x.n; }, 0), notN = groups[1][1].reduce(function (a, x) { return a + x.n; }, 0);
     // Under the total: the native count with Native picked, the non-native count with Non-native; nothing with Both
     var os = $('origin');
-    var rareTotal = Object.keys(rareN).reduce(function (a, k) { return a + rareN[k]; }, 0);
-    os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' native elsewhere'
-      : origin === 'rare' ? fmt.format(rareTotal) + ' rare/landmark trees, compiled by Mike Sullivan' : '';
-    if (origin === 'rare') groups = [['Rare/Landmark', list.filter(function (x) { return rareN[x.i]; })
-      .map(function (x) { var c = Object.create(x); c.n = rareN[x.i]; c.bounds = rareB[x.i] || x.bounds; return c; })]];
+    os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' native elsewhere' : '';
     os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
       if (!g[1].length) return;
-      if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice (Rare/Landmark has one group)
+      if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice
       var n = g[1].reduce(function (a, x) { return a + x.n; }, 0), hd = document.createElement('li');
       hd.className = 'group'; hd.textContent = g[0] + ' · ' + fmt.format(n) + (g[1].length > 1 ? ' trees, ' + g[1].length + ' species' : ' trees');
       frag.appendChild(hd);
