@@ -1,6 +1,6 @@
 # Builds treesf/canopy/, the tree canopy layer on /treesf/: DataSF's Urban Tree Canopy (ni2e-vpbg, about 289,000
 # polygons of tree cover mapped by SF Planning from aerial imagery for the 2013 Urban Forest Plan), cut into static
-# vector tiles (zoom 11–14, uncompressed .pbf) that the page reads beside itself. Too big to ship as one GeoJSON.
+# vector tiles (zoom 11–14, uncompressed .pbf, polygons unsimplified) that the page reads beside itself. Too big to ship as one GeoJSON.
 # The study is a one-off, so this runs only when this file changes, or on demand from the Actions tab.
 name: Build SF tree canopy tiles
 
@@ -53,21 +53,26 @@ jobs:
 
       - name: Cut the tiles
         run: |
-          rm -rf treesf/canopy
+          rm -rf treesf/canopy /tmp/low /tmp/full
+          # True polygons: no simplification (-ps), no tiny-polygon smoothing (-pt), no merging of shapes.
+          # Coordinates are kept at 2^16 units per tile (a few cm at zoom 13-14), so they're effectively exact.
           # -X: no attributes. Uncompressed tiles, since GitHub Pages won't label gzip'd .pbf files.
-          # Zoomed out, the smallest patches go first (they're under a pixel there anyway). Tiles stop at zoom 14, about
-          # half a meter per tile unit there, and the page overzooms past it: z15 tiles doubled the size for detail a
-          # canopy wash doesn't need.
-          tippecanoe -e treesf/canopy -l canopy -n "SF Urban Tree Canopy" \
-            -Z11 -z14 -X --no-tile-compression \
-            --drop-smallest-as-needed --coalesce-smallest-as-needed --simplification=4 \
-            --force /tmp/canopy.geojson
+          # Zoom 11-13: every polygon drawn is exact, but the smallest are left out where a tile would pass 500 KB
+          # (they're under a pixel there anyway).
+          tippecanoe -e /tmp/low -l canopy -Z11 -z13 -X --no-tile-compression -ps -pt -d16 -D16 \
+            --drop-smallest-as-needed /tmp/canopy.geojson
+          # Zoom 14, the page's top tiles (it overzooms past 14): every polygon, no size or count limit.
+          tippecanoe -e /tmp/full -l canopy -Z14 -z14 -X --no-tile-compression -ps -pt -d16 \
+            --no-tile-size-limit --no-feature-limit /tmp/canopy.geojson
+          mkdir -p treesf/canopy
+          cp -r /tmp/low/1[123] /tmp/full/14 treesf/canopy/
           rm -f treesf/canopy/metadata.json   # the page sets its own zooms and bounds
           files=$(find treesf/canopy -name '*.pbf' | wc -l)
           bytes=$(du -sb treesf/canopy | cut -f1)
           biggest=$(find treesf/canopy -name '*.pbf' -printf '%s\n' | sort -n | tail -1)
           echo "tiles=$files bytes=$bytes biggest=$biggest"
           [ "$files" -ge 20 ] || { echo "::error::Only $files tiles"; exit 1; }
+          [ "$biggest" -lt 90000000 ] || { echo "::error::A tile is ${biggest} bytes, near GitHub's 100 MB file limit"; exit 1; }
           [ "$bytes" -lt 150000000 ] || { echo "::error::Tiles total ${bytes} bytes; too big for the repo"; exit 1; }
 
       - name: Commit if anything changed
