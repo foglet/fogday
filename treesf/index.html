@@ -156,6 +156,8 @@ zoom: 11.8
   .origin-pick label:has(input:checked) { color: var(--ink); }
   .origin-pick input { margin: 0; width: 15px; height: 15px; accent-color: #6fbf5a; cursor: pointer; }
   .rare-pick { margin-top: -6px; }
+  /* Dotted rule between the tree picks and the species, copied from /tides/: 1px, 2px dash / 5px gap */
+  .legend-body .rule { height: 1px; margin-block: 4px; background: linear-gradient(to right, rgb(255 255 255 / .12) 2px, transparent 2px) left / 7px 1px repeat-x; }
   .rare-pick input { accent-color: #e9c46a; }
   .rare-pick .ring { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #e9c46a; }   /* the map's gold outline */
   .rare-tag { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: #e9c46a; }
@@ -366,7 +368,7 @@ zoom: 11.8
   /* iPhone 15 Pro (393 × 852) and smaller, either way up: the open legend leaves out the species list and its sort,
      which don't fit; species can still be found with search */
   @media (max-width: 393px), (max-height: 393px) {
-    .map-legend .species, .map-legend .sortby { display: none; }
+    .map-legend .species, .map-legend .sortby, .legend-body .rule { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
 </style>
@@ -436,6 +438,7 @@ zoom: 11.8
       <div class="origin-pick rare-pick">   <!-- not remembered: every load opens with it off -->
         <label><input type="checkbox" id="rare-only" autocomplete="off"> <span class="ring"></span>Rare/Landmark only</label>
       </div>
+      <div class="rule" aria-hidden="true"></div>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="common" aria-pressed="true">Common name<span class="ord"></span></button>
         <button type="button" data-sort="latin" aria-pressed="false">Latin name<span class="ord"></span></button>
