@@ -156,7 +156,7 @@ zoom: 11.8
   .origin-pick label:has(input:checked) { color: var(--ink); }
   .origin-pick input { margin: 0; width: 15px; height: 15px; accent-color: #6fbf5a; cursor: pointer; }
   .canopy-pick { margin-top: -4px; }
-  .canopy-pick .swatch { flex: none; width: 14px; height: 10px; border-radius: 2px; background: var(--canopy); opacity: .85; }
+  .canopy-pick .swatch { flex: none; width: 14px; height: 10px; border-radius: 2px; background: var(--canopy); opacity: .45; }   /* reads like the 15% wash on the dark card */
   .rare-tag { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: #e9c46a; }
   .rare-note { margin-top: 4px; font-size: .85rem; }
   .rare-note a, .rare-credit a { color: inherit; }
@@ -433,7 +433,7 @@ zoom: 11.8
         <label><input type="radio" name="origin" value="both" checked autocomplete="off"> All</label>
       </div>
       <div class="origin-pick canopy-pick">   <!-- not remembered: every load opens with the canopy on -->
-        <label><input type="checkbox" id="canopy-on" checked autocomplete="off"> <span class="swatch" style="--canopy:#2e7048"></span>Tree canopy</label>
+        <label><input type="checkbox" id="canopy-on" checked autocomplete="off"> <span class="swatch" style="--canopy:#8fd87a"></span>Tree canopy</label>
       </div>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="common" aria-pressed="true">Common name<span class="ord"></span></button>
@@ -442,7 +442,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city’s tree data doesn’t indicate; we matched botanical names to California species. Tap a tree for its name. A light outline marks California natives. A faint ring shows trunk size: narrow for 3–10 inches across, wider for 11–20, widest for 21 and up; a thin gray outline means no size was recorded. The green wash is the tree canopy, every tree seen from the air, park and private trees included: San Francisco Planning mapped it from aerial imagery for the 2013 Urban Forest Plan and put the city's cover at 13.7%. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>; <a href="https://data.sf.gov/d/55pv-5zcc">SF Urban Tree Canopy</a>. Rare/Landmark trees compiled by <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; the trees on his list that aren't in the city's, including some in the Presidio, are added from his addresses and notes, placed by street address where no exact spot is known. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city’s tree data doesn’t indicate; we matched botanical names to California species. Tap a tree for its name. A light outline marks California natives. A faint ring shows trunk size: narrow for 3–10 inches across, wider for 11–20, widest for 21 and up; a thin gray outline means no size was recorded. The green wash is the tree canopy, every tree seen from the air, park and private trees included: San Francisco Planning mapped it from aerial imagery for the 2013 Urban Forest Plan and put the city's cover at 13.7%. Zoomed in, it shows their polygons exactly; zoomed out, a fine-grained picture of the same shapes. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>; <a href="https://data.sf.gov/d/55pv-5zcc">SF Urban Tree Canopy</a>. Rare/Landmark trees compiled by <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; the trees on his list that aren't in the city's, including some in the Presidio, are added from his addresses and notes, placed by street address where no exact spot is known. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
       </details>
     </div>
   </details>
@@ -466,10 +466,14 @@ window.addEventListener('DOMContentLoaded', function () {
   var HOODS_LOCAL = '{{ "/treesf/neighborhoods.geojson" | relative_url }}';
   var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
   var HOOD_RED = '#e5372e';
-  /* Tree canopy: DataSF's Urban Tree Canopy, cut into vector tiles beside this page (zoom 11–14) by
-     .github/workflows/treesf-canopy.yml. Mapbox needs a full URL for tiles. */
+  /* Tree canopy: DataSF's Urban Tree Canopy, built beside this page by .github/workflows/treesf-canopy.yml.
+     From zoom 14 in, the true polygons (vector tiles, zoom 14, overzoomed past it); below 14, the same polygons
+     burned into a ~6 m coverage image (canopy-wash.png, spanning SF_BOUNDS). They cross-fade at 14 and share one
+     green and one transparency (85%), so a fully covered pixel matches a polygon. Mapbox needs full URLs. */
   var CANOPY_TILES = new URL('{{ "/treesf/canopy/" | relative_url }}', location.href).href + '{z}/{x}/{y}.pbf';
-  var CANOPY_GREEN = '#2e7048';
+  var CANOPY_WASH = new URL('{{ "/treesf/canopy-wash.png" | relative_url }}', location.href).href;
+  var CANOPY_GREEN = '#8fd87a';   // the wash image's green too (.github/scripts/treesf-canopy-wash.py)
+  var CANOPY_OPACITY = 0.15;
 
   var $ = function (id) { return document.getElementById(id); };
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -1401,16 +1405,22 @@ window.addEventListener('DOMContentLoaded', function () {
   function addCanopy() {
     if (map.getSource('canopy')) return;
     var labels = (map.getStyle().layers || []).filter(function (l) { return l.type === 'symbol'; })[0];
-    map.addSource('canopy', { type: 'vector', tiles: [CANOPY_TILES], minzoom: 11, maxzoom: 14,
-      bounds: [SF_BOUNDS[0][0], SF_BOUNDS[0][1], SF_BOUNDS[1][0], SF_BOUNDS[1][1]] });
-    map.addLayer({ id: 'canopy-fill', type: 'fill', source: 'canopy', 'source-layer': 'canopy',
-      layout: { visibility: $('canopy-on').checked ? 'visible' : 'none' },
-      paint: { 'fill-color': CANOPY_GREEN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, 0.6, 17, 0.4] } },
+    var w = SF_BOUNDS[0][0], s = SF_BOUNDS[0][1], e = SF_BOUNDS[1][0], n = SF_BOUNDS[1][1];
+    var vis = $('canopy-on').checked ? 'visible' : 'none';
+    map.addSource('canopy-wash', { type: 'image', url: CANOPY_WASH, coordinates: [[w, n], [e, n], [e, s], [w, s]] });
+    map.addLayer({ id: 'canopy-wash', type: 'raster', source: 'canopy-wash', maxzoom: 14.5, layout: { visibility: vis },
+      paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 13.8, CANOPY_OPACITY, 14.3, 0], 'raster-fade-duration': 0 } },
+      labels && labels.id);
+    map.addSource('canopy', { type: 'vector', tiles: [CANOPY_TILES], minzoom: 14, maxzoom: 14, bounds: [w, s, e, n] });
+    map.addLayer({ id: 'canopy-fill', type: 'fill', source: 'canopy', 'source-layer': 'canopy', minzoom: 13.8,
+      layout: { visibility: vis },
+      paint: { 'fill-color': CANOPY_GREEN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 13.8, 0, 14.3, CANOPY_OPACITY] } },
       labels && labels.id);
   }
   styleP.then(addCanopy);
   $('canopy-on').addEventListener('change', function () {
-    if (map.getLayer('canopy-fill')) map.setLayoutProperty('canopy-fill', 'visibility', this.checked ? 'visible' : 'none');
+    var v = this.checked ? 'visible' : 'none';
+    ['canopy-wash', 'canopy-fill'].forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v); });
   });
   /* Map credits start folded to the (i) button (on a narrow map Mapbox would open them on load); tapping (i) opens them */
   map.once('load', function () {
