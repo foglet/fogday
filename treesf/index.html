@@ -1020,6 +1020,7 @@ window.addEventListener('DOMContentLoaded', function () {
     r.addEventListener('click', function () {   // tapping the segment already lit also lets go of a pick
       origin = r.dataset.origin;
       [].forEach.call(originBtns, function (b) { b.setAttribute('aria-pressed', b === r ? 'true' : 'false'); });
+      if (origin === 'both' && rareOnly) { rareOnly = false; $('rare-only').setAttribute('aria-pressed', 'false'); }   // All lets go of Rare/Landmark only (rare trees still show among all)
       // choosing Native, Non-native or Both shows those trees and lets go of any single species or tree picked
       cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
       clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
