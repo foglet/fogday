@@ -1028,6 +1028,9 @@ window.addEventListener('DOMContentLoaded', function () {
   });
   $('rare-only').addEventListener('click', function () {   // Rare/Landmark only, on top of the segment's pick
     rareOnly = !rareOnly; this.setAttribute('aria-pressed', rareOnly ? 'true' : 'false');
+    // With All lit, Rare/Landmark takes its place: All goes dark (every rare tree shows), and lights again when the chip
+    // is turned off. Native or Non-native stay lit and stack with it (rare natives, rare non-natives).
+    if (origin === 'both') document.querySelector('.seg button[data-origin="both"]').setAttribute('aria-pressed', rareOnly ? 'false' : 'true');
     cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
     clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
   });
