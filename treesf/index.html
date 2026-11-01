@@ -2,7 +2,7 @@
 layout: null   # self-contained map page in the Transit Connected / Oyster Atlas interface, not the shared map layout
 title: San Francisco Tree Canopy
 short_title: SF Tree Canopy   # the name in the title button on small screens
-description: Where and when San Francisco's street trees were planted, from the city's Street Tree List. A map by Fogday Studios.
+description: Where and when San Francisco's street trees were planted, from the city's Street Tree List, over its tree canopy seen from the air. A map by Fogday Studios.
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 center: [-122.4425, 37.7585]
 zoom: 11.8
@@ -155,6 +155,8 @@ zoom: 11.8
   .origin-pick label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--muted); }
   .origin-pick label:has(input:checked) { color: var(--ink); }
   .origin-pick input { margin: 0; width: 15px; height: 15px; accent-color: #6fbf5a; cursor: pointer; }
+  .canopy-pick { margin-top: -4px; }
+  .canopy-pick .swatch { flex: none; width: 14px; height: 10px; border-radius: 2px; background: var(--canopy); opacity: .85; }
   .rare-tag { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: #e9c46a; }
   .rare-note { margin-top: 4px; font-size: .85rem; }
   .rare-note a, .rare-credit a { color: inherit; }
@@ -430,6 +432,9 @@ zoom: 11.8
         <label><input type="radio" name="origin" value="rare" autocomplete="off"> Rare/Landmark</label>
         <label><input type="radio" name="origin" value="both" checked autocomplete="off"> All</label>
       </div>
+      <div class="origin-pick canopy-pick">   <!-- not remembered: every load opens with the canopy on -->
+        <label><input type="checkbox" id="canopy-on" checked autocomplete="off"> <span class="swatch" style="--canopy:#2e7048"></span>Tree canopy</label>
+      </div>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="common" aria-pressed="true">Common name<span class="ord"></span></button>
         <button type="button" data-sort="latin" aria-pressed="false">Latin name<span class="ord"></span></button>
@@ -437,7 +442,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city’s tree data doesn’t indicate; we matched botanical names to California species. Tap a tree for its name. A light outline marks California natives. A faint ring shows trunk size: narrow for 3–10 inches across, wider for 11–20, widest for 21 and up; a thin gray outline means no size was recorded. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Rare/Landmark trees compiled by <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; the trees on his list that aren't in the city's, including some in the Presidio, are added from his addresses and notes, placed by street address where no exact spot is known. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous trees; tap one in the list to see where it grows. Evergreen or deciduous is matched on botanical names, like native. California native means a species that grows wild somewhere in California, or a cultivar of one, as Public Works' street tree list uses the term; the city’s tree data doesn’t indicate; we matched botanical names to California species. Tap a tree for its name. A light outline marks California natives. A faint ring shows trunk size: narrow for 3–10 inches across, wider for 11–20, widest for 21 and up; a thin gray outline means no size was recorded. The green wash is the tree canopy, every tree seen from the air, park and private trees included: San Francisco Planning mapped it from aerial imagery for the 2013 Urban Forest Plan and put the city's cover at 13.7%. Data: <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>; <a href="https://data.sf.gov/d/55pv-5zcc">SF Urban Tree Canopy</a>. Rare/Landmark trees compiled by <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; the trees on his list that aren't in the city's, including some in the Presidio, are added from his addresses and notes, placed by street address where no exact spot is known. Street trees only; park and private trees are mostly not listed. Empty planting sites, stumps, paved-over sites and shrubs in the city's list are left off.</p>
       </details>
     </div>
   </details>
@@ -461,6 +466,10 @@ window.addEventListener('DOMContentLoaded', function () {
   var HOODS_LOCAL = '{{ "/treesf/neighborhoods.geojson" | relative_url }}';
   var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
   var HOOD_RED = '#e5372e';
+  /* Tree canopy: DataSF's Urban Tree Canopy, cut into vector tiles beside this page (zoom 11–15) by
+     .github/workflows/treesf-canopy.yml. Mapbox needs a full URL for tiles. */
+  var CANOPY_TILES = new URL('{{ "/treesf/canopy/" | relative_url }}', location.href).href + '{z}/{x}/{y}.pbf';
+  var CANOPY_GREEN = '#2e7048';
 
   var $ = function (id) { return document.getElementById(id); };
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -765,7 +774,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var f = shown[i];
       if (!f) return;
       if (f.sp) { pickSpecies(f.sp); minimize(byKeyboard); return; }   // a species: every tree of it, as from the legend
-      if (f.origin) { var r = document.querySelector('.origin-pick input[value="' + f.origin + '"]'); if (r) { r.checked = true; r.click(); } minimize(byKeyboard); return; }   // native / non-native / all, as the radios
+      if (f.origin) { var r = document.querySelector('.origin-pick input[name="origin"][value="' + f.origin + '"]'); if (r) { r.checked = true; r.click(); } minimize(byKeyboard); return; }   // native / non-native / all, as the radios
       clearSpot(); clearTree();
       var t = spotTurn;   // the place's details appear on landing, unless a tap came first
       map.once('moveend', function () {
@@ -984,7 +993,7 @@ window.addEventListener('DOMContentLoaded', function () {
   /* Tap a species in the legend to see its distribution: the map fits its trees and shows only those.
      Tap it again, tap the title, or press Escape to show all trees. On phones the page scrolls up to the map. */
   var pickK = null;
-  [].forEach.call(document.querySelectorAll('.origin-pick input'), function (r) {
+  [].forEach.call(document.querySelectorAll('.origin-pick input[name="origin"]'), function (r) {
     r.addEventListener('click', function () {   // click, not change: tapping the radio already chosen also lets go of a pick
       if (!r.checked) return;
       origin = r.value;
@@ -1354,7 +1363,7 @@ window.addEventListener('DOMContentLoaded', function () {
     ls.forEach(function (l) {
       var id = l.id, t = l.type;
       try {
-        if (/^trees|^hood/.test(id)) return;
+        if (/^trees|^hood|^canopy/.test(id)) return;
         /* Labels: streets show at every zoom, but never their names (or route shields); park names show at every zoom;
            every other label (places, water, landmarks, transit) only from zoom 14 in */
         if (t === 'symbol') {
@@ -1388,6 +1397,21 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   map.on('style.load', navyBase);
   var styleP = new Promise(function (res) { map.on('load', res); });
+  /* The canopy wash sits under the base map's labels and every tree layer; it doesn't wait for the tree list */
+  function addCanopy() {
+    if (map.getSource('canopy')) return;
+    var labels = (map.getStyle().layers || []).filter(function (l) { return l.type === 'symbol'; })[0];
+    map.addSource('canopy', { type: 'vector', tiles: [CANOPY_TILES], minzoom: 11, maxzoom: 15,
+      bounds: [SF_BOUNDS[0][0], SF_BOUNDS[0][1], SF_BOUNDS[1][0], SF_BOUNDS[1][1]] });
+    map.addLayer({ id: 'canopy-fill', type: 'fill', source: 'canopy', 'source-layer': 'canopy',
+      layout: { visibility: $('canopy-on').checked ? 'visible' : 'none' },
+      paint: { 'fill-color': CANOPY_GREEN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, 0.6, 17, 0.4] } },
+      labels && labels.id);
+  }
+  styleP.then(addCanopy);
+  $('canopy-on').addEventListener('change', function () {
+    if (map.getLayer('canopy-fill')) map.setLayoutProperty('canopy-fill', 'visibility', this.checked ? 'visible' : 'none');
+  });
   /* Map credits start folded to the (i) button (on a narrow map Mapbox would open them on load); tapping (i) opens them */
   map.once('load', function () {
     var a = map.getContainer().querySelector('.mapboxgl-ctrl-attrib.mapboxgl-compact');

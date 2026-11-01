@@ -1,0 +1,79 @@
+# Builds treesf/canopy/, the tree canopy layer on /treesf/: DataSF's Urban Tree Canopy (ni2e-vpbg, about 289,000
+# polygons of tree cover mapped by SF Planning from aerial imagery for the 2013 Urban Forest Plan), cut into static
+# vector tiles (zoom 11–15, uncompressed .pbf) that the page reads beside itself. Too big to ship as one GeoJSON.
+# The study is a one-off, so this runs only when this file changes, or on demand from the Actions tab.
+name: Build SF tree canopy tiles
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/treesf-canopy.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: treesf-canopy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download the Urban Tree Canopy
+        run: |
+          # Geometry only: the other columns (NAME, T_SQFT, ACRES) aren't shown on the map
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 30 --max-time 1800 --compressed \
+            --get "https://data.sf.gov/resource/ni2e-vpbg.geojson" \
+            --data-urlencode "\$select=the_geom" \
+            --data-urlencode "\$limit=1000000" \
+            -o /tmp/canopy.geojson \
+          || curl --fail --silent --show-error --location --retry 4 --retry-delay 30 --max-time 1800 \
+            "https://data.sf.gov/api/geospatial/ni2e-vpbg?method=export&format=GeoJSON" \
+            -o /tmp/canopy.geojson
+          ls -l /tmp/canopy.geojson
+
+      - name: Check it
+        run: |
+          n=$(jq '[.features[] | select(.geometry != null)] | length' /tmp/canopy.geojson)
+          echo "polygons=$n"
+          # 289,219 rows on DataSF. Far fewer means a broken or truncated download.
+          [ "$n" -ge 250000 ] || { echo "::error::Only $n canopy polygons; not building"; exit 1; }
+
+      - name: Install tippecanoe
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq build-essential libsqlite3-dev zlib1g-dev
+          git clone --depth 1 --branch 2.79.0 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)" && sudo make -C /tmp/tippecanoe install
+          tippecanoe --version
+
+      - name: Cut the tiles
+        run: |
+          rm -rf treesf/canopy
+          # -X: no attributes. Uncompressed tiles, since GitHub Pages won't label gzip'd .pbf files.
+          # Zoomed out, the smallest patches go first (they're under a pixel there anyway); the page overzooms past 15.
+          tippecanoe -e treesf/canopy -l canopy -n "SF Urban Tree Canopy" \
+            -Z11 -z15 -X --no-tile-compression \
+            --drop-smallest-as-needed --coalesce-smallest-as-needed --simplification=4 \
+            --force /tmp/canopy.geojson
+          rm -f treesf/canopy/metadata.json   # the page sets its own zooms and bounds
+          files=$(find treesf/canopy -name '*.pbf' | wc -l)
+          bytes=$(du -sb treesf/canopy | cut -f1)
+          biggest=$(find treesf/canopy -name '*.pbf' -printf '%s\n' | sort -n | tail -1)
+          echo "tiles=$files bytes=$bytes biggest=$biggest"
+          [ "$files" -ge 50 ] || { echo "::error::Only $files tiles"; exit 1; }
+          [ "$bytes" -lt 150000000 ] || { echo "::error::Tiles total ${bytes} bytes; too big for the repo"; exit 1; }
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A treesf/canopy
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -m "SF Tree Canopy: build canopy tiles from DataSF Urban Tree Canopy ($(date -u +%Y-%m-%d))"
+          git pull --rebase
+          git push
