@@ -151,15 +151,21 @@ zoom: 11.8
   .leafkey { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
   .leafkey .dot { width: 10px; height: 10px; }
   .leafkey .dot + .dot, .leafkey .dot:not(:first-child) { margin-left: 8px; }
-  .origin-pick { display: flex; flex-wrap: wrap; column-gap: 14px; row-gap: 2px; font-size: .85rem; margin-top: -2px; }
-  .origin-pick label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--muted); }
-  .origin-pick label:has(input:checked) { color: var(--ink); }
-  .origin-pick input { margin: 0; width: 15px; height: 15px; accent-color: #6fbf5a; cursor: pointer; }
-  .rare-pick { margin-top: -6px; }
+  /* Tree picks: a segmented control (Native | Non-native | All, one lit) and a gold Rare/Landmark filter chip that
+     stacks on it. The chip fills gold when on. */
+  .picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -2px; }
+  .seg { display: inline-flex; padding: 2px; border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; }
+  .seg button, .chip { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+                       padding: 4px 11px; border-radius: 999px; font-size: .82rem; color: var(--muted); white-space: nowrap; }
+  .seg button:hover, .chip:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: rgb(111 191 90 / .24); color: var(--ink); font-weight: 600; }
+  .chip { padding: 5px 12px; border: 1px solid rgb(233 196 106 / .55); }
+  .chip .ring { flex: none; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #e9c46a; }   /* the map's gold outline */
+  .chip[aria-pressed="true"] { background: #e9c46a; border-color: #e9c46a; color: #021724; font-weight: 600; }
+  .chip[aria-pressed="true"] .ring { border-color: #021724; }
+  .seg button:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Dotted rule between the tree picks and the species, copied from /tides/: 1px, 2px dash / 5px gap */
   .legend-body .rule { height: 1px; margin-block: 4px; background: linear-gradient(to right, rgb(255 255 255 / .12) 2px, transparent 2px) left / 7px 1px repeat-x; }
-  .rare-pick input { accent-color: #e9c46a; }
-  .rare-pick .ring { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #e9c46a; }   /* the map's gold outline */
   .rare-tag { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: #e9c46a; }
   .rare-note { margin-top: 4px; font-size: .85rem; }
   .rare-note a, .rare-credit a { color: inherit; }
@@ -357,9 +363,7 @@ zoom: 11.8
     .summary, .species { font-size: 1rem; }
     .sortby { font-size: .95rem; column-gap: 16px; }
     .sortby button { padding: 8px 0; }
-    .origin-pick { font-size: .95rem; column-gap: 18px; }
-    .origin-pick label { min-height: 40px; }
-    .origin-pick input { width: 18px; height: 18px; }
+    .seg button, .chip { min-height: 40px; padding-inline: 14px; font-size: .92rem; }
     .species { gap: 3px; }
     .species .pick { min-height: 26px; }   /* compact rows so more species fit on a phone screen */
     .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
@@ -430,13 +434,11 @@ zoom: 11.8
       <p class="summary" id="summary">Loading the city's tree list…</p>
       <p class="origin-sum" id="origin"></p>
       <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Evergreen <span class="dot" style="--c:#9fd77a"></span>Deciduous</p>
-      <div class="origin-pick" role="radiogroup" aria-label="Which trees to show">   <!-- not remembered: every load opens on All -->
-        <label><input type="radio" name="origin" value="native" autocomplete="off"> Native</label>
-        <label><input type="radio" name="origin" value="non" autocomplete="off"> Non-native</label>
-        <label><input type="radio" name="origin" value="both" checked autocomplete="off"> All</label>
-      </div>
-      <div class="origin-pick rare-pick">   <!-- not remembered: every load opens with it off -->
-        <label><input type="checkbox" id="rare-only" autocomplete="off"> <span class="ring"></span>Rare/Landmark only</label>
+      <div class="picks">   <!-- not remembered: every load opens on All, Rare/Landmark off -->
+        <div class="seg" role="group" aria-label="Which trees to show">
+          <button type="button" data-origin="native" aria-pressed="false">Native</button><button type="button" data-origin="non" aria-pressed="false">Non-native</button><button type="button" data-origin="both" aria-pressed="true">All</button>
+        </div>
+        <button type="button" class="chip" id="rare-only" aria-pressed="false" title="Show only rare and landmark trees"><span class="ring"></span>Rare/Landmark</button>
       </div>
       <div class="rule" aria-hidden="true"></div>
       <div class="sortby" role="group" aria-label="Sort the species">
@@ -728,7 +730,7 @@ window.addEventListener('DOMContentLoaded', function () {
        start with what was typed come first, then a word that starts with it, then anywhere; ties go to more trees. */
     function fold(t) { return (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
     /* "native", "non-native", "exotic", "introduced", "all": rows that show all native or all non-native trees
-       (the legend's radio buttons, from search, which is handy on a phone with the legend shut) */
+       (the legend's segments, from search, which is handy on a phone with the legend shut) */
     function originHits(fq) {
       var nat = 0, non = 0;
       speciesList.forEach(function (x) { if (x.native) nat += x.n; else if (x.key !== 'Unknown') non += x.n; });
@@ -785,8 +787,8 @@ window.addEventListener('DOMContentLoaded', function () {
       var f = shown[i];
       if (!f) return;
       if (f.sp) { pickSpecies(f.sp); minimize(byKeyboard); return; }   // a species: every tree of it, as from the legend
-      if (f.rare) { var rc = $('rare-only'); if (!rc.checked) rc.click(); minimize(byKeyboard); return; }   // as the checkbox
-      if (f.origin) { var r = document.querySelector('.origin-pick input[name="origin"][value="' + f.origin + '"]'); if (r) { r.checked = true; r.click(); } minimize(byKeyboard); return; }   // native / non-native / all, as the radios
+      if (f.rare) { if (!rareOnly) $('rare-only').click(); minimize(byKeyboard); return; }   // as the chip
+      if (f.origin) { var r = document.querySelector('.seg button[data-origin="' + f.origin + '"]'); if (r) r.click(); minimize(byKeyboard); return; }   // native / non-native / all, as the segments
       clearSpot(); clearTree();
       var t = spotTurn;   // the place's details appear on landing, unless a tap came first
       map.once('moveend', function () {
@@ -822,10 +824,10 @@ window.addEventListener('DOMContentLoaded', function () {
   var state = { mode: 'year', year: THIS_YEAR, undated: true, span: [1970, THIS_YEAR], perYear: {}, total: 0, dated: 0 };
 
 
-  /* Native / Non-native / Both, from the legend's radio buttons. Both shows every tree, including those with no
+  /* Native / Non-native / Both, from the legend's segmented control. Both shows every tree, including those with no
      species recorded; Native and Non-native show only trees known to be one or the other. Rare/Landmark trees always
-     show, whichever is picked; the "Rare/Landmark only" checkbox narrows the map to them (and the radio still
-     applies: Native + Rare/Landmark only = rare natives). Always opens on Both, checkbox off. */
+     show, whichever is picked; the Rare/Landmark chip narrows the map to them (and the segment still
+     applies: Native + Rare/Landmark only = rare natives). Always opens on Both, chip off. */
   var origin = 'both', rareOnly = false;
   var RARE = ['==', ['get', 'r'], 1];
   function radioExpr() {
@@ -1013,17 +1015,18 @@ window.addEventListener('DOMContentLoaded', function () {
   /* Tap a species in the legend to see its distribution: the map fits its trees and shows only those.
      Tap it again, tap the title, or press Escape to show all trees. On phones the page scrolls up to the map. */
   var pickK = null;
-  [].forEach.call(document.querySelectorAll('.origin-pick input[name="origin"]'), function (r) {
-    r.addEventListener('click', function () {   // click, not change: tapping the radio already chosen also lets go of a pick
-      if (!r.checked) return;
-      origin = r.value;
+  var originBtns = document.querySelectorAll('.seg button');
+  [].forEach.call(originBtns, function (r) {
+    r.addEventListener('click', function () {   // tapping the segment already lit also lets go of a pick
+      origin = r.dataset.origin;
+      [].forEach.call(originBtns, function (b) { b.setAttribute('aria-pressed', b === r ? 'true' : 'false'); });
       // choosing Native, Non-native or Both shows those trees and lets go of any single species or tree picked
       cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
       clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
     });
   });
-  $('rare-only').addEventListener('change', function () {   // Rare/Landmark only, on top of the radio's pick
-    rareOnly = this.checked;
+  $('rare-only').addEventListener('click', function () {   // Rare/Landmark only, on top of the segment's pick
+    rareOnly = !rareOnly; this.setAttribute('aria-pressed', rareOnly ? 'true' : 'false');
     cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
     clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
   });
