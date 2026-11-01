@@ -151,7 +151,7 @@ zoom: 11.8
   .leafkey { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
   .leafkey .dot { width: 10px; height: 10px; }
   .leafkey .dot + .dot, .leafkey .dot:not(:first-child) { margin-left: 8px; }
-  /* Tree picks: a segmented control (Native | Non-native | All, one lit) and a gold Rare/Landmark filter chip that
+  /* Tree picks: a segmented control (All | Native | Non-native, one lit; All, the default, first) and a gold Rare/Landmark filter chip that
      stacks on it. The chip fills gold when on. */
   .picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -2px; }
   .seg { display: inline-flex; padding: 2px; border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; }
@@ -436,7 +436,7 @@ zoom: 11.8
       <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Evergreen <span class="dot" style="--c:#9fd77a"></span>Deciduous</p>
       <div class="picks">   <!-- not remembered: every load opens on All, Rare/Landmark off -->
         <div class="seg" role="group" aria-label="Which trees to show">
-          <button type="button" data-origin="native" aria-pressed="false">Native</button><button type="button" data-origin="non" aria-pressed="false">Non-native</button><button type="button" data-origin="both" aria-pressed="true">All</button>
+          <button type="button" data-origin="both" aria-pressed="true">All</button><button type="button" data-origin="native" aria-pressed="false">Native</button><button type="button" data-origin="non" aria-pressed="false">Non-native</button>
         </div>
         <button type="button" class="chip" id="rare-only" aria-pressed="false" title="Show only rare and landmark trees"><span class="ring"></span>Rare/Landmark</button>
       </div>
