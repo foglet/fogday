@@ -466,7 +466,7 @@ window.addEventListener('DOMContentLoaded', function () {
   var HOODS_LOCAL = '{{ "/treesf/neighborhoods.geojson" | relative_url }}';
   var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
   var HOOD_RED = '#e5372e';
-  /* Tree canopy: DataSF's Urban Tree Canopy, cut into vector tiles beside this page (zoom 11–15) by
+  /* Tree canopy: DataSF's Urban Tree Canopy, cut into vector tiles beside this page (zoom 11–14) by
      .github/workflows/treesf-canopy.yml. Mapbox needs a full URL for tiles. */
   var CANOPY_TILES = new URL('{{ "/treesf/canopy/" | relative_url }}', location.href).href + '{z}/{x}/{y}.pbf';
   var CANOPY_GREEN = '#2e7048';
@@ -1401,7 +1401,7 @@ window.addEventListener('DOMContentLoaded', function () {
   function addCanopy() {
     if (map.getSource('canopy')) return;
     var labels = (map.getStyle().layers || []).filter(function (l) { return l.type === 'symbol'; })[0];
-    map.addSource('canopy', { type: 'vector', tiles: [CANOPY_TILES], minzoom: 11, maxzoom: 15,
+    map.addSource('canopy', { type: 'vector', tiles: [CANOPY_TILES], minzoom: 11, maxzoom: 14,
       bounds: [SF_BOUNDS[0][0], SF_BOUNDS[0][1], SF_BOUNDS[1][0], SF_BOUNDS[1][1]] });
     map.addLayer({ id: 'canopy-fill', type: 'fill', source: 'canopy', 'source-layer': 'canopy',
       layout: { visibility: $('canopy-on').checked ? 'visible' : 'none' },

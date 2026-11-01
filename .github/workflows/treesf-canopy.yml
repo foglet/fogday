@@ -1,6 +1,6 @@
 # Builds treesf/canopy/, the tree canopy layer on /treesf/: DataSF's Urban Tree Canopy (ni2e-vpbg, about 289,000
 # polygons of tree cover mapped by SF Planning from aerial imagery for the 2013 Urban Forest Plan), cut into static
-# vector tiles (zoom 11–15, uncompressed .pbf) that the page reads beside itself. Too big to ship as one GeoJSON.
+# vector tiles (zoom 11–14, uncompressed .pbf) that the page reads beside itself. Too big to ship as one GeoJSON.
 # The study is a one-off, so this runs only when this file changes, or on demand from the Actions tab.
 name: Build SF tree canopy tiles
 
@@ -55,9 +55,11 @@ jobs:
         run: |
           rm -rf treesf/canopy
           # -X: no attributes. Uncompressed tiles, since GitHub Pages won't label gzip'd .pbf files.
-          # Zoomed out, the smallest patches go first (they're under a pixel there anyway); the page overzooms past 15.
+          # Zoomed out, the smallest patches go first (they're under a pixel there anyway). Tiles stop at zoom 14, about
+          # half a meter per tile unit there, and the page overzooms past it: z15 tiles doubled the size for detail a
+          # canopy wash doesn't need.
           tippecanoe -e treesf/canopy -l canopy -n "SF Urban Tree Canopy" \
-            -Z11 -z15 -X --no-tile-compression \
+            -Z11 -z14 -X --no-tile-compression \
             --drop-smallest-as-needed --coalesce-smallest-as-needed --simplification=4 \
             --force /tmp/canopy.geojson
           rm -f treesf/canopy/metadata.json   # the page sets its own zooms and bounds
@@ -65,7 +67,7 @@ jobs:
           bytes=$(du -sb treesf/canopy | cut -f1)
           biggest=$(find treesf/canopy -name '*.pbf' -printf '%s\n' | sort -n | tail -1)
           echo "tiles=$files bytes=$bytes biggest=$biggest"
-          [ "$files" -ge 50 ] || { echo "::error::Only $files tiles"; exit 1; }
+          [ "$files" -ge 20 ] || { echo "::error::Only $files tiles"; exit 1; }
           [ "$bytes" -lt 150000000 ] || { echo "::error::Tiles total ${bytes} bytes; too big for the repo"; exit 1; }
 
       - name: Commit if anything changed
