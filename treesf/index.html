@@ -437,7 +437,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous; tap one in the list to see where it grows, or tap a tree for its name. A light outline marks California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks rare and landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs.</p>
         <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Rare and landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
       </details>
     </div>
@@ -477,7 +477,8 @@ window.addEventListener('DOMContentLoaded', function () {
   // Year color ramp, all greens: deep forest (oldest) → leaf → spring green (newest). Stops spread over the data's year span.
   var RAMP = ['#2f7a45', '#3f9e4f', '#74c25a', '#b9e886'];
   var NATIVE_LINE = '#f1ffe3';   // the light outline on California natives
-  function nativeStroke(w) { return ['case', ['boolean', ['feature-state', 'sel'], false], 2, ['==', ['get', 'n'], 1], w, 0]; }
+  var RARE_LINE = '#e9c46a';   // Rare/Landmark: a small gold outline, the popup tag's gold
+  function nativeStroke(w) { return ['case', ['boolean', ['feature-state', 'sel'], false], 2, ['==', ['get', 'r'], 1], w * 1.2, ['==', ['get', 'n'], 1], w, 0]; }
   var BIG_RING = '#b9e886';   // the size rings around trees: the ramp's spring green
   var NODBH_LINE = '#8fa3b1';   // the thin outline on trees with no trunk size recorded (the page's muted gray)
   /* Trunk-size groups (g, from the build script): 1 = 3–10", 2 = 11–20", 3 = 21"+, 0 = not recorded.
@@ -859,9 +860,9 @@ window.addEventListener('DOMContentLoaded', function () {
         'circle-color': ['get', 'c'],   // the tree's species green
         'circle-radius': radius(1),
         'circle-opacity': 0.9,
-        /* California natives get a light outline (thin when zoomed out); the tapped tree a 2px white one */
+        /* California natives get a light outline, Rare/Landmark trees a gold one (thin when zoomed out); the tapped tree a 2px white one */
         'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, nativeStroke(0.6), 16, nativeStroke(1.4)],
-        'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#ffffff', NATIVE_LINE],
+        'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#ffffff', ['==', ['get', 'r'], 1], RARE_LINE, NATIVE_LINE],
         'circle-stroke-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0.85]
       }
     });
