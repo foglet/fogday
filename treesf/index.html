@@ -155,6 +155,9 @@ zoom: 11.8
   .origin-pick label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--muted); }
   .origin-pick label:has(input:checked) { color: var(--ink); }
   .origin-pick input { margin: 0; width: 15px; height: 15px; accent-color: #6fbf5a; cursor: pointer; }
+  .rare-pick { margin-top: -6px; }
+  .rare-pick input { accent-color: #e9c46a; }
+  .rare-pick .ring { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #e9c46a; }   /* the map's gold outline */
   .rare-tag { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: #e9c46a; }
   .rare-note { margin-top: 4px; font-size: .85rem; }
   .rare-note a, .rare-credit a { color: inherit; }
@@ -429,6 +432,9 @@ zoom: 11.8
         <label><input type="radio" name="origin" value="native" autocomplete="off"> Native</label>
         <label><input type="radio" name="origin" value="non" autocomplete="off"> Non-native</label>
         <label><input type="radio" name="origin" value="both" checked autocomplete="off"> All</label>
+      </div>
+      <div class="origin-pick rare-pick">   <!-- not remembered: every load opens with it off -->
+        <label><input type="checkbox" id="rare-only" autocomplete="off"> <span class="ring"></span>Rare/Landmark only</label>
       </div>
       <div class="sortby" role="group" aria-label="Sort the species">
         <button type="button" data-sort="common" aria-pressed="true">Common name<span class="ord"></span></button>
@@ -705,6 +711,7 @@ window.addEventListener('DOMContentLoaded', function () {
           var dot = document.createElement('span'); dot.className = 'dot' + (f.sp.native ? ' native' : ''); dot.style.setProperty('--c', f.sp.color);
           li.appendChild(dot); if (f.latin) li.title = f.latin;
         }
+        if (f.rare) { var rr = document.createElement('span'); rr.className = 'dot'; rr.style.cssText = 'background:transparent;border:1.5px solid #e9c46a;box-sizing:border-box'; li.appendChild(rr); }
         if (f.origin) {   // native / non-native: a dot in each look
           var od = document.createElement('span'); od.className = 'dot' + (f.origin === 'native' ? ' native' : ''); od.style.setProperty('--c', f.origin === 'non' ? '#4f8a4a' : '#6fbf5a'); li.appendChild(od);
         }
@@ -726,6 +733,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var wantNon = /^(non|not|ex|intro|alien)/.test(fq) || fq.indexOf('non') >= 0, wantNat = !wantNon && /^(nat|cali|ca n|indig)/.test(fq);
       if (wantNat) out.push({ origin: 'native', name: 'California native trees', where: fmt.format(nat) + ' trees' });
       if (wantNon) out.push({ origin: 'non', name: 'Non-native trees', where: fmt.format(non) + ' trees' });
+      if (/^(rare|landm|notab|special)/.test(fq)) out.push({ rare: true, name: 'Rare/Landmark trees', where: fmt.format(Object.keys(rareN).reduce(function (a, k) { return a + rareN[k]; }, 0)) + ' trees' });
       if (/^(all|both|every)/.test(fq)) out.push({ origin: 'both', name: 'All trees', where: fmt.format(nat + non + (speciesList.filter(function (x) { return x.key === 'Unknown'; })[0] || { n: 0 }).n) + ' trees' });
       return out;
     }
@@ -774,6 +782,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var f = shown[i];
       if (!f) return;
       if (f.sp) { pickSpecies(f.sp); minimize(byKeyboard); return; }   // a species: every tree of it, as from the legend
+      if (f.rare) { var rc = $('rare-only'); if (!rc.checked) rc.click(); minimize(byKeyboard); return; }   // as the checkbox
       if (f.origin) { var r = document.querySelector('.origin-pick input[name="origin"][value="' + f.origin + '"]'); if (r) { r.checked = true; r.click(); } minimize(byKeyboard); return; }   // native / non-native / all, as the radios
       clearSpot(); clearTree();
       var t = spotTurn;   // the place's details appear on landing, unless a tap came first
@@ -812,15 +821,20 @@ window.addEventListener('DOMContentLoaded', function () {
 
   /* Native / Non-native / Both, from the legend's radio buttons. Both shows every tree, including those with no
      species recorded; Native and Non-native show only trees known to be one or the other. Rare/Landmark trees always
-     show, whichever is picked. Always opens on Both. */
-  var origin = 'both';
+     show, whichever is picked; the "Rare/Landmark only" checkbox narrows the map to them (and the radio still
+     applies: Native + Rare/Landmark only = rare natives). Always opens on Both, checkbox off. */
+  var origin = 'both', rareOnly = false;
   var RARE = ['==', ['get', 'r'], 1];
-  function originExpr() {
-    if (origin === 'native') return ['any', ['==', ['get', 'n'], 1], RARE];
-    if (origin === 'non') return ['any', ['all', ['!=', ['coalesce', ['get', 'n'], 0], 1], ['!=', ['coalesce', ['get', 'u'], 0], 1]], RARE];
+  function radioExpr() {
+    if (origin === 'native') return ['==', ['get', 'n'], 1];
+    if (origin === 'non') return ['all', ['!=', ['coalesce', ['get', 'n'], 0], 1], ['!=', ['coalesce', ['get', 'u'], 0], 1]];
     return true;
   }
-  function filterExpr() { return origin === 'both' ? ['has', 'k'] : ['all', ['has', 'k'], originExpr()]; }
+  function originExpr() {
+    if (rareOnly) return ['all', RARE, radioExpr()];
+    return origin === 'both' ? true : ['any', radioExpr(), RARE];
+  }
+  function filterExpr() { return origin === 'both' && !rareOnly ? ['has', 'k'] : ['all', ['has', 'k'], originExpr()]; }
 
   function radius(k) {   // the dot size at each zoom, times k
     return ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6 * k, 13, 1.4 * k, 16, 3.6 * k, 19, 9 * k];
@@ -955,10 +969,16 @@ window.addEventListener('DOMContentLoaded', function () {
     // Under the total: the native count with Native picked, the non-native count with Non-native; nothing with Both
     var os = $('origin');
     os.textContent = origin === 'native' ? fmt.format(natN) + ' California native' : origin === 'non' ? fmt.format(notN) + ' native elsewhere' : '';
+    if (rareOnly) {   // one group: the species with Rare/Landmark trees (of the radio's kind), counting only those trees
+      var rare = list.filter(function (x) { return rareN[x.i] && (origin === 'native' ? x.native : origin === 'non' ? !x.native && x.key !== 'Unknown' : true); })
+        .map(function (x) { var c = Object.create(x); c.n = rareN[x.i]; c.bounds = rareB[x.i] || x.bounds; return c; });
+      groups = [['Rare/Landmark', rare]];
+      os.textContent = fmt.format(rare.reduce(function (a, x) { return a + x.n; }, 0)) + ' rare/landmark trees, compiled by Mike Sullivan';
+    }
     os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
       if (!g[1].length) return;
-      if ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1)) return;   // the radio's choice
+      if (!rareOnly && ((origin === 'native' && gi !== 0) || (origin === 'non' && gi !== 1))) return;   // the radio's choice
       var n = g[1].reduce(function (a, x) { return a + x.n; }, 0), hd = document.createElement('li');
       hd.className = 'group'; hd.textContent = g[0] + ' · ' + fmt.format(n) + (g[1].length > 1 ? ' trees, ' + g[1].length + ' species' : ' trees');
       frag.appendChild(hd);
@@ -998,6 +1018,11 @@ window.addEventListener('DOMContentLoaded', function () {
       cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
       clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
     });
+  });
+  $('rare-only').addEventListener('change', function () {   // Rare/Landmark only, on top of the radio's pick
+    rareOnly = this.checked;
+    cancelAnimationFrame(fadeRaf); fadeRaf = 0; pickK = null;
+    clearTree(); clearSpot(); applyFilter(); fillSpecies(speciesList); sheetHeight();
   });
   /* The other trees ease out (fade to nothing, quick then slow) before they leave the map; showing all again, they
      ease back in. 0.45 s; reduced motion: no fade. */
