@@ -29,6 +29,9 @@ zoom: 11.8
      self-contained page. Always dark. Class names follow those pages (oa-…, tc-…) so fixes copy between them.
      Numbers in Patua One with the site's sky-blue title gradient, as on fogday.com/tides. */
   :root {
+    /* Glass: the iOS search field's look (a smoked gray, frosted and lightly saturated, a hairline edge, rounded),
+       behind each line of text over the map: legend, neighborhood menu, tree card, here note */
+    --glass: rgb(48 50 54 / .72); --glass-blur: blur(20px) saturate(120%); --glass-edge: rgb(255 255 255 / .1); --glass-r: 12px;
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
     --title-1: #7cc4f0; --title-2: #bfe6fb;   /* fogday.css dark mode title gradient */
     --undated: #3f5e4a;   /* trees with no planting date: a dark, grey green */
@@ -121,15 +124,15 @@ zoom: 11.8
   }
   .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; }
   /* No panel, shut or open: the map shows around the legend, and each line of text sits on its own box only as wide
-     as the text (navy 80% with a blur, as in the neighborhood menu), so it reads over trees without a slab over the map */
+     as the text (the glass box, as in the neighborhood menu), so it reads over trees without a slab over the map */
   .controls.map-legend-panel { background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
   .species li, .notes summary, .notes .note, .controls > .status, .seg, .chip {
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
   }
   .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
   .species li, .notes summary, .notes .note, .controls > .status {
-    width: fit-content; max-width: 100%; box-sizing: border-box; border-radius: 4px; padding: 2px 8px;
+    width: fit-content; max-width: 100%; box-sizing: border-box; border-radius: var(--glass-r); padding: 3px 10px;
   }
   .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px !important; min-height: 40px;
                         font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
@@ -177,8 +180,8 @@ zoom: 11.8
   .chip[aria-pressed="true"] { background: rgb(233 196 106 / .2); border-color: #e9c46a; color: var(--ink); font-weight: 600; }   /* 20% gold, like All's lit green: on, not loud */
   .chip[aria-pressed="true"] .ring { background: #e9c46a; }
   /* Over the map with no panel: the chip sits on the navy box too (its 20% gold is laid over navy when on) */
-  .chip { background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-  .chip[aria-pressed="true"] { background: linear-gradient(rgb(233 196 106 / .2), rgb(233 196 106 / .2)), color-mix(in srgb, var(--bg) 85%, transparent); }
+  .chip { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  .chip[aria-pressed="true"] { background: linear-gradient(rgb(233 196 106 / .2), rgb(233 196 106 / .2)), var(--glass); }
   .seg button:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Dotted rule between the tree picks and the species, copied from /tides/: 1px, 2px dash / 5px gap */
   .legend-body .rule { height: 1px; margin-block: 4px; background: linear-gradient(to right, rgb(255 255 255 / .12) 2px, transparent 2px) left / 7px 1px repeat-x; }
@@ -224,8 +227,8 @@ zoom: 11.8
   }
   .oa-detail-panel[hidden] { display: none; }
   .oa-detail-panel > div {
-    width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    width: fit-content; max-width: 100%; padding: 3px 10px; border-radius: var(--glass-r);
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
   }
   .oa-detail-name { font-weight: 700; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
@@ -282,8 +285,8 @@ zoom: 11.8
   @keyframes here-pulse { 50% { opacity: .35; } }
   /* A short note left of the button (outside the city, location off, no fix), in the neighborhood menu's text-wide box */
   .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
-                 width: max-content; max-width: 60vw; padding: 2px 8px; border-radius: 4px; font: 400 .85rem/1.4 var(--font); color: var(--ink);
-                 background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+                 width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
+                 background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
   /* You are here: a blue dot with a white ring and a soft halo (blue, so it isn't a tree's green, gold or white) */
   .here-dot { width: 14px; height: 14px; border-radius: 50%; background: #3d8bff; border: 2px solid #fff; box-sizing: border-box;
               box-shadow: 0 0 0 6px rgb(61 139 255 / .25); pointer-events: none; }
@@ -305,11 +308,11 @@ zoom: 11.8
   }
   .oa-regions-pop[hidden] { display: none; }
   .oa-regions-title, .oa-regions-pop li button span {
-    display: block; width: fit-content; box-sizing: border-box; padding: 2px 8px; border-radius: 4px;
+    display: block; width: fit-content; box-sizing: border-box; padding: 2px 10px; border-radius: var(--glass-r);
     text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
     /* Over the trees a halo isn't enough: each line gets a navy box only as wide as its text, 80% with a blur
        (the /transit/ detail panel's) */
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
   }
   .oa-regions-pop li button[aria-current="true"] { font-weight: 700; }   /* the neighborhood on view */
   .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
@@ -321,8 +324,10 @@ zoom: 11.8
   .oa-regions-pop ul::-webkit-scrollbar { display: none; }
   .oa-regions-pop li { margin: 0; padding: 0; }
   .oa-regions-pop li button span { line-height: 20px; border-radius: 0; }
-  .oa-regions-pop li:first-child button span { border-top-right-radius: 4px; }
-  .oa-regions-pop li:last-child button span { border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+  .oa-regions-pop li button span { box-shadow: none; }   /* rows stack flush: no hairline seams between them */
+  .oa-regions-title, .oa-regions-pop li button span { text-shadow: none; }
+  .oa-regions-pop li:first-child button span { border-top-right-radius: var(--glass-r); }
+  .oa-regions-pop li:last-child button span { border-bottom-left-radius: var(--glass-r); border-bottom-right-radius: var(--glass-r); }
   .oa-regions-pop li button { all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap; }
   .oa-regions-pop li button:hover { color: var(--accent); }
   .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
