@@ -596,11 +596,14 @@ window.addEventListener('DOMContentLoaded', function () {
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
   /* Here: on a tap, and only then, the browser is asked once where you are (no watching, nothing stored or sent);
      the map flies there, close enough to see the nearest trees, and a blue dot marks the spot until the next tap
-     or reload. Outside the city, or with location refused, a short note says so instead. */
+     or reload. Outside the city, a short note says so; with location off or no fix, the note points to the search box,
+     which opens with the cursor in it. */
   var hereBtn = hereCtrl.querySelector('button'), hereMsg = hereCtrl.querySelector('.oa-here-msg'), hereDot = null, hereT = 0;
-  function hereSay(t) { clearTimeout(hereT); hereMsg.textContent = t; hereMsg.hidden = false; hereT = setTimeout(function () { hereMsg.hidden = true; }, 4000); }
+  function hereSay(t, ms) { clearTimeout(hereT); hereMsg.textContent = t; hereMsg.hidden = false; hereT = setTimeout(function () { hereMsg.hidden = true; }, ms || 4000); }
+  // No location to be had: say so, and open the search box with the cursor in it, so an address or corner gets you there
+  function hereSearch(t) { hereSay(t + ' — search an address or corner instead.', 6000); $('oa-search-input').focus(); }
   hereBtn.addEventListener('click', function () {
-    if (!navigator.geolocation) { hereSay('This browser can’t share your location.'); return; }
+    if (!navigator.geolocation) { hereSearch('This browser can’t share your location'); return; }
     if (hereBtn.getAttribute('aria-busy') === 'true') return;
     hereBtn.setAttribute('aria-busy', 'true'); hereMsg.hidden = true;
     navigator.geolocation.getCurrentPosition(function (p) {
@@ -614,7 +617,7 @@ window.addEventListener('DOMContentLoaded', function () {
       map.flyTo(Object.assign({ center: ll, zoom: Math.max(map.getZoom(), 17.5) }, FLY));
     }, function (err) {
       hereBtn.removeAttribute('aria-busy');
-      hereSay(err.code === 1 ? 'Location is off for this site.' : 'Couldn’t find your location.');
+      hereSearch(err.code === 1 ? 'Location is off' : 'Couldn’t find your location');
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   });
   /* Zoom readout, live, to one decimal; the zoom is remembered for the next visit (as on /transit/) */
