@@ -279,9 +279,9 @@ zoom: 11.8
   /* Neighborhoods menu: no panel; the title and each row get their own background, only as wide as the text */
   .oa-regions-pop {
     position: absolute; right: calc(100% + 8px); bottom: 0; padding: 0;
-    max-height: calc(100vh - 160px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain;
     display: flex; flex-direction: column; align-items: flex-start; gap: 0;
     color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left;
+    --row: 24px;   /* one neighborhood line: 20px text + 2px above and below */
   }
   .oa-regions-pop[hidden] { display: none; }
   .oa-regions-title, .oa-regions-pop li button span {
@@ -293,7 +293,16 @@ zoom: 11.8
   }
   .oa-regions-pop li button[aria-current="true"] { font-weight: 700; }   /* the neighborhood on view */
   .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
-  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 0; font-size: .9rem; }
+  /* Eight neighborhoods at a time; the list scrolls inside the menu, which stays on screen (dvh: Safari's visible
+     height, not the height behind its toolbars). Lines stack flush: no gaps between them. */
+  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 0; font-size: .9rem;
+                       max-height: min(calc(8 * var(--row)), calc(100vh - 240px - var(--sat) - var(--sab)), calc(100dvh - 240px - var(--sat) - var(--sab)));
+                       overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .oa-regions-pop ul::-webkit-scrollbar { display: none; }
+  .oa-regions-pop li { margin: 0; padding: 0; }
+  .oa-regions-pop li button span { line-height: 20px; border-radius: 0; }
+  .oa-regions-pop li:first-child button span { border-top-right-radius: 4px; }
+  .oa-regions-pop li:last-child button span { border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
   .oa-regions-pop li button { all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap; }
   .oa-regions-pop li button:hover { color: var(--accent); }
   .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
@@ -344,6 +353,7 @@ zoom: 11.8
   @media (pointer: coarse) {
     .oa-pin { width: 44px; height: 44px; }
     .oa-zoomread { width: 44px; height: 44px; font-size: .85rem; }
+    .oa-regions-pop { --row: 44px; }
     .oa-regions-pop li button span { padding-top: 10px; padding-bottom: 10px; line-height: 24px; }   /* 44px rows, no gaps */
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
     .mapboxgl-ctrl.oa-search .oa-field { height: 44px; }
