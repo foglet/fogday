@@ -134,7 +134,7 @@ zoom: 11.8
   .species li, .notes summary, .notes .note, .controls > .status {
     width: fit-content; max-width: 100%; box-sizing: border-box; border-radius: var(--glass-r); padding: 3px 10px;
   }
-  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px !important; min-height: 40px;
+  .map-legend summary { list-style: none; cursor: pointer; padding: 6px 14px !important; min-height: 30px; box-sizing: border-box;
                         font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
   .map-legend summary::-webkit-details-marker { display: none; }
   .map-legend > summary::after { content: " +"; color: var(--muted); }
@@ -204,7 +204,7 @@ zoom: 11.8
   .status.error { color: #f08a52; }
   /* Info: a small uppercase toggle that opens the notes, as on /tides/ */
   .notes { color: var(--muted); }
-  .notes summary { list-style: none; cursor: pointer; display: block; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; }
+  .notes summary { list-style: none; cursor: pointer; display: block; padding-inline: 12px !important; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; }
   .notes summary::-webkit-details-marker { display: none; }
   .notes summary::after { content: " +"; }
   .notes[open] summary::after { content: " –"; }
@@ -324,6 +324,10 @@ zoom: 11.8
   .oa-regions-pop ul::-webkit-scrollbar { display: none; }
   .oa-regions-pop li { margin: 0; padding: 0; }
   .oa-regions-pop li button span { line-height: 20px; border-radius: 0; }
+  /* One-line boxes are pills (fully round ends); the multi-line Info notes keep 12px corners */
+  .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
+  .species li, .notes summary, .controls > .status, .oa-regions-title, .oa-here-msg { border-radius: 999px; }
+  .legend-body > .origin-sum:empty { display: none; }   /* no empty pill before the counts are in */
   .oa-regions-pop li button span { box-shadow: none; }   /* rows stack flush: no hairline seams between them */
   .oa-regions-title, .oa-regions-pop li button span { text-shadow: none; }
   .oa-regions-pop li:first-child button span { border-top-right-radius: var(--glass-r); }
@@ -407,14 +411,14 @@ zoom: 11.8
     .controls { right: calc(66px + var(--sar)); width: auto; min-width: 0; max-width: none; }   /* clear of the 44px search / neighborhoods buttons on the right */
     .controls:has(.map-legend:not([open])) { right: auto; }
     .oa-detail-panel { max-width: calc(100vw - 38px - var(--sal) - var(--sar)); }
-    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .map-legend summary { min-height: 34px; display: flex; align-items: center; gap: .3em; }
     .summary, .species { font-size: 1rem; }
     .sortby { font-size: .95rem; column-gap: 16px; }
     .sortby button { padding: 8px 0; }
-    .seg button, .chip { min-height: 40px; padding-inline: 14px; font-size: .92rem; }
+    .seg button, .chip { min-height: 32px; padding-inline: 14px; font-size: .92rem; }
     .species { gap: 3px; }
     .species .pick { min-height: 26px; }   /* compact rows so more species fit on a phone screen */
-    .notes summary { min-height: 44px; display: inline-flex; align-items: center; font-size: .8rem; }
+    .notes summary { min-height: 32px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
   /* iPhone 15 Pro (393 × 852) and smaller, either way up: the open legend leaves out the species list and its sort,
@@ -1192,6 +1196,26 @@ window.addEventListener('DOMContentLoaded', function () {
   shutLegend();
   window.addEventListener('pageshow', function (e) { if (e.persisted) shutLegend(); });
   document.querySelector('.notes').addEventListener('toggle', fitLegend);   // Info opening grows the card; the spot card stays above it
+  /* Info open: the whole legend, its Tree Legend title and the INFO toggle (to close it) included, stays on screen
+     below the page title. The notes give up height first and scroll inside what's left (never under 72px). Measured
+     against the visible height (Safari's toolbars come and go), on opening, rotating and resizing. */
+  function fitNotes(e) {
+    var nb = document.querySelector('.notes-body'), notes = document.querySelector('.notes');
+    nb.style.maxHeight = '';
+    if (!$('legend').open || !notes.open) return;
+    var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    var top = Math.max(document.querySelector('.top').getBoundingClientRect().bottom + 8, 8);
+    var over = top - $('controls').getBoundingClientRect().top;   // how far the legend runs above the room it has
+    var bottomOver = $('controls').getBoundingClientRect().bottom - vh;   // or below the visible screen
+    over = Math.max(over, 0) + Math.max(bottomOver, 0);
+    if (over > 0) nb.style.maxHeight = Math.max(72, nb.clientHeight - over) + 'px';
+    if (e && e.type === 'toggle') nb.scrollTop = 0;   // a fresh open starts at the top; scrolling the page keeps your place
+    sheetHeight();
+  }
+  document.querySelector('.notes').addEventListener('toggle', fitNotes);
+  $('legend').addEventListener('toggle', fitNotes);
+  window.addEventListener('resize', fitNotes);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitNotes);
   sheetHeight();
 
   /* ---------- Popups ---------- */
