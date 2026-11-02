@@ -599,6 +599,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (sp.native) p.n = 1;                       // n: California native
       if (sp.key === 'Unknown') p.u = 1;             // u: species not recorded
       if (rareInfo[i]) p.r = 1;                      // r: Rare/Landmark (Mike Sullivan's list)
+      if (/^Prunus\b/.test(sp.key)) p.pr = 1;       // pr: Prunus, drawn in burgundy and see-through
       if (rareInfo[i]) { var rb = rareB[d.k[i]] || (rareB[d.k[i]] = [[180, 90], [-180, -90]]), lx = d.lon0 + x / d.q, ly = d.lat0 + y / d.q;
         rb[0][0] = Math.min(rb[0][0], lx); rb[0][1] = Math.min(rb[0][1], ly); rb[1][0] = Math.max(rb[1][0], lx); rb[1][1] = Math.max(rb[1][1], ly); }
       feats[i] = { type: 'Feature', id: i, geometry: { type: 'Point', coordinates: [d.lon0 + x / d.q, d.lat0 + y / d.q] }, properties: p };
@@ -954,6 +955,7 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   function filterExpr() { return origin === 'both' && !rareOnly ? ['has', 'k'] : ['all', ['has', 'k'], originExpr()]; }
 
+  var DOT_OP = ['case', ['==', ['get', 'pr'], 1], 0.6, 0.9];   // the dots: Prunus' burgundy at 60%, the greens at 90%
   function radius(k) {   // the dot size at each zoom, times k
     return ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6 * k, 13, 1.4 * k, 16, 3.6 * k, 19, 9 * k];
   }
@@ -991,7 +993,7 @@ window.addEventListener('DOMContentLoaded', function () {
       paint: {
         'circle-color': ['get', 'c'],   // the tree's species green
         'circle-radius': radius(1),
-        'circle-opacity': 0.9,
+        'circle-opacity': DOT_OP,
         /* California natives get a light outline, Rare/Landmark trees a gold one (thin when zoomed out); the tapped tree a 2px white one */
         'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, nativeStroke(0.6), 16, nativeStroke(1.4)],
         'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#ffffff', ['==', ['get', 'r'], 1], RARE_LINE, NATIVE_LINE],
@@ -1040,7 +1042,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var f = pickK == null ? filterExpr() : ['all', filterExpr(), ['==', ['get', 'k'], pickK]];
     map.setFilter('trees-dots', f);
     map.setFilter('trees-heat', f);
-    var op = 0.9; if (fadeRaf) { map.setFilter('trees-heat', f); setRingFilters(); updateCount(); return; }   // a fade is running; it sets the opacity
+    var op = DOT_OP; if (fadeRaf) { map.setFilter('trees-heat', f); setRingFilters(); updateCount(); return; }   // a fade is running; it sets the opacity
     map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
       ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, op] : op);
     setRingFilters();
@@ -1156,16 +1158,16 @@ window.addEventListener('DOMContentLoaded', function () {
     var t0 = performance.now();
     (function step(now) {
       var t = Math.min(1, (now - t0) / FADE_MS), e = 1 - Math.pow(1 - t, 3), a = from + (to - from) * e;
-      map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], k], 0.9, a]);
+      map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], k], DOT_OP, ['*', a / 0.9, DOT_OP]]);
       if (t < 1) fadeRaf = requestAnimationFrame(step);
-      else { fadeRaf = 0; map.setPaintProperty('trees-dots', 'circle-opacity', 0.9); done && done(); }
+      else { fadeRaf = 0; map.setPaintProperty('trees-dots', 'circle-opacity', DOT_OP); done && done(); }
     })(t0);
   }
   function pickSpecies(sp) {
     var was = pickK;
     clearTree(); clearSpot();
     if (sp && was == null) { pickK = sp.i; fillSpecies(speciesList); fadeOthers(sp.i, 0.9, 0, applyFilter); }   // fade the rest, then hide them
-    else if (!sp && was != null) { pickK = null; applyFilter(); fillSpecies(speciesList); map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], was], 0.9, 0]); fadeOthers(was, 0, 0.9); }   // all back, easing in
+    else if (!sp && was != null) { pickK = null; applyFilter(); fillSpecies(speciesList); map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], was], DOT_OP, 0]); fadeOthers(was, 0, 0.9); }   // all back, easing in
     else { pickK = sp ? sp.i : null; applyFilter(); fillSpecies(speciesList); }   // one species to another: a straight swap
     if (!sp) return;
     if ($('legend').open) { $('legend').open = false; sheetHeight(); }   // picking a species folds the legend, so the map is clear
