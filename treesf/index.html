@@ -119,21 +119,31 @@ zoom: 11.8
     border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 8px;
     transition: background-color .18s ease, border-color .18s ease;
   }
-  /* Shut: just "Tree Legend +", on a box as wide as the words (navy 80% with a blur, the neighborhood menu's), so it reads over trees */
-  .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; border-color: transparent;
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
+  .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; }
+  /* No panel, shut or open: the map shows around the legend, and each line of text sits on its own box only as wide
+     as the text (navy 80% with a blur, as in the neighborhood menu), so it reads over trees without a slab over the map */
+  .controls.map-legend-panel { background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
+  .species li, .notes summary, .notes .note, .controls > .status, .seg, .chip {
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
+  .species li, .notes summary, .notes .note, .controls > .status {
+    width: fit-content; max-width: 100%; box-sizing: border-box; border-radius: 4px; padding: 2px 8px;
+  }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px !important; min-height: 40px;
                         font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
   .map-legend summary::-webkit-details-marker { display: none; }
   .map-legend > summary::after { content: " +"; color: var(--muted); }
   .map-legend[open] > summary::after { content: " –"; }
   .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
-  .legend-body { padding: 0 14px 12px; display: grid; gap: 10px; }
+  .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 8px; }
   .sky-text { color: #4a90c8; }
   .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
-  .species { list-style: none; margin: 0 -6px; padding: 2px 6px; display: grid; gap: 6px; font-size: .9rem;
+  .species { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 2px; font-size: .9rem; max-width: 100%;
              max-height: max(72px, calc(100vh - var(--legend-top, 360px) - var(--sat) - var(--sab))); overflow-y: auto; overscroll-behavior: contain; }
-  .species li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .species li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 4px !important; }
+  .species li.group { padding: 2px 8px !important; }
   .species .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; cursor: pointer; border-radius: 4px; padding: 2px 4px; }
   .species .pick:hover .name { color: var(--accent); }
   .species .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -166,6 +176,9 @@ zoom: 11.8
   .chip .ring { flex: none; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #e9c46a; }   /* the map's gold outline */
   .chip[aria-pressed="true"] { background: rgb(233 196 106 / .2); border-color: #e9c46a; color: var(--ink); font-weight: 600; }   /* 20% gold, like All's lit green: on, not loud */
   .chip[aria-pressed="true"] .ring { background: #e9c46a; }
+  /* Over the map with no panel: the chip sits on the navy box too (its 20% gold is laid over navy when on) */
+  .chip { background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .chip[aria-pressed="true"] { background: linear-gradient(rgb(233 196 106 / .2), rgb(233 196 106 / .2)), color-mix(in srgb, var(--bg) 85%, transparent); }
   .seg button:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Dotted rule between the tree picks and the species, copied from /tides/: 1px, 2px dash / 5px gap */
   .legend-body .rule { height: 1px; margin-block: 4px; background: linear-gradient(to right, rgb(255 255 255 / .12) 2px, transparent 2px) left / 7px 1px repeat-x; }
@@ -179,7 +192,7 @@ zoom: 11.8
   .origin.native { color: #b9e886; }
   .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c); }   /* the atlas's legend dot */
   .dot.native { box-shadow: 0 0 0 1.5px #f1ffe3; }   /* the map's light outline on natives */
-  .controls > .status { padding: 0 14px 12px; }
+  .controls > .status { margin: 6px 6px 0; }
 
   /* View switch: two uppercase segments */
   .axis { display: flex; justify-content: space-between; gap: 8px; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -188,14 +201,13 @@ zoom: 11.8
   .status.error { color: #f08a52; }
   /* Info: a small uppercase toggle that opens the notes, as on /tides/ */
   .notes { color: var(--muted); }
-  .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; }
+  .notes summary { list-style: none; cursor: pointer; display: block; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; }
   .notes summary::-webkit-details-marker { display: none; }
   .notes summary::after { content: " +"; }
   .notes[open] summary::after { content: " –"; }
   .notes summary:hover { color: var(--accent); }
   .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-  .notes .note { padding-top: 4px; }
-  .notes .note + .note { padding-top: 6px; }
+  .notes .note { margin-top: 4px; }
   .note { font-size: .78rem; color: var(--muted); margin: 0; }
   .note a { color: inherit; }
   .note a:hover { color: var(--ink); }
