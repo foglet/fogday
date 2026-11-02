@@ -479,7 +479,7 @@ zoom: 11.8
       <ul class="species" id="species" aria-label="Tree species, most common first"></ul>
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
-        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs.</p>
+        <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
         <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
       </details>
     </div>
@@ -602,6 +602,15 @@ window.addEventListener('DOMContentLoaded', function () {
   function hereSay(t, ms) { clearTimeout(hereT); hereMsg.textContent = t; hereMsg.hidden = false; hereT = setTimeout(function () { hereMsg.hidden = true; }, ms || 4000); }
   // No location to be had: say so, and open the search box with the cursor in it, so an address or corner gets you there
   function hereSearch(t) { hereSay(t + ' — search an address or corner instead.', 6000); $('oa-search-input').focus(); }
+  /* With location sharing off for this site, the button is hidden (nothing to tap); it comes back by itself once
+     sharing is turned on (Info says how). Browsers without the permission check just keep it, and a refusal hides it. */
+  function hereShow(state) { hereCtrl.hidden = state === 'denied'; if (hereCtrl.hidden) hereMsg.hidden = true; }
+  if (!navigator.geolocation) hereCtrl.hidden = true;
+  else if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' }).then(function (st) {
+      hereShow(st.state); st.onchange = function () { hereShow(st.state); };
+    }).catch(function () {});
+  }
   hereBtn.addEventListener('click', function () {
     if (!navigator.geolocation) { hereSearch('This browser can’t share your location'); return; }
     if (hereBtn.getAttribute('aria-busy') === 'true') return;
@@ -618,6 +627,7 @@ window.addEventListener('DOMContentLoaded', function () {
     }, function (err) {
       hereBtn.removeAttribute('aria-busy');
       hereSearch(err.code === 1 ? 'Location is off' : 'Couldn’t find your location');
+      if (err.code === 1) setTimeout(function () { hereShow('denied'); }, 6000);   // refused: the note shows, then the button goes
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   });
   /* Zoom readout, live, to one decimal; the zoom is remembered for the next visit (as on /transit/) */
