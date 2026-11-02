@@ -29,9 +29,9 @@ zoom: 11.8
      self-contained page. Always dark. Class names follow those pages (oa-…, tc-…) so fixes copy between them.
      Numbers in Patua One with the site's sky-blue title gradient, as on fogday.com/tides. */
   :root {
-    /* Glass: the iOS search field's look (a smoked gray, frosted and lightly saturated, a hairline edge, rounded),
+    /* Glass: the iOS search field's look (a light smoked gray at 42% over a heavy 28px frost, a hairline edge, rounded),
        behind each line of text over the map: legend, neighborhood menu, tree card, here note */
-    --glass: rgb(48 50 54 / .45); --glass-blur: blur(20px) saturate(120%); --glass-edge: rgb(255 255 255 / .1); --glass-r: 12px;
+    --glass: rgb(98 98 102 / .42); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
     --title-1: #7cc4f0; --title-2: #bfe6fb;   /* fogday.css dark mode title gradient */
     --undated: #3f5e4a;   /* trees with no planting date: a dark, grey green */
@@ -328,6 +328,8 @@ zoom: 11.8
   .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
   .species li, .notes summary, .controls > .status, .oa-regions-title, .oa-here-msg { border-radius: 999px; }
   .legend-body > .origin-sum:empty { display: none; }   /* no empty pill before the counts are in */
+  /* On the glass, secondary text is lighter (as the iOS field's white text reads on its gray) */
+  .controls, .oa-regions-pop, .oa-detail-panel, .oa-here-msg { --muted: #c5ced5; }
   .oa-regions-pop li button span { box-shadow: none; }   /* rows stack flush: no hairline seams between them */
   .oa-regions-title, .oa-regions-pop li button span { text-shadow: none; }
   .oa-regions-pop li:first-child button span { border-top-right-radius: var(--glass-r); }
