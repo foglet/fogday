@@ -276,7 +276,10 @@ zoom: 11.8
   .oa-regions-pop[hidden] { display: none; }
   .oa-regions-title, .oa-regions-pop li button span {
     display: block; width: fit-content; box-sizing: border-box; padding: 2px 8px; border-radius: 4px;
-    text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);   /* no box behind the line: a navy halo, as on /transit/ */
+    text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
+    /* Over the trees a halo isn't enough: each line gets a navy box only as wide as its text, 80% with a blur
+       (the /transit/ detail panel's) */
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
   .oa-regions-pop li button[aria-current="true"] { font-weight: 700; }   /* the neighborhood on view */
   .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
