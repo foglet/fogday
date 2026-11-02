@@ -189,8 +189,7 @@ zoom: 11.8
   .legend-body .rule { height: 1px; margin-block: 4px; background: linear-gradient(to right, rgb(255 255 255 / .12) 2px, transparent 2px) left / 7px 1px repeat-x; }
   .rare-tag { margin-top: 4px; font-size: .78rem; letter-spacing: .02em; font-weight: 600; color: #e9c46a; }   /* Rare/Landmark: always mixed case */
   .rare-note { margin-top: 4px; font-size: .85rem; }
-  .rare-note a, .rare-credit a { color: inherit; }
-  .rare-credit { margin-top: 4px; font-size: .75rem; color: var(--muted); }
+  .rare-note a { color: inherit; }
   .species li.group.rare-group { text-transform: none; letter-spacing: .02em; font-size: .78rem; }   /* Rare/Landmark: always mixed case */
   .origin-sum { margin: -6px 0 0; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
   .origin { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
@@ -1093,7 +1092,7 @@ window.addEventListener('DOMContentLoaded', function () {
       var rare = list.filter(function (x) { return rareN[x.i] && (origin === 'native' ? x.native : origin === 'non' ? !x.native && x.key !== 'Unknown' : true); })
         .map(function (x) { var c = Object.create(x); c.n = rareN[x.i]; c.bounds = rareB[x.i] || x.bounds; return c; });
       groups = [['Rare/Landmark', rare]];
-      os.textContent = fmt.format(rare.reduce(function (a, x) { return a + x.n; }, 0)) + ' Rare/Landmark trees, compiled by Mike Sullivan';
+      os.textContent = fmt.format(rare.reduce(function (a, x) { return a + x.n; }, 0)) + ' Rare/Landmark trees';   // credited in Info
     }
     os.hidden = !os.textContent;
     groups.forEach(function (g, gi) {
@@ -1290,13 +1289,12 @@ window.addEventListener('DOMContentLoaded', function () {
   function treeHTML(t, tag, brief) {
     var sp = splitSpecies(t.sp);   // name and Latin name
     var h = '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + latinName(sp.latin).html + '</div>' : '');
-    if (t.rare) {   // Rare/Landmark: the tag on hover; the note, photo and credit once tapped
+    if (t.rare) {   // Rare/Landmark: the tag on hover; the note and photo once tapped (Mike Sullivan is credited in Info)
       h += '<div class="rare-tag">Rare/Landmark</div>';
       if (!brief) {
         var pl = t.rare.place || '', nt = t.rare.note || '', note = [nt.toLowerCase().indexOf(pl.toLowerCase()) >= 0 ? '' : pl, nt].filter(Boolean).map(esc).join(' · ');   // no address the note already gives
         if (note) h += '<div class="rare-note">' + note + '</div>';
         if (/^https:\/\//.test(t.rare.photo || '')) h += '<div class="rare-note"><a href="' + esc(t.rare.photo) + '" target="_blank" rel="noopener">Photo</a></div>';
-        h += '<div class="rare-credit">Compiled by <a href="https://www.sftrees.com/landmark-trees" target="_blank" rel="noopener">Mike Sullivan</a></div>';
       }
     }
     return h;
