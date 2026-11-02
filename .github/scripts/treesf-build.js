@@ -147,6 +147,15 @@ function build(rows) {
   return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
 }
 
+/* The city's addresses are all caps ("1634 JERROLD AVENUE"): the popups show them in mixed case ("1634 Jerrold
+   Avenue", "3580 21st Street"). Text already in mixed case is left as it is. */
+function mixedCase(t) {
+  if (t !== t.toUpperCase()) return t;
+  return t.toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g, function (m, a, c) { return a + c.toUpperCase(); })
+    .replace(/\bMc([a-z])/g, function (m, c) { return 'Mc' + c.toUpperCase(); })
+    .replace(/\bO'([a-z])/g, function (m, c) { return "O'" + c.toUpperCase(); });
+}
+
 /* ---- Write ---- */
 var cityRows = parseCSV(fs.readFileSync(path.join(DIR, 'trees.csv'), 'utf8'));
 var rp = path.join(DIR, 'rare-trees.csv');
@@ -184,7 +193,7 @@ order.forEach(function (i, j) {
   out.g += f.properties.g;   // one digit per tree, in output order
   var rare = info[i].rare;
   if (rare) {   // place: the address; left out when the note already says it (trees placed by coordinates and a note)
-    var place = rare.description.split(' | ')[0].trim(), note = (rare.detail || '').trim();
+    var place = mixedCase(rare.description.split(' | ')[0].trim()), note = (rare.detail || '').trim();
     if (note.toLowerCase().indexOf(place.toLowerCase()) >= 0) place = '';   // the note already says it
     out.r.push([j, note, rare.image_url || rare.closeup_url, place]);
   }
