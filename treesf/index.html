@@ -256,7 +256,17 @@ zoom: 11.8
     background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
     color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
   }
-  .mapboxgl-ctrl.oa-regions { position: relative; }
+  .mapboxgl-ctrl.oa-regions, .mapboxgl-ctrl.oa-here { position: relative; }
+  .oa-here[hidden], .oa-here-msg[hidden] { display: none; }
+  .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
+  @keyframes here-pulse { 50% { opacity: .35; } }
+  /* A short note left of the button (outside the city, location off, no fix), in the neighborhood menu's text-wide box */
+  .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
+                 width: max-content; max-width: 60vw; padding: 2px 8px; border-radius: 4px; font: 400 .85rem/1.4 var(--font); color: var(--ink);
+                 background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  /* You are here: a blue dot with a white ring and a soft halo (blue, so it isn't a tree's green, gold or white) */
+  .here-dot { width: 14px; height: 14px; border-radius: 50%; background: #3d8bff; border: 2px solid #fff; box-sizing: border-box;
+              box-shadow: 0 0 0 6px rgb(61 139 255 / .25); pointer-events: none; }
   .oa-pin {
     display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 32px; height: 32px; padding: 0;
     background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
@@ -393,6 +403,12 @@ zoom: 11.8
     <p class="oa-regions-title"><span class="sky-text">Neighborhoods</span></p>
     <ul aria-label="Fly to a neighborhood"></ul>  <!-- filled from the tree list's neighborhoods -->
   </div>
+</div>
+<div class="oa-here" hidden>  <!-- "here" button under the zoom readout: one look-up of where you are, only when tapped -->
+  <button type="button" class="oa-pin" aria-label="Show trees near me" title="Trees near me">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+  </button>
+  <p class="oa-here-msg" role="status" hidden></p>
 </div>
 <div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>  <!-- live zoom, above + and − -->
 <div class="oa-search oa-collapsed" role="search" hidden>  <!-- starts closed: just the magnifying glass -->
@@ -562,9 +578,33 @@ window.addEventListener('DOMContentLoaded', function () {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
   }
+  var hereCtrl = document.querySelector('.oa-here');      asControl(hereCtrl);   // under the zoom readout, above + and −
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
+  /* Here: on a tap, and only then, the browser is asked once where you are (no watching, nothing stored or sent);
+     the map flies there, close enough to see the nearest trees, and a blue dot marks the spot until the next tap
+     or reload. Outside the city, or with location refused, a short note says so instead. */
+  var hereBtn = hereCtrl.querySelector('button'), hereMsg = hereCtrl.querySelector('.oa-here-msg'), hereDot = null, hereT = 0;
+  function hereSay(t) { clearTimeout(hereT); hereMsg.textContent = t; hereMsg.hidden = false; hereT = setTimeout(function () { hereMsg.hidden = true; }, 4000); }
+  hereBtn.addEventListener('click', function () {
+    if (!navigator.geolocation) { hereSay('This browser can’t share your location.'); return; }
+    if (hereBtn.getAttribute('aria-busy') === 'true') return;
+    hereBtn.setAttribute('aria-busy', 'true'); hereMsg.hidden = true;
+    navigator.geolocation.getCurrentPosition(function (p) {
+      hereBtn.removeAttribute('aria-busy');
+      var ll = [p.coords.longitude, p.coords.latitude];
+      if (ll[0] < SF_BOUNDS[0][0] || ll[0] > SF_BOUNDS[1][0] || ll[1] < SF_BOUNDS[0][1] || ll[1] > SF_BOUNDS[1][1]) {
+        hereSay('You’re outside San Francisco.'); return;
+      }
+      if (!hereDot) { var el = document.createElement('div'); el.className = 'here-dot'; el.setAttribute('aria-label', 'You are here'); hereDot = new mapboxgl.Marker({ element: el }); }
+      hereDot.setLngLat(ll).addTo(map);
+      map.flyTo(Object.assign({ center: ll, zoom: Math.max(map.getZoom(), 17.5) }, FLY));
+    }, function (err) {
+      hereBtn.removeAttribute('aria-busy');
+      hereSay(err.code === 1 ? 'Location is off for this site.' : 'Couldn’t find your location.');
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  });
   /* Zoom readout, live, to one decimal; the zoom is remembered for the next visit (as on /transit/) */
   function showZoom() { var t = (Math.round(map.getZoom() * 10) / 10).toFixed(1); zoomRead.textContent = t; zoomRead.setAttribute('aria-label', 'Zoom level ' + t); }
   map.on('zoom', showZoom);
