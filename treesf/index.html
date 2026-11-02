@@ -61,14 +61,16 @@ zoom: 11.8
     pointer-events: auto; display: inline-block; margin: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
     font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
   }
-  .title-text { background-image: linear-gradient(to right, #c8f5a8, #a8e85a, #7fff00);   /* three stops: light green → chartreuse */ -webkit-background-clip: text; background-clip: text; color: transparent; }
+  /* Title gradient: three greens, new on every load (set by the script at the top of the body); these are the first
+     look and the fallback: light green → chartreuse */
+  .title-text { background-image: linear-gradient(var(--tg-dir, to right), var(--tg-1, #c8f5a8), var(--tg-2, #a8e85a), var(--tg-3, #7fff00)); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .title:hover .title-text { background-image: none; color: var(--accent); }
   .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
   .maps-btn {
     display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    color: #7fff00;   /* chartreuse, the end of the title's gradient */
+    color: var(--tg-3, #7fff00);   /* the end of the title's gradient */
   }
   .maps-btn svg { transition: transform .2s ease; }
   .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -432,6 +434,18 @@ zoom: 11.8
 </style>
 </head>
 <body>
+<script>
+  /* A new green title gradient on every load: three greens around a random hue (yellow-green to leaf to sea green),
+     light to bright, in a random direction. Kept light enough to read on the navy. */
+  (function () {
+    var r = function (a, b) { return a + Math.random() * (b - a); };
+    var h = r(78, 150), spread = r(14, 40) * (Math.random() < .5 ? -1 : 1), sat = r(62, 100);
+    var stops = [[h - spread, sat * .7, r(80, 88)], [h, sat, r(64, 74)], [h + spread, Math.min(100, sat + 10), r(50, 60)]];
+    var root = document.documentElement.style;
+    stops.forEach(function (c, i) { root.setProperty('--tg-' + (i + 1), 'hsl(' + c[0].toFixed(0) + ' ' + c[1].toFixed(0) + '% ' + c[2].toFixed(0) + '%)'); });
+    root.setProperty('--tg-dir', ['to right', 'to left', '100deg', '80deg'][Math.floor(Math.random() * 4)]);
+  })();
+</script>
 
 <div id="map" role="region" aria-label="{{ page.title }} map"></div>
 
