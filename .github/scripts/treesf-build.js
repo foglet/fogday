@@ -38,6 +38,22 @@ function greens(dark) {   // dark: one true/false per species (true = evergreen)
   });
   return out;
 }
+function burgundies(dark) {   // one burgundy per Prunus species: wine reds (hue 328–354°), evergreens deeper
+  var out = [], seen = {}, nd = 0, nl = 0;
+  function hex(h, s, l) {
+    s /= 100; l /= 100;
+    var k = function (m) { return (m + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
+    var f = function (m) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(m) - 3, Math.min(9 - k(m), 1))))).toString(16).padStart(2, '0'); };
+    return '#' + f(0) + f(8) + f(4);
+  }
+  dark.forEach(function (d) {
+    var i = d ? nd++ : nl++, lo = d ? 30 : 35, span = d ? 8 : 12;   // 30–38% evergreen, 35–47% deciduous: darker vanishes on the navy
+    var h = 330 + ((i * 0.618034) % 1) * 22, sat = 42 + ((i * 0.754878 + 0.3) % 1) * 30, l = lo + ((i * 0.381966 + 0.5) % 1) * span, c = hex(h, sat, l);
+    while (seen[c]) { l += 0.4; c = hex(h, sat, l); }
+    seen[c] = 1; out.push(c);
+  });
+  return out;
+}
 var NATIVE = /^(Quercus (agrifolia|lobata|kelloggii|douglasii|chrysolepis|wislizeni|wislizenii|engelmannii|tomentella\b|garryana)|Arbutus menziesii|Aesculus californica|Platanus racemosa|Heteromeles|Umbellularia|Cercis occidentalis|Sequoia sempervirens|Sequoiadendron|(Cupressus|Hesperocyparis) (macrocarpa|forbesii|arizonica|sargentii|goveniana|abramsiana|macnabiana)|Pinus (radiata|torreyana|coulteri|attenuata|sabiniana|muricata|contorta|ponderosa|jeffreyi|lambertiana|monophylla)|Acer (macrophyllum|circinatum)|Alnus (rhombifolia|rubra)|Populus (fremontii|trichocarpa|tremuloides)|Juglans (hindsii|californica)|Lyonothamnus|Ceanothus|(Rhamnus|Frangula) californica|Prunus (ilicifolia|lyonii)|Fremontodendron|Sambucus (mexicana|cerulea|caerulea)|Cercocarpus|Garrya|(Myrica|Morella) californica|Calocedrus|Pseudotsuga menziesii|Salix lasiolepis|Cornus nuttallii(?! x)|Chilopsis|Washingtonia filifera|Torreya californica|Thuja plicata|Chamaecyparis lawsoniana|Fraxinus (latifolia|velutina|dipetala)|Lithocarpus densiflorus|Notholithocarpus|Arctostaphylos)/i;
 var NOT_NATIVE = /tomentellaocarpa/i;   // a garbled name in the data (an Indian laurel fig), not an island oak
 function bare(latin) { return latin.replace(/^[x\u00d7]\s+/i, ''); }   // "× Chitalpa …" is still Chitalpa
@@ -134,6 +150,10 @@ function build(rows) {
   var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
   var gs = greens(list.map(function (k) { return !isDeciduous(k); })), colorOf = {};
   list.forEach(function (k, i) { colorOf[k] = gs[i]; });
+  // Prunus (cherries, plums, peach, apricot, cherry laurels) in burgundy instead of green, each its own shade
+  var pr = list.filter(function (k) { return /^Prunus\b/i.test(bare(k.split('::')[0].trim())); });
+  var bs = burgundies(pr.map(function (k) { return !isDeciduous(k); }));
+  pr.forEach(function (k, i) { colorOf[k] = bs[i]; });
   var rank = {}, ext = {};
   list.forEach(function (k, i) { rank[k] = i; ext[k] = [Infinity, Infinity, -Infinity, -Infinity]; });
   feats.forEach(function (f, i) {
