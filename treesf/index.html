@@ -1441,7 +1441,8 @@ window.addEventListener('DOMContentLoaded', function () {
       var rc = region && region.region_code;
       var st = region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
       var cityLine = [city && city.name, st].filter(Boolean).join(', ');
-      return { hood: ours || (c.neighborhood && c.neighborhood.name) || '', city: cityLine || (ours ? 'San Francisco, CA' : 'Open water') };
+      return { hood: ours || (c.neighborhood && c.neighborhood.name) || '', city: cityLine || (ours ? 'San Francisco, CA' : 'Open water'),
+               addr: (c.address && c.address.name) || '' };   // the nearest street address, when Mapbox has one
     }).catch(function () { return { hood: ours, city: ours ? 'San Francisco, CA' : 'Place name unavailable' }; });
   }
   function offsetText(zone) {   // GMT-7
@@ -1477,8 +1478,9 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
   /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates */
+  var SPOT_COORDS_Z = 15.5, SPOT_ADDR_Z = 17;   // coordinates past 15.5, street address from 17
   function showSpot(lngLat, tree) {   // tree: the tapped tree's feature, if any
-    var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
+    var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6), z = map.getZoom();
     spotMarker.setLngLat(ll).addTo(map); spotStart();
     placeName(lng, lat).then(function (pl) {
       // A tree knows its own neighborhood (the city's list records it); that wins over the boundary lookup, which can
@@ -1489,8 +1491,11 @@ window.addEventListener('DOMContentLoaded', function () {
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
       if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
+      // Detail grows with zoom, at the zoom of the tap: from 17 in, the street address (when known); past 15.5,
+      // the coordinates. Further out a spot is a neighborhood, not a point.
+      if (z >= SPOT_ADDR_Z && pl.addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
       spotCard.appendChild(line(pl.hood ? 'oa-detail-city' : 'oa-detail-name', pl.city));
-      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      if (z > SPOT_COORDS_Z) spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
