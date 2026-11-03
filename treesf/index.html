@@ -532,7 +532,7 @@ zoom: 11.8
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
         <div class="notes-body">   <!-- scrolls inside a limited height, so the open notes never cover the screen -->
-          <p class="note">Each species has its own green, darker for evergreens, lighter for deciduous and in between for semi-deciduous (as <a href="https://www.friendsoftheurbanforest.org/tree-species-directory-sf">Friends of the Urban Forest</a> lists them); cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
+          <p class="note">Each species has its own green, darker for evergreens, lighter for deciduous and in between for semi-deciduous (as <a href="https://www.friendsoftheurbanforest.org/tree-species-directory-sf">Friends of the Urban Forest</a> lists them); cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. A faint dashed line marks Rec and Park's sections of Golden Gate and McLaren Parks. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
           <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Park sections (Golden Gate and McLaren Parks), <a href="https://data.sf.gov/d/8du2-b837">SF Rec and Park</a>. Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
         </div>
       </details>
@@ -1067,6 +1067,18 @@ window.addEventListener('DOMContentLoaded', function () {
       var p = key.split('|'); (hoodNext[p[0]] = hoodNext[p[0]] || {})[p[1]] = 1; (hoodNext[p[1]] = hoodNext[p[1]] || {})[p[0]] = 1;
     });
   }
+  /* Park sections (Golden Gate and McLaren Parks): a faint dashed outline under the trees, so the sections the spot
+     card names can be seen. Pale and thin: the trees stay the picture. */
+  function addParkLayers(geo) {
+    if (map.getSource('parks')) return;
+    map.addSource('parks', { type: 'geojson', data: geo });
+    map.addLayer({ id: 'park-line', type: 'line', source: 'parks', minzoom: 12,
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': '#f1ffe3', 'line-dasharray': [3, 2],
+               'line-opacity': ['interpolate', ['linear'], ['zoom'], 12, 0, 12.5, 0.18, 16, 0.28],
+               'line-width': ['interpolate', ['linear'], ['zoom'], 12, 0.6, 16, 1.2] } },
+      map.getLayer('trees-heat') ? 'trees-heat' : undefined);
+  }
   function addHoodLayers(geo) {   // the picked neighborhood's boundary: red at 50%, 3px at most (thinner when zoomed out)
     hoodGeo = geo; buildAdjacency(geo);
     map.addSource('hoods', { type: 'geojson', data: geo });
@@ -1593,8 +1605,8 @@ window.addEventListener('DOMContentLoaded', function () {
   function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
   var hoodsP = getJSON(HOODS_LOCAL).catch(function () { return getJSON(HOODS_URL); })
     .then(function (g) { return g && g.features && g.features.length ? g : null; }).catch(function () { return null; });
-  getJSON(PARKS_LOCAL).catch(function () { return getJSON(PARKS_URL); })
-    .then(function (g) { if (g && g.features && g.features.length) parkGeo = g; }).catch(function () {});   // extra: cards work without it
+  var parksP = getJSON(PARKS_LOCAL).catch(function () { return getJSON(PARKS_URL); })
+    .then(function (g) { if (g && g.features && g.features.length) parkGeo = g; return parkGeo; }).catch(function () { return null; });   // extra: the map works without it
   var dataP = fetch(TREES_URL).then(function (r) {
     if (!r.ok) throw new Error('fogday.com answered ' + r.status);
     return r.json();
@@ -1674,6 +1686,7 @@ window.addEventListener('DOMContentLoaded', function () {
     setSort(sortBy, sortAZ); fillSpecies(built.species);
     fillNeighborhoods(built.hoods);
     hoodsP.then(function (g) { if (g) addHoodLayers(g); });   // boundaries are extra: the map works without them
+    parksP.then(function (g) { if (g) addParkLayers(g); });
     sheetHeight();
   }).catch(function (err) {
     var s = $('status'); s.classList.add('error');
