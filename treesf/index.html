@@ -593,6 +593,10 @@ window.addEventListener('DOMContentLoaded', function () {
   /* ---------- Trees ---------- */
   /* trees.json → the map's features, the species list and the neighborhoods. Positions are stored as whole steps of
      1e-5 degrees, each a small step from the tree before (see the build script). */
+  /* How San Franciscans say two of the neighborhoods: "the Mission", "the Marina". Display only: the city's names
+     (and Mapbox's "… District") stay the keys, so boundaries, sorting and search still match. */
+  var HOOD_SAY = { 'Mission': 'The Mission', 'Mission District': 'The Mission', 'Marina': 'The Marina', 'Marina District': 'The Marina' };
+  function hoodLabel(n) { return HOOD_SAY[n] || n; }
   var treeSp = null, treeHood = null, hoodNames = [], rareInfo = {}, rareN = {}, rareB = {};   // Rare/Landmark: notes by tree, counts by species
   function treeInfo(id) {   // what the popup and spot card need for one tree
     var sp = speciesList[treeSp[id]];
@@ -763,7 +767,7 @@ window.addEventListener('DOMContentLoaded', function () {
     popList.textContent = ''; hoodsAll = hoods;
     hoods.forEach(function (h) {
       var li = document.createElement('li'), b = document.createElement('button'), sp = document.createElement('span');
-      b.type = 'button'; b.dataset.name = h.name; sp.textContent = h.name; b.appendChild(sp); li.appendChild(b); popList.appendChild(li);
+      b.type = 'button'; b.dataset.name = h.name; sp.textContent = hoodLabel(h.name); b.appendChild(sp); li.appendChild(b); popList.appendChild(li);
       b.addEventListener('click', function () { setPop(false); clearSpot(); clearTree(); showHood(h); });
     });
   }
@@ -904,7 +908,8 @@ window.addEventListener('DOMContentLoaded', function () {
         return (j.features || []).map(function (f) {
           var p = f.properties || {};
           var hood = p.context && p.context.neighborhood && p.context.neighborhood.name;
-          return { name: p.name || p.full_address || q, where: p.feature_type === 'neighborhood' ? 'Neighborhood' : (hood || ''),
+          var nm = p.name || p.full_address || q;
+          return { name: p.feature_type === 'neighborhood' ? hoodLabel(nm) : nm, where: p.feature_type === 'neighborhood' ? 'Neighborhood' : hoodLabel(hood || ''),
                    center: f.geometry.coordinates, zoom: ZOOM[p.feature_type] || 16, type: p.feature_type };
         });
       }).catch(function () { return null; }).then(function (p) {
@@ -1501,7 +1506,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
-      if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
+      if (pl.hood) spotCard.appendChild(line('oa-detail-name', hoodLabel(pl.hood)));
       // Detail grows with zoom, at the zoom of the tap: from 15.5 in, the street address when known. No coordinates:
       // people come for the picture, and a tree worth the trip has a Directions link in its popup instead.
       var addr = z >= SPOT_ADDR_Z && pl.addr;
