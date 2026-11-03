@@ -810,7 +810,9 @@ window.addEventListener('DOMContentLoaded', function () {
     if (here && here !== hoodOn && here !== lastHood && hoodNext[lastHood] && hoodNext[lastHood][here]) setHoodLine(here);
   });
   function hoodStop() { cancelAnimationFrame(hoodFade); clearTimeout(hoodEnd); hoodFade = 0; }
-  function setHoodOpacity(o) { if (map.getLayer('hood-line')) map.setPaintProperty('hood-line', 'line-opacity', o); }
+  function setHoodOpacity(o) {
+    ['hood-line', 'dogpatch-hood-line'].forEach(function (id) { if (map.getLayer(id)) map.setPaintProperty(id, 'line-opacity', o); });
+  }
   function setHoodLine(name) {
     hoodStop();
     hoodOn = name || ''; markHood(hoodOn);
@@ -818,6 +820,8 @@ window.addEventListener('DOMContentLoaded', function () {
       var f = ['==', ['get', 'nhood'], hoodOn];
       map.setFilter('hood-line', f);
     }
+    // Dogpatch isn't one of the city's 41: its red outline is its own layer, on the same timer and fade
+    if (map.getLayer('dogpatch-hood-line')) map.setLayoutProperty('dogpatch-hood-line', 'visibility', hoodOn === 'Dogpatch' ? 'visible' : 'none');
     setHoodOpacity(HOOD_OPACITY);
     if (!hoodOn) return;
     lastHood = hoodOn;
@@ -1085,25 +1089,21 @@ window.addEventListener('DOMContentLoaded', function () {
                'line-width': ['interpolate', ['linear'], ['zoom'], 12, 0.6, 16, 1.2] } },
       map.getLayer('trees-heat') ? 'trees-heat' : undefined);
   }
-  /* Dogpatch, marked and named: a dashed outline in the title's spring green and its name in the title's letters,
-     from zoom 12.5 (the label from 13). The name sits on a point of its own, the outline's middle, so it shows once. */
+  /* Dogpatch, marked: a dashed outline in the title's spring green from zoom 12.5. No name on the map: like every
+     other neighborhood, it's named only in the tapped-spot card, and outlined in red when tapped. */
   function addDogpatchLayers(geo) {
     if (map.getSource('dogpatch')) return;
-    var xs = [], ys = [];
-    (function walk(c) { if (typeof c[0] === 'number') { xs.push(c[0]); ys.push(c[1]); } else c.forEach(walk); })(geo.features[0].geometry.coordinates);
-    var mid = [(Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2];
     map.addSource('dogpatch', { type: 'geojson', data: geo });
-    map.addSource('dogpatch-name', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: mid } } });
     map.addLayer({ id: 'dogpatch-line', type: 'line', source: 'dogpatch', minzoom: 12.5,
       layout: { 'line-join': 'round' },
       paint: { 'line-color': '#a8e85a', 'line-dasharray': [2, 1.5],
                'line-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0, 13, 0.55],
                'line-width': ['interpolate', ['linear'], ['zoom'], 13, 1, 17, 2] } },
       map.getLayer('trees-heat') ? 'trees-heat' : undefined);
-    map.addLayer({ id: 'dogpatch-name', type: 'symbol', source: 'dogpatch-name', minzoom: 13,
-      layout: { 'text-field': 'DOGPATCH', 'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'], 'text-letter-spacing': 0.14,
-                'text-size': ['interpolate', ['linear'], ['zoom'], 13, 12, 17, 20], 'text-allow-overlap': true, 'text-ignore-placement': true },
-      paint: { 'text-color': '#c8f5a8', 'text-halo-color': '#021724', 'text-halo-width': 1.5 } });
+    // The red outline when Dogpatch is the neighborhood on view: the same paint as hood-line, hidden until then
+    map.addLayer({ id: 'dogpatch-hood-line', type: 'line', source: 'dogpatch',
+      layout: { 'line-join': 'round', visibility: hoodOn === 'Dogpatch' ? 'visible' : 'none' },
+      paint: { 'line-color': HOOD_RED, 'line-opacity': HOOD_OPACITY, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 15, 3] } });
   }
   function addHoodLayers(geo) {   // the picked neighborhood's boundary: red at 50%, 3px at most (thinner when zoomed out)
     hoodGeo = geo; buildAdjacency(geo);
@@ -1553,14 +1553,20 @@ window.addEventListener('DOMContentLoaded', function () {
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
   /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates */
   var SPOT_ADDR_Z = 15.5;   // from 15.5 in: the street address, when known
+  /* The neighborhood a spot belongs to, as the card names it: Dogpatch (not Potrero Hill) inside its outline; else a
+     tapped tree's own neighborhood (the city's list records it); else the boundary it falls in. ownOnly: skip the
+     boundary lookup (the card's own Mapbox fallback takes over). */
+  function spotHood(lng, lat, tree, ownOnly) {
+    if (featureAt(dogGeo, lng, lat)) return 'Dogpatch';
+    return (tree && treeInfo(tree.id).nb) || (ownOnly ? '' : hoodAt(lng, lat));
+  }
   function showSpot(lngLat, tree) {   // tree: the tapped tree's feature, if any
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6), z = map.getZoom();
     spotMarker.setLngLat(ll).addTo(map); spotStart();
     placeName(lng, lat).then(function (pl) {
       // A tree knows its own neighborhood (the city's list records it); that wins over the boundary lookup, which can
       // miss trees on a boundary street or in a gap between the polygons
-      var own = tree && treeInfo(tree.id).nb;
-      if (featureAt(dogGeo, +lng, +lat)) { own = 'Dogpatch'; pl.hood = 'Dogpatch'; }   // Dogpatch, not Potrero Hill
+      var own = spotHood(+lng, +lat, tree, true);
       if (own) { pl.hood = own; if (/^(Open water|Place name unavailable)$/.test(pl.city)) pl.city = 'San Francisco, CA'; }
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
@@ -1614,7 +1620,12 @@ window.addEventListener('DOMContentLoaded', function () {
   map.on('click', function (e) {
     if (menuWasOpen) return;
     var f = map.getZoom() < TREE_POP_Z ? null : treeAt(e.point);   // trees answer taps from zoom 13 in
-    if (f) { showTree(f); showSpot(mapboxgl.LngLat.convert(f.geometry.coordinates), f); }
+    var ll = f ? mapboxgl.LngLat.convert(f.geometry.coordinates) : e.lngLat.wrap();
+    // The tapped spot's neighborhood: its red outline, on the usual 15-second fade (and the walk from there);
+    // the card names it. Open water or past the city line: no outline, and any outline on view is left alone.
+    var nh = spotHood(ll.lng, ll.lat, f);
+    if (nh) setHoodLine(nh);
+    if (f) { showTree(f); showSpot(ll, f); }
     else { clearTree(); showSpot(e.lngLat); }
   });
   map.on('zoomend', function () { if (map.getZoom() < TREE_POP_Z && popup.isOpen()) clearTree(); });   // zoomed out past street level: the popup goes
