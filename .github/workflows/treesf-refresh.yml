@@ -86,15 +86,17 @@ jobs:
           # DataSF SF Find Neighborhoods (Planning's 117 named neighborhoods): Dogpatch only, which the 41 analysis
           # neighborhoods fold into Potrero Hill
           curl --fail --silent --show-error --location --retry 4 --retry-delay 20 --max-time 300 --compressed \
-            --get "https://data.sfgov.org/resource/pty2-tcw4.geojson" \
+            --get "https://data.sfgov.org/resource/pty2-tcw4.json" \
             --data-urlencode "\$limit=500" \
-            -o /tmp/find-neighborhoods.geojson
-          jq -c '.features[0].properties' /tmp/find-neighborhoods.geojson
-          # Whichever text field holds the name: keep the feature named Dogpatch, as { name: "Dogpatch" }
-          jq -c '{type: "FeatureCollection", features: [.features[]
-                  | select(.geometry != null and ([.properties[]? | strings | ascii_downcase] | index("dogpatch")))
-                  | {type: "Feature", properties: {name: "Dogpatch"}, geometry: .geometry}]}' \
-            /tmp/find-neighborhoods.geojson > /tmp/dogpatch.geojson
+            -o /tmp/find-neighborhoods.json
+          jq -c '.[0] | with_entries(.value |= (if type == "object" then (.type // "object") else . end))' /tmp/find-neighborhoods.json
+          # The row whose name (whichever text field) is Dogpatch; its geometry field (the one with coordinates)
+          jq -c '{type: "FeatureCollection", features: [.[]
+                  | select([.[] | strings | ascii_downcase] | index("dogpatch"))
+                  | {type: "Feature", properties: {name: "Dogpatch"},
+                     geometry: ([.[] | objects | select(has("coordinates"))][0])}
+                  | select(.geometry != null)]}' \
+            /tmp/find-neighborhoods.json > /tmp/dogpatch.geojson
           n=$(jq '.features | length' /tmp/dogpatch.geojson)
           echo "dogpatch=$n"
           [ "$n" -ge 1 ] || { echo "::error::No Dogpatch boundary; keeping the current copy"; exit 1; }
