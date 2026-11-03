@@ -568,10 +568,11 @@ window.addEventListener('DOMContentLoaded', function () {
   var BIG_RING = '#b9e886';   // the size rings around trees: the ramp's spring green
   var NODBH_LINE = '#8fa3b1';   // the thin outline on trees with no trunk size recorded (the page's muted gray)
   /* Trunk-size groups (g, from the build script): 1 = 3–10", 2 = 11–20", 3 = 21"+, 0 = not recorded.
-     Ring width per group, 90% transparent, under the dot. The ring scales with zoom on the dot's own curve (radius()),
-     so ring and dot keep the same proportion at every zoom: 3, 6 or 10px at zoom 16, as before. */
+     Ring width per group, 90% transparent, under the dot. Zoomed out the rings hold 3, 6 or 10px, wide next to the dots,
+     so overlapping rings build up where trees are many and big: the city reads as a heat map of trees, no heat layer
+     needed. Past zoom 16 they grow on the dot's own curve (radius()), so up close ring and dot keep their proportion. */
   function ringAt(s) { return ['match', ['get', 'g'], 1, 3 * s, 2, 6 * s, 3, 10 * s, 0]; }
-  var RING_W = ['interpolate', ['exponential', 1.6], ['zoom'], 10, ringAt(0.6 / 3.6), 13, ringAt(1.4 / 3.6), 16, ringAt(1), 19, ringAt(9 / 3.6)];
+  var RING_W = ['interpolate', ['exponential', 1.6], ['zoom'], 16, ringAt(1), 19, ringAt(9 / 3.6)];
   /* Density weight per group: bigger trunks heat a block more. Unrecorded trees count about like a small one. */
   var HEAT_W = ['match', ['get', 'g'], 1, 0.4, 2, 0.7, 3, 1, 0.5];
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
@@ -976,7 +977,7 @@ window.addEventListener('DOMContentLoaded', function () {
           0, 'rgba(2,23,36,0)', 0.15, '#1d4a3a', 0.35, '#2f8a55', 0.6, '#7cc94e', 0.85, '#b9e886', 1, '#e2ffc4']
       }
     });
-    /* Size rings: 3, 6 or 10px wide by trunk group at zoom 16, scaling with the dot, 90% transparent, drawn under the dot */
+    /* Size rings: 3, 6 or 10px wide by trunk group, growing with the dot past zoom 16, 90% transparent, drawn under the dot */
     map.addLayer({
       id: 'trees-rings', type: 'circle', source: 'trees', filter: ['>=', ['get', 'g'], 1],
       paint: { 'circle-radius': radius(1), 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': RING_W,
