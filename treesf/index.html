@@ -532,8 +532,8 @@ zoom: 11.8
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
         <div class="notes-body">   <!-- scrolls inside a limited height, so the open notes never cover the screen -->
-          <p class="note">Each species has its own green, darker for evergreens, lighter for deciduous and in between for semi-deciduous (as <a href="https://www.friendsoftheurbanforest.org/tree-species-directory-sf">Friends of the Urban Forest</a> lists them); cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. A faint dashed line marks Rec and Park's sections of Golden Gate and McLaren Parks. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
-          <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Park sections (Golden Gate and McLaren Parks), <a href="https://data.sf.gov/d/8du2-b837">SF Rec and Park</a>. Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
+          <p class="note">Each species has its own green, darker for evergreens, lighter for deciduous and in between for semi-deciduous (as <a href="https://www.friendsoftheurbanforest.org/tree-species-directory-sf">Friends of the Urban Forest</a> lists them); cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. A faint dashed line marks Rec and Park's sections of Golden Gate and McLaren Parks. A green dashed line marks the Dogpatch. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
+          <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Park sections (Golden Gate and McLaren Parks), <a href="https://data.sf.gov/d/8du2-b837">SF Rec and Park</a>. Dogpatch's outline, <a href="https://data.sfgov.org/d/gfpk-269f">SF Find Neighborhoods</a> (2006). Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
         </div>
       </details>
     </div>
@@ -559,6 +559,9 @@ window.addEventListener('DOMContentLoaded', function () {
   var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
   /* Park sections (Golden Gate and McLaren Parks): a copy beside the page, refreshed with the trees; DataSF if it's missing */
   var PARKS_LOCAL = '{{ "/treesf/park-sections.geojson" | relative_url }}';
+  /* Dogpatch: the best neighborhood name in the city, which the 41 analysis neighborhoods fold into Potrero Hill.
+     Its outline is SF Find Neighborhoods' (Planning, 2006), a copy beside the page refreshed with the trees. */
+  var DOGPATCH_LOCAL = '{{ "/treesf/dogpatch.geojson" | relative_url }}';
   var PARKS_URL = 'https://data.sf.gov/resource/8du2-b837.geojson?$select=map_label,tma_property_name,shape&$limit=100';
   var HOOD_RED = '#e5372e';
   /* Tree canopy: DataSF's Urban Tree Canopy, built beside this page by .github/workflows/treesf-canopy.yml.
@@ -1082,6 +1085,26 @@ window.addEventListener('DOMContentLoaded', function () {
                'line-width': ['interpolate', ['linear'], ['zoom'], 12, 0.6, 16, 1.2] } },
       map.getLayer('trees-heat') ? 'trees-heat' : undefined);
   }
+  /* Dogpatch, marked and named: a dashed outline in the title's spring green and its name in the title's letters,
+     from zoom 12.5 (the label from 13). The name sits on a point of its own, the outline's middle, so it shows once. */
+  function addDogpatchLayers(geo) {
+    if (map.getSource('dogpatch')) return;
+    var xs = [], ys = [];
+    (function walk(c) { if (typeof c[0] === 'number') { xs.push(c[0]); ys.push(c[1]); } else c.forEach(walk); })(geo.features[0].geometry.coordinates);
+    var mid = [(Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2];
+    map.addSource('dogpatch', { type: 'geojson', data: geo });
+    map.addSource('dogpatch-name', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: mid } } });
+    map.addLayer({ id: 'dogpatch-line', type: 'line', source: 'dogpatch', minzoom: 12.5,
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': '#a8e85a', 'line-dasharray': [2, 1.5],
+               'line-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0, 13, 0.55],
+               'line-width': ['interpolate', ['linear'], ['zoom'], 13, 1, 17, 2] } },
+      map.getLayer('trees-heat') ? 'trees-heat' : undefined);
+    map.addLayer({ id: 'dogpatch-name', type: 'symbol', source: 'dogpatch-name', minzoom: 13,
+      layout: { 'text-field': 'DOGPATCH', 'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'], 'text-letter-spacing': 0.14,
+                'text-size': ['interpolate', ['linear'], ['zoom'], 13, 12, 17, 20], 'text-allow-overlap': true, 'text-ignore-placement': true },
+      paint: { 'text-color': '#c8f5a8', 'text-halo-color': '#021724', 'text-halo-width': 1.5 } });
+  }
   function addHoodLayers(geo) {   // the picked neighborhood's boundary: red at 50%, 3px at most (thinner when zoomed out)
     hoodGeo = geo; buildAdjacency(geo);
     map.addSource('hoods', { type: 'geojson', data: geo });
@@ -1469,7 +1492,7 @@ window.addEventListener('DOMContentLoaded', function () {
   /* Park sections: DataSF's Park Sections, Rec and Park's own divisions of Golden Gate Park (Sections 1–7) and
      McLaren Park (North and South of Mansell). In one, the spot card names the park and the section, in place of the
      neighborhood and the nearest street address, which in a park can be a long way off. */
-  var parkGeo = null;
+  var parkGeo = null, dogGeo = null;
   function parkAt(lng, lat) {
     var f = featureAt(parkGeo, lng, lat); if (!f) return null;
     var p = f.properties || {}, park = String(p.park || p.tma_property_name || '').split(' - ')[0].trim();
@@ -1537,6 +1560,7 @@ window.addEventListener('DOMContentLoaded', function () {
       // A tree knows its own neighborhood (the city's list records it); that wins over the boundary lookup, which can
       // miss trees on a boundary street or in a gap between the polygons
       var own = tree && treeInfo(tree.id).nb;
+      if (featureAt(dogGeo, +lng, +lat)) { own = 'Dogpatch'; pl.hood = 'Dogpatch'; }   // Dogpatch, not Potrero Hill
       if (own) { pl.hood = own; if (/^(Open water|Place name unavailable)$/.test(pl.city)) pl.city = 'San Francisco, CA'; }
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
@@ -1608,6 +1632,8 @@ window.addEventListener('DOMContentLoaded', function () {
   function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
   var hoodsP = getJSON(HOODS_LOCAL).catch(function () { return getJSON(HOODS_URL); })
     .then(function (g) { return g && g.features && g.features.length ? g : null; }).catch(function () { return null; });
+  var dogP = getJSON(DOGPATCH_LOCAL).then(function (g) { if (g && g.features && g.features.length) dogGeo = g; return dogGeo; })
+    .catch(function () { return null; });   // extra, like the parks
   var parksP = getJSON(PARKS_LOCAL).catch(function () { return getJSON(PARKS_URL); })
     .then(function (g) { if (g && g.features && g.features.length) parkGeo = g; return parkGeo; }).catch(function () { return null; });   // extra: the map works without it
   var dataP = fetch(TREES_URL).then(function (r) {
@@ -1690,6 +1716,7 @@ window.addEventListener('DOMContentLoaded', function () {
     fillNeighborhoods(built.hoods);
     hoodsP.then(function (g) { if (g) addHoodLayers(g); });   // boundaries are extra: the map works without them
     parksP.then(function (g) { if (g) addParkLayers(g); });
+    dogP.then(function (g) { if (g) addDogpatchLayers(g); });
     sheetHeight();
   }).catch(function (err) {
     var s = $('status'); s.classList.add('error');
