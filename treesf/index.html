@@ -243,8 +243,11 @@ zoom: 11.8
   .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
 
   /* Tree popup */
-  .mapboxgl-popup-content { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 400 .9rem/1.35 var(--font); box-shadow: 0 6px 20px rgb(0 0 0 / .35); }
-  .mapboxgl-popup-tip { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
+  /* Tree popups: the legend's glass (same tint, blur and edge), so the map shows through them the same way.
+     No tip: a triangle can't take the blur, so it would read as a solid scrap under the glass. */
+  .mapboxgl-popup-content { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    box-shadow: inset 0 0 0 1px var(--glass-edge); color: var(--ink); border: 0; border-radius: var(--glass-r); padding: 10px 12px; font: 400 .9rem/1.35 var(--font); }
+  .mapboxgl-popup-tip { display: none; }
   .hover-pop { pointer-events: none; }   /* the hover popup never gets in the pointer's way */
   /* It eases in: a short fade with a 4px rise (on the card and its tip, since Mapbox positions the popup itself) */
   .hover-pop .mapboxgl-popup-content, .hover-pop .mapboxgl-popup-tip { animation: pop-in .2s cubic-bezier(.2,.7,.35,1) both; }
