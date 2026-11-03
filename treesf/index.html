@@ -1623,8 +1623,9 @@ window.addEventListener('DOMContentLoaded', function () {
     var ll = f ? mapboxgl.LngLat.convert(f.geometry.coordinates) : e.lngLat.wrap();
     // The tapped spot's neighborhood: its red outline, on the usual 15-second fade (and the walk from there);
     // the card names it. Open water or past the city line: no outline, and any outline on view is left alone.
+    // A second tap in the neighborhood already outlined leaves the outline be: no restart, it keeps fading
     var nh = spotHood(ll.lng, ll.lat, f);
-    if (nh) setHoodLine(nh);
+    if (nh && nh !== hoodOn) setHoodLine(nh);
     if (f) { showTree(f); showSpot(ll, f); }
     else { clearTree(); showSpot(e.lngLat); }
   });
