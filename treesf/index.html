@@ -272,6 +272,9 @@ zoom: 11.8
   .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 12h16'/%3E%3C/svg%3E");
   }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {   /* the compass, oysteratlas.com's: solid north, hollow south */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E");
+  }
   /* Folded-map button: opens the Neighborhoods menu to its left */
   .oa-regions[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
   /* Zoom readout (above + and −): the current zoom, live. Display only — taps pass through to the map. */
@@ -397,7 +400,8 @@ zoom: 11.8
   }
   @media (pointer: coarse), (max-width: 759px) {
     .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
-    .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group { display: none; }   /* + and − were its only buttons */
+    /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it), alone, a 44px square */
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; width: 44px; height: 44px; }
   }
   /* Map credits (© Mapbox © OpenStreetMap · © Fogday Studios | @fogfish), styled as on /transit/ and oysteratlas.com:
      muted to sit back — smaller text, soft color, the panels' navy behind. The Mapbox logo is left alone.
@@ -573,6 +577,9 @@ window.addEventListener('DOMContentLoaded', function () {
      needed. Past zoom 16 they grow on the dot's own curve (radius()), so up close ring and dot keep their proportion. */
   function ringAt(s) { return ['match', ['get', 'g'], 1, 3 * s, 2, 6 * s, 3, 10 * s, 0]; }
   var RING_W = ['interpolate', ['exponential', 1.6], ['zoom'], 16, ringAt(1), 19, ringAt(9 / 3.6)];
+  /* A soft edge on the rings, as on oysteratlas.com's dots: fully soft zoomed out, so overlapping rings blend like a
+     heat map; firmer up close (half the ring's outer radius fades), so each tree's ring still reads. */
+  var RING_BLUR = ['interpolate', ['linear'], ['zoom'], 13, 1, 16, 0.5];
   /* Density weight per group: bigger trunks heat a block more. Unrecorded trees count about like a small one. */
   var HEAT_W = ['match', ['get', 'g'], 1, 0.4, 2, 0.7, 3, 1, 0.5];
   var POP = '#e2ffc4';   // a tree just added by the slider flashes in this pale green, then settles into the ramp
@@ -627,13 +634,15 @@ window.addEventListener('DOMContentLoaded', function () {
   var map = new mapboxgl.Map({
     container: 'map', style: 'mapbox://styles/mapbox/dark-v11',
     center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom, minZoom: 11, maxBounds: SF_BOUNDS,
+    pitchWithRotate: false, maxPitch: 0,   // rotate, never tilt
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
   /* Bottom-right stack, as on oysteratlas.com, top to bottom: search, folded map (Neighborhoods), zoom.
      Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first.
-     No compass, so the map doesn't rotate or tilt either: north stays up. */
-  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');   // + and − (hidden on phones, CSS)
-  map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); map.touchPitch && map.touchPitch.disable(); map.keyboard.disableRotation && map.keyboard.disableRotation();
+     The map rotates (right- or ctrl-drag, two-finger twist, shift + arrows), as on oysteratlas.com; the compass shows
+     north and a tap turns it back. It never tilts: the trees are dots on a flat map. */
+  map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false }), 'bottom-right');   // +, − and compass (phones: compass only, CSS)
+  map.touchPitch && map.touchPitch.disable();
   function asControl(el) {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
@@ -993,7 +1002,7 @@ window.addEventListener('DOMContentLoaded', function () {
     map.addLayer({
       id: 'trees-rings', type: 'circle', source: 'trees', filter: ['>=', ['get', 'g'], 1],
       paint: { 'circle-radius': radius(1), 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': RING_W,
-               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.1 }
+               'circle-stroke-color': BIG_RING, 'circle-stroke-opacity': 0.1, 'circle-blur': RING_BLUR }
     });
     /* No trunk size recorded: no ring, a thin gray outline instead, so they don't pass for big trees */
     map.addLayer({
