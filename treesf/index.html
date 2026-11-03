@@ -1506,7 +1506,9 @@ window.addEventListener('DOMContentLoaded', function () {
       // people come for the picture, and a tree worth the trip has a Directions link in its popup instead.
       var addr = z >= SPOT_ADDR_Z && pl.addr;
       if (addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
-      spotCard.appendChild(line(pl.hood ? 'oa-detail-city' : 'oa-detail-name', pl.city));
+      // No city line: the whole map is San Francisco. Only a spot with no neighborhood (open water, past the city
+      // line) says where it is instead.
+      if (!pl.hood) spotCard.appendChild(line('oa-detail-name', pl.city));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
