@@ -210,7 +210,7 @@ zoom: 11.8
   .notes summary::after { content: " +"; }
   .notes[open] summary::after { content: " –"; }
   .notes summary:hover { color: var(--accent); }
-  .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
   .notes .note { margin-top: 4px; }
   /* The open notes scroll inside a limited height (a third of a phone screen, half of a desktop one); the boxes scroll,
      the map shows around them */
@@ -331,6 +331,7 @@ zoom: 11.8
   /* One-line boxes are pills (fully round ends); the multi-line Info notes keep 12px corners */
   .map-legend > summary, .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey, .legend-body > .sortby,
   .species li, .notes summary, .controls > .status, .oa-regions-title, .oa-here-msg { border-radius: 999px; }
+  .map-legend > summary, .notes summary { border-radius: 8px; }   /* the Legend and Info toggles: rounded rectangles, the title's shape */
   .legend-body > .origin-sum:empty { display: none; }   /* no empty pill before the counts are in */
   /* On the glass, secondary text is lighter (as the iOS field's white text reads on its gray) */
   .controls, .oa-regions-pop, .oa-detail-panel, .oa-here-msg { --muted: #c5ced5; }
