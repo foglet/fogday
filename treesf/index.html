@@ -1317,7 +1317,13 @@ window.addEventListener('DOMContentLoaded', function () {
     selected = id;
     if (id != null) map.setFeatureState({ source: 'trees', id: id }, { sel: true });
   }
-  function treeHTML(t, tag, brief) {
+  /* Directions to a tree: Apple Maps on Apple devices, Google Maps elsewhere; both open the phone's maps app */
+  var APPLE = /iPhone|iPad|Macintosh/.test(navigator.userAgent);
+  function directionsURL(c) {
+    var ll = (+c[1]).toFixed(6) + ',' + (+c[0]).toFixed(6);
+    return APPLE ? 'https://maps.apple.com/?daddr=' + ll : 'https://www.google.com/maps/dir/?api=1&destination=' + ll;
+  }
+  function treeHTML(t, tag, brief, at) {   // at: the tree's [lng, lat], for Rare/Landmark directions
     var sp = splitSpecies(t.sp);   // name and Latin name
     var h = '<' + tag + '>' + esc(sp.common) + '</' + tag + '>' + (sp.latin && sp.latin !== sp.common ? '<div class="latin">' + latinName(sp.latin).html + '</div>' : '');
     if (t.rare) {   // Rare/Landmark: the tag on hover; the note and photo once tapped (Mike Sullivan is credited in Info)
@@ -1325,7 +1331,10 @@ window.addEventListener('DOMContentLoaded', function () {
       if (!brief) {
         var pl = t.rare.place || '', nt = t.rare.note || '', note = [nt.toLowerCase().indexOf(pl.toLowerCase()) >= 0 ? '' : pl, nt].filter(Boolean).map(esc).join(' · ');   // no address the note already gives
         if (note) h += '<div class="rare-note">' + note + '</div>';
-        if (/^https:\/\//.test(t.rare.photo || '')) h += '<div class="rare-note"><a href="' + esc(t.rare.photo) + '" target="_blank" rel="noopener">Photo</a></div>';
+        var links = [];
+        if (/^https:\/\//.test(t.rare.photo || '')) links.push('<a href="' + esc(t.rare.photo) + '" target="_blank" rel="noopener">Photo</a>');
+        if (at) links.push('<a href="' + directionsURL(at) + '" target="_blank" rel="noopener">Directions</a>');
+        if (links.length) h += '<div class="rare-note">' + links.join(' · ') + '</div>';
       }
     }
     return h;
@@ -1333,7 +1342,7 @@ window.addEventListener('DOMContentLoaded', function () {
   function showTree(f) {
     var t = treeInfo(f.id); if (!t) return;
     markTree(f.id);
-    popup.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2') + '</div>').addTo(map);
+    popup.setLngLat(f.geometry.coordinates).setHTML('<div class="pop">' + treeHTML(t, 'h2', false, f.geometry.coordinates) + '</div>').addTo(map);
   }
   function clearTree() { popup.remove(); markTree(null); }
   /* The nearest tree to a tap, within a finger's reach on phones (dots there are small) */
@@ -1480,7 +1489,7 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
   /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates */
-  var SPOT_ADDR_Z = 17;   // from 17 in: street address, or coordinates when none is known
+  var SPOT_ADDR_Z = 17;   // from 17 in: the street address, when known
   function showSpot(lngLat, tree) {   // tree: the tapped tree's feature, if any
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6), z = map.getZoom();
     spotMarker.setLngLat(ll).addTo(map); spotStart();
@@ -1493,12 +1502,11 @@ window.addEventListener('DOMContentLoaded', function () {
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
       if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
-      // Detail grows with zoom, at the zoom of the tap: from 17 in, the street address, or the coordinates when no
-      // address is known. Further out a spot is a neighborhood, not a point.
-      var near = z >= SPOT_ADDR_Z, addr = near && pl.addr;
+      // Detail grows with zoom, at the zoom of the tap: from 17 in, the street address when known. No coordinates:
+      // people come for the picture, and a tree worth the trip has a Directions link in its popup instead.
+      var addr = z >= SPOT_ADDR_Z && pl.addr;
       if (addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
       spotCard.appendChild(line(pl.hood ? 'oa-detail-city' : 'oa-detail-name', pl.city));
-      if (near && !addr) spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
