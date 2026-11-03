@@ -1666,11 +1666,17 @@ window.addEventListener('DOMContentLoaded', function () {
         if (t === 'symbol') {
           if (/road|street|shield|path|pedestrian|steps|motorway|junction/.test(id)) { map.setLayoutProperty(id, 'visibility', 'none'); return; }
           if (/settlement-subdivision|neighbou?rhood/.test(id)) { map.setLayoutProperty(id, 'visibility', 'none'); return; }
-          if (/poi/.test(id)) {   // landmarks share one layer with parks: parks always, the rest from zoom 14
-            var park = ['any', ['==', ['get', 'class'], 'park_like'], ['==', ['get', 'maki'], 'park'], ['==', ['get', 'maki'], 'garden']];
-            var old = map.getFilter(id), want = ['any', ['>=', ['zoom'], LABELS_FROM], park];
-            try { map.setFilter(id, old ? ['all', old, want] : want); }
-            catch (e) { map.setLayerZoomRange(id, Math.max(LABELS_FROM, l.minzoom || 0), l.maxzoom == null ? 24 : l.maxzoom); }
+          if (/poi/.test(id)) {
+            /* Places share one layer. Only two kinds are named: every park (city, state and national; at every zoom,
+               past the base map's own size cut, which hides small ones until close in) and civic landmarks (City Hall,
+               monuments, historic sites; from zoom 14). No businesses: no Safeway, Whole Foods, cafés or hotels. */
+            var cls = ['get', 'class'], mk = ['get', 'maki'];
+            var park = ['any', ['==', cls, 'park_like'],
+                        ['match', mk, ['park', 'garden', 'national-park', 'picnic-site', 'dog-park', 'playground'], true, false]];
+            var mark = ['any', ['match', cls, ['landmark', 'historic'], true, false],
+                        ['match', mk, ['monument', 'town-hall', 'castle', 'landmark'], true, false]];
+            try { map.setFilter(id, ['any', park, ['all', ['>=', ['zoom'], LABELS_FROM], mark]]); }
+            catch (e) { map.setFilter(id, ['any', park, mark]); }   // no zoom in filters: both kinds at every zoom
           } else {
             map.setLayerZoomRange(id, Math.max(LABELS_FROM, l.minzoom || 0), l.maxzoom == null ? 24 : l.maxzoom);
           }
