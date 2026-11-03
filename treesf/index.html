@@ -957,7 +957,19 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   function filterExpr() { return origin === 'both' && !rareOnly ? ['has', 'k'] : ['all', ['has', 'k'], originExpr()]; }
 
-  var DOT_OP = ['case', ['==', ['get', 'pr'], 1], 0.6, 0.9];   // the dots: Prunus' burgundy at 60%, the greens at 90%
+  /* The dots: Prunus' burgundy at 60%, the greens at 90%. Zoomed in, past 16.5, they turn see-through, to half that by
+     zoom 19, so the size rings of bigger trees show through the dots crowding them. Mapbox lets ["zoom"] drive only a
+     top-level interpolate, so every opacity the page sets is built here: keep (a species index) stays as is, the rest at
+     times others (the species-pick fade); fromZero starts at 0 at zoom 15 (density mode, where the heat stands in). */
+  var DOT_FADE_Z = 16.5, DOT_FAR = 0.5;
+  function dotOp(keep, others, fromZero) {
+    function at(f) {
+      var base = ['case', ['==', ['get', 'pr'], 1], 0.6 * f, 0.9 * f];
+      return keep == null ? base : ['case', ['==', ['get', 'k'], keep], base, others ? ['*', others, base] : 0];
+    }
+    return ['interpolate', ['linear'], ['zoom']].concat(fromZero ? [15, 0] : [], [DOT_FADE_Z, at(1), 19, at(DOT_FAR)]);
+  }
+  var DOT_OP = dotOp();
   function radius(k) {   // the dot size at each zoom, times k
     return ['interpolate', ['exponential', 1.6], ['zoom'], 10, 0.6 * k, 13, 1.4 * k, 16, 3.6 * k, 19, 9 * k];
   }
@@ -1044,9 +1056,8 @@ window.addEventListener('DOMContentLoaded', function () {
     var f = pickK == null ? filterExpr() : ['all', filterExpr(), ['==', ['get', 'k'], pickK]];
     map.setFilter('trees-dots', f);
     map.setFilter('trees-heat', f);
-    var op = DOT_OP; if (fadeRaf) { map.setFilter('trees-heat', f); setRingFilters(); updateCount(); return; }   // a fade is running; it sets the opacity
-    map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density'
-      ? ['interpolate', ['linear'], ['zoom'], 15, 0, 16.5, op] : op);
+    if (fadeRaf) { map.setFilter('trees-heat', f); setRingFilters(); updateCount(); return; }   // a fade is running; it sets the opacity
+    map.setPaintProperty('trees-dots', 'circle-opacity', state.mode === 'density' ? dotOp(null, 0, true) : DOT_OP);
     setRingFilters();
     map.setLayoutProperty('trees-heat', 'visibility', state.mode === 'density' ? 'visible' : 'none');
     updateCount(); drawBars();
@@ -1160,7 +1171,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var t0 = performance.now();
     (function step(now) {
       var t = Math.min(1, (now - t0) / FADE_MS), e = 1 - Math.pow(1 - t, 3), a = from + (to - from) * e;
-      map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], k], DOT_OP, ['*', a / 0.9, DOT_OP]]);
+      map.setPaintProperty('trees-dots', 'circle-opacity', dotOp(k, a / 0.9));
       if (t < 1) fadeRaf = requestAnimationFrame(step);
       else { fadeRaf = 0; map.setPaintProperty('trees-dots', 'circle-opacity', DOT_OP); done && done(); }
     })(t0);
@@ -1169,7 +1180,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var was = pickK;
     clearTree(); clearSpot();
     if (sp && was == null) { pickK = sp.i; fillSpecies(speciesList); fadeOthers(sp.i, 0.9, 0, applyFilter); }   // fade the rest, then hide them
-    else if (!sp && was != null) { pickK = null; applyFilter(); fillSpecies(speciesList); map.setPaintProperty('trees-dots', 'circle-opacity', ['case', ['==', ['get', 'k'], was], DOT_OP, 0]); fadeOthers(was, 0, 0.9); }   // all back, easing in
+    else if (!sp && was != null) { pickK = null; applyFilter(); fillSpecies(speciesList); map.setPaintProperty('trees-dots', 'circle-opacity', dotOp(was, 0)); fadeOthers(was, 0, 0.9); }   // all back, easing in
     else { pickK = sp ? sp.i : null; applyFilter(); fillSpecies(speciesList); }   // one species to another: a straight swap
     if (!sp) return;
     if ($('legend').open) { $('legend').open = false; sheetHeight(); }   // picking a species folds the legend, so the map is clear
