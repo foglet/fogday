@@ -607,6 +607,9 @@ window.addEventListener('DOMContentLoaded', function () {
     'Mission District': 'The Mission', 'Marina District': 'The Marina', 'Haight-Ashbury': 'The Haight', 'Castro': 'The Castro',
     'Financial District': 'The Financial District', 'Sunset District': 'The Sunset', 'Outer Sunset': 'The Outer Sunset' };
   function hoodLabel(n) { return HOOD_SAY[n] || n; }
+  /* Phones, in the tapped-spot card only: the two longest names as people shorten them */
+  var HOOD_SHORT = { 'The Financial District/South Beach': 'FiDi/South Beach', 'The Financial District': 'FiDi', 'South of Market': 'SOMA' };
+  function hoodCard(n) { var l = hoodLabel(n); return (PHONE.matches && HOOD_SHORT[l]) || l; }
   var treeSp = null, treeHood = null, hoodNames = [], rareInfo = {}, rareN = {}, rareB = {};   // Rare/Landmark: notes by tree, counts by species
   function treeInfo(id) {   // what the popup and spot card need for one tree
     var sp = speciesList[treeSp[id]];
@@ -1538,7 +1541,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (mine !== spotTurn) return;   // a newer tap, or a clear, won
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
-      if (pl.hood) spotCard.appendChild(line('oa-detail-name', hoodLabel(pl.hood)));
+      if (pl.hood) spotCard.appendChild(line('oa-detail-name', hoodCard(pl.hood)));
       // Detail grows with zoom, at the zoom of the tap: from 15.5 in, the street address when known. No coordinates:
       // people come for the picture, and a tree worth the trip has a Directions link in its popup instead.
       var park = parkAt(+lng, +lat), near = z >= SPOT_ADDR_Z;
