@@ -81,6 +81,20 @@ jobs:
           [ "$n" -ge 5 ] || { echo "::error::Only $n park sections; keeping the current copy"; exit 1; }
           jq -c . /tmp/park-sections.geojson > treesf/park-sections.geojson
 
+      - name: Download the Dogpatch boundary
+        run: |
+          # DataSF SF Find Neighborhoods (Planning's 117 named neighborhoods): Dogpatch only, which the 41 analysis
+          # neighborhoods fold into Potrero Hill
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 20 --max-time 300 --compressed \
+            --get "https://data.sfgov.org/resource/pty2-tcw4.geojson" \
+            --data-urlencode "\$where=name='Dogpatch'" \
+            -o /tmp/dogpatch.geojson
+          head -c 300 /tmp/dogpatch.geojson; echo
+          n=$(jq '[.features[] | select(.geometry != null)] | length' /tmp/dogpatch.geojson)
+          echo "dogpatch=$n"
+          [ "$n" -ge 1 ] || { echo "::error::No Dogpatch boundary; keeping the current copy"; exit 1; }
+          jq -c . /tmp/dogpatch.geojson > treesf/dogpatch.geojson
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -92,7 +106,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add treesf/trees.csv treesf/neighborhoods.geojson treesf/park-sections.geojson treesf/trees.json
+          git add treesf/trees.csv treesf/neighborhoods.geojson treesf/park-sections.geojson treesf/dogpatch.geojson treesf/trees.json
           if git diff --cached --quiet; then echo "No change"; exit 0; fi
-          git commit -m "SF Street Trees: refresh tree list, neighborhoods and park sections from DataSF ($(date -u +%Y-%m-%d))"
+          git commit -m "SF Street Trees: refresh tree list, neighborhoods, park sections and Dogpatch from DataSF ($(date -u +%Y-%m-%d))"
           git push
