@@ -1204,8 +1204,8 @@ window.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- Controls ---------- */
   var PHONE = window.matchMedia('(max-width: 759px)');   // small screens: wider tap reach, tighter fit padding (same as the CSS)
-  /* On phones, zoomed out past 13.5, a finger covers dozens of trees, so a tap shows the spot, not a tree's popup */
-  var PHONE_TREE_Z = 13.5;
+  /* Trees answer taps and hover only from zoom 13 in, where streets show; further out a tap shows the spot instead */
+  var TREE_POP_Z = 13;
   function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
     document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
   }
@@ -1347,7 +1347,7 @@ window.addEventListener('DOMContentLoaded', function () {
     return best;
   }
   popup.on('close', function () { markTree(null); });
-  map.on('mouseenter', 'trees-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseenter', 'trees-dots', function () { if (map.getZoom() >= TREE_POP_Z) map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'trees-dots', function () { map.getCanvas().style.cursor = ''; });
   /* Hover (mouse and trackpad): resting the pointer right on a tree shows its name, no click needed. It goes when the
      pointer leaves the dot; a clicked tree keeps its own popup. Touch screens keep tap. Only trees on show answer hover. */
@@ -1357,6 +1357,7 @@ window.addEventListener('DOMContentLoaded', function () {
   function hoverOff() { hoverId = null; hoverPop.remove(); }
   map.on('mousemove', 'trees-dots', function (e) {
     if (!canHover.matches || PHONE.matches) return;
+    if (map.getZoom() < TREE_POP_Z) { hoverOff(); return; }   // street level only
     var f = null;
     if (e.features.length) f = e.features[0];   // only shown trees answer
     if (!f || f.id === selected) { hoverOff(); return; }   // the clicked tree already shows its popup
@@ -1526,10 +1527,11 @@ window.addEventListener('DOMContentLoaded', function () {
 
   map.on('click', function (e) {
     if (menuWasOpen) return;
-    var f = PHONE.matches && map.getZoom() < PHONE_TREE_Z ? null : treeAt(e.point);   // phones: trees answer taps from 13.5 in
+    var f = map.getZoom() < TREE_POP_Z ? null : treeAt(e.point);   // trees answer taps from zoom 13 in
     if (f) { showTree(f); showSpot(mapboxgl.LngLat.convert(f.geometry.coordinates), f); }
     else { clearTree(); showSpot(e.lngLat); }
   });
+  map.on('zoomend', function () { if (map.getZoom() < TREE_POP_Z && popup.isOpen()) clearTree(); });   // zoomed out past street level: the popup goes
   document.addEventListener('keydown', function (e) {   // one Escape shuts one thing: the menu, then the popup, then the spot
     if (e.key !== 'Escape') return;
     if (!mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); }
