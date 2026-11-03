@@ -1204,6 +1204,8 @@ window.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- Controls ---------- */
   var PHONE = window.matchMedia('(max-width: 759px)');   // small screens: wider tap reach, tighter fit padding (same as the CSS)
+  /* On phones, zoomed out past 13.5, a finger covers dozens of trees, so a tap shows the spot, not a tree's popup */
+  var PHONE_TREE_Z = 13.5;
   function sheetHeight() {   // --ctrl: the control card's height, so the spot card sits above it (desktop)
     document.documentElement.style.setProperty('--ctrl', $('controls').offsetHeight + 'px');
   }
@@ -1524,7 +1526,7 @@ window.addEventListener('DOMContentLoaded', function () {
 
   map.on('click', function (e) {
     if (menuWasOpen) return;
-    var f = treeAt(e.point);
+    var f = PHONE.matches && map.getZoom() < PHONE_TREE_Z ? null : treeAt(e.point);   // phones: trees answer taps from 13.5 in
     if (f) { showTree(f); showSpot(mapboxgl.LngLat.convert(f.geometry.coordinates), f); }
     else { clearTree(); showSpot(e.lngLat); }
   });
