@@ -514,7 +514,7 @@ zoom: 11.8
     <div class="legend-body">
       <p class="summary" id="summary">Loading the city's tree list…</p>
       <p class="origin-sum" id="origin"></p>
-      <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Evergreen <span class="dot" style="--c:#9fd77a"></span>Deciduous</p>
+      <p class="leafkey"><span class="dot" style="--c:#2b5e2f"></span>Evergreen <span class="dot" style="--c:#4f9a3c"></span>Semi-deciduous <span class="dot" style="--c:#9fd77a"></span>Deciduous</p>
       <div class="picks">   <!-- not remembered: every load opens on All, Rare/Landmark off -->
         <div class="seg" role="group" aria-label="Which trees to show">
           <button type="button" data-origin="both" aria-pressed="true">All</button><button type="button" data-origin="native" aria-pressed="false">Native</button><button type="button" data-origin="non" aria-pressed="false">Non-native</button>
@@ -530,7 +530,7 @@ zoom: 11.8
       <details class="notes">  <!-- Info, as on /tides/ -->
         <summary>Info</summary>
         <div class="notes-body">   <!-- scrolls inside a limited height, so the open notes never cover the screen -->
-          <p class="note">Each species has its own green, darker for evergreens and lighter for deciduous; cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
+          <p class="note">Each species has its own green, darker for evergreens, lighter for deciduous and in between for semi-deciduous (as <a href="https://www.friendsoftheurbanforest.org/tree-species-directory-sf">Friends of the Urban Forest</a> lists them); cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
           <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
         </div>
       </details>
@@ -601,7 +601,7 @@ window.addEventListener('DOMContentLoaded', function () {
     if (d.g) for (var gi = 0; gi < n; gi++) grp[gi] = d.g.charCodeAt(gi) - 48;   // one digit per tree
     else if (d.big) d.big.forEach(function (i) { grp[i] = 3; });                 // an older trees.json: big trees only
     var species = d.species.map(function (s, i) {
-      return { key: s[0], i: i, n: s[1], color: s[2], native: !!s[3], deciduous: !!s[4], bounds: [[s[5], s[6]], [s[7], s[8]]] };
+      return { key: s[0], i: i, n: s[1], color: s[2], native: !!s[3], leaf: s[4], deciduous: s[4] === 1, semi: s[4] === 2, bounds: [[s[5], s[6]], [s[7], s[8]]] };
     });
     treeSp = d.k; treeHood = d.h; hoodNames = d.hoods.map(function (h) { return h[0]; });
     rareInfo = {}; rareN = {}; rareB = {};

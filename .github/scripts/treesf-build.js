@@ -3,7 +3,7 @@
    and rounds treesf/neighborhoods.geojson to 1 m. Run by .github/workflows/treesf-refresh.yml after each download;
    run it by hand after changing anything here:   node .github/scripts/treesf-build.js
    This is the one place the tree data is cleaned: non-trees dropped, misspelled botanical names fixed, spellings of
-   one species joined, each species given its green, California natives and deciduous trees marked. The page only
+   one species joined, each species given its green, California natives marked, leaf type (evergreen, deciduous, semi-deciduous) set. The page only
    draws the result.
    Rare/Landmark: treesf/rare-trees.csv (a hand-kept list of notable trees, same first ten columns as trees.csv).
    A row whose treeid is in the city list marks that tree; any other row (treeid "rare-…") is a tree the city list
@@ -22,16 +22,19 @@ function dbhGroup(v) {
   return d <= 10 ? 1 : d <= 20 ? 2 : 3;
 }
 
-function greens(dark) {   // dark: one true/false per species (true = evergreen)
-  var out = [], seen = {}, nd = 0, nl = 0;
+function greens(dark, semi) {   // dark: one true/false per species (true = evergreen); semi: true = semi-deciduous
+  var out = [], seen = {}, nd = 0, nl = 0, ns = 0;
   function hex(h, s, l) {
     s /= 100; l /= 100;
     var k = function (m) { return (m + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
     var f = function (m) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(m) - 3, Math.min(9 - k(m), 1))))).toString(16).padStart(2, '0'); };
     return '#' + f(0) + f(8) + f(4);
   }
-  dark.forEach(function (d) {
+  dark.forEach(function (d, j) {
     var i = d ? nd++ : nl++, lo = d ? 26 : 50, span = d ? 20 : 28;   // evergreens 26–46% (any darker vanishes on the navy map)
+    // Semi-deciduous: a middle band, 40–52%, between the two. They still take their old slot above, so adding the
+    // class leaves every other species' green as it was.
+    if (semi && semi[j]) { i = ns++; lo = 40; span = 12; }
     var h = 80 + ((i * 0.618034) % 1) * 80, sat = 40 + ((i * 0.754878 + 0.3) % 1) * 45, l = lo + ((i * 0.381966 + 0.5) % 1) * span, c = hex(h, sat, l);
     while (seen[c]) { l = l >= lo + span ? lo : l + 0.4; c = hex(h, sat, l); }   // every species gets a hex of its own
     seen[c] = 1; out.push(c);
@@ -60,6 +63,12 @@ function bare(latin) { return latin.replace(/^[x\u00d7]\s+/i, ''); }   // "× Ch
 function isNative(key) { var latin = bare(key.split('::')[0].trim()); return NATIVE.test(latin) && !NOT_NATIVE.test(latin); }
 var DECIDUOUS = /^(Platanus|Ginkgo|Pyrus(?! kawakamii)|Ulmus|Acer|Liquidambar|Gleditsia|Fraxinus(?! uhdei)|Betula|Malus|Crataegus|Cercis|Lagerstroemia|Jacaranda|Tilia|Zelkova|Aesculus|Koelreuteria|Pistacia chinensis|Celtis|Styphnolobium|Sophora japonica|Robinia|Catalpa|Morus|Populus|Salix|Alnus|Juglans|Liriodendron|Cornus|Carpinus|Fagus|Nyssa|Cotinus|Parrotia|Albizia|Erythrina|Tabebuia|Handroanthus|Chitalpa|Chilopsis|Melia|Ailanthus|Sapium|Triadica|Metasequoia|Taxodium|Larix|Punica|Ficus carica|Diospyros|Halesia|Amelanchier|Sorbus|Syringa|Paulownia|Toona|Sambucus|Cercidiphyllum|Hamamelis|Ostrya|Gymnocladus|Cladrastis|Laburnum|Firmiana|Hovenia|Idesia|Prunus (cerasifera|serrulata|blireiana|x ?blireiana|yedoensis|x ?yedoensis|subhirtella|sargentii|avium|persica|armeniaca|domestica|mume|cerasus|virginiana|padus|dulcis|campanulata|'|x |sp|spp|serotina|incisa|okame|×)|Quercus (lobata|douglasii|rubra|coccinea|palustris|robur|frainetto|garryana|kelloggii|macrocarpa|phellos|shumardii|alba|bicolor|cerris|velutina|texana|nuttallii|muehlenbergii|acutissima|imbricaria|x)|Magnolia (soulangeana|soulangiana|x ?soulang|stellata|kobus|denudata|liliiflora|'Ann'|'Butterflies'|acuminata|x ?loebneri|loebneri|sprengeri|campbellii|'Galaxy'|'Jane'|'Elizabeth')|Davidia|Cydonia|Mespilus|Eucommia|Pterocarya|Carya|Castanea|Sassafras|Maclura|Broussonetia|Kalopanax|Phellodendron|Tamarix|Ziziphus|Asimina|Oxydendrum|Stewartia|Styrax japonicus|Aralia|Rhus typhina|Clerodendrum trichotomum|Poncirus|Xanthoceras|Tetradium)/i;
 function isDeciduous(key) { return DECIDUOUS.test(bare(key.split('::')[0].trim())); }
+/* Semi-deciduous: losing some or all leaves for a short time, as Friends of the Urban Forest's Tree Species Directory
+   (friendsoftheurbanforest.org/tree-species-directory-sf, Foliage: Semi-Deciduous) has them. Its list names Drake
+   Chinese Elm; the species' other cultivars share the habit. Checked against the directory Nov 2026. */
+var SEMI = /^(Pyrus kawakamii|Cassia leptophylla|Jacaranda mimosifolia|Ulmus parvifolia)\b/i;
+function isSemi(key) { return SEMI.test(bare(key.split('::')[0].trim())); }
+function leafOf(key) { return isSemi(key) ? 2 : isDeciduous(key) ? 1 : 0; }   // 0 evergreen, 1 deciduous, 2 semi-deciduous
 function parseCSV(text) {
   var rows = [], row = [], field = '', i = 0, q = false, c, n = text.length;
   while (i < n) {
@@ -148,7 +157,7 @@ function build(rows) {
   spOf.forEach(function (k, i) { info[i].sp = k === 'Unknown' ? '' : k; });   // the tree panel shows the joined name too
   // Species, most trees first; each gets its green, stored on its trees for the map to draw
   var list = Object.keys(spCount).sort(function (a, b) { return spCount[b] - spCount[a] || (a < b ? -1 : 1); });
-  var gs = greens(list.map(function (k) { return !isDeciduous(k); })), colorOf = {};
+  var gs = greens(list.map(function (k) { return !isDeciduous(k); }), list.map(isSemi)), colorOf = {};
   list.forEach(function (k, i) { colorOf[k] = gs[i]; });
   // Prunus (cherries, plums, peach, apricot, cherry laurels) in burgundy instead of green, each its own shade
   var pr = list.filter(function (k) { return /^Prunus\b/i.test(bare(k.split('::')[0].trim())); });
@@ -163,7 +172,7 @@ function build(rows) {
     if (k === 'Unknown') f.properties.u = 1;                  // u: species not recorded (neither native nor non-native)
     e[0] = Math.min(e[0], c[0]); e[1] = Math.min(e[1], c[1]); e[2] = Math.max(e[2], c[0]); e[3] = Math.max(e[3], c[1]);
   });
-  var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), deciduous: isDeciduous(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
+  var species = list.map(function (k, i) { return { key: k, i: i, n: spCount[k], color: colorOf[k], native: isNative(k), leaf: leafOf(k), bounds: [[ext[k][0], ext[k][1]], [ext[k][2], ext[k][3]]] }; });
   return { fc: { type: 'FeatureCollection', features: feats }, perYear: perYear, species: species };
 }
 
@@ -200,7 +209,7 @@ var order = feats.map(function (f, i) { return i; }).sort(function (a, b) {
   return Math.floor(A[1] * 200) - Math.floor(B[1] * 200) || A[0] - B[0];
 });
 var out = { v: 1, built: new Date().toISOString().slice(0, 10), lon0: LON0, lat0: LAT0, q: Q,
-  species: S.map(function (s) { var b = s.bounds; return [s.key, s.n, s.color, s.native ? 1 : 0, s.deciduous ? 1 : 0,
+  species: S.map(function (s) { var b = s.bounds; return [s.key, s.n, s.color, s.native ? 1 : 0, s.leaf,
     +b[0][0].toFixed(5), +b[0][1].toFixed(5), +b[1][0].toFixed(5), +b[1][1].toFixed(5)]; }),
   hoods: hoods.map(function (n) { var h = hoodSum[n]; return [n, +(h[0] / h[2]).toFixed(5), +(h[1] / h[2]).toFixed(5)]; }),
   dx: [], dy: [], k: [], h: [], g: '', r: [] };   // r: Rare/Landmark trees, [position, note, photo, place]
