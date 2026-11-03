@@ -195,7 +195,7 @@ zoom: 11.8
   .origin { margin-top: 4px; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
   .origin.native { color: #b9e886; }
   .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c); }   /* the atlas's legend dot */
-  .dot.native { box-shadow: 0 0 0 1.5px #f1ffe3; }   /* the map's light outline on natives */
+  .dot.native { box-shadow: 0 0 0 1px color-mix(in srgb, #f1ffe3 55%, transparent); }   /* the map's light outline on natives */
   .controls > .status { margin: 6px 6px 0; }
 
   /* View switch: two uppercase segments */
@@ -1018,9 +1018,9 @@ window.addEventListener('DOMContentLoaded', function () {
         'circle-radius': radius(1),
         'circle-opacity': DOT_OP,
         /* California natives get a light outline, Rare/Landmark trees a gold one (thin when zoomed out); the tapped tree a 2px white one */
-        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, nativeStroke(0.6), 16, nativeStroke(1.4)],
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, nativeStroke(0.4), 16, nativeStroke(0.9)],   // thin: a hint, not a border
         'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#ffffff', ['==', ['get', 'r'], 1], RARE_LINE, NATIVE_LINE],
-        'circle-stroke-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0.85]
+        'circle-stroke-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, ['==', ['get', 'r'], 1], 0.7, 0.45]   // natives faint, Rare/Landmark a little more
       }
     });
     applyFilter();
