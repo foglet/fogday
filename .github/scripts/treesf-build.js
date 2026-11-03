@@ -237,5 +237,17 @@ if (fs.existsSync(gp)) {
   g.features.forEach(function (f) { f.properties = { nhood: f.properties.nhood }; });
   fs.writeFileSync(gp, JSON.stringify(g));
 }
+// Park sections (Golden Gate and McLaren Parks), rounded the same way; kept: park ("Golden Gate Park"), section ("Section 3")
+var pp = path.join(DIR, 'park-sections.geojson');
+if (fs.existsSync(pp)) {
+  var pg = JSON.parse(fs.readFileSync(pp, 'utf8'));
+  pg.features = pg.features.filter(function (f) { return f.geometry; });
+  (function walk(c) { for (var i = 0; i < c.length; i++) { if (typeof c[i] === 'number') c[i] = +c[i].toFixed(5); else walk(c[i]); } })(pg.features.map(function (f) { return f.geometry.coordinates; }));
+  pg.features.forEach(function (f) {
+    var p = f.properties || {};
+    f.properties = { park: String(p.park || p.tma_property_name || '').split(' - ')[0].trim(), section: String(p.section || p.map_label || '').trim() };
+  });
+  fs.writeFileSync(pp, JSON.stringify(pg));
+}
 console.log('trees=' + feats.length + ' species=' + S.length + ' rare=' + out.r.length + ' neighborhoods=' + hoods.length +
   ' trees.json=' + fs.statSync(path.join(DIR, 'trees.json')).size + ' bytes');

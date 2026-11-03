@@ -67,6 +67,20 @@ jobs:
           [ "$n" -ge 35 ] || { echo "::error::Only $n neighborhoods; keeping the current copy"; exit 1; }
           jq -c . /tmp/neighborhoods.geojson > treesf/neighborhoods.geojson
 
+      - name: Download the park sections
+        run: |
+          # DataSF Park Sections: Rec and Park's sections of Golden Gate Park and McLaren Park (9 in Nov 2026)
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 20 --max-time 300 --compressed \
+            --get "https://data.sf.gov/resource/8du2-b837.geojson" \
+            --data-urlencode "\$select=map_label,tma_property_name,shape" \
+            --data-urlencode "\$order=tma_property_name" \
+            --data-urlencode "\$limit=100" \
+            -o /tmp/park-sections.geojson
+          n=$(jq '[.features[] | select(.geometry != null)] | length' /tmp/park-sections.geojson)
+          echo "park_sections=$n"
+          [ "$n" -ge 5 ] || { echo "::error::Only $n park sections; keeping the current copy"; exit 1; }
+          jq -c . /tmp/park-sections.geojson > treesf/park-sections.geojson
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -78,7 +92,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add treesf/trees.csv treesf/neighborhoods.geojson treesf/trees.json
+          git add treesf/trees.csv treesf/neighborhoods.geojson treesf/park-sections.geojson treesf/trees.json
           if git diff --cached --quiet; then echo "No change"; exit 0; fi
-          git commit -m "SF Street Trees: refresh tree list and neighborhoods from DataSF ($(date -u +%Y-%m-%d))"
+          git commit -m "SF Street Trees: refresh tree list, neighborhoods and park sections from DataSF ($(date -u +%Y-%m-%d))"
           git push

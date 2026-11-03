@@ -533,7 +533,7 @@ zoom: 11.8
         <summary>Info</summary>
         <div class="notes-body">   <!-- scrolls inside a limited height, so the open notes never cover the screen -->
           <p class="note">Each species has its own green, darker for evergreens, lighter for deciduous and in between for semi-deciduous (as <a href="https://www.friendsoftheurbanforest.org/tree-species-directory-sf">Friends of the Urban Forest</a> lists them); cherries, plums and their kin (Prunus) are burgundy; tap one in the list to see where it grows, or tap a tree for its name. A gold outline marks Rare/Landmark trees; a light one, California natives (species that grow wild in California, or their cultivars, matched by botanical name). A faint ring shows trunk size: 3–10, 11–20 or 21+ inches across; a thin gray outline means no size recorded. The pale green wash is the tree canopy seen from the air, park and private trees included: 13.7% of the city. The tree list is street trees only, without empty sites, stumps or shrubs. The crosshair button finds trees near you, once per tap, nothing kept; it shows only while this site may use your location. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using; then in Safari, the page menu › Website Settings › Location › Ask or Allow.</p>
-          <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
+          <p class="note">Data: street trees, <a href="https://data.sf.gov/d/tkzw-k3nq">SF Public Works Street Tree List</a>. Tree canopy, <a href="https://data.sf.gov/d/55pv-5zcc">SF Planning Urban Tree Canopy</a> (2013 Urban Forest Plan). Park sections (Golden Gate and McLaren Parks), <a href="https://data.sf.gov/d/8du2-b837">SF Rec and Park</a>. Rare/Landmark trees, <a href="https://www.sftrees.com/landmark-trees">Mike Sullivan</a>; those not in the city's list, some in the Presidio, are placed by street address where no exact spot is known.</p>
         </div>
       </details>
     </div>
@@ -557,6 +557,9 @@ window.addEventListener('DOMContentLoaded', function () {
      this page (refreshed with the trees); if it can't be read, the page asks DataSF. */
   var HOODS_LOCAL = '{{ "/treesf/neighborhoods.geojson" | relative_url }}';
   var HOODS_URL = 'https://data.sf.gov/resource/j2bu-swwd.geojson?$select=nhood,the_geom&$limit=100';
+  /* Park sections (Golden Gate and McLaren Parks): a copy beside the page, refreshed with the trees; DataSF if it's missing */
+  var PARKS_LOCAL = '{{ "/treesf/park-sections.geojson" | relative_url }}';
+  var PARKS_URL = 'https://data.sf.gov/resource/8du2-b837.geojson?$select=map_label,tma_property_name,shape&$limit=100';
   var HOOD_RED = '#e5372e';
   /* Tree canopy: DataSF's Urban Tree Canopy, built beside this page by .github/workflows/treesf-canopy.yml.
      From zoom 14 in, the true polygons (vector tiles, zoom 14, overzoomed past it); below 14, the same polygons
@@ -1429,8 +1432,8 @@ window.addEventListener('DOMContentLoaded', function () {
     spotLife = setTimeout(function () { spotStop(); spotMarker.remove(); }, SPOT_LIFE);
   }
   /* The analysis neighborhood a point falls in (the same 41 as the legend and the red outline), from the boundaries */
-  function hoodAt(lng, lat) {
-    if (!hoodGeo) return '';
+  function featureAt(geo, lng, lat) {   // the first feature of a polygon collection that holds the point
+    if (!geo) return null;
     function inRing(r) {   // ray casting
       var inside = false;
       for (var a = 0, b = r.length - 1; a < r.length; b = a++) {
@@ -1440,12 +1443,22 @@ window.addEventListener('DOMContentLoaded', function () {
       return inside;
     }
     function inPoly(rings) { if (!inRing(rings[0])) return false; for (var k = 1; k < rings.length; k++) if (inRing(rings[k])) return false; return true; }
-    for (var n = 0; n < hoodGeo.features.length; n++) {
-      var g = hoodGeo.features[n].geometry; if (!g) continue;
+    for (var n = 0; n < geo.features.length; n++) {
+      var g = geo.features[n].geometry; if (!g) continue;
       var polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
-      for (var q = 0; q < polys.length; q++) if (inPoly(polys[q])) return hoodGeo.features[n].properties.nhood || '';
+      for (var q = 0; q < polys.length; q++) if (inPoly(polys[q])) return geo.features[n];
     }
-    return '';
+    return null;
+  }
+  function hoodAt(lng, lat) { var f = featureAt(hoodGeo, lng, lat); return (f && f.properties.nhood) || ''; }
+  /* Park sections: DataSF's Park Sections, Rec and Park's own divisions of Golden Gate Park (Sections 1–7) and
+     McLaren Park (North and South of Mansell). In one, the spot card names the park and the section, in place of the
+     neighborhood and the nearest street address, which in a park can be a long way off. */
+  var parkGeo = null;
+  function parkAt(lng, lat) {
+    var f = featureAt(parkGeo, lng, lat); if (!f) return null;
+    var p = f.properties || {}, park = String(p.park || p.tma_property_name || '').split(' - ')[0].trim();
+    return park ? { park: park, section: String(p.section || p.map_label || '').trim() } : null;
   }
   /* The spot's place: { hood, city } — the neighborhood (the city's own boundaries first, then Mapbox's), and the
      city with its state code from Mapbox reverse geocoding ("San Francisco, CA"). */
@@ -1516,11 +1529,15 @@ window.addEventListener('DOMContentLoaded', function () {
       if (pl.hood) spotCard.appendChild(line('oa-detail-name', hoodLabel(pl.hood)));
       // Detail grows with zoom, at the zoom of the tap: from 15.5 in, the street address when known. No coordinates:
       // people come for the picture, and a tree worth the trip has a Directions link in its popup instead.
-      var addr = z >= SPOT_ADDR_Z && pl.addr;
-      if (addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
+      var park = parkAt(+lng, +lat), near = z >= SPOT_ADDR_Z;
+      if (park) {   // in a park section: the park's name for the neighborhood; from 15.5 in, its section for the address
+        spotCard.textContent = '';
+        spotCard.appendChild(line('oa-detail-name', park.park));
+        if (near && park.section) spotCard.appendChild(line('oa-detail-city', park.section));
+      } else if (near && pl.addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
       // No city line: the whole map is San Francisco. Only a spot with no neighborhood (open water, past the city
       // line) says where it is instead.
-      if (!pl.hood) spotCard.appendChild(line('oa-detail-name', pl.city));
+      if (!pl.hood && !park) spotCard.appendChild(line('oa-detail-name', pl.city));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
@@ -1576,6 +1593,8 @@ window.addEventListener('DOMContentLoaded', function () {
   function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
   var hoodsP = getJSON(HOODS_LOCAL).catch(function () { return getJSON(HOODS_URL); })
     .then(function (g) { return g && g.features && g.features.length ? g : null; }).catch(function () { return null; });
+  getJSON(PARKS_LOCAL).catch(function () { return getJSON(PARKS_URL); })
+    .then(function (g) { if (g && g.features && g.features.length) parkGeo = g; }).catch(function () {});   // extra: cards work without it
   var dataP = fetch(TREES_URL).then(function (r) {
     if (!r.ok) throw new Error('fogday.com answered ' + r.status);
     return r.json();
