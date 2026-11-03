@@ -593,9 +593,16 @@ window.addEventListener('DOMContentLoaded', function () {
   /* ---------- Trees ---------- */
   /* trees.json → the map's features, the species list and the neighborhoods. Positions are stored as whole steps of
      1e-5 degrees, each a small step from the tree before (see the build script). */
-  /* How San Franciscans say two of the neighborhoods: "the Mission", "the Marina". Display only: the city's names
-     (and Mapbox's "… District") stay the keys, so boundaries, sorting and search still match. */
-  var HOOD_SAY = { 'Mission': 'The Mission', 'Mission District': 'The Mission', 'Marina': 'The Marina', 'Marina District': 'The Marina' };
+  /* How San Franciscans say some neighborhoods: with "the". Display only: the city's names (left) and Mapbox's
+     (place search) stay the keys, so boundaries, sorting and search still match. Exact names only: Presidio Heights,
+     Mission Bay and Outer Mission keep theirs. The city's paired areas keep their second half. */
+  var HOOD_SAY = {
+    'Mission': 'The Mission', 'Marina': 'The Marina', 'Presidio': 'The Presidio', 'Tenderloin': 'The Tenderloin',
+    'Haight Ashbury': 'The Haight', 'Sunset/Parkside': 'The Sunset/Parkside', 'Castro/Upper Market': 'The Castro/Upper Market',
+    'Financial District/South Beach': 'The Financial District/South Beach',
+    // Mapbox's names for the same places
+    'Mission District': 'The Mission', 'Marina District': 'The Marina', 'Haight-Ashbury': 'The Haight', 'Castro': 'The Castro',
+    'Financial District': 'The Financial District', 'Sunset District': 'The Sunset', 'Outer Sunset': 'The Outer Sunset' };
   function hoodLabel(n) { return HOOD_SAY[n] || n; }
   var treeSp = null, treeHood = null, hoodNames = [], rareInfo = {}, rareN = {}, rareB = {};   // Rare/Landmark: notes by tree, counts by species
   function treeInfo(id) {   // what the popup and spot card need for one tree
