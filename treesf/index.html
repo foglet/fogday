@@ -336,6 +336,8 @@ zoom: 11.8
   .species li, .notes summary, .controls > .status, .oa-regions-title, .oa-here-msg { border-radius: 999px; }
   .map-legend > summary, .notes summary { border-radius: 8px; }   /* the Legend and Info toggles: rounded rectangles, the title's shape */
   .legend-body > .origin-sum:empty { display: none; }   /* no empty pill before the counts are in */
+  /* Outlines mark what can be picked; the counts and the leaf key are only read, so they keep the glass, no edge */
+  .legend-body > .summary, .legend-body > .origin-sum, .legend-body > .leafkey { box-shadow: none; }
   /* On the glass, secondary text is lighter (as the iOS field's white text reads on its gray) */
   .controls, .oa-regions-pop, .oa-detail-panel, .oa-here-msg { --muted: #c5ced5; }
   .oa-regions-pop li button span { box-shadow: none; }   /* rows stack flush: no hairline seams between them */
