@@ -1494,10 +1494,11 @@ window.addEventListener('DOMContentLoaded', function () {
       spotCard.textContent = '';
       if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
       // Detail grows with zoom, at the zoom of the tap: from 17 in, the street address (when known); past 15.5,
-      // the coordinates. Further out a spot is a neighborhood, not a point.
-      if (z >= SPOT_ADDR_Z && pl.addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
+      // the coordinates, unless the address is shown. Further out a spot is a neighborhood, not a point.
+      var addr = z >= SPOT_ADDR_Z && pl.addr;
+      if (addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
       spotCard.appendChild(line(pl.hood ? 'oa-detail-city' : 'oa-detail-name', pl.city));
-      if (z > SPOT_COORDS_Z) spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      if (z > SPOT_COORDS_Z && !addr) spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
       spotCard.hidden = false;
       if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // no local time on this map
     });
