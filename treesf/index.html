@@ -1489,7 +1489,7 @@ window.addEventListener('DOMContentLoaded', function () {
   }
   function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
   /* The spot card, line by line:  Neighborhood / San Francisco, CA / GPS coordinates */
-  var SPOT_ADDR_Z = 17;   // from 17 in: the street address, when known
+  var SPOT_ADDR_Z = 15.5;   // from 15.5 in: the street address, when known
   function showSpot(lngLat, tree) {   // tree: the tapped tree's feature, if any
     var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6), z = map.getZoom();
     spotMarker.setLngLat(ll).addTo(map); spotStart();
@@ -1502,7 +1502,7 @@ window.addEventListener('DOMContentLoaded', function () {
       if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
       spotCard.textContent = '';
       if (pl.hood) spotCard.appendChild(line('oa-detail-name', pl.hood));
-      // Detail grows with zoom, at the zoom of the tap: from 17 in, the street address when known. No coordinates:
+      // Detail grows with zoom, at the zoom of the tap: from 15.5 in, the street address when known. No coordinates:
       // people come for the picture, and a tree worth the trip has a Directions link in its popup instead.
       var addr = z >= SPOT_ADDR_Z && pl.addr;
       if (addr) spotCard.appendChild(line('oa-detail-city', pl.addr));
