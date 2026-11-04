@@ -1,0 +1,56 @@
+// Bay Area Mahjong Week: data for fogday.com/mj (also /mahjong).
+// Edit this file to add or change venues and weekly events.
+// Venue: n = name, a = address, ll = [lat, lon], approx = true if the pin is a guess.
+// Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = title, s/e = start/end in 24h decimals (null = not listed),
+//        st = chinese | american | both | games, cost, notes, how (sign-up/contact), flag (shown in red: unverified detail).
+// Venues. Coordinates are approximate street-address positions.
+window.MJ_VENUES = {
+  mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313]},
+  mmClem:  {n:"Mamahuhu Clement St", a:"517 Clement St, SF", ll:[37.7827,-122.4650]},
+  mmMV:    {n:"Mamahuhu Mill Valley", a:"173 Throckmorton Ave, Mill Valley", ll:[37.9058,-122.5480]},
+  mmPA:    {n:"Mamahuhu Palo Alto", a:"Palo Alto (street address not confirmed)", ll:[37.4443,-122.1610], approx:true},
+  aquatic: {n:"Aquatic Park Senior Center", a:"890 Beach St, SF", ll:[37.8065,-122.4225]},
+  pier23:  {n:"Pier 23 Cafe", a:"Pier 23, The Embarcadero, SF", ll:[37.8038,-122.4016]},
+  grape:   {n:"A Grape in the Fog", a:"400 Old County Rd, Pacifica", ll:[37.6105,-122.4943]},
+  pkm:     {n:"Parkmerced Leasing Center", a:"3711 19th Ave, SF", ll:[37.7178,-122.4745]},
+  bapt:    {n:"19th Avenue Baptist Church", a:"1370 19th Ave, SF", ll:[37.7630,-122.4769]},
+  udB:     {n:"United Dumplings Bernal", a:"525 Cortland Ave, SF", ll:[37.7390,-122.4166]},
+  udR:     {n:"United Dumplings Rockridge", a:"6247 College Ave, Oakland", ll:[37.8510,-122.2523]},
+  paname:  {n:"Paname SF", a:"523 Broadway, SF (North Beach, by Chinatown)", ll:[37.7979,-122.4062]},
+  dragon:  {n:"Dragon Well", a:"2142 Chestnut St, SF", ll:[37.8006,-122.4386]},
+  mrmj:    {n:"Mr. Mahjong's", a:"260 Kearny St, SF", ll:[37.7911,-122.4038]},
+  ferry:   {n:"Ferry Building (by Delica)", a:"1 Ferry Building, SF", ll:[37.7955,-122.3937]},
+  beth:    {n:"Congregation Beth Sholom", a:"301 14th Ave, SF", ll:[37.7832,-122.4727]},
+  aam:     {n:"Asian Art Museum", a:"200 Larkin St, SF", ll:[37.7802,-122.4161]},
+  goemon:  {n:"Goemon", a:"3129 Clement St, SF", ll:[37.7818,-122.4925]},
+  smsc:    {n:"San Mateo Senior Center", a:"2645 Alameda de las Pulgas, San Mateo", ll:[37.5340,-122.3390]},
+  civic:   {n:"Civic Center (skate park / farmers market)", a:"UN Plaza area, SF", ll:[37.7793,-122.4128]},
+  yuja:    {n:"Yuja Kitchen", a:"396 Harrison St, SF", ll:[37.7866,-122.3912]},
+  dolores: {n:"The Bar on Dolores", a:"1600 Dolores St, SF", ll:[37.7445,-122.4245]},
+};
+
+// Events. Times are 24h decimals; end:null = end time not listed.
+window.MJ_EVENTS = [
+  {d:1,v:["mmNoe","mmClem","mmMV","mmPA"],t:"Mahjong Mondays at Mamahuhu",s:18,e:21,st:"chinese",notes:"Beginner lessons in Chinese style; all levels welcome. Same hours at all four locations.",how:"RSVP on Meetup"},
+  {d:1,v:["aquatic"],t:"Chinese drop-in mahjong",s:12.5,e:null,st:"chinese",notes:"Senior center drop-in."},
+  {d:1,v:["pier23"],t:"Mahjong at Pier 23",s:16,e:19,st:"chinese",notes:"Free instruction 4–5 pm, open play until 7 pm."},
+  {d:2,v:["grape"],t:"Open play at the wine bar",s:16,e:20,st:"chinese",cost:"Free",notes:"Chinese style. Bring a set if you can."},
+  {d:2,v:["pkm"],t:"American mahjong",s:12,e:14.5,st:"american",cost:"Free",notes:"All levels welcome."},
+  {d:2,v:["aquatic"],t:"American drop-in",s:12.5,e:null,st:"american",notes:"Senior center drop-in."},
+  {d:2,v:["bapt"],t:"Chinese mahjong in the Sunset",s:17,e:20,st:"chinese",how:"Email Jim Dant (no address listed)"},
+  {d:2,v:["udB"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on 1st and 3rd Tuesdays.",how:"Tickets required",flag:"Time from the venue's Eventbrite listing (5:30–8:30 pm), not your source."},
+  {d:2,v:["paname"],t:"3-Point Hong Kong mahjong",s:19,e:22,st:"chinese",notes:"Fast, advanced play; beginners welcome. No instructors, handouts available.",how:"Three Dragon Society on Instagram",flag:"Your source gives no time. 7–10 pm comes from a separate listing for a Tuesday club at Paname; confirm before going."},
+  {d:2,v:["dragon"],t:"The Mahjong Lair",s:17,e:21,st:"both",notes:"American and Chinese style, with food.",how:"Sign up online",cost:"$20 cover (per Dragon Well's site)"},
+  {d:2,v:["mrmj"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on first Tuesdays.",how:"Register online"},
+  {d:3,v:["ferry"],t:"Free drop-in play",s:15,e:19,st:"both",cost:"Free",notes:"Indoors next to Delica. All levels; instruction for Chinese style."},
+  {d:3,v:["beth"],t:"American drop-in games",s:18,e:21,st:"american",notes:"Open to all players.",how:"Call Nancy, 714-403-0305"},
+  {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",cost:"Included with museum admission",notes:"Drop-in games and Chinese-style instruction.",flag:"Time from the museum's calendar (5–8 pm), not your source."},
+  {d:4,v:["goemon"],t:"Hong Kong style mahjong",s:17,e:21,st:"chinese",cost:"Free",notes:"Drop-in game. New night.",how:"Text 415-601-9906"},
+  {d:4,v:["smsc"],t:"American mahjong drop-in",s:18,e:null,st:"american",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
+  {d:5,v:["ferry"],t:"Free Friday Game Night",s:null,e:null,st:"games",cost:"Free",notes:"Any board games, not mahjong specific. With Gamescape.",flag:"No time listed."},
+  {d:5,v:["civic"],t:"Outdoor Asian mahjong (and chess)",s:14,e:17,st:"chinese",cost:"Free",notes:"Near the skate park and farmers market area."},
+  {d:5,v:["udR"],t:"Chinese open play (Rockridge)",s:17.5,e:20.5,st:"chinese",notes:"Same format as the Bernal Tuesday night.",how:"Tickets required",flag:"Time assumed from the Bernal night and the venue's Eventbrite (starts 5:30 pm)."},
+  {d:6,v:["yuja"],t:"Mahjong Saturdays",s:16,e:19,st:"chinese",cost:"Free",notes:"Open play, Chinese style. No registration."},
+  {d:6,v:["dolores"],t:"Open mahjong play",s:12,e:16,st:"chinese",notes:"Chinese style. Bring a set if you can."},
+];
+
