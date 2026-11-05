@@ -2,7 +2,7 @@
 // Edit this file to add or change venues and weekly events.
 // Venue: n = name, a = address, ll = [lat, lon], approx = true if the pin is a guess.
 // Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = title, s/e = start/end in 24h decimals (null = not listed),
-//        st = chinese | american | both | games, cost, notes, how (sign-up/contact), url (More info link), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
+//        st = chinese | american | both | games | unlisted, cost, notes, how (sign-up/contact), url (More info link), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
 // Venues. Coordinates are approximate street-address positions.
 window.MJ_VENUES = {
   mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313]},
@@ -31,6 +31,7 @@ window.MJ_VENUES = {
   third:   {n:"Third Realm", a:"1381 9th Ave, SF (Inner Sunset)", ll:[37.7627,-122.4664]},
   sportsb: {n:"Sports Basement Stonestown", a:"3251 20th Ave, SF", ll:[37.7283,-122.4757]},
   chisholm:{n:"Shirley Chisholm Village", a:"1360 43rd Ave, SF", ll:[37.7621,-122.5021]},
+  sjwc:    {n:"San Jose Woman's Club (Tea Room)", a:"75 S 11th St, San Jose", ll:[37.3390,-121.8789]},
   stjoseph:{n:"Saint Joseph's Arts Society", a:"1401 Howard St, SF", ll:[37.7738,-122.4148]},
 };
 
@@ -39,6 +40,7 @@ window.MJ_EVENTS = [
   {d:1,v:["mmNoe","mmClem","mmMV","mmPA"],t:"Mahjong Mondays at Mamahuhu",s:18,e:21,st:"chinese",notes:"Beginner lessons in Chinese style; all levels welcome. Same hours at all four locations.",how:"RSVP on Meetup"},
   {d:1,v:["aquatic"],t:"Chinese drop-in mahjong",s:12.5,e:null,st:"chinese",notes:"Senior center drop-in."},
   {d:1,v:["tabletop"],t:"Beginner mahjong class",s:18.5,e:20.5,st:"chinese",freq:"About monthly",notes:"Hong Kong style, taught from scratch. Open to the public. Run by Play Mahjong SF.",url:"https://www.playmahjongsf.com/events"},
+  {d:1,v:["sjwc"],t:"San Jose Woman's Club Mahjong Group",s:13,e:15,st:"unlisted",freq:"1st, 3rd and 5th Mondays",notes:"Open to all skill levels, beginners to experienced. Plus bonus sessions."},
   {d:1,v:["pier23"],t:"Mahjong at Pier 23",s:16,e:19,st:"chinese",notes:"Free instruction 4–5 pm, open play until 7 pm."},
   {d:2,v:["grape"],t:"Open play at the wine bar",s:16,e:20,st:"chinese",cost:"Free",notes:"Chinese style. Bring a set if you can."},
   {d:2,v:["pkm"],t:"American mahjong",s:12,e:14.5,st:"american",cost:"Free",notes:"All levels welcome."},
