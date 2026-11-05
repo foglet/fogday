@@ -319,11 +319,26 @@ document.addEventListener('DOMContentLoaded', function () {
     var stuckTop = parseFloat(getComputedStyle(days).top) || 0;          // safe-area inset at the top
     var below = stuckTop + days.offsetHeight + box.offsetHeight + 8;      // where the map ends once pinned
     spacer.style.height = '0px';
-    var target = row.getBoundingClientRect().top + window.scrollY - below;
+    var target = Math.max(0, row.getBoundingClientRect().top + window.scrollY - below);
+    var from = window.scrollY, dist = target - from;
+    var over = Math.abs(dist) * 0.08 + 4;                                 // room for the small overshoot
     var room = document.documentElement.scrollHeight - window.innerHeight;
-    if (target > room) spacer.style.height = Math.ceil(target - room) + 'px';
-    window.scrollTo({ top: Math.max(0, target), behavior: calm.matches ? 'auto' : 'smooth' });
+    if (target + over > room) spacer.style.height = Math.ceil(target + over - room) + 'px';
+    if (calm.matches || Math.abs(dist) < 2) { window.scrollTo(0, target); return; }
+    // ease in, run slightly past, settle back: a gentle bounce (easeOutBack)
+    var c1 = 1.15, c3 = c1 + 1, dur = 650, t0 = null;
+    if (rowUnderMap.raf) cancelAnimationFrame(rowUnderMap.raf);
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var t = Math.min(1, (ts - t0) / dur), u = t - 1;
+      var k = 1 + c3 * u * u * u + c1 * u * u;
+      window.scrollTo(0, from + dist * k);
+      if (t < 1) rowUnderMap.raf = requestAnimationFrame(step);
+    }
+    rowUnderMap.raf = requestAnimationFrame(step);
   }
+  // a finger or wheel on the page stops the glide at once
+  ['touchstart', 'wheel'].forEach(function (ev) { window.addEventListener(ev, function () { if (rowUnderMap.raf) { cancelAnimationFrame(rowUnderMap.raf); rowUnderMap.raf = 0; } }, { passive: true }); });
   function render(refit) {
     if (refit) { var sp = document.getElementById('spacer'); if (sp) sp.style.height = '0px'; }
     var evs = visible();
