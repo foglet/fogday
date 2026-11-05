@@ -46,7 +46,7 @@ h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underlin
 .sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
 .legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-.days{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:clamp(4px,1vw,8px)}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(4px,1vw,8px)}
 .day{appearance:none;border:1px solid var(--tile-edge);border-bottom-width:4px;background:var(--tile);color:var(--ink);
   border-radius:6px;padding:7px 1px 5px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .day .d{font-family:var(--display);font-size:clamp(13px,3.9vw,20px);line-height:1}
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var DAYKEYS = ["sun","mon","tue","wed","thu","fri","sat"];
   var today = new Date().getDay();
-  function dayFromHash() { var h = location.hash.slice(1).toLowerCase(); if (h === "all") return "all"; var i = DAYKEYS.indexOf(h); return i >= 0 ? i : null; }
+  function dayFromHash() { var h = location.hash.slice(1).toLowerCase(); var i = DAYKEYS.indexOf(h); return i >= 0 ? i : null; }
   var hd = dayFromHash();
   var state = { day: hd != null ? hd : today, style: "all", sel: null };
 
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ---- day tiles and style filter
   function drawDays() {
     var el = document.getElementById('days'); el.innerHTML = "";
-    ORDER.map(function (d) { return { d: d, lab: DAYS[d].slice(0, 3) }; }).concat([{ d: "all", lab: "All" }]).forEach(function (it) {
+    ORDER.map(function (d) { return { d: d, lab: DAYS[d].slice(0, 3) }; }).forEach(function (it) {
       var n = E.filter(function (ev) { return it.d === "all" || ev.d === it.d; }).length;
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'day' + (it.d === today ? ' today' : '');
