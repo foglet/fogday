@@ -105,7 +105,7 @@ footer a{color:inherit}
       <p class="sub">Come and play.</p>
     </div>
     <div class="legend" aria-label="Style key">
-      <span><b style="background:var(--red)"></b>Hong Kong / Chinese</span>
+      <span><b style="background:var(--red)"></b>Hong Kong</span>
       <span><b style="background:var(--blue)"></b>American</span>
       <span><b style="background:var(--both)"></b>Both styles</span>
       <span><b style="background:var(--na)"></b>Style not listed</span>
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!V || !E) { document.getElementById('agenda').textContent = 'The schedule could not load. Reload the page to try again.'; return; }
   var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   var ORDER = [1,2,3,4,5,6,0];
-  var STY = {chinese:["Hong Kong / Chinese","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], unlisted:["Style not listed","var(--na)"]};
+  var STY = {chinese:["Hong Kong","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], unlisted:["Style not listed","var(--na)"]};
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   // Stable venue numbers across the week.
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function drawFilters() {
     var el = document.getElementById('filters'); el.innerHTML = "<span>Style:</span>";
-    [["all","Any"],["chinese","Hong Kong / Chinese"],["american","American"]].forEach(function (f) {
+    [["all","Both"],["chinese","Hong Kong"],["american","American"]].forEach(function (f) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = f[1];
       b.setAttribute('aria-pressed', String(state.style === f[0]));
       b.onclick = function () { state.style = f[0]; state.sel = null; render(true); };
