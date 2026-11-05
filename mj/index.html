@@ -54,8 +54,8 @@ h1 span{color:var(--felt)}
 .day[aria-pressed="true"] .n{color:var(--bone);opacity:.85}
 .day:focus-visible,.chip:focus-visible,.ev:focus-visible,.mk:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
 .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
-.chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--bone);border-color:var(--ink)}
+.chip{border:1.5px solid var(--c);background:transparent;color:var(--c);border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--c);color:var(--bone)}
 main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:820px){main{grid-template-columns:1fr}.days{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .mapbox{position:sticky;top:max(12px,env(safe-area-inset-top,0px));border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper)}
@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var el = document.getElementById('filters'); el.innerHTML = "<span>Style:</span>";
     [["all","Both"],["chinese","Hong Kong"],["american","American"]].forEach(function (f) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = f[1];
+      b.style.setProperty('--c', {all:'var(--both)', chinese:'var(--red)', american:'var(--blue)'}[f[0]]);
       b.setAttribute('aria-pressed', String(state.style === f[0]));
       b.onclick = function () { state.style = f[0]; state.sel = null; render(true); };
       el.appendChild(b);
