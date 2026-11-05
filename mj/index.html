@@ -289,9 +289,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function drawAgenda(evs) {
     var el = document.getElementById('agenda'); el.innerHTML = "";
-    var head = document.createElement('div'); head.className = 'dayhead';
-    head.innerHTML = '<span>' + (state.day === today ? 'Today · ' : '') + 'bars run 10 am–midnight</span>';
-    el.appendChild(head);
     if (!evs.length) {
       var e = document.createElement('div'); e.className = 'empty';
       e.textContent = "Nothing listed for this day.";
