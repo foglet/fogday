@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function render(refit) {
     var evs = visible();
-    drawDays(); drawAgenda(evs);
+    drawDays(); setDayH(); drawAgenda(evs);
     var venues = drawMap(evs);
     if (refit) fit(venues);
   }
@@ -321,7 +321,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (map) map.on('load', function () { fit(drawMap(visible())); });
   // the map pins just below the day buttons, whatever their height
   function setDayH() { document.documentElement.style.setProperty('--dayh', document.getElementById('days').offsetHeight + 'px'); }
-  setDayH(); window.addEventListener('resize', setDayH);
+  window.addEventListener('resize', setDayH);
+  if (window.ResizeObserver) new ResizeObserver(setDayH).observe(document.getElementById('days'));
   render(false);
 });
 </script>
