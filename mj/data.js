@@ -38,13 +38,13 @@ window.MJ_VENUES = {
 // Events. Times are 24h decimals; end:null = end time not listed.
 window.MJ_EVENTS = [
   {d:1,v:["mmNoe","mmClem","mmMV","mmPA"],t:"Mahjong Mondays at Mamahuhu",s:18,e:21,st:"chinese",notes:"Beginner lessons in Chinese style; all levels welcome. Same hours at all four locations.",how:"RSVP on Meetup"},
-  {d:1,v:["aquatic"],t:"Chinese drop-in mahjong",s:12.5,e:null,st:"chinese",notes:"Senior center drop-in."},
+  {d:1,v:["aquatic"],t:"Chinese drop-in mahjong",s:12.5,e:null,st:"chinese",notes:"Senior center drop-in. Meet in Room 11."},
   {d:1,v:["tabletop"],t:"Beginner mahjong class",s:18.5,e:20.5,st:"chinese",freq:"About monthly",notes:"Hong Kong style, taught from scratch. Open to the public. Run by Play Mahjong SF.",url:"https://www.playmahjongsf.com/events"},
   {d:1,v:["sjwc"],t:"San Jose Woman's Club Mahjong Group",s:13,e:15,st:"both",freq:"1st, 3rd and 5th Mondays",notes:"Meets in the Tea Room. Open to all skill levels, beginners to experienced. Plus bonus sessions.",how:"Contact Alexa Dalkey and Robyn Ginsburg Braverman, mahjong@sjwomansclub.org"},
   {d:1,v:["pier23"],t:"Mahjong at Pier 23",s:16,e:19,st:"chinese",notes:"Free instruction 4–5 pm, open play until 7 pm."},
   {d:2,v:["grape"],t:"Open play at the wine bar",s:16,e:20,st:"chinese",cost:"Free",notes:"Chinese style. Bring a set if you can."},
   {d:2,v:["pkm"],t:"American mahjong",s:12,e:14.5,st:"american",cost:"Free",notes:"All levels welcome."},
-  {d:2,v:["aquatic"],t:"American drop-in",s:12.5,e:null,st:"american",notes:"Senior center drop-in."},
+  {d:2,v:["aquatic"],t:"American and Hong Kong drop-in",s:12.5,e:null,st:"both",notes:"Senior center drop-in, both styles. Meet in Room 11."},
   {d:2,v:["bapt"],t:"Chinese mahjong in the Sunset",s:17,e:20,st:"chinese",how:"Email Jim Dant (no address listed)"},
   {d:2,v:["udB"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on 1st and 3rd Tuesdays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
   {d:2,v:["paname"],t:"3-Point Hong Kong mahjong",s:19,e:22,st:"chinese",notes:"Fast, advanced play; beginners welcome. No instructors, handouts available.",how:"Three Dragon Society on Instagram"},
