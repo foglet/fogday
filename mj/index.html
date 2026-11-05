@@ -44,8 +44,12 @@ h1 span{color:var(--felt)}
 h1 a{color:inherit;text-decoration:none}
 h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
 .sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
-.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lt{display:inline-grid;place-items:center;width:17px;height:23px;border-radius:3px;background:var(--tile);border:1px solid var(--tile-edge);font:normal 400 13px "Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;position:relative}
+.lt.red{color:var(--red)}
+.lt.green{color:var(--both)}
+.lt.white::after{content:"";position:absolute;inset:4px 3px;border:1.5px solid var(--blue);border-radius:1px}
 .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(4px,1vw,8px)}
 .day{appearance:none;border:1px solid var(--tile-edge);background:var(--tile);color:var(--ink);
   border-radius:6px;padding:7px 1px 5px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
@@ -120,8 +124,9 @@ footer a{color:inherit}
       <p class="sub">Come and play. This is recurring weekly play. Call venue to confirm.</p>
     </div>
     <div class="legend" aria-label="Style key">
-      <span><b style="background:var(--red)"></b>Hong Kong</span>
-      <span><b style="background:var(--blue)"></b>American</span>
+      <span><i class="lt red" aria-hidden="true">中</i>Hong Kong</span>
+      <span><i class="lt white" aria-hidden="true"></i>American</span>
+      <span><i class="lt green" aria-hidden="true">發</i>Both</span>
     </div>
   </header>
 
