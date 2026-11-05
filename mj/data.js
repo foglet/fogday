@@ -18,7 +18,7 @@ window.MJ_VENUES = {
   udR:     {n:"United Dumplings Rockridge", a:"6247 College Ave, Oakland", ll:[37.8510,-122.2523], w:"https://www.uniteddumplings.com"},
   paname:  {n:"Paname SF", a:"523 Broadway, SF (North Beach, by Chinatown)", ll:[37.7979,-122.4062], w:"https://www.sfpaname.com"},
   dragon:  {n:"Dragon Well", a:"2142 Chestnut St, SF", ll:[37.8006,-122.4386], w:"https://www.dragonwell.com"},
-  mrmj:    {n:"Mr. Mahjong's", a:"260 Kearny St, SF", ll:[37.7911,-122.4038]},
+  mrmj:    {n:"Mr. Mahjong's", a:"260 Kearny St, SF", ll:[37.7911,-122.4038], w:"https://www.mrmahjongs.com"},
   ferry:   {n:"Ferry Building (by Delica)", a:"1 Ferry Building, SF", ll:[37.7955,-122.3937], w:"https://www.ferrybuildingmarketplace.com"},
   beth:    {n:"Congregation Beth Sholom", a:"301 14th Ave, SF", ll:[37.7832,-122.4727], w:"https://www.bethsholomsf.org"},
   aam:     {n:"Asian Art Museum", a:"200 Larkin St, SF", ll:[37.7802,-122.4161], w:"https://asianart.org"},
@@ -61,7 +61,7 @@ window.MJ_EVENTS = [
   {d:6,v:["third"],t:"Mahjong at Third Realm",s:13,e:16,st:"chinese",freq:"Occasional",cost:"$20 ($10 members)",notes:"Hong Kong style. Some sessions fall on Sundays.",url:"https://www.playmahjongsf.com/events"},
   {d:6,v:["yuja"],t:"Mahjong Saturdays",s:16,e:19,st:"chinese",cost:"Free",notes:"Open play, Chinese style. No registration."},
   {d:6,v:["dolores"],t:"Open mahjong play",s:12,e:16,st:"chinese",notes:"Chinese style. Bring a set if you can."},
-  {d:6,v:["mrmj"],t:"Mahjong, drinks and DJs",s:19.5,e:23.5,st:"chinese",notes:"Chinese style mahjong with drinks and DJs.",url:"https://www.eventbrite.com/o/109673752611"},
+  {d:6,v:["mrmj"],t:"Mahjong, drinks and DJs",s:19.5,e:23.5,st:"chinese",notes:"Chinese style mahjong with drinks and DJs.",url:"https://www.mrmahjongs.com"},
   {d:0,v:["sportsb","bapt","chisholm"],t:"Monthly Mahjong Meet & Learn",s:13.5,e:16.5,st:"chinese",freq:"One weekend a month",cost:"Free",notes:"Hong Kong / Cantonese style. Venue rotates between Sports Basement Stonestown, 19th Avenue Baptist Church and Shirley Chisholm Village; some months fall on Saturday.",url:"https://www.playmahjongsf.com/events"},
   {d:0,v:["aam"],t:"Sundays at the Asian Art Museum",s:10.5,e:16,st:"chinese",freq:"Most Sundays",cost:"Included with museum admission",notes:"Mahjong in Bogart Court: take a lesson and play all day.",url:"https://calendar.asianart.org/",flag:"Not on your list or Play Mahjong SF's current schedule; from the museum's past Sunday listings. Check its calendar."},
 ];
