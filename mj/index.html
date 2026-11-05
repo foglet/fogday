@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
       b.innerHTML = '<span class="d">' + it.lab + '</span><span class="n">' + n + (n === 1 ? ' event' : ' events') + '</span>';
       b.onclick = function () {
         state.day = it.d; state.sel = null;
-        history.replaceState(null, "", "#" + (it.d === "all" ? "all" : DAYKEYS[it.d]));
+        if (location.hash) history.replaceState(null, "", location.pathname);   // a reload opens on today, not the last day picked
         render(true);
       };
       el.appendChild(b);
