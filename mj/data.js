@@ -8,7 +8,7 @@ window.MJ_VENUES = {
   mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313], w:"https://www.eatmamahuhu.com"},
   mmClem:  {n:"Mamahuhu Clement St", a:"517 Clement St, SF", ll:[37.7827,-122.4650], w:"https://www.eatmamahuhu.com"},
   mmMV:    {n:"Mamahuhu Mill Valley", a:"173 Throckmorton Ave, Mill Valley", ll:[37.9058,-122.5480], w:"https://www.eatmamahuhu.com"},
-  mmPA:    {n:"Mamahuhu Palo Alto", a:"Palo Alto (street address not confirmed)", ll:[37.4443,-122.1610], w:"https://www.eatmamahuhu.com", approx:true},
+  mmPA:    {n:"Mamahuhu Palo Alto", a:"855 El Camino Real, Ste 75, Palo Alto (Town & Country Village)", ll:[37.4390,-122.1594], w:"https://www.eatmamahuhu.com"},
   aquatic: {n:"Aquatic Park Senior Center", a:"890 Beach St, SF", ll:[37.8065,-122.4225], w:"https://sequoialiving.org/senior-center/aquatic-park/"},
   pier23:  {n:"Pier 23 Cafe", a:"Pier 23, The Embarcadero, SF", ll:[37.8038,-122.4016], w:"https://www.pier23cafe.com"},
   grape:   {n:"A Grape in the Fog", a:"400 Old County Rd, Pacifica", ll:[37.6105,-122.4943], w:"https://agitf.com"},
