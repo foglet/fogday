@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
       el.style.setProperty('--c', STY[st][1]); el.textContent = vnum[v];
       el.setAttribute('aria-label', V[v].n);
       var here = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })
-        .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + " · " + esc(e.t); }).join("<br>");
+        .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + " · " + esc(e.t); }).join("<br>");
       var pop = new mapboxgl.Popup({ offset: 20, closeButton: false })
         .setHTML('<b>' + esc(V[v].n) + '</b><br>' + esc(V[v].a) + (V[v].approx ? ' <i>(location approx.)</i>' : '') + '<br>' + here);
       el.addEventListener('click', function () {
@@ -238,15 +238,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var b = document.createElement('div'); b.tabIndex = 0; b.setAttribute('role', 'button');
     b.className = 'ev' + (state.sel && ev.v.some(function (v) { return state.sel.indexOf(v) >= 0; }) ? ' on' : '');
     b.dataset.v = ev.v.join(" ");
-    var L = 11, R = 24, pct = function (h) { return (h - L) / (R - L) * 100; };
-    var bar = ev.s == null ? "" : '<span class="bar block" style="color:' + col + '" title="11 am to midnight"><i class="' + (ev.e == null ? 'open' : '') +
+    var L = 10, R = 24, pct = function (h) { return (h - L) / (R - L) * 100; };
+    var bar = ev.s == null ? "" : '<span class="bar block" style="color:' + col + '" title="10 am to midnight"><i class="' + (ev.e == null ? 'open' : '') +
       '" style="left:' + pct(ev.s).toFixed(1) + '%;width:' + (ev.e == null ? 8 : pct(ev.e) - pct(ev.s)).toFixed(1) + '%;background:' + col + '"></i></span>';
     var venues = ev.v.map(function (v) { return esc(V[v].n) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a); }).join("<br>");
     b.innerHTML = '<span class="tile">' + (ev.v.length > 2 ? ev.v.length + '×' : ev.v.map(function (v) { return vnum[v]; }).join('·')) + '</span>' +
       '<span style="min-width:0">' +
         '<span class="t">' + esc(ev.t) + '</span>' +
         '<span class="meta"><span class="time">' + (state.day === "all" ? DAYS[ev.d].slice(0, 3) + ' · ' : '') + span(ev) + '</span>' +
-          '<span class="pill" style="color:' + col + '">' + STY[ev.st][0] + '</span>' + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
+          '<span class="pill" style="color:' + col + '">' + STY[ev.st][0] + '</span>' + (ev.freq ? '<span>' + esc(ev.freq) + '</span>' : '') + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
         '<span class="meta block">' + venues + '</span>' +
         (ev.notes ? '<span class="notes">' + esc(ev.notes) + '</span>' : '') +
         (ev.how ? '<span class="meta block">' + esc(ev.how) + '</span>' : '') +
@@ -261,11 +261,11 @@ document.addEventListener('DOMContentLoaded', function () {
   function drawAgenda(evs) {
     var el = document.getElementById('agenda'); el.innerHTML = "";
     var head = document.createElement('div'); head.className = 'dayhead';
-    head.innerHTML = '<h2>' + (state.day === "all" ? "All week" : DAYS[state.day]) + '</h2><span>' + (state.day === today ? 'Today · ' : '') + 'bars run 11 am–midnight</span>';
+    head.innerHTML = '<h2>' + (state.day === "all" ? "All week" : DAYS[state.day]) + '</h2><span>' + (state.day === today ? 'Today · ' : '') + 'bars run 10 am–midnight</span>';
     el.appendChild(head);
     if (!evs.length) {
       var e = document.createElement('div'); e.className = 'empty';
-      e.textContent = state.day === 0 ? "Nothing listed for Sunday yet. Try Saturday at The Bar on Dolores (noon–4 pm) or Yuja Kitchen (4–7 pm)." : "No events match this style on this day.";
+      e.textContent = "No events match this style on this day.";
       el.appendChild(e); return;
     }
     var last = null;
