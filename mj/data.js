@@ -2,7 +2,7 @@
 // Edit this file to add or change venues and weekly events.
 // Venue: n = name, a = address, ll = [lat, lon], approx = true if the pin is a guess.
 // Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = title, s/e = start/end in 24h decimals (null = not listed),
-//        st = chinese | american | both | games, cost, notes, how (sign-up/contact), url (More info link), flag (shown in red: unverified detail).
+//        st = chinese | american | both | games, cost, notes, how (sign-up/contact), url (More info link), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
 // Venues. Coordinates are approximate street-address positions.
 window.MJ_VENUES = {
   mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313]},
@@ -27,31 +27,40 @@ window.MJ_VENUES = {
   civic:   {n:"Civic Center (skate park / farmers market)", a:"UN Plaza area, SF", ll:[37.7793,-122.4128]},
   yuja:    {n:"Yuja Kitchen", a:"396 Harrison St, SF", ll:[37.7866,-122.3912]},
   dolores: {n:"The Bar on Dolores", a:"1600 Dolores St, SF", ll:[37.7445,-122.4245]},
+  tabletop:{n:"Tabletop Library", a:"3048 Claremont Ave, Berkeley", ll:[37.8556,-122.2476]},
+  third:   {n:"Third Realm", a:"1381 9th Ave, SF (Inner Sunset)", ll:[37.7627,-122.4664]},
+  sportsb: {n:"Sports Basement Stonestown", a:"3251 20th Ave, SF", ll:[37.7283,-122.4757]},
+  chisholm:{n:"Shirley Chisholm Village", a:"1360 43rd Ave, SF", ll:[37.7621,-122.5021]},
+  stjoseph:{n:"Saint Joseph's Arts Society", a:"1401 Howard St, SF", ll:[37.7738,-122.4148]},
 };
 
 // Events. Times are 24h decimals; end:null = end time not listed.
 window.MJ_EVENTS = [
   {d:1,v:["mmNoe","mmClem","mmMV","mmPA"],t:"Mahjong Mondays at Mamahuhu",s:18,e:21,st:"chinese",notes:"Beginner lessons in Chinese style; all levels welcome. Same hours at all four locations.",how:"RSVP on Meetup"},
   {d:1,v:["aquatic"],t:"Chinese drop-in mahjong",s:12.5,e:null,st:"chinese",notes:"Senior center drop-in."},
+  {d:1,v:["tabletop"],t:"Beginner mahjong class",s:18.5,e:20.5,st:"chinese",freq:"About monthly",notes:"Hong Kong style, taught from scratch. Open to the public. Run by Play Mahjong SF.",url:"https://www.playmahjongsf.com/events"},
   {d:1,v:["pier23"],t:"Mahjong at Pier 23",s:16,e:19,st:"chinese",notes:"Free instruction 4–5 pm, open play until 7 pm."},
   {d:2,v:["grape"],t:"Open play at the wine bar",s:16,e:20,st:"chinese",cost:"Free",notes:"Chinese style. Bring a set if you can."},
   {d:2,v:["pkm"],t:"American mahjong",s:12,e:14.5,st:"american",cost:"Free",notes:"All levels welcome."},
   {d:2,v:["aquatic"],t:"American drop-in",s:12.5,e:null,st:"american",notes:"Senior center drop-in."},
   {d:2,v:["bapt"],t:"Chinese mahjong in the Sunset",s:17,e:20,st:"chinese",how:"Email Jim Dant (no address listed)"},
-  {d:2,v:["udB"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on 1st and 3rd Tuesdays.",how:"Tickets required",flag:"Time from the venue's Eventbrite listing (5:30–8:30 pm), not your source."},
+  {d:2,v:["udB"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on 1st and 3rd Tuesdays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
   {d:2,v:["paname"],t:"3-Point Hong Kong mahjong",s:19,e:22,st:"chinese",notes:"Fast, advanced play; beginners welcome. No instructors, handouts available.",how:"Three Dragon Society on Instagram",flag:"Your source gives no time. 7–10 pm comes from a separate listing for a Tuesday club at Paname; confirm before going."},
   {d:2,v:["dragon"],t:"The Mahjong Lair",s:17,e:21,st:"both",notes:"American and Chinese style, with food.",how:"Sign up online",cost:"$20 cover (per Dragon Well's site)"},
   {d:2,v:["mrmj"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on first Tuesdays.",how:"Register online"},
   {d:3,v:["ferry"],t:"Free drop-in play",s:15,e:19,st:"both",cost:"Free",notes:"Indoors next to Delica. All levels; instruction for Chinese style."},
   {d:3,v:["beth"],t:"American drop-in games",s:18,e:21,st:"american",notes:"Open to all players.",how:"Call Nancy, 714-403-0305"},
+  {d:3,v:["stjoseph"],t:"Mahjong night",s:18,e:21,st:"both",freq:"Monthly",notes:"Hong Kong style, with open play for Hong Kong and American.",how:"Tickets online",url:"https://www.playmahjongsf.com/events"},
   {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",cost:"Included with museum admission",notes:"Drop-in games and Chinese-style instruction.",flag:"Time from the museum's calendar (5–8 pm), not your source."},
   {d:4,v:["goemon"],t:"Hong Kong style mahjong",s:17,e:21,st:"chinese",cost:"Free",notes:"Drop-in game. New night.",how:"Text 415-601-9906"},
   {d:4,v:["smsc"],t:"American mahjong drop-in",s:18,e:null,st:"american",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
   {d:5,v:["ferry"],t:"Free Friday Game Night",s:null,e:null,st:"games",cost:"Free",notes:"Any board games, not mahjong specific. With Gamescape.",flag:"No time listed."},
   {d:5,v:["civic"],t:"Outdoor Asian mahjong (and chess)",s:14,e:17,st:"chinese",cost:"Free",notes:"Near the skate park and farmers market area."},
-  {d:5,v:["udR"],t:"Chinese open play (Rockridge)",s:17.5,e:20.5,st:"chinese",notes:"Same format as the Bernal Tuesday night.",how:"Tickets required",flag:"Time assumed from the Bernal night and the venue's Eventbrite (starts 5:30 pm)."},
+  {d:5,v:["udR"],t:"Chinese open play (Rockridge)",s:17.5,e:20.5,st:"chinese",notes:"Same format as the Bernal Tuesday night. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
+  {d:6,v:["third"],t:"Mahjong at Third Realm",s:13,e:16,st:"chinese",freq:"Occasional",cost:"$20 ($10 members)",notes:"Hong Kong style. Some sessions fall on Sundays.",url:"https://www.playmahjongsf.com/events"},
   {d:6,v:["yuja"],t:"Mahjong Saturdays",s:16,e:19,st:"chinese",cost:"Free",notes:"Open play, Chinese style. No registration."},
   {d:6,v:["dolores"],t:"Open mahjong play",s:12,e:16,st:"chinese",notes:"Chinese style. Bring a set if you can."},
   {d:6,v:["mrmj"],t:"Mahjong, drinks and DJs",s:19.5,e:23.5,st:"chinese",notes:"Chinese style mahjong with drinks and DJs.",url:"https://www.eventbrite.com/o/109673752611"},
+  {d:0,v:["sportsb","bapt","chisholm"],t:"Monthly Mahjong Meet & Learn",s:13.5,e:16.5,st:"chinese",freq:"One weekend a month",cost:"Free",notes:"Hong Kong / Cantonese style. Venue rotates between Sports Basement Stonestown, 19th Avenue Baptist Church and Shirley Chisholm Village; some months fall on Saturday.",url:"https://www.playmahjongsf.com/events"},
+  {d:0,v:["aam"],t:"Sundays at the Asian Art Museum",s:10.5,e:16,st:"chinese",freq:"Most Sundays",cost:"Included with museum admission",notes:"Mahjong in Bogart Court: take a lesson and play all day.",url:"https://calendar.asianart.org/",flag:"Not on your list or Play Mahjong SF's current schedule; from the museum's past Sunday listings. Check its calendar."},
 ];
-
