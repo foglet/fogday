@@ -16,7 +16,7 @@ map_style: mapbox://styles/mapbox/light-v11
 
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
-<script src="/mj/data.js" defer></script>
+<script src="/mj/data.js?v={{ site.time | date: '%s' }}" defer></script>   <!-- new build, new URL: browsers fetch the latest schedule -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
