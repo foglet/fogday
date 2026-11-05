@@ -135,10 +135,6 @@ footer a{color:inherit}
 
   <main>
     <section class="mapbox" aria-label="Map">
-      <div class="maphead">
-        <span id="mapcount"></span>
-        <button class="vbtn" id="fit" type="button">Show all pins</button>
-      </div>
       <div id="map"></div>
     </section>
     <section class="agenda" id="agenda" aria-live="polite"></section>
@@ -226,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function () {
       markers[v] = new mapboxgl.Marker({ element: el, anchor: 'bottom' }).setLngLat([V[v].ll[1], V[v].ll[0]]).setPopup(pop).addTo(map);
     });
     var n = venues.length;
-    document.getElementById('mapcount').textContent = n ? n + (n === 1 ? ' venue' : ' venues') + (state.day === "all" ? ' this week' : ' on ' + DAYS[state.day]) : 'No venues';
     return venues;
   }
   function fit(venues) {
@@ -242,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (state.sel.length === 1) { var ll = V[state.sel[0]].ll; map.easeTo({ center: [ll[1], ll[0]], zoom: Math.max(map.getZoom(), 13), duration: calm.matches ? 0 : 600 }); }
     else fit(state.sel);
   }
-  document.getElementById('fit').onclick = function () { state.sel = null; render(true); };
 
   // ---- day tiles and style filter
   function drawDays() {
@@ -294,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function drawAgenda(evs) {
     var el = document.getElementById('agenda'); el.innerHTML = "";
     var head = document.createElement('div'); head.className = 'dayhead';
-    head.innerHTML = '<h2>' + (state.day === "all" ? "All week" : DAYS[state.day]) + '</h2><span>' + (state.day === today ? 'Today · ' : '') + 'bars run 10 am–midnight</span>';
+    head.innerHTML = '<span>' + (state.day === today ? 'Today · ' : '') + 'bars run 10 am–midnight</span>';
     el.appendChild(head);
     if (!evs.length) {
       var e = document.createElement('div'); e.className = 'empty';
