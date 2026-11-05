@@ -47,7 +47,7 @@ h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underlin
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
 .legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(4px,1vw,8px)}
-.day{appearance:none;border:1px solid var(--tile-edge);border-bottom-width:4px;background:var(--tile);color:var(--ink);
+.day{appearance:none;border:1px solid var(--tile-edge);background:var(--tile);color:var(--ink);
   border-radius:6px;padding:7px 1px 5px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .day .d{font-family:var(--display);font-size:clamp(13px,3.9vw,20px);line-height:1}
 .day.today .d::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin-left:3px;vertical-align:super}
@@ -75,7 +75,7 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 .dayhead span{color:var(--muted);font-size:13px}
 .ev{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 10px 10px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:transparent;text-align:left;font:inherit;color:inherit;width:100%}
 .ev:hover,.ev.on{background:var(--paper);border-color:var(--line)}
-.ev .tile{width:30px;height:38px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);border-bottom-width:3px;display:grid;place-items:center;font-weight:700;font-size:13px}
+.ev .tile{width:30px;height:38px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);display:grid;place-items:center;font-weight:700;font-size:13px}
 .ev .t{font-weight:600;font-size:15px;line-height:1.3;display:block;padding-right:44px}
 .ev .body{min-width:0;position:relative}
 .maplink{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border:0;padding:2px;white-space:nowrap;line-height:1}
