@@ -2,7 +2,7 @@
 // Edit this file to add or change venues and weekly events.
 // Venue: n = name, a = address, ll = [lat, lon], approx = true if the pin is a guess.
 // Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = title, s/e = start/end in 24h decimals (null = not listed),
-//        st = chinese | american | both | games | unlisted, cost, notes, how (sign-up/contact), url (More info link), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
+//        st = chinese | american | both | unlisted, cost, notes, how (sign-up/contact), url (More info link), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
 // Venues. Coordinates are approximate street-address positions.
 window.MJ_VENUES = {
   mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313]},
@@ -56,7 +56,6 @@ window.MJ_EVENTS = [
   {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",cost:"Included with museum admission",notes:"Drop-in games and Chinese-style instruction.",flag:"Time from the museum's calendar (5–8 pm), not your source."},
   {d:4,v:["goemon"],t:"Hong Kong style mahjong",s:17,e:21,st:"chinese",cost:"Free",notes:"Drop-in game. New night.",how:"Text 415-601-9906"},
   {d:4,v:["smsc"],t:"American mahjong drop-in",s:18,e:null,st:"american",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
-  {d:5,v:["ferry"],t:"Free Friday Game Night",s:null,e:null,st:"games",cost:"Free",notes:"Any board games, not mahjong specific. With Gamescape.",flag:"No time listed."},
   {d:5,v:["civic"],t:"Outdoor Asian mahjong (and chess)",s:14,e:17,st:"chinese",cost:"Free",notes:"Near the skate park and farmers market area."},
   {d:5,v:["udR"],t:"Chinese open play (Rockridge)",s:17.5,e:20.5,st:"chinese",notes:"Same format as the Bernal Tuesday night. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
   {d:6,v:["third"],t:"Mahjong at Third Realm",s:13,e:16,st:"chinese",freq:"Occasional",cost:"$20 ($10 members)",notes:"Hong Kong style. Some sessions fall on Sundays.",url:"https://www.playmahjongsf.com/events"},

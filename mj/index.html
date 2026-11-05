@@ -26,7 +26,7 @@ map_style: mapbox://styles/mapbox/light-v11
 /* Day tiles on top, Mapbox Light map left, that day's agenda right; stacks on phones */
 :root{
   --felt:#1f5c4a; --bone:#fbf8f1; --paper:#f3efe4; --ink:#1d2421; --muted:#5f6b66; --line:#d9d3c4;
-  --red:#b8352b; --blue:#2c5b9e; --both:#1f7a5c; --games:#8a6d2c; --na:#7a8580;
+  --red:#b8352b; --blue:#2c5b9e; --both:#1f7a5c; --na:#7a8580;
   --tile:#fffdf7; --tile-edge:#c9c0aa; --sel:#e8b43a;
   --display:"Young Serif", Georgia, "Times New Roman", serif;
   --body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -105,10 +105,9 @@ footer a{color:inherit}
       <p class="sub">Come and play.</p>
     </div>
     <div class="legend" aria-label="Style key">
-      <span><b style="background:var(--red)"></b>Chinese / Hong Kong</span>
+      <span><b style="background:var(--red)"></b>Hong Kong / Chinese</span>
       <span><b style="background:var(--blue)"></b>American</span>
       <span><b style="background:var(--both)"></b>Both styles</span>
-      <span><b style="background:var(--games)"></b>General games</span>
       <span><b style="background:var(--na)"></b>Style not listed</span>
     </div>
   </header>
@@ -136,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!V || !E) { document.getElementById('agenda').textContent = 'The schedule could not load. Reload the page to try again.'; return; }
   var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   var ORDER = [1,2,3,4,5,6,0];
-  var STY = {chinese:["Chinese / HK","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], games:["General games","var(--games)"], unlisted:["Style not listed","var(--na)"]};
+  var STY = {chinese:["Hong Kong / Chinese","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], unlisted:["Style not listed","var(--na)"]};
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   // Stable venue numbers across the week.
@@ -148,14 +147,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function dayFromHash() { var h = location.hash.slice(1).toLowerCase(); if (h === "all") return "all"; var i = DAYKEYS.indexOf(h); return i >= 0 ? i : null; }
   var hd = dayFromHash();
   var state = { day: hd != null ? hd : today, style: "all", sel: null };
-  try { var s = JSON.parse(localStorage.getItem("mjw") || "{}"); if (s.style) state.style = s.style; } catch (e) {}
 
   function fmt(h) { var H = Math.floor(h), M = Math.round((h - H) * 60), ap = H >= 12 ? "pm" : "am", h12 = ((H + 11) % 12) + 1; return h12 + (M ? ":" + String(M).padStart(2, "0") : "") + " " + ap; }
   function span(ev) { if (ev.s == null) return "Time not listed"; return ev.e == null ? fmt(ev.s) + " start" : fmt(ev.s) + "–" + fmt(ev.e); }
   function visible() {
     return E.filter(function (ev) {
       return (state.day === "all" || ev.d === state.day) &&
-             (state.style === "all" || ev.st === state.style || (ev.st === "both" && state.style !== "games"));
+             (state.style === "all" || ev.st === state.style || ev.st === "both");
     });
   }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
@@ -240,10 +238,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function drawFilters() {
     var el = document.getElementById('filters'); el.innerHTML = "<span>Style:</span>";
-    [["all","Any"],["chinese","Chinese / HK"],["american","American"],["games","General games"]].forEach(function (f) {
+    [["all","Any"],["chinese","Hong Kong / Chinese"],["american","American"]].forEach(function (f) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = f[1];
       b.setAttribute('aria-pressed', String(state.style === f[0]));
-      b.onclick = function () { state.style = f[0]; state.sel = null; try { localStorage.setItem("mjw", JSON.stringify({ style: f[0] })); } catch (e) {} render(true); };
+      b.onclick = function () { state.style = f[0]; state.sel = null; render(true); };
       el.appendChild(b);
     });
   }
