@@ -46,7 +46,15 @@ zoom: 11.8
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
   body { overflow: hidden; }
-  #map { position: fixed; inset: 0; }
+  html, body { overscroll-behavior: none; }
+  /* The map runs under Safari's toolbars (large viewport), so tiles show through the translucent bars;
+     --bar is how much of it they cover, to keep Mapbox's bottom controls and attribution in view. */
+  :root { --bar: 0px; }
+  @supports (height: 100lvh) { :root { --bar: calc(100lvh - 100svh); } }
+  #map { position: fixed; top: 0; left: 0; right: 0; height: 100%; }
+  @supports (height: 100lvh) { #map { height: 100lvh; } }
+  /* Safari 26 clips fully opaque fixed layers at its floating toolbar; a hair under 1 lets the map paint behind it. */
+  #map { opacity: .999; }
 
   /* Frosted panels over the map */
   .title, .controls {
@@ -264,8 +272,8 @@ zoom: 11.8
   .pop .latin { color: var(--muted); }
 
   /* Mapbox corners clear the home indicator and notch; controls in the panel color with the muted icon tint, as on /transit/ */
-  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
-  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--kb)); }   /* rises above the keyboard */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: calc(var(--sab) + var(--bar)); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--bar) + var(--kb)); }   /* rises above the keyboard */
   /* ---- Bottom-right controls, copied from oysteratlas.com: search glass, folded map (Neighborhoods), + and −.
      Same panel, 50% border and muted icons on each. ---- */
   .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); box-shadow: none; }
