@@ -47,7 +47,7 @@ window.MJ_EVENTS = [
   {d:2,v:["aquatic"],t:"American drop-in",s:12.5,e:null,st:"american",notes:"Senior center drop-in."},
   {d:2,v:["bapt"],t:"Chinese mahjong in the Sunset",s:17,e:20,st:"chinese",how:"Email Jim Dant (no address listed)"},
   {d:2,v:["udB"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on 1st and 3rd Tuesdays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
-  {d:2,v:["paname"],t:"3-Point Hong Kong mahjong",s:19,e:22,st:"chinese",notes:"Fast, advanced play; beginners welcome. No instructors, handouts available.",how:"Three Dragon Society on Instagram",flag:"Your source gives no time. 7–10 pm comes from a separate listing for a Tuesday club at Paname; confirm before going."},
+  {d:2,v:["paname"],t:"3-Point Hong Kong mahjong",s:19,e:22,st:"chinese",notes:"Fast, advanced play; beginners welcome. No instructors, handouts available.",how:"Three Dragon Society on Instagram"},
   {d:2,v:["dragon"],t:"The Mahjong Lair",s:17,e:21,st:"both",notes:"American and Chinese style, with food.",how:"Sign up online",cost:"$20 cover (per Dragon Well's site)"},
   {d:2,v:["mrmj"],t:"Chinese open play",s:17.5,e:20.5,st:"chinese",notes:"Instruction on first Tuesdays.",how:"Register online"},
   {d:3,v:["ferry"],t:"Free drop-in play",s:15,e:19,st:"both",cost:"Free",notes:"Indoors next to Delica. All levels; instruction for Chinese style."},
