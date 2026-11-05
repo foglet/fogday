@@ -53,7 +53,7 @@ window.MJ_EVENTS = [
   {d:3,v:["ferry"],t:"Free drop-in play",s:15,e:19,st:"both",cost:"Free",notes:"Indoors next to Delica. All levels; instruction for Chinese style."},
   {d:3,v:["beth"],t:"American drop-in games",s:18,e:21,st:"american",notes:"Open to all players.",how:"Call Nancy, 714-403-0305"},
   {d:3,v:["stjoseph"],t:"Mahjong night",s:18,e:21,st:"both",freq:"Monthly",notes:"Hong Kong style, with open play for Hong Kong and American.",how:"Tickets online",url:"https://www.playmahjongsf.com/events"},
-  {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",cost:"Included with museum admission",notes:"Drop-in games and Chinese-style instruction.",flag:"Time from the museum's calendar (5–8 pm), not your source."},
+  {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",cost:"Included with museum admission",notes:"Drop-in games and Chinese-style instruction."},
   {d:4,v:["goemon"],t:"Hong Kong style mahjong",s:17,e:21,st:"chinese",cost:"Free",notes:"Drop-in game. New night.",how:"Text 415-601-9906"},
   {d:4,v:["smsc"],t:"American mahjong drop-in",s:18,e:null,st:"american",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
   {d:5,v:["civic"],t:"Outdoor Asian mahjong (and chess)",s:14,e:17,st:"chinese",cost:"Free",notes:"Near the skate park and farmers market area."},
