@@ -62,6 +62,7 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 @media (max-width:820px){.mapbox{position:static}}
 .maphead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
 #map{height:min(560px,70vh);width:100%}
+#map.nomap{height:auto;padding:16px;color:var(--muted);font-size:14px}
 @media (max-width:820px){#map{height:58vh}}
 .vbtn{border:1px solid var(--line);background:var(--bone);color:var(--ink);font:inherit;font-size:12px;padding:3px 9px;border-radius:5px;cursor:pointer}
 /* map pins drawn as little mahjong tiles */
@@ -132,6 +133,7 @@ footer a{color:inherit}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var V = window.MJ_VENUES, E = window.MJ_EVENTS;
+  if (!V || !E) { document.getElementById('agenda').textContent = 'The schedule could not load. Reload the page to try again.'; return; }
   var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   var ORDER = [1,2,3,4,5,6,0];
   var STY = {chinese:["Chinese / HK","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], games:["General games","var(--games)"], unlisted:["Style not listed","var(--na)"]};
@@ -159,19 +161,32 @@ document.addEventListener('DOMContentLoaded', function () {
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
   // ---- map
-  mapboxgl.accessToken = '{{ page.access_token }}';
-  var map = new mapboxgl.Map({
-    container: 'map', style: '{{ page.map_style }}',
-    center: [-122.43, 37.77], zoom: 11.5, cooperativeGestures: true,
-    customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a>'
-  });
-  map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+  // The calendar must work even when the map can't start (blocked Mapbox script, WebGL off in Lockdown Mode, old browser).
+  var map = null;
+  function mapFailed(why) {
+    map = null;
+    var m = document.getElementById('map');
+    m.className = 'nomap';
+    m.textContent = 'The map could not load in this browser, so the list shows every venue and time. ' +
+      'If you use a content blocker or Lockdown Mode, allow api.mapbox.com and reload to see the map.';
+    if (window.console) console.warn('Map unavailable:', why);
+  }
+  try {
+    if (!window.mapboxgl) throw new Error('Mapbox GL JS did not load');
+    mapboxgl.accessToken = '{{ page.access_token }}';
+    map = new mapboxgl.Map({
+      container: 'map', style: '{{ page.map_style }}',
+      center: [-122.43, 37.77], zoom: 11.5, cooperativeGestures: true,
+      customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a>'
+    });
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+  } catch (err) { mapFailed(err); }
   var markers = {};
 
   function drawMap(evs) {
     Object.keys(markers).forEach(function (v) { markers[v].remove(); }); markers = {};
     var venues = []; evs.forEach(function (e) { e.v.forEach(function (v) { if (venues.indexOf(v) < 0) venues.push(v); }); });
-    venues.forEach(function (v) {
+    if (map) venues.forEach(function (v) {
       var st = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })[0].st;
       var el = document.createElement('button');
       el.type = 'button'; el.className = 'mk' + (state.sel && state.sel.indexOf(v) >= 0 ? ' on' : '');
@@ -192,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return venues;
   }
   function fit(venues) {
-    if (!venues.length) return;
+    if (!map || !venues.length) return;
     var opt = { padding: 50, maxZoom: 14, duration: calm.matches ? 0 : 900 };
     if (venues.length === 1) { map.easeTo({ center: [V[venues[0]].ll[1], V[venues[0]].ll[0]], zoom: 14, duration: opt.duration }); return; }
     var b = new mapboxgl.LngLatBounds();
@@ -200,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     map.fitBounds(b, opt);
   }
   function focusSel() {
-    if (!state.sel) return;
+    if (!map || !state.sel) return;
     if (state.sel.length === 1) { var ll = V[state.sel[0]].ll; map.easeTo({ center: [ll[1], ll[0]], zoom: Math.max(map.getZoom(), 13), duration: calm.matches ? 0 : 600 }); }
     else fit(state.sel);
   }
@@ -284,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (refit) fit(venues);
   }
   window.addEventListener('hashchange', function () { var d = dayFromHash(); if (d != null) { state.day = d; state.sel = null; render(true); } });
-  map.on('load', function () { fit(drawMap(visible())); });
+  if (map) map.on('load', function () { fit(drawMap(visible())); });
   render(false);
 });
 </script>
