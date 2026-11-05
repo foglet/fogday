@@ -53,6 +53,8 @@ zoom: 11.8
   @supports (height: 100lvh) { :root { --bar: calc(100lvh - 100svh); } }
   #map { position: fixed; top: 0; left: 0; right: 0; height: 100%; }
   @supports (height: 100lvh) { #map { height: 100lvh; } }
+  /* Safari 26 clips fully opaque fixed layers at its floating toolbar; a hair under 1 lets the map paint behind it. */
+  #map { opacity: .999; }
 
   /* Frosted panels over the map */
   .title, .controls {
