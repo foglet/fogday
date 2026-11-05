@@ -150,6 +150,7 @@ footer a{color:inherit}
       <div id="map"></div>
     </section>
     <section class="agenda" id="agenda" aria-live="polite"></section>
+    <div id="spacer" aria-hidden="true"></div>   <!-- room so the last listings can scroll up to just under the map -->
   </main>
 
   <footer>Special thanks to <a href="https://www.mrmahjongs.com">Mr. Mahjong</a> and <a href="https://fogday.com/">Fogday Studios</a>.</footer>
@@ -229,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .setHTML('<b>' + vname(v) + '</b><br>' + esc(V[v].a) + (V[v].approx ? ' <i>(location approx.)</i>' : '') + '<br>' + here);
       el.addEventListener('click', function () {
         state.sel = [v]; render(false);
-        var row = document.querySelector('.ev[data-v~="' + v + '"]'); if (row) row.scrollIntoView({ block: 'nearest', behavior: calm.matches ? 'auto' : 'smooth' });
+        var row = document.querySelector('.ev[data-v~="' + v + '"]'); if (row) rowUnderMap(row);
       });
       markers[v] = new mapboxgl.Marker({ element: el, anchor: 'bottom' }).setLngLat([V[v].ll[1], V[v].ll[0]]).setPopup(pop).addTo(map);
     });
@@ -312,7 +313,19 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
+  // Tapping a pin scrolls its listing to sit right under the pinned day bar and map
+  function rowUnderMap(row) {
+    var days = document.getElementById('days'), box = document.querySelector('.mapbox'), spacer = document.getElementById('spacer');
+    var stuckTop = parseFloat(getComputedStyle(days).top) || 0;          // safe-area inset at the top
+    var below = stuckTop + days.offsetHeight + box.offsetHeight + 8;      // where the map ends once pinned
+    spacer.style.height = '0px';
+    var target = row.getBoundingClientRect().top + window.scrollY - below;
+    var room = document.documentElement.scrollHeight - window.innerHeight;
+    if (target > room) spacer.style.height = Math.ceil(target - room) + 'px';
+    window.scrollTo({ top: Math.max(0, target), behavior: calm.matches ? 'auto' : 'smooth' });
+  }
   function render(refit) {
+    if (refit) { var sp = document.getElementById('spacer'); if (sp) sp.style.height = '0px'; }
     var evs = visible();
     drawDays(); setDayH(); drawAgenda(evs);
     var venues = drawMap(evs);
