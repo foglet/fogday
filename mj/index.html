@@ -66,6 +66,7 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 .mk{width:30px;height:40px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);padding:0 0 7px;
   box-shadow:0 2px 6px rgba(0,0,0,.22);display:grid;place-items:center;font:700 13px var(--body);color:var(--ink);cursor:pointer;position:relative}
 .mk::after{content:"";position:absolute;left:5px;right:5px;bottom:5px;height:4px;border-radius:2px;background:var(--c)}
+.mk.dragon{font:400 22px "Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;color:var(--red)}
 .mk.both{--c:var(--blue);padding-bottom:13px}
 .mk.both::before{content:"";position:absolute;left:5px;right:5px;bottom:11px;height:4px;border-radius:2px;background:var(--red)}
 .mk.on{outline:3px solid var(--sel);z-index:2}
@@ -146,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   var ORDER = [1,2,3,4,5,6,0];
   var STY = {chinese:["Hong Kong","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], unlisted:["Style not listed","var(--na)"]};
+  var DRAGON_DAYS = [6];   // test: map pins on these days show the red dragon tile (中) instead of a number
   var PIN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -200,7 +202,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var st = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })[0].st;
       var el = document.createElement('button');
       el.type = 'button'; el.className = 'mk' + (state.sel && state.sel.indexOf(v) >= 0 ? ' on' : '');
-      el.style.setProperty('--c', st === 'both' ? 'var(--blue)' : STY[st][1]); if (st === 'both') el.classList.add('both'); el.textContent = vnum[v];
+      el.style.setProperty('--c', st === 'both' ? 'var(--blue)' : STY[st][1]); if (st === 'both') el.classList.add('both');
+      if (DRAGON_DAYS.indexOf(state.day) >= 0) { el.classList.add('dragon'); el.textContent = '中'; } else el.textContent = vnum[v];
       el.setAttribute('aria-label', V[v].n);
       var here = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })
         .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + " · " + esc(e.t); }).join("<br>");
