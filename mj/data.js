@@ -63,5 +63,5 @@ window.MJ_EVENTS = [
   {d:6,v:["dolores"],t:"Open mahjong play",s:12,e:16,st:"chinese",notes:"Chinese style. Bring a set if you can."},
   {d:6,v:["mrmj"],t:"Mahjong, drinks and DJs",s:19.5,e:23.5,st:"chinese",notes:"Chinese style mahjong with drinks and DJs.",url:"https://www.mrmahjongs.com"},
   {d:0,v:["sportsb","bapt","chisholm"],t:"Monthly Mahjong Meet & Learn",s:13.5,e:16.5,st:"chinese",freq:"One weekend a month",cost:"Free",notes:"Hong Kong / Cantonese style. Venue rotates between Sports Basement Stonestown, 19th Avenue Baptist Church and Shirley Chisholm Village; some months fall on Saturday.",url:"https://www.playmahjongsf.com/events"},
-  {d:0,v:["aam"],t:"Sundays at the Asian Art Museum",s:10.5,e:16,st:"chinese",freq:"Most Sundays",cost:"Included with museum admission",notes:"Mahjong in Bogart Court: take a lesson and play all day.",url:"https://calendar.asianart.org/",flag:"Not on your list or Play Mahjong SF's current schedule; from the museum's past Sunday listings. Check its calendar."},
+  {d:0,v:["aam"],t:"Sundays at the Asian Art Museum",s:10.5,e:16,st:"chinese",freq:"Most Sundays",cost:"Included with museum admission",notes:"Mahjong in Bogart Court: take a lesson and play all day.",url:"https://calendar.asianart.org/"},
 ];
