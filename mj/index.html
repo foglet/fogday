@@ -105,7 +105,6 @@ footer a{color:inherit}
       <span><b style="background:var(--red)"></b>Hong Kong</span>
       <span><b style="background:var(--blue)"></b>American</span>
       <span><b style="background:var(--both)"></b>Both styles</span>
-      <span><b style="background:var(--na)"></b>Style not listed</span>
     </div>
   </header>
 
@@ -246,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
       '<span style="min-width:0">' +
         '<span class="t">' + esc(ev.t) + '</span>' +
         '<span class="meta"><span class="time">' + (state.day === "all" ? DAYS[ev.d].slice(0, 3) + ' · ' : '') + span(ev) + '</span>' +
-          (ev.st === 'both' ? ['chinese', 'american'] : [ev.st]).map(function (k) { return '<span class="pill" style="color:' + STY[k][1] + '">' + STY[k][0] + '</span>'; }).join('') + (ev.freq ? '<span>' + esc(ev.freq) + '</span>' : '') + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
+          (ev.st === 'both' ? ['chinese', 'american'] : ev.st === 'unlisted' ? [] : [ev.st]).map(function (k) { return '<span class="pill" style="color:' + STY[k][1] + '">' + STY[k][0] + '</span>'; }).join('') + (ev.freq ? '<span>' + esc(ev.freq) + '</span>' : '') + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
         '<span class="meta block">' + venues + '</span>' +
         (ev.notes ? '<span class="notes">' + esc(ev.notes) + '</span>' : '') +
         (ev.how ? '<span class="meta block">' + esc(ev.how) + '</span>' : '') +
