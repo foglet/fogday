@@ -2,7 +2,7 @@
 // Edit this file to add or change venues and weekly events.
 // Venue: n = name, a = address, ll = [lat, lon], approx = true if the pin is a guess.
 // Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = title, s/e = start/end in 24h decimals (null = not listed),
-//        st = chinese | american | both | games, cost, notes, how (sign-up/contact), flag (shown in red: unverified detail).
+//        st = chinese | american | both | games, cost, notes, how (sign-up/contact), url (More info link), flag (shown in red: unverified detail).
 // Venues. Coordinates are approximate street-address positions.
 window.MJ_VENUES = {
   mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313]},
@@ -52,5 +52,6 @@ window.MJ_EVENTS = [
   {d:5,v:["udR"],t:"Chinese open play (Rockridge)",s:17.5,e:20.5,st:"chinese",notes:"Same format as the Bernal Tuesday night.",how:"Tickets required",flag:"Time assumed from the Bernal night and the venue's Eventbrite (starts 5:30 pm)."},
   {d:6,v:["yuja"],t:"Mahjong Saturdays",s:16,e:19,st:"chinese",cost:"Free",notes:"Open play, Chinese style. No registration."},
   {d:6,v:["dolores"],t:"Open mahjong play",s:12,e:16,st:"chinese",notes:"Chinese style. Bring a set if you can."},
+  {d:6,v:["mrmj"],t:"Mahjong, drinks and DJs",s:19.5,e:23.5,st:"chinese",notes:"Chinese style mahjong with drinks and DJs.",url:"https://www.eventbrite.com/o/109673752611"},
 ];
 
