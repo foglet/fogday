@@ -51,10 +51,9 @@ zoom: 11.8
      --bar is how much of it they cover, to keep Mapbox's bottom controls and attribution in view. */
   :root { --bar: 0px; }
   @supports (height: 100lvh) { :root { --bar: calc(100lvh - 100svh); } }
-  #map { position: fixed; top: 0; left: 0; right: 0; height: 100%; }
+  /* Absolute, not fixed: Safari 26 paints page content under its floating toolbar but clips fixed layers at its edge. */
+  #map { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
   @supports (height: 100lvh) { #map { height: 100lvh; } }
-  /* Safari 26 clips fully opaque fixed layers at its floating toolbar; a hair under 1 lets the map paint behind it. */
-  #map { opacity: .999; }
 
   /* Frosted panels over the map */
   .title, .controls {
