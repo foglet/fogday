@@ -1,7 +1,7 @@
 ---
 layout: null   # self-contained page; also served at /mahjong (see mahjong/index.html)
 title: Bay Area Mahjong Weekly
-description: Come and play.
+description: Come and play. Schedules are recurring and subject to change.
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 map_style: mapbox://styles/mapbox/light-v11
 ---
@@ -80,6 +80,8 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 .ev .body{min-width:0;position:relative}
 .maplink{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--felt);text-decoration:none;border:1px solid var(--felt);border-radius:999px;padding:4px;white-space:nowrap;line-height:1}
 .maplink svg{display:block}
+.vlink{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+.vlink:hover{text-decoration-color:currentColor}
 .maplink:hover{background:var(--felt);color:var(--bone)}
 .ev .body > .maplink{position:absolute;top:0;right:0}
 .ev .body > span.maplink{border-style:dashed;padding:3px 7px 3px 4px}
@@ -107,7 +109,7 @@ footer a{color:inherit}
   <header>
     <div>
       <h1>Bay Area <span>Mahjong</span> Weekly</h1>
-      <p class="sub">Come and play.</p>
+      <p class="sub">Come and play. Schedules are recurring and subject to change.</p>
     </div>
     <div class="legend" aria-label="Style key">
       <span><b style="background:var(--red)"></b>Hong Kong</span>
@@ -129,7 +131,7 @@ footer a{color:inherit}
     <section class="agenda" id="agenda" aria-live="polite"></section>
   </main>
 
-  <footer>Schedules are recurring and change. Contact the host if needed. Red notes mark times or details that came from somewhere other than the original list. Pins are placed from street addresses. A map by <a href="https://fogday.com/">Fogday Studios</a>.</footer>
+  <footer>Contact the host if needed. Red notes mark times or details that came from somewhere other than the original list. Pins are placed from street addresses. A map by <a href="https://fogday.com/">Fogday Studios</a>.</footer>
 </div>
 
 <script>
@@ -160,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
              (state.style === "all" || ev.st === state.style || ev.st === "both");
     });
   }
+  function vname(v) { return V[v].w ? '<a class="vlink" href="' + esc(V[v].w) + '" target="_blank" rel="noopener">' + esc(V[v].n) + '</a>' : esc(V[v].n); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
   // ---- map
@@ -197,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var here = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })
         .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + " · " + esc(e.t); }).join("<br>");
       var pop = new mapboxgl.Popup({ offset: 20, closeButton: false })
-        .setHTML('<b>' + esc(V[v].n) + '</b><br>' + esc(V[v].a) + (V[v].approx ? ' <i>(location approx.)</i>' : '') + '<br>' + here);
+        .setHTML('<b>' + vname(v) + '</b><br>' + esc(V[v].a) + (V[v].approx ? ' <i>(location approx.)</i>' : '') + '<br>' + here);
       el.addEventListener('click', function () {
         state.sel = [v]; render(false);
         var row = document.querySelector('.ev[data-v~="' + v + '"]'); if (row) row.scrollIntoView({ block: 'nearest', behavior: calm.matches ? 'auto' : 'smooth' });
@@ -252,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function mapURL(v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(V[v].n + ', ' + V[v].a.replace(/ \(.*\)$/, '')); }
     function mapA(v) { return '<a class="maplink" href="' + mapURL(v) + '" target="_blank" rel="noopener" aria-label="Open ' + esc(V[v].n) + ' in Google Maps" title="Open in Google Maps">' + PIN + '</a>'; }
     var one = ev.v.length === 1;
-    var venues = ev.v.map(function (v) { return esc(V[v].n) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a) + (one ? '' : mapA(v)); }).join("<br>");
+    var venues = ev.v.map(function (v) { return vname(v) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a) + (one ? '' : mapA(v)); }).join("<br>");
     b.innerHTML = '<span class="tile">' + (ev.v.length > 2 ? ev.v.length + '×' : ev.v.map(function (v) { return vnum[v]; }).join('·')) + '</span>' +
       '<span class="body">' + (one ? mapA(ev.v[0]) : '<span class="maplink" aria-hidden="true">' + PIN + ev.v.length + '</span>') +
         '<span class="t">' + esc(ev.t) + '</span>' +
