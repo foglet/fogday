@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var st = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })[0].st;
       var el = document.createElement('button');
       el.type = 'button'; el.className = 'mk' + (state.sel && state.sel.indexOf(v) >= 0 ? ' on' : '');
-      el.style.setProperty('--c', STY[st][1]); if (st === 'both') el.classList.add('both'); el.textContent = vnum[v];
+      el.style.setProperty('--c', st === 'both' ? 'var(--blue)' : STY[st][1]); if (st === 'both') el.classList.add('both'); el.textContent = vnum[v];
       el.setAttribute('aria-label', V[v].n);
       var here = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })
         .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + " · " + esc(e.t); }).join("<br>");
