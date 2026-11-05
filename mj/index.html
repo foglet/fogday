@@ -66,7 +66,8 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 .mk{width:24px;height:30px;border-radius:4px;background:var(--tile);border:1px solid var(--tile-edge);
   box-shadow:0 3px 0 var(--c),0 4px 6px rgba(0,0,0,.18);display:grid;place-items:center;font:700 12px var(--body);color:var(--ink);cursor:pointer;position:relative}
 .mk::after{content:"";position:absolute;left:4px;right:4px;bottom:4px;height:3px;border-radius:2px;background:var(--stripe,var(--c))}
-.mk.both{--c:var(--blue);--stripe:linear-gradient(90deg,var(--red) 50%,var(--blue) 50%)}
+.mk.both{--c:var(--blue)}
+.mk.both::before{content:"";position:absolute;left:4px;right:4px;bottom:9px;height:3px;border-radius:2px;background:var(--red)}
 .mk.on{outline:3px solid var(--sel);z-index:2}
 .mapboxgl-popup-content{font-family:var(--body);font-size:13px;padding:10px 12px;border-radius:8px}
 .mapboxgl-popup-content b{font-size:14px}
@@ -76,7 +77,11 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 .dayhead span{color:var(--muted);font-size:13px}
 .ev{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 10px 10px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:transparent;text-align:left;font:inherit;color:inherit;width:100%}
 .ev:hover,.ev.on{background:var(--paper);border-color:var(--line)}
-.ev .tile{width:30px;height:38px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);display:grid;place-items:center;font-weight:700;font-size:13px}
+.ev .tile{width:30px;height:38px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);display:grid;place-items:center;font-weight:700;font-size:13px;position:relative;padding-bottom:6px}
+/* style lines on the numbered tiles: red = Hong Kong, blue = American, both = red over blue */
+.ev .tile::after{content:"";position:absolute;left:4px;right:4px;bottom:4px;height:3px;border-radius:2px;background:var(--c1,transparent)}
+.ev .tile.two{padding-bottom:11px}
+.ev .tile.two::before{content:"";position:absolute;left:4px;right:4px;bottom:9px;height:3px;border-radius:2px;background:var(--red)}
 .ev .t{font-weight:600;font-size:15px;line-height:1.3;display:block;padding-right:44px}
 .ev .body{min-width:0;position:relative}
 .maplink{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border:0;padding:2px;white-space:nowrap;line-height:1}
@@ -256,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function mapA(v) { return '<a class="maplink" href="' + mapURL(v) + '" target="_blank" rel="noopener" aria-label="Open ' + esc(V[v].n) + ' in Google Maps" title="Open in Google Maps">' + PIN + '</a>'; }
     var one = ev.v.length === 1;
     var venues = ev.v.map(function (v) { return vname(v) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a) + (one ? '' : mapA(v)); }).join("<br>");
-    b.innerHTML = '<span class="tile">' + (ev.v.length > 2 ? ev.v.length + '×' : ev.v.map(function (v) { return vnum[v]; }).join('·')) + '</span>' +
+    b.innerHTML = '<span class="tile' + (ev.st === 'both' ? ' two' : '') + '" style="--c1:' + (ev.st === 'both' ? 'var(--blue)' : ev.st === 'unlisted' ? 'transparent' : col) + '">' + (ev.v.length > 2 ? ev.v.length + '×' : ev.v.map(function (v) { return vnum[v]; }).join('·')) + '</span>' +
       '<span class="body">' + (one ? mapA(ev.v[0]) : '<span class="maplink" aria-hidden="true">' + PIN + ev.v.length + '</span>') +
         '<span class="t">' + esc(ev.t) + '</span>' +
         '<span class="meta"><span class="time">' + (state.day === "all" ? DAYS[ev.d].slice(0, 3) + ' · ' : '') + span(ev) + '</span>' +
