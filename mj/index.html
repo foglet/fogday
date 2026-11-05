@@ -26,7 +26,7 @@ map_style: mapbox://styles/mapbox/light-v11
 /* Day tiles on top, Mapbox Light map left, that day's agenda right; stacks on phones */
 :root{
   --felt:#1f5c4a; --bone:#fbf8f1; --paper:#f3efe4; --ink:#1d2421; --muted:#5f6b66; --line:#d9d3c4;
-  --red:#b8352b; --blue:#2c5b9e; --both:#1f7a5c; --games:#8a6d2c;
+  --red:#b8352b; --blue:#2c5b9e; --both:#1f7a5c; --games:#8a6d2c; --na:#7a8580;
   --tile:#fffdf7; --tile-edge:#c9c0aa; --sel:#e8b43a;
   --display:"Young Serif", Georgia, "Times New Roman", serif;
   --body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -108,6 +108,7 @@ footer a{color:inherit}
       <span><b style="background:var(--blue)"></b>American</span>
       <span><b style="background:var(--both)"></b>Both styles</span>
       <span><b style="background:var(--games)"></b>General games</span>
+      <span><b style="background:var(--na)"></b>Style not listed</span>
     </div>
   </header>
 
@@ -133,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var V = window.MJ_VENUES, E = window.MJ_EVENTS;
   var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   var ORDER = [1,2,3,4,5,6,0];
-  var STY = {chinese:["Chinese / HK","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], games:["General games","var(--games)"]};
+  var STY = {chinese:["Chinese / HK","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], games:["General games","var(--games)"], unlisted:["Style not listed","var(--na)"]};
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   // Stable venue numbers across the week.
