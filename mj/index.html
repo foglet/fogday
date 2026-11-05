@@ -1,6 +1,6 @@
 ---
 layout: null   # self-contained page; also served at /mahjong (see mahjong/index.html)
-title: "Bay Area Mahjong: Weekly Play"
+title: Bay Area Mahjong Weekly
 description: Come and play.
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 map_style: mapbox://styles/mapbox/light-v11
@@ -83,6 +83,7 @@ main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;
 .ev .block{display:block}
 .ev .time{color:var(--ink);font-weight:600}
 .ev .notes{font-size:13.5px;margin-top:3px;max-width:62ch;display:block}
+.ev .more{display:inline-block;font-size:13px;font-weight:600;color:var(--felt);margin-top:3px}
 .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid currentColor}
 .flag{font-size:12px;color:var(--red);margin-top:3px;display:block}
 .bar{position:relative;height:6px;background:var(--line);border-radius:3px;margin-top:7px}
@@ -99,7 +100,7 @@ footer a{color:inherit}
 <div class="wrap">
   <header>
     <div>
-      <h1>Bay Area <span>Mahjong</span>: Weekly Play</h1>
+      <h1>Bay Area <span>Mahjong</span> Weekly</h1>
       <p class="sub">Come and play.</p>
     </div>
     <div class="legend" aria-label="Style key">
@@ -234,11 +235,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // ---- agenda
   function evRow(ev) {
     var col = STY[ev.st][1];
-    var b = document.createElement('button'); b.type = 'button';
+    var b = document.createElement('div'); b.tabIndex = 0; b.setAttribute('role', 'button');
     b.className = 'ev' + (state.sel && ev.v.some(function (v) { return state.sel.indexOf(v) >= 0; }) ? ' on' : '');
     b.dataset.v = ev.v.join(" ");
-    var L = 11, R = 23, pct = function (h) { return (h - L) / (R - L) * 100; };
-    var bar = ev.s == null ? "" : '<span class="bar block" style="color:' + col + '" title="11 am to 11 pm"><i class="' + (ev.e == null ? 'open' : '') +
+    var L = 11, R = 24, pct = function (h) { return (h - L) / (R - L) * 100; };
+    var bar = ev.s == null ? "" : '<span class="bar block" style="color:' + col + '" title="11 am to midnight"><i class="' + (ev.e == null ? 'open' : '') +
       '" style="left:' + pct(ev.s).toFixed(1) + '%;width:' + (ev.e == null ? 8 : pct(ev.e) - pct(ev.s)).toFixed(1) + '%;background:' + col + '"></i></span>';
     var venues = ev.v.map(function (v) { return esc(V[v].n) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a); }).join("<br>");
     b.innerHTML = '<span class="tile">' + (ev.v.length > 2 ? ev.v.length + '×' : ev.v.map(function (v) { return vnum[v]; }).join('·')) + '</span>' +
@@ -249,16 +250,18 @@ document.addEventListener('DOMContentLoaded', function () {
         '<span class="meta block">' + venues + '</span>' +
         (ev.notes ? '<span class="notes">' + esc(ev.notes) + '</span>' : '') +
         (ev.how ? '<span class="meta block">' + esc(ev.how) + '</span>' : '') +
+        (ev.url ? '<a class="more" href="' + esc(ev.url) + '" target="_blank" rel="noopener">More info</a>' : '') +
         (ev.flag ? '<span class="flag">' + esc(ev.flag) + '</span>' : '') +
         bar +
       '</span>';
-    b.onclick = function () { state.sel = ev.v; render(false); focusSel(); };
+    b.onclick = function (e) { if (e.target.closest('a')) return; state.sel = ev.v; render(false); focusSel(); };
+    b.onkeydown = function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); b.click(); } };
     return b;
   }
   function drawAgenda(evs) {
     var el = document.getElementById('agenda'); el.innerHTML = "";
     var head = document.createElement('div'); head.className = 'dayhead';
-    head.innerHTML = '<h2>' + (state.day === "all" ? "All week" : DAYS[state.day]) + '</h2><span>' + (state.day === today ? 'Today · ' : '') + 'bars run 11 am–11 pm</span>';
+    head.innerHTML = '<h2>' + (state.day === "all" ? "All week" : DAYS[state.day]) + '</h2><span>' + (state.day === today ? 'Today · ' : '') + 'bars run 11 am–midnight</span>';
     el.appendChild(head);
     if (!evs.length) {
       var e = document.createElement('div'); e.className = 'empty';
