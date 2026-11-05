@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var today = new Date().getDay();
   function dayFromHash() { var h = location.hash.slice(1).toLowerCase(); if (h === "all") return "all"; var i = DAYKEYS.indexOf(h); return i >= 0 ? i : null; }
   var hd = dayFromHash();
-  var state = { day: hd != null ? hd : today, style: "all", sel: null };
+  var state = { day: hd != null ? hd : today, style: "chinese", sel: null };
 
   function fmt(h) { var H = Math.floor(h), M = Math.round((h - H) * 60), ap = H >= 12 ? "pm" : "am", h12 = ((H + 11) % 12) + 1; return h12 + (M ? ":" + String(M).padStart(2, "0") : "") + " " + ap; }
   function span(ev) { if (ev.s == null) return "Time not listed"; return ev.e == null ? fmt(ev.s) + " start" : fmt(ev.s) + "–" + fmt(ev.e); }
