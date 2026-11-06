@@ -117,7 +117,7 @@ window.MJ_I18N = {
     more:'More info', barTitle:'10 am to midnight', empty:'Nothing listed for this day.',
     noLoad:'The schedule could not load. Reload the page to try again.',
     noMap:'The map could not load in this browser, so the list shows every venue and time. If you use a content blocker or Lockdown Mode, allow api.mapbox.com and reload to see the map.',
-    thanks:'Special thanks to {a} and {b}.',
+    thanks:'An imprint of {a}',
     langAria:'Language: English. Tap for {next}.'
   },
   fr: {
@@ -134,7 +134,7 @@ window.MJ_I18N = {
     more:'Plus d’infos', barTitle:'De 10:00 à minuit', empty:'Rien de prévu ce jour-là.',
     noLoad:'Le programme n’a pas pu se charger. Rechargez la page pour réessayer.',
     noMap:'La carte n’a pas pu se charger dans ce navigateur ; la liste indique donc tous les lieux et horaires. Si vous utilisez un bloqueur de contenu ou le mode Isolement, autorisez api.mapbox.com et rechargez pour voir la carte.',
-    thanks:'Merci tout particulier à {a} et à {b}.',
+    thanks:'Un label de {a}',
     langAria:'Langue : français. Touchez pour {next}.'
   },
   es: {
@@ -151,7 +151,7 @@ window.MJ_I18N = {
     more:'Más información', barTitle:'De 10:00 a medianoche', empty:'No hay nada este día.',
     noLoad:'El programa no se pudo cargar. Recargue la página para intentarlo de nuevo.',
     noMap:'El mapa no se pudo cargar en este navegador, así que la lista muestra todos los lugares y horarios. Si usa un bloqueador de contenido o el modo de aislamiento, permita api.mapbox.com y recargue para ver el mapa.',
-    thanks:'Un agradecimiento especial a {a} y a {b}.',
+    thanks:'Un sello de {a}',
     langAria:'Idioma: español. Toque para {next}.'
   },
   zh: {
@@ -168,7 +168,7 @@ window.MJ_I18N = {
     more:'更多信息', barTitle:'上午 10 点至午夜', empty:'这一天没有活动。',
     noLoad:'日程无法加载。请重新加载页面再试。',
     noMap:'此浏览器无法加载地图，因此列表显示所有场地和时间。如果你使用内容拦截器或锁定模式，请允许 api.mapbox.com 并重新加载以查看地图。',
-    thanks:'特别感谢 {a} 和 {b}。',
+    thanks:'{a} 旗下品牌',
     langAria:'语言：中文。点按切换到{next}。'
   }
 };

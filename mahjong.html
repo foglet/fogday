@@ -146,7 +146,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .bar i.open{background-image:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 10px)!important}
 .empty{grid-column:1/-1;padding:22px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
 .grouphead{font-family:var(--display);font-size:19px;margin:6px 0 -6px;color:var(--felt)}
-footer{font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;justify-content:space-between;gap:12px}   /* language code bottom left, credit far right */
+footer{font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;justify-content:space-between;gap:12px}   /* language code bottom left, imprint credit far right */
 #thanks{min-width:0;text-align:right}
 footer a{color:inherit}
 @media (prefers-reduced-motion:no-preference){.ev,.day{transition:background .15s,border-color .15s,opacity .15s}}
@@ -177,7 +177,7 @@ footer a{color:inherit}
     <div id="spacer" aria-hidden="true"></div>   <!-- room so the last listings can scroll up to just under the map -->
   </main>
 
-  <footer><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button><span id="thanks">Special thanks to <a href="https://www.mrmahjongs.com">Mr. Mahjong</a> and <a href="https://fogday.com/">Fogday Studios</a>.</span></footer>
+  <footer><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button><span id="thanks">An imprint of <a href="https://fogday.com/">Fogday Studios</a></span></footer>
 </div>
 
 <script>
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.title = L.title + ' · Fogday Studios';
     document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = L[el.dataset.i18n]; });
     document.querySelectorAll('[data-i18n-aria]').forEach(function (el) { el.setAttribute('aria-label', L[el.dataset.i18nAria]); });
-    document.getElementById('thanks').innerHTML = tr('thanks', {a: thanksLinks[0], b: thanksLinks[1]});   // the two links, kept as written
+    document.getElementById('thanks').innerHTML = tr('thanks', {a: thanksLinks[0]});   // the Fogday Studios link, kept as written
     var next = I18N.order[(I18N.order.indexOf(lang) + 1) % I18N.order.length], b = document.getElementById('langBtn');
     b.textContent = lang.toUpperCase();
     b.setAttribute('aria-label', tr('langAria', {next: I18N[next].name})); b.title = I18N[next].name;
