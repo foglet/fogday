@@ -55,6 +55,7 @@ h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underlin
 .sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
 .sub.play .zimo [lang]{font-family:"Songti SC","STSong","Noto Serif CJK TC","Noto Serif TC","Noto Serif CJK SC","SimSun",serif}   /* same Chinese serif as the dragon tiles */
 .sub.play .pinyin{font-family:var(--body);font-size:15px;color:var(--muted)}   /* same small grey type as "Confirm with venue." */
+:root:lang(zh) .sub.play .pinyin{display:none}   /* Chinese readers need no pinyin for 自摸 */
 .sub.play{color:var(--red);font-family:var(--display);font-size:clamp(17px,4.6vw,22px);font-weight:400;line-height:1.2;margin-top:6px}   /* same size as the subtitle */   /* 1.5em of the 15px base = 22.5px */
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);align-items:center}
 .legend span{display:inline-flex;align-items:center;gap:6px}
