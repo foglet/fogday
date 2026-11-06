@@ -62,7 +62,11 @@ h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underlin
 .day{appearance:none;border:1px solid transparent;background:transparent;color:hsl(220,4%,52%);   /* days not selected: no border, no fill */
   border-radius:6px;padding:7px 1px 5px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .day .d{font-family:var(--body);font-size:clamp(12px,3.3vw,15px);font-weight:300;letter-spacing:.06em;line-height:1}   /* Rubik capitals, small */
-.day.today .d::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin-left:3px;vertical-align:super}
+/* red line under the chosen day (today when the page opens); it slides to a new day, overshoots a touch, then settles */
+.dayline{position:absolute;left:0;top:0;height:2px;border-radius:1px;background:var(--red);pointer-events:none;
+  transition:transform .45s cubic-bezier(.5,0,.3,1.45),width .45s cubic-bezier(.5,0,.3,1.45)}
+.dayline.still{transition:none}
+@media (prefers-reduced-motion:reduce){.dayline{transition:none}}
 .day[aria-pressed="true"]{border-color:var(--felt);color:var(--felt)}   /* selected: green 1px outline, green bold text, no fill */
 .day[aria-pressed="true"] .d{font-weight:700}
 .day[aria-pressed="false"]:hover{color:hsl(220,5%,25%)}
@@ -262,7 +266,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---- day tiles and style filter
   function drawDays() {
-    var el = document.getElementById('days'); el.innerHTML = "";
+    var el = document.getElementById('days');
+    [].slice.call(el.querySelectorAll('.day')).forEach(function (n) { n.remove(); });   // keep the red line so it can slide
     ORDER.map(function (d) { return { d: d, lab: DAYS[d].slice(0, 3).toUpperCase() }; }).forEach(function (it) {
       var n = E.filter(function (ev) { return it.d === "all" || ev.d === it.d; }).length;
       var b = document.createElement('button');
@@ -276,6 +281,22 @@ document.addEventListener('DOMContentLoaded', function () {
       };
       el.appendChild(b);
     });
+    placeLine(false);
+  }
+  var dayLine = null, lineReady = false;
+  function placeLine(still) {
+    var el = document.getElementById('days'), b = el.querySelector('.day[aria-pressed="true"] .d');
+    if (!dayLine) { dayLine = document.createElement('span'); dayLine.className = 'dayline still'; dayLine.setAttribute('aria-hidden', 'true'); el.appendChild(dayLine); }
+    if (!b) { dayLine.hidden = true; return; }
+    dayLine.hidden = false;
+    var box = el.getBoundingClientRect(), r = b.getBoundingClientRect();
+    if (!r.width) return;
+    var first = !lineReady || still;
+    dayLine.classList.toggle('still', first);
+    dayLine.style.top = (r.bottom - box.top + 4) + 'px';
+    dayLine.style.width = r.width + 'px';
+    dayLine.style.transform = 'translateX(' + (r.left - box.left) + 'px)';
+    if (first) { dayLine.getBoundingClientRect(); lineReady = true; }
   }
   // ---- agenda
   function evRow(ev) {
@@ -362,7 +383,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (map) map.on('load', function () { fit(drawMap(visible())); });
   // the map pins just below the day buttons, whatever their height
   function setDayH() { document.documentElement.style.setProperty('--dayh', document.getElementById('days').offsetHeight + 'px'); }
-  window.addEventListener('resize', setDayH);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { placeLine(true); });   // re-measure once Rubik loads
+  window.addEventListener('resize', function () { setDayH(); placeLine(true); });
   if (window.ResizeObserver) new ResizeObserver(setDayH).observe(document.getElementById('days'));
   render(false);
 });
