@@ -1,0 +1,361 @@
+---
+layout: null   # self-contained page at fogday.com/mahjong; fogday.com/mj/ forwards here (mj/index.html). Schedule data stays in mj/data.js
+title: Bay Area Mahjong
+description: Recurring weekly mahjong play around the Bay Area. Come and play. Confirm times with venue.
+access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
+map_style: mapbox://styles/mapbox/light-v11
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<link rel="canonical" href="https://fogday.com/mahjong">
+
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
+<script src="/mj/data.js?v={{ site.time | date: '%s' }}" defer></script>   <!-- new build, new URL: browsers fetch the latest schedule -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600;700&display=swap">
+
+<style>
+/* Day tiles on top, Mapbox Light map left, that day's agenda right; stacks on phones */
+:root{
+  --felt:#1f5c4a; --bone:#fbf8f1; --paper:#f3efe4; --ink:#1d2421; --muted:#5f6b66; --line:#d9d3c4;
+  --red:#b8352b; --blue:#2c5b9e; --both:#1f7a5c; --na:#7a8580;
+  --tile:#fffdf7; --tile-edge:#c9c0aa; --sel:#e8b43a;
+  --display:"Young Serif", Georgia, "Times New Roman", serif;
+  --body:"Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+html{overflow-x:clip}
+body{overflow-x:clip;background:var(--bone);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(40px,env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
+h1{font-family:var(--display);font-weight:400;font-size:min(42px,calc((100vw - 34px) / 12.2));line-height:1.05;margin:0;white-space:nowrap;color:var(--felt);letter-spacing:.03em}  /* BAY AREA MAHJONG is 11.35em (+ tracking) in Young Serif: one line down to small phones */
+.subtitle{font-family:var(--body);font-size:15px;line-height:1.5;color:var(--muted);margin:4px 0 0}   /* same as "Confirm with venue." */
+.subtitle .sub{font-family:var(--body);font-size:15px;margin:0 0 0 8px;white-space:nowrap}   /* same small grey text as the line below, beside the subtitle */
+h1 span{color:var(--felt)}
+h1 a{color:inherit;text-decoration:none}
+h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
+.sub.play{color:var(--red);font-family:var(--display);font-size:clamp(17px,4.6vw,22px);font-weight:400;line-height:1.2;margin-top:6px}   /* same size as the subtitle */   /* 1.5em of the 15px base = 22.5px */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lt{display:inline-grid;place-items:center;width:17px;height:23px;border-radius:3px;background:var(--tile);border:1px solid var(--tile-edge);font:normal 400 13px "Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;position:relative}
+.lt.red{color:var(--red)}
+.lt.green{color:var(--both)}
+.lt.white::after{content:"";position:absolute;inset:4px 3px;border:1.5px solid var(--blue);border-radius:1px}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(4px,1vw,8px);
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:6;padding-block:8px;background:var(--bone);
+  box-shadow:0 0 0 100vmax var(--bone);clip-path:inset(0 -100vmax)}   /* day buttons stay pinned above the map; the band spans the window */
+.day{appearance:none;border:1px solid hsl(220,5%,86%);background:hsl(220,5%,92%);color:hsl(220,4%,52%);   /* days not selected: the park grey of Mapbox Light (the Presidio) */
+  border-radius:6px;padding:7px 1px 5px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.day .d{font-family:var(--display);font-size:clamp(13px,3.9vw,20px);line-height:1}
+.day.today .d::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin-left:3px;vertical-align:super}
+.day[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--bone)}
+.day[aria-pressed="false"]:hover{background:hsl(220,5%,88%);color:hsl(220,5%,38%)}
+.day:focus-visible,.ev:focus-visible,.mk:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+main{display:flex;flex-direction:column;gap:20px}
+@media (max-width:820px){footer{text-align:center;max-width:none}}
+/* the map runs the full width of the window, edge to edge */
+.mapbox{width:100vw;margin-inline:calc(50% - 50vw);border-block:1px solid var(--line);overflow:hidden;background:var(--paper);
+  position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--dayh,56px));z-index:5;box-shadow:0 6px 12px -8px rgba(0,0,0,.25)}   /* listings scroll under the map */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bone)}
+.maphead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+#map{height:min(520px,55vh);width:100%}
+#map.nomap{height:auto;padding:16px;color:var(--muted);font-size:14px}
+@media (max-width:820px){#map{height:44vh}#map .mapboxgl-ctrl-zoom-in,#map .mapboxgl-ctrl-zoom-out,#map .mapboxgl-ctrl-group{display:none}}   /* phones pinch to zoom; no +/- buttons */
+.vbtn{border:1px solid var(--line);background:var(--bone);color:var(--ink);font:inherit;font-size:12px;padding:3px 9px;border-radius:5px;cursor:pointer}
+/* map pins drawn as little mahjong tiles */
+/* map pins are mahjong tiles: red dragon (中) = Hong Kong, white dragon (blue frame) = American, green dragon (發) = both */
+.mk{display:flex;gap:2px;padding:0;border:0;background:none;cursor:pointer;border-radius:6px}
+.mk .tl{width:30px;height:40px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);box-shadow:0 2px 6px rgba(0,0,0,.22);
+  display:grid;place-items:center;font:700 13px var(--body);color:var(--ink);position:relative}
+.mk .red,.mk .green{font:400 22px "Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;color:var(--red)}
+.mk .green{color:var(--both)}
+.mk .white::after{content:"";position:absolute;inset:7px 6px;border:2.5px solid var(--blue);border-radius:2px}
+.mk.on{outline:3px solid var(--sel);z-index:2}
+.mapboxgl-popup-content{font-family:var(--body);font-size:13px;padding:10px 12px;border-radius:8px}
+.mapboxgl-popup-content b{font-size:14px}
+.agenda{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:10px 18px;align-items:start;min-width:0}
+.dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:2px solid var(--ink);padding-bottom:4px}
+.dayhead h2{font-family:var(--display);font-weight:400;font-size:26px;margin:0}
+.dayhead span{color:var(--muted);font-size:13px}
+.ev{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 10px 10px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:transparent;text-align:left;font:inherit;color:inherit;width:100%}
+.ev:hover{background:var(--paper);border-color:var(--line)}
+/* a tapped listing stands out; the rest step back until the day changes */
+.ev.on{background:var(--paper);border:2px solid var(--felt);box-shadow:0 2px 10px rgba(31,92,74,.18)}
+.agenda.picked .ev:not(.on){opacity:.45}
+.agenda.picked .ev:not(.on):hover{opacity:.8}
+.ev .tile{width:30px;height:40px;border-radius:5px;background:var(--tile);border:1px solid var(--tile-edge);display:grid;place-items:center;position:relative;
+  font:400 22px "Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif}
+/* listing tiles match the map pins: red dragon = Hong Kong, white dragon = American, green dragon = both */
+.ev .tile.red{color:var(--red)}
+.ev .tile.green{color:var(--both)}
+.ev .tile.white::after{content:"";position:absolute;inset:7px 6px;border:2.5px solid var(--blue);border-radius:2px}
+.ev .t{font-weight:600;font-size:15px;line-height:1.3;display:block;padding-right:44px}
+.ev .body{min-width:0;position:relative}
+.maplink{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border:0;padding:2px;white-space:nowrap;line-height:1}
+.maplink svg{display:block}
+.vlink{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+.vlink:hover{text-decoration-color:currentColor}
+.maplink:hover{color:var(--ink)}
+.ev .body > .maplink{position:absolute;top:0;right:0}
+.ev .body > span.maplink{padding:2px}
+.ev .meta .maplink{margin-left:6px;padding:2px;vertical-align:-3px}
+.ev .meta .maplink svg{width:13px;height:13px}
+.ev .meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 10px;font-variant-numeric:tabular-nums}
+.ev .block{display:block}
+.ev .time{color:var(--ink);font-weight:600}
+.ev .notes{font-size:13.5px;margin-top:3px;max-width:62ch;display:block}
+.ev .more{display:inline-block;font-size:13px;font-weight:600;color:var(--felt);margin-top:3px}
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid currentColor}
+.flag{font-size:12px;color:var(--red);margin-top:3px;display:block}
+.bar{position:relative;height:6px;background:var(--line);border-radius:3px;margin-top:7px}
+.bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.bar i.open{background-image:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 10px)!important}
+.empty{grid-column:1/-1;padding:22px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
+.grouphead{font-family:var(--display);font-size:19px;margin:6px 0 -6px;color:var(--felt)}
+footer{font-size:12.5px;color:var(--muted);max-width:80ch}
+footer a{color:inherit}
+@media (prefers-reduced-motion:no-preference){.ev,.day{transition:background .15s,border-color .15s,opacity .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><a href="https://fogday.com/mahjong">BAY AREA MAHJONG</a></h1>
+      <p class="subtitle">Weekly Recurring Games. Confirm with venue.</p>
+      <p class="sub play">Come and play.</p>
+    </div>
+    <div class="legend" aria-label="Style key">
+      <span><i class="lt red" aria-hidden="true">中</i>Hong Kong</span>
+      <span><i class="lt white" aria-hidden="true"></i>American</span>
+      <span><i class="lt green" aria-hidden="true">發</i>Both</span>
+    </div>
+  </header>
+
+  <nav class="days" id="days" aria-label="Day of week"></nav>
+
+  <main>
+    <section class="mapbox" aria-label="Map">
+      <div id="map"></div>
+    </section>
+    <section class="agenda" id="agenda" aria-live="polite"></section>
+    <div id="spacer" aria-hidden="true"></div>   <!-- room so the last listings can scroll up to just under the map -->
+  </main>
+
+  <footer>Special thanks to <a href="https://www.mrmahjongs.com">Mr. Mahjong</a> and <a href="https://fogday.com/">Fogday Studios</a>.</footer>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var V = window.MJ_VENUES, E = window.MJ_EVENTS;
+  if (!V || !E) { document.getElementById('agenda').textContent = 'The schedule could not load. Reload the page to try again.'; return; }
+  var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var ORDER = [1,2,3,4,5,6,0];
+  var STY = {chinese:["Hong Kong","var(--red)"], american:["American","var(--blue)"], both:["Both styles","var(--both)"], unlisted:["Style not listed","var(--na)"]};
+  var PIN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Stable venue numbers across the week.
+  var vnum = {}, k = 0;
+  ORDER.forEach(function (d) { E.filter(function (x) { return x.d === d; }).forEach(function (ev) { ev.v.forEach(function (v) { if (!(v in vnum)) vnum[v] = ++k; }); }); });
+
+  var DAYKEYS = ["sun","mon","tue","wed","thu","fri","sat"];
+  var today = new Date().getDay();
+  function dayFromHash() { var h = location.hash.slice(1).toLowerCase(); var i = DAYKEYS.indexOf(h); return i >= 0 ? i : null; }
+  var hd = dayFromHash();
+  var state = { day: hd != null ? hd : today, style: "all", sel: null };
+
+  function fmt(h) { var H = Math.floor(h), M = Math.round((h - H) * 60), ap = H >= 12 ? "pm" : "am", h12 = ((H + 11) % 12) + 1; return h12 + (M ? ":" + String(M).padStart(2, "0") : "") + " " + ap; }
+  function span(ev) { if (ev.s == null) return "Time not listed"; return ev.e == null ? fmt(ev.s) + " start" : fmt(ev.s) + "–" + fmt(ev.e); }
+  function visible() {
+    return E.filter(function (ev) {
+      return (state.day === "all" || ev.d === state.day) &&
+             (state.style === "all" || ev.st === state.style || ev.st === "both");
+    });
+  }
+  function vname(v) { return V[v].w ? '<a class="vlink" href="' + esc(V[v].w) + '" target="_blank" rel="noopener">' + esc(V[v].n) + '</a>' : esc(V[v].n); }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  // ---- map
+  // The calendar must work even when the map can't start (blocked Mapbox script, WebGL off in Lockdown Mode, old browser).
+  var map = null;
+  function mapFailed(why) {
+    map = null;
+    var m = document.getElementById('map');
+    m.className = 'nomap';
+    m.textContent = 'The map could not load in this browser, so the list shows every venue and time. ' +
+      'If you use a content blocker or Lockdown Mode, allow api.mapbox.com and reload to see the map.';
+    if (window.console) console.warn('Map unavailable:', why);
+  }
+  try {
+    if (!window.mapboxgl) throw new Error('Mapbox GL JS did not load');
+    mapboxgl.accessToken = '{{ page.access_token }}';
+    map = new mapboxgl.Map({
+      container: 'map', style: '{{ page.map_style }}',
+      center: [-122.43, 37.77], zoom: 11.5, cooperativeGestures: true,
+      customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a>'
+    });
+    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+  } catch (err) { mapFailed(err); }
+  var markers = {};
+
+  function drawMap(evs) {
+    Object.keys(markers).forEach(function (v) { markers[v].remove(); }); markers = {};
+    var venues = []; evs.forEach(function (e) { e.v.forEach(function (v) { if (venues.indexOf(v) < 0) venues.push(v); }); });
+    if (map) venues.forEach(function (v) {
+      var sts = evs.filter(function (e) { return e.v.indexOf(v) >= 0; }).map(function (e) { return e.st; });
+      var hk = sts.some(function (x) { return x === 'chinese' || x === 'both'; }), am = sts.some(function (x) { return x === 'american' || x === 'both'; });
+      var st = hk && am ? 'both' : hk ? 'chinese' : am ? 'american' : 'unlisted';
+      var el = document.createElement('button');
+      el.type = 'button'; el.className = 'mk' + (state.sel && state.sel.indexOf(v) >= 0 ? ' on' : '');
+      el.innerHTML = st === 'chinese' ? '<span class="tl red">中</span>'
+        : st === 'american' ? '<span class="tl white"></span>'
+        : st === 'both' ? '<span class="tl green">發</span>'
+        : '<span class="tl"></span>';
+      el.setAttribute('aria-label', V[v].n);
+      var here = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })
+        .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + " · " + esc(e.t); }).join("<br>");
+      var pop = new mapboxgl.Popup({ offset: 44, closeButton: false })
+        .setHTML('<b>' + vname(v) + '</b><br>' + esc(V[v].a) + (V[v].approx ? ' <i>(location approx.)</i>' : '') + '<br>' + here);
+      el.addEventListener('click', function () {
+        state.sel = [v]; render(false);
+        var row = document.querySelector('.ev[data-v~="' + v + '"]'); if (row) rowUnderMap(row);
+      });
+      markers[v] = new mapboxgl.Marker({ element: el, anchor: 'bottom' }).setLngLat([V[v].ll[1], V[v].ll[0]]).setPopup(pop).addTo(map);
+    });
+    var n = venues.length;
+    return venues;
+  }
+  function fit(venues) {
+    if (!map || !venues.length) return;
+    var opt = { padding: 50, maxZoom: 14, duration: calm.matches ? 0 : 900 };
+    if (venues.length === 1) { map.easeTo({ center: [V[venues[0]].ll[1], V[venues[0]].ll[0]], zoom: 14, duration: opt.duration }); return; }
+    var b = new mapboxgl.LngLatBounds();
+    venues.forEach(function (v) { b.extend([V[v].ll[1], V[v].ll[0]]); });
+    map.fitBounds(b, opt);
+  }
+  function focusSel() {
+    if (!map || !state.sel) return;
+    if (state.sel.length === 1) { var ll = V[state.sel[0]].ll; map.easeTo({ center: [ll[1], ll[0]], zoom: Math.max(map.getZoom(), 13), duration: calm.matches ? 0 : 600 }); }
+    else fit(state.sel);
+  }
+
+  // ---- day tiles and style filter
+  function drawDays() {
+    var el = document.getElementById('days'); el.innerHTML = "";
+    ORDER.map(function (d) { return { d: d, lab: DAYS[d].slice(0, 3) }; }).forEach(function (it) {
+      var n = E.filter(function (ev) { return it.d === "all" || ev.d === it.d; }).length;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'day' + (it.d === today ? ' today' : '');
+      b.setAttribute('aria-pressed', String(state.day === it.d));
+      b.innerHTML = '<span class="d">' + it.lab + '</span>'; b.setAttribute('aria-label', (it.d === 'all' ? 'All week' : DAYS[it.d]) + ', ' + n + (n === 1 ? ' event' : ' events'));
+      b.onclick = function () {
+        state.day = it.d; state.sel = null;
+        if (location.hash) history.replaceState(null, "", location.pathname);   // a reload opens on today, not the last day picked
+        render(true);
+      };
+      el.appendChild(b);
+    });
+  }
+  // ---- agenda
+  function evRow(ev) {
+    var col = STY[ev.st][1];
+    var b = document.createElement('div'); b.tabIndex = 0; b.setAttribute('role', 'button');
+    b.className = 'ev' + (state.sel && ev.v.some(function (v) { return state.sel.indexOf(v) >= 0; }) ? ' on' : '');
+    b.dataset.v = ev.v.join(" ");
+    var L = 10, R = 24, pct = function (h) { return (h - L) / (R - L) * 100; };
+    var bar = ev.s == null ? "" : '<span class="bar block" style="color:' + col + '" title="10 am to midnight"><i class="' + (ev.e == null ? 'open' : '') +
+      '" style="left:' + pct(ev.s).toFixed(1) + '%;width:' + (ev.e == null ? 8 : pct(ev.e) - pct(ev.s)).toFixed(1) + '%;background:' + (ev.st === 'both' ? 'repeating-linear-gradient(90deg,var(--red) 0 8px,var(--blue) 8px 16px)' : col) + '"></i></span>';
+    function mapURL(v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(V[v].n + ', ' + V[v].a.replace(/ \(.*\)$/, '')); }
+    function mapA(v) { return '<a class="maplink" href="' + mapURL(v) + '" target="_blank" rel="noopener" aria-label="Open ' + esc(V[v].n) + ' in Google Maps" title="Open in Google Maps">' + PIN + '</a>'; }
+    var one = ev.v.length === 1;
+    var venues = ev.v.map(function (v) { return vname(v) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a) + (one ? '' : mapA(v)); }).join("<br>");
+    var dr = ev.st === 'chinese' ? ['red', '中'] : ev.st === 'american' ? ['white', ''] : ev.st === 'both' ? ['green', '發'] : ['', ''];
+    b.innerHTML = '<span class="tile ' + dr[0] + '" aria-hidden="true">' + dr[1] + '</span>' +
+      '<span class="body">' + (one ? mapA(ev.v[0]) : '<span class="maplink" aria-hidden="true">' + PIN + ev.v.length + '</span>') +
+        '<span class="t">' + esc(ev.t) + '</span>' +
+        '<span class="meta"><span class="time">' + (state.day === "all" ? DAYS[ev.d].slice(0, 3) + ' · ' : '') + span(ev) + '</span>' +
+          (ev.st === 'both' ? ['chinese', 'american'] : ev.st === 'unlisted' ? [] : [ev.st]).map(function (k) { return '<span class="pill" style="color:' + STY[k][1] + '">' + STY[k][0] + '</span>'; }).join('') + (ev.freq ? '<span>' + esc(ev.freq) + '</span>' : '') + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
+        '<span class="meta block">' + venues + '</span>' +
+        (ev.notes ? '<span class="notes">' + esc(ev.notes) + '</span>' : '') +
+        (ev.how ? '<span class="meta block">' + esc(ev.how) + '</span>' : '') +
+        (ev.url ? '<a class="more" href="' + esc(ev.url) + '" target="_blank" rel="noopener">More info</a>' : '') +
+        (ev.flag ? '<span class="flag">' + esc(ev.flag) + '</span>' : '') +
+        bar +
+      '</span>';
+    b.onclick = function (e) { if (e.target.closest('a')) return; state.sel = ev.v; render(false); focusSel(); };
+    b.onkeydown = function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); b.click(); } };
+    return b;
+  }
+  function drawAgenda(evs) {
+    var el = document.getElementById('agenda'); el.innerHTML = ""; el.classList.toggle('picked', !!state.sel);
+    if (!evs.length) {
+      var e = document.createElement('div'); e.className = 'empty';
+      e.textContent = "Nothing listed for this day.";
+      el.appendChild(e); return;
+    }
+    var last = null;
+    evs.slice().sort(function (a, b) { return (ORDER.indexOf(a.d) - ORDER.indexOf(b.d)) || ((a.s == null ? 99 : a.s) - (b.s == null ? 99 : b.s)); })
+      .forEach(function (ev) {
+        if (state.day === "all" && ev.d !== last) { var g = document.createElement('div'); g.className = 'grouphead'; g.textContent = DAYS[ev.d]; el.appendChild(g); last = ev.d; }
+        el.appendChild(evRow(ev));
+      });
+  }
+
+  // Tapping a pin scrolls its listing to sit right under the pinned day bar and map
+  function rowUnderMap(row) {
+    var days = document.getElementById('days'), box = document.querySelector('.mapbox'), spacer = document.getElementById('spacer');
+    var stuckTop = parseFloat(getComputedStyle(days).top) || 0;          // safe-area inset at the top
+    var below = stuckTop + days.offsetHeight + box.offsetHeight + 8;      // where the map ends once pinned
+    spacer.style.height = '0px';
+    var target = Math.max(0, row.getBoundingClientRect().top + window.scrollY - below);
+    var from = window.scrollY, dist = target - from;
+    var over = Math.abs(dist) * 0.08 + 4;                                 // room for the small overshoot
+    var room = document.documentElement.scrollHeight - window.innerHeight;
+    if (target + over > room) spacer.style.height = Math.ceil(target + over - room) + 'px';
+    if (calm.matches || Math.abs(dist) < 2) { window.scrollTo(0, target); return; }
+    // ease in, run slightly past, settle back: a gentle bounce (easeOutBack)
+    var c1 = 1.15, c3 = c1 + 1, dur = 650, t0 = null;
+    if (rowUnderMap.raf) cancelAnimationFrame(rowUnderMap.raf);
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var t = Math.min(1, (ts - t0) / dur), u = t - 1;
+      var k = 1 + c3 * u * u * u + c1 * u * u;
+      window.scrollTo(0, from + dist * k);
+      if (t < 1) rowUnderMap.raf = requestAnimationFrame(step);
+    }
+    rowUnderMap.raf = requestAnimationFrame(step);
+  }
+  // a finger or wheel on the page stops the glide at once
+  ['touchstart', 'wheel'].forEach(function (ev) { window.addEventListener(ev, function () { if (rowUnderMap.raf) { cancelAnimationFrame(rowUnderMap.raf); rowUnderMap.raf = 0; } }, { passive: true }); });
+  function render(refit) {
+    if (refit) { var sp = document.getElementById('spacer'); if (sp) sp.style.height = '0px'; }
+    var evs = visible();
+    drawDays(); setDayH(); drawAgenda(evs);
+    var venues = drawMap(evs);
+    if (refit) fit(venues);
+  }
+  window.addEventListener('hashchange', function () { var d = dayFromHash(); if (d != null) { state.day = d; state.sel = null; render(true); } });
+  if (map) map.on('load', function () { fit(drawMap(visible())); });
+  // the map pins just below the day buttons, whatever their height
+  function setDayH() { document.documentElement.style.setProperty('--dayh', document.getElementById('days').offsetHeight + 'px'); }
+  window.addEventListener('resize', setDayH);
+  if (window.ResizeObserver) new ResizeObserver(setDayH).observe(document.getElementById('days'));
+  render(false);
+});
+</script>
+</body>
+</html>
