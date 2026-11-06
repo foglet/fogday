@@ -113,6 +113,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ev .body > span.maplink{padding:2px}
 .ev .meta .maplink{margin-left:6px;padding:2px;vertical-align:-3px}
 .ev .meta .maplink svg{width:13px;height:13px}
+.ev .t .vlink{color:inherit;text-decoration:none}
+.ev .t .vlink:hover{text-decoration:underline;text-underline-offset:2px}
+.ev .t .ename{font-size:13px;font-weight:400;color:var(--muted);margin-left:4px}   /* the host's own name for the night */
 .ev .t .status{font-size:13px;font-weight:400;color:var(--red);margin-left:4px}   /* e.g. Inactive: on the title line, in the same small type as Free */
 .ev .meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 10px;font-variant-numeric:tabular-nums}
 .ev .block{display:block}
@@ -228,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
         : '<span class="tl"></span>';
       el.setAttribute('aria-label', V[v].n);
       var here = evs.filter(function (e) { return e.v.indexOf(v) >= 0; })
-        .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + " · " + esc(e.t); }).join("<br>");
+        .map(function (e) { return (state.day === "all" ? DAYS[e.d].slice(0, 3) + " · " : "") + span(e) + (e.freq ? " (" + esc(e.freq.toLowerCase()) + ")" : "") + (e.t ? " · " + esc(e.t) : ""); }).join("<br>");
       var pop = new mapboxgl.Popup({ offset: 44, closeButton: false })
         .setHTML('<b>' + vname(v) + '</b><br>' + esc(V[v].a) + (V[v].approx ? ' <i>(location approx.)</i>' : '') + '<br>' + here);
       el.addEventListener('click', function () {
@@ -283,11 +286,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function mapURL(v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(V[v].n + ', ' + V[v].a.replace(/ \(.*\)$/, '')); }
     function mapA(v) { return '<a class="maplink" href="' + mapURL(v) + '" target="_blank" rel="noopener" aria-label="Open ' + esc(V[v].n) + ' in Google Maps" title="Open in Google Maps">' + PIN + '</a>'; }
     var one = ev.v.length === 1;
-    var venues = ev.v.map(function (v) { return vname(v) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a) + (one ? '' : mapA(v)); }).join("<br>");
+    // title is the venue (or the group name for several venues); the host's event name follows in small grey
+    var title = one ? vname(ev.v[0]) : esc(ev.g || ev.v.map(function (v) { return V[v].n; }).join(', '));
+    var venues = one ? esc(V[ev.v[0]].a) + (V[ev.v[0]].approx ? ' (location approx.)' : '')
+      : ev.v.map(function (v) { return vname(v) + (V[v].approx ? ' (location approx.)' : '') + ' · ' + esc(V[v].a) + mapA(v); }).join("<br>");
     var dr = ev.st === 'chinese' ? ['red', '中'] : ev.st === 'american' ? ['white', ''] : ev.st === 'both' ? ['green', '發'] : ['', ''];
     b.innerHTML = '<span class="tile ' + dr[0] + '" aria-hidden="true">' + dr[1] + '</span>' +
       '<span class="body">' + (one ? mapA(ev.v[0]) : '<span class="maplink" aria-hidden="true">' + PIN + ev.v.length + '</span>') +
-        '<span class="t">' + esc(ev.t) + (ev.status ? ' <span class="status">' + esc(ev.status) + '</span>' : '') + '</span>' +
+        '<span class="t">' + title + (ev.t ? ' <span class="ename">' + esc(ev.t) + '</span>' : '') + (ev.status ? ' <span class="status">' + esc(ev.status) + '</span>' : '') + '</span>' +
         '<span class="meta"><span class="time">' + (state.day === "all" ? DAYS[ev.d].slice(0, 3) + ' · ' : '') + span(ev) + '</span>' +
           (ev.st === 'both' ? ['chinese', 'american'] : ev.st === 'unlisted' ? [] : [ev.st]).map(function (k) { return '<span class="pill" style="color:' + STY[k][1] + '">' + STY[k][0] + '</span>'; }).join('') + (ev.freq ? '<span>' + esc(ev.freq) + '</span>' : '') + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
         '<span class="meta block">' + venues + '</span>' +
