@@ -20,7 +20,7 @@ map_style: mapbox://styles/mapbox/light-v11
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&display=swap">
 
 <style>
 /* Day tiles on top, Mapbox Light map left, that day's agenda right; stacks on phones */
@@ -61,7 +61,7 @@ h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underlin
   box-shadow:0 0 0 100vmax var(--bone);clip-path:inset(0 -100vmax)}   /* day buttons stay pinned above the map; the band spans the window */
 .day{appearance:none;border:2px solid transparent;background:transparent;color:hsl(220,4%,52%);   /* days not selected: no border, no fill */
   border-radius:6px;padding:7px 1px 5px;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
-.day .d{font-family:var(--body);font-size:clamp(12px,3.3vw,15px);font-weight:500;letter-spacing:.06em;line-height:1}   /* Rubik capitals, small */
+.day .d{font-family:var(--body);font-size:clamp(12px,3.3vw,15px);font-weight:300;letter-spacing:.06em;line-height:1}   /* Rubik capitals, small */
 .day.today .d::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin-left:3px;vertical-align:super}
 .day[aria-pressed="true"]{border-color:var(--felt);color:var(--felt)}   /* selected: green 2px outline, green bold text, no fill */
 .day[aria-pressed="true"] .d{font-weight:700}
