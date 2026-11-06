@@ -113,6 +113,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ev .body > span.maplink{padding:2px}
 .ev .meta .maplink{margin-left:6px;padding:2px;vertical-align:-3px}
 .ev .meta .maplink svg{width:13px;height:13px}
+.ev .t .status{font-size:13px;font-weight:400;color:var(--red);margin-left:4px}   /* e.g. Inactive: same small type as Free */
 .ev .meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 10px;font-variant-numeric:tabular-nums}
 .ev .block{display:block}
 .ev .time{color:var(--ink);font-weight:600}
@@ -286,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var dr = ev.st === 'chinese' ? ['red', '中'] : ev.st === 'american' ? ['white', ''] : ev.st === 'both' ? ['green', '發'] : ['', ''];
     b.innerHTML = '<span class="tile ' + dr[0] + '" aria-hidden="true">' + dr[1] + '</span>' +
       '<span class="body">' + (one ? mapA(ev.v[0]) : '<span class="maplink" aria-hidden="true">' + PIN + ev.v.length + '</span>') +
-        '<span class="t">' + esc(ev.t) + '</span>' +
+        '<span class="t">' + esc(ev.t) + (ev.status ? ' <span class="status">' + esc(ev.status) + '</span>' : '') + '</span>' +
         '<span class="meta"><span class="time">' + (state.day === "all" ? DAYS[ev.d].slice(0, 3) + ' · ' : '') + span(ev) + '</span>' +
           (ev.st === 'both' ? ['chinese', 'american'] : ev.st === 'unlisted' ? [] : [ev.st]).map(function (k) { return '<span class="pill" style="color:' + STY[k][1] + '">' + STY[k][0] + '</span>'; }).join('') + (ev.freq ? '<span>' + esc(ev.freq) + '</span>' : '') + (ev.cost ? '<span>' + esc(ev.cost) + '</span>' : '') + '</span>' +
         '<span class="meta block">' + venues + '</span>' +
