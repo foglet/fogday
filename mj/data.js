@@ -2,7 +2,7 @@
 // Edit this file to add or change venues and weekly events.
 // Venue: n = name, a = address, ll = [lat, lon], w = website (optional), approx = true if the pin is a guess.
 // Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = title, s/e = start/end in 24h decimals (null = not listed),
-//        st = chinese | american | both | unlisted, cost, notes, how (sign-up/contact), url (More info link), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
+//        st = chinese | american | both | unlisted, cost, notes, how (sign-up/contact), url (More info link), status (e.g. Inactive: small red text after the title), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
 // Venues. Coordinates are approximate street-address positions.
 window.MJ_VENUES = {
   mmNoe:   {n:"Mamahuhu Noe Valley", a:"3991 24th St, SF", ll:[37.7514,-122.4313], w:"https://www.eatmamahuhu.com"},
@@ -22,7 +22,7 @@ window.MJ_VENUES = {
   ferry:   {n:"Ferry Building (by Delica)", a:"1 Ferry Building, SF", ll:[37.7955,-122.3937], w:"https://www.ferrybuildingmarketplace.com"},
   beth:    {n:"Congregation Beth Sholom", a:"301 14th Ave, SF", ll:[37.7832,-122.4727], w:"https://www.bethsholomsf.org"},
   aam:     {n:"Asian Art Museum", a:"200 Larkin St, SF", ll:[37.7802,-122.4161], w:"https://asianart.org"},
-  goemon:  {n:"Goemon", a:"3129 Clement St, SF", ll:[37.7818,-122.4925], w:"https://goemonbar.com"},
+  goemon:  {n:"Goemon Izakaya", a:"3129 Clement St, SF", ll:[37.7818,-122.4925], w:"https://goemonbar.com"},
   smsc:    {n:"San Mateo Senior Center", a:"2645 Alameda de las Pulgas, San Mateo", ll:[37.5340,-122.3390], w:"https://cityofsanmateo.org/638/Senior-Center"},
   civic:   {n:"Civic Center (skate park / farmers market)", a:"UN Plaza area, SF", ll:[37.7793,-122.4128], w:"https://sfciviccenter.org"},
   yuja:    {n:"Yuja Kitchen", a:"396 Harrison St, SF", ll:[37.7866,-122.3912], w:"https://www.yujakitchen.com"},
@@ -56,7 +56,7 @@ window.MJ_EVENTS = [
   {d:3,v:["beth"],t:"American drop-in games",s:18,e:21,st:"american",notes:"Open to all players.",how:"Call Nancy, 714-403-0305"},
   {d:3,v:["stjoseph"],t:"Mahjong night",s:18,e:21,st:"both",freq:"Monthly",notes:"Hong Kong style, with open play for Hong Kong and American.",how:"Tickets online",url:"https://www.playmahjongsf.com/events"},
   {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",cost:"Included with museum admission",notes:"Drop-in games and Chinese-style instruction."},
-  {d:4,v:["goemon"],t:"Hong Kong style mahjong",s:17,e:21,st:"chinese",cost:"Free",notes:"Drop-in game. New night.",how:"Text 415-601-9906"},
+  {d:4,v:["goemon"],t:"Hong Kong style mahjong",status:"Inactive",s:17,e:21,st:"chinese",cost:"Free",notes:"Drop-in game. New night.",how:"Text 415-601-9906"},
   {d:4,v:["smsc"],t:"American mahjong drop-in",s:18,e:null,st:"american",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
   {d:5,v:["civic"],t:"Outdoor Asian mahjong (and chess)",s:14,e:17,st:"chinese",cost:"Free",notes:"Near the skate park and farmers market area."},
   {d:5,v:["udR"],t:"Chinese open play (Rockridge)",s:17.5,e:20.5,st:"chinese",notes:"Same format as the Bernal Tuesday night. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
