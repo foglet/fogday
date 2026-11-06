@@ -77,6 +77,15 @@ h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underlin
 /* red line under today, shown only while another day is selected */
 .day .d{position:relative}
 .day.today[aria-pressed="false"] .d::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:2px;border-radius:1px;background:var(--red)}
+/* Center the label inside the selected outline: the box hugs the capitals (or the Chinese ink), so equal padding gives equal space
+   above and below; the negative margin cancels the letter-spacing after the last letter, so left and right match too */
+.day .d{margin-right:-.06em}
+@supports (text-box: trim-both cap alphabetic){
+  .day{padding:8px 8px 9px}   /* Rubik's cap-height metric sits ~1px above its drawn capitals: 1px more below evens the space */
+  .day .d{text-box:trim-both cap alphabetic}
+  :root:lang(zh) .day .d{text-box:trim-both ideographic-ink}
+  .day.today[aria-pressed="false"] .d::after{bottom:-7px}   /* red line keeps its place under the trimmed label */
+}
 @media (max-width:360px){.day{padding-inline:5px}}   /* the row still fits small phones */
 .day[aria-pressed="true"]{border-color:var(--felt);color:var(--felt)}   /* selected: green 1px outline, green bold text, no fill */
 .day[aria-pressed="true"] .d{font-weight:700}
