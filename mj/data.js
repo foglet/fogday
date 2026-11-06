@@ -12,7 +12,7 @@ window.MJ_VENUES = {
   aquatic: {n:"Aquatic Park Senior Center", a:"890 Beach St, SF", ll:[37.8065,-122.4225], w:"https://sequoialiving.org/senior-center/aquatic-park/"},
   pier23:  {n:"Pier 23 Cafe", a:"Pier 23, The Embarcadero, SF", ll:[37.8038,-122.4016], w:"https://www.pier23cafe.com"},
   grape:   {n:"A Grape in the Fog", a:"400 Old County Rd, Pacifica", ll:[37.6105,-122.4943], w:"https://agitf.com"},
-  pkm:     {n:"Park Merced Leasing Center", a:"3711 19th Ave, SF", ll:[37.7178,-122.4745], w:"https://www.parkmerced.com"},
+  pkm:     {n:"Parkmerced Leasing Center", a:"3711 19th Ave, SF", ll:[37.7178,-122.4745], w:"https://www.parkmerced.com"},
   bapt:    {n:"19th Avenue Baptist Church", a:"1370 19th Ave, SF", ll:[37.7630,-122.4769], w:"http://www.nabcsf.org"},
   udB:     {n:"United Dumplings Bernal", a:"525 Cortland Ave, SF", ll:[37.7390,-122.4166], w:"https://www.uniteddumplings.com"},
   udR:     {n:"United Dumplings Rockridge", a:"6247 College Ave, Oakland", ll:[37.8510,-122.2523], w:"https://www.uniteddumplings.com"},
