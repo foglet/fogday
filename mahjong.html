@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ---- day tiles and style filter
   function drawDays() {
     var el = document.getElementById('days'); el.innerHTML = "";
-    ORDER.map(function (d) { return { d: d, lab: DAYS[d].slice(0, 3) }; }).forEach(function (it) {
+    ORDER.map(function (d) { return { d: d, lab: DAYS[d].slice(0, 3).toUpperCase() }; }).forEach(function (it) {
       var n = E.filter(function (ev) { return it.d === "all" || ev.d === it.d; }).length;
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'day' + (it.d === today ? ' today' : '');
