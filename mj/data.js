@@ -32,6 +32,7 @@ window.MJ_VENUES = {
   sportsb: {n:"Sports Basement Stonestown", a:"3251 20th Ave, SF", ll:[37.7283,-122.4757], w:"https://www.sportsbasement.com"},
   chisholm:{n:"Shirley Chisholm Village", a:"1360 43rd Ave, SF", ll:[37.7621,-122.5021], w:"https://www.midpen-housing.org/shirley-chisholm-village/"},
   sjwc:    {n:"San Jose Woman's Club (Tea Room)", a:"75 S 11th St, San Jose", ll:[37.3390,-121.8789], w:"https://sjwomansclub.org"},
+  boichik: {n:"Boichik Bagels Concord", a:"2980 Treat Blvd, Concord (Oak Grove Plaza)", ll:[37.9283,-122.0279], w:"https://www.boichikbagels.com"},
   stjoseph:{n:"Saint Joseph's Arts Society", a:"1401 Howard St, SF", ll:[37.7738,-122.4148], w:"https://saintjosephsartssociety.com"},
 };
 
@@ -42,6 +43,7 @@ window.MJ_EVENTS = [
   {d:1,v:["tabletop"],t:"Mahjong Mondays",s:18.5,e:20.5,st:"chinese",freq:"About monthly",notes:"Hong Kong-style taught from scratch. First-time visit is for free. Run by Play Mahjong SF.",url:"https://www.playmahjongsf.com/events"},
   {d:1,v:["sjwc"],t:"San Jose Woman's Club Mahjong Group",s:13,e:15,st:"both",freq:"1st, 3rd and 5th Mondays",notes:"Meets in the Tea Room. Open to all skill levels, beginners to experienced. Plus bonus sessions.",how:"Contact Alexa Dalkey and Robyn Ginsburg Braverman, mahjong@sjwomansclub.org"},
   {d:1,v:["pier23"],t:"Mahjong at Pier 23",s:16,e:19,st:"chinese",notes:"Free instruction 4–5 pm, open play until 7 pm."},
+  {d:2,v:["boichik"],t:"Tile Tuesdays",s:10,e:12,st:"american",notes:"Open play."},
   {d:2,v:["grape"],t:"Open play at the wine bar",s:16,e:20,st:"chinese",cost:"Free",notes:"Hong Kong style. Bring a set, if you can."},
   {d:2,v:["pkm"],t:"American Mahjong at Park Merced",s:12,e:14.5,st:"american",cost:"Free",notes:"All levels welcome."},
   {d:2,v:["aquatic"],t:"Hong Kong and American drop-in",s:12.5,e:null,st:"both",notes:"Senior center drop-in, both styles. Meet in Room 11."},
