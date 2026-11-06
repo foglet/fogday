@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mapboxgl.accessToken = '{{ page.access_token }}';
     map = new mapboxgl.Map({
       container: 'map', style: '{{ page.map_style }}',
-      center: [-122.43, 37.77], zoom: 11.5, cooperativeGestures: true, language: L.map,   // street and place labels follow the page language
+      center: [-122.43, 37.77], zoom: 11.5, cooperativeGestures: true,   // map labels stay in English, matching street signs and the listed addresses
       customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a>'
     });
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
@@ -395,7 +395,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var next = I18N.order[(I18N.order.indexOf(lang) + 1) % I18N.order.length], b = document.getElementById('langBtn');
     b.textContent = lang.toUpperCase();
     b.setAttribute('aria-label', tr('langAria', {next: I18N[next].name})); b.title = I18N[next].name;
-    if (map && map.setLanguage) { try { map.setLanguage(L.map); } catch (err) {} }
     var m = document.getElementById('map'); if (m.classList.contains('nomap')) m.textContent = L.noMap;
   }
   // Tap the language code (EN → FR → ES → ZH → EN): the whole page redraws in the new language, same day and selection

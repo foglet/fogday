@@ -103,7 +103,7 @@ window.MJ_I18N = {
   order: ['en','fr','es','zh'],
   tx, fill,
   en: {
-    html:'en', name:'English', map:'en',
+    html:'en', name:'English',
     title:'Bay Area Mahjong', h1:'BAY AREA MAHJONG',
     subtitle:'Weekly Recurring Games. Confirm with venue.', play:'Come and play.',
     hk:'Hong Kong', am:'American', both:'Both', styleKey:'Style key',
@@ -121,7 +121,7 @@ window.MJ_I18N = {
     langAria:'Language: English. Tap for {next}.'
   },
   fr: {
-    html:'fr', name:'Français', map:'fr',
+    html:'fr', name:'Français',
     title:'Mahjong dans la Bay Area', h1:'BAY AREA MAHJONG',
     subtitle:'Parties chaque semaine. Confirmez auprès du lieu.', play:'Venez jouer.',
     hk:'Hong Kong', am:'Américain', both:'Les deux', styleKey:'Légende des styles',
@@ -138,7 +138,7 @@ window.MJ_I18N = {
     langAria:'Langue : français. Touchez pour {next}.'
   },
   es: {
-    html:'es', name:'Español', map:'es',
+    html:'es', name:'Español',
     title:'Mahjong en el Área de la Bahía', h1:'BAY AREA MAHJONG',
     subtitle:'Partidas cada semana. Confirme con el local.', play:'Ven a jugar.',
     hk:'Hong Kong', am:'Americano', both:'Ambos', styleKey:'Leyenda de estilos',
@@ -155,7 +155,7 @@ window.MJ_I18N = {
     langAria:'Idioma: español. Toque para {next}.'
   },
   zh: {
-    html:'zh', name:'中文', map:'zh-Hans',
+    html:'zh', name:'中文',
     title:'湾区麻将', h1:'湾区麻将',
     subtitle:'每周固定牌局。请先向场地确认。', play:'来打牌吧。',
     hk:'港式', am:'美式', both:'两种都有', styleKey:'风格图例',
