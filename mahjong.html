@@ -21,7 +21,7 @@ map_style: mapbox://styles/mapbox/light-v11
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&family=Fira+Sans+Condensed:wght@400&display=swap">
 
 <style>
 /* Day tiles on top, Mapbox Light map left, that day's agenda right; stacks on phones */
@@ -54,16 +54,9 @@ h1 a{color:inherit;text-decoration:none}
 h1 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
 .sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
 .sub.play .zimo [lang]{font-family:"Songti SC","STSong","Noto Serif CJK TC","Noto Serif TC","Noto Serif CJK SC","SimSun",serif}   /* same Chinese serif as the dragon tiles */
-.sub.play .pinyin{font-family:var(--body);font-size:15px;color:var(--muted)}   /* same small grey type as "Confirm with venue." */
-:root:lang(zh) .sub.play .pinyin{display:none}   /* Chinese readers need no pinyin for 自摸 */
-.sub.play{color:var(--red);font-family:var(--display);font-size:clamp(17px,4.6vw,22px);font-weight:400;line-height:1.2;margin-top:6px}   /* same size as the subtitle */   /* 1.5em of the 15px base = 22.5px */
+:root:lang(zh) .sub.play{color:var(--red);font-family:var(--display);font-size:clamp(17px,4.6vw,22px);font-weight:400;line-height:1.2;margin-top:6px}   /* same size as the subtitle */   /* 1.5em of the 15px base = 22.5px */
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);align-items:center}
 .legend span{display:inline-flex;align-items:center;gap:6px}
-/* Language: tap to cycle EN → FR → ES → ZH (as on /tides), small spaced capitals in the felt green, bottom left of the footer */
-.langbtn{background:none;border:0;margin:0;padding:6px 16px 6px 0;cursor:pointer;font:600 12px var(--body);letter-spacing:.14em;color:var(--felt);
-  min-width:44px;text-align:left;flex:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.langbtn:hover{opacity:.8}
-.langbtn:focus-visible{outline:3px solid var(--sel);outline-offset:2px;border-radius:4px}
 .lt{display:inline-grid;place-items:center;width:17px;height:23px;border-radius:3px;background:var(--tile);border:1px solid var(--tile-edge);font:normal 400 13px "Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",serif;position:relative}
 .lt.red{color:var(--red)}
 .lt.green{color:var(--both)}
@@ -155,9 +148,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .bar i.open{background-image:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 10px)!important}
 .empty{grid-column:1/-1;padding:22px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
 .grouphead{font-family:var(--display);font-size:19px;margin:6px 0 -6px;color:var(--felt)}
-footer{font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;justify-content:space-between;gap:12px}   /* language code bottom left, imprint credit far right */
-#thanks{min-width:0;text-align:right}
-footer a{color:inherit}
+/* footer as on fogday.com: centered wordmark and Instagram glyph */
+footer{display:flex;justify-content:center;align-items:baseline;padding-block:14px;font-family:"Fira Sans Condensed",Seravek,Calibri,"Segoe UI",Ubuntu,"Arial Narrow",Arial,sans-serif;font-weight:400;letter-spacing:.02em;font-size:.85rem;color:var(--muted);text-align:center}
+footer a{color:inherit;text-decoration:none}
+footer a:hover{color:var(--felt)}
+.ig-link{display:inline-block;vertical-align:baseline;line-height:0;padding:8px;margin:-8px -8px -8px calc(.6em - 8px);transition:color .15s ease}
+.ig-link .ig{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.225em;background:currentColor;-webkit-mask:url(/assets/icons/instagram.svg) center/contain no-repeat;mask:url(/assets/icons/instagram.svg) center/contain no-repeat}
 @media (prefers-reduced-motion:no-preference){.ev,.day{transition:background .15s,border-color .15s,opacity .15s}}
 </style>
 </head>
@@ -167,7 +163,7 @@ footer a{color:inherit}
     <div>
       <h1><a href="https://fogday.com/mahjong" data-i18n="h1">BAY AREA MAHJONG</a></h1>
       <p class="subtitle" data-i18n="subtitle">Weekly Recurring Games. Confirm with venue.</p>
-      <p class="sub play"><span data-i18n="play">Come and play.</span> <span class="zimo"><span lang="zh-Hant">自摸</span> <span class="pinyin">(zì mō)</span></span></p>
+      <p class="sub play"><span data-i18n="play">Come and play.</span> <span class="zimo"><span lang="zh-Hant">自摸</span></span></p>
     </div>
     <div class="legend" aria-label="Style key" data-i18n-aria="styleKey">
       <span><i class="lt red" aria-hidden="true">中</i><span data-i18n="hk">Hong Kong</span></span>
@@ -186,16 +182,15 @@ footer a{color:inherit}
     <div id="spacer" aria-hidden="true"></div>   <!-- room so the last listings can scroll up to just under the map -->
   </main>
 
-  <footer><button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button><span id="thanks">An imprint of <a href="https://fogday.com/">Fogday Studios</a></span></footer>
+  <footer><span><a href="https://fogday.com">FOGDAY™</a> <a class="ig-link" href="https://www.instagram.com/fogfish" aria-label="Instagram" rel="me"><span class="ig" aria-hidden="true"></span></a></span></footer>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var V = window.MJ_VENUES, E = window.MJ_EVENTS, I18N = window.MJ_I18N;
   if (!V || !E || !I18N) { document.getElementById('agenda').textContent = 'The schedule could not load. Reload the page to try again.'; return; }
-  // Language: EN (default), FR, ES, ZH from mj/i18n.js; tap the code at the end of the style key to cycle (remembered per visitor, as on /tides)
+  // Language: English only (the language toggle was removed)
   var lang = 'en';
-  try { var saved = localStorage.getItem('mj-lang'); if (I18N.order.indexOf(saved) >= 0) lang = saved; } catch (e) {}
   var L = I18N[lang];
   function tr(k, v) { return I18N.fill(L[k], v); }
   function tx(s) { return I18N.tx(s, lang); }   // schedule text from data.js in the page's language
@@ -394,24 +389,13 @@ document.addEventListener('DOMContentLoaded', function () {
   if (window.ResizeObserver) new ResizeObserver(setDayH).observe(document.getElementById('days'));
 
   // ---- language: page title, header, style key, footer and the language code itself
-  var thanksLinks = Array.prototype.map.call(document.querySelectorAll('#thanks a'), function (a) { return a.outerHTML; });
   function applyLang() {
     document.documentElement.lang = L.html;
     document.title = L.title + ' · Fogday Studios';
     document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = L[el.dataset.i18n]; });
     document.querySelectorAll('[data-i18n-aria]').forEach(function (el) { el.setAttribute('aria-label', L[el.dataset.i18nAria]); });
-    document.getElementById('thanks').innerHTML = tr('thanks', {a: thanksLinks[0]});   // the Fogday Studios link, kept as written
-    var next = I18N.order[(I18N.order.indexOf(lang) + 1) % I18N.order.length], b = document.getElementById('langBtn');
-    b.textContent = lang.toUpperCase();
-    b.setAttribute('aria-label', tr('langAria', {next: I18N[next].name})); b.title = I18N[next].name;
     var m = document.getElementById('map'); if (m.classList.contains('nomap')) m.textContent = L.noMap;
   }
-  // Tap the language code (EN → FR → ES → ZH → EN): the whole page redraws in the new language, same day and selection
-  document.getElementById('langBtn').addEventListener('click', function () {
-    lang = I18N.order[(I18N.order.indexOf(lang) + 1) % I18N.order.length]; L = I18N[lang];
-    try { localStorage.setItem('mj-lang', lang); } catch (err) {}
-    applyLang(); render(false);
-  });
   applyLang();
   render(false);
 });
