@@ -382,18 +382,20 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   // a finger or wheel on the page stops the glide at once
   ['touchstart', 'wheel'].forEach(function (ev) { window.addEventListener(ev, function () { if (rowUnderMap.raf) { cancelAnimationFrame(rowUnderMap.raf); rowUnderMap.raf = 0; } }, { passive: true }); });
-  // Phone numbers and emails stay hidden behind "Tap for number" / "Tap for email" until tapped
+  // Contact lines with a phone number or email show just "Info"; tapping it unscrambles the line ([[base64]] in data.js)
+  var PHONE = /\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g, CODED = /\[\[([A-Za-z0-9+\/=]+)\]\]/g;
   function contact(text) {
-    var out = esc(text);
-    out = out.replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, function (n) { return '<button type="button" class="reveal" data-k="' + (/^Text\b/i.test(text) ? 'sms' : 'tel') + '" data-v="' + n + '">Tap for number</button>'; });
-    out = out.replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, function (m) { return '<button type="button" class="reveal" data-k="mailto" data-v="' + m + '">Tap for email</button>'; });
-    return out;
+    if (!(CODED.test(text) || PHONE.test(text) || EMAIL.test(text))) { CODED.lastIndex = PHONE.lastIndex = EMAIL.lastIndex = 0; return esc(text); }
+    CODED.lastIndex = PHONE.lastIndex = EMAIL.lastIndex = 0;
+    return '<button type="button" class="reveal" data-h="' + esc(text) + '">Info</button>';
   }
   function reveal(btn) {
-    var v = btn.dataset.v, a = document.createElement('a');
-    a.className = 'shown'; a.textContent = v;
-    a.href = btn.dataset.k + ':' + (btn.dataset.k === 'mailto' ? v : v.replace(/\D/g, ''));
-    btn.replaceWith(a);
+    var raw = btn.dataset.h.replace(CODED, function (m, b) { try { return atob(b); } catch (e) { return ''; } });
+    var sms = /^Text\b/i.test(raw), span = document.createElement('span');
+    span.innerHTML = esc(raw)
+      .replace(PHONE, function (n) { return '<a class="shown" href="' + (sms ? 'sms:' : 'tel:') + n.replace(/\D/g, '') + '">' + n + '</a>'; })
+      .replace(EMAIL, function (m) { return '<a class="shown" href="mailto:' + m + '">' + m + '</a>'; });
+    btn.replaceWith(span);
   }
   function render(refit) {
     if (refit) { var sp = document.getElementById('spacer'); if (sp) sp.style.height = '0px'; }
