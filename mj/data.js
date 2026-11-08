@@ -50,7 +50,7 @@ window.MJ_EVENTS = [
   {d:2,v:["grape"],t:"",s:16,e:20,st:"chinese",notes:"Open play at the wine bar. Bring a set, if you can.",cost:"Free"},
   {d:2,v:["pkm"],t:"",s:12,e:14.5,st:"american",notes:"Open play. All levels welcome.",cost:"Free"},
   {d:2,v:["aquatic"],t:"",s:12.5,e:null,st:"both",notes:"Open play. Meet in Room 11."},
-  {d:2,v:["bapt"],t:"",s:17,e:20,st:"chinese",how:"Email Jim Dant (no address listed)"},
+  {d:2,v:["bapt"],t:"",s:17,e:20,st:"chinese",how:"Email Jim Dant, nabcoffice@gmail.com"},
   {d:2,v:["udB"],t:"",s:17.5,e:20.5,st:"chinese",notes:"Open play. Instruction on 1st and 3rd Tuesdays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
   {d:2,v:["paname"],t:"3-Point Hong Kong Mahjong",s:19,e:22,st:"chinese",notes:"No instructors. Handouts. Beginners welcome. Fast, advanced play.",how:"Three Dragon Society on Instagram"},
   {d:2,v:["dragon"],t:"The Mahjong Lair",s:17,e:21,st:"both",notes:"With food.",how:"Sign up online",cost:"$20 cover (per Dragon Well's site)"},

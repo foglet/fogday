@@ -58,7 +58,6 @@ const DATA = {
     'Contact : Alexa Dalkey et Robyn Ginsburg Braverman, mahjong@sjwomansclub.org',
     'Contacto: Alexa Dalkey y Robyn Ginsburg Braverman, mahjong@sjwomansclub.org',
     '联系 Alexa Dalkey 和 Robyn Ginsburg Braverman：mahjong@sjwomansclub.org'],
-  'Email Jim Dant (no address listed)':['Écrire à Jim Dant (adresse non indiquée)','Escriba a Jim Dant (no se indica la dirección)','发邮件给 Jim Dant（未列出地址）'],
   'Tickets required':['Billet obligatoire','Se necesita entrada','需购票'],
   'Three Dragon Society on Instagram':['Three Dragon Society sur Instagram','Three Dragon Society en Instagram','Instagram 上的 Three Dragon Society'],
   'Sign up online':['Inscription en ligne','Inscripción en línea','网上报名'],
