@@ -140,6 +140,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ev .block{display:block}
 .ev .time{color:var(--ink);font-weight:600}
 .ev .notes{font-size:13.5px;margin-top:3px;max-width:62ch;display:block}
+.ev .reveal{appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:var(--felt);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.ev .reveal:focus-visible{outline:2px solid var(--sel);outline-offset:2px;border-radius:2px}
+.ev .shown{color:var(--ink);font-weight:600;text-decoration:none;user-select:all}   /* revealed number or email: selectable, taps to call, text or mail */
 .ev .more{display:inline-block;font-size:13px;font-weight:600;color:var(--felt);margin-top:3px}
 .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid currentColor}
 .flag{font-size:12px;color:var(--red);margin-top:3px;display:block}
@@ -324,12 +327,17 @@ document.addEventListener('DOMContentLoaded', function () {
           (ev.st === 'both' ? ['chinese', 'american'] : ev.st === 'unlisted' ? [] : [ev.st]).map(function (k) { return '<span class="pill" style="color:' + STY[k] + '">' + esc(L.sty[k]) + '</span>'; }).join('') + (ev.freq ? '<span>' + esc(tx(ev.freq)) + '</span>' : '') + (ev.cost ? '<span>' + esc(tx(ev.cost)) + '</span>' : '') + '</span>' +
         '<span class="meta block">' + venues + '</span>' +
         (ev.notes ? '<span class="notes">' + esc(tx(ev.notes)) + '</span>' : '') +
-        (ev.how ? '<span class="meta block">' + esc(tx(ev.how)) + '</span>' : '') +
+        (ev.how ? '<span class="meta block">' + contact(tx(ev.how)) + '</span>' : '') +
         (ev.url ? '<a class="more" href="' + esc(ev.url) + '" target="_blank" rel="noopener">' + esc(L.more) + '</a>' : '') +
         (ev.flag ? '<span class="flag">' + esc(ev.flag) + '</span>' : '') +
         bar +
       '</span>';
-    b.onclick = function (e) { if (e.target.closest('a')) return; state.sel = ev.v; render(false); focusSel(); };
+    b.onclick = function (e) {
+      var rv = e.target.closest('.reveal');
+      if (rv) { reveal(rv); return; }
+      if (e.target.closest('a')) return;
+      state.sel = ev.v; render(false); focusSel();
+    };
     b.onkeydown = function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); b.click(); } };
     return b;
   }
@@ -374,6 +382,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   // a finger or wheel on the page stops the glide at once
   ['touchstart', 'wheel'].forEach(function (ev) { window.addEventListener(ev, function () { if (rowUnderMap.raf) { cancelAnimationFrame(rowUnderMap.raf); rowUnderMap.raf = 0; } }, { passive: true }); });
+  // Phone numbers and emails stay hidden behind "Tap for number" / "Tap for email" until tapped
+  function contact(text) {
+    var out = esc(text);
+    out = out.replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, function (n) { return '<button type="button" class="reveal" data-k="' + (/^Text\b/i.test(text) ? 'sms' : 'tel') + '" data-v="' + n + '">Tap for number</button>'; });
+    out = out.replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, function (m) { return '<button type="button" class="reveal" data-k="mailto" data-v="' + m + '">Tap for email</button>'; });
+    return out;
+  }
+  function reveal(btn) {
+    var v = btn.dataset.v, a = document.createElement('a');
+    a.className = 'shown'; a.textContent = v;
+    a.href = btn.dataset.k + ':' + (btn.dataset.k === 'mailto' ? v : v.replace(/\D/g, ''));
+    btn.replaceWith(a);
+  }
   function render(refit) {
     if (refit) { var sp = document.getElementById('spacer'); if (sp) sp.style.height = '0px'; }
     var evs = visible();

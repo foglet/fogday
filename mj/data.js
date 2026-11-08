@@ -59,7 +59,7 @@ window.MJ_EVENTS = [
   {d:3,v:["beth"],t:"",s:18,e:21,st:"american",notes:"Open play. Open to all players.",how:"Call Nancy, 714-403-0305"},
   {d:3,v:["stjoseph"],t:"",s:18,e:21,st:"both",notes:"Open play.",freq:"Monthly",how:"Tickets online",url:"https://www.playmahjongsf.com/events"},
   {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",notes:"Open play. Instruction for Hong Kong style.",cost:"Included with museum admission"},
-  {d:4,v:["goemon"],t:"",status:"Inactive",s:17,e:21,st:"chinese",notes:"Open play. New night.",cost:"Free",how:"Text 415-601-9906"},
+  {d:4,v:["goemon"],t:"",status:"Inactive",s:17,e:21,st:"chinese",notes:"Open play. New night.",cost:"Free",how:"Text with questions, 415-601-9906"},
   {d:4,v:["smsc"],t:"",s:18,e:null,st:"american",notes:"Open play.",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
   {d:5,v:["civic"],t:"",s:14,e:17,st:"chinese",notes:"Outdoor games. Chess too. Near the skate park and farmers market.",cost:"Free"},
   {d:5,v:["udR"],t:"",s:17.5,e:20.5,st:"chinese",notes:"Open play. Instruction on 1st and 3rd Fridays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
