@@ -54,18 +54,11 @@ const DATA = {
   'In Bogart Court.':['Dans la Bogart Court.','En Bogart Court.','在 Bogart Court。'],
   // how (sign-up / contact)
   'RSVP on Meetup':['Réponse sur Meetup','Confirme en Meetup','在 Meetup 上报名'],
-  'Contact Alexa Dalkey and Robyn Ginsburg Braverman, mahjong@sjwomansclub.org':[
-    'Contact : Alexa Dalkey et Robyn Ginsburg Braverman, mahjong@sjwomansclub.org',
-    'Contacto: Alexa Dalkey y Robyn Ginsburg Braverman, mahjong@sjwomansclub.org',
-    '联系 Alexa Dalkey 和 Robyn Ginsburg Braverman：mahjong@sjwomansclub.org'],
   'Tickets required':['Billet obligatoire','Se necesita entrada','需购票'],
   'Three Dragon Society on Instagram':['Three Dragon Society sur Instagram','Three Dragon Society en Instagram','Instagram 上的 Three Dragon Society'],
   'Sign up online':['Inscription en ligne','Inscripción en línea','网上报名'],
   'Register online':['Inscription en ligne','Inscripción en línea','网上报名'],
-  'Call Nancy, 714-403-0305':['Appeler Nancy, 714-403-0305','Llame a Nancy, 714-403-0305','致电 Nancy：714-403-0305'],
   'Tickets online':['Billets en ligne','Entradas en línea','网上购票'],
-  'Text 415-601-9906':['SMS au 415-601-9906','Envíe un mensaje al 415-601-9906','发短信至 415-601-9906'],
-  'RSVP to Connie, conniewhite90@gmail.com':['Réponse à Connie, conniewhite90@gmail.com','Confirme con Connie, conniewhite90@gmail.com','向 Connie 报名：conniewhite90@gmail.com'],
   // group titles
   'Mamahuhu (4 locations)':['Mamahuhu (4 adresses)','Mamahuhu (4 locales)','Mamahuhu（4 家店）'],
   'Play Mahjong SF (rotating venues)':['Play Mahjong SF (lieux tournants)','Play Mahjong SF (sedes rotativas)','Play Mahjong SF（场地轮换）'],

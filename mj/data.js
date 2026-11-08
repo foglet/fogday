@@ -5,6 +5,8 @@
 // Venue: n = name, a = address, ll = [lat, lon], w = website (optional), approx = true if the pin is a guess.
 // Event: d = weekday (0 Sun ... 6 Sat), v = venue keys, t = the host's own event name if it has one ("" if not; the title is the venue),
 //        g = title for a listing with several venues, s/e = start/end in 24h decimals (null = not listed),
+//        how = sign-up or contact. Phone numbers and emails go in scrambled as [[base64]] so bots can't read them here;
+//              the page shows an Info link and unscrambles on tap. Scramble one in a browser console: btoa('415-555-0100')
 //        st = chinese | american | both | unlisted, cost, notes, how (sign-up/contact), url (More info link), status (e.g. Inactive: small red text after the title), freq (e.g. Monthly; blank = weekly), flag (shown in red: unverified detail).
 // Venues. Coordinates are approximate street-address positions.
 window.MJ_VENUES = {
@@ -44,23 +46,23 @@ window.MJ_EVENTS = [
   {d:1,v:["mmNoe","mmClem","mmMV","mmPA"],g:"Mamahuhu (4 locations)",t:"Mahjong Mondays",s:18,e:21,st:"chinese",notes:"Open play. Beginner lessons. All levels welcome. Same hours at all four locations.",how:"RSVP on Meetup"},
   {d:1,v:["aquatic"],t:"",s:12.5,e:null,st:"chinese",notes:"Open play. Meet in Room 11."},
   {d:1,v:["tabletop"],t:"Mahjong Mondays",s:18.5,e:20.5,st:"chinese",notes:"Class. Taught from scratch. First-time visit is for free. Run by Play Mahjong SF.",freq:"About monthly",url:"https://www.playmahjongsf.com/events"},
-  {d:1,v:["sjwc"],t:"Mahjong Group",s:13,e:15,st:"both",notes:"Club. All levels, beginners to experienced. Meets in the Tea Room. Plus bonus sessions.",freq:"1st, 3rd and 5th Mondays",how:"Contact Alexa Dalkey and Robyn Ginsburg Braverman, mahjong@sjwomansclub.org"},
+  {d:1,v:["sjwc"],t:"Mahjong Group",s:13,e:15,st:"both",notes:"Club. All levels, beginners to experienced. Meets in the Tea Room. Plus bonus sessions.",freq:"1st, 3rd and 5th Mondays",how:"Contact Alexa Dalkey and Robyn Ginsburg Braverman, [[bWFoam9uZ0BzandvbWFuc2NsdWIub3Jn]]"},
   {d:1,v:["pier23"],t:"",s:16,e:19,st:"chinese",notes:"Open play. Free instruction 4–5 pm, then play until 7 pm."},
   {d:2,v:["boichik"],t:"Tile Tuesdays",s:10,e:12,st:"american",notes:"Open play."},
   {d:2,v:["grape"],t:"",s:16,e:20,st:"chinese",notes:"Open play at the wine bar. Bring a set, if you can.",cost:"Free"},
   {d:2,v:["pkm"],t:"",s:12,e:14.5,st:"american",notes:"Open play. All levels welcome.",cost:"Free"},
   {d:2,v:["aquatic"],t:"",s:12.5,e:null,st:"both",notes:"Open play. Meet in Room 11."},
-  {d:2,v:["bapt"],t:"",s:17,e:20,st:"chinese",how:"Email Jim Dant, nabcoffice@gmail.com"},
+  {d:2,v:["bapt"],t:"",s:17,e:20,st:"chinese",how:"Email Jim Dant, [[bmFiY29mZmljZUBnbWFpbC5jb20=]]"},
   {d:2,v:["udB"],t:"",s:17.5,e:20.5,st:"chinese",notes:"Open play. Instruction on 1st and 3rd Tuesdays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
   {d:2,v:["paname"],t:"3-Point Hong Kong Mahjong",s:19,e:22,st:"chinese",notes:"No instructors. Handouts. Beginners welcome. Fast, advanced play.",how:"Three Dragon Society on Instagram"},
   {d:2,v:["dragon"],t:"The Mahjong Lair",s:17,e:21,st:"both",notes:"With food.",how:"Sign up online",cost:"$20 cover (per Dragon Well's site)"},
   {d:2,v:["mrmj"],t:"",s:17.5,e:20.5,st:"chinese",notes:"Open play. Instruction on first Tuesdays.",how:"Register online"},
   {d:3,v:["ferry"],t:"",s:15,e:19,st:"both",notes:"Open play. Instruction for Hong Kong style. All levels welcome. Indoors next to Delica.",cost:"Free"},
-  {d:3,v:["beth"],t:"",s:18,e:21,st:"american",notes:"Open play. Open to all players.",how:"Call Nancy, 714-403-0305"},
+  {d:3,v:["beth"],t:"",s:18,e:21,st:"american",notes:"Open play. Open to all players.",how:"Call Nancy, [[NzE0LTQwMy0wMzA1]]"},
   {d:3,v:["stjoseph"],t:"",s:18,e:21,st:"both",notes:"Open play.",freq:"Monthly",how:"Tickets online",url:"https://www.playmahjongsf.com/events"},
   {d:4,v:["aam"],t:"Mahjong and Mocktails",s:17,e:20,st:"chinese",notes:"Open play. Instruction for Hong Kong style.",cost:"Included with museum admission"},
-  {d:4,v:["goemon"],t:"",status:"Inactive",s:17,e:21,st:"chinese",notes:"Open play. New night.",cost:"Free",how:"Text with questions, 415-601-9906"},
-  {d:4,v:["smsc"],t:"",s:18,e:null,st:"american",notes:"Open play.",cost:"Free",how:"RSVP to Connie, conniewhite90@gmail.com"},
+  {d:4,v:["goemon"],t:"",status:"Inactive",s:17,e:21,st:"chinese",notes:"Open play. New night.",cost:"Free",how:"Text with questions, [[NDE1LTYwMS05OTA2]]"},
+  {d:4,v:["smsc"],t:"",s:18,e:null,st:"american",notes:"Open play.",cost:"Free",how:"RSVP to Connie, [[Y29ubmlld2hpdGU5MEBnbWFpbC5jb20=]]"},
   {d:5,v:["civic"],t:"",s:14,e:17,st:"chinese",notes:"Outdoor games. Chess too. Near the skate park and farmers market.",cost:"Free"},
   {d:5,v:["udR"],t:"",s:17.5,e:20.5,st:"chinese",notes:"Open play. Instruction on 1st and 3rd Fridays. Play Mahjong SF hosts every other week.",how:"Tickets required",url:"https://www.playmahjongsf.com/events"},
   {d:6,v:["third"],t:"",s:13,e:16,st:"chinese",notes:"Some sessions fall on Sundays.",freq:"Occasional",cost:"$20 ($10 members)",url:"https://www.playmahjongsf.com/events"},
