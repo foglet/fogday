@@ -140,8 +140,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ev .block{display:block}
 .ev .time{color:var(--ink);font-weight:600}
 .ev .notes{font-size:13.5px;margin-top:3px;max-width:62ch;display:block}
-.ev .reveal{appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:var(--felt);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.ev .reveal{appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:var(--felt);font-weight:600;cursor:pointer;text-decoration:none}
 .ev .reveal:focus-visible{outline:2px solid var(--sel);outline-offset:2px;border-radius:2px}
+.ev .reveal .pm{display:inline-block;min-width:.7em;text-align:center}   /* + to open, − to close */
+.ext{font-size:.8em;margin-left:2px;color:var(--muted);text-decoration:none;display:inline-block}   /* marks a link that leaves the site */
 .ev .shown{color:var(--ink);font-weight:600;text-decoration:none;user-select:all}   /* revealed number or email: selectable, taps to call, text or mail */
 .ev .more{display:inline-block;font-size:13px;font-weight:600;color:var(--felt);margin-top:3px}
 .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:999px;border:1px solid currentColor}
@@ -220,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
              (state.style === "all" || ev.st === state.style || ev.st === "both");
     });
   }
-  function vname(v) { return V[v].w ? '<a class="vlink" href="' + esc(V[v].w) + '" target="_blank" rel="noopener">' + esc(V[v].n) + '</a>' : esc(V[v].n); }
+  function vname(v) { return V[v].w ? '<a class="vlink" href="' + esc(V[v].w) + '" target="_blank" rel="noopener">' + esc(V[v].n) + '<span class="ext" aria-hidden="true">↗</span></a>' : esc(V[v].n); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
   // ---- map
@@ -328,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<span class="meta block">' + venues + '</span>' +
         (ev.notes ? '<span class="notes">' + esc(tx(ev.notes)) + '</span>' : '') +
         (ev.how ? '<span class="meta block">' + contact(tx(ev.how)) + '</span>' : '') +
-        (ev.url ? '<a class="more" href="' + esc(ev.url) + '" target="_blank" rel="noopener">' + esc(L.more) + '</a>' : '') +
+        (ev.url ? '<a class="more" href="' + esc(ev.url) + '" target="_blank" rel="noopener">' + esc(L.more) + '<span class="ext" aria-hidden="true">↗</span></a>' : '') +
         (ev.flag ? '<span class="flag">' + esc(ev.flag) + '</span>' : '') +
         bar +
       '</span>';
@@ -387,15 +389,20 @@ document.addEventListener('DOMContentLoaded', function () {
   function contact(text) {
     if (!(CODED.test(text) || PHONE.test(text) || EMAIL.test(text))) { CODED.lastIndex = PHONE.lastIndex = EMAIL.lastIndex = 0; return esc(text); }
     CODED.lastIndex = PHONE.lastIndex = EMAIL.lastIndex = 0;
-    return '<button type="button" class="reveal" data-h="' + esc(text) + '">Info</button>';
+    return '<button type="button" class="reveal" aria-expanded="false" data-h="' + esc(text) + '">Info <span class="pm" aria-hidden="true">+</span></button> <span class="revealed" hidden></span>';
   }
   function reveal(btn) {
+    var box = btn.nextElementSibling, open = btn.getAttribute('aria-expanded') !== 'true';
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.querySelector('.pm').textContent = open ? '−' : '+';
+    box.hidden = !open;
+    if (!open || box.childNodes.length) return;
     var raw = btn.dataset.h.replace(CODED, function (m, b) { try { return atob(b); } catch (e) { return ''; } });
     var sms = /^Text\b/i.test(raw), span = document.createElement('span');
     span.innerHTML = esc(raw)
       .replace(PHONE, function (n) { return '<a class="shown" href="' + (sms ? 'sms:' : 'tel:') + n.replace(/\D/g, '') + '">' + n + '</a>'; })
       .replace(EMAIL, function (m) { return '<a class="shown" href="mailto:' + m + '">' + m + '</a>'; });
-    btn.replaceWith(span);
+    box.appendChild(span);
   }
   function render(refit) {
     if (refit) { var sp = document.getElementById('spacer'); if (sp) sp.style.height = '0px'; }
