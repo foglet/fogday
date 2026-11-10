@@ -413,6 +413,12 @@ title: Waves of San Francisco
   @media (max-width: 640px) {
         .tides .pw-groups label { grid-template-columns: 7.5em minmax(0, 1fr) 5.5em; }
   }
+  /* Bottom nav (the site footer) as clear as it can be, like /treesf/: no fill, no top line, so the page shows through it and
+     through Safari's floating toolbar (Safari tints its bar from a solid fixed layer at the bottom; with none, it stays glass).
+     Overrides the solid / gradient footer fills above and in fogday.css, in every look. A soft halo in the page color keeps
+     the footer text readable over sliders scrolling under it. */
+  footer { background: transparent !important; border-top: 0 !important; }
+  footer .wrap { text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg); }
   </style>
 <script>
   // Dark-mode look, picked on every load, equal odds (data-look on <html>):
