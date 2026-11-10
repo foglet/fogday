@@ -505,8 +505,8 @@ title: Waves of San Francisco
       <summary data-i18n="info">Info</summary>
       <div class="notes-body">
       <div class="info-set" id="infoWaves">
-        <span><b>Tide:</b> the sea follows the San Francisco tide right now (NOAA station 9414290), calculated in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. The tide sets the water level, and its direction sets the undercurrent: rising water pushes toward shore, falling water pushes seaward.</span>
-        <span><b>Set by hand:</b> wind, fetch, swell, air pressure and the Kelvin / El Niño offset. The offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
+        <span><b>Every slider is yours to play with.</b> The sea opens on the San Francisco tide at the moment you load the page (NOAA station 9414290), calculated in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. Tide and Undercurrent start there: rising water pushes toward shore, falling water pushes seaward. Reload the page to go back to the live tide.</span>
+        <span><b>Starting values</b> for wind, fetch, swell and air pressure are typical; the Kelvin / El Niño offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
         <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
         <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
       </div>
@@ -690,12 +690,14 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   const WINDOWS = [['2026-11-21','2026-11-28'],['2026-12-20','2026-12-27'],['2027-01-17','2027-01-24']];
   const KING_FT = 6.9;
 
-  // Live only: the sea follows the San Francisco tide at the real time, from page load. Tide and undercurrent come
-  // from the tide; the other sliders are set by hand.
+  // A sea to experiment with: on page load, Tide and Undercurrent start at the live San Francisco tide; from then on
+  // every slider is the visitor's, and nothing live overrides them.
   function startLive() {
-    ui.tide.disabled = true; ui.current.disabled = true;
-    el('tideLbl').classList.add('off'); el('currentLbl').classList.add('off');
     clock = Date.now();
+    ui.tide.value = tideAt(clock).toFixed(1);
+    ui.current.value = Math.round(clamp((tideAt(clock + 600000) - tideAt(clock - 600000)) * 3 / 1.3, -1, 1) * 100);
+    live = false;
+    outputs();
     refreshSlow(true);
   }
 
