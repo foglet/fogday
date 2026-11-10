@@ -374,7 +374,7 @@ title: Waves of San Francisco
 
   /* Pixel Waves: the sea and its pixel moon / chart keep their own palette; everything around them uses the site's */
   .tides .pw canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
-  .tides #pw-sea { width: 100%; aspect-ratio: 160/100; border-radius: 12px; cursor: pointer; }
+  .tides #pw-sea { width: 100%; aspect-ratio: 320/100; border-radius: 12px; cursor: pointer; }
   .tides #pw-palette { display: grid; grid-template-columns: repeat(37, 1fr); height: 8px; border-radius: 4px; overflow: hidden; margin-top: -12px; }
   @media (max-width: 520px) {   /* phones, dark mode: the sea runs edge to edge, like the tide chart on /tides/ */
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides :is(#pw-sea, #pw-palette) { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
@@ -386,10 +386,11 @@ title: Waves of San Francisco
   .tides .pw-mode button:first-child { border-radius: 8px 0 0 8px; }
   .tides .pw-mode button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
   .tides .pw-mode button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .tides .pw-info { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  .tides .pw-info { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: center;
     background: var(--surface); border-radius: 12px; padding: 14px 16px; }
   .tides #pw-moon { width: 72px; height: 72px; background: rgb(16 32 44); border-radius: 6px; }  /* the night sky behind the moon, as in the tide chart */
   .tides #pw-chart { width: 288px; height: 72px; border-radius: 6px; }
+  .tides :is(#pw-moon, #pw-chart) { display: none; }   /* moon and tide pictures hidden; the readings stay */
   .tides .pw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 4px 18px; font-size: .9rem; font-variant-numeric: tabular-nums; }
   .tides .pw-stats .stat b { color: var(--muted); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; display: inline-block; min-width: 10.5em; }
   .tides .pw-stats .flag { color: var(--buoy); font-weight: 700; }
@@ -453,7 +454,7 @@ title: Waves of San Francisco
     </div>
 
     <div class="view pw" id="viewWaves">
-      <canvas id="pw-sea" width="160" height="100" aria-label="Pixel-art sea driven by tide, moon and wave factors"></canvas>
+      <canvas id="pw-sea" width="320" height="100" aria-label="Pixel-art sea driven by tide, moon and wave factors"></canvas>
       <div id="pw-palette" aria-hidden="true"></div>
 
       <div class="pw-mode" role="group" aria-label="Simulation mode">
@@ -676,7 +677,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   }
 
   // ---------- palette ----------
-  const W = 160, H = 100, N = 36;
+  const W = 320, H = 100, N = 36;   // wide landscape view: twice the sea of v5's 160 x 100
   const stops = [[1,[244,255,251]],[5,[191,238,224]],[10,[111,211,181]],[15,[47,179,154]],
                  [20,[26,143,138]],[25,[20,109,134]],[30,[13,79,115]],[33,[8,52,90]],[36,[4,32,61]]];
   const pal = [[16,32,44]];
@@ -736,7 +737,13 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     el('info').hidden = !isLive;   // Manual: no live readings, so the sliders sit right under the sea
     ui.tide.disabled = isLive; ui.current.disabled = isLive;
     el('tideLbl').classList.toggle('off', isLive); el('currentLbl').classList.toggle('off', isLive);
-    if (isLive) { clock = Date.now(); el('when').value = toInput(clock); }
+    // Either button resets to the current live state: clock to now at the default time-lapse, hand-set sliders to their
+    // defaults, and tide + undercurrent to now's live values (Manual then starts from where the sea is right now)
+    clock = Date.now(); el('when').value = toInput(clock); el('lapse').value = '600';
+    Object.values(ui).forEach(i => { i.value = i.defaultValue; });
+    ui.tide.value = tideAt(clock).toFixed(1);
+    ui.current.value = Math.round(clamp((tideAt(clock + 600000) - tideAt(clock - 600000)) * 3 / 1.3, -1, 1) * 100);
+    outputs();
     refreshSlow(true);
   }
 
@@ -867,7 +874,8 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     const sw = Math.pow(clamp(wf.Hb / 22, 0, 1), 0.85);
     const amp = 0.55 * sw * base;
     const swellW = wf.Hb > 0 ? wf.HbS / (wf.HbS + wf.HbW + 1e-6) : 1, chopW = 1 - swellW;
-    const k1 = 2.2 * Math.pow(13 / wf.Ts, 2), k2 = clamp(2.2 * Math.pow(13 / wf.Tw, 2), 2, 22);
+    const KW = W / 160;   // wavenumbers per v5's 160-px frame, so a wave keeps its size in pixels and more of them fit across
+    const k1 = 2.2 * Math.pow(13 / wf.Ts, 2) * KW, k2 = clamp(2.2 * Math.pow(13 / wf.Tw, 2), 2, 22) * KW;
     ph1 += DT * TIME_COMPRESS / wf.Ts; ph2 += DT * TIME_COMPRESS / wf.Tw;
     for (let x = 0; x < W; x++) {
       const u = x / W;
