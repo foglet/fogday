@@ -366,8 +366,10 @@ title: Waves of San Francisco
   .tides .view { display: contents; }
   .tides .view[hidden] { display: none; }
   /* Toggle: three words in the small-label style; the chosen one in the title gradient, underlined in the accent */
-  .tides .viewpick { display: flex; gap: 22px; }
-  .tides .viewpick button { background: none; border: 0; padding: 4px 0 6px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
+  /* Tight above and below (Nov 2026: cut by over half). Before: 26px above the words (.tides' 22px top padding + 4px), and 6px
+     under them plus .tides' 24px gap (28px dark) below. Now ~12px above, 12px below (16px dark). */
+  .tides .viewpick { display: flex; gap: 22px; margin-block: -12px -15px; }
+  .tides .viewpick button { background: none; border: 0; padding: 2px 0 3px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; -webkit-tap-highlight-color: transparent; }
   .tides .viewpick button:hover { color: var(--accent); }
   .tides .viewpick button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
