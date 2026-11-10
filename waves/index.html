@@ -507,7 +507,7 @@ title: Waves of San Francisco
       <div class="info-set" id="infoWaves">
         <span><b>Every slider is yours to play with.</b> Each time the page loads, they start at live San Francisco conditions; reload to go back to them.</span>
         <span><b>Tide and undercurrent:</b> the tide at Golden Gate (NOAA station 9414290), calculated in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. Rising water pushes toward shore, falling water pushes seaward.</span>
-        <span><b>Wind, swell height and swell period:</b> the National Weather Service marine forecast for this hour, for the water just outside the Golden Gate. Wind is the part blowing onshore (from the west) or offshore. <b>Air pressure:</b> the latest National Weather Service station reading. Each 1 mb drop raises the sea about 1 cm.</span>
+        <span><b>Wind, swell height and swell period:</b> the National Weather Service marine forecast for this hour, for the water just outside the Golden Gate. Wind is the part blowing onshore (from the west) or offshore. <b>Air pressure:</b> the latest reading at San Francisco International Airport. Each 1 mb drop raises the sea about 1 cm.</span>
         <span><b>Fetch and the Kelvin / El Niño offset</b> have no live source. The offset starts at +1.0 ft: NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter.</span>
         <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
         <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
@@ -847,8 +847,8 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
 
   // ---------- live conditions from the National Weather Service, on load ----------
   // Wind, swell height and swell period: the NWS marine forecast for the open water just outside the Golden Gate (the
-  // beach's own grid cell is land, with no waves), for the current hour. Air pressure: the latest station reading that
-  // /tides/ already loads (tides.js loadWeather). Fetch and the El Niño offset have no live source and keep their values.
+  // beach's own grid cell is land, with no waves), for the current hour. Air pressure: the latest reading at San Francisco
+  // airport (Oakland if SFO has none in the last 3 hours). Fetch and the El Niño offset have no live source.
   // Any slider already moved is left alone; if the NWS can't be reached, the starting values stay.
   async function loadLiveSea() {
     const h = { headers: { Accept: 'application/geo+json' } };
@@ -867,10 +867,13 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
       if (sh) set('swellH', Math.round(sh * FT * 2) / 2);
       if (sp) set('swellT', Math.round(sp));
     } catch (e) {}
-    try {
-      const w = typeof loadWeather === 'function' ? await loadWeather('baker') : null;
-      if (w && w.pres != null) set('pressure', Math.round(w.pres / 100));        // Pa → mb
-    } catch (e) {}
+    for (const s of ['KSFO', 'KOAK']) {                                          // airports report pressure; SF's own stations don't
+      try {
+        const o = (await get(`https://api.weather.gov/stations/${s}/observations/latest`)).properties;
+        const pa = o.seaLevelPressure && o.seaLevelPressure.value != null ? o.seaLevelPressure.value : o.barometricPressure && o.barometricPressure.value;
+        if (pa != null && Date.now() - new Date(o.timestamp) < 3 * 36e5) { set('pressure', Math.round(pa / 100)); break; }   // Pa → mb
+      } catch (e) {}
+    }
     outputs(); refreshSlow(true);
   }
   loadLiveSea();
