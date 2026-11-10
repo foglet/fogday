@@ -379,11 +379,9 @@ title: Waves of San Francisco
   .tides .pw-stick { position: sticky; top: 8px; z-index: 21; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; }
   .tides #pw-sea { width: 100%; aspect-ratio: 320/100; cursor: pointer; }
   @media (max-width: 520px) { .tides #pw-sea { aspect-ratio: 2/1; } }   /* phones: 200 x 100 canvas (set in the script) */
-  @media (max-width: 520px) {   /* phones, dark mode: the sea runs edge to edge, like the tide chart on /tides/ */
-    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
-    :root[data-theme="dark"] .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+  @media (max-width: 520px) {   /* phones: the sea runs edge to edge, like the tide chart on /tides/ in dark mode */
+    .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }   /* light and dark: steps out over .wrap's 20px side padding */
   }
-    letter-spacing: .12em; text-transform: uppercase; color: var(--muted); min-width: 9em; }
   .tides .pw-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .tides .pw :is(button, select, input[type=datetime-local]) { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
     border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .9rem; cursor: pointer; }
