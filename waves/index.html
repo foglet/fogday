@@ -375,6 +375,7 @@ title: Waves of San Francisco
   /* Pixel Waves: the sea and its pixel moon / chart keep their own palette; everything around them uses the site's */
   .tides .pw canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
   .tides #pw-sea { width: 100%; aspect-ratio: 320/100; border-radius: 12px; cursor: pointer; }
+  @media (max-width: 520px) { .tides #pw-sea { aspect-ratio: 2/1; } }   /* phones: 200 x 100 canvas (set in the script) */
   .tides #pw-palette { display: grid; grid-template-columns: repeat(37, 1fr); height: 8px; border-radius: 4px; overflow: hidden; margin-top: -12px; }
   @media (max-width: 520px) {   /* phones, dark mode: the sea runs edge to edge, like the tide chart on /tides/ */
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides :is(#pw-sea, #pw-palette) { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
@@ -454,7 +455,7 @@ title: Waves of San Francisco
     </div>
 
     <div class="view pw" id="viewWaves">
-      <canvas id="pw-sea" width="320" height="100" aria-label="Pixel-art sea driven by tide, moon and wave factors"></canvas>
+      <canvas id="pw-sea" width="320" height="100" tabindex="0" role="button" aria-pressed="false" aria-label="Pixel-art sea driven by tide, moon and wave factors. Tap to pause or play." title="Tap to pause or play"></canvas>
       <div id="pw-palette" aria-hidden="true"></div>
 
       <div class="pw-mode" role="group" aria-label="Simulation mode">
@@ -505,7 +506,6 @@ title: Waves of San Francisco
           <legend class="label">Motion</legend>
           <label id="pw-currentLbl"><span>Undercurrent</span> <input id="pw-current" type="range" min="-100" max="100" value="35"><output id="pw-currentOut"></output></label>
           <label><span>Sim speed</span> <input id="pw-speed" type="range" min="5" max="100" value="35"><output id="pw-speedOut"></output></label>
-          <div class="pw-row"><button id="pw-toggle" type="button">Pause</button></div>
         </fieldset>
       </div>
 
@@ -677,7 +677,9 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   }
 
   // ---------- palette ----------
-  const W = 320, H = 100, N = 36;   // wide landscape view: twice the sea of v5's 160 x 100
+  // Wide landscape view: 320 x 100 (3.2:1); phones 200 x 100 (2:1), matching the CSS. Picked once, on load.
+  const W = matchMedia('(max-width: 520px)').matches ? 200 : 320, H = 100, N = 36;
+  el('sea').width = W;
   const stops = [[1,[244,255,251]],[5,[191,238,224]],[10,[111,211,181]],[15,[47,179,154]],
                  [20,[26,143,138]],[25,[20,109,134]],[30,[13,79,115]],[33,[8,52,90]],[36,[4,32,61]]];
   const pal = [[16,32,44]];
@@ -951,10 +953,10 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   el('nowBtn').onclick = () => { clock = Date.now(); el('lapse').value = '1'; el('when').value = toInput(clock); refreshSlow(true); };
   el('when').onchange = () => { if (el('when').value) { clock = fromInput(el('when').value); refreshSlow(true); } };
   el('jump').onchange = () => { const v = el('jump').value; if (v) { clock = fromInput(v); el('when').value = v; el('lapse').value = '600'; refreshSlow(true); } el('jump').value = ''; };
-  const btn = el('toggle');
-  const setRun = v => { running = v; btn.textContent = v ? 'Pause' : 'Play'; last = performance.now(); };
-  btn.onclick = () => setRun(!running);
+  // Tap (or Space / Enter on) the sea to pause or play; there's no separate button
+  const setRun = v => { running = v; cv.setAttribute('aria-pressed', !v); last = performance.now(); };
   cv.onclick = () => setRun(!running);
+  cv.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setRun(!running); } };
 
   outputs();
   setMode(true);
