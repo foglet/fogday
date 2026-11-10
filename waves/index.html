@@ -372,14 +372,13 @@ title: Waves of San Francisco
   .tides .viewpick button:hover { color: var(--accent); }
   .tides .viewpick button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 
-  /* Pixel Waves: the sea and its pixel moon / chart keep their own palette; everything around them uses the site's */
+  /* Pixel Waves: the sea keeps its own palette; everything around them uses the site's */
   .tides .pw canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
-  /* The sea and its palette strip never scroll away: they stick right under the fixed 8px color bar, over the bar's
+  /* The sea never scrolls away: they stick right under the fixed 8px color bar, over the bar's
      fade (z-index 21 > 20), so nothing scrolls into view above the sea while you work the sliders. */
   .tides .pw-stick { position: sticky; top: 8px; z-index: 21; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; }
   .tides #pw-sea { width: 100%; aspect-ratio: 320/100; cursor: pointer; }
   @media (max-width: 520px) { .tides #pw-sea { aspect-ratio: 2/1; } }   /* phones: 200 x 100 canvas (set in the script) */
-  .tides #pw-palette { display: grid; grid-template-columns: repeat(37, 1fr); height: 8px; }
   @media (max-width: 520px) {   /* phones, dark mode: the sea runs edge to edge, like the tide chart on /tides/ */
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
     :root[data-theme="dark"] .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
@@ -443,7 +442,6 @@ title: Waves of San Francisco
     <div class="view pw" id="viewWaves">
       <div class="pw-stick" id="pw-stick">
         <canvas id="pw-sea" width="320" height="100" tabindex="0" role="button" aria-pressed="false" aria-label="Pixel-art sea driven by tide, moon and wave factors. Tap to pause or play." title="Tap to pause or play"></canvas>
-        <div id="pw-palette" aria-hidden="true"></div>
       </div>
 
       <div class="pw-groups">
@@ -651,8 +649,6 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     pal.push(a[1].map((v, k) => Math.round(v + (b[1][k] - v) * t)));
   }
   const rgb = i => `rgb(${pal[i]})`;
-  const strip = el('palette');
-  pal.forEach((c, i) => { const d = document.createElement('div'); d.style.background = rgb(i); strip.appendChild(d); });
 
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const ui = {}; ['tide','kelvin','pressure','wind','fetch','swellH','swellT','current','speed'].forEach(k => ui[k] = el(k));
