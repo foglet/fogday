@@ -820,7 +820,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   Object.entries(ui).forEach(([k, i]) => i.addEventListener('input', () => { touched.add(k); outputs(); refreshSlow(true); }));
 
   // ---------- loop ----------
-  let running = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let running = true;   // the sea always plays on load (tap it to pause)
   let acc = 0, last = performance.now();
   function loop(now) {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
