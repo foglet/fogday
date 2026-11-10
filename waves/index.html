@@ -405,7 +405,8 @@ title: Waves of San Francisco
   .tides .pw-groups label output { color: var(--ink); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
   .tides .pw-groups label.off { opacity: .55; }
   .tides .pw input[type=range] { width: 100%; accent-color: var(--accent); }
-  .tides .pw-notes { max-width: none; }
+  /* Info under the footer: the Tides or Waves notes, whichever view is showing */
+  .tides .info-set { display: contents; } .tides .info-set[hidden] { display: none; }
   /* Dark mode: no panel fills, as on /tides/ */
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides :is(.pw-info, .pw-groups fieldset) { background: transparent; padding-inline: 0; } }
   :root[data-theme="dark"] .tides :is(.pw-info, .pw-groups fieldset) { background: transparent; padding-inline: 0; }
@@ -507,15 +508,6 @@ title: Waves of San Francisco
         </fieldset>
       </div>
 
-      <details class="notes pw-notes">
-        <summary>About the waves</summary>
-        <div class="notes-body">
-        <span><b>Live mode</b> calculates the San Francisco tide (NOAA station 9414290) in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. The moon phase and distance are calculated too (approximate, to within a few hours). In live mode the undercurrent follows the tide: incoming (rising) water pushes toward shore, outgoing (falling) water pushes seaward. <b>King tide</b> is flagged when the day's predicted high reaches 6.9 ft or the date falls in a published window. The windows (San Mateo County, Oct 2026) are Nov 21–28, Dec 20–27 and Jan 17–24.</span>
-        <span><b>Set by hand in both modes</b>: wind, fetch, swell, pressure and the Kelvin / El Niño offset. The offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
-        <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
-        <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
-        </div>
-      </details>
     </div>
 
     <div class="view" id="viewTides" hidden>
@@ -553,10 +545,18 @@ title: Waves of San Francisco
     <details class="notes">
       <summary data-i18n="info">Info</summary>
       <div class="notes-body">
+      <div class="info-set" id="infoWaves">
+        <span><b>Live mode</b> calculates the San Francisco tide (NOAA station 9414290) in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. The moon phase and distance are calculated too (approximate, to within a few hours). In live mode the undercurrent follows the tide: incoming (rising) water pushes toward shore, outgoing (falling) water pushes seaward. <b>King tide</b> is flagged when the day's predicted high reaches 6.9 ft or the date falls in a published window. The windows (San Mateo County, Oct 2026) are Nov 21–28, Dec 20–27 and Jan 17–24.</span>
+        <span><b>Set by hand in both modes</b>: wind, fetch, swell, pressure and the Kelvin / El Niño offset. The offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
+        <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
+        <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
+      </div>
+      <div class="info-set" id="infoTides" hidden>
       <span class="station" id="station"></span>
       <span id="source"></span>
       <span data-i18n="notes">Heights above mean lower low water (MLLW); tap the tide height to switch between US and metric units (feet / meters, °F / °C, mph / km/h). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
       <span data-i18n="credit">Weather and wind icons: <a href="https://phosphoricons.com">Phosphor Icons</a>. Tide arrow: AIGA symbol signs. Moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
+      </div>
       </div>
     </details>
     <span class="madeat"><span data-i18n="madeat">Made at Baker Beach</span><button class="seabtn" id="seaBtn" type="button" aria-pressed="true" aria-label="Sea life: tap to hide or show all; 2 taps crabs, 4 sharks" title="Sea life: tap to hide or show all; 2 taps crabs, 4 sharks"><svg viewBox="0 0 26 24" width="20" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5C11 2.5 12 5.5 11.5 9.5C11 12.5 11.5 15.5 11.5 17.5C11.5 20 10 21 8 21C6 21 4.5 20 4.5 17.5C4.5 15 5 12.5 4.5 9.5C4 5.5 5 2.5 8 2.5Z"/><path d="M4.9 11L8 5.5L11.1 11"/><path d="M18 4C21 4 22 7 21.5 11C21 14 21.5 17 21.5 19C21.5 21.5 20 22.5 18 22.5C16 22.5 14.5 21.5 14.5 19C14.5 16.5 15 14 14.5 11C14 7 15 4 18 4Z"/><path d="M14.9 12.5L18 7L21.1 12.5"/></svg></button></span>
@@ -582,6 +582,7 @@ title: Waves of San Francisco
     var views = { Tides: document.getElementById('viewTides'), Waves: document.getElementById('viewWaves') };
     function show(name) {
       for (var k in views) views[k].hidden = k !== name;
+      document.getElementById('infoTides').hidden = name !== 'Tides'; document.getElementById('infoWaves').hidden = name !== 'Waves';
       document.querySelectorAll('.viewpick button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === name); });
       try { localStorage.setItem('fogday-waves-view', name); } catch (e) {}
       if (name === 'Tides') dispatchEvent(new Event('resize'));   // tides.js measures and redraws its chart for the now-visible panel
