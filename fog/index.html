@@ -1,0 +1,378 @@
+---
+title: Pixel Fog
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pixel Fog · Fogday Studios</title>
+<meta name="description" content="Pixel Fog: San Francisco's fog rolling in through the Golden Gate, seen from above, as pixel art driven by the wind, the marine layer, the sun and the heat inland. By Fogday Studios.">
+
+{% include head.html %}
+<style>
+  /* Pixel Fog: the Golden Gate from above, 125 m per pixel. Same page format as /waves/: the picture sticks at the top,
+     sliders in titled groups below, Info and the language code on the last line. Site colors and fonts from fogday.css. */
+  :root:lang(zh) {
+    --font-ui: "Fira Sans", "Heiti SC", STHeiti, SimHei, "Kaiti SC", STKaiti, KaiTi, sans-serif;
+  }
+  .fog { display: flex; flex-direction: column; gap: 24px; padding-block: 12px 36px; }
+  .fog .label { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .fog .title { margin: 0; font: 400 1.6rem/1.1 var(--font-logo, "Patua One", serif); }
+  .fog .sub { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
+  .fog canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  /* The picture never scrolls away: it sticks right under the fixed 8px color bar, as on /waves/ */
+  .fog .stick { position: sticky; top: 8px; z-index: 21; border-radius: 12px; overflow: hidden; background: #0c2a40; }
+  .fog #fog-map { width: 100%; aspect-ratio: 196/140; cursor: pointer; touch-action: manipulation; }
+  @media (max-width: 520px) { .fog .stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
+  .fog .readout { color: var(--muted); font-size: .85rem; margin-top: -14px; font-variant-numeric: tabular-nums; }
+  .fog .readout b { color: var(--ink); font-weight: 600; }
+  .fog .groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .fog fieldset { background: var(--surface); border: 0; border-radius: 12px; padding: 12px 16px 14px; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .fog legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; }
+  .fog fieldset label { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 6.5em; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+  .fog fieldset label output { color: var(--ink); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .fog input[type=range] { width: 100%; accent-color: var(--accent); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fog fieldset { background: transparent; padding-inline: 0; } }
+  :root[data-theme="dark"] .fog fieldset { background: transparent; padding-inline: 0; }
+  @media (max-width: 640px) { .fog fieldset label { grid-template-columns: 7.5em minmax(0, 1fr) 5.5em; } }
+  .fog .langbtn { float: left; background: none; border: 0; padding: 6px 16px 6px 0; margin: 0; cursor: pointer; font-size: .75rem; font-weight: 600;
+    letter-spacing: .14em; color: var(--accent); -webkit-tap-highlight-color: transparent; }
+  .fog .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
+  .fog .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; }
+  .fog .notes summary::-webkit-details-marker { display: none; }
+  .fog .notes summary::after { content: " +"; }
+  .fog .notes[open] summary::after { content: " –"; }
+  .fog .notes-body { clear: both; display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+  .fog .notes a { color: var(--accent); }
+  /* Bottom nav as clear as it can be, as on /waves/ */
+  footer { background: transparent !important; border-top: 0 !important; }
+  footer .wrap { text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg); }
+</style>
+</head>
+<body class="wide">
+
+{% include header.html current="maps" title=page.title %}
+
+<main>
+  <div class="wrap fog">
+    <div class="stick">
+      <canvas id="fog-map" width="196" height="140" tabindex="0" role="button" aria-pressed="false"></canvas>
+    </div>
+    <div class="readout" id="fog-readout" aria-live="polite"></div>
+
+    <div class="groups">
+      <fieldset>
+        <legend class="label" data-t="gFog">Fog</legend>
+        <label><span data-t="bank">Fog bank</span> <input id="fog-bank" type="range" min="0" max="100" value="70"><output id="fog-bankOut"></output></label>
+        <label><span data-t="top">Marine layer top</span> <input id="fog-top" type="range" min="100" max="900" step="10" value="350"><output id="fog-topOut"></output></label>
+      </fieldset>
+      <fieldset>
+        <legend class="label" data-t="gWind">Wind</legend>
+        <label><span data-t="speed">Wind speed</span> <input id="fog-wind" type="range" min="0" max="35" value="14"><output id="fog-windOut"></output></label>
+        <label><span data-t="dir">Wind from</span> <input id="fog-dir" type="range" min="180" max="360" step="5" value="275"><output id="fog-dirOut"></output></label>
+      </fieldset>
+      <fieldset>
+        <legend class="label" data-t="gSun">Sun &amp; heat</legend>
+        <label><span data-t="hour">Time of day</span> <input id="fog-hour" type="range" min="0" max="23.75" step="0.25" value="12"><output id="fog-hourOut"></output></label>
+        <label><span data-t="heat">Inland heat</span> <input id="fog-heat" type="range" min="45" max="100" value="68"><output id="fog-heatOut"></output></label>
+        <label><span data-t="sim">Sim speed</span> <input id="fog-sim" type="range" min="5" max="100" value="50"><output id="fog-simOut"></output></label>
+      </fieldset>
+    </div>
+
+    <div class="foot">
+      <button class="langbtn" id="langBtn" type="button">EN</button>
+      <details class="notes">
+        <summary data-t="info">Info</summary>
+        <div class="notes-body">
+          <span data-t="n1"></span>
+          <span data-t="n2"></span>
+          <span data-t="n3"></span>
+          <span data-t="n4"></span>
+          <span data-t="n5"></span>
+        </div>
+      </details>
+    </div>
+  </div>
+</main>
+
+{% include footer.html %}
+
+<script>
+(() => {
+  // ---------- words, in the four languages of /tides/ and /waves/ (same language setting, shared across the pages) ----------
+  const T = {
+    en: { gFog:'Fog', bank:'Fog bank', top:'Marine layer top', gWind:'Wind', speed:'Wind speed', dir:'Wind from', gSun:'Sun & heat', hour:'Time of day', heat:'Inland heat', sim:'Sim speed', info:'Info',
+      calm:'calm', offshore:'Offshore wind: fog pulls back', towers:'Bridge towers above the fog', covered:'Fog over the Gate', clear:'Gate clear',
+      aria:'Pixel-art map of the Golden Gate from above, with fog rolling in from the Pacific. Tap to pause or play.', tap:'Tap to pause or play',
+      n1:'<b>What you see:</b> the Golden Gate from straight above, about 125 m per pixel, north up. Marin Headlands and Sausalito at top left, San Francisco along the bottom, Angel Island, Alcatraz and Treasure Island in the Bay. Fog pours in from the Pacific on the left.',
+      n2:'<b>How the fog moves:</b> the PSX Doom fire rule turned on its side. Each step, every fog pixel moves one pixel downwind, wanders a little, and sometimes thins by one shade. It thins fastest over sunny, hot land and barely at all over the cold Bay. Hills taller than the marine layer stop it, so a low layer squeezes through the Gate and a high one spills over the hills. The Golden Gate Bridge towers (227 m) show through when the layer is lower than they are.',
+      n3:'<b>Every slider is yours to play with.</b> On each load, wind speed and direction, the inland temperature and the fog bank start from the National Weather Service forecast for this hour, and the clock from now. The fog bank is an estimate: the forecast doesn\'t give fog thickness, so it\'s read from the forecast\'s fog flag and humidity. The marine layer top has no live source and starts at 350 m.',
+      n4:'<b>Map:</b> shorelines from OpenStreetMap land polygons (via geo-maps, 100 m), with Alcatraz added by hand. Hills are approximate: smooth bumps at the real summits (Twin Peaks, Mount Sutro, Hawk Hill, Mount Livermore and others), not a terrain model.',
+      n5:'Sources: <a href="https://www.weather.gov/documentation/services-web-api">National Weather Service API</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a> (© OpenStreetMap contributors). A hat tip to the fire animation in the PlayStation port of Doom.' },
+    fr: { gFog:'Brouillard', bank:'Banc de brume', top:'Couche marine', gWind:'Vent', speed:'Vent', dir:'Vent de', gSun:'Soleil et chaleur', hour:'Heure', heat:'Chaleur intérieure', sim:'Vitesse', info:'Info',
+      calm:'calme', offshore:'Vent de terre : la brume recule', towers:'Tours du pont au-dessus de la brume', covered:'Brume sur le Golden Gate', clear:'Golden Gate dégagé',
+      aria:'Carte en pixel art du Golden Gate vu d’en haut, avec la brume qui arrive du Pacifique. Touchez pour mettre en pause ou relancer.', tap:'Touchez pour mettre en pause ou relancer',
+      n1:'<b>Ce que vous voyez :</b> le Golden Gate vu d’en haut, environ 125 m par pixel, nord en haut. Les Marin Headlands et Sausalito en haut à gauche, San Francisco en bas, Angel Island, Alcatraz et Treasure Island dans la baie. La brume arrive du Pacifique, à gauche.',
+      n2:'<b>Comment la brume avance :</b> la règle du feu de Doom (PSX) couchée sur le côté. À chaque pas, chaque pixel de brume avance d’un pixel sous le vent, dévie un peu, et parfois s’éclaircit d’une teinte. Elle s’éclaircit vite sur les terres chaudes et ensoleillées, à peine sur la baie froide. Les collines plus hautes que la couche marine l’arrêtent : une couche basse se faufile par le Golden Gate, une couche haute déborde sur les collines. Les tours du pont (227 m) dépassent quand la couche est plus basse qu’elles.',
+      n3:'<b>Tous les curseurs sont à vous.</b> À chaque chargement, le vent, la température à l’intérieur des terres et le banc de brume partent de la prévision du National Weather Service pour cette heure, et l’horloge de maintenant. Le banc de brume est une estimation : la prévision ne donne pas l’épaisseur de la brume, elle est déduite de l’indicateur de brouillard et de l’humidité. Le sommet de la couche marine n’a pas de source en direct et part de 350 m.',
+      n4:'<b>Carte :</b> côtes d’après les polygones de terre d’OpenStreetMap (via geo-maps, 100 m), avec Alcatraz ajouté à la main. Les collines sont approximatives : des bosses lisses aux vrais sommets (Twin Peaks, Mount Sutro, Hawk Hill, Mount Livermore et d’autres), pas un modèle de terrain.',
+      n5:'Sources : <a href="https://www.weather.gov/documentation/services-web-api">API du National Weather Service</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a> (© contributeurs d’OpenStreetMap). Un clin d’œil à l’animation du feu du portage PlayStation de Doom.' },
+    es: { gFog:'Niebla', bank:'Banco de niebla', top:'Capa marina', gWind:'Viento', speed:'Viento', dir:'Viento del', gSun:'Sol y calor', hour:'Hora', heat:'Calor interior', sim:'Velocidad', info:'Info',
+      calm:'calma', offshore:'Viento de tierra: la niebla retrocede', towers:'Torres del puente sobre la niebla', covered:'Niebla en el Golden Gate', clear:'Golden Gate despejado',
+      aria:'Mapa en pixel art del Golden Gate visto desde arriba, con la niebla entrando desde el Pacífico. Toca para pausar o reanudar.', tap:'Toca para pausar o reanudar',
+      n1:'<b>Lo que ves:</b> el Golden Gate visto desde arriba, unos 125 m por píxel, con el norte arriba. Marin Headlands y Sausalito arriba a la izquierda, San Francisco abajo, y Angel Island, Alcatraz y Treasure Island en la bahía. La niebla entra desde el Pacífico, a la izquierda.',
+      n2:'<b>Cómo se mueve la niebla:</b> la regla del fuego de Doom (PSX) puesta de lado. En cada paso, cada píxel de niebla avanza un píxel a favor del viento, se desvía un poco y a veces se aclara un tono. Se aclara rápido sobre la tierra caliente y soleada y casi nada sobre la bahía fría. Las colinas más altas que la capa marina la frenan: una capa baja se cuela por el Golden Gate y una alta desborda las colinas. Las torres del puente (227 m) asoman cuando la capa es más baja que ellas.',
+      n3:'<b>Todos los controles son tuyos para jugar.</b> En cada carga, el viento, la temperatura del interior y el banco de niebla empiezan con el pronóstico del National Weather Service para esta hora, y el reloj con la hora actual. El banco de niebla es una estimación: el pronóstico no da el espesor de la niebla, así que se deduce del aviso de niebla y la humedad. El tope de la capa marina no tiene fuente en directo y empieza en 350 m.',
+      n4:'<b>Mapa:</b> costas de los polígonos de tierra de OpenStreetMap (vía geo-maps, 100 m), con Alcatraz añadido a mano. Las colinas son aproximadas: lomas suaves en las cumbres reales (Twin Peaks, Mount Sutro, Hawk Hill, Mount Livermore y otras), no un modelo del terreno.',
+      n5:'Fuentes: <a href="https://www.weather.gov/documentation/services-web-api">API del National Weather Service</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a> (© colaboradores de OpenStreetMap). Un guiño a la animación del fuego de la versión de Doom para PlayStation.' },
+    zh: { gFog:'雾', bank:'雾堤', top:'海洋层顶', gWind:'风', speed:'风速', dir:'风向', gSun:'太阳与热度', hour:'时间', heat:'内陆气温', sim:'模拟速度', info:'说明',
+      calm:'无风', offshore:'离岸风：雾在后退', towers:'桥塔露出雾面', covered:'金门被雾覆盖', clear:'金门晴朗',
+      aria:'从上方俯瞰金门的像素地图，雾从太平洋涌入。轻触暂停或播放。', tap:'轻触暂停或播放',
+      n1:'<b>你看到的：</b>从正上方俯瞰的金门，每像素约 125 米，上方为北。左上是马林岬角和索萨利托，下方是旧金山，海湾中有天使岛、恶魔岛和金银岛。雾从左边的太平洋涌入。',
+      n2:'<b>雾如何移动：</b>把 PSX 版《毁灭战士》的火焰规则横过来。每一步，每个雾像素顺风前进一格，略微偏移，有时淡一级。在晴朗炎热的陆地上消散最快，在寒冷的海湾上几乎不散。高于海洋层的山丘会挡住雾：海洋层低时，雾从金门挤进来；海洋层高时，雾漫过山丘。金门大桥的桥塔（227 米）在海洋层低于它们时露出雾面。',
+      n3:'<b>每个滑块都可以随意调节。</b>每次加载时，风速、风向、内陆气温和雾堤都从美国国家气象局本小时的预报开始，时钟从现在开始。雾堤是估计值：预报不提供雾的厚度，因此根据预报中的雾标记和湿度推算。海洋层顶没有实时数据来源，初始为 350 米。',
+      n4:'<b>地图：</b>海岸线取自 OpenStreetMap 陆地多边形（经 geo-maps，100 米精度），恶魔岛为手工添加。山丘是近似的：在真实山顶（双峰、苏特罗山、鹰山、利弗莫尔山等）放置的平滑隆起，并非地形模型。',
+      n5:'来源：<a href="https://www.weather.gov/documentation/services-web-api">美国国家气象局 API</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a>（© OpenStreetMap 贡献者）。致敬 PlayStation 版《毁灭战士》中的火焰动画。' },
+  };
+  const ORDER = ['en', 'fr', 'es', 'zh'], NAMES = { en: 'English', fr: 'Français', es: 'Español', zh: '中文' };
+  let lang = 'en';
+  try { const l = localStorage.getItem('sf-tides-lang'); if (T[l]) lang = l; } catch (e) {}
+  const t = k => (T[lang] && T[lang][k]) || T.en[k];
+
+  // ---------- the map: land mask (run lengths per row, water first, hex), 196 x 140 at 125 m ----------
+  const W = 196, H = 140, LON0 = -122.600, LON1 = -122.322, LAT1 = 37.898, CELL_LAT = 0.125 / 111.0, CELL_M = 125;
+  const MASK = '0,60,48,5,15,2|0,44,2,1b,49,4,16|0,35,1,e,3,7,1,14,4a,2,15|0,35,1,d,4,3,6,1a,5a|0,29,1,b,2,d,d,1a,59|0,36,1,2,1,a,e,6,8,c,55,1,2|0,36,2,1,1,a,f,5,7,e,54,2,1|0,36,4,b,10,3,6,f,53,4|0,36,4,b,11,2,5,11,56|0,36,4,3,2,6,12,1,4,13,55|0,37,8,7,15,15,54|0,37,8,7,14,16,54|0,37,8,7,13,18,53|0,39,7,7,12,19,52|0,38,3,1,6,5,12,19,52|0,37,2,4,6,5,11,18,53|0,3e,7,3,11,17,54|0,3f,8,1,11,16,55|0,3f,1a,15,56|0,40,3,1,15,14,57|0,41,1,2,15,13,58|0,44,16,11,57,2|1,42,18,f,59,1|2,45,15,5,16,2,4b|2,47,14,4,15,5,49|3,47,14,3,14,8,47|4,46,15,3,11,a,47|5,45,16,2,10,c,46|6,45,16,2,e,d,46|7,44,17,1,d,f,45|8,43,24,10,45|9,44,21,12,44|9,45,1f,13,44|a,46,1d,12,45|b,4,1,42,1d,10,45|c,2,3,43,1,1,1a,f,45|12,44,1b,e,45|13,42,1d,d,45|14,41,1e,4,4,4,45|15,40,29,2,44|1a,3b,6f|1b,3a,6f|1c,39,6f|1c,39,6f|1d,38,6f|1d,38,6f|1e,38,6e|1f,37,6e|1f,38,6d|20,38,6c|20,38,6c|21,38,6b|21,38,6b|22,38,6a|22,38,6a|23,37,6a|24,36,6a|25,35,6a|27,2f,6e|29,2d,49,2,23|2c,2a,48,4,22|2d,29,47,5,22|2d,b,1,1d,46,7,21|2d,a,2,14,2,7,26,4,1c,8,20|2d,9,3,13,31,2,1d,9,1f|2d,8,b,b,52,9,1c,2|2e,6,e,8,53,a,1a,3|2e,6,f,6,55,9,18,5|2f,4,12,3,57,7,1b,3|30,2,6d,6,1f|31,1,6e,5,1f|31,1,6e,4,20|32,1,6e,2,21|a1,1,22|a1,1,6,2,1a|a1,2,3,3,1b|a0,9,1b|56,1,28,2,20,8,13,3,5|56,3,24,2,1,4,2,1,1c,6,12,9|55,6,14,1,7,2,3,c,1d,3,11,b|55,8,d,4,9,3,2,d,2f,c|55,a,6,8,9,17,29,8,3,3|54,38,2a,4,7,3|54,3a,28,1,b,2|54,3b,33,2|53,3d,32,2|53,3d,30,4|53,3e,2f,4|52,40,31,1|52,40,32|52,41,2a,3,4|51,43,29,6,1|51,43,29,7|51,44,28,7|50,46,27,7|50,46,27,7|4b,4c,26,7|42,55,26,7|41,15,2,40,25,7|40,17,1,40,25,7|3f,58,26,7|3e,59,26,7|3d,5a,26,7|3c,5b,27,6|3c,5a,2b,3|3c,5a,2e|3c,59,2f|3d,57,30|3d,5a,2d|3d,5d,2a|3d,5d,2a|3d,5a,2,1,2a|3d,5b,2c|3d,5c,2b|3d,5c,2b|3d,5b,2c|3d,5b,2c|3e,59,2d|3e,58,2e|3e,59,2d|3e,5b,2b|3e,5b,2b|3e,5b,2b|3e,5b,2b|3e,5c,2a|3e,5c,2a|3f,37,1,23,2a|3f,36,2,22,2b|3f,5c,29|3f,5f,26|3f,5f,26|3f,5f,26|3f,5f,26|3f,56,2f|3f,60,25|40,60,24|40,61,23|40,61,23|40,62,22|40,63,21';
+  const land = new Uint8Array(W * H);
+  MASK.split('|').forEach((row, y) => { let x = 0, on = 0; for (const r of row.split(',')) { const n = parseInt(r, 16); for (let k = 0; k < n; k++) land[y * W + x++] = on; on ^= 1; } });
+  const X = lon => (lon - LON0) / (LON1 - LON0) * W, Y = lat => (LAT1 - lat) / CELL_LAT;
+
+  // Hills: smooth bumps at real summits (approximate heights in m, radius in km), over a 15 m base on land
+  const HILLS = [
+    [-122.4475, 37.7525, 280, .9], [-122.4580, 37.7580, 277, .8], [-122.4537, 37.7383, 283, 1.0], [-122.4330, 37.7920, 110, 1.0],
+    [-122.4180, 37.8010, 90, .4], [-122.4058, 37.8024, 85, .3], [-122.4140, 37.7925, 100, .4], [-122.4620, 37.7950, 110, 1.2],
+    [-122.5050, 37.7800, 70, .8], [-122.4920, 37.7650, 60, 1.6],
+    [-122.4990, 37.8325, 280, .9], [-122.4855, 37.8370, 280, .8], [-122.4930, 37.8520, 290, 1.0], [-122.5200, 37.8400, 250, 1.2],
+    [-122.4900, 37.8700, 280, 1.5], [-122.5100, 37.8750, 350, 1.8], [-122.5300, 37.8900, 400, 2.0],
+    [-122.4650, 37.8880, 200, 1.0], [-122.4650, 37.8730, 100, .4], [-122.4317, 37.8608, 240, .8], [-122.3670, 37.8100, 100, .4],
+  ];
+  const elev = new Float32Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (!land[i]) continue;
+    let e = 15;
+    for (const [lo, la, h, r] of HILLS) { const dx = (x - X(lo)) * CELL_M / 1000, dy = (y - Y(la)) * CELL_M / 1000; e += h * Math.exp(-(dx * dx + dy * dy) / (r * r)); }
+    elev[i] = e;
+  }
+  // Hillshade, lit from the northwest
+  const shade = new Float32Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (!land[i]) continue;
+    const ex = elev[y * W + Math.min(W - 1, x + 1)] - elev[y * W + Math.max(0, x - 1)], ey = elev[Math.min(H - 1, y + 1) * W + x] - elev[Math.max(0, y - 1) * W + x];
+    shade[i] = Math.max(.65, Math.min(1.3, 1 - (ex + ey) * .004));
+  }
+  // Bridges (lon, lat endpoints): Golden Gate (Fort Point to Lime Point) and the Bay Bridge (Rincon Point, Yerba Buena, toward Oakland)
+  const line = (a, b) => { const p = [], n = Math.ceil(Math.hypot(X(b[0]) - X(a[0]), Y(b[1]) - Y(a[1]))) * 2; for (let k = 0; k <= n; k++) p.push([Math.round(X(a[0]) + (X(b[0]) - X(a[0])) * k / n), Math.round(Y(a[1]) + (Y(b[1]) - Y(a[1])) * k / n)]); return p; };
+  const GGB = line([-122.4770, 37.8107], [-122.4787, 37.8263]);
+  const GG_TOWERS = [[-122.4772, 37.8122], [-122.4785, 37.8243]].map(([lo, la]) => [Math.round(X(lo)), Math.round(Y(la))]);
+  const BAYB = line([-122.3880, 37.7880], [-122.3700, 37.8080]).concat(line([-122.3615, 37.8115], [-122.3220, 37.8230]));
+
+  // ---------- sliders ----------
+  const el = id => document.getElementById('fog-' + id);
+  const ui = {}; ['bank', 'top', 'wind', 'dir', 'hour', 'heat', 'sim'].forEach(k => ui[k] = el(k));
+  const val = k => +ui[k].value;
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const COMPASS = { en: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
+                    fr: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
+                    es: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
+                    zh: ['北','北东北','东北','东东北','东','东东南','东南','南东南','南','南西南','西南','西西南','西','西西北','西北','北西北'] };
+  const compass = d => COMPASS[lang][Math.round(d / 22.5) % 16];
+  const fmtHour = h => { const hh = Math.floor(h), mm = String(Math.round((h % 1) * 60)).padStart(2, '0');
+    return lang === 'en' ? `${((hh + 11) % 12) + 1}:${mm} ${hh < 12 ? 'am' : 'pm'}` : `${hh}:${mm}`; };
+  function outputs() {
+    el('bankOut').textContent = val('bank') + '%';
+    el('topOut').textContent = val('top') + ' m';
+    el('windOut').textContent = val('wind') ? val('wind') + ' kt' : t('calm');
+    el('dirOut').textContent = `${compass(val('dir'))} ${val('dir')}°`;
+    el('hourOut').textContent = fmtHour(val('hour'));
+    el('heatOut').textContent = val('heat') + ' °F';
+    el('simOut').textContent = (val('sim') / 100).toFixed(2) + '×';
+  }
+
+  // ---------- sun (approximate, San Francisco), for the time of day on today's date ----------
+  const R = Math.PI / 180, LAT = 37.81, LONG = -122.48;
+  function sunElev(ms) {
+    const D = (ms - Date.UTC(2000, 0, 1, 12)) / 864e5, gA = (357.529 + .98560028 * D) * R, q = 280.459 + .98564736 * D;
+    const L = (q + 1.915 * Math.sin(gA) + .020 * Math.sin(2 * gA)) * R, e = (23.439 - .00000036 * D) * R;
+    const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / R, dec = Math.asin(Math.sin(e) * Math.sin(L));
+    const ha = ((((18.697374558 + 24.06570982441908 * D) * 15 + LONG - ra) % 360) + 540) % 360 - 180;
+    return Math.asin(Math.sin(LAT * R) * Math.sin(dec) + Math.cos(LAT * R) * Math.cos(dec) * Math.cos(ha * R)) / R;
+  }
+  const tz = { timeZone: 'America/Los_Angeles' };
+  function laParts(ms) { const o = {}; new Intl.DateTimeFormat('en-CA', { ...tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(ms)).forEach(p => o[p.type] = p.value); return o; }
+  function todayAt(h) {   // today in San Francisco at hour h, as epoch ms
+    const o = laParts(Date.now()), hh = Math.floor(h), mm = Math.round((h % 1) * 60);
+    let g = Date.UTC(+o.year, o.month - 1, +o.day, hh + 8, mm);
+    for (let i = 0; i < 2; i++) { const p = laParts(g); g -= Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute) - Date.UTC(+o.year, o.month - 1, +o.day, hh, mm); }
+    return g;
+  }
+
+  // ---------- fog: the Doom fire rule on its side ----------
+  // f = fog density 0..36 per pixel. The west edge is the source (the fog bank, with drifting streaks). Each step every pixel
+  // moves one pixel downwind (east), wanders a pixel up or down, drifts north or south with the wind, and thins by one
+  // with a chance P that depends on the pixel it lands on. Hills above the marine layer thin it by several at once.
+  const N = 36;
+  let f = new Uint8Array(W * H), prev = new Uint8Array(W * H);
+  const P = new Float32Array(W * H), BLOCK = new Uint8Array(W * H);
+  const streak = new Float32Array(H);
+  { const raw = Array.from({ length: H }, () => Math.random());
+    for (let y = 0; y < H; y++) { let s = 0; for (let k = -5; k <= 5; k++) s += raw[(y + k + H) % H]; streak[y] = s / 11; }
+    const lo = Math.min(...streak), hi = Math.max(...streak); for (let y = 0; y < H; y++) streak[y] = (streak[y] - lo) / (hi - lo); }
+  let streakOff = 0, light = 1, sunK = 0, dayK = 1;
+  function physics() {   // per-pixel thinning, from the sliders; recomputed when they change
+    const el0 = sunElev(todayAt(val('hour')));
+    sunK = clamp(Math.sin(Math.max(0, el0) * R) * 1.4, 0, 1);                 // how hard the sun works on the fog
+    light = clamp(.22 + .78 * (el0 + 6) / 24, .22, 1);                           // how lit the scene is
+    dayK = clamp((el0 + 8) / 14, 0, 1);                                          // fog: white by day, blue-grey at night
+    const heatK = clamp((val('heat') - 55) / 40, 0, 1), top = val('top');
+    for (let i = 0; i < W * H; i++) {
+      if (!land[i]) { P[i] = .012 + .03 * sunK; BLOCK[i] = 0; continue; }       // the cold Bay keeps fog
+      const e = elev[i], over = e - top;
+      // Sun and inland heat burn it off over land: shades lost per step, from 0.12 (night) to ~2.2 (hot afternoon sun)
+      let p = .12 + sunK * (.3 + 1.8 * heatK);
+      if (e > top * .7) p += (e / top - .7) * 1.5;                                 // thinner near the top of the layer
+      P[i] = clamp(p, .02, 4); BLOCK[i] = over > 0 ? Math.min(N, 3 + Math.floor(over / 20)) : 0;
+    }
+  }
+  function windVec() {   // travel direction: east component (pixels per step along x is always 1 when > 0), north/south drift per step
+    const to = (val('dir') + 180) * R, ue = Math.sin(to), vn = Math.cos(to);
+    return { ue, dy: ue > .1 ? clamp(-vn / ue, -1.5, 1.5) : 0 };
+  }
+  function step() {
+    const { ue, dy } = windVec(), bank = val('bank') / 100;
+    if (ue > .1 && val('wind') > 0) {
+      streakOff += .35;
+      for (let y = 0; y < H; y++) {
+        const s = streak[Math.floor(y + streakOff) % H];
+        f[y * W] = land[y * W] ? 0 : Math.max(0, Math.round(N * bank - 7 * s * (1.2 - bank) - 2 * Math.random()));
+      }
+      for (let x = W - 2; x >= 0; x--) for (let y = 0; y < H; y++) {
+        const v = f[y * W + x];
+        let ny = y + ((Math.random() * 3) | 0) - 1 + Math.floor(dy + Math.random());
+        ny = ny < 0 ? 0 : ny >= H ? H - 1 : ny;
+        const dst = ny * W + x + 1;
+        if (v === 0) { f[dst] = 0; continue; }
+        const pd = P[dst], dec = (pd | 0) + (Math.random() < pd % 1 ? 1 : 0) + BLOCK[dst];
+        f[dst] = v > dec ? v - dec : 0;
+      }
+    } else {   // calm or offshore: no new fog comes in, and what's here thins out where it sits
+      const k = val('wind') > 0 && ue <= .1 ? .25 : .04;
+      for (let i = 0; i < W * H; i++) if (f[i] && Math.random() < k + Math.min(1, P[i]) * .3) f[i]--;
+    }
+  }
+
+  // ---------- drawing ----------
+  const cv = document.getElementById('fog-map'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
+  const WATER = [10, 48, 78], WATER2 = [14, 62, 96], LAND_LO = [52, 72, 54], LAND_HI = [86, 96, 66];
+  const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124], ORANGE = [192, 54, 44], DECK = [170, 176, 180];
+  const wnoise = new Float32Array(W * H).map(() => Math.random());
+  function draw(fr) {
+    const fogC = FOG_NIGHT.map((v, k) => v + (FOG_DAY[k] - v) * dayK);
+    for (let i = 0; i < W * H; i++) {
+      let c;
+      if (land[i]) { const t2 = clamp(elev[i] / 450, 0, 1), s = shade[i]; c = LAND_LO.map((v, k) => (v + (LAND_HI[k] - v) * t2) * s); }
+      else c = WATER.map((v, k) => v + (WATER2[k] - v) * wnoise[i] * .5);
+      const fv = prev[i] + (f[i] - prev[i]) * fr, a = Math.min(.97, Math.pow(fv / N, .55) * 1.02), o = i * 4;
+      d[o] = (c[0] * light) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * light) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * light) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
+    }
+    const put = (x, y, c, a) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const o = (y * W + x) * 4; d[o] = d[o] * (1 - a) + c[0] * a; d[o + 1] = d[o + 1] * (1 - a) + c[1] * a; d[o + 2] = d[o + 2] * (1 - a) + c[2] * a; };
+    const lk = .45 + .55 * light, fogAt = (x, y) => f[clamp(y, 0, H - 1) * W + clamp(x, 0, W - 1)] / N;
+    for (const [x, y] of BAYB) put(x, y, DECK.map(v => v * lk), .85 * (1 - Math.min(1, fogAt(x, y) * 1.4)));
+    for (const [x, y] of GGB) put(x, y, ORANGE.map(v => v * lk), .9 * (1 - Math.min(1, fogAt(x, y) * 1.4)));
+    const towersOut = val('top') < 227;   // the towers stand 227 m above the water
+    for (const [x, y] of GG_TOWERS) { const a = towersOut ? 1 : 1 - Math.min(1, fogAt(x, y) * 1.4); put(x, y, ORANGE.map(v => v * lk * 1.1), a); put(x + 1, y, [20, 20, 24], a * .5); }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // ---------- readout, words, language ----------
+  function readout() {
+    const { ue } = windVec(), gate = GGB.reduce((s, [x, y]) => s + fogAt0(x, y), 0) / GGB.length;
+    let state = val('wind') && ue <= .1 ? t('offshore') : gate > .35 ? (val('top') < 227 ? t('towers') : t('covered')) : t('clear');
+    document.getElementById('fog-readout').innerHTML = `<b>${state}</b> · ${val('wind') ? val('wind') + ' kt ' + compass(val('dir')) : t('calm')} · ${val('top')} m · ${fmtHour(val('hour'))}`;
+  }
+  const fogAt0 = (x, y) => f[clamp(y, 0, H - 1) * W + clamp(x, 0, W - 1)] / N;
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-t]').forEach(e => e.innerHTML = t(e.dataset.t));   // trusted text from the table above
+    cv.setAttribute('aria-label', t('aria')); cv.title = t('tap');
+    const next = ORDER[(ORDER.indexOf(lang) + 1) % ORDER.length], b = document.getElementById('langBtn');
+    b.textContent = lang.toUpperCase(); b.title = NAMES[next]; b.setAttribute('aria-label', `${NAMES[lang]} → ${NAMES[next]}`);
+    outputs(); readout();
+  }
+  document.getElementById('langBtn').addEventListener('click', () => {
+    lang = ORDER[(ORDER.indexOf(lang) + 1) % ORDER.length];
+    try { localStorage.setItem('sf-tides-lang', lang); } catch (e) {}
+    applyLang();
+  });
+  Object.values(ui).forEach(i => i.addEventListener('input', () => { touched.add(i.id); outputs(); physics(); readout(); }));
+  const touched = new Set();
+
+  // ---------- loop ----------
+  // Speed: real wind carries fog ~160x faster than life, so a 15 kt westerly crosses the 24 km view in about 20 s at 1x.
+  let running = true, acc = 0, last = performance.now(), lastRead = 0;
+  function loop(now) {
+    const dt = Math.min(.1, (now - last) / 1000); last = now;
+    if (running) {
+      const { ue } = windVec(), kt = val('wind');
+      const rate = (ue > .1 && kt > 0 ? kt * .5144 * ue * 160 / CELL_M : 4) * (val('sim') / 100) * 2;   // steps per second
+      acc += dt * rate; let n = 0;
+      while (acc >= 1 && n < 6) { prev.set(f); step(); acc -= 1; n++; }
+      if (n === 6) acc = 0;
+      draw(acc);
+      if (now - lastRead > 500) { readout(); lastRead = now; }
+    }
+    requestAnimationFrame(loop);
+  }
+  const setRun = v => { running = v; cv.setAttribute('aria-pressed', !v); last = performance.now(); };
+  cv.onclick = () => setRun(!running);
+  cv.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setRun(!running); } };
+
+  // ---------- live start, from the National Weather Service: this hour's forecast for the Golden Gate ----------
+  // Wind speed and direction, the temperature inland (Mission District grid cell), and a fog bank estimate from the
+  // forecast's fog flag and humidity. Sliders already moved are left alone; if the NWS can't be reached, the defaults stay.
+  async function live() {
+    const h = { headers: { Accept: 'application/geo+json' } };
+    const get = async u => { const r = await fetch(u, h); if (!r.ok) throw new Error(r.status); return r.json(); };
+    const at = (layer, ms) => { for (const v of (layer && layer.values) || []) { const [s, du] = String(v.validTime).split('/');
+      const m = /P(?:(\d+)D)?(?:T(?:(\d+)H)?)?/.exec(du || '') || [], s0 = +new Date(s), e0 = s0 + ((+m[1] || 0) * 24 + (+m[2] || 0)) * 36e5;
+      if (ms >= s0 && ms < e0) return v.value; } return null; };
+    const set = (k, v) => { if (v == null || !isFinite(v) || touched.has(ui[k].id)) return; ui[k].value = clamp(v, +ui[k].min, +ui[k].max); };
+    const now = Date.now();
+    try {
+      const g = (await get((await get('https://api.weather.gov/points/37.82,-122.52')).properties.forecastGridData)).properties;   // just outside the Gate
+      const spd = at(g.windSpeed, now), dir = at(g.windDirection, now), rh = at(g.relativeHumidity, now), wx = at(g.weather, now);
+      if (spd != null) set('wind', Math.round(spd / 1.852));
+      if (dir != null) set('dir', Math.round(clamp(dir < 90 ? dir + 360 : dir, 180, 360) / 5) * 5);
+      const fogFlag = Array.isArray(wx) && wx.some(w => w && /fog/.test(w.weather || ''));
+      if (rh != null) set('bank', Math.round(clamp((rh - 70) / 30, 0, 1) * 70 + (fogFlag ? 30 : 0)));
+    } catch (e) {}
+    try {
+      const g = (await get((await get('https://api.weather.gov/points/37.76,-122.415')).properties.forecastGridData)).properties;   // the Mission
+      const c = at(g.temperature, now); if (c != null) set('heat', Math.round(c * 9 / 5 + 32));
+    } catch (e) {}
+    outputs(); physics(); readout();
+  }
+
+  // ---------- start ----------
+  { const o = laParts(Date.now()); ui.hour.value = (+o.hour + Math.round(+o.minute / 15) / 4).toFixed(2); }
+  physics();
+  for (let i = 0; i < W * 1.3; i++) step();   // warm up: fog already in
+  prev.set(f);
+  applyLang(); draw(0);
+  live();
+  requestAnimationFrame(loop);
+  window.__fog = { land, elev, f: () => f, step, physics, draw, W, H, X, Y, GGB, GG_TOWERS, setRun };
+})();
+</script>
+</body>
+</html>

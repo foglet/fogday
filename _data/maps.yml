@@ -17,6 +17,8 @@
   url: /tides/
 - name: SF Waves
   url: /waves/
+- name: Pixel Fog
+  url: /fog/
 - name: SF Trees
   url: /treesf/
 - name: A Spy Map
