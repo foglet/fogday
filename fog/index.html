@@ -227,7 +227,7 @@ title: FOG
   { const raw = Array.from({ length: H }, () => Math.random());
     for (let y = 0; y < H; y++) { let s = 0; for (let k = -5; k <= 5; k++) s += raw[(y + k + H) % H]; streak[y] = s / 11; }
     const lo = Math.min(...streak), hi = Math.max(...streak); for (let y = 0; y < H; y++) streak[y] = (streak[y] - lo) / (hi - lo); }
-  let streakOff = 0, light = 1, sunK = 0, dayK = 1;
+  let streakOff = 0, light = 1, sunK = 0, dayK = 1, billowX = 0, billowY = 0;
   function physics() {   // per-pixel thinning, from the sliders; recomputed when they change
     const el0 = sunElev(timeMs());
     sunK = clamp(Math.sin(Math.max(0, el0) * R) * 1.4, 0, 1);                 // how hard the sun works on the fog
@@ -250,11 +250,14 @@ title: FOG
   function step() {
     const { ue, dy } = windVec(), bank = val('bank') / 100;
     if (ue > .1 && val('wind') > 0) {
-      streakOff += .35;
+      streakOff += .12;   // the bank's lobes slide slowly along the edge
       for (let y = 0; y < H; y++) {
-        const s = streak[Math.floor(y + streakOff) % H];
-        f[y * W] = land[y * W] ? 0 : Math.max(0, Math.round(N * bank - 7 * s * (1.2 - bank) - 2 * Math.random()));
+        // The whole west edge feeds fog, over the Marin coast too (its hills thin or stop it, as anywhere else).
+        // A thick bank is solid; a thin one breaks into slow lobes with clear gaps between them.
+        const s = streak[Math.floor(y + streakOff) % H], lobe = 1 - (1 - bank) * 1.6 * s;
+        f[y * W] = Math.max(0, Math.round(N * clamp(bank * 1.15, 0, 1) * clamp(lobe, 0, 1) - Math.random()));
       }
+      billowX += 1; billowY += dy;   // the billow pattern rides along with the fog
       for (let x = W - 2; x >= 0; x--) for (let y = 0; y < H; y++) {
         const v = f[y * W + x];
         let ny = y + ((Math.random() * 3) | 0) - 1 + Math.floor(dy + Math.random());
@@ -275,13 +278,36 @@ title: FOG
   const WATER = [10, 48, 78], WATER2 = [14, 62, 96], LAND_LO = [52, 72, 54], LAND_HI = [86, 96, 66];
   const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124], ORANGE = [192, 54, 44], DECK = [170, 176, 180];
   const wnoise = new Float32Array(W * H).map(() => Math.random());
+  // Fog is drawn soft: the density is blurred (two 3x3 passes) so the Doom fire rule's pixel-by-pixel grain becomes
+  // smooth sheets, and a slowly drifting two-scale noise breaks the thin edges into billows and holes.
+  const NG = 32, ng = Float32Array.from({ length: NG * NG }, () => Math.random());
+  const sm = t => t * t * (3 - 2 * t);
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), fx = sm(x - xi), fy = sm(y - yi), g = (a, b) => ng[(((b % NG) + NG) % NG) * NG + (((a % NG) + NG) % NG)];
+    const a = g(xi, yi) + (g(xi + 1, yi) - g(xi, yi)) * fx, b = g(xi, yi + 1) + (g(xi + 1, yi + 1) - g(xi, yi + 1)) * fx;
+    return a + (b - a) * fy;
+  }
+  const fa = new Float32Array(W * H), fb = new Float32Array(W * H);
+  function blur(src, dst) {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let s = 0, n = 0;
+      for (let j = -1; j <= 1; j++) { const yy = y + j; if (yy < 0 || yy >= H) continue;
+        for (let k = -1; k <= 1; k++) { const xx = x + k; if (xx < 0 || xx >= W) continue; s += src[yy * W + xx]; n++; } }
+      dst[y * W + x] = s / n;
+    }
+  }
   function draw(fr) {
     const fogC = FOG_NIGHT.map((v, k) => v + (FOG_DAY[k] - v) * dayK);
+    for (let i = 0; i < W * H; i++) fa[i] = (prev[i] + (f[i] - prev[i]) * fr) / N;
+    blur(fa, fb); blur(fb, fa);
     for (let i = 0; i < W * H; i++) {
       let c;
       if (land[i]) { const t2 = clamp(elev[i] / 450, 0, 1), s = shade[i]; c = LAND_LO.map((v, k) => (v + (LAND_HI[k] - v) * t2) * s); }
       else c = WATER.map((v, k) => v + (WATER2[k] - v) * wnoise[i] * .5);
-      const fv = prev[i] + (f[i] - prev[i]) * fr, a = Math.min(.97, Math.pow(fv / N, .55) * 1.02), o = i * 4;
+      const x = i % W, y = (i / W) | 0;
+      const n = .65 * vnoise((x - billowX) / 11, (y - billowY) / 11) + .35 * vnoise((x - billowX) / 4.5 + 17, (y - billowY) / 4.5 + 5);
+      const v = fa[i] + .28 * (n - .5), e = clamp((v - .1) / .5, 0, 1);
+      const a = sm(e) * .96, o = i * 4;
       d[o] = (c[0] * light) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * light) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * light) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
     }
     const put = (x, y, c, a) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const o = (y * W + x) * 4; d[o] = d[o] * (1 - a) + c[0] * a; d[o + 1] = d[o + 1] * (1 - a) + c[1] * a; d[o + 2] = d[o + 2] * (1 - a) + c[2] * a; };
