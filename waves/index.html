@@ -365,7 +365,7 @@ title: Waves of San Francisco
   /* Each view takes part in .tides' own flex layout (display: contents), so the Tides view spaces exactly as /tides/ does */
   .tides .view { display: contents; }
   .tides .view[hidden] { display: none; }
-  /* Toggle: two words in the small-label style; the chosen one in the title gradient, underlined in the accent */
+  /* Toggle: three words in the small-label style; the chosen one in the title gradient, underlined in the accent */
   .tides .viewpick { display: flex; gap: 22px; }
   .tides .viewpick button { background: none; border: 0; padding: 4px 0 6px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; -webkit-tap-highlight-color: transparent; }
@@ -379,6 +379,11 @@ title: Waves of San Francisco
   .tides .pw-stick { position: sticky; top: 8px; z-index: 21; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; }
   .tides #pw-sea { width: 100%; aspect-ratio: 320/100; cursor: pointer; }
   @media (max-width: 520px) { .tides #pw-sea { aspect-ratio: 2/1; } }   /* phones: 200 x 100 canvas (set in the script) */
+  /* Plunge: the same sea stood on end, a tall portrait column (about 100 px wide; its height comes from this box).
+     62dvh tall so the sliders still show below while the sea sticks at the top. */
+  .tides .pw-stick.plunge { background: none; }
+  .tides .pw-stick.plunge #pw-sea { aspect-ratio: auto; height: 62vh; height: 62dvh; width: min(100%, calc(62dvh * .55)); align-self: center; border-radius: 12px; }
+  @media (max-width: 520px) { .tides .pw-stick.plunge #pw-sea { width: 100%; border-radius: 0; } }
   @media (max-width: 520px) {   /* phones: the sea runs edge to edge, like the tide chart on /tides/ in dark mode */
     .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }   /* light and dark: steps out over .wrap's 20px side padding */
   }
@@ -435,6 +440,7 @@ title: Waves of San Francisco
     <div class="viewpick" role="group" aria-label="View">
       <button type="button" id="vTidesBtn" data-view="Tides" aria-pressed="false" data-i18n="vTides">Tides</button>
       <button type="button" id="vWavesBtn" data-view="Waves" aria-pressed="true" data-i18n="vWaves">Waves</button>
+      <button type="button" id="vPlungeBtn" data-view="Plunge" aria-pressed="false" data-i18n="vPlunge">Plunge</button>
     </div>
 
     <div class="view pw" id="viewWaves">
@@ -506,6 +512,7 @@ title: Waves of San Francisco
         <span><b>Wind, swell height and swell period:</b> the National Weather Service marine forecast for this hour, for the water just outside the Golden Gate. Wind is the part blowing onshore (from the west) or offshore. <b>Air pressure:</b> the latest reading at San Francisco International Airport. Each 1 mb drop raises the sea about 1 cm.</span>
         <span><b>Fetch and the Kelvin / El Niño offset</b> have no live source. The offset starts at +1.0 ft: NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter.</span>
         <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
+        <span><b>Plunge</b> is the same sea and sliders, stood on end: a tall column, about 100 pixels wide, with the column heights stretched to fill it, so you see each wave from the deep water at the bottom up to its foam tip.</span>
         <span>This pixelated wave effect is a hat tip to the fire procedural animation in the PlayStation (PSX) port of Doom and in Doom 64 on the Nintendo 64.</span>
         <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
       </div>
@@ -528,26 +535,30 @@ title: Waves of San Francisco
 <script>
   // Waves page: its own title and toggle words (tides.js writes the title from these on load and on language change)
   (function () { var T = window.TIDE_I18N; if (!T) return;
-    var w = { en: ['Waves of San Francisco', 'Waves', 'Tides'], fr: ['Vagues de San Francisco', 'Vagues', 'Marées'],
-              es: ['Olas de San Francisco', 'Olas', 'Mareas'], zh: ['旧金山海浪', '海浪', '潮汐'] };
-    for (var k in w) if (T[k]) { T[k].title = w[k][0]; T[k].vWaves = w[k][1]; T[k].vTides = w[k][2]; } })();
+    var w = { en: ['Waves of San Francisco', 'Waves', 'Tides', 'Plunge'], fr: ['Vagues de San Francisco', 'Vagues', 'Marées', 'Plongée'],
+              es: ['Olas de San Francisco', 'Olas', 'Mareas', 'Zambullida'], zh: ['旧金山海浪', '海浪', '潮汐', '卷浪'] };
+    for (var k in w) if (T[k]) { T[k].title = w[k][0]; T[k].vWaves = w[k][1]; T[k].vTides = w[k][2]; T[k].vPlunge = w[k][3]; } })();
 </script>
 <script src="{{ '/tides/stations.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script src="{{ '/tides/tides.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 <script>
-  // Tides / Waves toggle. Waves is the default; the choice is remembered per visitor.
+  // Tides / Waves / Plunge toggle. Waves is the default; the choice is remembered per visitor.
+  // Plunge is the Waves view (same sliders, same sea) with the canvas stood on end; the sea script listens for pw-shape.
   (function () {
     var views = { Tides: document.getElementById('viewTides'), Waves: document.getElementById('viewWaves') };
     function show(name) {
-      for (var k in views) views[k].hidden = k !== name;
-      document.getElementById('infoTides').hidden = name !== 'Tides'; document.getElementById('infoWaves').hidden = name !== 'Waves';
+      var v = name === 'Plunge' ? 'Waves' : name;
+      for (var k in views) views[k].hidden = k !== v;
+      document.getElementById('infoTides').hidden = v !== 'Tides'; document.getElementById('infoWaves').hidden = v !== 'Waves';
+      document.getElementById('pw-stick').classList.toggle('plunge', name === 'Plunge');
+      dispatchEvent(new Event('pw-shape'));
       document.querySelectorAll('.viewpick button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === name); });
       try { localStorage.setItem('fogday-waves-view', name); } catch (e) {}
       if (name === 'Tides') dispatchEvent(new Event('resize'));   // tides.js measures and redraws its chart for the now-visible panel
     }
     document.querySelectorAll('.viewpick button').forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.view); }); });
     var saved = null; try { saved = localStorage.getItem('fogday-waves-view'); } catch (e) {}
-    show(saved === 'Tides' ? 'Tides' : 'Waves');
+    show(saved === 'Tides' || saved === 'Plunge' ? saved : 'Waves');
   })();
 </script>
 <script>
@@ -635,8 +646,9 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
 
   // ---------- palette ----------
   // Wide landscape view: 320 x 100 (3.2:1); phones 200 x 100 (2:1), matching the CSS. Picked once, on load.
-  const W = matchMedia('(max-width: 520px)').matches ? 200 : 320, H = 100, N = 36;
-  el('sea').width = W;
+  // Plunge: a portrait column about 100 px wide, its height from the canvas box (see setShape below).
+  const WIDE_W = matchMedia('(max-width: 520px)').matches ? 200 : 320, N = 36;
+  let W = WIDE_W, H = 100, VS = 1;
   const stops = [[1,[244,255,251]],[5,[191,238,224]],[10,[111,211,181]],[15,[47,179,154]],
                  [20,[26,143,138]],[25,[20,109,134]],[30,[13,79,115]],[33,[8,52,90]],[36,[4,32,61]]];
   const pal = [[16,32,44]];
@@ -741,17 +753,36 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   }
 
   // ---------- Doom-fire sea (v4 engine, driven by the factors) ----------
-  const cv = el('sea'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H);
-  const px = new Uint8Array(W * H), prev = new Uint8Array(W * H);
-  const streak = new Float32Array(W);
-  { const raw = Array.from({ length: W }, () => Math.random());
-    for (let x = 0; x < W; x++) { let s = 0; for (let k = -4; k <= 4; k++) s += raw[(x + k + W) % W]; streak[x] = s / 9; }
-    const lo = Math.min(...streak), hi = Math.max(...streak);
-    for (let x = 0; x < W; x++) streak[x] = (streak[x] - lo) / (hi - lo); }
+  const cv = el('sea'), ctx = cv.getContext('2d');
+  let img, px, prev, streak, p, shape = '';
   const sampleStreak = u => { u = ((u % W) + W) % W; const i = u | 0, f = u - i; return streak[i] * (1 - f) + streak[(i + 1) % W] * f; };
   let curOff = 0, ph1 = 0, ph2 = 0;
-  const p = new Float32Array(W);
   const DT = 1 / 30, TIME_COMPRESS = 3;
+  const REF_H = 112;   // Plunge: column heights stretch by H / REF_H (decay probability ÷ VS), so the tall frame fills
+  // Size the grid for the chosen view and warm the sea up. Waves: WIDE_W x 100. Plunge: ~100 wide, as tall as the box allows.
+  function setShape() {
+    const plunge = document.getElementById('pw-stick').classList.contains('plunge');
+    let w = WIDE_W, h = 100;
+    if (plunge) {
+      const r = cv.getBoundingClientRect();
+      if (!r.width || !r.height) return;                 // not on screen yet (Tides view): sized when it shows
+      w = clamp(Math.round(r.width / 4), 90, 130);
+      h = clamp(Math.round(w * r.height / r.width), 100, Math.round(w * 2.4));
+    }
+    const key = w + 'x' + h;
+    if (key === shape) return;
+    shape = key; W = w; H = h; VS = plunge ? H / REF_H : 1;
+    cv.width = W; cv.height = H;
+    img = ctx.createImageData(W, H);
+    px = new Uint8Array(W * H); prev = new Uint8Array(W * H); p = new Float32Array(W);
+    streak = new Float32Array(W);
+    const raw = Array.from({ length: W }, () => Math.random());
+    for (let x = 0; x < W; x++) { let s = 0; for (let k = -4; k <= 4; k++) s += raw[(x + k + W) % W]; streak[x] = s / 9; }
+    const lo = Math.min(...streak), hi = Math.max(...streak);
+    for (let x = 0; x < W; x++) streak[x] = (streak[x] - lo) / (hi - lo);
+    for (let i = 0; i < H + 40; i++) step();
+    prev.set(px); draw(0);
+  }
 
   function step() {
     const wf = waveFactors();
@@ -769,7 +800,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
       const u = x / W;
       const s1 = 0.78 * Math.sin(2 * Math.PI * (u * k1 - ph1)) + 0.22 * Math.sin(2 * Math.PI * (u * k1 * 2.3 - ph1 * 1.5) + 1.3);
       const s2 = Math.sin(2 * Math.PI * (u * k2 - ph2)) * 0.7 + 0.3 * Math.sin(2 * Math.PI * (u * k2 * 1.7 - ph2 * 1.3) + 2.1);
-      p[x] = clamp(base - amp * (swellW * s1 + chopW * s2), 0.34, 1);
+      p[x] = clamp(base - amp * (swellW * s1 + chopW * s2), 0.34, 1) / VS;   // Plunge: stretch the column to the tall frame
     }
     const cur = (val('current') / 100) * 1.2;
     const wind = (val('wind') / 40) * 2.0;
@@ -872,11 +903,13 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     outputs(); refreshSlow(true);
   }
   loadLiveSea();
-  for (let i = 0; i < 140; i++) step();
-  prev.set(px); draw(0);
+  setShape();
+  addEventListener('pw-shape', setShape);
+  let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(setShape, 150); });
   setRun(running);
   requestAnimationFrame(loop);
-  window.__v5 = { tideAt, moon, extremesCoarse, waveFactors, fromInput, toInput, info: () => info, setClock: ms => { clock = ms; refreshSlow(true); } };
+  window.__v5 = { tideAt, moon, extremesCoarse, waveFactors, fromInput, toInput, info: () => info, setClock: ms => { clock = ms; refreshSlow(true); },
+                  dims: () => ({ W, H, VS }) };
 })();
 </script>
 <script type="module">
