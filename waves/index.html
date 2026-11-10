@@ -505,8 +505,10 @@ title: Waves of San Francisco
       <summary data-i18n="info">Info</summary>
       <div class="notes-body">
       <div class="info-set" id="infoWaves">
-        <span><b>Every slider is yours to play with.</b> The sea opens on the San Francisco tide at the moment you load the page (NOAA station 9414290), calculated in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. Tide and Undercurrent start there: rising water pushes toward shore, falling water pushes seaward. Reload the page to go back to the live tide.</span>
-        <span><b>Starting values</b> for wind, fetch, swell and air pressure are typical; the Kelvin / El Niño offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
+        <span><b>Every slider is yours to play with.</b> Each time the page loads, they start at live San Francisco conditions; reload to go back to them.</span>
+        <span><b>Tide and undercurrent:</b> the tide at Golden Gate (NOAA station 9414290), calculated in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. Rising water pushes toward shore, falling water pushes seaward.</span>
+        <span><b>Wind, swell height and swell period:</b> the National Weather Service marine forecast for this hour, for the water just outside the Golden Gate. Wind is the part blowing onshore (from the west) or offshore. <b>Air pressure:</b> the latest National Weather Service station reading. Each 1 mb drop raises the sea about 1 cm.</span>
+        <span><b>Fetch and the Kelvin / El Niño offset</b> have no live source. The offset starts at +1.0 ft: NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter.</span>
         <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
         <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
       </div>
@@ -814,7 +816,8 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     el('currentOut').textContent = c == 0 ? 'still' : (c < 0 ? '← ' : '→ ') + (Math.abs(c) / 100).toFixed(2);
     el('speedOut').textContent = (val('speed') / 100).toFixed(2) + '×';
   }
-  Object.values(ui).forEach(i => i.addEventListener('input', () => { outputs(); refreshSlow(true); }));
+  const touched = new Set();   // sliders the visitor has moved: live data that arrives later leaves these alone
+  Object.entries(ui).forEach(([k, i]) => i.addEventListener('input', () => { touched.add(k); outputs(); refreshSlow(true); }));
 
   // ---------- loop ----------
   let running = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -841,6 +844,36 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
 
   outputs();
   startLive();
+
+  // ---------- live conditions from the National Weather Service, on load ----------
+  // Wind, swell height and swell period: the NWS marine forecast for the open water just outside the Golden Gate (the
+  // beach's own grid cell is land, with no waves), for the current hour. Air pressure: the latest station reading that
+  // /tides/ already loads (tides.js loadWeather). Fetch and the El Niño offset have no live source and keep their values.
+  // Any slider already moved is left alone; if the NWS can't be reached, the starting values stay.
+  async function loadLiveSea() {
+    const h = { headers: { Accept: 'application/geo+json' } };
+    const get = async u => { const r = await fetch(u, h); if (!r.ok) throw new Error(r.status); return r.json(); };
+    const at = (layer, ms) => { for (const v of (layer && layer.values) || []) { const [s, d] = String(v.validTime).split('/');
+      const m = /P(?:(\d+)D)?(?:T(?:(\d+)H)?)?/.exec(d || '') || [], s0 = +new Date(s), e0 = s0 + ((+m[1] || 0) * 24 + (+m[2] || 0)) * 36e5;
+      if (ms >= s0 && ms < e0) return v.value; } return null; };
+    const set = (k, v) => { if (v == null || !isFinite(v) || touched.has(k)) return;
+      const i = ui[k]; i.value = clamp(v, +i.min, +i.max); };
+    try {
+      const pt = (await get('https://api.weather.gov/points/37.8,-122.52')).properties;
+      const grid = (await get(pt.forecastGridData)).properties, now = Date.now();
+      const spd = at(grid.windSpeed, now), dir = at(grid.windDirection, now);          // km/h, degrees the wind blows from
+      if (spd != null && dir != null) set('wind', Math.round(spd / 1.852 * Math.cos((dir - 270) * R)));   // knots, + = from the west (onshore)
+      const sh = at(grid.primarySwellHeight, now), sp = at(grid.wavePeriod, now);       // m, s
+      if (sh) set('swellH', Math.round(sh * FT * 2) / 2);
+      if (sp) set('swellT', Math.round(sp));
+    } catch (e) {}
+    try {
+      const w = typeof loadWeather === 'function' ? await loadWeather('baker') : null;
+      if (w && w.pres != null) set('pressure', Math.round(w.pres / 100));        // Pa → mb
+    } catch (e) {}
+    outputs(); refreshSlow(true);
+  }
+  loadLiveSea();
   for (let i = 0; i < 140; i++) step();
   prev.set(px); draw(0);
   setRun(running);
