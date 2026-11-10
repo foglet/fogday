@@ -394,7 +394,7 @@ title: Waves of San Francisco
   .tides .pw-stats .stat b { color: var(--muted); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; display: inline-block; min-width: 10.5em; }
   .tides .pw-stats .flag { color: var(--buoy); font-weight: 700; }
   .tides .pw-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .tides .pw-row.live-only[hidden] { display: none; }
+  .tides .pw-row.live-only[hidden], .tides .pw-info[hidden] { display: none; }
   .tides .pw :is(button, select, input[type=datetime-local]):not(.pw-mode button) { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
     border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .9rem; cursor: pointer; }
   .tides .pw-row button:hover, .tides .pw-groups button:hover { border-color: var(--accent); color: var(--accent); }
@@ -461,7 +461,7 @@ title: Waves of San Francisco
         <button id="pw-modeLive" type="button" aria-pressed="true">Live · NOAA tide + moon</button>
       </div>
 
-      <section class="pw-info" aria-label="Tide, moon and wave readings">
+      <section class="pw-info" id="pw-info" aria-label="Tide, moon and wave readings">
         <canvas id="pw-moon" width="24" height="24" aria-label="Moon phase"></canvas>
         <div class="pw-stats" id="pw-stats"></div>
         <canvas id="pw-chart" width="192" height="48" aria-label="Tide curve, 24 hours either side"></canvas>
@@ -733,6 +733,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     live = isLive;
     el('modeLive').setAttribute('aria-pressed', isLive); el('modeManual').setAttribute('aria-pressed', !isLive);
     el('liveRow').hidden = !isLive;
+    el('info').hidden = !isLive;   // Manual: no live readings, so the sliders sit right under the sea
     ui.tide.disabled = isLive; ui.current.disabled = isLive;
     el('tideLbl').classList.toggle('off', isLive); el('currentLbl').classList.toggle('off', isLive);
     if (isLive) { clock = Date.now(); el('when').value = toInput(clock); }
