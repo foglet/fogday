@@ -384,23 +384,9 @@ title: Waves of San Francisco
     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
     :root[data-theme="dark"] .tides .pw-stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
   }
-  .tides .pw-mode { display: flex; justify-content: center; }
-  .tides .pw-mode button { background: var(--surface); border: 1px solid var(--line); padding: 7px 14px; cursor: pointer; font-size: .72rem; font-weight: 600;
     letter-spacing: .12em; text-transform: uppercase; color: var(--muted); min-width: 9em; }
-  .tides .pw-mode button:first-child { border-radius: 8px 0 0 8px; }
-  .tides .pw-mode button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
-  .tides .pw-mode button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .tides .pw-info { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: center;
-    background: var(--surface); border-radius: 12px; padding: 14px 16px; }
-  .tides #pw-moon { width: 72px; height: 72px; background: rgb(16 32 44); border-radius: 6px; }  /* the night sky behind the moon, as in the tide chart */
-  .tides #pw-chart { width: 288px; height: 72px; border-radius: 6px; }
-  .tides :is(#pw-moon, #pw-chart) { display: none; }   /* moon and tide pictures hidden; the readings stay */
-  .tides .pw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 4px 18px; font-size: .9rem; font-variant-numeric: tabular-nums; }
-  .tides .pw-stats .stat b { color: var(--muted); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; display: inline-block; min-width: 10.5em; }
-  .tides .pw-stats .flag { color: var(--buoy); font-weight: 700; }
   .tides .pw-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .tides .pw-row.live-only[hidden], .tides .pw-info[hidden] { display: none; }
-  .tides .pw :is(button, select, input[type=datetime-local]):not(.pw-mode button) { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  .tides .pw :is(button, select, input[type=datetime-local]) { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
     border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .9rem; cursor: pointer; }
   .tides .pw-row button:hover, .tides .pw-groups button:hover { border-color: var(--accent); color: var(--accent); }
   .tides .pw-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--tilegap); }
@@ -413,13 +399,10 @@ title: Waves of San Francisco
   /* Info under the footer: the Tides or Waves notes, whichever view is showing */
   .tides .info-set { display: contents; } .tides .info-set[hidden] { display: none; }
   /* Dark mode: no panel fills, as on /tides/ */
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides :is(.pw-info, .pw-groups fieldset) { background: transparent; padding-inline: 0; } }
-  :root[data-theme="dark"] .tides :is(.pw-info, .pw-groups fieldset) { background: transparent; padding-inline: 0; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pw-groups fieldset { background: transparent; padding-inline: 0; } }
+  :root[data-theme="dark"] .tides .pw-groups fieldset { background: transparent; padding-inline: 0; }
   @media (max-width: 640px) {
-    .tides .pw-info { grid-template-columns: 1fr; justify-items: center; }
-    .tides #pw-chart { width: 100%; height: auto; aspect-ratio: 4/1; }
-    .tides .pw-stats { grid-template-columns: 1fr; width: 100%; }
-    .tides .pw-groups label { grid-template-columns: 7.5em minmax(0, 1fr) 5.5em; }
+        .tides .pw-groups label { grid-template-columns: 7.5em minmax(0, 1fr) 5.5em; }
   }
   </style>
 <script>
@@ -461,36 +444,6 @@ title: Waves of San Francisco
       <div class="pw-stick" id="pw-stick">
         <canvas id="pw-sea" width="320" height="100" tabindex="0" role="button" aria-pressed="false" aria-label="Pixel-art sea driven by tide, moon and wave factors. Tap to pause or play." title="Tap to pause or play"></canvas>
         <div id="pw-palette" aria-hidden="true"></div>
-      </div>
-
-      <div class="pw-mode" role="group" aria-label="Simulation mode">
-        <button id="pw-modeManual" type="button" aria-pressed="false">Manual</button>
-        <button id="pw-modeLive" type="button" aria-pressed="true">Live · NOAA tide + moon</button>
-      </div>
-
-      <section class="pw-info" id="pw-info" aria-label="Tide, moon and wave readings">
-        <canvas id="pw-moon" width="24" height="24" aria-label="Moon phase"></canvas>
-        <div class="pw-stats" id="pw-stats"></div>
-        <canvas id="pw-chart" width="192" height="48" aria-label="Tide curve, 24 hours either side"></canvas>
-      </section>
-
-      <div class="pw-row live-only" id="pw-liveRow">
-        <span class="label">Clock (Pacific)</span>
-        <input type="datetime-local" id="pw-when" step="60">
-        <button id="pw-nowBtn" type="button">Now</button>
-        <select id="pw-lapse" aria-label="Time-lapse">
-          <option value="1">Real time</option>
-          <option value="60">1 min / sec</option>
-          <option value="600" selected>10 min / sec</option>
-          <option value="3600">1 hr / sec</option>
-          <option value="21600">6 hr / sec</option>
-        </select>
-        <select id="pw-jump" aria-label="Jump to king tide">
-          <option value="">Jump to king tide…</option>
-          <option value="2026-11-25T08:00">Nov 25, 2026</option>
-          <option value="2026-12-24T08:00">Dec 24, 2026</option>
-          <option value="2027-01-21T08:00">Jan 21, 2027</option>
-        </select>
       </div>
 
       <div class="pw-groups">
@@ -552,8 +505,8 @@ title: Waves of San Francisco
       <summary data-i18n="info">Info</summary>
       <div class="notes-body">
       <div class="info-set" id="infoWaves">
-        <span><b>Live mode</b> calculates the San Francisco tide (NOAA station 9414290) in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. The moon phase and distance are calculated too (approximate, to within a few hours). In live mode the undercurrent follows the tide: incoming (rising) water pushes toward shore, outgoing (falling) water pushes seaward. <b>King tide</b> is flagged when the day's predicted high reaches 6.9 ft or the date falls in a published window. The windows (San Mateo County, Oct 2026) are Nov 21–28, Dec 20–27 and Jan 17–24.</span>
-        <span><b>Set by hand in both modes</b>: wind, fetch, swell, pressure and the Kelvin / El Niño offset. The offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
+        <span><b>Tide:</b> the sea follows the San Francisco tide right now (NOAA station 9414290), calculated in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. The tide sets the water level, and its direction sets the undercurrent: rising water pushes toward shore, falling water pushes seaward.</span>
+        <span><b>Set by hand:</b> wind, fetch, swell, air pressure and the Kelvin / El Niño offset. The offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
         <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
         <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
       </div>
@@ -737,20 +690,12 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   const WINDOWS = [['2026-11-21','2026-11-28'],['2026-12-20','2026-12-27'],['2027-01-17','2027-01-24']];
   const KING_FT = 6.9;
 
-  function setMode(isLive) {
-    live = isLive;
-    el('modeLive').setAttribute('aria-pressed', isLive); el('modeManual').setAttribute('aria-pressed', !isLive);
-    el('liveRow').hidden = !isLive;
-    el('info').hidden = !isLive;   // Manual: no live readings, so the sliders sit right under the sea
-    ui.tide.disabled = isLive; ui.current.disabled = isLive;
-    el('tideLbl').classList.toggle('off', isLive); el('currentLbl').classList.toggle('off', isLive);
-    // Either button resets to the current live state: clock to now at the default time-lapse, hand-set sliders to their
-    // defaults, and tide + undercurrent to now's live values (Manual then starts from where the sea is right now)
-    clock = Date.now(); el('when').value = toInput(clock); el('lapse').value = '600';
-    Object.values(ui).forEach(i => { i.value = i.defaultValue; });
-    ui.tide.value = tideAt(clock).toFixed(1);
-    ui.current.value = Math.round(clamp((tideAt(clock + 600000) - tideAt(clock - 600000)) * 3 / 1.3, -1, 1) * 100);
-    outputs();
+  // Live only: the sea follows the San Francisco tide at the real time, from page load. Tide and undercurrent come
+  // from the tide; the other sliders are set by hand.
+  function startLive() {
+    ui.tide.disabled = true; ui.current.disabled = true;
+    el('tideLbl').classList.add('off'); el('currentLbl').classList.add('off');
+    clock = Date.now();
     refreshSlow(true);
   }
 
@@ -780,7 +725,6 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     } else {
       info.tide = val('tide'); info.rate = 0;
     }
-    drawChart(); drawMoon(); drawStats();
   }
   function extremesCoarse(ms0, ms1) {      // 6-min scan, then refine to the minute
     const out = []; const st = 360000;
@@ -795,68 +739,6 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
       a = b; b = c;
     }
     return out;
-  }
-
-  // ---------- info panel ----------
-  function drawStats() {
-    const wf = waveFactors();
-    const ib = (1013.25 - val('pressure')) * 0.01 * FT;
-    const level = info.tide + val('kelvin') + ib;
-    const m = info.m;
-    const rows = [];
-    if (live) {
-      rows.push(['Clock (PT)', fmtT(clock)]);
-      rows.push(['Tide', `${info.tide.toFixed(2)} ft · ${info.rate >= 0 ? 'rising' : 'falling'} ${Math.abs(info.rate).toFixed(2)} ft/h`]);
-      if (info.nextH) rows.push(['Next high', `${fmtShort(info.nextH.t)} · ${info.nextH.v.toFixed(2)} ft`]);
-      if (info.nextL) rows.push(['Next low', `${fmtShort(info.nextL.t)} · ${info.nextL.v.toFixed(2)} ft`]);
-      rows.push(['King tide', info.king ? `<span class="flag">YES</span> · day high ${info.dayMax.toFixed(2)} ft${info.win ? ' · in window' : ''}` : `no · day high ${info.dayMax.toFixed(2)} ft`]);
-      rows.push(['Undercurrent', `${info.rate >= 0 ? 'incoming (toward shore)' : 'outgoing (seaward)'}`]);
-    } else {
-      rows.push(['Mode', 'Manual (tide and undercurrent set by hand)']);
-      rows.push(['Tide', `${info.tide.toFixed(2)} ft (manual)`]);
-    }
-    rows.push(['Moon', `${m.name} · ${Math.round(m.ill * 100)}% lit${live ? '' : ' (today)'}`]);
-    rows.push(['Moon distance', `${Math.round(m.dist).toLocaleString()} km${m.dist < 367500 ? ' · <span class="flag">near perigee</span>' : m.dist > 402000 ? ' · near apogee' : ''}`]);
-    rows.push(['Water level', `${level.toFixed(2)} ft (tide ${info.tide >= 0 ? '+' : ''}${info.tide.toFixed(1)}, Kelvin ${val('kelvin') >= 0 ? '+' : ''}${val('kelvin').toFixed(2)}, pressure ${ib >= 0 ? '+' : ''}${ib.toFixed(2)})`]);
-    rows.push(['Breaking waves', `${wf.Hb.toFixed(1)} ft (swell ${wf.HbS.toFixed(1)}, wind waves ${wf.HbW.toFixed(1)} @ ${wf.Tw.toFixed(0)} s)`]);
-    el('stats').innerHTML = rows.map(([k, v]) => `<div class="stat"><b>${k}</b> ${v}</div>`).join('');
-  }
-
-  // ---------- moon icon ----------
-  const mctx = el('moon').getContext('2d');
-  function drawMoon() {
-    const S = 24, r = 10.5, c = 11.5, th = 2 * Math.PI * info.m.age / SYN;
-    const img = mctx.createImageData(S, S), d = img.data;
-    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-      const nx = (x - c) / r, ny = (y - c) / r, o = (y * S + x) * 4;
-      if (nx * nx + ny * ny > 1) { d[o+3] = 0; continue; }
-      const w = Math.sqrt(1 - ny * ny);
-      const lit = th < Math.PI ? nx > w * Math.cos(th) : nx < -w * Math.cos(th);
-      const shade = 1 - 0.15 * Math.max(0, nx * 0.6 + ny * 0.4) ;
-      const col = lit ? pal[2].map(v => v * shade) : pal[33];
-      d[o] = col[0]; d[o+1] = col[1]; d[o+2] = col[2]; d[o+3] = 255;
-    }
-    mctx.putImageData(img, 0, 0);
-  }
-
-  // ---------- tide chart (±24 h) ----------
-  const cctx = el('chart').getContext('2d');
-  function drawChart() {
-    const CW = 192, CH = 48, lo = -3, hi = 10;
-    const yOf = v => Math.round((hi - v) / (hi - lo) * (CH - 1));
-    cctx.fillStyle = rgb(0); cctx.fillRect(0, 0, CW, CH);
-    cctx.fillStyle = rgb(33); for (let x = 0; x < CW; x += 2) cctx.fillRect(x, yOf(0), 1, 1);              // MLLW
-    cctx.fillStyle = '#f2c46d'; for (let x = 0; x < CW; x += 3) cctx.fillRect(x, yOf(KING_FT), 1, 1);       // king threshold
-    const center = clock, span = 24 * 3600000, off = val('kelvin') + (1013.25 - val('pressure')) * 0.0328;
-    for (let x = 0; x < CW; x++) {
-      const t = center - span + (x / (CW - 1)) * 2 * span;
-      const v = live ? tideAt(t) : info.tide;
-      const y = yOf(v), yt = yOf(v + off);
-      cctx.fillStyle = rgb(20); cctx.fillRect(x, y + 1, 1, CH - y);
-      cctx.fillStyle = rgb(12); cctx.fillRect(x, y, 1, 1);
-      cctx.fillStyle = rgb(3); cctx.fillRect(x, yt, 1, 1);
-    }
-    cctx.fillStyle = rgb(1); cctx.fillRect(CW / 2, 0, 1, CH);
   }
 
   // ---------- Doom-fire sea (v4 engine, driven by the factors) ----------
@@ -934,14 +816,11 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
 
   // ---------- loop ----------
   let running = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  let acc = 0, last = performance.now(), lastInputSync = 0;
+  let acc = 0, last = performance.now();
   function loop(now) {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     if (running && !document.getElementById('viewWaves').hidden) {
-      if (live) {
-        clock += dt * 1000 * (+el('lapse').value);
-        if (now - lastInputSync > 1000 && document.activeElement !== el('when')) { el('when').value = toInput(clock); lastInputSync = now; }
-      }
+      clock = Date.now();   // real time
       refreshSlow(false);
       acc += dt * (val('speed') / 100);
       let n = 0;
@@ -953,18 +832,13 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   }
 
   // ---------- wiring ----------
-  el('modeLive').onclick = () => setMode(true);
-  el('modeManual').onclick = () => setMode(false);
-  el('nowBtn').onclick = () => { clock = Date.now(); el('lapse').value = '1'; el('when').value = toInput(clock); refreshSlow(true); };
-  el('when').onchange = () => { if (el('when').value) { clock = fromInput(el('when').value); refreshSlow(true); } };
-  el('jump').onchange = () => { const v = el('jump').value; if (v) { clock = fromInput(v); el('when').value = v; el('lapse').value = '600'; refreshSlow(true); } el('jump').value = ''; };
   // Tap (or Space / Enter on) the sea to pause or play; there's no separate button
   const setRun = v => { running = v; cv.setAttribute('aria-pressed', !v); last = performance.now(); };
   cv.onclick = () => setRun(!running);
   cv.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setRun(!running); } };
 
   outputs();
-  setMode(true);
+  startLive();
   for (let i = 0; i < 140; i++) step();
   prev.set(px); draw(0);
   setRun(running);
