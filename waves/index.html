@@ -1,1 +1,1035 @@
-// waves //
+---
+title: Waves of San Francisco
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Waves of San Francisco · Fogday Studios</title>
+<meta name="description" content="Waves of San Francisco: a pixel sea driven by the tide, the moon, king tides and El Niño, plus tides, weather and wind for San Francisco beaches. By Fogday Studios.">
+
+{% include head.html %}
+<link rel="stylesheet" href="{{ '/tides/weather-icons/css/weather-icons.min.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/tides/phosphor/phosphor.css' | relative_url }}">
+<style>
+  /* SF Tides, in the site's own identity: Patua One slab numbers in the sky-blue title gradient,
+     condition tiles, and a day tide curve.
+     Site colors and fonts come from fogday.css; only tide-specific colors are defined here. */
+  /* Chinese: Heiti, falling back to Kaiti. Latin fonts stay first so numbers and Latin text keep the
+     site look; they have no Chinese glyphs, so the browser takes those from Heiti (or Kaiti). */
+  :root:lang(zh) {
+    --font-ui: "Fira Sans", "Heiti SC", STHeiti, SimHei, "Kaiti SC", STKaiti, KaiTi, sans-serif;
+    --font-logo: "Patua One", "Heiti SC", STHeiti, SimHei, "Kaiti SC", STKaiti, KaiTi, serif;
+  }
+  .tides {
+    --water: var(--accent);
+    --tl1: #2f7fc1; --tl2: #22a37c; --tl3: #2f7fc1; --tl4: #22a37c; --tl5: #1b3f75;   /* tide line: blue, green, blue, green, dark blue */
+    --water-fill: color-mix(in srgb, var(--accent) 15%, transparent);
+    --night: rgb(28 40 48 / .06);
+    --buoy: #d9622b;            /* channel buoy: the "now" marker */
+    --sand: #a77d37;            /* low tides, minus tides */
+    --sand-bg: rgb(181 139 69 / .15);
+    --moon-lit: #f3ebd3; --moon-dark: #c3cfd0;
+    --eg1: #2f5f34; --eg2: #4f8a4a; --eg3: #9cc46a;   /* eelgrass on the chart floor: root, middle, tip */
+    --past: color-mix(in srgb, var(--muted) 45%, var(--bg));  /* lighter grey for times already past */
+    display: flex; flex-direction: column; gap: 24px; padding-block: 22px 36px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides {
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
+    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; --eg1: #3f7a44; --eg2: #6fae66; --eg3: #b9df84; } }
+  :root[data-theme="dark"] .tides {
+    --night: rgb(0 0 0 / .26); --buoy: #f08a52; --sand: #d9b36e; --sand-bg: rgb(217 179 110 / .15); --moon-lit: #f1e6c4; --moon-dark: #2c3b48; --past: var(--muted); --line: rgb(255 255 255 / .12);
+    --tl1: #5aa6e6; --tl2: #46c79c; --tl3: #5aa6e6; --tl4: #46c79c; --tl5: #3f72c0; --eg1: #3f7a44; --eg2: #6fae66; --eg3: #b9df84; }
+
+  /* Dark mode only: the page background is a random two-blue gradient, top to bottom, picked on
+     every load by the script at the end of <head> (--rg-top / --rg-mid / --rg-bot). Fixed to the window, so the
+     fade under the top bar matches the top color and the fixed footer matches the bottom one.
+     Lightness 14–16% (sea blue) and 15–18% (deeper blue) keeps muted text at 4.6:1 or better; --line is a translucent light
+     so the dotted rules and chart height lines show on any of them.
+     Without the script, it stays the site's plain navy. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-mid, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
+    :root:not([data-theme="light"]) body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
+    :root:not([data-theme="light"]) footer { background: var(--rg-bot, var(--bg)); }
+  }
+  :root[data-theme="dark"] body { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), var(--rg-mid, var(--bg)), var(--rg-bot, var(--bg))) fixed; }
+  :root[data-theme="dark"] body::after { background: linear-gradient(to bottom, var(--rg-top, var(--bg)), transparent); }
+  :root[data-theme="dark"] footer { background: var(--rg-bot, var(--bg)); }
+
+  /* Dark mode, the green look (.rg-green on <html>, one load in three): the same three-stop gradient, in dark greens,
+     runs through the header and footer too. The header loses its bottom line, and the fixed footer is painted with
+     the page gradient pinned to the window, so it shows exactly the slice of gradient behind it: no band, no seam.
+     The page itself (<html>) gets the gradient as well, over the site's navy, so the scrollbar gutter and the
+     overscroll bounce past the top or bottom are green too; the scrollbar's track goes clear over it, with a light thumb. */
+  @media (prefers-color-scheme: dark) {
+    :root.rg-green:not([data-theme="light"]) { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; scrollbar-color: rgb(255 255 255 / .28) transparent; }
+    :root.rg-green:not([data-theme="light"]) header { border-bottom: 0; }
+    :root.rg-green:not([data-theme="light"]) footer { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; }
+  }
+  :root.rg-green[data-theme="dark"] { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; scrollbar-color: rgb(255 255 255 / .28) transparent; }
+  :root.rg-green[data-theme="dark"] header { border-bottom: 0; }
+  :root.rg-green[data-theme="dark"] footer { background: linear-gradient(to bottom, var(--rg-top), var(--rg-mid), var(--rg-bot)) fixed; }
+
+  /* Dark mode, on a third of loads (data-look="neat"; the others keep the random gradient above): an animated NEAT
+     gradient (WebGL canvas, config at the end of <body>) sits behind the page.
+     Fixed to the window, under everything. Once it's running the script adds .neat-on to <html>, the body
+     goes transparent so the canvas shows, and --rg-* become NEAT's background color, so the top fade, the
+     footer and the chart's label halos match it. If WebGL fails, the random blue gradient above stays. */
+  #gradient { position: fixed; inset: 0; z-index: -1; pointer-events: none; display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root.neat-on:not([data-theme="light"]) #gradient { display: block; }
+    :root.neat-on:not([data-theme="light"]) body { background: transparent; }
+  }
+  :root.neat-on[data-theme="dark"] #gradient { display: block; }
+  :root.neat-on[data-theme="dark"] body { background: transparent; }
+
+  .tides .num { font-variant-numeric: tabular-nums; }
+  .tides .muted { color: var(--muted); }
+  .tides button, .tides select { font: inherit; color: inherit; }
+  .tides :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .tides .big:focus, .tides .big:focus-visible { outline: none; }  /* the tide number never shows a focus border */
+  .tides .label { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .tides .slab { font-family: var(--font-logo); font-weight: 400; line-height: .9; }
+  .tides .grad { background-image: linear-gradient(to right, var(--title-1), var(--title-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; padding: .08em .04em; margin: -.08em -.04em; }
+  .tides .unit { font-family: var(--font-ui); font-size: 1rem; color: var(--muted); margin-left: 4px; }
+
+  /* Beach picker: the beach name is the drop-down (no box), then its coordinates, as on /transit/ */
+  /* Top: beach and coordinates on the left; sunrise and sunset flush right */
+  .tides .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .tides .top .picker { min-width: 0; }
+  /* Rise / set block: sits flush right */
+  .tides .suntimes { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 14px; flex: none; padding-top: 6px; }
+  /* Each item: icon in a fixed-width first column (so icons line up across items), title over time in the second,
+     both left-aligned on the same edge */
+  .tides .suntimes { --rise-ic: calc(.68rem * 1.7); }
+  .tides .suntimes > div { display: grid; grid-template-columns: calc(var(--rise-ic) * 1.2) auto; column-gap: 5px; align-items: center; line-height: 1.15; }
+  .tides .suntimes .label { font-size: .68rem; grid-column: 2; grid-row: 1; }
+  .tides .suntimes .time { font-weight: 600; line-height: 1.3; grid-column: 2; grid-row: 2; }  /* same as the tide times */
+  .tides .suntimes .ampm { font-size: .68rem; }  /* same size as the Sunrise / Sunset labels */
+  .tides .suntimes .past .time { color: var(--past); }  /* already happened: light grey in light mode, the site grey in dark */
+  .tides .picker { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .tides .beachpick { position: relative; max-width: 100%; }
+  .tides .beachbtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; color: var(--ink);
+    font: 600 clamp(1.6rem, 6.5vw, 2rem)/1.2 var(--font-ui); -webkit-tap-highlight-color: transparent; }
+  /* Beach name in the site's sky-blue title gradient (same as the header title) */
+  .tides #beachName { background-image: linear-gradient(to right, var(--title-1), var(--title-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; padding: .1em .05em; margin: -.1em -.05em; }
+  .tides .beachbtn:hover #beachName { opacity: .8; }
+  .tides .beachbtn:active #beachName { opacity: .6; }
+  .tides .coords { display: block; width: fit-content; font-size: .95rem; margin-top: 4px; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  .tides .coords:hover { color: var(--accent); }  /* tap the coordinates to open the beach in the visitor's map app */
+  .tides .coords { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }   /* long press asks Apple / Google Maps again */
+  .tides .mappick { display: flex; gap: 14px; margin-top: 6px; }
+  .tides .mappick button { background: none; border: 0; padding: 4px 0; cursor: pointer; font-size: .72rem; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); -webkit-tap-highlight-color: transparent; }
+  .tides .place { margin: 8px 0 0; line-height: 1.35; color: var(--muted); max-width: 100%; }  /* tides.js fits it to one line when it can (fitPlace) */
+  .tides .station { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+  /* Tide now */
+  .tides .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center;
+    padding-block: 6px 22px; border-bottom: 1px solid var(--line); }
+  .tides .big { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 4px; row-gap: 6px;
+    background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; justify-self: start; -webkit-tap-highlight-color: transparent; }
+  .tides .big:hover .spdunit { color: var(--accent); }
+  .tides .big { --tide-fs: clamp(4.2rem, 19vw, 6.6rem); --arrow-h: clamp(1.8rem, 7vw, 2.6rem); }
+  /* Arrow sits on the number's baseline (falling: its foot on the baseline); rising lifts it so its tip meets the
+     top of the figures (Patua One figures stand .70em tall, measured) */
+  .tides .big .arrow { width: var(--arrow-h); height: var(--arrow-h); fill: var(--water); align-self: baseline; flex: none;
+    margin-right: calc(var(--tide-fs) * var(--lb, .025) * -1); }  /* about 4px of ink gap to the first figure (the row gap is 4px) */
+  /* Each Patua One figure starts with a different blank on its left: the arrow is pulled in per first figure (measured; m = minus) */
+  .tides .big .arrow[data-fd="0"] { --lb: 0.037; } .tides .big .arrow[data-fd="1"] { --lb: 0.025; } .tides .big .arrow[data-fd="2"] { --lb: 0.019; } .tides .big .arrow[data-fd="3"] { --lb: 0.021; } .tides .big .arrow[data-fd="4"] { --lb: 0.003; } .tides .big .arrow[data-fd="5"] { --lb: 0.025; } .tides .big .arrow[data-fd="6"] { --lb: 0.032; } .tides .big .arrow[data-fd="7"] { --lb: 0.014; } .tides .big .arrow[data-fd="8"] { --lb: 0.031; } .tides .big .arrow[data-fd="9"] { --lb: 0.014; } .tides .big .arrow[data-fd="m"] { --lb: 0.045; }
+  /* Falling: the rising drawing turned over. A change of direction is animated in tides.js (flipArrow):
+     a smooth half turn, then the arrow drops or rises to its resting spot with a soft bounce */
+  .tides .big .arrow { position: relative; top: 0; transform: rotate(180deg); }
+  .tides .big .arrow.up { top: calc(var(--arrow-h) - var(--tide-fs) * .70); transform: rotate(0deg); }
+  /* Smooth icon changes: glyphs crossfade (tides.js fades out, swaps, fades in), the wind arrow turns, past times fade to grey */
+  .tides i.wi, .tides i.ph, .tides i.aiga { transition: opacity .16s ease; }
+  .tides i.wi.windicon, .tides i.ph.windicon, .tides i.aiga.windicon { transition: opacity .16s ease, transform .5s ease; }
+  .tides .suntimes .time, .tides i.wi.riseicon { transition: color .3s ease, opacity .16s ease; }
+  @media (prefers-reduced-motion: reduce) { .tides i.wi, .tides i.ph, .tides i.aiga, .tides .windicon, .tides .suntimes .time, .tides .riseicon { transition: none; } }
+  .tides .big .slab { font-size: var(--tide-fs); }
+  /* FT kerned against the last figure: about 2.5px of ink gap, 3px at most. Each Patua One figure leaves a different
+     space on its right, so the pull-in is per figure (measured), in proportion to the figure size */
+  .tides .big .spdunit { margin-left: calc(0px - var(--tide-fs) * var(--kern, .02)); }  /* 3 px further right than before */
+  .tides .big .spdunit[data-ld="0"] { --kern: 0.031; } .tides .big .spdunit[data-ld="1"] { --kern: 0.022; } .tides .big .spdunit[data-ld="2"] { --kern: 0.022; } .tides .big .spdunit[data-ld="3"] { --kern: 0.026; } .tides .big .spdunit[data-ld="4"] { --kern: 0.015; } .tides .big .spdunit[data-ld="5"] { --kern: 0.019; } .tides .big .spdunit[data-ld="6"] { --kern: 0.01; } .tides .big .spdunit[data-ld="7"] { --kern: -0.005; } .tides .big .spdunit[data-ld="8"] { --kern: 0.025; } .tides .big .spdunit[data-ld="9"] { --kern: 0.026; }
+  /* The next-tide line beside the big reading: left edge on the weather descriptions below (--desc-x, set by tides.js),
+     its last line on the same baseline as the unit (FT). Falls back to below the reading when the reading is wider */
+  .tides .hero.inline { grid-template-columns: var(--desc-x) minmax(0, 1fr); column-gap: 0; align-items: last baseline; }
+  .tides .hero.inline .hero-side { grid-column: 2; }
+  .tides .hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .tides .dir { font-weight: 600; font-size: 1.2rem; }
+  .tides .nlist { display: flex; flex-direction: column; gap: 4px; }  /* next tide, then (negative tides) the tide-pool line under it */
+  .tides .nrow { display: flex; flex-direction: column; line-height: 1.3; }
+  .tides .nrow b { font-weight: 600; }
+  .tides .nrow.neg .label { color: var(--sand); }
+  .tides .nrow.kingalert .label { color: #FF5500; }  /* NWS king tide / coastal flood alert, above the next-tide line */
+  .tides .nrow.kingalert .kt { color: var(--title-1); font-weight: 600; font-size: 1rem; }  /* "King Tides": its own line, as large as "Sunny" / "From NE", in the site's title blue */
+  .tides .nrow.slack .label { color: var(--buoy); font-weight: 700; }  /* same color as the wind arrow */
+
+  /* Condition tiles */
+  .tides { --tilegap: 12px; }
+  .tides .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--tilegap); }
+  .tides .tiles + .day { margin-top: calc(var(--tilegap) - 24px); }  /* chart sits the same distance below the moon tile as the tiles are from each other (24px = .tides gap) */
+  .tides .tile { background: var(--surface); border: 0; border-radius: 12px; padding: 14px 16px 16px;
+    display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 150px; }
+  /* Dark mode only: panels (weather, wind, moon, tide chart) have no fill and no border, and the rule above the
+     footer is gone, so the page gradient shows through. The rule under the tide value stays, drawn like the tide chart's
+     height lines (1px, 2px dash / 5px gap, --line), 28px above and below it. The same dotted rule separates weather,
+     wind and moon; their contents sit 16px in from each side (the old panel padding), so they're inset from the rules.
+     Panel text drops its padding so it lines up with the beach name and tide value, and every section
+     (top, tide value, weather, wind, moon, chart) is spaced by the same 28px gap.
+     --surface becomes the gradient's midpoint, so the chart's label halos and marker dots blend in. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .tides { --surface: var(--rg-mid, #16202a); }
+    :root:not([data-theme="light"]) .tides :is(.tile, .day) { background: transparent; border: 0; } :root:not([data-theme="light"]) .tides .tile { padding: 0; } :root:not([data-theme="light"]) .tides { gap: 28px; --tilegap: 28px; } :root:not([data-theme="light"]) .tides .hero { padding-bottom: 28px; border-bottom: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; } :root:not([data-theme="light"]) .tides .tiles + .day { margin-top: 0; } :root:not([data-theme="light"]) .tides :is(#weather, #wind, #moon) { padding-inline: 16px; } :root:not([data-theme="light"]) .tides :is(#weather, #wind) { padding-bottom: 28px; border-radius: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; }
+    :root:not([data-theme="light"]) footer { border: 0; }
+  }
+  :root[data-theme="dark"] .tides { --surface: var(--rg-mid, #16202a); }
+  :root[data-theme="dark"] .tides :is(.tile, .day) { background: transparent; border: 0; } :root[data-theme="dark"] .tides .tile { padding: 0; } :root[data-theme="dark"] .tides { gap: 28px; --tilegap: 28px; } :root[data-theme="dark"] .tides .hero { padding-bottom: 28px; border-bottom: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; } :root[data-theme="dark"] .tides .tiles + .day { margin-top: 0; } :root[data-theme="dark"] .tides :is(#weather, #wind, #moon) { padding-inline: 16px; } :root[data-theme="dark"] .tides :is(#weather, #wind) { padding-bottom: 28px; border-radius: 0; background: linear-gradient(to right, var(--line) 2px, transparent 2px) left bottom / 7px 1px repeat-x; }
+  :root[data-theme="dark"] footer { border: 0; }
+  .tides .tile p { margin: 0; font-size: .9rem; line-height: 1.4; }
+  .tides .trow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }  /* as tall as the wind icon, so the temperature and wind speed share a line */
+  .tides .slab.mid { font-size: clamp(2.3rem, 9vw, 2.9rem); }
+  .tides .spdunit { margin-left: 6px; font-family: var(--font-ui); }  /* units (ft / m, mph / km/h) in the small-label style */
+  .tides #wind .spdunit { cursor: pointer; -webkit-tap-highlight-color: transparent; }  /* tap mph / km/h for knots */
+  .tides #wind .spdunit:hover { color: var(--accent); }
+  .tides #wind .spdval { cursor: pointer; -webkit-tap-highlight-color: transparent; }  /* tap the number: whole ⇄ 0.1 readings */
+  .tides #wind .spdval:hover { color: var(--accent); }
+  .tides .sub { display: flex; flex-direction: column; line-height: 1.3; font-size: .9rem; margin-top: auto; }
+  .tides .sub b { font-weight: 600; font-size: 1rem; }
+  .tides .deg { letter-spacing: 0; }  /* 64°F: no tracking gap after the degree sign */
+  .tides .sub .label, .tides .hero-side .nrow .label, .tides .place { letter-spacing: .04em; }  /* all-caps descriptions (tiles, next-tide line, beach): the wind line's tight spacing */
+  /* Weather, wind and moon each get their own full-width line: reading with its icon right beside it, then the description.
+     The tiles share two columns (subgrid), so every description starts at the same x: 100px right of the widest reading + icon */
+  /* Three shared columns (subgrid): readings | icons | descriptions. The icons are centered on one another, in a column
+     the same distance from the widest reading as from the descriptions, so they sit roughly midway; descriptions left-aligned */
+  .tides .tiles { grid-template-columns: max-content var(--icw) minmax(0, 1fr); column-gap: var(--icgap); }
+  .tides { --icw: 58px; --icgap: 50px; }
+  .tides #weather, .tides #wind, .tides #moon { grid-column: 1 / -1; min-height: 0; display: grid; grid-template-columns: subgrid; align-content: start; }
+  .tides #weather > .label, .tides #wind > .label, .tides #moon > .label { grid-column: 1 / -1; }
+  .tides .trow.inline { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: var(--icgap); align-items: center; }
+  .tides .trow.inline .ri { display: contents; }  /* reading and icon each take their own column */
+  .tides .trow.inline .ri > .slab { grid-column: 1; }
+  .tides .trow.inline .ri > i { grid-column: 2; justify-self: center; width: auto; }  /* icons centered on one another */
+  .tides .wline { display: flex; flex-wrap: wrap; }  /* Beaufort and gusts on one line */
+  .tides .wline > .label { white-space: nowrap; }
+  .tides .wline > .label:not(:last-child)::after { content: "\00b7"; margin: 0 .35em; }  /* if it must wrap, the dot ends the first line */
+  /* Loading and error messages span the whole tile, so they never widen the readings column and push the icons */
+  .tides #weather > p, .tides #wind > p, .tides #moon > p { grid-column: 1 / -1; }
+  .tides .trow.inline .sub { grid-column: 3; margin: 0; min-width: 0; }
+  .tides .trow.inline .moonicon { font-size: 40px; }
+  .tides .stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+  .tides .stack b { font-weight: 600; }
+  /* Weather Icons glyphs (font): sized by font-size, colored by color */
+  .tides .sky { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }
+  .tides i.ph.sky { font-size: 44px; width: auto; }  /* Phosphor glyphs: same size as the wind arrow */
+  .tides .windicon { font-size: 44px; width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; flex: none; color: var(--buoy); }
+  /* Sunrise / sunset / moonrise / moonset glyph beside each label */
+  .tides .riseicon { font-size: var(--rise-ic); line-height: 1; color: var(--sand); grid-column: 1; grid-row: 1; justify-self: center; position: relative; top: var(--rise-nudge, 0); }
+  .tides .past .riseicon { color: var(--past); }
+  /* Each glyph's ink sits differently in its em box; nudge so its ink is centered on the label's capitals (measured) */
+  .tides .wi-sunrise.riseicon { --rise-nudge: .03em; }
+  /* The moon glyphs are drawn smaller than the sun glyphs; scale each so its ink matches its sun twin's height (measured from the font), and nudge so it sits at the same height */
+  .tides .wi-moonrise.riseicon { font-size: calc(var(--rise-ic) * 1.31); --rise-nudge: .05em; }
+  .tides .wi-moonset.riseicon { font-size: calc(var(--rise-ic) * 1.245); --rise-nudge: -.10em; }
+  .tides .tile.moon { grid-column: 1 / -1; min-height: 0; }
+  /* Same two columns as the weather / wind tiles, so the % and moon icon sit exactly where the temperature and sky icon do */
+  .tides .moonrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: calc(var(--tilegap) + 32px); align-items: start; }
+  .tides .moonmain { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .tides .moonicon { font-size: 40px; width: 1.15em; text-align: center; flex: none; color: var(--sand); }  /* same size as the sky icon */
+  .tides .moon .stack { gap: 4px; }
+  .tides .nextfull { font-size: .95rem; margin-top: 4px; }
+  .tides .moontimes { justify-self: end; padding-top: 0; }  /* moonrise / moonset flush right, styled like sunrise / sunset */
+  .tides .rows { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .tides .rows div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
+  .tides .rows dt { color: var(--muted); font-size: .9rem; }
+  .tides .rows dd { margin: 0; font-weight: 600; }
+  .tides .loading { color: var(--muted); font-size: .9rem; }
+
+  /* Day card with the swipeable strip */
+  .tides .day { background: var(--surface); border: 0; border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }  /* chart fills 100% of the card width (rounded corners clip it); tides.js sets the top/bottom padding */
+  /* Dark mode on phones: the tide chart runs edge to edge. It steps out over .wrap's 20px side padding (at this
+     width .wrap fills the window), with square corners. tides.js redraws the chart when its width changes. */
+  @media (max-width: 520px) {
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .day { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
+    :root[data-theme="dark"] .tides .day { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+  }
+  .tides .chartbox { display: block; }  /* height labels sit inside the chart, so no side gutter */
+  .tides .strip { overflow: hidden; min-width: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }  /* drag sideways through time; vertical swipes still scroll the page */
+  .tides .strip.dragging { cursor: grabbing; }
+  /* The week picture and its labels slide together; the center line (stripCur) stays put between them */
+  .tides #stripInner { position: relative; overflow: hidden; }
+  .tides #stripSvg, .tides #stripCur, .tides #stripLab { position: absolute; top: 0; left: 0; }
+  .tides #stripSvg, .tides #stripLab { will-change: transform; }
+  .tides #stripCur, .tides #stripLab { pointer-events: none; }
+  .tides .strip svg { display: block; overflow: visible; }
+  .tides .tick { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .tides .dayl { font: 600 11px var(--font-ui); fill: var(--ink); letter-spacing: .1em; text-transform: uppercase; }
+  .tides .lab { font: 600 12px var(--font-ui); fill: var(--ink); font-variant-numeric: tabular-nums; }
+  .tides .labt { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .tides .rs { font: 400 11px var(--font-ui); fill: var(--muted); font-variant-numeric: tabular-nums; }  /* sun / moon rise and set under the tide: light text */
+  .tides .rsi { font: 400 12px 'weathericons'; }
+  .tides .rsa { font-size: 13px; }
+  /* A value with a creature passing in front of it fades out until it has passed (tides.js, seaHideLabels) */
+  .tides .lab, .tides .labt, .tides .dayl, .tides .tmk { transition: opacity .25s; } .tides text.sea-hid, .tides circle.sea-hid { opacity: 0; }
+  .tides text.past, .tides circle.past { visibility: hidden; }   /* a tide that passed over an hour ago: no marker, time or height */
+  .tides .labt { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }  /* halo over lines on the heights; the times have none */
+  .tides .nowl { font: 600 11px var(--font-ui); fill: var(--buoy); }
+
+  .tides .foot { position: relative; }  /* credit pinned flush right on the Info line; the open notes keep their full width */
+  .tides .madeat { position: absolute; top: 0; right: 0; color: var(--muted); font-size: .85rem; line-height: 1.5; padding: 4px 0; text-align: right;
+    display: flex; align-items: baseline; gap: 10px; }
+  /* Language: tap to cycle EN → FR → ES → ZH, styled like the Info label and the units toggle */
+  /* Language code: left of Info, with room on its right so a tap doesn't land on Info; the open notes still use the full width */
+  .tides .langbtn { float: left; background: none; border: 0; padding: 6px 16px 6px 0; margin: 0; cursor: pointer; font-size: .75rem; font-weight: 600;
+    letter-spacing: .14em; color: var(--accent); -webkit-tap-highlight-color: transparent; }
+  .tides .langbtn:hover { opacity: .8; }
+  /* Flip-flops after the credit, in its color (no on / off look): 1 tap all sea life, 2 crabs, 3 orcas, 4 sharks (remembered per visitor) */
+  .tides .seabtn { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: inherit; line-height: 0; align-self: center; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent; }
+  /* Wings flap, beating around their root at the body: gulls a few quick beats then a glide, pelicans slow deep beats
+     then a long glide (rippling back along a flock), the gull leaving the pole steadily. Each bird has its own timing. */
+  .tides .wing { transform-box: fill-box; transform-origin: 50% 100%; animation: seaFlap 2.6s ease-in-out infinite; }
+  .tides .wing.fast { animation: seaBeat .34s ease-in-out infinite; }
+  @keyframes seaFlap { 0% { transform: scaleY(1); } 6% { transform: scaleY(-.5); } 12% { transform: scaleY(1); } 18% { transform: scaleY(-.5); }
+    24% { transform: scaleY(1); } 30% { transform: scaleY(-.5); } 36%, 100% { transform: scaleY(.92); } }
+  @keyframes seaBeat { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-.55); } }
+  /* Sharks: tail swishes from its base, body sways a touch. Crabs: claws wave and snap, legs shuffle, eyes wink.
+     All driven at random from tides.js (seaParts), so no two moves repeat; the keyframes below are no longer used. */
+  .tides .stail { transform-box: fill-box; transform-origin: 0% 50%; }
+  /* Orcas: males have the tall straight dorsal fin, females the shorter curved one */
+  .tides .sl-orca .ofin-m, .tides .sl-orca.male .ofin-f { display: none; } .tides .sl-orca.male .ofin-m { display: inline; }
+  /* Orca splash: white water, edged in the water color */
+  .tides .spc { fill: #fff; fill-opacity: .9; stroke: var(--water); stroke-width: .35; } .tides .spd { fill: #fff; stroke: var(--water); stroke-width: .5; }
+  .tides .spr { fill: none; stroke: var(--water); stroke-width: 1.1; } .tides .spf { fill: #fff; stroke: none; }
+  .tides .otail { transform-box: fill-box; transform-origin: 0% 50%; } .tides .obody { transform-box: fill-box; transform-origin: 40% 50%; }
+  .tides .sbody { transform-box: fill-box; transform-origin: 40% 50%; }
+  @keyframes sharkTail { 0%, 100% { transform: rotate(-13deg); } 50% { transform: rotate(13deg); } }
+  @keyframes sharkSway { 0%, 100% { transform: rotate(1.6deg); } 50% { transform: rotate(-1.6deg); } }
+  .tides .claw { transform-box: fill-box; }
+  .tides .claw.l { transform-origin: 100% 100%; } .tides .claw.r { transform-origin: 0% 100%; }
+  @keyframes clawL { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-16deg); } 30% { transform: rotate(-6deg); } 40% { transform: rotate(-16deg); } 60% { transform: rotate(8deg); } }
+  @keyframes clawR { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(16deg); } 30% { transform: rotate(6deg); } 40% { transform: rotate(16deg); } 60% { transform: rotate(-8deg); } }
+  .tides .pinch { transform-box: fill-box; transform-origin: 0% 100%; }
+  .tides .claw.r .pinch { transform-origin: 0% 100%; }
+  @keyframes pinch { 0%, 15%, 25%, 35%, 45%, 100% { transform: rotate(0); } 20%, 40% { transform: rotate(-28deg); } }
+  @keyframes crabLegs { 0% { transform: translateX(-.5px); } 100% { transform: translateX(.5px); } }
+  /* Crab eyes: each winks on its own, at random moments */
+  .tides .ceye { transform-box: fill-box; transform-origin: 50% 50%; }
+  @keyframes crabWink { 0%, 93%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(.12); } }
+  /* Pole gull in flight (side view): wings swing from the shoulder, up and down; held out to glide on the way in to land */
+  .tides .pgw { transform-box: fill-box; transform-origin: 8% 100%; animation: pgFlap .38s ease-in-out infinite; }
+  .tides .pgw.far { animation-name: pgFlapFar; }
+  @keyframes pgFlap { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(90deg); } }   /* + lowers the wing: 0 raised, ~30 level, 90 down */
+  @keyframes pgFlapFar { 0%, 100% { transform: rotate(-18deg) scale(.92); } 50% { transform: rotate(58deg) scale(.92); } }
+  /* Landing flare: slow, deep beats with the wings swept high, braking onto the pole */
+  .tides #pgFly.flare .pgw { animation: pgFlare .6s ease-in-out infinite; } .tides #pgFly.flare .pgw.far { animation-name: pgFlareFar; }
+  @keyframes pgFlare { 0%, 100% { transform: rotate(-60deg); } 50% { transform: rotate(40deg); } }
+  @keyframes pgFlareFar { 0%, 100% { transform: rotate(-48deg) scale(.92); } 50% { transform: rotate(30deg) scale(.92); } }
+  .tides #pgFly.glide .pgw { animation: none; transform: rotate(28deg); } .tides #pgFly.glide .pgw.far { transform: rotate(22deg) scale(.92); }
+  /* The bird on the pole: a cormorant on a light page, the gull on a dark one */
+  .tides .pg-gull { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides .pg-gull { display: inline; } :root:not([data-theme="light"]) .tides .pg-corm { display: none; } }
+  :root[data-theme="dark"] .tides .pg-gull { display: inline; } :root[data-theme="dark"] .tides .pg-corm { display: none; }
+  @media (prefers-reduced-motion: reduce) { .tides .wing, .tides .pgw, .tides .stail, .tides .sbody, .tides .claw, .tides .pinch, .tides .clegs, .tides .ceye { animation: none; } }
+  /* Eelgrass on the chart floor: green gradient strokes; the sway is drawn by the script (eelSway) */
+  .tides .eelgrass { fill: none; stroke: url(#eelGrad); stroke-linecap: round; stroke-opacity: .88; }
+  .tides .strip.no-crab .sl-crab, .tides .strip.no-otter .sl-otter, .tides .strip.no-shark .sl-shark, .tides .strip.no-gull .sl-gull, .tides .strip.no-pelican .sl-pelican, .tides .strip.no-orca .sl-orca, .tides .strip.no-orca .sl-splash { display: none; }
+  .tides .notes { color: var(--muted); font-size: .85rem; line-height: 1.5; max-width: 65ch; }
+  .tides .notes summary { list-style: none; cursor: pointer; display: inline-block; font-size: .75rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 6px 0; -webkit-tap-highlight-color: transparent; }
+  .tides .notes summary::-webkit-details-marker { display: none; }
+  .tides .notes summary::after { content: " +"; }
+  .tides .notes[open] summary::after { content: " –"; }
+  .tides .notes summary:hover { color: var(--accent); }
+  .tides .notes-body { clear: both; display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+
+  @media (max-width: 520px) {
+    .tides .hero { grid-template-columns: 1fr; }
+    .tides { --tilegap: 10px; --icw: 48px; --icgap: 11px; }  /* phone: keeps "Light breeze · No gusts" on one line */  /* phone: keeps the description column wide enough to read */
+    .tides .tile { padding: 12px 12px 14px; min-height: 140px; }
+    .tides .windicon { font-size: 38px; width: 48px; height: 48px; }
+    .tides i.ph.sky { font-size: 38px; }
+    .tides .trow { min-height: 48px; }
+    .tides .moonrow { column-gap: calc(var(--tilegap) + 24px); }  /* tile padding is 12px here */
+    .tides .sky, .tides .moonicon { font-size: 34px; }
+  }
+  @media (max-width: 400px) {  /* phones: keep "Full moon" on one line beside the moonrise / moonset glyphs */
+    .tides .moontimes > div { column-gap: 3px; }
+  }
+  @media (max-width: 340px) { .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
+
+  /* ---- Waves page: the Tides / Waves toggle and the Pixel Waves v5 view ---- */
+  /* Each view takes part in .tides' own flex layout (display: contents), so the Tides view spaces exactly as /tides/ does */
+  .tides .view { display: contents; }
+  .tides .view[hidden] { display: none; }
+  /* Toggle: two words in the small-label style; the chosen one in the title gradient, underlined in the accent */
+  .tides .viewpick { display: flex; gap: 22px; }
+  .tides .viewpick button { background: none; border: 0; padding: 4px 0 6px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; -webkit-tap-highlight-color: transparent; }
+  .tides .viewpick button:hover { color: var(--accent); }
+  .tides .viewpick button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  /* Pixel Waves: the sea and its pixel moon / chart keep their own palette; everything around them uses the site's */
+  .tides .pw canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .tides #pw-sea { width: 100%; aspect-ratio: 160/100; border-radius: 12px; cursor: pointer; }
+  .tides #pw-palette { display: grid; grid-template-columns: repeat(37, 1fr); height: 8px; border-radius: 4px; overflow: hidden; margin-top: -12px; }
+  @media (max-width: 520px) {   /* phones, dark mode: the sea runs edge to edge, like the tide chart on /tides/ */
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides :is(#pw-sea, #pw-palette) { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
+    :root[data-theme="dark"] .tides :is(#pw-sea, #pw-palette) { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; }
+  }
+  .tides .pw-mode { display: flex; justify-content: center; }
+  .tides .pw-mode button { background: var(--surface); border: 1px solid var(--line); padding: 7px 14px; cursor: pointer; font-size: .72rem; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted); min-width: 9em; }
+  .tides .pw-mode button:first-child { border-radius: 8px 0 0 8px; }
+  .tides .pw-mode button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
+  .tides .pw-mode button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tides .pw-info { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center;
+    background: var(--surface); border-radius: 12px; padding: 14px 16px; }
+  .tides #pw-moon { width: 72px; height: 72px; background: rgb(16 32 44); border-radius: 6px; }  /* the night sky behind the moon, as in the tide chart */
+  .tides #pw-chart { width: 288px; height: 72px; border-radius: 6px; }
+  .tides .pw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 4px 18px; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .tides .pw-stats .stat b { color: var(--muted); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; display: inline-block; min-width: 10.5em; }
+  .tides .pw-stats .flag { color: var(--buoy); font-weight: 700; }
+  .tides .pw-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tides .pw-row.live-only[hidden] { display: none; }
+  .tides .pw :is(button, select, input[type=datetime-local]):not(.pw-mode button) { background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .9rem; cursor: pointer; }
+  .tides .pw-row button:hover, .tides .pw-groups button:hover { border-color: var(--accent); color: var(--accent); }
+  .tides .pw-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--tilegap); }
+  .tides .pw-groups fieldset { background: var(--surface); border: 0; border-radius: 12px; padding: 12px 16px 14px; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .tides .pw-groups legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; }
+  .tides .pw-groups label { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 6.5em; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+  .tides .pw-groups label output { color: var(--ink); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .tides .pw-groups label.off { opacity: .55; }
+  .tides .pw input[type=range] { width: 100%; accent-color: var(--accent); }
+  .tides .pw-notes { max-width: none; }
+  /* Dark mode: no panel fills, as on /tides/ */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tides :is(.pw-info, .pw-groups fieldset) { background: transparent; padding-inline: 0; } }
+  :root[data-theme="dark"] .tides :is(.pw-info, .pw-groups fieldset) { background: transparent; padding-inline: 0; }
+  @media (max-width: 640px) {
+    .tides .pw-info { grid-template-columns: 1fr; justify-items: center; }
+    .tides #pw-chart { width: 100%; height: auto; aspect-ratio: 4/1; }
+    .tides .pw-stats { grid-template-columns: 1fr; width: 100%; }
+    .tides .pw-groups label { grid-template-columns: 7.5em minmax(0, 1fr) 5.5em; }
+  }
+  </style>
+<script>
+  // Dark-mode look, picked on every load, equal odds (data-look on <html>):
+  //   blue:  three blue stops: sea blue and deeper blue at the ends, any blue in the middle, in random order, top to bottom.
+  //   neat:  Monterey, the NEAT gradient (script at the end of <body>); the blue stops stay as its no-WebGL fallback.
+  //   green: three dark green stops (hue 135-165, lightness 12-14), each its own green; also runs through the header and footer.
+  (function () {
+    var r = function (a, b) { return Math.round(a + Math.random() * (b - a)); };
+    var root = document.documentElement, st = root.style, look = ['blue', 'neat', 'green'][Math.floor(Math.random() * 3)];
+    root.dataset.look = look;
+    if (look === 'green') {
+      var gr = function () { return 'hsl(' + r(135, 165) + ' ' + r(40, 65) + '% ' + r(12, 14) + '%)'; };
+      st.setProperty('--rg-top', gr()); st.setProperty('--rg-mid', gr()); st.setProperty('--rg-bot', gr());
+      root.classList.add('rg-green');
+      return;
+    }
+    var g = 'hsl(' + r(188, 202) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // a sea blue
+    var b = 'hsl(' + r(208, 228) + ' ' + r(40, 65) + '% ' + r(15, 18) + '%)';   // a deeper blue
+    var m = 'hsl(' + r(188, 228) + ' ' + r(40, 65) + '% ' + r(14, 16) + '%)';   // the middle stop: any blue (16% max is safe for all of them)
+    var swap = Math.random() < .5;
+    st.setProperty('--rg-top', swap ? b : g); st.setProperty('--rg-mid', m); st.setProperty('--rg-bot', swap ? g : b);
+  })();
+</script>
+</head>
+<body class="wide">
+<canvas id="gradient" style="width: 100%; height: 100%" aria-hidden="true"></canvas>
+
+{% include header.html current="maps" title=page.title %}
+
+<main>
+  <div class="wrap tides">
+    <div class="viewpick" role="group" aria-label="View">
+      <button type="button" id="vTidesBtn" data-view="Tides" aria-pressed="false" data-i18n="vTides">Tides</button>
+      <button type="button" id="vWavesBtn" data-view="Waves" aria-pressed="true" data-i18n="vWaves">Waves</button>
+    </div>
+
+    <div class="view pw" id="viewWaves">
+      <canvas id="pw-sea" width="160" height="100" aria-label="Pixel-art sea driven by tide, moon and wave factors"></canvas>
+      <div id="pw-palette" aria-hidden="true"></div>
+
+      <div class="pw-mode" role="group" aria-label="Simulation mode">
+        <button id="pw-modeManual" type="button" aria-pressed="false">Manual</button>
+        <button id="pw-modeLive" type="button" aria-pressed="true">Live · NOAA tide + moon</button>
+      </div>
+
+      <section class="pw-info" aria-label="Tide, moon and wave readings">
+        <canvas id="pw-moon" width="24" height="24" aria-label="Moon phase"></canvas>
+        <div class="pw-stats" id="pw-stats"></div>
+        <canvas id="pw-chart" width="192" height="48" aria-label="Tide curve, 24 hours either side"></canvas>
+      </section>
+
+      <div class="pw-row live-only" id="pw-liveRow">
+        <span class="label">Clock (Pacific)</span>
+        <input type="datetime-local" id="pw-when" step="60">
+        <button id="pw-nowBtn" type="button">Now</button>
+        <select id="pw-lapse" aria-label="Time-lapse">
+          <option value="1">Real time</option>
+          <option value="60">1 min / sec</option>
+          <option value="600" selected>10 min / sec</option>
+          <option value="3600">1 hr / sec</option>
+          <option value="21600">6 hr / sec</option>
+        </select>
+        <select id="pw-jump" aria-label="Jump to king tide">
+          <option value="">Jump to king tide…</option>
+          <option value="2026-11-25T08:00">Nov 25, 2026</option>
+          <option value="2026-12-24T08:00">Dec 24, 2026</option>
+          <option value="2027-01-21T08:00">Jan 21, 2027</option>
+        </select>
+      </div>
+
+      <div class="pw-groups">
+        <fieldset>
+          <legend class="label">Water level</legend>
+          <label id="pw-tideLbl"><span>Tide (MLLW)</span> <input id="pw-tide" type="range" min="-2.5" max="8" step="0.1" value="3.1"><output id="pw-tideOut"></output></label>
+          <label><span>Kelvin / El Niño</span> <input id="pw-kelvin" type="range" min="-0.5" max="2" step="0.05" value="1"><output id="pw-kelvinOut"></output></label>
+          <label><span>Air pressure</span> <input id="pw-pressure" type="range" min="960" max="1040" step="1" value="1013"><output id="pw-pressureOut"></output></label>
+        </fieldset>
+        <fieldset>
+          <legend class="label">Wave height</legend>
+          <label><span>Surface wind</span> <input id="pw-wind" type="range" min="-40" max="40" step="1" value="12"><output id="pw-windOut"></output></label>
+          <label><span>Fetch</span> <input id="pw-fetch" type="range" min="5" max="600" step="5" value="150"><output id="pw-fetchOut"></output></label>
+          <label><span>Swell height</span> <input id="pw-swellH" type="range" min="0" max="20" step="0.5" value="6"><output id="pw-swellHOut"></output></label>
+          <label><span>Swell period</span> <input id="pw-swellT" type="range" min="5" max="22" step="1" value="13"><output id="pw-swellTOut"></output></label>
+        </fieldset>
+        <fieldset>
+          <legend class="label">Motion</legend>
+          <label id="pw-currentLbl"><span>Undercurrent</span> <input id="pw-current" type="range" min="-100" max="100" value="35"><output id="pw-currentOut"></output></label>
+          <label><span>Sim speed</span> <input id="pw-speed" type="range" min="5" max="100" value="35"><output id="pw-speedOut"></output></label>
+          <div class="pw-row"><button id="pw-toggle" type="button">Pause</button></div>
+        </fieldset>
+      </div>
+
+      <details class="notes pw-notes">
+        <summary>About the waves</summary>
+        <div class="notes-body">
+        <span><b>Live mode</b> calculates the San Francisco tide (NOAA station 9414290) in your browser with NOAA's own harmonic-constant method, using all 33 published constants. Tested against NOAA's official predictions: within 0.07 ft and 2 min. The moon phase and distance are calculated too (approximate, to within a few hours). In live mode the undercurrent follows the tide: incoming (rising) water pushes toward shore, outgoing (falling) water pushes seaward. <b>King tide</b> is flagged when the day's predicted high reaches 6.9 ft or the date falls in a published window. The windows (San Mateo County, Oct 2026) are Nov 21–28, Dec 20–27 and Jan 17–24.</span>
+        <span><b>Set by hand in both modes</b>: wind, fetch, swell, pressure and the Kelvin / El Niño offset. The offset starts at +1.0 ft. NOAA's Oct 8, 2026 update reports a strengthening El Niño (Niño-3.4 at +2.1 °C), and San Mateo County says the ocean is running 1–2 ft above the tide tables this winter. Each 1 mb drop in air pressure raises the sea about 1 cm.</span>
+        <span><b>Wave math:</b> wind waves use a standard fetch-limited formula (JONSWAP): height ≈ 0.0016·U·√(F/g), capped at a fully developed sea. Breaking height for swell and wind waves uses Komar–Gaghan: Hb = 0.39·g<sup>0.2</sup>·(T·H₀²)<sup>0.4</sup>. Longer periods make longer, faster waves. On-screen, the water level sets how high the sea fills the frame, breaking height sets the swell size, and the period sets wavelength and speed. Foam and spray use the Doom-fire rule. Rightward wind means onshore.</span>
+        <span>Sources: <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414290">NOAA Tides &amp; Currents 9414290</a> · <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml">NOAA CPC ENSO discussion</a> · <a href="https://www.smcgov.org/parks/news/super-el-nino-high-tides-and-possible-flooding-expected-fallwinter">San Mateo County king tide notice</a></span>
+        </div>
+      </details>
+    </div>
+
+    <div class="view" id="viewTides" hidden>
+    <div class="top">
+      <div class="picker">
+        <div class="beachpick">
+          <button class="beachbtn" id="beachBtn" type="button"><span id="beachName">Baker Beach</span></button>
+        </div>
+        <a class="coords num" id="coords" rel="noopener"></a>
+        <p class="place label" id="place"></p>
+      </div>
+    </div>
+
+    <section class="hero" aria-live="polite">
+      <div class="hero-in" id="tideNow" style="display:contents"></div>
+    </section>
+
+    <section class="tiles" aria-label="Weather and moon" data-i18n-aria="tilesAria">
+      <div class="tile" id="weather"><span class="label" data-i18n="weather">Weather</span><p class="loading" data-i18n="loadingWx">Loading live weather…</p></div>
+      <div class="tile" id="wind"><span class="label" data-i18n="wind">Wind</span><p class="loading" data-i18n="loading">Loading…</p></div>
+      <div class="tile moon" id="moon"><span class="label" data-i18n="moon">Moon</span></div>
+    </section>
+
+    <section class="day" aria-label="Tide chart" data-i18n-aria="chartSection">
+      <div class="chartbox">
+        <div class="strip" id="strip">
+          <div id="stripInner"><div id="stripSvg"></div><div id="stripCur"></div><div id="stripLab"></div></div>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <div class="foot">
+    <button class="langbtn" id="langBtn" type="button" aria-label="Language: English. Tap for Français." title="Français">EN</button>
+    <details class="notes">
+      <summary data-i18n="info">Info</summary>
+      <div class="notes-body">
+      <span class="station" id="station"></span>
+      <span id="source"></span>
+      <span data-i18n="notes">Heights above mean lower low water (MLLW); tap the tide height to switch between US and metric units (feet / meters, °F / °C, mph / km/h). A minus tide drops below that line, the best time for tidepools. Tides are astronomical predictions; wind and swell change the real water level. Weather from the National Weather Service. Not for navigation.</span>
+      <span data-i18n="credit">Weather and wind icons: <a href="https://phosphoricons.com">Phosphor Icons</a>. Tide arrow: AIGA symbol signs. Moon icons: <a href="https://erikflowers.github.io/weather-icons/">Weather Icons</a> by Erik Flowers.</span>
+      </div>
+    </details>
+    <span class="madeat"><span data-i18n="madeat">Made at Baker Beach</span><button class="seabtn" id="seaBtn" type="button" aria-pressed="true" aria-label="Sea life: tap to hide or show all; 2 taps crabs, 4 sharks" title="Sea life: tap to hide or show all; 2 taps crabs, 4 sharks"><svg viewBox="0 0 26 24" width="20" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5C11 2.5 12 5.5 11.5 9.5C11 12.5 11.5 15.5 11.5 17.5C11.5 20 10 21 8 21C6 21 4.5 20 4.5 17.5C4.5 15 5 12.5 4.5 9.5C4 5.5 5 2.5 8 2.5Z"/><path d="M4.9 11L8 5.5L11.1 11"/><path d="M18 4C21 4 22 7 21.5 11C21 14 21.5 17 21.5 19C21.5 21.5 20 22.5 18 22.5C16 22.5 14.5 21.5 14.5 19C14.5 16.5 15 14 14.5 11C14 7 15 4 18 4Z"/><path d="M14.9 12.5L18 7L21.1 12.5"/></svg></button></span>
+    </div>
+  </div>
+</main>
+
+{% include footer.html %}
+<script src="{{ '/tides/neaps.min.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+<script src="{{ '/tides/i18n.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+<script>
+  // Waves page: its own title and toggle words (tides.js writes the title from these on load and on language change)
+  (function () { var T = window.TIDE_I18N; if (!T) return;
+    var w = { en: ['Waves of San Francisco', 'Waves', 'Tides'], fr: ['Vagues de San Francisco', 'Vagues', 'Marées'],
+              es: ['Olas de San Francisco', 'Olas', 'Mareas'], zh: ['旧金山海浪', '海浪', '潮汐'] };
+    for (var k in w) if (T[k]) { T[k].title = w[k][0]; T[k].vWaves = w[k][1]; T[k].vTides = w[k][2]; } })();
+</script>
+<script src="{{ '/tides/stations.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+<script src="{{ '/tides/tides.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+<script>
+  // Tides / Waves toggle. Waves is the default; the choice is remembered per visitor.
+  (function () {
+    var views = { Tides: document.getElementById('viewTides'), Waves: document.getElementById('viewWaves') };
+    function show(name) {
+      for (var k in views) views[k].hidden = k !== name;
+      document.querySelectorAll('.viewpick button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === name); });
+      try { localStorage.setItem('fogday-waves-view', name); } catch (e) {}
+      if (name === 'Tides') dispatchEvent(new Event('resize'));   // tides.js measures and redraws its chart for the now-visible panel
+    }
+    document.querySelectorAll('.viewpick button').forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.view); }); });
+    var saved = null; try { saved = localStorage.getItem('fogday-waves-view'); } catch (e) {}
+    show(saved === 'Tides' ? 'Tides' : 'Waves');
+  })();
+</script>
+<script>
+
+(() => {
+const el = id => document.getElementById('pw-' + id);
+const HARCON = [
+  ['M2',1.89,208.2],['S2',0.449,216.2],['N2',0.4,183.2],['K1',1.214,225.4],['M4',0.072,136.8],
+  ['O1',0.755,208.4],['M6',0.007,7.3],['MK3',0.059,124.1],['MN4',0.026,112.0],['NU2',0.085,189.9],
+  ['MU2',0.023,100.2],['2N2',0.043,153.3],['OO1',0.039,260.0],['LAM2',0.023,214.3],['S1',0.023,282.6],
+  ['M1',0.036,237.5],['J1',0.062,244.3],['SSA',0.098,272.3],['SA',0.144,200.2],['MF',0.049,153.1],
+  ['RHO',0.03,200.0],['Q1',0.135,202.4],['T2',0.03,204.6],['R2',0.003,126.8],['2Q1',0.02,208.6],
+  ['P1',0.374,222.1],['2SM2',0.01,37.3],['M3',0.01,37.6],['L2',0.059,229.6],['2MK3',0.046,92.2],
+  ['K2',0.131,206.0],['M8',0.003,108.5],['MS4',0.033,149.0],
+];
+const R = Math.PI/180;
+// V coefficients on [T, s, h, p, p1] + constant (deg); T = 180 + 15*UThours
+const VARG = {
+  M2:[2,-2,2,0,0,0], S2:[2,0,0,0,0,0], N2:[2,-3,2,1,0,0], K1:[1,0,1,0,0,-90], O1:[1,-2,1,0,0,90],
+  P1:[1,0,-1,0,0,90], Q1:[1,-3,1,1,0,90], K2:[2,0,2,0,0,0], NU2:[2,-3,4,-1,0,0], MU2:[2,-4,4,0,0,0],
+  '2N2':[2,-4,2,2,0,0], OO1:[1,2,1,0,0,-90], LAM2:[2,-1,0,1,0,180], S1:[1,0,0,0,0,0], M1:[1,-1,1,1,0,-90],
+  J1:[1,1,1,-1,0,-90], SSA:[0,0,2,0,0,0], SA:[0,0,1,0,0,0], MF:[0,2,0,0,0,0], RHO:[1,-3,3,-1,0,90],
+  T2:[2,0,-1,0,1,0], R2:[2,0,1,0,-1,180], '2Q1':[1,-4,1,2,0,90], L2:[2,-1,2,-1,0,180],
+  M4:[4,-4,4,0,0,0], M6:[6,-6,6,0,0,0], M8:[8,-8,8,0,0,0], MK3:[3,-2,3,0,0,-90], MN4:[4,-5,4,1,0,0],
+  MS4:[4,-2,2,0,0,0], '2SM2':[2,2,-2,0,0,0], M3:[3,-3,3,0,0,0], '2MK3':[3,-4,3,0,0,90],
+};
+function astro(ms) {                       // ms = epoch milliseconds (UTC)
+  const D = (ms - Date.UTC(2000,0,1,12)) / 86400000;
+  const n = x => ((x % 360) + 360) % 360;
+  return { s:n(218.3164+13.17639648*D), h:n(280.4661+0.98564736*D), p:n(83.3535+0.11140353*D),
+           N:n(125.0445-0.05295377*D), p1:n(282.9384+0.0000471*D),
+           T:n(180 + 15*((((ms/3600000) % 24) + 24) % 24)) };
+}
+function nodal(N) {
+  const c=Math.cos(N*R), c2=Math.cos(2*N*R), c3=Math.cos(3*N*R), s=Math.sin(N*R), s2=Math.sin(2*N*R), s3=Math.sin(3*N*R);
+  const M2={f:1.0004-0.0373*c+0.0002*c2, u:-2.14*s};
+  const K1={f:1.006+0.115*c-0.0088*c2+0.0006*c3, u:-8.86*s+0.68*s2-0.07*s3};
+  const O1={f:1.0089+0.1871*c-0.0147*c2+0.0014*c3, u:10.80*s-1.34*s2+0.19*s3};
+  const K2={f:1.0241+0.2863*c+0.0083*c2-0.0015*c3, u:-17.74*s+0.68*s2-0.04*s3};
+  const J1={f:1.1029+0.1676*c-0.0170*c2+0.0016*c3, u:-12.94*s+1.34*s2-0.19*s3};
+  const OO1={f:1.1027+0.6504*c+0.0317*c2-0.0014*c3, u:-36.68*s+4.02*s2-0.57*s3};
+  const MF={f:1.084+0.415*c+0.039*c2, u:-23.74*s+2.68*s2-0.38*s3};
+  const one={f:1,u:0};
+  const pow=(a,k)=>({f:a.f**k,u:a.u*k}), mul=(a,b)=>({f:a.f*b.f,u:a.u+b.u});
+  return { M2,N2:M2,'2N2':M2,MU2:M2,NU2:M2,LAM2:M2,L2:M2, S2:one,P1:one,S1:one,T2:one,R2:one,SA:one,SSA:one,
+    K1,O1,Q1:O1,'2Q1':O1,RHO:O1,M1:O1,K2,J1,OO1,MF,
+    M4:pow(M2,2),MN4:pow(M2,2),M6:pow(M2,3),M8:pow(M2,4),MS4:M2,M3:pow(M2,1.5),
+    MK3:mul(M2,K1),'2MK3':{f:M2.f**2*K1.f,u:2*M2.u-K1.u},'2SM2':{f:M2.f,u:-M2.u} };
+}
+const Z0 = 3.12;   // MSL above MLLW (ft) — refined by fit against NOAA predictions
+function tideAt(ms, z0 = Z0) {
+  const a = astro(ms), nf = nodal(a.N);
+  let h = z0;
+  for (const [name, A, G] of HARCON) {
+    const v = VARG[name];
+    const V = v[0]*a.T + v[1]*a.s + v[2]*a.h + v[3]*a.p + v[4]*a.p1 + v[5];
+    const fu = nf[name];
+    h += A * fu.f * Math.cos((V + fu.u - G) * R);
+  }
+  return h;
+}
+function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
+  const out = []; const step = 60000;
+  let a = tideAt(ms0 - step, z0), b = tideAt(ms0, z0);
+  for (let t = ms0; t <= ms1; t += step) {
+    const c = tideAt(t + step, z0);
+    if (b > a && b >= c) out.push({ t, v: b, type: 'H' });
+    if (b < a && b <= c) out.push({ t, v: b, type: 'L' });
+    a = b; b = c;
+  }
+  return out;
+}
+
+
+  // ---------- moon ----------
+  const SYN = 29.530588853, NEW0 = Date.UTC(2000, 0, 6, 18, 14);
+  function moon(ms) {
+    const age = ((((ms - NEW0) / 864e5) % SYN) + SYN) % SYN;
+    const D = (ms - Date.UTC(2000, 0, 1, 12)) / 864e5;
+    const M = (134.963 + 13.064993 * D) * Math.PI / 180;
+    const names = ['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent'];
+    return { age, ill: (1 - Math.cos(2 * Math.PI * age / SYN)) / 2, dist: 385001 - 20905 * Math.cos(M),
+             name: names[Math.floor(((age / SYN) * 8 + 0.5)) % 8] };
+  }
+
+  // ---------- palette ----------
+  const W = 160, H = 100, N = 36;
+  const stops = [[1,[244,255,251]],[5,[191,238,224]],[10,[111,211,181]],[15,[47,179,154]],
+                 [20,[26,143,138]],[25,[20,109,134]],[30,[13,79,115]],[33,[8,52,90]],[36,[4,32,61]]];
+  const pal = [[16,32,44]];
+  for (let i = 1; i <= N; i++) {
+    let a = stops[0], b = stops[stops.length - 1];
+    for (let s = 0; s < stops.length - 1; s++) if (i >= stops[s][0] && i <= stops[s+1][0]) { a = stops[s]; b = stops[s+1]; break; }
+    const t = b[0] === a[0] ? 0 : (i - a[0]) / (b[0] - a[0]);
+    pal.push(a[1].map((v, k) => Math.round(v + (b[1][k] - v) * t)));
+  }
+  const rgb = i => `rgb(${pal[i]})`;
+  const strip = el('palette');
+  pal.forEach((c, i) => { const d = document.createElement('div'); d.style.background = rgb(i); strip.appendChild(d); });
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const ui = {}; ['tide','kelvin','pressure','wind','fetch','swellH','swellT','current','speed'].forEach(k => ui[k] = el(k));
+  const val = k => +ui[k].value;
+
+  // ---------- physics: water level + breaking wave height ----------
+  const g = 9.81, FT = 3.28084;
+  function waveFactors() {
+    const Ukt = val('wind'), U = Math.abs(Ukt) * 0.5144, F = val('fetch') * 1852;
+    let Hw = 0, Tw = 4;
+    if (U > 0.3) {
+      Hw = Math.min(0.0016 * U * Math.sqrt(F / g), 0.243 * U * U / g);            // JONSWAP fetch-limited, capped at fully developed
+      Tw = clamp(U / (3.5 * g) * Math.pow(g * F / (U * U), 0.33), 2, 14);           // peak period
+    }
+    const onshore = Ukt >= 0 ? 1 : 0.2;                                              // offshore wind blows the wind-sea away from the beach
+    const breaker = (H0, T) => H0 > 0 ? 0.39 * Math.pow(g, 0.2) * Math.pow(T * H0 * H0, 0.4) : 0;   // Komar–Gaghan
+    const Hs0 = val('swellH') / FT, Ts = val('swellT');
+    const HbS = breaker(Hs0, Ts), HbW = breaker(Hw * onshore, Tw);
+    return { HbS: HbS * FT, HbW: HbW * FT, Hb: Math.hypot(HbS, HbW) * FT, Hw: Hw * FT, Tw, Ts };
+  }
+
+  // ---------- mode + clock ----------
+  let live = true, clock = Date.now();
+  const tz = { timeZone: 'America/Los_Angeles' };
+  const fmtT = ms => new Date(ms).toLocaleString('en-US', { ...tz, weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  const fmtShort = ms => new Date(ms).toLocaleString('en-US', { ...tz, hour:'numeric', minute:'2-digit' });
+  function laParts(ms) {
+    const p = new Intl.DateTimeFormat('en-CA', { ...tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(new Date(ms));
+    const o = {}; p.forEach(x => o[x.type] = x.value); return o;
+  }
+  const toInput = ms => { const o = laParts(ms); return `${o.year}-${o.month}-${o.day}T${o.hour}:${o.minute}`; };
+  function fromInput(s) {           // interpret a datetime-local string as Pacific time
+    const [d, t] = s.split('T'); const [y, m, dd] = d.split('-').map(Number); const [hh, mm] = t.split(':').map(Number);
+    let guess = Date.UTC(y, m - 1, dd, hh + 8, mm);
+    for (let i = 0; i < 2; i++) { const o = laParts(guess); const diff = Date.UTC(+o.year, o.month - 1, +o.day, +o.hour, +o.minute) - Date.UTC(y, m - 1, dd, hh, mm); guess -= diff; }
+    return guess;
+  }
+  const WINDOWS = [['2026-11-21','2026-11-28'],['2026-12-20','2026-12-27'],['2027-01-17','2027-01-24']];
+  const KING_FT = 6.9;
+
+  function setMode(isLive) {
+    live = isLive;
+    el('modeLive').setAttribute('aria-pressed', isLive); el('modeManual').setAttribute('aria-pressed', !isLive);
+    el('liveRow').hidden = !isLive;
+    ui.tide.disabled = isLive; ui.current.disabled = isLive;
+    el('tideLbl').classList.toggle('off', isLive); el('currentLbl').classList.toggle('off', isLive);
+    if (isLive) { clock = Date.now(); el('when').value = toInput(clock); }
+    refreshSlow(true);
+  }
+
+  // cached slow-changing info (recomputed a few times per second)
+  let info = { tide: 3.1, rate: 0, nextH: null, nextL: null, dayMax: 0, king: false, win: false, m: moon(Date.now()) };
+  let lastSlow = 0;
+  function refreshSlow(force) {
+    const now = performance.now();
+    if (!force && now - lastSlow < 250) return;
+    lastSlow = now;
+    info.m = moon(clock);
+    if (live) {
+      info.tide = tideAt(clock);
+      info.rate = (tideAt(clock + 600000) - tideAt(clock - 600000)) * 3;   // ft per hour
+      const ex = extremesCoarse(clock, clock + 27 * 3600000);
+      info.nextH = ex.find(e => e.type === 'H') || null;
+      info.nextL = ex.find(e => e.type === 'L') || null;
+      const o = laParts(clock); const day0 = fromInput(`${o.year}-${o.month}-${o.day}T00:00`);
+      const dayEx = extremesCoarse(day0, day0 + 864e5);
+      info.dayMax = Math.max(...dayEx.filter(e => e.type === 'H').map(e => e.v), -9);
+      const ds = `${o.year}-${o.month}-${o.day}`;
+      info.win = WINDOWS.some(([a, b]) => ds >= a && ds <= b);
+      info.king = info.dayMax >= KING_FT || info.win;
+      ui.tide.value = info.tide.toFixed(1);
+      ui.current.value = Math.round(clamp(info.rate / 1.3, -1, 1) * 100);
+      outputs();
+    } else {
+      info.tide = val('tide'); info.rate = 0;
+    }
+    drawChart(); drawMoon(); drawStats();
+  }
+  function extremesCoarse(ms0, ms1) {      // 6-min scan, then refine to the minute
+    const out = []; const st = 360000;
+    let a = tideAt(ms0 - st), b = tideAt(ms0);
+    for (let t = ms0; t <= ms1; t += st) {
+      const c = tideAt(t + st);
+      if ((b > a && b >= c) || (b < a && b <= c)) {
+        const type = b > a ? 'H' : 'L'; let bt = t, bv = b;
+        for (let u = t - st; u <= t + st; u += 60000) { const v = tideAt(u); if (type === 'H' ? v > bv : v < bv) { bv = v; bt = u; } }
+        out.push({ t: bt, v: bv, type });
+      }
+      a = b; b = c;
+    }
+    return out;
+  }
+
+  // ---------- info panel ----------
+  function drawStats() {
+    const wf = waveFactors();
+    const ib = (1013.25 - val('pressure')) * 0.01 * FT;
+    const level = info.tide + val('kelvin') + ib;
+    const m = info.m;
+    const rows = [];
+    if (live) {
+      rows.push(['Clock (PT)', fmtT(clock)]);
+      rows.push(['Tide', `${info.tide.toFixed(2)} ft · ${info.rate >= 0 ? 'rising' : 'falling'} ${Math.abs(info.rate).toFixed(2)} ft/h`]);
+      if (info.nextH) rows.push(['Next high', `${fmtShort(info.nextH.t)} · ${info.nextH.v.toFixed(2)} ft`]);
+      if (info.nextL) rows.push(['Next low', `${fmtShort(info.nextL.t)} · ${info.nextL.v.toFixed(2)} ft`]);
+      rows.push(['King tide', info.king ? `<span class="flag">YES</span> · day high ${info.dayMax.toFixed(2)} ft${info.win ? ' · in window' : ''}` : `no · day high ${info.dayMax.toFixed(2)} ft`]);
+      rows.push(['Undercurrent', `${info.rate >= 0 ? 'incoming (toward shore)' : 'outgoing (seaward)'}`]);
+    } else {
+      rows.push(['Mode', 'Manual (tide and undercurrent set by hand)']);
+      rows.push(['Tide', `${info.tide.toFixed(2)} ft (manual)`]);
+    }
+    rows.push(['Moon', `${m.name} · ${Math.round(m.ill * 100)}% lit${live ? '' : ' (today)'}`]);
+    rows.push(['Moon distance', `${Math.round(m.dist).toLocaleString()} km${m.dist < 367500 ? ' · <span class="flag">near perigee</span>' : m.dist > 402000 ? ' · near apogee' : ''}`]);
+    rows.push(['Water level', `${level.toFixed(2)} ft (tide ${info.tide >= 0 ? '+' : ''}${info.tide.toFixed(1)}, Kelvin ${val('kelvin') >= 0 ? '+' : ''}${val('kelvin').toFixed(2)}, pressure ${ib >= 0 ? '+' : ''}${ib.toFixed(2)})`]);
+    rows.push(['Breaking waves', `${wf.Hb.toFixed(1)} ft (swell ${wf.HbS.toFixed(1)}, wind waves ${wf.HbW.toFixed(1)} @ ${wf.Tw.toFixed(0)} s)`]);
+    el('stats').innerHTML = rows.map(([k, v]) => `<div class="stat"><b>${k}</b> ${v}</div>`).join('');
+  }
+
+  // ---------- moon icon ----------
+  const mctx = el('moon').getContext('2d');
+  function drawMoon() {
+    const S = 24, r = 10.5, c = 11.5, th = 2 * Math.PI * info.m.age / SYN;
+    const img = mctx.createImageData(S, S), d = img.data;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const nx = (x - c) / r, ny = (y - c) / r, o = (y * S + x) * 4;
+      if (nx * nx + ny * ny > 1) { d[o+3] = 0; continue; }
+      const w = Math.sqrt(1 - ny * ny);
+      const lit = th < Math.PI ? nx > w * Math.cos(th) : nx < -w * Math.cos(th);
+      const shade = 1 - 0.15 * Math.max(0, nx * 0.6 + ny * 0.4) ;
+      const col = lit ? pal[2].map(v => v * shade) : pal[33];
+      d[o] = col[0]; d[o+1] = col[1]; d[o+2] = col[2]; d[o+3] = 255;
+    }
+    mctx.putImageData(img, 0, 0);
+  }
+
+  // ---------- tide chart (±24 h) ----------
+  const cctx = el('chart').getContext('2d');
+  function drawChart() {
+    const CW = 192, CH = 48, lo = -3, hi = 10;
+    const yOf = v => Math.round((hi - v) / (hi - lo) * (CH - 1));
+    cctx.fillStyle = rgb(0); cctx.fillRect(0, 0, CW, CH);
+    cctx.fillStyle = rgb(33); for (let x = 0; x < CW; x += 2) cctx.fillRect(x, yOf(0), 1, 1);              // MLLW
+    cctx.fillStyle = '#f2c46d'; for (let x = 0; x < CW; x += 3) cctx.fillRect(x, yOf(KING_FT), 1, 1);       // king threshold
+    const center = clock, span = 24 * 3600000, off = val('kelvin') + (1013.25 - val('pressure')) * 0.0328;
+    for (let x = 0; x < CW; x++) {
+      const t = center - span + (x / (CW - 1)) * 2 * span;
+      const v = live ? tideAt(t) : info.tide;
+      const y = yOf(v), yt = yOf(v + off);
+      cctx.fillStyle = rgb(20); cctx.fillRect(x, y + 1, 1, CH - y);
+      cctx.fillStyle = rgb(12); cctx.fillRect(x, y, 1, 1);
+      cctx.fillStyle = rgb(3); cctx.fillRect(x, yt, 1, 1);
+    }
+    cctx.fillStyle = rgb(1); cctx.fillRect(CW / 2, 0, 1, CH);
+  }
+
+  // ---------- Doom-fire sea (v4 engine, driven by the factors) ----------
+  const cv = el('sea'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H);
+  const px = new Uint8Array(W * H), prev = new Uint8Array(W * H);
+  const streak = new Float32Array(W);
+  { const raw = Array.from({ length: W }, () => Math.random());
+    for (let x = 0; x < W; x++) { let s = 0; for (let k = -4; k <= 4; k++) s += raw[(x + k + W) % W]; streak[x] = s / 9; }
+    const lo = Math.min(...streak), hi = Math.max(...streak);
+    for (let x = 0; x < W; x++) streak[x] = (streak[x] - lo) / (hi - lo); }
+  const sampleStreak = u => { u = ((u % W) + W) % W; const i = u | 0, f = u - i; return streak[i] * (1 - f) + streak[(i + 1) % W] * f; };
+  let curOff = 0, ph1 = 0, ph2 = 0;
+  const p = new Float32Array(W);
+  const DT = 1 / 30, TIME_COMPRESS = 3;
+
+  function step() {
+    const wf = waveFactors();
+    const ib = (1013.25 - val('pressure')) * 0.01 * FT;
+    const level = info.tide + val('kelvin') + ib;                      // ft above MLLW
+    const lvl = clamp((level + 2.5) / 13, 0, 1);
+    const base = 0.95 - 0.47 * lvl;                                     // decay prob → avg column height ≈ 36/p
+    const sw = Math.pow(clamp(wf.Hb / 22, 0, 1), 0.85);
+    const amp = 0.55 * sw * base;
+    const swellW = wf.Hb > 0 ? wf.HbS / (wf.HbS + wf.HbW + 1e-6) : 1, chopW = 1 - swellW;
+    const k1 = 2.2 * Math.pow(13 / wf.Ts, 2), k2 = clamp(2.2 * Math.pow(13 / wf.Tw, 2), 2, 22);
+    ph1 += DT * TIME_COMPRESS / wf.Ts; ph2 += DT * TIME_COMPRESS / wf.Tw;
+    for (let x = 0; x < W; x++) {
+      const u = x / W;
+      const s1 = 0.78 * Math.sin(2 * Math.PI * (u * k1 - ph1)) + 0.22 * Math.sin(2 * Math.PI * (u * k1 * 2.3 - ph1 * 1.5) + 1.3);
+      const s2 = Math.sin(2 * Math.PI * (u * k2 - ph2)) * 0.7 + 0.3 * Math.sin(2 * Math.PI * (u * k2 * 1.7 - ph2 * 1.3) + 2.1);
+      p[x] = clamp(base - amp * (swellW * s1 + chopW * s2), 0.34, 1);
+    }
+    const cur = (val('current') / 100) * 1.2;
+    const wind = (val('wind') / 40) * 2.0;
+    curOff += cur * 0.6;
+    for (let x = 0; x < W; x++) px[(H - 1) * W + x] = N - Math.round(4 * sampleStreak(x - curOff));
+    for (let x = 0; x < W; x++) {
+      for (let y = 1; y < H; y++) {
+        const src = y * W + x, v = px[src];
+        const depth = v / N;
+        const drift = cur * depth * depth + wind * (1 - depth) * (1 - depth) * (1 + 0.6 * Math.random());
+        let dx = x + ((Math.random() * 3) | 0) - 1 + Math.floor(drift + Math.random());
+        dx = ((dx % W) + W) % W;
+        const dst = (y - 1) * W + dx;
+        if (v === 0) { px[dst] = 0; continue; }
+        px[dst] = v - (Math.random() < p[x] ? 1 : 0);
+      }
+    }
+  }
+  function draw(f) {
+    const d = img.data;
+    for (let i = 0; i < W * H; i++) {
+      const c = pal[Math.round(prev[i] + (px[i] - prev[i]) * f)], o = i * 4;
+      d[o] = c[0]; d[o+1] = c[1]; d[o+2] = c[2]; d[o+3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // ---------- outputs ----------
+  const dir = (v, unit, l, r) => v == 0 ? 'still' : `${v < 0 ? '← ' + l : r + ' →'} ${Math.abs(v)}${unit}`;
+  function outputs() {
+    el('tideOut').textContent = `${val('tide').toFixed(1)} ft`;
+    el('kelvinOut').textContent = `${val('kelvin') >= 0 ? '+' : ''}${val('kelvin').toFixed(2)} ft`;
+    el('pressureOut').textContent = `${val('pressure')} mb`;
+    el('windOut').textContent = val('wind') == 0 ? 'calm' : `${Math.abs(val('wind'))} kt ${val('wind') > 0 ? 'on →' : '← off'}`;
+    el('fetchOut').textContent = `${val('fetch')} nm`;
+    el('swellHOut').textContent = `${val('swellH').toFixed(1)} ft`;
+    el('swellTOut').textContent = `${val('swellT')} s`;
+    const c = val('current');
+    el('currentOut').textContent = c == 0 ? 'still' : (c < 0 ? '← ' : '→ ') + (Math.abs(c) / 100).toFixed(2);
+    el('speedOut').textContent = (val('speed') / 100).toFixed(2) + '×';
+  }
+  Object.values(ui).forEach(i => i.addEventListener('input', () => { outputs(); refreshSlow(true); }));
+
+  // ---------- loop ----------
+  let running = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let acc = 0, last = performance.now(), lastInputSync = 0;
+  function loop(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (running && !document.getElementById('viewWaves').hidden) {
+      if (live) {
+        clock += dt * 1000 * (+el('lapse').value);
+        if (now - lastInputSync > 1000 && document.activeElement !== el('when')) { el('when').value = toInput(clock); lastInputSync = now; }
+      }
+      refreshSlow(false);
+      acc += dt * (val('speed') / 100);
+      let n = 0;
+      while (acc >= DT && n < 4) { prev.set(px); step(); acc -= DT; n++; }
+      if (n === 4) acc = 0;
+      draw(acc / DT);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- wiring ----------
+  el('modeLive').onclick = () => setMode(true);
+  el('modeManual').onclick = () => setMode(false);
+  el('nowBtn').onclick = () => { clock = Date.now(); el('lapse').value = '1'; el('when').value = toInput(clock); refreshSlow(true); };
+  el('when').onchange = () => { if (el('when').value) { clock = fromInput(el('when').value); refreshSlow(true); } };
+  el('jump').onchange = () => { const v = el('jump').value; if (v) { clock = fromInput(v); el('when').value = v; el('lapse').value = '600'; refreshSlow(true); } el('jump').value = ''; };
+  const btn = el('toggle');
+  const setRun = v => { running = v; btn.textContent = v ? 'Pause' : 'Play'; last = performance.now(); };
+  btn.onclick = () => setRun(!running);
+  cv.onclick = () => setRun(!running);
+
+  outputs();
+  setMode(true);
+  for (let i = 0; i < 140; i++) step();
+  prev.set(px); draw(0);
+  setRun(running);
+  requestAnimationFrame(loop);
+  window.__v5 = { tideAt, moon, extremesCoarse, waveFactors, fromInput, toInput, info: () => info, setClock: ms => { clock = ms; refreshSlow(true); } };
+})();
+</script>
+<script type="module">
+  // Dark-mode background, on a third of loads (the look is picked in <head>; the others are the blue or green gradient):
+  // Monterey, an animated NEAT gradient (neat.rebase.pro) behind the page: a deep-violet twisted ribbon, as exported Oct 2026.
+  // (cameraLock: false is as exported; NEAT 1.1.0 stores it but doesn't use it, so the camera stays put.)
+  // Runs only while the page is dark (system setting or the theme toggle). Reduced motion: one still frame.
+  // Scrolling shifts the waves (yOffset), as in NEAT's export.
+  import { NeatGradient } from "{{ '/tides/neat/neat.es.js' | relative_url }}?v={{ site.time | date: '%s' }}";
+
+  const config = {   // Monterey
+    colors: [
+      { color: '#130437', enabled: true },
+      { color: '#B34BD0', enabled: true },
+      { color: '#210751', enabled: true },
+      { color: '#3511A5', enabled: true },
+      { color: '#8F3E8D', enabled: false },
+      { color: '#FF9A9E', enabled: false },
+    ],
+    speed: 4, horizontalPressure: 7, verticalPressure: 3,
+    waveFrequencyX: 0, waveFrequencyY: 0, waveAmplitude: 0,
+    secondaryWaveEnabled: false, secondaryWaveFrequencyX: 3, secondaryWaveFrequencyY: 3, secondaryWaveAmplitude: 5,
+    secondaryWaveSpeed: 0.6, secondaryWaveAngle: 1,
+    shadows: 4, highlights: 0, colorBrightness: 1.95, colorSaturation: 2,
+    wireframe: false, antialias: false, colorBlending: 9,
+    backgroundColor: '#210751', backgroundAlpha: 1,
+    grainScale: 6, grainSparsity: 0, grainIntensity: 0.125, grainSpeed: 0,
+    resolution: 1.15, renderScale: 1.05,
+    yOffset: 132, yOffsetWaveMultiplier: 4.5, yOffsetColorMultiplier: 4.8, yOffsetFlowMultiplier: 5.2,
+    flowDistortionA: 0.4, flowDistortionB: 10, flowScale: 3.3, flowEase: 0.37, flowEnabled: true,
+    enableProceduralTexture: false, transparentTextureVoid: false, textureMode: 'bitmap', bakeEdgeSoftness: 1,
+    textureVoidLikelihood: 0.06, textureVoidWidthMin: 10, textureVoidWidthMax: 500, textureBandDensity: 0.8,
+    textureColorBlending: 0.06, textureSeed: 333, textureEase: 0.38, proceduralBackgroundColor: '#003FFF',
+    textureShapeTriangles: 20, textureShapeCircles: 15, textureShapeBars: 15, textureShapeSquiggles: 10,
+    domainWarpEnabled: false, domainWarpIntensity: 0, domainWarpScale: 3,
+    vignetteIntensity: 0, vignetteRadius: 0.8,
+    fresnelEnabled: false, fresnelPower: 2, fresnelIntensity: 0.5, fresnelColor: '#FFFFFF',
+    iridescenceEnabled: false, iridescenceIntensity: 0.5, iridescenceSpeed: 1,
+    prismEdgeEnabled: false, prismEdgeIntensity: 0.5, prismEdgeThinness: 3, prismEdgeSpread: 1, prismEdgeSpeed: 0.5, prismEdgeRipple: 1,
+    bloomIntensity: 0, bloomThreshold: 0.7, chromaticAberration: 0,
+    shapeType: 'ribbon', shapeRotationX: 0, shapeRotationY: 0, shapeRotationZ: 0, shapeAutoRotateSpeedX: 0, shapeAutoRotateSpeedY: 0,
+    sphereRadius: 15, torusRadius: 15, torusTube: 5, cylinderRadius: 10, cylinderHeight: 40,
+    planeBend: 1.7, planeTwist: 5, silhouetteFade: 0.2, cylinderFade: 0.08, ribbonFade: 0.23,
+    flatShading: false, cameraLock: false,
+    cameraX: 15, cameraY: 0.5, cameraZ: 0, cameraRotationX: 0, cameraRotationY: 0, cameraRotationZ: 0, cameraZoom: 1.45,
+  };
+
+  const useNeat = document.documentElement.dataset.look === 'neat';   // picked in <head>; otherwise NEAT never loads
+
+  const root = document.documentElement;
+  const canvas = document.getElementById('gradient');
+  const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+  const stillMQ = matchMedia('(prefers-reduced-motion: reduce)');
+  const isDark = () => (root.dataset.theme || (darkMQ.matches ? 'dark' : 'light')) === 'dark';
+  let gradient = null;
+
+  const onScroll = () => { if (gradient) gradient.yOffset = config.yOffset + window.scrollY; };
+
+  // Built the first time the page is dark, then kept. In light mode the CSS hides the canvas and NEAT pauses itself
+  // (it stops drawing while its canvas isn't visible). Not destroyed: NEAT 1.1.0's destroy() leaves a draw loop
+  // running against the deleted GL objects.
+  function start() {
+    if (gradient || !isDark()) return;
+    try {
+      gradient = new NeatGradient({ ref: canvas, ...config, speed: stillMQ.matches ? 0 : config.speed });
+    } catch (e) { gradient = null; return; }   // no WebGL: keep the random blue gradient
+    for (const v of ['--rg-top', '--rg-mid', '--rg-bot']) root.style.setProperty(v, config.backgroundColor);
+    root.classList.add('neat-on');
+    onScroll();
+    addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  if (useNeat) {
+    start();
+    darkMQ.addEventListener('change', start);
+    new MutationObserver(start).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+</script>
+</body>
+</html>
