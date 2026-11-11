@@ -369,14 +369,15 @@ title: Waves of San Francisco
   /* Tight above and below (Nov 2026: cut by over half). Before: 26px above the words (.tides' 22px top padding + 4px), and 6px
      under them plus .tides' 24px gap (28px dark) below. Now ~12px above, 12px below (16px dark). */
   .tides .viewpick { display: flex; gap: 22px; margin-block: -12px -15px; align-items: center; }
-  /* Landscape / portrait for the sea, right-aligned on the toggle row (Waves only): outline icons; the chosen one is outlined
-     in #FF5500 at 50% opacity */
-  .tides .viewpick .orient { margin-left: auto; display: flex; gap: 6px; }
+  /* Landscape / portrait for the sea: one outline icon, right-aligned on the toggle row (Waves only), outlined in #FF5500 at
+     50% opacity. Tap it and it turns a quarter: wide = landscape (Waves), tall = portrait (Plunge). */
+  .tides .viewpick .orient { margin-left: auto; display: flex; }
   .tides .viewpick .orient[hidden] { display: none; }
-  .tides .viewpick .orient button { border: 0; padding: 2px; color: var(--muted); line-height: 0; }
-  .tides .viewpick .orient button:hover { color: var(--ink); }
-  .tides .viewpick .orient button[aria-pressed="true"] { color: rgba(255, 85, 0, .5); border: 0; }
-  .tides .viewpick .orient svg { display: block; }
+  .tides .viewpick .orient button, .tides .viewpick .orient button[aria-pressed] { border: 0; padding: 2px; line-height: 0; color: rgba(255, 85, 0, .5); }
+  .tides .viewpick .orient button:hover { color: rgba(255, 85, 0, .8); }
+  .tides .viewpick .orient svg { display: block; transition: transform .3s ease; }
+  .tides .viewpick .orient button[aria-pressed="true"] svg { transform: rotate(90deg); }
+  @media (prefers-reduced-motion: reduce) { .tides .viewpick .orient svg { transition: none; } }
   .tides .viewpick button { background: none; border: 0; padding: 2px 0 3px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
     letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; -webkit-tap-highlight-color: transparent; }
   .tides .viewpick button:hover { color: var(--accent); }
@@ -485,11 +486,9 @@ title: Waves of San Francisco
     <div class="viewpick" role="group" aria-label="View" data-i18n-aria="w_view">
       <button type="button" id="vTidesBtn" data-view="Tides" aria-pressed="false" data-i18n="vTides">Tides</button>
       <button type="button" id="vWavesBtn" data-view="Waves" aria-pressed="true" data-i18n="vWaves">Waves</button>
-      <div class="orient" id="orient" role="group" aria-label="Orientation" data-i18n-aria="w_orient">
-        <button type="button" data-orient="landscape" aria-pressed="true" aria-label="Landscape" data-i18n-aria="w_land" title="Landscape">
+      <div class="orient" id="orient">
+        <button type="button" id="orientBtn" aria-pressed="false" aria-label="Portrait" data-i18n-aria="w_port" title="Portrait">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
-        <button type="button" data-orient="portrait" aria-pressed="false" aria-label="Portrait" data-i18n-aria="w_port" title="Portrait">
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
       </div>
     </div>
 
@@ -627,14 +626,16 @@ title: Waves of San Francisco
       dispatchEvent(new Event('pw-shape'));
       document.querySelectorAll('.viewpick button[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === v); });
       document.getElementById('orient').hidden = v !== 'Waves';
-      document.querySelectorAll('.orient button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.orient === orient); });
+      var ob = document.getElementById('orientBtn'), lab = (window.TIDE_I18N && (TIDE_I18N[document.documentElement.lang] || TIDE_I18N.en)) || {};
+      ob.setAttribute('aria-pressed', orient === 'portrait');   // pressed = portrait: the icon stands tall
+      ob.dataset.i18nAria = orient === 'portrait' ? 'w_land' : 'w_port';   // it names what a tap switches to
+      ob.setAttribute('aria-label', lab[ob.dataset.i18nAria] || (orient === 'portrait' ? 'Landscape' : 'Portrait')); ob.title = ob.getAttribute('aria-label');
       try { localStorage.setItem('fogday-waves-view', name); } catch (e) {}
       if (name === 'Tides') dispatchEvent(new Event('resize'));   // tides.js measures and redraws its chart for the now-visible panel
     }
     document.querySelectorAll('.viewpick button[data-view]').forEach(function (b) { b.addEventListener('click', function () {
       show(b.dataset.view === 'Waves' && orient === 'portrait' ? 'Plunge' : b.dataset.view); }); });
-    document.querySelectorAll('.orient button').forEach(function (b) { b.addEventListener('click', function () {
-      show(b.dataset.orient === 'portrait' ? 'Plunge' : 'Waves'); }); });
+    document.getElementById('orientBtn').addEventListener('click', function () { show(orient === 'portrait' ? 'Waves' : 'Plunge'); });
     var saved = null; try { saved = localStorage.getItem('fogday-waves-view'); } catch (e) {}
     show(saved === 'Tides' || saved === 'Plunge' ? saved : 'Waves');
   })();
