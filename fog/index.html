@@ -209,13 +209,6 @@ title: FOG
   const wob = (x, y, k) => [x + (tnoise(x / 3 + 90, y / 3) - .5) * k, y + (tnoise(x / 3, y / 3 + 140) - .5) * k];
   const inRect = (x0, y0, lo0, la0, lo1, la1, k = 4) => { const [x, y] = wob(x0, y0, k); return x >= X(lo0) && x <= X(lo1) && y >= Y(la1) && y <= Y(la0); };
   const near = (x, y, lo, la, km) => Math.hypot(x - X(lo), y - Y(la)) * CELL_M / 1000 < km;
-  const COVER = {   // four tones each, dark to light
-    grass:  [[92, 88, 56], [124, 116, 72], [154, 142, 90], [178, 164, 106]],     // headland grass, November gold-olive
-    scrub:  [[44, 58, 38], [60, 78, 48], [80, 98, 58], [102, 118, 70]],          // coastal scrub and chaparral
-    forest: [[22, 44, 32], [32, 60, 42], [44, 78, 52], [60, 96, 62]],            // cypress, eucalyptus, pine
-    city:   [[88, 88, 92], [114, 112, 110], [138, 134, 126], [160, 154, 144]],   // streets and roofs
-    sand:   [[168, 154, 118], [192, 178, 136], [210, 196, 154], [224, 212, 172]],
-  };
   function cover(x, y, i) {
     const e = elev[i], lon = LON0 + (x + .5) * (LON1 - LON0) / W, marin = lon < -122.44 ? Y(37.8235) > y : Y(37.84) > y;
     if (dist[i] <= 1 && e < 30 && x < X(-122.49) && !marin) return 'sand';                       // Ocean Beach, Baker Beach
@@ -237,25 +230,29 @@ title: FOG
     if (inRect(x, y, -122.478, 37.802, -122.447, 37.808)) return 'grass';                        // Crissy Field
     return 'city';
   }
-  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);
-  const baseC = new Float32Array(W * H * 3), shade = new Float32Array(W * H);
+  // Blocky voxel-map look: the ground steps in 20 m block levels, and every block is shaded the way blocky game maps do it:
+  // brighter if it stands higher than the block to its north, darker if lower (darker still for a drop of two or more).
+  // Colours are block colours with a little texture per block; water darkens with depth in checkerboard bands.
+  const BLOCK_M = 20, LVL = new Int16Array(W * H);
+  for (let i = 0; i < W * H; i++) LVL[i] = land[i] ? Math.floor(elev[i] / BLOCK_M) : -1;
+  const MC = { grass: [112, 162, 60], scrub: [86, 128, 52], forest: [44, 102, 42], city: [128, 128, 132], sand: [214, 200, 146] };
+  const ROOF = [[150, 92, 64], [112, 104, 98], [176, 166, 150]];   // a few odd roofs among the stone
+  const baseC = new Float32Array(W * H * 3);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y * W + x, o = i * 3;
-    if (!land[i]) {   // water: lighter in the shallows by the shore, a faint chop further out
-      const sh = Math.max(0, 3 - dist[i]) / 3, n = tnoise(x / 1.5, y / 1.5 + 200);
-      const c = [10 + 14 * sh + 6 * n, 48 + 34 * sh + 8 * n, 78 + 30 * sh + 10 * n];
-      baseC[o] = c[0]; baseC[o + 1] = c[1]; baseC[o + 2] = c[2]; continue;
+    const i = y * W + x, o = i * 3, tex = .94 + .12 * rnd();      // per-block texture
+    let c;
+    if (!land[i]) {   // water: three depths from the shore, mixed in a checkerboard where they meet
+      const d = dist[i], band = d < 2 ? 0 : d < 5 ? 1 : 2, mix = (d === 1 || d === 4) && (x + y) % 2 === 0 ? Math.max(0, band - 1) : band;
+      c = [[64, 112, 186], [46, 86, 164], [34, 66, 138]][d === 1 || d === 4 ? Math.min(2, mix + ((x + y) % 2)) : band];
+      const k = tex * .97; baseC[o] = c[0] * k; baseC[o + 1] = c[1] * k; baseC[o + 2] = c[2] * k; continue;
     }
-    // hillshade, sun from the northwest, relief exaggerated 3x so the slopes read at 125 m a pixel
-    const ex = (elev[y * W + Math.min(W - 1, x + 1)] - elev[y * W + Math.max(0, x - 1)]) / (2 * CELL_M) * 3;
-    const ey = (elev[Math.min(H - 1, y + 1) * W + x] - elev[Math.max(0, y - 1) * W + x]) / (2 * CELL_M) * 3;
-    const dot = (ex * .5 + ey * .5 + .707) / Math.hypot(ex, ey, 1);
-    const h = clamp(.5 + (dot - .707) * 2.4, 0, 1); shade[i] = h;
-    const kind = cover(x, y, i), tones = COVER[kind];
-    let lvl = Math.floor(h * 3 + BAYER[(y % 4) * 4 + (x % 4)]);
-    if (kind === 'city' && ((x + 2 * y) % 5 === 0)) lvl--;                                       // a hint of the street grid
-    const c = tones[clamp(lvl, 0, 3)];
-    baseC[o] = c[0]; baseC[o + 1] = c[1]; baseC[o + 2] = c[2];
+    const kind = cover(x, y, i);
+    c = MC[kind];
+    if (kind === 'city' && rnd() < .14) c = ROOF[(rnd() * 3) | 0];
+    if (kind === 'forest' && rnd() < .3) c = [34, 84, 34];                                        // darker leaf blocks
+    const north = y > 0 ? (land[i - W] ? LVL[i - W] : 0) : LVL[i], dl = LVL[i] - north;
+    const k = (dl > 0 ? 1.0 : dl === 0 ? .86 : dl === -1 ? .71 : .56) * tex;
+    baseC[o] = Math.min(255, c[0] * k); baseC[o + 1] = Math.min(255, c[1] * k); baseC[o + 2] = Math.min(255, c[2] * k);
   }
   // Bridges (lon, lat endpoints): Golden Gate (Fort Point to Lime Point) and the Bay Bridge (Rincon Point, Yerba Buena, toward Oakland)
   const line = (a, b) => { const p = [], n = Math.ceil(Math.hypot(X(b[0]) - X(a[0]), Y(b[1]) - Y(a[1]))) * 2; for (let k = 0; k <= n; k++) p.push([Math.round(X(a[0]) + (X(b[0]) - X(a[0])) * k / n), Math.round(Y(a[1]) + (Y(b[1]) - Y(a[1])) * k / n)]); return p; };
@@ -414,7 +411,7 @@ title: FOG
       const x = i % W, y = (i / W) | 0;
       const n = .65 * vnoise((x - billowX) / 11, (y - billowY) / 11) + .35 * vnoise((x - billowX) / 4.5 + 17, (y - billowY) / 4.5 + 5);
       const v = fa[i] + .28 * (n - .5), e = clamp((v - .1) / .5, 0, 1);
-      const a = sm(e) * .96, o = i * 4; fogA[i] = a;
+      const a = e < .12 ? 0 : e < .4 ? .42 : e < .72 ? .74 : .93, o = i * 4; fogA[i] = a;   // blocky cloud steps, hard edges
       d[o] = (c[0] * light) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * light) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * light) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
