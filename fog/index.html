@@ -112,7 +112,7 @@ title: FOG
       n1:'<b>What you see:</b> the Golden Gate from straight above, about 125 m per pixel, north up. Marin Headlands and Sausalito at top left, San Francisco along the bottom, Angel Island, Alcatraz and Treasure Island in the Bay. Fog pours in from the Pacific on the left.',
       n2:'<b>How the fog moves:</b> the PSX Doom fire rule turned on its side. Each step, every fog pixel moves one pixel downwind, wanders a little, and sometimes thins by one shade. It thins fastest over sunny, hot land and barely at all over the cold Bay. It moves fastest at sea level, so it races through the Gate, and slows as it climbs the hills. Hills taller than the marine layer stop it, so a low layer squeezes through the Gate and a high one spills over the hills. The Golden Gate Bridge towers (227 m) show through when the layer is lower than they are.',
       n3:'<b>Starts with current conditions.</b> The map opens on now: the wind just outside the Gate, the temperature inland (the Mission), the fog and the height of the marine layer, from this hour\'s National Weather Service forecast, with the sun where it is right now. <b>Time:</b> slide ahead hour by hour through the forecast (up to about a week) for a time lapse; the sliders move to each hour. You can still move any slider yourself; moving Time again puts them back on the forecast. The fog bank is an estimate: the forecast gives no fog thickness, so it\'s read from the forecast\'s fog flag, humidity and visibility. The marine layer top is the forecast\'s mixing height, which sits near the top of the marine layer when there\'s an inversion.',
-      n4:'<b>Map:</b> shorelines from OpenStreetMap land polygons (via geo-maps, 100 m), with Alcatraz added by hand. Hills are approximate: smooth bumps at the real summits (Twin Peaks, Mount Sutro, Hawk Hill, Mount Livermore and others), not a terrain model.',
+      n4:'<b>Map:</b> shorelines from OpenStreetMap land polygons (via geo-maps, 100 m), with Alcatraz added by hand. The terrain is approximate, not a survey: ridgelines at their real places and heights (the Headlands ridges, Twin Peaks, Mount Sutro, Mount Livermore and others), roughened with noise for gullies and spurs, and lit from the northwest. Ground cover (grass, scrub, forest, city, sand) is drawn by hand from where it is.',
       n5:'Sources: <a href="https://www.weather.gov/documentation/services-web-api">National Weather Service API</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a> (© OpenStreetMap contributors). A hat tip to the fire animation in the PlayStation port of Doom.' },
     fr: { gFog:'Brouillard', bank:'Banc de brume', top:'Couche marine', gWind:'Vent', speed:'Vent', dir:'Vent de', gSun:'Soleil et chaleur', hour:'Heure', now:'Maintenant', heat:'Chaleur intérieure', sim:'Vitesse', info:'Info',
       calm:'calme', offshore:'Vent de terre : la brume recule', towers:'Tours du pont au-dessus de la brume', covered:'Brume à travers le Golden Gate', clear:'Golden Gate dégagé',
@@ -120,7 +120,7 @@ title: FOG
       n1:'<b>Ce que vous voyez :</b> le Golden Gate vu d’en haut, environ 125 m par pixel, nord en haut. Les Marin Headlands et Sausalito en haut à gauche, San Francisco en bas, Angel Island, Alcatraz et Treasure Island dans la baie. La brume arrive du Pacifique, à gauche.',
       n2:'<b>Comment la brume avance :</b> la règle du feu de Doom (PSX) couchée sur le côté. À chaque pas, chaque pixel de brume avance d’un pixel sous le vent, dévie un peu, et parfois s’éclaircit d’une teinte. Elle s’éclaircit vite sur les terres chaudes et ensoleillées, à peine sur la baie froide. Elle va plus vite au niveau de la mer, donc file par le Golden Gate, et ralentit en montant sur les collines. Les collines plus hautes que la couche marine l’arrêtent : une couche basse se faufile par le Golden Gate, une couche haute déborde sur les collines. Les tours du pont (227 m) dépassent quand la couche est plus basse qu’elles.',
       n3:'<b>Commence par les conditions actuelles.</b> La carte s’ouvre sur maintenant : le vent juste au large du Golden Gate, la température à l’intérieur (Mission), la brume et la hauteur de la couche marine, d’après la prévision du National Weather Service pour cette heure, avec le soleil là où il est. <b>Heure :</b> avancez heure par heure dans la prévision (jusqu’à environ une semaine) pour un accéléré ; les curseurs suivent chaque heure. Vous pouvez toujours bouger un curseur vous-même ; bouger l’heure les remet sur la prévision. Le banc de brume est une estimation : la prévision ne donne pas l’épaisseur de la brume, elle est déduite de l’indicateur de brouillard, de l’humidité et de la visibilité. Le sommet de la couche marine est la hauteur de mélange de la prévision, proche du sommet de la couche marine quand il y a une inversion.',
-      n4:'<b>Carte :</b> côtes d’après les polygones de terre d’OpenStreetMap (via geo-maps, 100 m), avec Alcatraz ajouté à la main. Les collines sont approximatives : des bosses lisses aux vrais sommets (Twin Peaks, Mount Sutro, Hawk Hill, Mount Livermore et d’autres), pas un modèle de terrain.',
+      n4:'<b>Carte :</b> côtes d’après les polygones de terre d’OpenStreetMap (via geo-maps, 100 m), avec Alcatraz ajouté à la main. Le relief est approximatif, pas un relevé : les crêtes à leurs vraies places et hauteurs (les crêtes des Headlands, Twin Peaks, Mount Sutro, Mount Livermore et d’autres), rendues irrégulières par du bruit pour les ravines et les éperons, éclairées du nord-ouest. La couverture du sol (herbe, maquis, forêt, ville, sable) est dessinée à la main d’après la réalité.',
       n5:'Sources : <a href="https://www.weather.gov/documentation/services-web-api">API du National Weather Service</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a> (© contributeurs d’OpenStreetMap). Un clin d’œil à l’animation du feu du portage PlayStation de Doom.' },
     es: { gFog:'Niebla', bank:'Banco de niebla', top:'Capa marina', gWind:'Viento', speed:'Viento', dir:'Viento del', gSun:'Sol y calor', hour:'Hora', now:'Ahora', heat:'Calor interior', sim:'Velocidad', info:'Info',
       calm:'calma', offshore:'Viento de tierra: la niebla retrocede', towers:'Torres del puente sobre la niebla', covered:'Niebla a través del Golden Gate', clear:'Golden Gate despejado',
@@ -128,7 +128,7 @@ title: FOG
       n1:'<b>Lo que ves:</b> el Golden Gate visto desde arriba, unos 125 m por píxel, con el norte arriba. Marin Headlands y Sausalito arriba a la izquierda, San Francisco abajo, y Angel Island, Alcatraz y Treasure Island en la bahía. La niebla entra desde el Pacífico, a la izquierda.',
       n2:'<b>Cómo se mueve la niebla:</b> la regla del fuego de Doom (PSX) puesta de lado. En cada paso, cada píxel de niebla avanza un píxel a favor del viento, se desvía un poco y a veces se aclara un tono. Se aclara rápido sobre la tierra caliente y soleada y casi nada sobre la bahía fría. Va más rápido al nivel del mar, así que cruza el Golden Gate a toda prisa, y se frena al subir las colinas. Las colinas más altas que la capa marina la frenan: una capa baja se cuela por el Golden Gate y una alta desborda las colinas. Las torres del puente (227 m) asoman cuando la capa es más baja que ellas.',
       n3:'<b>Empieza con las condiciones actuales.</b> El mapa abre en el ahora: el viento justo fuera del Golden Gate, la temperatura del interior (la Mission), la niebla y la altura de la capa marina, según el pronóstico del National Weather Service para esta hora, con el sol donde está ahora. <b>Hora:</b> avanza hora a hora por el pronóstico (hasta una semana, más o menos) para un time-lapse; los controles siguen cada hora. Aún puedes mover cualquier control; al mover la hora vuelven al pronóstico. El banco de niebla es una estimación: el pronóstico no da el espesor de la niebla, así que se deduce del aviso de niebla, la humedad y la visibilidad. El tope de la capa marina es la altura de mezcla del pronóstico, que queda cerca del tope de la capa marina cuando hay inversión.',
-      n4:'<b>Mapa:</b> costas de los polígonos de tierra de OpenStreetMap (vía geo-maps, 100 m), con Alcatraz añadido a mano. Las colinas son aproximadas: lomas suaves en las cumbres reales (Twin Peaks, Mount Sutro, Hawk Hill, Mount Livermore y otras), no un modelo del terreno.',
+      n4:'<b>Mapa:</b> costas de los polígonos de tierra de OpenStreetMap (vía geo-maps, 100 m), con Alcatraz añadido a mano. El relieve es aproximado, no un levantamiento: las crestas en sus lugares y alturas reales (las de los Headlands, Twin Peaks, Mount Sutro, Mount Livermore y otras), con ruido para barrancos y lomas, iluminadas desde el noroeste. La cobertura del suelo (pasto, matorral, bosque, ciudad, arena) está dibujada a mano según la realidad.',
       n5:'Fuentes: <a href="https://www.weather.gov/documentation/services-web-api">API del National Weather Service</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a> (© colaboradores de OpenStreetMap). Un guiño a la animación del fuego de la versión de Doom para PlayStation.' },
     zh: { gFog:'雾', bank:'雾堤', top:'海洋层顶', gWind:'风', speed:'风速', dir:'风向', gSun:'太阳与热度', hour:'时间', now:'现在', heat:'内陆气温', sim:'模拟速度', info:'说明',
       calm:'无风', offshore:'离岸风：雾在后退', towers:'桥塔露出雾面', covered:'雾穿过金门', clear:'金门晴朗',
@@ -136,7 +136,7 @@ title: FOG
       n1:'<b>你看到的：</b>从正上方俯瞰的金门，每像素约 125 米，上方为北。左上是马林岬角和索萨利托，下方是旧金山，海湾中有天使岛、恶魔岛和金银岛。雾从左边的太平洋涌入。',
       n2:'<b>雾如何移动：</b>把 PSX 版《毁灭战士》的火焰规则横过来。每一步，每个雾像素顺风前进一格，略微偏移，有时淡一级。在晴朗炎热的陆地上消散最快，在寒冷的海湾上几乎不散。它在海平面上移动最快，因此会迅速穿过金门，爬坡时则会减慢。高于海洋层的山丘会挡住雾：海洋层低时，雾从金门挤进来；海洋层高时，雾漫过山丘。金门大桥的桥塔（227 米）在海洋层低于它们时露出雾面。',
       n3:'<b>从当前状况开始。</b>地图一打开就是现在：金门外侧的风、内陆（教会区）的气温、雾和海洋层高度，取自美国国家气象局本小时的预报，太阳也在此刻的位置。<b>时间：</b>向后滑动，按小时浏览预报（最多约一周），形成延时效果；各滑块随每个小时变化。你仍可自行调节任何滑块；再次移动时间会让它们回到预报值。雾堤是估计值：预报不提供雾的厚度，因此根据预报中的雾标记、湿度和能见度推算。海洋层顶取预报中的混合层高度，在有逆温时接近海洋层顶部。',
-      n4:'<b>地图：</b>海岸线取自 OpenStreetMap 陆地多边形（经 geo-maps，100 米精度），恶魔岛为手工添加。山丘是近似的：在真实山顶（双峰、苏特罗山、鹰山、利弗莫尔山等）放置的平滑隆起，并非地形模型。',
+      n4:'<b>地图：</b>海岸线取自 OpenStreetMap 陆地多边形（经 geo-maps，100 米精度），恶魔岛为手工添加。地形是近似的，并非测绘：山脊位于真实的位置和高度（岬角山脊、双峰、苏特罗山、利弗莫尔山等），加入噪声形成沟谷和山嘴，光从西北方照来。地表覆盖（草地、灌丛、森林、城市、沙滩）按实际情况手工绘制。',
       n5:'来源：<a href="https://www.weather.gov/documentation/services-web-api">美国国家气象局 API</a> · <a href="https://github.com/simonepri/geo-maps">geo-maps</a>（© OpenStreetMap 贡献者）。致敬 PlayStation 版《毁灭战士》中的火焰动画。' },
   };
   const ORDER = ['en', 'fr', 'es', 'zh'], NAMES = { en: 'English', fr: 'Français', es: 'Español', zh: '中文' };
@@ -151,28 +151,111 @@ title: FOG
   MASK.split('|').forEach((row, y) => { let x = 0, on = 0; for (const r of row.split(',')) { const n = parseInt(r, 16); for (let k = 0; k < n; k++) land[y * W + x++] = on; on ^= 1; } });
   const X = lon => (lon - LON0) / (LON1 - LON0) * W, Y = lat => (LAT1 - lat) / CELL_LAT;
 
-  // Hills: smooth bumps at real summits (approximate heights in m, radius in km), over a 15 m base on land
-  const HILLS = [
-    [-122.4475, 37.7525, 280, .9], [-122.4580, 37.7580, 277, .8], [-122.4537, 37.7383, 283, 1.0], [-122.4330, 37.7920, 110, 1.0],
-    [-122.4180, 37.8010, 90, .4], [-122.4058, 37.8024, 85, .3], [-122.4140, 37.7925, 100, .4], [-122.4620, 37.7950, 110, 1.2],
-    [-122.5050, 37.7800, 70, .8], [-122.4920, 37.7650, 60, 1.6],
-    [-122.4990, 37.8325, 280, .9], [-122.4855, 37.8370, 280, .8], [-122.4930, 37.8520, 290, 1.0], [-122.5200, 37.8400, 250, 1.2],
-    [-122.4900, 37.8700, 280, 1.5], [-122.5100, 37.8750, 350, 1.8], [-122.5300, 37.8900, 400, 2.0],
-    [-122.4650, 37.8880, 200, 1.0], [-122.4650, 37.8730, 100, .4], [-122.4317, 37.8608, 240, .8], [-122.3670, 37.8100, 100, .4],
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  // ---------- terrain: ridgelines at their real places and heights, roughened by noise ----------
+  // Not a survey: each ridge is a segment with an approximate crest height (m) and half-width (km); the ground between
+  // rises gently away from the shore, and multi-scale noise cuts gullies and spurs into the slopes.
+  const RIDGES = [
+    // Marin Headlands
+    [-122.530, 37.826, -122.482, 37.836, 250, .5],   // Conzelman Road ridge above the Gate, to Hawk Hill
+    [-122.486, 37.838, -122.505, 37.872, 300, .65],  // Slacker Hill, Wolfback Ridge, Alta
+    [-122.545, 37.849, -122.507, 37.860, 270, .6],   // Miwok / Rodeo ridge
+    [-122.548, 37.866, -122.536, 37.898, 330, .85],  // Coyote Ridge, toward Tam
+    [-122.505, 37.872, -122.522, 37.898, 310, .75],  // Alta, north
+    [-122.493, 37.857, -122.481, 37.876, 170, .45],  // the hills behind Sausalito
+    [-122.476, 37.899, -122.459, 37.881, 190, .55],  // Tiburon ridge
+    [-122.462, 37.876, -122.457, 37.869, 90, .22],   // Belvedere
+    [-122.4317, 37.8608, -122.4317, 37.8608, 240, .75],  // Mount Livermore, Angel Island
+    // San Francisco
+    [-122.4580, 37.7600, -122.4475, 37.7525, 275, .5],   // Mount Sutro to Twin Peaks
+    [-122.4475, 37.7525, -122.4537, 37.7383, 280, .55],  // Twin Peaks to Mount Davidson
+    [-122.476, 37.7965, -122.452, 37.7920, 110, .5],     // Presidio ridge
+    [-122.447, 37.7910, -122.420, 37.7925, 110, .38],    // Pacific Heights
+    [-122.4185, 37.8010, -122.4185, 37.8010, 90, .22],   // Russian Hill
+    [-122.4140, 37.7925, -122.4140, 37.7925, 100, .22],  // Nob Hill
+    [-122.4058, 37.8024, -122.4058, 37.8024, 85, .16],   // Telegraph Hill
+    [-122.4515, 37.7790, -122.4515, 37.7790, 90, .25],   // Lone Mountain
+    [-122.5060, 37.7790, -122.4990, 37.7830, 70, .35],   // Lands End
+    [-122.4370, 37.7590, -122.4300, 37.7560, 120, .35],  // Corona Heights / Kite Hill
+    [-122.3670, 37.8100, -122.3670, 37.8100, 100, .28],  // Yerba Buena Island
   ];
+  // distance (px) from the other medium: land pixels from water, water pixels from land (breadth-first)
+  const dist = new Int16Array(W * H).fill(-1); { const q = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x;
+      if ([[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => { const xx = x + dx, yy = y + dy; return xx >= 0 && yy >= 0 && xx < W && yy < H && land[yy * W + xx] !== land[i]; })) { dist[i] = 0; q.push(i); } }
+    for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = i / W | 0;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx; if (dist[j] < 0 && land[j] === land[i]) { dist[j] = dist[i] + 1; q.push(j); } } } }
+  // value noise (seeded, so the hills are the same on every visit)
+  let seed = 7919; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const TG = 64, tg = Float32Array.from({ length: TG * TG }, rnd);
+  const tsm = t => t * t * (3 - 2 * t);
+  function tnoise(x, y) { const xi = Math.floor(x), yi = Math.floor(y), fx = tsm(x - xi), fy = tsm(y - yi), g = (a, b) => tg[((b % TG + TG) % TG) * TG + ((a % TG + TG) % TG)];
+    const p = g(xi, yi) + (g(xi + 1, yi) - g(xi, yi)) * fx, q = g(xi, yi + 1) + (g(xi + 1, yi + 1) - g(xi, yi + 1)) * fx; return p + (q - p) * fy; }
+  const fbm = (x, y) => .5 * tnoise(x / 9, y / 9) + .3 * tnoise(x / 4, y / 4 + 31) + .2 * tnoise(x / 2, y / 2 + 77);
   const elev = new Float32Array(W * H);
+  const segD = (px, py, r) => { const ax = X(r[0]), ay = Y(r[1]), bx = X(r[2]), by = Y(r[3]), vx = bx - ax, vy = by - ay, L2 = vx * vx + vy * vy;
+    const t = L2 ? clamp(((px - ax) * vx + (py - ay) * vy) / L2, 0, 1) : 0; return Math.hypot(px - ax - vx * t, py - ay - vy * t) * CELL_M / 1000; };
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = y * W + x; if (!land[i]) continue;
-    let e = 15;
-    for (const [lo, la, h, r] of HILLS) { const dx = (x - X(lo)) * CELL_M / 1000, dy = (y - Y(la)) * CELL_M / 1000; e += h * Math.exp(-(dx * dx + dy * dy) / (r * r)); }
-    elev[i] = e;
+    let e = 4 + 26 * Math.min(1, dist[i] * CELL_M / 2000);                     // gentle rise from the shore
+    for (const r of RIDGES) { const d = segD(x, y, r); e = Math.max(e, r[4] * Math.exp(-(d * d) / (r[5] * r[5]))); }
+    const ridged = 1 - Math.abs(2 * tnoise(x / 3.5 + 11, y / 3.5) - 1);         // gullies: sharp creases in the slopes
+    e += (fbm(x, y) - .5) * (10 + .35 * e) - ridged * .18 * e * Math.min(1, e / 120);
+    elev[i] = Math.max(2, Math.min(e, dist[i] * 60 + 6));                       // cliffs, not walls, at the water's edge
   }
-  // Hillshade, lit from the northwest
-  const shade = new Float32Array(W * H);
+  // ---------- ground cover and colours (pixel-art tones, ordered dither) ----------
+  // edges of parks and forests wander a pixel or two, so nothing reads as a ruled rectangle (Golden Gate Park stays straight-ish)
+  const wob = (x, y, k) => [x + (tnoise(x / 3 + 90, y / 3) - .5) * k, y + (tnoise(x / 3, y / 3 + 140) - .5) * k];
+  const inRect = (x0, y0, lo0, la0, lo1, la1, k = 4) => { const [x, y] = wob(x0, y0, k); return x >= X(lo0) && x <= X(lo1) && y >= Y(la1) && y <= Y(la0); };
+  const near = (x, y, lo, la, km) => Math.hypot(x - X(lo), y - Y(la)) * CELL_M / 1000 < km;
+  const COVER = {   // four tones each, dark to light
+    grass:  [[92, 88, 56], [124, 116, 72], [154, 142, 90], [178, 164, 106]],     // headland grass, November gold-olive
+    scrub:  [[44, 58, 38], [60, 78, 48], [80, 98, 58], [102, 118, 70]],          // coastal scrub and chaparral
+    forest: [[22, 44, 32], [32, 60, 42], [44, 78, 52], [60, 96, 62]],            // cypress, eucalyptus, pine
+    city:   [[88, 88, 92], [114, 112, 110], [138, 134, 126], [160, 154, 144]],   // streets and roofs
+    sand:   [[168, 154, 118], [192, 178, 136], [210, 196, 154], [224, 212, 172]],
+  };
+  function cover(x, y, i) {
+    const e = elev[i], lon = LON0 + (x + .5) * (LON1 - LON0) / W, marin = lon < -122.44 ? Y(37.8235) > y : Y(37.84) > y;
+    if (dist[i] <= 1 && e < 30 && x < X(-122.49) && !marin) return 'sand';                       // Ocean Beach, Baker Beach
+    if (dist[i] <= 1 && (near(x, y, -122.5385, 37.8320, .35) || near(x, y, -122.4935, 37.8270, .12))) return 'sand';   // Rodeo Beach, Kirby Cove
+    if (near(x, y, -122.4317, 37.8608, 1.5)) return e > 200 ? 'grass' : 'forest';                // Angel Island
+    if (x > X(-122.39) && y < Y(37.80) && y > Y(37.835)) return near(x, y, -122.367, 37.810, .55) ? 'forest' : 'city';   // Treasure Island, YBI
+    if (x > X(-122.335)) return 'city';                                                          // Emeryville and Berkeley edge
+    if (marin) {
+      if (lon > -122.494 && y < Y(37.845) && e < 110) return 'city';                              // Sausalito
+      if (lon > -122.476 && y < Y(37.866) && e < 120) return 'city';                              // Tiburon and Belvedere
+      const valley = fbm(x + 40, y) < .48 || e < 90;
+      return valley ? (tnoise(x / 2, y / 2) > .55 ? 'forest' : 'scrub') : 'grass';
+    }
+    if (inRect(x, y, -122.4835, 37.786, -122.448, 37.803)) return 'forest';                      // the Presidio
+    if (inRect(x, y, -122.511, 37.7655, -122.4535, 37.7735, 1.5)) return 'forest';               // Golden Gate Park
+    if (inRect(x, y, -122.509, 37.7805, -122.494, 37.789)) return 'forest';                      // Lincoln Park, Lands End
+    if (near(x, y, -122.458, 37.758, .45)) return 'forest';                                      // Sutro forest
+    if (e > 230) return 'grass';                                                                 // Twin Peaks, Mount Davidson tops
+    if (inRect(x, y, -122.478, 37.802, -122.447, 37.808)) return 'grass';                        // Crissy Field
+    return 'city';
+  }
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);
+  const baseC = new Float32Array(W * H * 3), shade = new Float32Array(W * H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y * W + x; if (!land[i]) continue;
-    const ex = elev[y * W + Math.min(W - 1, x + 1)] - elev[y * W + Math.max(0, x - 1)], ey = elev[Math.min(H - 1, y + 1) * W + x] - elev[Math.max(0, y - 1) * W + x];
-    shade[i] = Math.max(.65, Math.min(1.3, 1 - (ex + ey) * .004));
+    const i = y * W + x, o = i * 3;
+    if (!land[i]) {   // water: lighter in the shallows by the shore, a faint chop further out
+      const sh = Math.max(0, 3 - dist[i]) / 3, n = tnoise(x / 1.5, y / 1.5 + 200);
+      const c = [10 + 14 * sh + 6 * n, 48 + 34 * sh + 8 * n, 78 + 30 * sh + 10 * n];
+      baseC[o] = c[0]; baseC[o + 1] = c[1]; baseC[o + 2] = c[2]; continue;
+    }
+    // hillshade, sun from the northwest, relief exaggerated 3x so the slopes read at 125 m a pixel
+    const ex = (elev[y * W + Math.min(W - 1, x + 1)] - elev[y * W + Math.max(0, x - 1)]) / (2 * CELL_M) * 3;
+    const ey = (elev[Math.min(H - 1, y + 1) * W + x] - elev[Math.max(0, y - 1) * W + x]) / (2 * CELL_M) * 3;
+    const dot = (ex * .5 + ey * .5 + .707) / Math.hypot(ex, ey, 1);
+    const h = clamp(.5 + (dot - .707) * 2.4, 0, 1); shade[i] = h;
+    const kind = cover(x, y, i), tones = COVER[kind];
+    let lvl = Math.floor(h * 3 + BAYER[(y % 4) * 4 + (x % 4)]);
+    if (kind === 'city' && ((x + 2 * y) % 5 === 0)) lvl--;                                       // a hint of the street grid
+    const c = tones[clamp(lvl, 0, 3)];
+    baseC[o] = c[0]; baseC[o + 1] = c[1]; baseC[o + 2] = c[2];
   }
   // Bridges (lon, lat endpoints): Golden Gate (Fort Point to Lime Point) and the Bay Bridge (Rincon Point, Yerba Buena, toward Oakland)
   const line = (a, b) => { const p = [], n = Math.ceil(Math.hypot(X(b[0]) - X(a[0]), Y(b[1]) - Y(a[1]))) * 2; for (let k = 0; k <= n; k++) p.push([Math.round(X(a[0]) + (X(b[0]) - X(a[0])) * k / n), Math.round(Y(a[1]) + (Y(b[1]) - Y(a[1])) * k / n)]); return p; };
@@ -192,7 +275,6 @@ title: FOG
   const el = id => document.getElementById('fog-' + id);
   const ui = {}; ['bank', 'top', 'wind', 'dir', 'time', 'heat', 'sim'].forEach(k => ui[k] = el(k));
   const val = k => +ui[k].value;
-  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const COMPASS = { en: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
                     fr: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
                     es: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
@@ -304,9 +386,7 @@ title: FOG
 
   // ---------- drawing ----------
   const cv = document.getElementById('fog-map'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
-  const WATER = [10, 48, 78], WATER2 = [14, 62, 96], LAND_LO = [52, 72, 54], LAND_HI = [86, 96, 66];
   const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124];
-  const wnoise = new Float32Array(W * H).map(() => Math.random());
   // Fog is drawn soft: the density is blurred (two 3x3 passes) so the Doom fire rule's pixel-by-pixel grain becomes
   // smooth sheets, and a slowly drifting two-scale noise breaks the thin edges into billows and holes.
   const NG = 32, ng = Float32Array.from({ length: NG * NG }, () => Math.random());
@@ -330,9 +410,7 @@ title: FOG
     for (let i = 0; i < W * H; i++) fa[i] = (prev[i] + (f[i] - prev[i]) * fr) / N;
     blur(fa, fb); blur(fb, fa);
     for (let i = 0; i < W * H; i++) {
-      let c;
-      if (land[i]) { const t2 = clamp(elev[i] / 450, 0, 1), s = shade[i]; c = LAND_LO.map((v, k) => (v + (LAND_HI[k] - v) * t2) * s); }
-      else c = WATER.map((v, k) => v + (WATER2[k] - v) * wnoise[i] * .5);
+      const c = [baseC[i * 3], baseC[i * 3 + 1], baseC[i * 3 + 2]];
       const x = i % W, y = (i / W) | 0;
       const n = .65 * vnoise((x - billowX) / 11, (y - billowY) / 11) + .35 * vnoise((x - billowX) / 4.5 + 17, (y - billowY) / 4.5 + 5);
       const v = fa[i] + .28 * (n - .5), e = clamp((v - .1) / .5, 0, 1);
