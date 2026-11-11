@@ -377,6 +377,7 @@ title: Waves of San Francisco
   .tides .viewpick .orient button, .tides .viewpick .orient button[aria-pressed] { border: 0; padding: 2px; line-height: 0; color: #FF5500; }
   .tides .viewpick .orient button:hover { color: #FF7733; }
   .tides .viewpick .orient svg { display: block; transition: transform .3s ease; }
+  .tides .viewpick .orient button { position: relative; top: -2px; }   /* centre the icon on the WAVES capitals; it turns about that centre, so both orientations line up */
   .tides .viewpick .orient button[aria-pressed="true"] svg { transform: rotate(90deg); }
   @media (prefers-reduced-motion: reduce) { .tides .viewpick .orient svg { transition: none; } }
   .tides .viewpick button { background: none; border: 0; padding: 2px 0 3px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
