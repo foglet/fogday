@@ -1,0 +1,48 @@
+# Builds and deploys fogday.com with GitHub Pages, from the exact commit that was pushed.
+# Replaces the classic "deploy from branch" builder, which sometimes read main a moment before a push landed and
+# published the previous commit. Same Jekyll build as before (actions/jekyll-build-pages is the classic builder's engine).
+# Also redeploys after the TreeSF data workflows push new data (pushes made with GITHUB_TOKEN don't trigger `push`).
+# Needs: repo Settings → Pages → Source = "GitHub Actions".
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Refresh SF street trees", "Build SF tree canopy tiles"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.sha || 'main' }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
