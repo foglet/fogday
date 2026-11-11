@@ -1580,6 +1580,7 @@ $('beachBtn').addEventListener('click', ()=>{
    pick one. 'tide-beach' fires on window whenever the beach changes, from either side. */
 window.TIDE_BEACH = {
   keys: ORDER.slice(), name: k => beachName(k), get: () => beach,
+  level: t => levelAt(beach, t),   // predicted water level (ft, MLLW) at the current beach's own tide station
   set: k => { if (!BEACHES[k] || k===beach) return; beach=k; newSea(); render(); dispatchEvent(new CustomEvent('tide-beach', {detail: beach})); }
 };
 /* ---- Drag the chart sideways to look ahead, up to 36 hours; it stops at now going back.

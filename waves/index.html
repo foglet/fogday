@@ -763,10 +763,16 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
 
   // A sea to experiment with: on page load, Tide and Undercurrent start at the live San Francisco tide; from then on
   // every slider is the visitor's, and nothing live overrides them.
+  // Tide and tidal current at the selected beach, now: from the beach's own NOAA station via tides.js (Baker and East Beach:
+  // San Francisco 9414290; China Beach, Ocean Beach, Fort Funston: Ocean Beach 9414275), else the built-in 9414290 calculation.
+  function seedTide() {
+    const lv = window.TIDE_BEACH && window.TIDE_BEACH.level ? window.TIDE_BEACH.level : tideAt, t = Date.now();
+    try { ui.tide.value = (+lv(t)).toFixed(1); ui.current.value = Math.round(clamp((lv(t + 600000) - lv(t - 600000)) * 3 / 1.3, -1, 1) * 100); }
+    catch (e) { ui.tide.value = tideAt(t).toFixed(1); ui.current.value = Math.round(clamp((tideAt(t + 600000) - tideAt(t - 600000)) * 3 / 1.3, -1, 1) * 100); }
+  }
   function startLive() {
     clock = Date.now();
-    ui.tide.value = tideAt(clock).toFixed(1);
-    ui.current.value = Math.round(clamp((tideAt(clock + 600000) - tideAt(clock - 600000)) * 3 / 1.3, -1, 1) * 100);
+    seedTide();
     live = false;
     outputs();
     refreshSlow(true);
@@ -1008,7 +1014,15 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   }
   function loadPreset(k) { const b = SURF_BEACH[k]; if (!b) return; for (const key in b) { ui[key].value = b[key]; touched.delete(key); } outputs(); refreshSlow(true); }
   el('beach').addEventListener('change', () => { const k = el('beach').value; if (TB) TB.set(k); else loadPreset(k); });
-  addEventListener('tide-beach', e => { el('beach').value = e.detail; loadPreset(e.detail); });
+  // A new beach (from either view): refresh what depends on the beach - its surf preset, its tide and tidal current, and
+  // the wind and swell off that beach - and drop back to now (any scene is cleared).
+  addEventListener('tide-beach', e => {
+    el('beach').value = e.detail;
+    for (const k of ['tide', 'current', 'wind', 'swellH', 'swellT']) touched.delete(k);
+    timeOffset = 0; pressScene(null);
+    loadPreset(e.detail); seedTide(); outputs(); refreshSlow(true);
+    loadLiveSea().then(() => { liveSnap = snap(); });
+  });
   beachOptions(); loadPreset(el('beach').value);
 
   // ---------- loop ----------
@@ -1077,6 +1091,8 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   // beach's own grid cell is land, with no waves), for the current hour. Air pressure: the latest reading at San Francisco
   // airport (Oakland if SFO has none in the last 3 hours). Fetch and the El Niño offset have no live source.
   // Any slider already moved is left alone; if the NWS can't be reached, the starting values stay.
+  // Open water off each beach (lat, lon, share of the swell that reaches the beach)
+  const SEA_POINT = { baker: [37.79, -122.52, 1], china: [37.79, -122.52, 1], ocean: [37.76, -122.53, 1], funston: [37.71, -122.53, 1], east: [37.8, -122.52, .35] };
   async function loadLiveSea() {
     const h = { headers: { Accept: 'application/geo+json' } };
     const get = async u => { const r = await fetch(u, h); if (!r.ok) throw new Error(r.status); return r.json(); };
@@ -1086,12 +1102,13 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     const set = (k, v) => { if (v == null || !isFinite(v) || touched.has(k)) return;
       const i = ui[k]; i.value = clamp(v, +i.min, +i.max); };
     try {
-      const pt = (await get('https://api.weather.gov/points/37.8,-122.52')).properties;
+      const bk = window.TIDE_BEACH ? window.TIDE_BEACH.get() : 'baker', P = SEA_POINT[bk] || SEA_POINT.baker;
+      const pt = (await get(`https://api.weather.gov/points/${P[0]},${P[1]}`)).properties;
       const grid = (await get(pt.forecastGridData)).properties, now = Date.now();
       const spd = at(grid.windSpeed, now), dir = at(grid.windDirection, now);          // km/h, degrees the wind blows from
       if (spd != null && dir != null) set('wind', Math.round(spd / 1.852 * Math.cos((dir - 270) * R)));   // knots, + = from the west (onshore)
       const sh = at(grid.primarySwellHeight, now), sp = at(grid.wavePeriod, now);       // m, s
-      if (sh) set('swellH', Math.round(sh * FT * 2) / 2);
+      if (sh) set('swellH', Math.round(sh * FT * P[2] * 2) / 2);   // East Beach is inside the Gate: most swell never reaches it
       if (sp) set('swellT', Math.round(sp));
     } catch (e) {}
     for (const s of ['KSFO', 'KOAK']) {                                          // airports report pressure; SF's own stations don't
