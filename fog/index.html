@@ -353,13 +353,16 @@ title: FOG
   { const raw = Array.from({ length: H }, () => Math.random());
     for (let y = 0; y < H; y++) { let s = 0; for (let k = -5; k <= 5; k++) s += raw[(y + k + H) % H]; streak[y] = s / 11; }
     const lo = Math.min(...streak), hi = Math.max(...streak); for (let y = 0; y < H; y++) streak[y] = (streak[y] - lo) / (hi - lo); }
-  let sunAz = 180, sunEl = 45;
+  let sunAz = 180, sunEl = 45, glowK = 0;
   let streakOff = 0, light = 1, sunK = 0, dayK = 1, billowX = 0, billowY = 0;
   function physics() {   // per-pixel thinning, from the sliders; recomputed when they change
     const el0 = sunElev(timeMs()); sunEl = el0;
     sunK = clamp(Math.sin(Math.max(0, el0) * R) * 1.4, 0, 1);                 // how hard the sun works on the fog
     light = clamp(.22 + .78 * (el0 + 6) / 24, .22, 1);                           // how lit the scene is
     dayK = clamp((el0 + 8) / 14, 0, 1);                                          // fog: white by day, blue-grey at night
+    // sunrise / sunset glow: strongest with the sun just above the horizon, fading by 12° up and 5° below
+    { const sm2 = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+      glowK = el0 < 1.5 ? sm2(-5, 1.5, el0) : 1 - sm2(1.5, 12, el0); }
     const heatK = clamp((val('heat') - 55) / 40, 0, 1), top = val('top');
     for (let i = 0; i < W * H; i++) {
       if (!land[i]) { P[i] = .012 + .03 * sunK; BLOCK[i] = 0; SPD[i] = 1; continue; }   // the cold Bay keeps fog
@@ -413,7 +416,7 @@ title: FOG
 
   // ---------- drawing ----------
   const cv = document.getElementById('fog-map'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
-  const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124];
+  const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124], GLOW = [255, 198, 150], WARM = [1.22, 1.02, .8];   // glow: golden-peach fog tops, warm light
   // Fog is drawn soft: the density is blurred (two 3x3 passes) so the Doom fire rule's pixel-by-pixel grain becomes
   // smooth sheets, and a slowly drifting two-scale noise breaks the thin edges into billows and holes.
   const NG = 32, ng = Float32Array.from({ length: NG * NG }, () => Math.random());
@@ -433,7 +436,9 @@ title: FOG
     }
   }
   function draw(fr) {
-    const fogC = FOG_NIGHT.map((v, k) => v + (FOG_DAY[k] - v) * dayK);
+    const fogB = FOG_NIGHT.map((v, k) => v + (FOG_DAY[k] - v) * dayK), fogC = [0, 0, 0];
+    const sx = Math.sin(sunAz * R), sy = -Math.cos(sunAz * R);   // toward the sun, on screen (x east, y south)
+    const lr = light * (1 + (WARM[0] - 1) * glowK), lg = light * (1 + (WARM[1] - 1) * glowK), lb = light * (1 + (WARM[2] - 1) * glowK);
     for (let i = 0; i < W * H; i++) fa[i] = (prev[i] + (f[i] - prev[i]) * fr) / N;
     blur(fa, fb); blur(fb, fa); blur(fa, fb); blur(fb, fa);   // four 3x3 passes: soft sheets
     for (let i = 0; i < W * H; i++) {
@@ -441,8 +446,12 @@ title: FOG
       const x = i % W, y = (i / W) | 0;
       const n = .65 * vnoise((x - billowX) / 11, (y - billowY) / 11) + .35 * vnoise((x - billowX) / 4.5 + 17, (y - billowY) / 4.5 + 5);
       const v = fa[i] + .22 * (n - .5), e = clamp((v - .04) / .7, 0, 1);
-      const a = sm(e) * .88, o = i * 4; fogA[i] = a;   // soft: a wide, gentle fade, never quite opaque
-      d[o] = (c[0] * light) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * light) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * light) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
+      const a = sm(e) * .88, o = i * 4; fogA[i] = a;
+      if (glowK > 0) {   // the glow is strongest on the side facing the sun (west at sunset, east at sunrise)
+        const g = glowK * clamp(.6 + .5 * ((x / W - .5) * 2 * sx + (y / H - .5) * 2 * sy), .2, 1) * .78;
+        fogC[0] = fogB[0] + (GLOW[0] - fogB[0]) * g; fogC[1] = fogB[1] + (GLOW[1] - fogB[1]) * g; fogC[2] = fogB[2] + (GLOW[2] - fogB[2]) * g;
+      } else { fogC[0] = fogB[0]; fogC[1] = fogB[1]; fogC[2] = fogB[2]; }   // soft: a wide, gentle fade, never quite opaque
+      d[o] = (c[0] * lr) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * lg) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * lb) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
     drawBridges();
