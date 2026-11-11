@@ -1581,6 +1581,13 @@ $('beachBtn').addEventListener('click', ()=>{
 window.TIDE_BEACH = {
   keys: ORDER.slice(), name: k => beachName(k), get: () => beach,
   level: t => levelAt(beach, t),   // predicted water level (ft, MLLW) at the current beach's own tide station
+  weather: () => loadWeather(beach),   // the same conditions this view shows (station observation, else the hourly forecast)
+  // this view's formats, so other views show the same numbers in the same units (ft / m, mph / knots / km/h, in / hPa)
+  fmt: { units: () => units, level: v => ft(v) + (units==='m' ? ' m' : ' ft'),
+         spd: mph => { const n = spdNum(mph); return fmtSpd(n) + ' ' + spdUnit(n); },
+         pres: pa => units==='m' ? Math.round(pa/100) + ' hPa' : (pa/3386.389).toFixed(2) + ' in',
+         dir: deg => dirName(COMPASS[Math.round(deg/22.5) % 16]) },
+  compass: COMPASS.slice(),
   set: k => { if (!BEACHES[k] || k===beach) return; beach=k; newSea(); render(); dispatchEvent(new CustomEvent('tide-beach', {detail: beach})); }
 };
 /* ---- Drag the chart sideways to look ahead, up to 36 hours; it stops at now going back.

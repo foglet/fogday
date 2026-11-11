@@ -491,7 +491,7 @@ title: Waves of San Francisco
           <legend class="label" data-i18n="w_play">The sea</legend>
           <div class="pw-cyc"><button type="button" id="pw-beach" class="pw-cycle">Baker Beach</button></div>
           <label><span data-i18n="w_swellH">Swell height</span> <input id="pw-swellH" type="range" min="0" max="20" step="0.5" value="6"><output id="pw-swellHOut"></output></label>
-          <label><span data-i18n="w_wind">Surface wind</span> <input id="pw-wind" type="range" min="-40" max="40" step="1" value="12"><output id="pw-windOut"></output></label>
+          <label><span data-i18n="w_wind">Surface wind</span> <input id="pw-wind" type="range" min="-40" max="40" step="any" value="12"><output id="pw-windOut"></output></label>
           <label><span data-i18n="w_kelvin">Kelvin / El Niño</span> <input id="pw-kelvin" type="range" min="-0.5" max="2" step="0.05" value="1"><output id="pw-kelvinOut"></output></label>
           <label><span data-i18n="w_foam">Foam</span> <input id="pw-foam" type="range" min="0" max="100" value="70"><output id="pw-foamOut"></output></label>
           <label><span data-i18n="w_speed">Sim speed</span> <input id="pw-speed" type="range" min="5" max="100" value="35"><output id="pw-speedOut"></output></label>
@@ -502,8 +502,8 @@ title: Waves of San Francisco
         <div class="pw-groups">
         <fieldset>
           <legend class="label" data-i18n="w_lvl">Water level</legend>
-          <label id="pw-tideLbl"><span data-i18n="w_tide">Tide (MLLW)</span> <input id="pw-tide" type="range" min="-2.5" max="8" step="0.1" value="3.1"><output id="pw-tideOut"></output></label>
-          <label><span data-i18n="w_pressure">Air pressure</span> <input id="pw-pressure" type="range" min="960" max="1040" step="1" value="1013"><output id="pw-pressureOut"></output></label>
+          <label id="pw-tideLbl"><span data-i18n="w_tide">Tide (MLLW)</span> <input id="pw-tide" type="range" min="-2.5" max="8" step="any" value="3.1"><output id="pw-tideOut"></output></label>
+          <label><span data-i18n="w_pressure">Air pressure</span> <input id="pw-pressure" type="range" min="960" max="1040" step="any" value="1013"><output id="pw-pressureOut"></output></label>
         </fieldset>
         <fieldset>
           <legend class="label" data-i18n="w_wav">Wave height</legend>
@@ -764,7 +764,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   // San Francisco 9414290; China Beach, Ocean Beach, Fort Funston: Ocean Beach 9414275), else the built-in 9414290 calculation.
   function seedTide() {
     const lv = window.TIDE_BEACH && window.TIDE_BEACH.level ? window.TIDE_BEACH.level : tideAt, t = Date.now();
-    try { ui.tide.value = (+lv(t)).toFixed(1); ui.current.value = Math.round(clamp((lv(t + 600000) - lv(t - 600000)) * 3 / 1.3, -1, 1) * 100); }
+    try { ui.tide.value = +lv(t); ui.current.value = Math.round(clamp((lv(t + 600000) - lv(t - 600000)) * 3 / 1.3, -1, 1) * 100); }
     catch (e) { ui.tide.value = tideAt(t).toFixed(1); ui.current.value = Math.round(clamp((tideAt(t + 600000) - tideAt(t - 600000)) * 3 / 1.3, -1, 1) * 100); }
   }
   function startLive() {
@@ -975,12 +975,16 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   // Words in the readouts follow the page's language (tides.js sets <html lang> from the language button)
   const wd = k => { const T = window.TIDE_I18N || {}, l = T[document.documentElement.lang] || T.en || {}; return l[k] || (T.en && T.en[k]) || k; };
   function outputs() {
-    el('tideOut').textContent = `${val('tide').toFixed(1)} ft`;
-    el('kelvinOut').textContent = `${val('kelvin') >= 0 ? '+' : ''}${val('kelvin').toFixed(2)} ft`;
-    el('pressureOut').textContent = `${val('pressure')} mb`;
-    el('windOut').textContent = val('wind') == 0 ? wd('w_calm') : val('wind') > 0 ? `${Math.abs(val('wind'))} kt ${wd('w_on')} →` : `${Math.abs(val('wind'))} kt ← ${wd('w_off')}`;
+    // Same numbers and units as the Tides view (its ft / m and mph / knots settings), via tides.js formats
+    const FM = window.TIDE_BEACH && window.TIDE_BEACH.fmt, M = FM && FM.units() === 'm';
+    el('tideOut').textContent = FM ? FM.level(val('tide')) : `${val('tide').toFixed(1)} ft`;
+    el('kelvinOut').textContent = (val('kelvin') >= 0 ? '+' : '−') + (M ? (Math.abs(val('kelvin')) * .3048).toFixed(2) + ' m' : Math.abs(val('kelvin')).toFixed(2) + ' ft');
+    el('pressureOut').textContent = FM ? FM.pres(val('pressure') * 100) : `${Math.round(val('pressure'))} mb`;
+    const w = val('wind'), ws = FM ? FM.spd(Math.abs(w) * 1.150779) : `${Math.round(Math.abs(w))} kt`;
+    const wdir = windDir != null && !touched.has('wind') && FM ? FM.dir(windDir) + ' ' : '';
+    el('windOut').textContent = Math.abs(w) < .5 ? wd('w_calm') : w > 0 ? `${ws} ${wdir}${wd('w_on')} →` : `← ${ws} ${wdir}${wd('w_off')}`;
     el('fetchOut').textContent = `${val('fetch')} nm`;
-    el('swellHOut').textContent = `${val('swellH').toFixed(1)} ft`;
+    el('swellHOut').textContent = M ? `${(val('swellH') * .3048).toFixed(1)} m` : `${val('swellH').toFixed(1)} ft`;
     el('swellTOut').textContent = `${val('swellT')} s`;
     const c = val('current');
     el('currentOut').textContent = c == 0 ? wd('w_slack') : c < 0 ? `← ${wd('w_ebb')} ${(Math.abs(c) / 100).toFixed(2)}` : `${wd('w_flood')} → ${(c / 100).toFixed(2)}`;
@@ -1104,6 +1108,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     funston: { sea: [37.71, -122.53], wind: [37.7146, -122.5023], face: 255, swell: [255, 70, 1] },
     ocean:   { sea: [37.76, -122.53], wind: [37.7594, -122.5107], face: 265, swell: [265, 75, 1] },
   };
+  var windDir = null;   // the reading's direction, shown beside the speed until the wind slider is moved
   const angDiff = (a, b) => Math.abs(((a - b) % 360 + 540) % 360 - 180);
   async function loadLiveSea() {
     const h = { headers: { Accept: 'application/geo+json' } };
@@ -1122,18 +1127,18 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
       if (sh != null) set('swellH', Math.round(sh * FT * reach * 2) / 2);
       if (sp) set('swellT', Math.round(sp));
     } catch (e) {}
-    try {   // wind at the beach: the part blowing onshore (+) or offshore (−) for this beach's facing
-      const g = await grid(B.wind);
-      const spd = at(g.windSpeed, now), dir = at(g.windDirection, now);          // km/h, degrees the wind blows from
-      if (spd != null && dir != null) set('wind', Math.round(spd / 1.852 * Math.cos((dir - B.face) * R)));
+    // Wind and pressure: exactly what the Tides view shows (tides.js loadWeather: the nearest station's latest reading, else
+    // the hourly forecast; pressure from the nearest low-lying station that reports it). The slider holds the full wind speed;
+    // its sign says onshore (+) or offshore (−) for the way this beach faces.
+    try {
+      const w = window.TIDE_BEACH && window.TIDE_BEACH.weather ? await window.TIDE_BEACH.weather() : null, o = (w && w.obs) || {};
+      const v = x => x && x.value != null ? x.value : null;
+      let kmh = v(o.windSpeed), dir = v(o.windDirection);
+      if (kmh == null && w && w.hourlyWind) kmh = parseInt(w.hourlyWind, 10) * 1.609344;
+      if (dir == null && w && w.hourlyDir) { const i = window.TIDE_BEACH.compass.indexOf(w.hourlyDir); if (i >= 0) dir = i * 22.5; }
+      if (kmh != null && !touched.has('wind')) { windDir = dir; set('wind', kmh / 1.852 * (dir == null || Math.cos((dir - B.face) * R) >= 0 ? 1 : -1)); }
+      if (w && w.pres != null) set('pressure', w.pres / 100);   // Pa → mb (hPa)
     } catch (e) {}
-    for (const s of ['KSFO', 'KOAK']) {                                          // airports report pressure; SF's own stations don't
-      try {
-        const o = (await get(`https://api.weather.gov/stations/${s}/observations/latest`)).properties;
-        const pa = o.seaLevelPressure && o.seaLevelPressure.value != null ? o.seaLevelPressure.value : o.barometricPressure && o.barometricPressure.value;
-        if (pa != null && Date.now() - new Date(o.timestamp) < 3 * 36e5) { set('pressure', Math.round(pa / 100)); break; }   // Pa → mb
-      } catch (e) {}
-    }
     outputs(); refreshSlow(true);
   }
   loadLiveSea().then(() => { liveSnap = snap(); });
@@ -1146,6 +1151,12 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   liveSnap = snap();
   function setModified(m) { modified = m; if (m) { el('beach').textContent = '—'; el('beach').title = wd('w_backTo').replace('{b}', TB ? TB.name(surfBeach) : surfBeach); } else beachOptions(); }
   Object.values(ui).forEach(i => i.addEventListener('input', () => setModified(true)));
+  // Keep in step with the Tides view while the sea is still the beach's own: the tide every minute, wind and pressure every
+  // 10 minutes (Tides refreshes its weather on the same clock), and whenever Waves or Plunge is shown again.
+  function resync() { if (modified) return; seedTide(); outputs(); refreshSlow(true); }
+  setInterval(resync, 60000);
+  setInterval(() => { if (!modified) loadLiveSea().then(() => { if (!modified) liveSnap = snap(); }); }, 10 * 60000);
+  addEventListener('pw-shape', () => { resync(); outputs(); });
   setShape();
   addEventListener('pw-shape', setShape);
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(setShape, 150); });
