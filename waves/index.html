@@ -648,7 +648,7 @@ title: Waves of San Francisco
     document.getElementById('orientBtn').addEventListener('click', function () { show(orient === 'portrait' ? 'Waves' : 'Plunge');
       this.classList.remove('flash'); void this.offsetWidth; this.classList.add('flash'); });   // #FF5500, fading back to light blue
     var saved = null; try { saved = localStorage.getItem('fogday-waves-view'); } catch (e) {}
-    show(saved === 'Tides' || saved === 'Plunge' ? saved : 'Waves');
+    show(saved === 'Tides' ? 'Tides' : 'Waves');   // Waves always opens horizontal (landscape); Plunge is a tap away
   })();
 </script>
 <script>
