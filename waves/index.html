@@ -995,6 +995,11 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   // The beach is the Tides view's beach: same list, same current pick, kept in step both ways (tides.js window.TIDE_BEACH,
   // and its 'tide-beach' event). Breakers use one typical beach slope and a middling amount of stirred sand.
   const BEACH_SLOPE = 20, SAND = .5;
+  // Currents are the beach's own: tidal current from its tide station (seedTide), and rip and cross current set per beach
+  // (approximate): Ocean Beach and Fort Funston have frequent rips; East Beach sits in the Bay's tidal stream (strong cross
+  // current, no rips); Baker and China Beach are in between. Moving the sliders afterwards is yours.
+  const BEACH_CUR = { baker: { rip: 25, cross: 30 }, china: { rip: 20, cross: 35 }, east: { rip: 0, cross: 70 }, funston: { rip: 55, cross: 40 }, ocean: { rip: 65, cross: 45 } };
+  function beachCurrents(k) { const c = BEACH_CUR[k]; if (!c) return; for (const key in c) { ui[key].value = c[key]; touched.delete(key); } }
   const TB = window.TIDE_BEACH;
   // Beach: the name is the control. Tap it for the next beach, in the Tides view's order (Baker, China, East, Fort Funston,
   // Ocean), named in the page's language; it is the same beach as on Tides.
@@ -1009,10 +1014,10 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     surfBeach = e.detail; beachOptions();
     for (const k of ['tide', 'current', 'wind', 'swellH', 'swellT']) touched.delete(k);
     timeOffset = 0; setCond('now');
-    seedTide(); outputs(); refreshSlow(true);
+    beachCurrents(e.detail); seedTide(); outputs(); refreshSlow(true);
     loadLiveSea().then(() => { liveSnap = snap(); });
   });
-  beachOptions();
+  beachOptions(); beachCurrents(surfBeach);
 
   // ---------- loop ----------
   let running = true;   // the sea always plays on load (tap it to pause)
