@@ -24,6 +24,8 @@ title: FOG
   /* The picture never scrolls away: it sticks right under the fixed 8px color bar, as on /waves/ */
   .fog .stick { position: sticky; top: 8px; z-index: 21; border-radius: 12px; overflow: hidden; background: #0c2a40; }
   .fog #fog-map { width: 100%; aspect-ratio: 196/140; cursor: pointer; touch-action: manipulation; }
+  /* Bridges: a pixel sprite on a layer 2x finer than the map (62.5 m per pixel), so they read as bridges */
+  .fog #fog-bridges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   @media (max-width: 520px) { .fog .stick { width: calc(100% + 40px); margin-inline: -20px; border-radius: 0; } }
   .fog .readout { color: var(--muted); font-size: .85rem; margin-top: -14px; font-variant-numeric: tabular-nums; }
   .fog .readout b { color: var(--ink); font-weight: 600; }
@@ -59,6 +61,7 @@ title: FOG
   <div class="wrap fog">
     <div class="stick">
       <canvas id="fog-map" width="196" height="140" tabindex="0" role="button" aria-pressed="false"></canvas>
+      <canvas id="fog-bridges" width="392" height="280" aria-hidden="true"></canvas>
     </div>
     <div class="readout" id="fog-readout" aria-live="polite"></div>
 
@@ -173,9 +176,17 @@ title: FOG
   }
   // Bridges (lon, lat endpoints): Golden Gate (Fort Point to Lime Point) and the Bay Bridge (Rincon Point, Yerba Buena, toward Oakland)
   const line = (a, b) => { const p = [], n = Math.ceil(Math.hypot(X(b[0]) - X(a[0]), Y(b[1]) - Y(a[1]))) * 2; for (let k = 0; k <= n; k++) p.push([Math.round(X(a[0]) + (X(b[0]) - X(a[0])) * k / n), Math.round(Y(a[1]) + (Y(b[1]) - Y(a[1])) * k / n)]); return p; };
-  const GGB = line([-122.4770, 37.8107], [-122.4787, 37.8263]);
-  const GG_TOWERS = [[-122.4772, 37.8122], [-122.4785, 37.8243]].map(([lo, la]) => [Math.round(X(lo)), Math.round(Y(la))]);
-  const BAYB = line([-122.3880, 37.7880], [-122.3700, 37.8080]).concat(line([-122.3615, 37.8115], [-122.3220, 37.8230]));
+  // Golden Gate Bridge: mid-span 37.8197 N, 122.4786 W; 1,280 m main span, 343 m side spans, axis ~9° west of north.
+  // Towers 640 m either side of mid-span, anchorages 343 m beyond; road approaches to the toll plaza and Vista Point.
+  const GG_MID = [-122.4786, 37.8197], GG_BRG = -9 * Math.PI / 180;
+  const along = m => [GG_MID[0] + m * Math.sin(GG_BRG) / (111000 * Math.cos(37.82 * Math.PI / 180)), GG_MID[1] + m * Math.cos(GG_BRG) / 111000];
+  const GG = { s: along(-983), sT: along(-640), nT: along(640), n: along(983) };
+  const GG_ROADS = [[GG.s, [-122.4752, 37.8072], [-122.4655, 37.8035], [-122.4560, 37.8030]], [GG.n, [-122.4812, 37.8322], [-122.4848, 37.8380], [-122.4880, 37.8445]]];
+  const GGB = line(GG.s, GG.n);
+  // Bay Bridge: west span (two suspension spans, four towers) Rincon Point to Yerba Buena Island; east span toward Oakland
+  const BB_W = [[-122.3880, 37.7880], [-122.3700, 37.8080]], BB_E = [[-122.3615, 37.8115], [-122.3220, 37.8230]];
+  const lerpLL = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const BB_TOWERS = [.17, .39, .61, .83].map(t => lerpLL(BB_W[0], BB_W[1], t)).concat([lerpLL(BB_E[0], BB_E[1], .1)]);
 
   // ---------- sliders ----------
   const el = id => document.getElementById('fog-' + id);
@@ -213,7 +224,9 @@ title: FOG
     const L = (q + 1.915 * Math.sin(gA) + .020 * Math.sin(2 * gA)) * R, e = (23.439 - .00000036 * D) * R;
     const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / R, dec = Math.asin(Math.sin(e) * Math.sin(L));
     const ha = ((((18.697374558 + 24.06570982441908 * D) * 15 + LONG - ra) % 360) + 540) % 360 - 180;
-    return Math.asin(Math.sin(LAT * R) * Math.sin(dec) + Math.cos(LAT * R) * Math.cos(dec) * Math.cos(ha * R)) / R;
+    const el = Math.asin(Math.sin(LAT * R) * Math.sin(dec) + Math.cos(LAT * R) * Math.cos(dec) * Math.cos(ha * R)) / R;
+    sunAz = (Math.atan2(Math.sin(ha * R), Math.cos(ha * R) * Math.sin(LAT * R) - Math.tan(dec) * Math.cos(LAT * R)) / R + 180) % 360;   // from north, clockwise
+    return el;
   }
 
   // ---------- fog: the Doom fire rule on its side ----------
@@ -227,9 +240,10 @@ title: FOG
   { const raw = Array.from({ length: H }, () => Math.random());
     for (let y = 0; y < H; y++) { let s = 0; for (let k = -5; k <= 5; k++) s += raw[(y + k + H) % H]; streak[y] = s / 11; }
     const lo = Math.min(...streak), hi = Math.max(...streak); for (let y = 0; y < H; y++) streak[y] = (streak[y] - lo) / (hi - lo); }
+  let sunAz = 180, sunEl = 45;
   let streakOff = 0, light = 1, sunK = 0, dayK = 1, billowX = 0, billowY = 0;
   function physics() {   // per-pixel thinning, from the sliders; recomputed when they change
-    const el0 = sunElev(timeMs());
+    const el0 = sunElev(timeMs()); sunEl = el0;
     sunK = clamp(Math.sin(Math.max(0, el0) * R) * 1.4, 0, 1);                 // how hard the sun works on the fog
     light = clamp(.22 + .78 * (el0 + 6) / 24, .22, 1);                           // how lit the scene is
     dayK = clamp((el0 + 8) / 14, 0, 1);                                          // fog: white by day, blue-grey at night
@@ -276,7 +290,7 @@ title: FOG
   // ---------- drawing ----------
   const cv = document.getElementById('fog-map'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
   const WATER = [10, 48, 78], WATER2 = [14, 62, 96], LAND_LO = [52, 72, 54], LAND_HI = [86, 96, 66];
-  const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124], ORANGE = [192, 54, 44], DECK = [170, 176, 180];
+  const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124];
   const wnoise = new Float32Array(W * H).map(() => Math.random());
   // Fog is drawn soft: the density is blurred (two 3x3 passes) so the Doom fire rule's pixel-by-pixel grain becomes
   // smooth sheets, and a slowly drifting two-scale noise breaks the thin edges into billows and holes.
@@ -287,7 +301,7 @@ title: FOG
     const a = g(xi, yi) + (g(xi + 1, yi) - g(xi, yi)) * fx, b = g(xi, yi + 1) + (g(xi + 1, yi + 1) - g(xi, yi + 1)) * fx;
     return a + (b - a) * fy;
   }
-  const fa = new Float32Array(W * H), fb = new Float32Array(W * H);
+  const fa = new Float32Array(W * H), fb = new Float32Array(W * H), fogA = new Float32Array(W * H);
   function blur(src, dst) {
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       let s = 0, n = 0;
@@ -307,17 +321,67 @@ title: FOG
       const x = i % W, y = (i / W) | 0;
       const n = .65 * vnoise((x - billowX) / 11, (y - billowY) / 11) + .35 * vnoise((x - billowX) / 4.5 + 17, (y - billowY) / 4.5 + 5);
       const v = fa[i] + .28 * (n - .5), e = clamp((v - .1) / .5, 0, 1);
-      const a = sm(e) * .96, o = i * 4;
+      const a = sm(e) * .96, o = i * 4; fogA[i] = a;
       d[o] = (c[0] * light) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * light) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * light) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
     }
-    const put = (x, y, c, a) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const o = (y * W + x) * 4; d[o] = d[o] * (1 - a) + c[0] * a; d[o + 1] = d[o + 1] * (1 - a) + c[1] * a; d[o + 2] = d[o + 2] * (1 - a) + c[2] * a; };
-    const lk = .45 + .55 * light, fogAt = (x, y) => f[clamp(y, 0, H - 1) * W + clamp(x, 0, W - 1)] / N;
-    for (const [x, y] of BAYB) put(x, y, DECK.map(v => v * lk), .85 * (1 - Math.min(1, fogAt(x, y) * 1.4)));
-    for (const [x, y] of GGB) put(x, y, ORANGE.map(v => v * lk), .9 * (1 - Math.min(1, fogAt(x, y) * 1.4)));
-    const towersOut = val('top') < 227;   // the towers stand 227 m above the water
-    for (const [x, y] of GG_TOWERS) { const a = towersOut ? 1 : 1 - Math.min(1, fogAt(x, y) * 1.4); put(x, y, ORANGE.map(v => v * lk * 1.1), a); put(x + 1, y, [20, 20, 24], a * .5); }
     ctx.putImageData(img, 0, 0);
+    drawBridges();
   }
+
+  // ---------- bridges, as a pixel sprite at 2x (62.5 m per pixel) ----------
+  // Exaggerated to read at this scale: decks 3 px wide (orange cables at the edges, grey road between), towers 5 x 3 px.
+  // Fog hides them pixel by pixel; the Golden Gate towers (227 m) stand clear of a marine layer lower than they are.
+  // By day the towers and deck cast shadows on the water, away from the sun; at night, deck lights and red tower beacons.
+  const S = 2, bcv = document.getElementById('fog-bridges'), b2 = bcv.getContext('2d');
+  const SX = lon => X(lon) * S, SY = lat => Y(lat) * S;
+  const GG_O = [192, 54, 44], GG_O2 = [150, 38, 32], ROAD = [128, 130, 134], BB_G = [176, 182, 188], BB_G2 = [128, 134, 142];
+  function seg(a, b) {   // pixel centers along a, b (lon/lat), with the unit across-vector
+    const x0 = SX(a[0]), y0 = SY(a[1]), x1 = SX(b[0]), y1 = SY(b[1]), L = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(L);
+    const out = []; for (let k = 0; k <= n; k++) out.push([x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n]);
+    return { pts: out, ax: -(y1 - y0) / L, ay: (x1 - x0) / L };
+  }
+  const GG_SEG = seg(GG.s, GG.n), GG_RD = GG_ROADS.map(r => r.slice(1).map((p, k) => seg(r[k], p)));
+  const BB_SEGS = [seg(BB_W[0], BB_W[1]), seg(BB_E[0], BB_E[1])];
+  function drawBridges() {
+    b2.clearRect(0, 0, bcv.width, bcv.height);
+    const lk = .4 + .6 * light, night = dayK < .35, rgba = (c, a, k = lk) => `rgba(${c[0] * k | 0},${c[1] * k | 0},${c[2] * k | 0},${a})`;
+    const vis = (x, y) => 1 - fogA[clamp(y / S | 0, 0, H - 1) * W + clamp(x / S | 0, 0, W - 1)];
+    const px = (x, y, c, a) => { if (a <= .02) return; b2.fillStyle = c; b2.globalAlpha = a; b2.fillRect(Math.round(x), Math.round(y), 1, 1); };
+    // shadows (day): tower shadow length = 227 m / tan(sun height), in 62.5 m pixels; the deck's from its ~67 m clearance
+    if (sunEl > 3 && !night) {
+      const t = 1 / Math.tan(sunEl * R), dx = -Math.sin(sunAz * R), dy = Math.cos(sunAz * R);   // away from the sun, screen y down
+      const towerL = Math.min(16, 227 * t / 62.5), deckL = Math.min(3, 67 * t / 62.5);
+      for (const [x, y] of GG_SEG.pts) px(x + dx * deckL, y + dy * deckL, 'rgb(2,10,18)', .5 * vis(x, y));
+      for (const T of [GG.sT, GG.nT]) { const x0 = SX(T[0]), y0 = SY(T[1]);
+        for (let k = 1; k <= towerL; k++) for (const w of [-1, 0, 1]) px(x0 + dx * k + GG_SEG.ax * w, y0 + dy * k + GG_SEG.ay * w, 'rgb(2,10,18)', .6 * vis(x0 + dx * k, y0 + dy * k)); }
+    }
+    // roads on land up to each end
+    for (const r of GG_RD) for (const sg of r) for (const [x, y] of sg.pts) px(x, y, rgba(ROAD, 1, lk * .8), .7 * vis(x, y));
+    // Bay Bridge: grey deck, silver towers
+    for (const sg of BB_SEGS) for (const [x, y] of sg.pts) for (const w of [-1, 0, 1]) px(x + sg.ax * w, y + sg.ay * w, rgba(w ? BB_G2 : BB_G, 1), .9 * vis(x, y));
+    for (const T of BB_TOWERS) { const x0 = SX(T[0]), y0 = SY(T[1]), { ax, ay } = BB_SEGS[0];
+      for (let i = -2; i <= 2; i++) for (let j = -1; j <= 0; j++) px(x0 + ax * i + ay * j, y0 + ay * i - ax * j, rgba(Math.abs(i) === 2 ? BB_G2 : BB_G, 1, lk * 1.15), vis(x0, y0)); }
+    // Golden Gate Bridge deck: orange cable edges, grey road between
+    for (const [x, y] of GG_SEG.pts) { const v = .95 * vis(x, y);
+      px(x - GG_SEG.ax, y - GG_SEG.ay, rgba(GG_O, 1), v); px(x, y, rgba(ROAD, 1), v); px(x + GG_SEG.ax, y + GG_SEG.ay, rgba(GG_O, 1), v); }
+    // towers: 5 across x 3 along, darker rim, lit top
+    const towersOut = val('top') < 227;
+    for (const T of [GG.sT, GG.nT]) {
+      const x0 = SX(T[0]), y0 = SY(T[1]), v = towersOut ? 1 : vis(x0, y0);
+      for (let i = -2; i <= 2; i++) for (let j = -1; j <= 1; j++) {
+        const edge = Math.abs(i) === 2 || Math.abs(j) === 1;
+        px(x0 + GG_SEG.ax * i + GG_SEG.ay * j, y0 + GG_SEG.ay * i - GG_SEG.ax * j, rgba(edge ? GG_O2 : GG_O, 1, lk * (edge ? 1 : 1.2)), v);
+      }
+      if (night) px(x0, y0, `rgb(255,${(performance.now() / 700 | 0) % 2 ? 40 : 90},40)`, v);   // aircraft beacon, blinking
+    }
+    // night: deck lights along the Golden Gate and the Bay Bridge
+    if (night) {
+      GG_SEG.pts.forEach(([x, y], k) => { if (k % 3 === 0) { px(x - GG_SEG.ax, y - GG_SEG.ay, 'rgb(255,196,110)', .9 * vis(x, y)); px(x + GG_SEG.ax, y + GG_SEG.ay, 'rgb(255,196,110)', .9 * vis(x, y)); } });
+      for (const sg of BB_SEGS) sg.pts.forEach(([x, y], k) => { if (k % 4 === 0) px(x, y, 'rgb(235,240,255)', .85 * vis(x, y)); });
+    }
+    b2.globalAlpha = 1;
+  }
+
 
   // ---------- readout, words, language ----------
   function readout() {
@@ -415,7 +479,7 @@ title: FOG
   applyLang(); draw(0);
   live();
   requestAnimationFrame(loop);
-  window.__fog = { land, elev, f: () => f, step, physics, draw, W, H, X, Y, GGB, GG_TOWERS, setRun };
+  window.__fog = { land, elev, f: () => f, step, physics, draw, W, H, X, Y, GG, setRun };
 })();
 </script>
 </body>
