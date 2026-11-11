@@ -377,8 +377,8 @@ title: Waves of San Francisco
   @keyframes orientFlash { from { color: #FF5500; } to { color: var(--accent); } }
   .tides .viewpick .orient button.flash { animation: orientFlash 1.2s ease-out; }
   .tides .viewpick .orient svg { display: block; transition: transform .3s ease; }
-  .tides .viewpick .orient button { position: relative; top: 1px; transition: top .3s ease; }   /* tall icon: sits 3px lower than centred on WAVES */
-  .tides .viewpick .orient button[aria-pressed="true"] { top: 0; }   /* wide icon: 2px lower than centred */
+  .tides .viewpick .orient button { position: relative; top: 0; transition: top .3s ease; }   /* tall icon: sits 2px lower than centred on WAVES */
+  .tides .viewpick .orient button[aria-pressed="true"] { top: -1px; }   /* wide icon: 1px lower than centred */
   .tides .viewpick .orient button[aria-pressed="true"] svg { transform: rotate(90deg); }
   @media (prefers-reduced-motion: reduce) { .tides .viewpick .orient svg { transition: none; } .tides .viewpick .orient button.flash { animation-duration: .01s; } }
   .tides .viewpick button { background: none; border: 0; padding: 2px 0 3px; margin: 0; cursor: pointer; font-size: .8rem; font-weight: 600;
