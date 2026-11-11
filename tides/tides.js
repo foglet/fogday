@@ -1574,7 +1574,14 @@ const ORDER=Object.keys(BEACHES);
 $('beachBtn').addEventListener('click', ()=>{
   beach=ORDER[(ORDER.indexOf(beach)+1)%ORDER.length];
   newSea(); render();
+  dispatchEvent(new CustomEvent('tide-beach', {detail: beach}));
 });
+/* For other views on the same page (the Surf zone on fogday.com/waves): the beach list, the current beach, and a way to
+   pick one. 'tide-beach' fires on window whenever the beach changes, from either side. */
+window.TIDE_BEACH = {
+  keys: ORDER.slice(), name: k => beachName(k), get: () => beach,
+  set: k => { if (!BEACHES[k] || k===beach) return; beach=k; newSea(); render(); dispatchEvent(new CustomEvent('tide-beach', {detail: beach})); }
+};
 /* ---- Drag the chart sideways to look ahead, up to 36 hours; it stops at now going back.
    The tide panel, sun, moon and forecast follow the center line. ---- */
 let stripW=1, frame=0, tileAt=0, tileTimer=0, tileKey='';

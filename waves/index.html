@@ -484,7 +484,7 @@ title: Waves of San Francisco
         </fieldset>
         <fieldset>
           <legend class="label" data-i18n="w_surf">Surf zone</legend>
-          <label><span data-i18n="w_beach">Beach</span> <select id="pw-beach" class="pw-select"><option value="baker">Baker Beach</option><option value="ocean">Ocean Beach</option><option value="east">East Beach</option><option value="custom" data-i18n="w_custom">Custom</option></select><output></output></label>
+          <label><span data-i18n="w_beach">Beach</span> <select id="pw-beach" class="pw-select"><option value="baker">Baker Beach</option></select><output></output></label>
           <label><span data-i18n="w_slope">Beach slope</span> <input id="pw-slope" type="range" min="5" max="80" value="12"><output id="pw-slopeOut"></output></label>
           <label><span data-i18n="w_sand">Sand in the surf</span> <input id="pw-sand" type="range" min="0" max="100" value="45"><output id="pw-sandOut"></output></label>
           <label><span data-i18n="w_bio">Bioluminescence</span> <input id="pw-bio" type="range" min="0" max="100" value="0"><output id="pw-bioOut"></output></label>
@@ -966,15 +966,25 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
   }
   const touched = new Set();   // sliders the visitor has moved: live data that arrives later leaves these alone
   Object.entries(ui).forEach(([k, i]) => i.addEventListener('input', () => {
-    touched.add(k); if (['slope', 'sand', 'rip', 'cross'].includes(k)) el('beach').value = 'custom';
+    touched.add(k);
     outputs(); refreshSlow(true); }));
-  // Beach presets (approximate): Baker steep and coarse (shorebreak, plunging); Ocean Beach flat and wide with sandbars and
-  // frequent rips (spilling); East Beach (Crissy Field) sheltered inside the Gate, in the Bay's tidal stream.
-  // Starts on the beach picked on the Tides view (tides.js `beach`), else Baker.
-  const SURF_BEACH = { baker: { slope: 12, sand: 45, rip: 25, cross: 30 }, ocean: { slope: 50, sand: 75, rip: 65, cross: 45 }, east: { slope: 25, sand: 30, rip: 0, cross: 70 } };
-  function setBeach(k) { const b = SURF_BEACH[k]; if (!b) return; el('beach').value = k; for (const key in b) ui[key].value = b[key]; outputs(); }
-  el('beach').addEventListener('change', () => setBeach(el('beach').value));
-  try { setBeach(typeof beach === 'string' && SURF_BEACH[beach] ? beach : 'baker'); } catch (e) { setBeach('baker'); }
+  // The Surf zone's beach is the Tides view's beach: same list, same current pick, kept in step both ways (tides.js
+  // window.TIDE_BEACH, and its 'tide-beach' event). Picking a beach loads its surf preset (approximate):
+  // Baker steep and coarse (shorebreak, plunging); China Beach a small steep cove; East Beach (Crissy Field) sheltered inside
+  // the Gate, in the Bay's tidal stream; Fort Funston steep below the bluffs, big surf; Ocean Beach flat and wide with
+  // sandbars and frequent rips (spilling). The sliders stay yours to move after that.
+  const SURF_BEACH = { baker: { slope: 12, sand: 45, rip: 25, cross: 30 }, china: { slope: 15, sand: 40, rip: 20, cross: 35 },
+    east: { slope: 25, sand: 30, rip: 0, cross: 70 }, funston: { slope: 30, sand: 70, rip: 55, cross: 40 }, ocean: { slope: 50, sand: 75, rip: 65, cross: 45 } };
+  const TB = window.TIDE_BEACH;
+  function beachOptions() {   // the Tides view's beaches, named in the page's language
+    const sel = el('beach'), keys = TB ? TB.keys : Object.keys(SURF_BEACH), cur = TB ? TB.get() : sel.value;
+    sel.innerHTML = keys.map(k => `<option value="${k}">${TB ? TB.name(k) : k}</option>`).join('');
+    sel.value = cur;
+  }
+  function loadPreset(k) { const b = SURF_BEACH[k]; if (!b) return; for (const key in b) { ui[key].value = b[key]; touched.delete(key); } outputs(); refreshSlow(true); }
+  el('beach').addEventListener('change', () => { const k = el('beach').value; if (TB) TB.set(k); else loadPreset(k); });
+  addEventListener('tide-beach', e => { el('beach').value = e.detail; loadPreset(e.detail); });
+  beachOptions(); loadPreset(el('beach').value);
 
   // ---------- loop ----------
   let running = true;   // the sea always plays on load (tap it to pause)
@@ -1031,8 +1041,7 @@ function extremes(ms0, ms1, z0 = Z0) {     // hi/lo by sampling each minute
     el('readout').innerHTML = `<b>${wd('w_' + SURF.type)}</b>` + (fl.length ? ' · ' + fl.join(' · ') : '');
   }
   const relabel = () => { cv.setAttribute('aria-label', wd('w_seaAria')); cv.title = wd('w_seaTitle');
-    const T = window.TIDE_I18N || {}, bn = (T[document.documentElement.lang] || {}).beaches || {};   // beach names in the page's language
-    for (const o of el('beach').options) if (o.value !== 'custom') o.textContent = bn[o.value] || { baker: 'Baker Beach', ocean: 'Ocean Beach', east: 'East Beach' }[o.value];
+    beachOptions();   // beach names in the page's language
     outputs(); readout(); };
   new MutationObserver(relabel).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
   relabel();
