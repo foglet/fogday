@@ -368,13 +368,14 @@ title: Waves of San Francisco
   /* Toggle: three words in the small-label style; the chosen one in the title gradient, underlined in the accent */
   /* Tight above and below (Nov 2026: cut by over half). Before: 26px above the words (.tides' 22px top padding + 4px), and 6px
      under them plus .tides' 24px gap (28px dark) below. Now ~12px above, 12px below (16px dark). */
-  .tides .viewpick { display: flex; gap: 22px; margin-block: -12px -15px; align-items: center; }
+  .tides .viewpick { display: flex; gap: 22px; margin-block: -12px -15px; align-items: stretch; }
   /* Landscape / portrait for the sea: one outline icon right after the Waves label (Waves only), outlined in #FF5500 at
-     50% opacity. It shows the orientation a tap switches TO: tall while in landscape (Waves), wide while in portrait (Plunge). */
-  .tides .viewpick .orient { margin-left: -14px; display: flex; }
+     full opacity, inside the same accent underline as Waves. It shows the orientation a tap switches TO: tall while in landscape (Waves), wide while in portrait (Plunge). */
+  .tides .viewpick .orient { margin-left: -22px; padding-right: 2px; display: flex; align-items: center; border-bottom: 2px solid var(--accent); }
+  .tides .viewpick #vWavesBtn[aria-pressed="true"] { padding-right: 8px; }   /* the underline runs on from WAVES under the icon */
   .tides .viewpick .orient[hidden] { display: none; }
-  .tides .viewpick .orient button, .tides .viewpick .orient button[aria-pressed] { border: 0; padding: 2px; line-height: 0; color: rgba(255, 85, 0, .5); }
-  .tides .viewpick .orient button:hover { color: rgba(255, 85, 0, .8); }
+  .tides .viewpick .orient button, .tides .viewpick .orient button[aria-pressed] { border: 0; padding: 2px; line-height: 0; color: #FF5500; }
+  .tides .viewpick .orient button:hover { color: #FF7733; }
   .tides .viewpick .orient svg { display: block; transition: transform .3s ease; }
   .tides .viewpick .orient button[aria-pressed="true"] svg { transform: rotate(90deg); }
   @media (prefers-reduced-motion: reduce) { .tides .viewpick .orient svg { transition: none; } }
