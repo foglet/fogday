@@ -647,8 +647,7 @@ title: Waves of San Francisco
       show(b.dataset.view === 'Waves' && orient === 'portrait' ? 'Plunge' : b.dataset.view); }); });
     document.getElementById('orientBtn').addEventListener('click', function () { show(orient === 'portrait' ? 'Waves' : 'Plunge');
       this.classList.remove('flash'); void this.offsetWidth; this.classList.add('flash'); });   // #FF5500, fading back to light blue
-    var saved = null; try { saved = localStorage.getItem('fogday-waves-view'); } catch (e) {}
-    show(saved === 'Tides' ? 'Tides' : 'Waves');   // Waves always opens horizontal (landscape); Plunge is a tap away
+    show('Waves');   // /waves (SF Waves in the menu) always opens on Waves, horizontal; Tides and Plunge are a tap away
   })();
 </script>
 <script>
