@@ -21,6 +21,7 @@ title: FOG
   .fog .title { margin: 0; font: 400 1.6rem/1.1 var(--font-logo, "Patua One", serif); }
   .fog .sub { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
   .fog canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .fog #fog-map { image-rendering: auto; }   /* fine grain (as Pixel Waves v10): drawn at 2x and scaled up smoothly */
   /* The picture never scrolls away: it sticks right under the fixed 8px color bar, as on /waves/ */
   .fog .stick { position: sticky; top: 8px; z-index: 21; border-radius: 12px; overflow: hidden; background: #0c2a40; }
   .fog #fog-map { width: 100%; aspect-ratio: 196/140; cursor: pointer; touch-action: manipulation; }
@@ -60,7 +61,7 @@ title: FOG
 <main>
   <div class="wrap fog">
     <div class="stick">
-      <canvas id="fog-map" width="196" height="140" tabindex="0" role="button" aria-pressed="false"></canvas>
+      <canvas id="fog-map" width="392" height="280" tabindex="0" role="button" aria-pressed="false"></canvas>
       <canvas id="fog-bridges" width="392" height="280" aria-hidden="true"></canvas>
     </div>
     <div class="readout" id="fog-readout" aria-live="polite"></div>
@@ -415,7 +416,7 @@ title: FOG
   }
 
   // ---------- drawing ----------
-  const cv = document.getElementById('fog-map'), ctx = cv.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
+  const cv = document.getElementById('fog-map'), ctx = cv.getContext('2d'), SC = 2, W2 = W * SC, H2 = H * SC, img = ctx.createImageData(W2, H2), d = img.data;   // fine grain: the picture is drawn SC× finer than the fog grid
   const FOG_DAY = [238, 243, 245], FOG_NIGHT = [96, 108, 124], GLOW = [255, 198, 150], WARM = [1.22, 1.02, .8];   // glow: golden-peach fog tops, warm light
   // Fog is drawn soft: the density is blurred (two 3x3 passes) so the Doom fire rule's pixel-by-pixel grain becomes
   // smooth sheets, and a slowly drifting two-scale noise breaks the thin edges into billows and holes.
@@ -441,17 +442,30 @@ title: FOG
     const lr = light * (1 + (WARM[0] - 1) * glowK), lg = light * (1 + (WARM[1] - 1) * glowK), lb = light * (1 + (WARM[2] - 1) * glowK);
     for (let i = 0; i < W * H; i++) fa[i] = (prev[i] + (f[i] - prev[i]) * fr) / N;
     blur(fa, fb); blur(fb, fa); blur(fa, fb); blur(fb, fa);   // four 3x3 passes: soft sheets
-    for (let i = 0; i < W * H; i++) {
-      const c = [baseC[i * 3], baseC[i * 3 + 1], baseC[i * 3 + 2]];
+    for (let i = 0; i < W * H; i++) {   // fog cover per grid cell, for the bridges
       const x = i % W, y = (i / W) | 0;
       const n = .65 * vnoise((x - billowX) / 11, (y - billowY) / 11) + .35 * vnoise((x - billowX) / 4.5 + 17, (y - billowY) / 4.5 + 5);
-      const v = fa[i] + .22 * (n - .5), e = clamp((v - .04) / .7, 0, 1);
-      const a = sm(e) * .88, o = i * 4; fogA[i] = a;
-      if (glowK > 0) {   // the glow is strongest on the side facing the sun (west at sunset, east at sunrise)
-        const g = glowK * clamp(.6 + .5 * ((x / W - .5) * 2 * sx + (y / H - .5) * 2 * sy), .2, 1) * .78;
-        fogC[0] = fogB[0] + (GLOW[0] - fogB[0]) * g; fogC[1] = fogB[1] + (GLOW[1] - fogB[1]) * g; fogC[2] = fogB[2] + (GLOW[2] - fogB[2]) * g;
-      } else { fogC[0] = fogB[0]; fogC[1] = fogB[1]; fogC[2] = fogB[2]; }   // soft: a wide, gentle fade, never quite opaque
-      d[o] = (c[0] * lr) * (1 - a) + fogC[0] * a; d[o + 1] = (c[1] * lg) * (1 - a) + fogC[1] * a; d[o + 2] = (c[2] * lb) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
+      fogA[i] = sm(clamp((fa[i] + .22 * (n - .5) - .04) / .7, 0, 1)) * .88;
+    }
+    // Fine grain: every picture pixel blends the four grid cells around it (terrain and fog), so nothing steps in blocks.
+    for (let Y2 = 0; Y2 < H2; Y2++) {
+      const gy = clamp((Y2 + .5) / SC - .5, 0, H - 1), y0 = gy | 0, y1 = Math.min(H - 1, y0 + 1), ty = gy - y0;
+      for (let X2 = 0; X2 < W2; X2++) {
+        const gx = clamp((X2 + .5) / SC - .5, 0, W - 1), x0 = gx | 0, x1 = Math.min(W - 1, x0 + 1), tx = gx - x0;
+        const i00 = y0 * W + x0, i10 = y0 * W + x1, i01 = y1 * W + x0, i11 = y1 * W + x1;
+        const w00 = (1 - tx) * (1 - ty), w10 = tx * (1 - ty), w01 = (1 - tx) * ty, w11 = tx * ty;
+        const c0 = baseC[i00 * 3] * w00 + baseC[i10 * 3] * w10 + baseC[i01 * 3] * w01 + baseC[i11 * 3] * w11;
+        const c1 = baseC[i00 * 3 + 1] * w00 + baseC[i10 * 3 + 1] * w10 + baseC[i01 * 3 + 1] * w01 + baseC[i11 * 3 + 1] * w11;
+        const c2 = baseC[i00 * 3 + 2] * w00 + baseC[i10 * 3 + 2] * w10 + baseC[i01 * 3 + 2] * w01 + baseC[i11 * 3 + 2] * w11;
+        const fv = fa[i00] * w00 + fa[i10] * w10 + fa[i01] * w01 + fa[i11] * w11;
+        const n = .65 * vnoise((gx - billowX) / 11, (gy - billowY) / 11) + .35 * vnoise((gx - billowX) / 4.5 + 17, (gy - billowY) / 4.5 + 5);
+        const a = sm(clamp((fv + .22 * (n - .5) - .04) / .7, 0, 1)) * .88, o = (Y2 * W2 + X2) * 4;
+        if (glowK > 0) {   // the glow is strongest on the side facing the sun (west at sunset, east at sunrise)
+          const g = glowK * clamp(.6 + .5 * ((gx / W - .5) * 2 * sx + (gy / H - .5) * 2 * sy), .2, 1) * .78;
+          fogC[0] = fogB[0] + (GLOW[0] - fogB[0]) * g; fogC[1] = fogB[1] + (GLOW[1] - fogB[1]) * g; fogC[2] = fogB[2] + (GLOW[2] - fogB[2]) * g;
+        } else { fogC[0] = fogB[0]; fogC[1] = fogB[1]; fogC[2] = fogB[2]; }   // soft: a wide, gentle fade, never quite opaque
+        d[o] = (c0 * lr) * (1 - a) + fogC[0] * a; d[o + 1] = (c1 * lg) * (1 - a) + fogC[1] * a; d[o + 2] = (c2 * lb) * (1 - a) + fogC[2] * a; d[o + 3] = 255;
+      }
     }
     ctx.putImageData(img, 0, 0);
     drawBridges();
