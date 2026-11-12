@@ -401,12 +401,21 @@ async function loadKingAlert(key){
   try {
     const j=await nws(`https://api.weather.gov/alerts/active?point=${(+b.lat).toFixed(4)},${(+b.lon).toFixed(4)}`);
     // Kept as data (type and end time) as well as the NWS headline, so the line can be written in each language
-    const seen=new Set(), list=(j.features||[]).map(f=>f.properties||{})
+    // One message only: the NWS often has several live at once (an update alongside the alert it replaces, separate zone
+    // segments, a statement next to an advisory). Drop superseded ones, then keep the most severe; on a tie, the one
+    // already in effect (earliest onset), then the latest issued.
+    const props=(j.features||[]).map(f=>f.properties||{}), now=Date.now();
+    const replaced=new Set(props.flatMap(p=>(p.references||[]).map(r=>r.identifier||r['@id'])));
+    const rank={warn:0, watch:1, adv:2, stmt:3, king:4}, ms=s=>s?+new Date(s):0;
+    const list=props
+      .filter(p=>!replaced.has(p.id))
       .filter(p=>/coastal flood/i.test(p.event||'') || /king tide/i.test((p.headline||'')+' '+(p.description||'')))
-      .filter(p=>!p.ends || new Date(p.ends) > Date.now())
+      .filter(p=>!p.ends || new Date(p.ends) > now)
       .map(p=>{ const ev=p.event||'', t=/coastal flood warning/i.test(ev)?'warn':/coastal flood watch/i.test(ev)?'watch':/coastal flood advisory/i.test(ev)?'adv':/coastal flood/i.test(ev)?'stmt':'king';
-        return {t, ends:p.ends||p.expires||null, head:String((p.parameters && p.parameters.NWSheadline && p.parameters.NWSheadline[0]) || p.headline || ev).trim()}; })
-      .filter(a=>!seen.has(a.t+a.ends) && seen.add(a.t+a.ends));
+        return {t, ends:p.ends||p.expires||null, onset:ms(p.onset||p.effective), sent:ms(p.sent),
+          head:String((p.parameters && p.parameters.NWSheadline && p.parameters.NWSheadline[0]) || p.headline || ev).trim()}; })
+      .sort((a,b)=>rank[a.t]-rank[b.t] || a.onset-b.onset || b.sent-a.sent)
+      .slice(0,1);
     kingAlert[key]={at:Date.now(), list};
   } catch(e){ if (!c) kingAlert[key]={at:Date.now()-8*6e4, list:[]}; return; }   // offline: try again in a couple of minutes
   if (key===beach) renderNow();
