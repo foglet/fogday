@@ -153,7 +153,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .bar i.open{background-image:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 10px)!important}
 .empty{grid-column:1/-1;padding:22px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
 .grouphead{font-family:var(--display);font-size:19px;margin:6px 0 -6px;color:var(--felt)}
-/* QR code linking back to this page (v18, Morse style), above the footer */
+/* QR code linking back to this page (v18–v22, Morse style, one picked at random per load), above the footer */
 .qr{display:flex;justify-content:center;padding:28px 0 6px}
 .qr img{width:330px;max-width:100%;height:auto;image-rendering:pixelated;display:block}
 @media (max-width:600px){.qr img{width:95vw;max-width:none}}   /* phones: 95% of screen width; centered flex lets it extend past the body padding */
@@ -191,7 +191,12 @@ footer a:hover{color:var(--felt)}
     <div id="spacer" aria-hidden="true"></div>   <!-- room so the last listings can scroll up to just under the map -->
   </main>
 
-  <div class="qr"><img src="/mj/fogday-mahjong-qr-v18.png" width="330" height="330" alt="QR code for fogday.com/mahjong" loading="lazy"></div>
+  <div class="qr"><img id="qr" src="/mj/fogday-mahjong-qr-v18.png" width="330" height="330" alt="QR code for fogday.com/mahjong" loading="lazy"></div>
+  <script>/* a different mahjong-tile QR on each load: v18 mixed, v19 circles, v20 bamboo, v21 characters, v22 honors */
+  (function(){var v=["v18","v19","v20","v21","v22"],k="mjQR",last=null;try{last=localStorage.getItem(k)}catch(e){}
+   var pool=v.filter(function(x){return x!==last}),pick=pool[Math.floor(Math.random()*pool.length)];   /* never the same one twice in a row */
+   try{localStorage.setItem(k,pick)}catch(e){}
+   document.getElementById("qr").src="/mj/fogday-mahjong-qr-"+pick+".png";})();</script>
 
   <footer><span><a href="https://fogday.com">FOGDAY™</a> <a class="ig-link" href="https://www.instagram.com/fogfish" aria-label="Instagram" rel="me"><span class="ig" aria-hidden="true"></span></a></span></footer>
 </div>
