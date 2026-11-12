@@ -390,14 +390,14 @@ title: Waves of San Francisco
   .tides .pw canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
   /* The sea never scrolls away: they stick right under the fixed 8px color bar, over the bar's
      fade (z-index 21 > 20), so nothing scrolls into view above the sea while you work the sliders. */
-  .tides .pw-stick { position: sticky; top: 8px; z-index: 21; display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; }   /* 10px corners except full screen */
+  .tides .pw-stick { position: sticky; top: 8px; z-index: 21; display: flex; flex-direction: column; border-radius: 0; overflow: hidden; }   /* square corners */
   .tides #pw-sea { width: 100%; aspect-ratio: 320/100; cursor: pointer; }
   @media (max-width: 520px) { .tides #pw-sea { aspect-ratio: 2/1; } }   /* phones: 200 x 100 canvas (set in the script) */
   /* Plunge: the same sea stood on end, a tall portrait column (about 100 px wide; its height comes from this box).
      62dvh tall so the sliders still show below while the sea sticks at the top. */
   .tides .pw-stick.plunge { background: none; }
-  .tides .pw-stick.plunge #pw-sea { aspect-ratio: auto; height: 62vh; height: 62dvh; width: min(100%, calc(62dvh * .55)); align-self: center; border-radius: 10px; }
-  @media (max-width: 520px) { .tides .pw-stick.plunge #pw-sea { width: 100%; border-radius: 10px; } }
+  .tides .pw-stick.plunge #pw-sea { aspect-ratio: auto; height: 62vh; height: 62dvh; width: min(100%, calc(62dvh * .55)); align-self: center; border-radius: 0; }
+  @media (max-width: 520px) { .tides .pw-stick.plunge #pw-sea { width: 100%; border-radius: 0; } }
   .tides .pw-stick.plunge #pw-sea { touch-action: manipulation; }   /* no double-tap zoom: two taps go full screen */
   /* Plunge, full screen (two quick taps): the sea fills the whole window; two taps (or Esc) to come back */
   .tides .pw-stick.plunge.full { position: fixed; inset: 0; z-index: 1000; width: auto; margin: 0; border-radius: 0; background: rgb(16,32,44); }
