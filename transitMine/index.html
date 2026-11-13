@@ -197,7 +197,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     color: var(--muted); cursor: pointer;
   }
   .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: var(--panel); }
-  .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { color: var(--accent); }   /* menu open, or rivers on */
+  .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { color: var(--accent); }   /* menu open */
   .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Cities menu: the same pop-out as oysteratlas.com's Regions menu. It opens to the left of the folded-map button,
@@ -307,7 +307,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   }
   /* The map is drawn at a fraction of the screen's resolution (pixelRatio, set by the script) and scaled up
      with nearest-neighbour, so every map pixel becomes a visible block */
-  .mapboxgl-canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  .mapboxgl-canvas { image-rendering: auto; }   /* v10 grain (default): scaled up smoothly, shades blend */
+  .tm-v9 .mapboxgl-canvas { image-rendering: pixelated; image-rendering: crisp-edges; }   /* v9: hard 4px blocks */
   .title, .maps-btn, .map-legend-panel, .oa-detail-panel > div, .oa-status, .oa-results, .oa-field, .maps-menu, .oa-zoomread, .oa-pin,
   .mapboxgl-map .mapboxgl-ctrl-group, .mapboxgl-ctrl.mapboxgl-ctrl-attrib {
     border-radius: 0 !important;
@@ -403,12 +404,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 </div>
 </div>
 
-<!-- Moved into the map's bottom-right stack by the script: search, Cities, Rivers, zoom readout, then zoom -->
-<div class="tc-rivers" hidden>
-  <button type="button" class="oa-pin" aria-pressed="false" aria-label="Rivers" title="Rivers">
-    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.6 4.7-6 8.1-6 11a6 6 0 0 0 12 0c0-2.9-2.4-6.3-6-11z"/></svg>
-  </button>
-</div>
+<!-- Moved into the map's bottom-right stack by the script: search, Cities, zoom readout, then zoom -->
 <div class="oa-regions" hidden>
   <button type="button" class="oa-pin" aria-expanded="false" aria-controls="tc-cities" aria-label="Cities" title="Cities">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
@@ -421,8 +417,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </ul>
   </div>
 </div>
-<div class="oa-blocks" hidden>  <!-- block size: how many screen pixels each map pixel covers (4× default, 1×, 2×) -->
-  <button type="button" class="oa-pin" aria-label="Block size" title="Block size">4×</button>
+<div class="oa-blocks" hidden>  <!-- pixel look: v10 fine grain (default), v9 chunky blocks, HD -->
+  <button type="button" class="oa-pin" aria-label="Pixel look" title="Pixel look">v10</button>
 </div>
 <div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
 <div class="oa-search oa-collapsed" role="search" hidden>
@@ -443,11 +439,16 @@ document.addEventListener('DOMContentLoaded', function () {
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function savedZoom() { try { var z = parseFloat(localStorage.getItem('tm-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
-  /* Block size: each map pixel covers this many CSS pixels (the canvas is drawn at 1/BLOCK and scaled up with hard
-     edges). 4× by default: the Pixel Waves v9 level (chunky hard pixels, about frame width / 4, as on /waves).
-     The block button cycles 4× → 1× → 2× and the choice is remembered. */
-  function savedBlock() { try { var b = parseInt(localStorage.getItem('tm-block2'), 10); return b === 1 || b === 2 || b === 4 ? b : 4; } catch (e) { return 4; } }
-  var BLOCK = savedBlock();
+  /* BLOCK: each map pixel covers this many CSS pixels (the canvas is drawn at 1/BLOCK and scaled back up). */
+  /* Looks, by Pixel Waves level (the button cycles them; the choice is remembered):
+       v10 (default): 2× blocks, scaled up smoothly so neighbouring pixels blend (fine grain, as on /fog)
+       v9:            4× blocks with hard edges (chunky, as on /waves)
+       HD:            full resolution, smooth */
+  var LOOKS = { v10: { block: 2, hard: false, texel: 2 }, v9: { block: 4, hard: true, texel: 4 }, HD: { block: 1, hard: false, texel: 2 } };
+  var ORDER = ['v10', 'v9', 'HD'];
+  function savedLook() { try { var l = localStorage.getItem('tm-look'); return LOOKS[l] ? l : 'v10'; } catch (e) { return 'v10'; } }
+  var LOOK = savedLook(), BLOCK = LOOKS[LOOK].block;
+  document.documentElement.classList.toggle('tm-v9', LOOKS[LOOK].hard);
   /* Mapbox GL v3 ignores its pixelRatio option and draws at window.devicePixelRatio, read whenever the map's size
      changes. So the page tells it the screen's pixel ratio is 1/BLOCK: the canvas is drawn at 1/BLOCK of the
      window's size, and CSS scales it back up with hard edges. */
@@ -493,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   ['mousedown', 'touchstart', 'wheel'].forEach(function (ev) { map.on(ev, stopSpin); });
 
-  /* Bottom-right stack, top to bottom: search, Cities, Rivers, zoom readout, zoom + compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, Cities, zoom readout, zoom + compass (added bottom first) */
   function asControl(el) {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
@@ -501,7 +502,6 @@ document.addEventListener('DOMContentLoaded', function () {
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
   var blocksCtrl = document.querySelector('.oa-blocks');   asControl(blocksCtrl);
-  var riversCtrl = document.querySelector('.tc-rivers');   asControl(riversCtrl);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
 
@@ -890,36 +890,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 'text-size': ['interpolate', ['linear'], ['zoom'], 10, 12, 13, 16], 'text-letter-spacing': 0.2, 'text-max-width': 8 },
       paint: { 'text-color': 'rgba(237,239,245,0.7)', 'text-halo-color': '#000', 'text-halo-width': 1.5 } });   // the city labels' colors, softened
   });
-  /* Rivers: the water-drop button turns on rivers, canals and streams in blue, with river names along them
-     (Mapbox Streets waterways, already in the map's tiles; the base map draws them near-black, all but invisible).
-     Drawn under the transit lines so the lines stay on top. Off at first; the choice is remembered for next time. */
-  var RIVER_LAYERS = ['tc-rivers', 'tc-river-labels'], riverBtn = riversCtrl.querySelector('.oa-pin');
-  var riversOn = false;
-  try { riversOn = localStorage.getItem('tm-rivers') === '1'; } catch (e) {}
-  function showRivers(on) {
-    riversOn = on; riverBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    RIVER_LAYERS.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); });
-    try { localStorage.setItem('tm-rivers', on ? '1' : '0'); } catch (e) {}
-  }
-  riverBtn.addEventListener('click', function () { showRivers(!riversOn); });
-  map.on('load', function () {
-    var src = 'mapbox://mapbox.mapbox-streets-v7', under = map.getLayer('amtrak routes 8fdb63') ? 'amtrak routes 8fdb63' : undefined;
-    if (!map.getSource(src)) return;   // the base style changed: no waterways to show
-    var vis = riversOn ? 'visible' : 'none', isStream = ['==', ['get', 'class'], 'stream'];
-    map.addLayer({ id: 'tc-rivers', type: 'line', source: src, 'source-layer': 'waterway',
-      filter: ['match', ['get', 'class'], ['river', 'canal', 'stream'], true, false],
-      layout: { visibility: vis, 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': '#4aa3df', 'line-opacity': ['case', isStream, 0.18, 0.25],   // 75% transparent (streams a bit fainter)
-               'line-width': ['interpolate', ['linear'], ['zoom'], 5, ['case', isStream, 0, 0.6], 10, ['case', isStream, 0.4, 1.4],
-                              14, ['case', isStream, 1, 3], 18, ['case', isStream, 2.5, 6]] } }, under);
-    map.addLayer({ id: 'tc-river-labels', type: 'symbol', source: src, 'source-layer': 'waterway_label', minzoom: 10,   // names live here, not on the lines
-      filter: ['==', ['get', 'class'], 'river'],
-      layout: { visibility: vis, 'symbol-placement': 'line', 'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']],
-                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 10, 11, 16, 14],
-                'text-letter-spacing': 0.1, 'symbol-spacing': 400 },
-      paint: { 'text-color': '#8fcdf3', 'text-halo-color': '#000', 'text-halo-width': 1 } });
-    showRivers(riversOn);
-  });
 
   /* Tapping an airport names it, as a search pick does. The map draws an airport from zoom 10 as runways and
      taxiways, and from zoom 12 also as its code (SFO); a tap within a fingertip of any of these counts.
@@ -964,7 +934,7 @@ document.addEventListener('DOMContentLoaded', function () {
      As in Blocky Planet, the block textures are random noise tinted with a color: grass on land, water in the seas,
      sand and snow where the base map has them. Lines get square ends and mitred corners; label halos go hard-edged.
      A night sky with stars rings the globe. The transit layers' own colors are left alone, so the legend still reads. */
-  var TEX = 16, TEXEL_PX = 4;   // 16×16 texels, each 4 CSS px across (1, 2 or 4 map pixels, by block size)
+  var TEX = 16;   // 16×16 texels, each 2 CSS px across (v10, HD) or 4 (v9): one texture set per size
   var BLOCKS = {
     'mc-grass': { base: [30, 50, 27],   spread: .16, fleck: [[42, 68, 34], .12] },   /* grass and water by night: dark enough */
     'mc-water': { base: [20, 38, 98],   spread: .12, fleck: [[30, 56, 136], .10] },  /* that the transit lines read as on /transit/ */
@@ -984,9 +954,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function addBlocks() {
     Object.keys(BLOCKS).forEach(function (id, n) {
-      if (!map.hasImage(id)) map.addImage(id, noiseTexture(BLOCKS[id], 9973 * (n + 1)), { pixelRatio: 1 / TEXEL_PX });
+      [2, 4].forEach(function (px) {
+        if (!map.hasImage(id + px)) map.addImage(id + px, noiseTexture(BLOCKS[id], 9973 * (n + 1)), { pixelRatio: 1 / px });
+      });
     });
   }
+  var patterned = [];   // [layer, paint property, texture] for every textured layer, so a look change can swap sizes
+  function pattern(id, prop, kind) { patterned.push([id, prop, kind]); map.setPaintProperty(id, prop, kind + LOOKS[LOOK].texel); }
+  function repattern() { patterned.forEach(function (p) { if (map.getLayer(p[0])) map.setPaintProperty(p[0], p[1], p[2] + LOOKS[LOOK].texel); }); }
   var WATER = '#162a6c';   // solid ocean under the water texture (the texture's average)
   var KIND = [   // which texture a base-map layer gets, by its id
     [/water|ocean|sea\b|lake|river|reservoir|bay/i, 'mc-water'],
@@ -1001,7 +976,7 @@ document.addEventListener('DOMContentLoaded', function () {
     layers.forEach(function (l) {
       if (/^t[cm]-/.test(l.id)) return;   // this page's own layers keep their look
       try {
-        if (l.type === 'background') map.setPaintProperty(l.id, 'background-pattern', kindOf(l.id) || 'mc-grass');
+        if (l.type === 'background') pattern(l.id, 'background-pattern', kindOf(l.id) || 'mc-grass');
         else if (l.type === 'fill') {
           var k = kindOf(l.id);
           if (k === 'mc-water') {
@@ -1009,11 +984,12 @@ document.addEventListener('DOMContentLoaded', function () {
                and a copy above it carries the block texture from zoom 5, where the map flattens out */
             map.setPaintProperty(l.id, 'fill-color', WATER);
             var tex = Object.assign({}, l, { id: 'tm-tex-' + l.id, minzoom: Math.max(5, l.minzoom || 0),
-                                             paint: { 'fill-pattern': k }, layout: { visibility: 'visible' } });
+                                             paint: {}, layout: { visibility: 'visible' } });
             delete tex.metadata;
             var after = layers[layers.indexOf(l) + 1];
             map.addLayer(tex, after && after.id);
-          } else if (k) map.setPaintProperty(l.id, 'fill-pattern', k);
+            pattern(tex.id, 'fill-pattern', k);
+          } else if (k) pattern(l.id, 'fill-pattern', k);
         }
         else if (l.type === 'line') {
           var dashed = map.getPaintProperty(l.id, 'line-dasharray') != null;
@@ -1028,13 +1004,14 @@ document.addEventListener('DOMContentLoaded', function () {
   map.on('style.load', blockify);
   window.tmMap = map;   // for poking at the planet from the console
 
-  /* Block size button: 4× → 1× → 2× → 4× … */
-  var blockBtn = blocksCtrl.querySelector('.oa-pin'), STEPS = [4, 1, 2];
-  function showBlock() { blockBtn.textContent = BLOCK + '×'; blockBtn.setAttribute('aria-label', 'Block size ' + BLOCK + '×'); }
+  /* Look button: v10 → v9 → HD → v10 … */
+  var blockBtn = blocksCtrl.querySelector('.oa-pin');
+  function showBlock() { blockBtn.textContent = LOOK; blockBtn.setAttribute('aria-label', 'Pixel look: ' + LOOK); }
   blockBtn.addEventListener('click', function () {
-    BLOCK = STEPS[(STEPS.indexOf(BLOCK) + 1) % STEPS.length];
-    try { localStorage.setItem('tm-block2', String(BLOCK)); } catch (e) {}
-    showBlock();
+    LOOK = ORDER[(ORDER.indexOf(LOOK) + 1) % ORDER.length]; BLOCK = LOOKS[LOOK].block;
+    try { localStorage.setItem('tm-look', LOOK); } catch (e) {}
+    document.documentElement.classList.toggle('tm-v9', LOOKS[LOOK].hard);
+    showBlock(); repattern();
     /* Mapbox only re-reads the pixel ratio when the map's size changes, so nudge the size by a pixel and back */
     var box = map.getContainer();
     box.style.right = '1px'; map.resize(); box.style.right = ''; map.resize();
