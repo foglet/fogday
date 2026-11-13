@@ -110,10 +110,14 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-weight:9
   box-shadow:var(--shadow-lead)}
 .lead .glyph{position:absolute;right:-10px;bottom:-34px;font-size:9rem;font-weight:900;line-height:1;opacity:.14;pointer-events:none}
 .lead .k{font-size:var(--fs-cap);font-weight:900;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
-.lead h2{font-size:1.75rem;line-height:var(--lh-tight);margin:var(--s1) 0 var(--s2);font-weight:900;max-width:16ch}
-.lead p{margin:0 0 var(--s4);max-width:34ch;opacity:.95}
-.lead .btn{background:var(--surface);color:var(--primary-ink);border-color:var(--primary-edge)}
-@media (hover:hover){.lead .btn:hover{background:var(--primary-tint)}}
+.lead{display:block;width:100%;border:0;text-align:left;font:inherit;cursor:pointer;transition:transform var(--dur-fast) var(--ease),background-color var(--dur-fast)}
+@media (hover:hover){.lead:hover{background:var(--primary-hover)}}
+.lead:active{transform:translateY(2px);background:var(--primary-press)}
+.lead .k{display:block}
+.lead .lh{display:block;font-size:1.75rem;line-height:var(--lh-tight);margin:var(--s1) 0 var(--s2);font-weight:900;max-width:16ch}
+.lead .p{display:block;margin:0 0 var(--s4);max-width:34ch;opacity:.95}
+.lead .go{display:inline-grid;place-items:center;width:var(--tap);height:var(--tap);border-radius:50%;background:var(--on-primary);color:var(--primary)}
+.lead .go svg{width:20px;height:20px;fill:currentColor;stroke:none}
 .meter{height:8px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--on-primary) 25%,transparent);margin:0 0 var(--s4);overflow:hidden;max-width:20rem}
 .meter i{display:block;height:100%;background:var(--on-primary);border-radius:inherit}
 .lead .row-actions{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap}
@@ -147,6 +151,7 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-weight:9
 .scard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:var(--s4);background:var(--surface);border:1.5px solid var(--line);border-bottom-width:calc(1.5px + var(--edge));border-radius:var(--r-lg);text-align:left;cursor:pointer;width:100%;box-shadow:var(--shadow-card)}
 @media (hover:hover){.scard:hover{border-color:var(--line-strong)}}
 .scard:active{transform:translateY(2px);border-bottom-width:3px}
+.scard.feat{border-color:var(--primary);background:var(--primary-tint)}
 .scard b{display:block;font-size:1.0625rem;font-weight:900;line-height:1.25}
 .scard span{display:block;font-size:var(--fs-sm);color:var(--ink-2)}
 .ring{width:48px;height:48px}
@@ -290,6 +295,7 @@ const thumb = r => `https://i.ytimg.com/vi/${r.id}/${r.k==='long'?'mqdefault':'h
 const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg>';
 const ICON_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
@@ -357,15 +363,15 @@ function viewLearn(bodyOnly){
     const leadSer = {beginner:'survival30', intermediate:'yao', advanced:null}[S.level];
     if(leadSer){
       const it = seriesItems(leadSer), n = it.filter(r=>isDone(r.id)).length, next = it.find(r=>!isDone(r.id)) || it[0];
-      h += `<section class="lead" data-ser="${leadSer}" aria-labelledby="leadH"><span class="glyph" aria-hidden="true">${S.level==='beginner'?'学':'要'}</span>
-        <div class="k">${n? 'Keep going' : 'Start here'}</div><h2 id="leadH">${esc(SER[leadSer].name)}</h2><p>${esc(SER[leadSer].blurb)}</p>
-        <div class="meter" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="${it.length}" aria-valuenow="${n}"><i style="width:${100*n/it.length}%"></i></div>
-        <div class="row-actions"><button class="btn" data-play="${next.id}" data-ctx="ser:${leadSer}">${n?'Continue':'Play lesson 1'}</button><span class="count">${n} of ${it.length} done</span></div></section>`;
+      h += `<button class="lead" data-ser="${leadSer}" data-play="${next.id}" data-ctx="ser:${leadSer}" aria-label="${esc(SER[leadSer].name)}, ${n} of ${it.length} done. Plays the next lesson"><span class="glyph" aria-hidden="true">${S.level==='beginner'?'学':'要'}</span>
+        <span class="k">${n? 'Keep going' : 'Start here'}</span><span class="lh">${esc(SER[leadSer].name)}</span><span class="p">${esc(SER[leadSer].blurb)}</span>
+        <span class="meter" aria-hidden="true"><i style="width:${100*n/it.length}%"></i></span>
+        <span class="row-actions"><span class="go" aria-hidden="true">${ICON_PLAY}</span><span class="count">${n} of ${it.length} done</span></span></button>`;
     } else {
       const idi = items.filter(r=>r.sec==='culture');
-      h += `<section class="lead" aria-labelledby="leadH"><span class="glyph" aria-hidden="true">成</span><div class="k">Start here</div><h2 id="leadH">Idioms, slang and register</h2>
-        <p>Dr. Jia's channel is mostly beginner material. This shelf collects what goes beyond it: idioms, internet slang and formal speech.</p>
-        <div class="row-actions"><button class="btn" data-play="${idi[0].id}" data-ctx="lv:culture">Play the first one</button></div></section>`;
+      h += `<button class="lead" data-play="${idi[0].id}" data-ctx="lv:culture" aria-label="Idioms, slang and register. Plays the first lesson"><span class="glyph" aria-hidden="true">成</span><span class="k">Start here</span><span class="lh">Idioms, slang and register</span>
+        <span class="p">Dr. Jia's channel is mostly beginner material. This shelf collects what goes beyond it: idioms, internet slang and formal speech.</span>
+        <span class="row-actions"><span class="go" aria-hidden="true">${ICON_PLAY}</span><span class="count">${idi.length} lessons</span></span></button>`;
     }
   }
 
@@ -387,7 +393,6 @@ function viewLearn(bodyOnly){
     const its = items.filter(r => r.sec===sec.id);
     if(!its.length) return;
     let body = ['phrases','pron','culture','drills'].includes(sec.id) ? grouped(`lv:${sec.id}`, its) : list(`lv:${sec.id}`, its);
-    if(sec.id==='drills') body = `<div class="acts" style="margin-bottom:var(--s2)"><button class="btn primary" data-drill="level">Start a drill session</button></div>` + body;
     h += `<section class="sec" aria-labelledby="h-${sec.id}">${secHead(sec.id, sec.name, its)}${sec.note?`<p class="sec-note">${sec.note}</p>`:''}${body}</section>`;
   });
   return h + foot();
@@ -403,7 +408,6 @@ function viewSeries(){
     return `<p class="kicker"><button class="btn ghost" data-back style="margin-left:calc(-1 * var(--s4))"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(90deg)"><path d="m6 9 6 6 6-6"/></svg>All courses</button></p>
       <h1 class="display">${esc(s.name)}</h1><p class="lede">${esc(s.blurb)} ${n} of ${it.length} done.</p>
       ${S.series==='survival30'?'<p class="sec-note">Days 8, 10, 11, 12, 14, 16, 26, 27 and 29 have no day number in their titles; their place is inferred from posting order.</p>':''}
-      <div class="row-actions" style="margin:var(--s4) 0"><button class="btn primary" data-play="${(it.find(r=>!isDone(r.id))||it[0]).id}" data-ctx="ser:${S.series}">${n?'Continue':'Start'}</button></div>
       <section class="sec" style="margin-top:var(--s4)" aria-label="Lessons">${(()=>{CTX['ser:'+S.series]=it.map(r=>r.id);return `<ul class="list">${it.map((r,i)=>row(r,'ser:'+S.series,{ord: S.series==='survival30'||['apartment','tastes','help','kinship','countries'].includes(S.series) ? (S.series==='survival30'?r.ord:i+1) : i+1, ordLabel: label, level:true})).join('')}</ul>`;})()}</section>` + foot();
   }
   const groups = LEVELS.map(l => ({l, sids: DATA.series.map(s=>s.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
@@ -418,10 +422,16 @@ function viewPractice(){
   const dayMs = 864e5, now = Date.now();
   const due = watched.filter(r => now - done[r.id] > dayMs);
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
+  if(S.drill){
+    const it = drillPool(S.drill), n = it.filter(r=>isDone(r.id)).length, key='drill:'+S.drill;
+    const name = S.drill==='all' ? 'Mixed drill session' : S.drill; CTX[key] = it.map(r=>r.id);
+    return `<p class="kicker"><button class="btn ghost" data-back style="margin-left:calc(-1 * var(--s4))"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(90deg)"><path d="m6 9 6 6 6-6"/></svg>All practice</button></p>
+      <h1 class="display">${esc(name)}</h1><p class="lede">${esc(S.drill==='all'?'Every drill, all four types.':blurbs[S.drill])} ${n} of ${it.length} done.</p>
+      <section class="sec" style="margin-top:var(--s4)" aria-label="Drills"><ul class="list">${it.map((r,i)=>row(r,key,{ord:i+1,ordLabel:'Drill',level:true})).join('')}</ul></section>` + foot();
+  }
   return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
-    <p class="lede">Short drills played back to back. Say each answer aloud, then let her confirm it.</p>
-    <div class="tile feature"><h3>Mixed drill session</h3><p>${drills.length} drills, shuffled, across all four types.</p><div class="acts"><button class="btn primary" data-drill="all">Start mixed session</button></div></div>
-    ${topics.map(t=>{const n=drills.filter(r=>r.top===t).length;return `<div class="tile"><h3>${esc(t)}</h3><p>${blurbs[t]} ${n} drills.</p><div class="acts"><button class="btn" data-drill="${esc(t)}">Start</button></div></div>`}).join('')}
+    <p class="lede">Pick a drill type, then pick a drill. Say each answer aloud, then let her confirm it.</p>
+    <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
     <section class="sec" aria-labelledby="h-review">${secHead('review','Review what you watched')}
       <p class="sec-note">Lessons you marked done more than a day ago come back here, oldest first.</p>
       ${watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`}
@@ -466,7 +476,7 @@ function render(focusMain){
   if(S.tab==='search'){ const i=$('#q'); i.focus(); i.setSelectionRange(i.value.length,i.value.length); }
   else if(focusMain){ $('#main').focus({preventScroll:true}); }
 }
-function go(tab){ S.tab=tab; if(tab!=='series') S.series=null; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
+function go(tab){ S.tab=tab; if(tab!=='series') S.series=null; S.drill=null; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
 
 /* ---------- player ---------- */
 let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '';
@@ -503,17 +513,27 @@ function closePlayer(){
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
   document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', r.t+(d?', done':'')); });
-  document.querySelectorAll('.scard[data-series]').forEach(c=>{ const w=document.createElement('div'); w.innerHTML=scard(c.dataset.series); const nc=w.firstElementChild; c.replaceWith(nc); });
+  document.querySelectorAll('.scard[data-series]').forEach(c=>{ const w=document.createElement('div'); w.innerHTML=scard(c.dataset.series); c.replaceWith(w.firstElementChild); });
+  document.querySelectorAll('.scard[data-drill]').forEach(c=>{ const w=document.createElement('div'); w.innerHTML=drillCard(c.dataset.drill, c.dataset.label, c.dataset.blurb, c.classList.contains('feat')); c.replaceWith(w.firstElementChild); });
   const lead=document.querySelector('.lead[data-ser]');
-  if(lead){ const it=seriesItems(lead.dataset.ser), n=it.filter(r=>isDone(r.id)).length; const m=lead.querySelector('.meter');
-    m.setAttribute('aria-valuenow',n); m.firstElementChild.style.width=(100*n/it.length)+'%'; lead.querySelector('.count').textContent=`${n} of ${it.length} done`;
-    const b=lead.querySelector('[data-play]'); const nx=it.find(r=>!isDone(r.id))||it[0]; b.dataset.play=nx.id; b.textContent=n?'Continue':'Play lesson 1'; lead.querySelector('.k').textContent=n?'Keep going':'Start here'; }
+  if(lead){ const it=seriesItems(lead.dataset.ser), n=it.filter(r=>isDone(r.id)).length;
+    lead.querySelector('.meter i').style.width=(100*n/it.length)+'%'; lead.querySelector('.count').textContent=`${n} of ${it.length} done`;
+    const nx=it.find(r=>!isDone(r.id))||it[0]; lead.dataset.play=nx.id; lead.querySelector('.k').textContent=n?'Keep going':'Start here';
+    lead.setAttribute('aria-label', `${SER[lead.dataset.ser].name}, ${n} of ${it.length} done. Plays the next lesson`); }
 }
 function syncDone(){ const d = isDone(cur.id); const b=$('#doneBtn'); b.setAttribute('aria-pressed', String(d)); b.querySelector('span').textContent = d ? 'Done' : 'Mark done'; }
-function startDrill(kind){
+function drillPool(kind){
   let pool = ITEMS.filter(r=>r.sec==='drills');
   if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
   else if(kind!=='all') pool = pool.filter(r=>r.top===kind);
+  return pool;
+}
+function drillCard(kind, label, blurb, feat){
+  const pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length;
+  return `<button class="scard${feat?' feat':''}" data-drill="${esc(kind)}" data-label="${esc(label)}" data-blurb="${esc(blurb)}" aria-label="${esc(label)}, ${pool.length} drills, ${n} done. "><span><b>${esc(label)}</b><span>${pool.length} drills · ${esc(blurb)}</span></span>${ring(n,pool.length)}</button>`;
+}
+function startDrill(kind){
+  let pool = drillPool(kind);
   pool = pool.map(r=>[Math.random(),r]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
   CTX['drill'] = pool.map(r=>r.id);
   drillName = kind==='all' ? 'Mixed session' : kind==='level' ? `${LEVELS.find(l=>l.id===S.level).name} drills` : kind;
@@ -529,11 +549,11 @@ document.addEventListener('click', e => {
   if(t.dataset.sub){ S.sub=t.dataset.sub; render(false); const b=document.querySelector(`[data-sub="${S.sub}"]`); b&&b.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
   if(t.dataset.series){ S.tab='series'; S.series=t.dataset.series; window.scrollTo(0,0); render(true); return; }
-  if(t.hasAttribute('data-back')){ S.series=null; render(true); return; }
+  if(t.hasAttribute('data-back')){ S.series=null; S.drill=null; render(true); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
-  if(t.dataset.drill) return startDrill(t.dataset.drill);
+  if(t.dataset.drill){ S.tab='practice'; S.drill=t.dataset.drill; window.scrollTo(0,0); render(true); return; }
   if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
-  if(t.matches('.row') && t.dataset.id){ drillName=''; return openPlayer(t.dataset.id, t.dataset.ctx); }
+  if(t.matches('.row') && t.dataset.id){ drillName = (t.dataset.ctx||'').startsWith('drill:') ? (S.drill==='all'?'Mixed session':S.drill) : ''; return openPlayer(t.dataset.id, t.dataset.ctx); }
 });
 $('#searchBtn').addEventListener('click', () => { S.tab='search'; render(false); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; const pos=e.target.selectionStart; render(false); const i=$('#q'); i.setSelectionRange(pos,pos); } });
