@@ -1072,6 +1072,16 @@ document.addEventListener('DOMContentLoaded', function () {
       html.appendChild(el);
     });
     labelBox.textContent = ''; labelBox.appendChild(html);
+    /* The pixel font runs wider than the map's own, so names Mapbox spaced apart can touch. Keep the bigger ones
+       (countries over cities), then the ones Mapbox ranks first, and hide any name that would overlap one kept. */
+    var els = Array.prototype.slice.call(labelBox.children), kept = [];
+    els.map(function (el, i) { return { el: el, i: i, size: parseInt(el.style.fontSize, 10) }; })
+       .sort(function (a, b) { return b.size - a.size || a.i - b.i; })
+       .forEach(function (o) {
+         var r = o.el.getBoundingClientRect(), pad = 4;
+         var hit = kept.some(function (k) { return r.left - pad < k.right && r.right + pad > k.left && r.top - pad < k.bottom && r.bottom + pad > k.top; });
+         if (hit) o.el.style.visibility = 'hidden'; else kept.push(r);
+       });
   }
   map.on('styledata', findPointLabels);
   map.on('render', function () { if (!labelFrame) labelFrame = requestAnimationFrame(drawLabels); });
