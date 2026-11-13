@@ -283,12 +283,16 @@ zoom: 11
   .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
   /* Phones fold the credits into an (i) button; its icon is dark, so lighten it to show on the navy */
   .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
-</style>
   /* ---- Remote Islands additions ---- */
 
   /* Credits: always written out in full (no folded (i) button on phones), and the bottom-left card
      sits just above them however many lines they wrap to (--attrib, set by the script) */
-  .map-bottom-left { bottom: calc(var(--attrib, 50px) + 8px + var(--sab)); }
+  .map-bottom-left { bottom: calc(var(--attrib, 50px) + 6px); }   /* --attrib already includes the safe area */
+  /* Phones: the card stops short of the right-hand buttons, and the description is shorter (it scrolls) */
+  @media (max-width: 759px) {
+    .map-bottom-left { max-width: calc(100% - 24px - 56px - var(--sal) - var(--sar)); }
+    .oa-detail-panel > .oa-detail-desc { max-height: 7em; }
+  }
   .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib { max-width: calc(100vw - 110px - var(--sal) - var(--sar)); }
 
   /* The picked island, above the credits: name, ocean · what it is, coordinates, local time, then Wikipedia's description */
@@ -459,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Keep the bottom-left card just above the credits, however many lines they wrap to */
   var attrib = map.getContainer().querySelector('.mapboxgl-ctrl-attrib');
-  function placeCard() { if (attrib) document.documentElement.style.setProperty('--attrib', (attrib.getBoundingClientRect().height + 10) + 'px'); }
+  function placeCard() { if (attrib) document.documentElement.style.setProperty('--attrib', Math.round(window.innerHeight - attrib.getBoundingClientRect().top) + 'px'); }
   if (attrib && window.ResizeObserver) new ResizeObserver(placeCard).observe(attrib);
   window.addEventListener('resize', placeCard); placeCard();
 
