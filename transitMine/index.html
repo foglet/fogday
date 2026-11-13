@@ -482,6 +482,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var t = Math.min(1, (now - t0) / SPIN.turn), k = ease(t);
         map.jumpTo({ center: [from.lng + dLng * k, from.lat + (to.lat - from.lat) * k] });
         if (t < 1) { spinFrame = requestAnimationFrame(frame); return; }
+        map.jumpTo({ center: to });   // same spot, longitude wrapped back to ±180, so the drop doesn't unwind the turns
         then({ center: to, zoom: keep, bearing: view.bearing || 0, duration: keep > high ? SPIN.down : 0 }, landed || function () {});
       })(t0);
     });
