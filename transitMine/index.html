@@ -959,7 +959,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var TEX = 16, TEXEL_PX = 4;   // 16×16 texels, each 4 CSS px across (1, 2 or 4 map pixels, by block size)
   var BLOCKS = {
     'mc-grass': { base: [30, 50, 27],   spread: .16, fleck: [[42, 68, 34], .12] },   /* grass and water by night: dark enough */
-    'mc-water': { base: [14, 28, 74],   spread: .12, fleck: [[24, 46, 110], .10] },  /* that the transit lines read as on /transit/ */
+    'mc-water': { base: [20, 38, 98],   spread: .12, fleck: [[30, 56, 136], .10] },  /* that the transit lines read as on /transit/ */
     'mc-sand':  { base: [196, 184, 132], spread: .08, fleck: [[176, 162, 112], .12] },
     'mc-snow':  { base: [226, 234, 240], spread: .05, fleck: [[196, 212, 224], .10] },
     'mc-stone': { base: [96, 96, 96],   spread: .14, fleck: [[72, 72, 72], .14] }
@@ -979,6 +979,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!map.hasImage(id)) map.addImage(id, noiseTexture(BLOCKS[id], 9973 * (n + 1)), { pixelRatio: 1 / TEXEL_PX });
     });
   }
+  var WATER = '#162a6c';   // solid ocean under the water texture (the texture's average)
   var KIND = [   // which texture a base-map layer gets, by its id
     [/water|ocean|sea\b|lake|river|reservoir|bay/i, 'mc-water'],
     [/sand|beach|desert/i, 'mc-sand'],
@@ -988,11 +989,24 @@ document.addEventListener('DOMContentLoaded', function () {
   function kindOf(id) { for (var i = 0; i < KIND.length; i++) if (KIND[i][0].test(id)) return KIND[i][1]; return null; }
   function blockify() {
     addBlocks();
-    map.getStyle().layers.forEach(function (l) {
-      if (/^tc-/.test(l.id)) return;   // this page's own layers keep their look
+    var layers = map.getStyle().layers;
+    layers.forEach(function (l) {
+      if (/^t[cm]-/.test(l.id)) return;   // this page's own layers keep their look
       try {
         if (l.type === 'background') map.setPaintProperty(l.id, 'background-pattern', kindOf(l.id) || 'mc-grass');
-        else if (l.type === 'fill') { var k = kindOf(l.id); if (k) map.setPaintProperty(l.id, 'fill-pattern', k); }
+        else if (l.type === 'fill') {
+          var k = kindOf(l.id);
+          if (k === 'mc-water') {
+            /* The globe (below about zoom 5) doesn't draw pattern fills, so the water itself goes solid ocean blue,
+               and a copy above it carries the block texture from zoom 5, where the map flattens out */
+            map.setPaintProperty(l.id, 'fill-color', WATER);
+            var tex = Object.assign({}, l, { id: 'tm-tex-' + l.id, minzoom: Math.max(5, l.minzoom || 0),
+                                             paint: { 'fill-pattern': k }, layout: { visibility: 'visible' } });
+            delete tex.metadata;
+            var after = layers[layers.indexOf(l) + 1];
+            map.addLayer(tex, after && after.id);
+          } else if (k) map.setPaintProperty(l.id, 'fill-pattern', k);
+        }
         else if (l.type === 'line') {
           var dashed = map.getPaintProperty(l.id, 'line-dasharray') != null;
           map.setLayoutProperty(l.id, 'line-cap', dashed ? 'butt' : 'square');
