@@ -1,0 +1,49 @@
+# index|level|section|topic   (blank = keep)
+1009|intermediate|grammar|Grammar & patterns
+1001|intermediate||
+83|beginner|phrases|Greetings & goodbyes
+96|intermediate||
+136|intermediate||
+2|beginner||
+376|beginner||
+372|beginner||
+362|beginner||
+366|beginner||
+36|beginner||
+384|beginner|vocab|Vocabulary & word building
+31|beginner|vocab|Vocabulary & word building
+26|beginner|vocab|Vocabulary & word building
+202|intermediate|culture|Holidays & festivals
+215|intermediate|culture|Culture & etiquette
+170|beginner|phrases|Politeness, thanks & apologies
+175|beginner|phrases|Politeness, thanks & apologies
+171|intermediate|phrases|Conversation & small talk
+173|intermediate|phrases|Conversation & small talk
+256|intermediate|grammar|Grammar & patterns
+266|intermediate|phrases|Conversation & small talk
+344|intermediate|phrases|Politeness, thanks & apologies
+63|intermediate|grammar|Grammar & patterns
+293||phrases|Shopping & money
+296||phrases|Essential phrases
+305||phrases|When you don't understand
+348||phrases|Phone calls
+401||phrases|Phone calls
+81||drills|Listening challenges
+155||drills|Listening challenges
+27||tips|Study strategy
+42|intermediate|vocab|Vocabulary & word building
+285||phrases|Emergencies & help
+1003||phrases|Emergencies & help
+1006||phrases|Emergencies & help
+7||phrases|Emergencies & help
+339||phrases|Shopping & money
+300||phrases|Politeness, thanks & apologies
+141|beginner||
+157|intermediate||
+211|intermediate||
+219|intermediate||
+223|intermediate||
+271|intermediate||
+391|intermediate||
+87|beginner||
+91|beginner||

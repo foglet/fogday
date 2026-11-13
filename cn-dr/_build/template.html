@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17130F" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Every Mandarin Insights lesson by Dr. Jia, sorted by level and topic: serial courses, repetition training, pronunciation, grammar, phrases and materials.">
+<title>Mandarin with Dr. Jia · Lesson Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Tokens. Direction: UX/UI Agent Skills "Warm Soft-SaaS" archetype, anchored on the
+   library's `lingo` system (Nunito, rounded, tactile 3D button edge), recoloured to
+   cinnabar seal ink on rice paper. One primary; jade is status only ("done"). */
+:root{
+  --paper:#FAF6EF; --surface:#FFFFFF; --surface-2:#F3EDE3; --surface-3:#EAE2D5;
+  --ink:#2A2420; --ink-2:#574E46; --ink-3:#6E645A; --line:#E3D9CA; --line-strong:#CDBFAB;
+  --primary:#B3261E; --primary-hover:#9E2019; --primary-press:#8A1B15; --primary-edge:#6E150F;
+  --on-primary:#FFFFFF; --primary-tint:#FBEAE7; --primary-ink:#9E2019;
+  --done:#1D6E52; --done-tint:#E3F1EA; --on-done:#FFFFFF;
+  --scrim:rgba(28,22,18,.48);
+  --focus:#B3261E;
+  --font:"Nunito",ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --fs-cap:.75rem; --fs-sm:.875rem; --fs-body:1rem; --fs-h3:1.25rem; --fs-h2:1.5rem; --fs-display:2.5rem;
+  --lh-tight:1.15; --lh-body:1.5;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-pill:999px;
+  --edge:3px; /* lingo's tactile bottom border */
+  --tap:44px; --bar-h:64px;
+  --dur-fast:120ms; --dur:200ms; --ease:cubic-bezier(.2,.8,.2,1);
+  --shadow-sheet:0 -8px 32px rgba(42,36,32,.18);
+  --ring-w:3px;
+  --shadow-card:0 1px 2px rgba(42,36,32,.06);
+  --shadow-lead:0 10px 24px -12px rgba(110,21,15,.55);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#17130F; --surface:#211C17; --surface-2:#2A241E; --surface-3:#352D25;
+    --ink:#F3ECE2; --ink-2:#D2C8BB; --ink-3:#B2A797; --line:#3A3129; --line-strong:#54483C;
+    --primary:#F08A7E; --primary-hover:#F4A196; --primary-press:#E7776A; --primary-edge:#A8493F;
+    --on-primary:#2A0F0B; --primary-tint:#3A201C; --primary-ink:#F4A196;
+    --done:#6FD0A6; --done-tint:#173327; --on-done:#0B2219;
+    --scrim:rgba(0,0,0,.6); --focus:#F4A196;
+    --shadow-sheet:0 -8px 32px rgba(0,0,0,.5); --shadow-card:0 1px 2px rgba(0,0,0,.4); --shadow-lead:0 10px 24px -12px rgba(0,0,0,.7);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:var(--lh-body);
+  padding-bottom:calc(var(--bar-h) + env(safe-area-inset-bottom) + var(--s5))}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit}
+a{color:var(--primary-ink)}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.wrap{width:100%;max-width:40rem;margin:0 auto;padding:0 var(--s4)}
+p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
+
+/* Header */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.top .wrap{display:flex;align-items:center;gap:var(--s3);min-height:56px}
+.brand{display:flex;align-items:center;gap:var(--s2);min-width:0;flex:1}
+.seal{flex:none;width:32px;height:32px;border-radius:8px;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;font-weight:900;font-size:1.05rem;line-height:1}
+.brand-txt{min-width:0}
+.brand-txt b{display:block;font-weight:900;font-size:var(--fs-body);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-txt span{display:block;font-size:var(--fs-cap);color:var(--ink-3);font-weight:700}
+
+/* Buttons: eight states */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);padding:0 var(--s4);border-radius:var(--r-md);
+  border:2px solid var(--line-strong);border-bottom-width:calc(2px + var(--edge));background:var(--surface);color:var(--ink);font-weight:800;font-size:var(--fs-sm);
+  cursor:pointer;text-decoration:none;transition:transform var(--dur-fast) var(--ease),background-color var(--dur-fast),border-color var(--dur-fast);white-space:normal;text-align:center}
+@media (hover:hover){.btn:hover{background:var(--surface-2)}}
+.btn:active{transform:translateY(2px);border-bottom-width:4px}
+.btn[aria-disabled="true"],.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn[aria-busy="true"]{cursor:progress;opacity:.75}
+.btn.primary{background:var(--primary);border-color:var(--primary-edge);color:var(--on-primary)}
+@media (hover:hover){.btn.primary:hover{background:var(--primary-hover)}}
+.btn.primary:active{background:var(--primary-press)}
+.btn[aria-pressed="true"]{background:var(--done);border-color:var(--done);color:var(--on-done)}
+.btn.ghost{border-color:transparent;background:transparent;border-bottom-width:2px}
+@media (hover:hover){.btn.ghost:hover{background:var(--surface-2)}}
+.icon-btn{width:var(--tap);padding:0;flex:none}
+.btn svg,.tab svg,.row svg{width:20px;height:20px;flex:none}
+svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Level switch (segmented) */
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s4) 0 var(--s3)}
+.seg button{min-height:var(--tap);border:0;border-radius:calc(var(--r-md) - 4px);background:transparent;font-weight:800;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer;padding:0 var(--s1);
+  transition:background-color var(--dur-fast)}
+@media (hover:hover){.seg button:hover{background:var(--surface-3);color:var(--ink)}}
+.seg button:active{transform:scale(.98)}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
+.seg small{display:block;font-weight:700;font-size:var(--fs-cap);color:var(--ink-3)}
+.chips{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
+.chip{min-height:36px;padding:0 var(--s3);border-radius:var(--r-pill);border:1.5px solid var(--line-strong);background:var(--surface);font-weight:800;font-size:var(--fs-sm);cursor:pointer;color:var(--ink-2)}
+@media (hover:hover){.chip:hover{border-color:var(--ink-3);color:var(--ink)}}
+.chip:active{transform:scale(.97)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+/* Page heading */
+.kicker{font-size:var(--fs-cap);font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-ink);margin:var(--s5) 0 var(--s1)}
+h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-weight:900;margin:0;letter-spacing:-.01em;max-width:18ch}
+.lede{color:var(--ink-2);margin:var(--s2) 0 0;max-width:46ch}
+
+/* Lead card: one thing leads */
+.lead{margin:var(--s5) 0 var(--s2);background:var(--primary);color:var(--on-primary);border-radius:var(--r-lg);padding:var(--s5);position:relative;overflow:hidden;
+  box-shadow:var(--shadow-lead)}
+.lead .glyph{position:absolute;right:-10px;bottom:-34px;font-size:9rem;font-weight:900;line-height:1;opacity:.14;pointer-events:none}
+.lead .k{font-size:var(--fs-cap);font-weight:900;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.lead h2{font-size:1.75rem;line-height:var(--lh-tight);margin:var(--s1) 0 var(--s2);font-weight:900;max-width:16ch}
+.lead p{margin:0 0 var(--s4);max-width:34ch;opacity:.95}
+.lead .btn{background:var(--surface);color:var(--primary-ink);border-color:var(--primary-edge)}
+@media (hover:hover){.lead .btn:hover{background:var(--primary-tint)}}
+.meter{height:8px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--on-primary) 25%,transparent);margin:0 0 var(--s4);overflow:hidden;max-width:20rem}
+.meter i{display:block;height:100%;background:var(--on-primary);border-radius:inherit}
+.lead .row-actions{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap}
+.lead .count{font-weight:800;font-size:var(--fs-sm)}
+
+/* Sections */
+.sec{margin-top:var(--s7)}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);border-bottom:2px solid var(--ink);padding-bottom:var(--s2);margin-bottom:var(--s2)}
+.sec-h h2{font-size:var(--fs-h2);line-height:var(--lh-tight);margin:0;font-weight:900}
+.sec-h .n{font-size:var(--fs-sm);color:var(--ink-3);font-weight:800;white-space:nowrap}
+.sec-note{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s2) 0 var(--s3);max-width:65ch}
+.sub{font-size:var(--fs-sm);font-weight:900;color:var(--ink-2);margin:var(--s5) 0 var(--s1);text-transform:uppercase;letter-spacing:.06em}
+.list{list-style:none;margin:0;padding:0}
+.list li+li{border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:var(--s3);width:100%;padding:var(--s3) var(--s1);background:none;border:0;text-align:left;cursor:pointer;border-radius:var(--r-sm);min-height:var(--tap)}
+@media (hover:hover){.row:hover{background:var(--surface-2)}}
+.row:active{background:var(--surface-3)}
+.thumb{width:56px;height:56px;border-radius:var(--r-sm);object-fit:cover;background:var(--surface-3)}
+.row .t{font-weight:800;font-size:.9375rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row .m{font-size:var(--fs-cap);color:var(--ink-3);font-weight:700;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
+.tag{color:var(--primary-ink);font-weight:900}
+.state{width:28px;height:28px;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;color:transparent}
+.row[data-done="true"] .state{background:var(--done);border-color:var(--done);color:var(--on-done)}
+.row[data-done="true"] .state svg{width:16px;height:16px;stroke-width:3}
+.ord{width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-2);display:grid;place-items:center;font-weight:900;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
+.ord small{display:block;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+.more{margin-top:var(--s2);width:100%}
+
+/* Series cards */
+.series{display:grid;gap:var(--s3);margin-top:var(--s3)}
+.scard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:var(--s4);background:var(--surface);border:1.5px solid var(--line);border-bottom-width:calc(1.5px + var(--edge));border-radius:var(--r-lg);text-align:left;cursor:pointer;width:100%;box-shadow:var(--shadow-card)}
+@media (hover:hover){.scard:hover{border-color:var(--line-strong)}}
+.scard:active{transform:translateY(2px);border-bottom-width:3px}
+.scard b{display:block;font-size:1.0625rem;font-weight:900;line-height:1.25}
+.scard span{display:block;font-size:var(--fs-sm);color:var(--ink-2)}
+.ring{width:48px;height:48px}
+.ring circle{stroke-width:5}
+.ring .bg{stroke:var(--surface-3)} .ring .fg{stroke:var(--done)}
+.ring text{fill:var(--ink);stroke:none;font-size:13px;font-weight:900;font-family:var(--font)}
+
+/* Practice + materials */
+.tile{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:var(--s4);margin-top:var(--s3)}
+.tile h3{margin:0 0 var(--s1);font-size:var(--fs-h3);line-height:1.25;font-weight:900}
+.tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
+.tile .acts{display:flex;gap:var(--s2);flex-wrap:wrap}
+.tile.feature{border-color:var(--primary);background:var(--primary-tint)}
+.empty{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-2);background:var(--surface);border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);margin-top:var(--s3)}
+.empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
+.foot{margin-top:var(--s8);padding:var(--s5) 0;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
+.foot p{margin:0 0 var(--s2);max-width:65ch}
+
+/* Search */
+.search{display:flex;gap:var(--s2);align-items:center;margin-top:var(--s4)}
+.search input{flex:1;min-width:0;min-height:var(--tap);border-radius:var(--r-md);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;padding:0 var(--s3)}
+.search input:hover{border-color:var(--ink-3)}
+.search input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+
+/* Bottom tab bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.bar .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0 var(--s1)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:var(--bar-h);border:0;background:none;cursor:pointer;color:var(--ink-3);font-weight:800;font-size:var(--fs-cap);border-radius:var(--r-sm);padding:var(--s1) 0}
+@media (hover:hover){.tab:hover{color:var(--ink)}}
+.tab:active{transform:scale(.96)}
+.tab[aria-selected="true"]{color:var(--primary-ink)}
+.tab[aria-selected="true"] svg{stroke-width:2.5}
+
+/* Player sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:50;display:none}
+.sheet-wrap[data-open="true"]{display:block}
+.scrim{position:absolute;inset:0;background:var(--scrim);cursor:pointer}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:96dvh;overflow:auto;background:var(--surface);border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:var(--shadow-sheet);
+  padding:var(--s2) var(--s4) calc(var(--s4) + env(safe-area-inset-bottom));animation:up var(--dur) var(--ease)}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.grab{width:40px;height:5px;border-radius:var(--r-pill);background:var(--line-strong);margin:0 auto var(--s2)}
+.sheet-h{display:flex;align-items:flex-start;gap:var(--s2)}
+.sheet-h h2{flex:1;margin:var(--s2) 0 0;font-size:1.125rem;line-height:1.3;font-weight:900}
+.player{position:relative;margin:var(--s3) auto;background:#000;border-radius:var(--r-md);overflow:hidden;width:100%}
+.player.short{aspect-ratio:9/16;max-height:62dvh;width:auto;max-width:100%}
+.player.long{aspect-ratio:16/9}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.player .loading{position:absolute;inset:0;display:grid;place-items:center;color:#F3ECE2;font-weight:800;font-size:var(--fs-sm)}
+.sheet .meta{font-size:var(--fs-sm);color:var(--ink-2);margin:0 0 var(--s3)}
+.sheet .acts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s2)}
+.sheet .acts .wide{grid-column:1/-1}
+.drillbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);font-size:var(--fs-sm);font-weight:800;color:var(--ink-2);margin-top:var(--s2)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (min-width:40rem){
+  :root{--fs-display:3rem}
+  .series{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sheet{left:50%;right:auto;width:36rem;transform:translateX(-50%);bottom:var(--s4);border-radius:var(--r-lg);animation:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin with Dr. Jia</b><span>Mandarin Insights · lesson library</span></div></div>
+    <button class="btn ghost icon-btn" id="searchBtn" aria-label="Search lessons"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap" id="main" tabindex="-1"></main>
+
+<nav class="bar" aria-label="Sections">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" data-tab="learn" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Learn</button>
+    <button class="tab" role="tab" data-tab="series" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>Courses</button>
+    <button class="tab" role="tab" data-tab="practice" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>Practice</button>
+    <button class="tab" role="tab" data-tab="materials" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>Materials</button>
+  </div>
+</nav>
+
+<div class="sheet-wrap" id="sheetWrap" data-open="false">
+  <div class="scrim" id="scrim" aria-hidden="true"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" id="sheet">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h">
+      <h2 id="sheetTitle"></h2>
+      <button class="btn ghost icon-btn" id="closeBtn" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <div class="player" id="player"></div>
+    <p class="meta" id="sheetMeta"></p>
+    <div class="acts">
+      <button class="btn" id="doneBtn" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Mark done</span></button>
+      <a class="btn" id="ytLink" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>YouTube</a>
+      <button class="btn primary wide" id="nextBtn"><span>Next lesson</span><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
+    </div>
+    <div class="drillbar" id="drillBar" hidden></div>
+  </div>
+</div>
+
+<script>
+const DATA = /*DATA*/;
+const MAT = /*MATERIALS*/;
+
+/* ---------- state ---------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('cn-dr:'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
+};
+let done = store.get('done', {});           // id -> timestamp
+let S = { tab: store.get('tab','learn'), level: store.get('level','beginner'), sub:'all', open:{}, q:'', series:null };
+const ITEMS = DATA.items;
+const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
+const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
+
+const LEVELS = [
+  {id:'beginner', name:'Beginner', note:'HSK 1 to 2'},
+  {id:'intermediate', name:'Intermediate', note:'HSK 3 to 4'},
+  {id:'advanced', name:'Advanced', note:'Idiom & register'}
+];
+const SECTIONS = [
+  {id:'series', name:'Serial Course', note:'Lessons she released as a numbered run. Watch them in order.'},
+  {id:'drills', name:'Repetition Training', note:'Tone, homophone, listening and HSK quizzes. Replay until you answer before she does.'},
+  {id:'pron', name:'Pronunciation', note:'Tones, tricky sounds and what pinyin spelling hides.'},
+  {id:'grammar', name:'Grammar & Patterns'},
+  {id:'vocab', name:'Vocabulary & Word Building'},
+  {id:'phrases', name:'Everyday Phrases', note:'Grouped by the situation you will be in.'},
+  {id:'culture', name:'Culture, Idioms & Slang'},
+  {id:'tips', name:'How to Study', note:'Dr. Jia on why learning stalls and what to do instead.'},
+  {id:'materials', name:'Materials'}
+];
+const TOPIC_ORDER = ['Greetings & goodbyes','Essential phrases',"When you don't understand",'Politeness, thanks & apologies','Conversation & small talk','Feelings & reactions',
+  'Travel & getting around','Eating out','Shopping & money','Home & daily life','Phone calls','Emergencies & help',
+  'Tones','Sounds','Pinyin spelling rules','Tone ear training','Homophone listening','Listening challenges','HSK quizzes',
+  'Idioms (成语)','Slang & internet speak','Culture & etiquette','Holidays & festivals'];
+const LIMIT = 5;
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const thumb = r => `https://i.ytimg.com/vi/${r.id}/${r.k==='long'?'mqdefault':'hqdefault'}.jpg`;
+const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
+const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
+const isDone = id => !!done[id];
+const ICON_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
+function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
+function meta(r, opts={}){
+  const bits = [];
+  if(r.lab && r.lab.length) bits.push(`<span class="tag">${esc(r.lab.join(' · '))}</span>`);
+  bits.push(r.k==='long' ? `Lesson · ${esc(r.d)}` : 'Short');
+  if(r.v) bits.push(`${esc(r.v)} views`);
+  if(opts.level) bits.push(LEVELS.find(l=>l.id===r.lv).name);
+  return bits.map(b=>`<span>${b}</span>`).join('');
+}
+function row(r, ctx, opts={}){
+  const lead = opts.ord!=null
+    ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
+    : `<img class="thumb" src="${thumb(r)}" alt="" loading="lazy" width="56" height="56">`;
+  const label = `${r.t}${isDone(r.id)?', done':''}`;
+  return `<li><button class="row" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
+    <span><span class="t">${esc(r.t)}</span><span class="m">${meta(r,opts)}</span></span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
+}
+function ring(n, total){
+  const C = 2*Math.PI*20, f = total ? n/total : 0;
+  return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle">${n}/${total}</text></svg>`;
+}
+function scard(sid){
+  const s = SER[sid], it = seriesItems(sid), n = it.filter(r=>isDone(r.id)).length;
+  return `<button class="scard" data-series="${sid}" aria-label="${esc(s.name)}, ${it.length} lessons, ${n} done"><span><b>${esc(s.name)}</b><span>${it.length} lessons · ${esc(s.blurb)}</span></span>${ring(n,it.length)}</button>`;
+}
+// context lists drive "Next lesson"
+const CTX = {};
+function list(key, items, opts={}){
+  CTX[key] = items.map(r=>r.id);
+  const open = S.open[key] || items.length <= LIMIT+1;
+  const shown = open ? items : items.slice(0, LIMIT);
+  let h = `<ul class="list" id="l-${key}">${shown.map(r=>row(r,key,opts)).join('')}</ul>`;
+  if(items.length > LIMIT+1) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  return h;
+}
+function grouped(key, items){
+  const groups = {};
+  items.forEach(r => (groups[r.top] = groups[r.top] || []).push(r));
+  const names = Object.keys(groups).sort((a,b)=>(TOPIC_ORDER.indexOf(a)+99)%999-(TOPIC_ORDER.indexOf(b)+99)%999);
+  if(names.length===1) return list(key, items);
+  return names.map(n => `<h3 class="sub">${esc(n)} <span style="font-weight:700">· ${groups[n].length}</span></h3>${list(key+':'+n, groups[n])}`).join('');
+}
+function secHead(id, name, items){
+  const n = items ? items.filter(r=>isDone(r.id)).length : 0;
+  return `<div class="sec-h"><h2 id="h-${id}">${esc(name)}</h2>${items?`<span class="n">${n ? n+' of ' : ''}${items.length}</span>`:''}</div>`;
+}
+
+/* ---------- views ---------- */
+function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
+  return `<p class="kicker">Lesson library</p><h1 class="display">${L.name}</h1><p class="lede">${ITEMS.filter(r=>r.lv===S.level).length} lessons from Dr. Jia, sorted by what they teach.</p>`; }
+function viewLearn(bodyOnly){
+  let items = ITEMS.filter(r => r.lv===S.level);
+  const subs = S.level==='beginner' ? ['HSK 1','HSK 2'] : [];
+  if(S.sub!=='all') items = items.filter(r => (r.lab||[]).includes(S.sub));
+  if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>
+    <div class="seg" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
+    <div id="learnBody">${viewLearn(true)}</div>`;
+  let h = '';
+  if(subs.length) h += `<div class="chips" role="group" aria-label="Dr. Jia's own level labels"><button class="chip" data-sub="all" aria-pressed="${S.sub==='all'}">All</button>${subs.map(s=>`<button class="chip" data-sub="${s}" aria-pressed="${S.sub===s}">${s}</button>`).join('')}</div>`;
+
+  // lead
+  if(S.sub==='all'){
+    const leadSer = {beginner:'survival30', intermediate:'yao', advanced:null}[S.level];
+    if(leadSer){
+      const it = seriesItems(leadSer), n = it.filter(r=>isDone(r.id)).length, next = it.find(r=>!isDone(r.id)) || it[0];
+      h += `<section class="lead" data-ser="${leadSer}" aria-labelledby="leadH"><span class="glyph" aria-hidden="true">${S.level==='beginner'?'学':'要'}</span>
+        <div class="k">${n? 'Keep going' : 'Start here'}</div><h2 id="leadH">${esc(SER[leadSer].name)}</h2><p>${esc(SER[leadSer].blurb)}</p>
+        <div class="meter" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="${it.length}" aria-valuenow="${n}"><i style="width:${100*n/it.length}%"></i></div>
+        <div class="row-actions"><button class="btn" data-play="${next.id}" data-ctx="ser:${leadSer}">${n?'Continue':'Play lesson 1'}</button><span class="count">${n} of ${it.length} done</span></div></section>`;
+    } else {
+      const idi = items.filter(r=>r.sec==='culture');
+      h += `<section class="lead" aria-labelledby="leadH"><span class="glyph" aria-hidden="true">成</span><div class="k">Start here</div><h2 id="leadH">Idioms, slang and register</h2>
+        <p>Dr. Jia's channel is mostly beginner material. This shelf collects what goes beyond it: idioms, internet slang and formal speech.</p>
+        <div class="row-actions"><button class="btn" data-play="${idi[0].id}" data-ctx="lv:culture">Play the first one</button></div></section>`;
+    }
+  }
+
+  SECTIONS.forEach(sec => {
+    if(sec.id==='series'){
+      if(S.sub!=='all') return;
+      const sids = DATA.series.map(s=>s.id).filter(sid => seriesLevel(sid)===S.level);
+      if(!sids.length) return;
+      h += `<section class="sec" aria-labelledby="h-series">${secHead('series', sec.name)}<p class="sec-note">${sec.note}</p><div class="series">${sids.map(scard).join('')}</div></section>`;
+      return;
+    }
+    if(sec.id==='materials'){
+      if(S.sub!=='all') return;
+      const c = MAT.courses.filter(c => c.levels.includes(S.level));
+      h += `<section class="sec" aria-labelledby="h-materials">${secHead('materials', sec.name)}${c.map(courseTile).join('')}
+        <button class="btn more" data-goto="materials">All materials, guides and long lessons</button></section>`;
+      return;
+    }
+    const its = items.filter(r => r.sec===sec.id);
+    if(!its.length) return;
+    let body = ['phrases','pron','culture','drills'].includes(sec.id) ? grouped(`lv:${sec.id}`, its) : list(`lv:${sec.id}`, its);
+    if(sec.id==='drills') body = `<div class="acts" style="margin-bottom:var(--s2)"><button class="btn primary" data-drill="level">Start a drill session</button></div>` + body;
+    h += `<section class="sec" aria-labelledby="h-${sec.id}">${secHead(sec.id, sec.name, its)}${sec.note?`<p class="sec-note">${sec.note}</p>`:''}${body}</section>`;
+  });
+  return h + foot();
+}
+function updateLevel(){
+  $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true);
+  document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
+}
+function viewSeries(){
+  if(S.series){
+    const s = SER[S.series], it = seriesItems(S.series), n = it.filter(r=>isDone(r.id)).length;
+    const label = S.series==='survival30' ? 'Day' : 'Part';
+    return `<p class="kicker"><button class="btn ghost" data-back style="margin-left:calc(-1 * var(--s4))"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(90deg)"><path d="m6 9 6 6 6-6"/></svg>All courses</button></p>
+      <h1 class="display">${esc(s.name)}</h1><p class="lede">${esc(s.blurb)} ${n} of ${it.length} done.</p>
+      ${S.series==='survival30'?'<p class="sec-note">Days 8, 10, 11, 12, 14, 16, 26, 27 and 29 have no day number in their titles; their place is inferred from posting order.</p>':''}
+      <div class="row-actions" style="margin:var(--s4) 0"><button class="btn primary" data-play="${(it.find(r=>!isDone(r.id))||it[0]).id}" data-ctx="ser:${S.series}">${n?'Continue':'Start'}</button></div>
+      <section class="sec" style="margin-top:var(--s4)" aria-label="Lessons">${(()=>{CTX['ser:'+S.series]=it.map(r=>r.id);return `<ul class="list">${it.map((r,i)=>row(r,'ser:'+S.series,{ord: S.series==='survival30'||['apartment','tastes','help','kinship','countries'].includes(S.series) ? (S.series==='survival30'?r.ord:i+1) : i+1, ordLabel: label, level:true})).join('')}</ul>`;})()}</section>` + foot();
+  }
+  const groups = LEVELS.map(l => ({l, sids: DATA.series.map(s=>s.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
+  return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Runs of lessons Dr. Jia released in order, plus themes she kept coming back to. Progress saves on this device.</p>
+    ${groups.map(g=>`<section class="sec" aria-labelledby="h-s-${g.l.id}">${secHead('s-'+g.l.id, g.l.name)}<div class="series">${g.sids.map(scard).join('')}</div></section>`).join('')}` + foot();
+}
+function viewPractice(){
+  const drills = ITEMS.filter(r=>r.sec==='drills');
+  const topics = ['Tone ear training','Homophone listening','Listening challenges','HSK quizzes'];
+  const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1 and 2.'};
+  const watched = Object.entries(done).sort((a,b)=>a[1]-b[1]).map(([id])=>byId[id]).filter(Boolean);
+  const dayMs = 864e5, now = Date.now();
+  const due = watched.filter(r => now - done[r.id] > dayMs);
+  CTX['review'] = (due.length?due:watched).map(r=>r.id);
+  return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
+    <p class="lede">Short drills played back to back. Say each answer aloud, then let her confirm it.</p>
+    <div class="tile feature"><h3>Mixed drill session</h3><p>${drills.length} drills, shuffled, across all four types.</p><div class="acts"><button class="btn primary" data-drill="all">Start mixed session</button></div></div>
+    ${topics.map(t=>{const n=drills.filter(r=>r.top===t).length;return `<div class="tile"><h3>${esc(t)}</h3><p>${blurbs[t]} ${n} drills.</p><div class="acts"><button class="btn" data-drill="${esc(t)}">Start</button></div></div>`}).join('')}
+    <section class="sec" aria-labelledby="h-review">${secHead('review','Review what you watched')}
+      <p class="sec-note">Lessons you marked done more than a day ago come back here, oldest first.</p>
+      ${watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`}
+    </section>` + foot();
+}
+function courseTile(c){
+  return `<div class="tile${c.feature?' feature':''}"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><div class="acts"><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></div></div>`;
+}
+function viewMaterials(){
+  const longs = ITEMS.filter(r=>r.k==='long');
+  const promos = ITEMS.filter(r=>r.sec==='materials');
+  CTX['long'] = longs.map(r=>r.id);
+  return `<p class="kicker">Materials</p><h1 class="display">Courses, guides & long lessons</h1>
+    <section class="sec" aria-labelledby="h-courses">${secHead('courses','Courses with Dr. Jia')}${MAT.courses.map(courseTile).join('')}</section>
+    <section class="sec" aria-labelledby="h-free">${secHead('free','Free guides')}${MAT.free.map(courseTile).join('')}</section>
+    <section class="sec" aria-labelledby="h-long">${secHead('long','Long-form lessons', longs)}<p class="sec-note">Her full-length YouTube lessons, 5 to 15 minutes each.</p>${list('long', longs, {level:true})}</section>
+    <section class="sec" aria-labelledby="h-ig">${secHead('ig','Recent on Instagram')}<p class="sec-note">Grammar cards and reels from @mandarininsights. Opens Instagram.</p>
+      <ul class="list">${MAT.ig.map(p=>`<li><a class="row" href="https://www.instagram.com${p.path}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="ord" aria-hidden="true"><span><small>${p.kind}</small>${p.day}</span></span><span><span class="t">${esc(p.text)}</span><span class="m"><span>${esc(p.date)}</span></span></span><span class="state" aria-hidden="true" style="border:0;color:var(--ink-3)"><svg viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></span></a></li>`).join('')}</ul></section>
+    <section class="sec" aria-labelledby="h-promo">${secHead('promo','Announcements', promos)}${list('promo', promos)}</section>
+    <section class="sec" aria-labelledby="h-follow">${secHead('follow','Follow')}<div class="acts" style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div></section>` + foot();
+}
+function viewSearch(){
+  const q = S.q.trim().toLowerCase();
+  const res = q ? ITEMS.filter(r => r.t.toLowerCase().includes(q) || (r.top||'').toLowerCase().includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v)) : [];
+  CTX['search'] = res.map(r=>r.id);
+  return `<p class="kicker">Search</p><h1 class="display">Find a lesson</h1>
+    <form class="search" role="search" id="searchForm"><label class="vh" for="q">Search all ${ITEMS.length} lessons</label><input id="q" type="search" placeholder="Try 了, tones, bill, goodbye" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"><button class="btn" type="button" data-tab-go="learn">Cancel</button></form>
+    <p class="sec-note" aria-live="polite">${q ? `${res.length} result${res.length===1?'':'s'}, most viewed first` : `Searches titles and topics across all ${ITEMS.length} lessons.`}</p>
+    ${q && !res.length ? `<div class="empty"><b>No lessons match "${esc(S.q)}"</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search',{level:true})).join('')}</ul>`}`;
+}
+function foot(){
+  return `<footer class="foot"><p>All ${ITEMS.length} lessons: ${ITEMS.filter(r=>r.k==='short').length} Shorts and ${ITEMS.filter(r=>r.k==='long').length} long videos from <a href="https://www.youtube.com/@Mandarin-Insights" target="_blank" rel="noopener">Mandarin Insights</a>, collected ${MAT.crawled}.</p>
+  <p>Levels Dr. Jia labels herself (Beginner, HSK 1, HSK 2) show in red on each lesson. Every other level and topic is assigned from what the lesson teaches.</p><p>Videos and course content belong to Dr. Jia.</p></footer>`;
+}
+
+/* ---------- render ---------- */
+function render(focusMain){
+  const v = S.tab==='search' ? viewSearch() : S.tab==='series' ? viewSeries() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn();
+  $('#main').innerHTML = v;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab===S.tab)));
+  rove();
+  if(S.tab==='search'){ const i=$('#q'); i.focus(); i.setSelectionRange(i.value.length,i.value.length); }
+  else if(focusMain){ $('#main').focus({preventScroll:true}); }
+}
+function go(tab){ S.tab=tab; if(tab!=='series') S.series=null; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
+
+/* ---------- player ---------- */
+let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '';
+function openPlayer(id, ctx, keepQueue){
+  const r = byId[id]; if(!r) return;
+  cur = r;
+  if(keepQueue){ qi = queue.indexOf(id); }
+  else {
+    if(ctx && !CTX[ctx] && ctx.startsWith('ser:')) CTX[ctx] = seriesItems(ctx.slice(4)).map(x=>x.id);
+    if(ctx && CTX[ctx]){ queue = CTX[ctx].slice(); qi = queue.indexOf(id); } else { queue=[id]; qi=0; }
+  }
+  if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
+  $('#sheetTitle').textContent = r.t;
+  $('#sheetMeta').textContent = [r.lab&&r.lab.join(', '), r.k==='long'?`Lesson, ${r.d}`:'Short', r.v&&`${r.v} views`, LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
+  const p = $('#player'); p.className = 'player ' + (r.k==='long'?'long':'short');
+  p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(r.t)}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
+  p.querySelector('iframe').addEventListener('load', () => { const l=p.querySelector('.loading'); if(l) l.remove(); }, {once:true});
+  $('#ytLink').href = url(r);
+  syncDone();
+  const hasNext = queue && qi > -1 && qi < queue.length-1;
+  $('#nextBtn').disabled = !hasNext; $('#nextBtn').setAttribute('aria-disabled', String(!hasNext));
+  $('#nextBtn').querySelector('span').textContent = hasNext ? (drillName?'Next drill':'Next lesson') : 'End of list';
+  const db = $('#drillBar');
+  if(drillName){ db.hidden=false; db.textContent = `${drillName}: ${qi+1} of ${queue.length}`; } else db.hidden = true;
+  $('#sheetWrap').dataset.open = 'true';
+  document.body.style.overflow = 'hidden';
+  $('#closeBtn').focus();
+}
+function closePlayer(){
+  $('#player').innerHTML = ''; $('#sheetWrap').dataset.open = 'false'; document.body.style.overflow = ''; drillName='';
+  refreshProgress(); if(lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+  else { const b = document.querySelector(`[data-id="${cur&&cur.id}"]`); if(b) b.focus(); }
+}
+function refreshProgress(){
+  // update done marks without rebuilding the page, so focus can return to the trigger
+  document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', r.t+(d?', done':'')); });
+  document.querySelectorAll('.scard[data-series]').forEach(c=>{ const w=document.createElement('div'); w.innerHTML=scard(c.dataset.series); const nc=w.firstElementChild; c.replaceWith(nc); });
+  const lead=document.querySelector('.lead[data-ser]');
+  if(lead){ const it=seriesItems(lead.dataset.ser), n=it.filter(r=>isDone(r.id)).length; const m=lead.querySelector('.meter');
+    m.setAttribute('aria-valuenow',n); m.firstElementChild.style.width=(100*n/it.length)+'%'; lead.querySelector('.count').textContent=`${n} of ${it.length} done`;
+    const b=lead.querySelector('[data-play]'); const nx=it.find(r=>!isDone(r.id))||it[0]; b.dataset.play=nx.id; b.textContent=n?'Continue':'Play lesson 1'; lead.querySelector('.k').textContent=n?'Keep going':'Start here'; }
+}
+function syncDone(){ const d = isDone(cur.id); const b=$('#doneBtn'); b.setAttribute('aria-pressed', String(d)); b.querySelector('span').textContent = d ? 'Done' : 'Mark done'; }
+function startDrill(kind){
+  let pool = ITEMS.filter(r=>r.sec==='drills');
+  if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
+  else if(kind!=='all') pool = pool.filter(r=>r.top===kind);
+  pool = pool.map(r=>[Math.random(),r]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  CTX['drill'] = pool.map(r=>r.id);
+  drillName = kind==='all' ? 'Mixed session' : kind==='level' ? `${LEVELS.find(l=>l.id===S.level).name} drills` : kind;
+  openPlayer(pool[0].id, 'drill');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, a'); if(!t) return;
+  if(t.matches('.tab')) return go(t.dataset.tab);
+  if(t.dataset.tabGo) return go(t.dataset.tabGo);
+  if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
+  if(t.dataset.sub){ S.sub=t.dataset.sub; render(false); const b=document.querySelector(`[data-sub="${S.sub}"]`); b&&b.focus(); return; }
+  if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
+  if(t.dataset.series){ S.tab='series'; S.series=t.dataset.series; window.scrollTo(0,0); render(true); return; }
+  if(t.hasAttribute('data-back')){ S.series=null; render(true); return; }
+  if(t.dataset.goto) return go(t.dataset.goto);
+  if(t.dataset.drill) return startDrill(t.dataset.drill);
+  if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
+  if(t.matches('.row') && t.dataset.id){ drillName=''; return openPlayer(t.dataset.id, t.dataset.ctx); }
+});
+$('#searchBtn').addEventListener('click', () => { S.tab='search'; render(false); });
+$('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; const pos=e.target.selectionStart; render(false); const i=$('#q'); i.setSelectionRange(pos,pos); } });
+$('#main').addEventListener('submit', e => { e.preventDefault(); const i=$('#q'); i&&i.blur(); });
+$('#closeBtn').addEventListener('click', closePlayer);
+$('#scrim').addEventListener('click', closePlayer);
+$('#doneBtn').addEventListener('click', () => { if(isDone(cur.id)) delete done[cur.id]; else done[cur.id]=Date.now(); store.set('done',done); syncDone(); });
+$('#nextBtn').addEventListener('click', () => { if(queue && qi < queue.length-1) openPlayer(queue[qi+1], null, true); });
+function rove(){ document.querySelectorAll('[role="tablist"]').forEach(l=>{ l.querySelectorAll('[role="tab"]').forEach(t=>t.tabIndex = t.getAttribute('aria-selected')==='true'?0:-1); }); }
+document.addEventListener('keydown', e => {
+  const tab = e.target.closest && e.target.closest('[role="tab"]');
+  if(tab && ['ArrowRight','ArrowLeft','ArrowDown','ArrowUp','Home','End'].includes(e.key)){
+    const tabs=[...tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')]; let i=tabs.indexOf(tab);
+    i = e.key==='Home'?0 : e.key==='End'?tabs.length-1 : (i + (['ArrowRight','ArrowDown'].includes(e.key)?1:-1) + tabs.length) % tabs.length;
+    e.preventDefault(); const sel = tabs[i].dataset.level ? `[data-level="${tabs[i].dataset.level}"]` : `.tab[data-tab="${tabs[i].dataset.tab}"]`;
+    tabs[i].click(); const n=document.querySelector(sel); if(n && document.activeElement!==n) n.focus(); return;
+  }
+  if($('#sheetWrap').dataset.open!=='true') return;
+  if(e.key==='Escape'){ e.preventDefault(); closePlayer(); }
+  if(e.key==='Tab'){ const f=[...$('#sheet').querySelectorAll('button:not([disabled]),a[href],iframe')]; const a=f[0], z=f[f.length-1];
+    if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); } }
+});
+render(false);
+</script>
+</body>
+</html>
