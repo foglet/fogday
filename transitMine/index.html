@@ -307,8 +307,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   }
   /* The map is drawn at a fraction of the screen's resolution (pixelRatio, set by the script) and scaled up
      with nearest-neighbour, so every map pixel becomes a visible block */
-  .mapboxgl-canvas { image-rendering: auto; }   /* v10 grain (default): scaled up smoothly, shades blend */
-  .tm-v9 .mapboxgl-canvas { image-rendering: pixelated; image-rendering: crisp-edges; }   /* v9: hard 4px blocks */
+  .mapboxgl-canvas { image-rendering: auto; }   /* 2× (default), v10 grain: scaled up smoothly, shades blend */
+  .tm-v9 .mapboxgl-canvas { image-rendering: pixelated; image-rendering: crisp-edges; }   /* 4×, v9: hard blocks */
   .title, .maps-btn, .map-legend-panel, .oa-detail-panel > div, .oa-status, .oa-results, .oa-field, .maps-menu, .oa-zoomread, .oa-pin,
   .mapboxgl-map .mapboxgl-ctrl-group, .mapboxgl-ctrl.mapboxgl-ctrl-attrib {
     border-radius: 0 !important;
@@ -417,8 +417,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </ul>
   </div>
 </div>
-<div class="oa-blocks" hidden>  <!-- pixel look: v10 fine grain (default), v9 chunky blocks, HD -->
-  <button type="button" class="oa-pin" aria-label="Pixel look" title="Pixel look">v10</button>
+<div class="oa-blocks" hidden>  <!-- block size: 2× smooth (default), 4× hard blocks, 1× full resolution -->
+  <button type="button" class="oa-pin" aria-label="Block size" title="Block size">2×</button>
 </div>
 <div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
 <div class="oa-search oa-collapsed" role="search" hidden>
@@ -440,13 +440,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function savedZoom() { try { var z = parseFloat(localStorage.getItem('tm-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
   /* BLOCK: each map pixel covers this many CSS pixels (the canvas is drawn at 1/BLOCK and scaled back up). */
-  /* Looks, by Pixel Waves level (the button cycles them; the choice is remembered):
-       v10 (default): 2× blocks, scaled up smoothly so neighbouring pixels blend (fine grain, as on /fog)
-       v9:            4× blocks with hard edges (chunky, as on /waves)
-       HD:            full resolution, smooth */
-  var LOOKS = { v10: { block: 2, hard: false, texel: 2 }, v9: { block: 4, hard: true, texel: 4 }, HD: { block: 1, hard: false, texel: 2 } };
-  var ORDER = ['v10', 'v9', 'HD'];
-  function savedLook() { try { var l = localStorage.getItem('tm-look'); return LOOKS[l] ? l : 'v10'; } catch (e) { return 'v10'; } }
+  /* Block sizes (the button cycles 2× → 4× → 1×; the choice is remembered), by Pixel Waves level:
+       2× (default): scaled up smoothly so neighbouring pixels blend, the v10 fine grain (as on /fog)
+       4×:           hard-edged blocks, the v9 chunky look (as on /waves)
+       1×:           full resolution */
+  var LOOKS = { '2×': { block: 2, hard: false, texel: 2 }, '4×': { block: 4, hard: true, texel: 4 }, '1×': { block: 1, hard: false, texel: 2 } };
+  var ORDER = ['2×', '4×', '1×'];
+  function savedLook() { try { var l = localStorage.getItem('tm-look'); return LOOKS[l] ? l : '2×'; } catch (e) { return '2×'; } }
   var LOOK = savedLook(), BLOCK = LOOKS[LOOK].block;
   document.documentElement.classList.toggle('tm-v9', LOOKS[LOOK].hard);
   /* Mapbox GL v3 ignores its pixelRatio option and draws at window.devicePixelRatio, read whenever the map's size
@@ -934,7 +934,7 @@ document.addEventListener('DOMContentLoaded', function () {
      As in Blocky Planet, the block textures are random noise tinted with a color: grass on land, water in the seas,
      sand and snow where the base map has them. Lines get square ends and mitred corners; label halos go hard-edged.
      A night sky with stars rings the globe. The transit layers' own colors are left alone, so the legend still reads. */
-  var TEX = 16;   // 16×16 texels, each 2 CSS px across (v10, HD) or 4 (v9): one texture set per size
+  var TEX = 16;   // 16×16 texels, each 2 CSS px across (1×, 2×) or 4 (4×): one texture set per size
   var BLOCKS = {
     'mc-grass': { base: [30, 50, 27],   spread: .16, fleck: [[42, 68, 34], .12] },   /* grass and water by night: dark enough */
     'mc-water': { base: [20, 38, 98],   spread: .12, fleck: [[30, 56, 136], .10] },  /* that the transit lines read as on /transit/ */
@@ -1004,9 +1004,9 @@ document.addEventListener('DOMContentLoaded', function () {
   map.on('style.load', blockify);
   window.tmMap = map;   // for poking at the planet from the console
 
-  /* Look button: v10 → v9 → HD → v10 … */
+  /* Block size button: 2× → 4× → 1× → 2× … */
   var blockBtn = blocksCtrl.querySelector('.oa-pin');
-  function showBlock() { blockBtn.textContent = LOOK; blockBtn.setAttribute('aria-label', 'Pixel look: ' + LOOK); }
+  function showBlock() { blockBtn.textContent = LOOK; blockBtn.setAttribute('aria-label', 'Block size ' + LOOK); }
   blockBtn.addEventListener('click', function () {
     LOOK = ORDER[(ORDER.indexOf(LOOK) + 1) % ORDER.length]; BLOCK = LOOKS[LOOK].block;
     try { localStorage.setItem('tm-look', LOOK); } catch (e) {}
