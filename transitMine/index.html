@@ -184,12 +184,15 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   /* Square buttons in the stack (Cities), same size as zoom */
   .oa-regions[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
 
-  /* Zoom readout (above zoom/compass): the current zoom, live. Display only — taps pass through to the map. */
+  /* Zoom readout (above zoom/compass): the current zoom, live. Tap it to go back to the map's default zoom. */
   .oa-zoomread {
-    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; pointer-events: none;
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; cursor: pointer;
     background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
     color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
   }
+  .mapboxgl-ctrl button.oa-zoomread:not(:disabled):hover { background-color: transparent; }
+  .oa-zoomread:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .oa-zoomread:hover { color: var(--accent); } }
   .mapboxgl-ctrl.oa-regions { position: relative; }
   .oa-pin {
     display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
@@ -346,6 +349,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-pin svg, .oa-search.oa-collapsed .oa-field svg { filter: none; }
   .oa-pin:hover, .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { background: #5a6aa8 !important; color: var(--accent); }
   .oa-zoomread { font: 400 .7rem/1 var(--pixel); text-shadow: 1px 1px 0 #000; color: var(--ink); }
+  .mapboxgl-ctrl button.oa-zoomread:not(:disabled):hover { background: #5a6aa8; color: var(--accent); }   /* the hovered-button blue */
   .oa-blocks .oa-pin { font: 400 .7rem/1 var(--pixel); }
   .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 2px solid #000; box-shadow: var(--bevel); }
   .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 2px solid #000; }
@@ -429,7 +433,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 <div class="oa-blocks" hidden>  <!-- block size: 2× smooth (default), 4× hard blocks, 1× full resolution -->
   <button type="button" class="oa-pin" aria-label="Block size" title="Block size">2×</button>
 </div>
-<div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
+<button type="button" class="oa-zoomread" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
 <div class="oa-search oa-collapsed" role="search" hidden>
   <div class="oa-field" title="Search cities">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -524,7 +528,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Zoom: whatever zoom the visitor pinches or +/−s to is the zoom every flight keeps (Cities, search, the title),
      and it's remembered in this browser for their next visit. The readout shows it live, to one decimal. */
-  function showZoom() { var t = (Math.round(map.getZoom() * 10) / 10).toFixed(1); zoomRead.textContent = t; zoomRead.setAttribute('aria-label', 'Zoom level ' + t); }
+  function showZoom() { var t = (Math.round(map.getZoom() * 10) / 10).toFixed(1); zoomRead.textContent = t; zoomRead.setAttribute('aria-label', 'Zoom level ' + t + '. Reset to ' + HOME.zoom); }
+  /* Tap the readout: back to the default zoom (the front matter's), staying where the map is; remembered as usual */
+  zoomRead.addEventListener('click', function () {
+    if (calm.matches) map.jumpTo({ zoom: HOME.zoom }); else map.easeTo({ zoom: HOME.zoom, duration: 600 });
+  });
   map.on('zoom', showZoom);
   map.on('zoomend', function () { try { localStorage.setItem('tm-zoom', String(Math.round(map.getZoom() * 10) / 10)); } catch (e) {} });
   showZoom();
