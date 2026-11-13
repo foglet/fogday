@@ -809,27 +809,23 @@ document.addEventListener('DOMContentLoaded', function () {
     go({ center: isl.center, bearing: 0 });
   }
 
-  /* All fifty as small orange dots (the book's orange) and names when zoomed out; at island zoom the island speaks for itself */
+  /* All fifty as small orange dots (the book's orange) when zoomed out; the map style names them. At island zoom the island speaks for itself */
   map.on('load', function () {
     map.addSource('ri-islands', { type: 'geojson', data: { type: 'FeatureCollection', features: ISLANDS.map(function (i) {
       return { type: 'Feature', properties: { name: i.name, slug: i.slug }, geometry: { type: 'Point', coordinates: i.center } }; }) } });
     map.addLayer({ id: 'ri-dots', type: 'circle', source: 'ri-islands', maxzoom: 7,
       paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3, 6, 5], 'circle-color': '#ff5500',
                'circle-stroke-color': '#021724', 'circle-stroke-width': 1.5 } });
-    map.addLayer({ id: 'ri-names', type: 'symbol', source: 'ri-islands', minzoom: 2.5, maxzoom: 7,
-      layout: { 'text-field': ['get', 'name'], 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'], 'text-size': 12,
-                'text-offset': [0, 0.9], 'text-anchor': 'top', 'text-optional': true },
-      paint: { 'text-color': '#e3eaee', 'text-halo-color': '#021724', 'text-halo-width': 1.5 } });
     map.on('mouseenter', 'ri-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'ri-dots', function () { map.getCanvas().style.cursor = ''; });
     if (ARRIVE) flyToIsland(ARRIVE, true);
   });
 
-  /* Tap: an island's dot (or name) picks it; anywhere else shows that spot */
+  /* Tap: an island's dot picks it; anywhere else shows that spot */
   map.on('click', function (e) {
     if (menuWasOpen) return;
     var r = matchMedia('(pointer: coarse)').matches ? 16 : 8, p = e.point;
-    var layers = ['ri-dots', 'ri-names'].filter(function (id) { return map.getLayer(id); });
+    var layers = ['ri-dots'].filter(function (id) { return map.getLayer(id); });
     var hit = layers.length ? map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: layers })[0] : null;
     if (hit) { flyToIsland(bySlug(hit.properties.slug)); return; }
     current = null; markIsland(null);
