@@ -5,6 +5,7 @@ description: Metro, rail, tram, trolley bus, monorail, cable car and ferry lines
 # transitMine: the Transit Connected map (/transit/) in a Minecraft skin, after Blocky Planet (bowerbyte.com/posts/blocky-planet/).
 # Same Mapbox style and data; the map is drawn at low resolution and scaled up with hard pixels, water and land get
 # noise-tinted block textures, and every city change spins the globe.
+sitemap: false   # reached only from /transit/, not listed anywhere
 mapbox_style: cildewrgb007h9jm16r0j102k
 access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
 center: [21.22, 45.75]
@@ -29,7 +30,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{ page.title }} · Fogday Studios</title>
 <meta name="description" content="{{ page.description }}">
-<meta name="robots" content="index,follow">
+<meta name="robots" content="noindex,nofollow">  <!-- reached only from the lego button on /transit/ -->
 <meta name="theme-color" content="#021724">
 
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
@@ -194,6 +195,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-zoomread:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (hover: hover) { .oa-zoomread:hover { color: var(--accent); } }
   .mapboxgl-ctrl.oa-regions { position: relative; }
+  .tc-switch .oa-pin { text-decoration: none; }   /* a link styled as a stack button */
   .oa-pin {
     display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
     background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
@@ -390,7 +392,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </button>
     <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>  <!-- the list comes from _data/maps.yml, same as the other map pages -->
       <ul>
-        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == '/transit/' %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
         {% endfor %}
         <li class="all"><a href="{{ '/maps/' | relative_url }}">All maps →</a></li>
       </ul>
@@ -433,6 +435,9 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
 <div class="oa-blocks" hidden>  <!-- block size: 2× smooth (default), 4× hard blocks, 1× full resolution -->
   <button type="button" class="oa-pin" aria-label="Block size" title="Block size">2×</button>
 </div>
+<div class="tc-switch" hidden>  <!-- the other version of this map, at the same spot and zoom (icons: Phosphor, MIT, phosphoricons.com) -->
+  <a class="oa-pin" href="{{ '/transit/' | relative_url }}" aria-label="Bird’s-eye version" title="Bird’s-eye version"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M189.66,66.34a8,8,0,0,0-11.32,0L148.69,96H107.31L77.66,66.34A8,8,0,0,0,66.34,77.66L96,107.31v41.38L66.34,178.34a8,8,0,0,0,11.32,11.32L107.31,160h41.38l29.65,29.66a8,8,0,0,0,11.32-11.32L160,148.69V107.31l29.66-29.65A8,8,0,0,0,189.66,66.34ZM112,112h32v32H112Zm26.51-50.67a44,44,0,1,1,56.16,56.16A7.86,7.86,0,0,1,192,118a8,8,0,0,1-2.67-15.54,28,28,0,1,0-35.74-35.74,8,8,0,1,1-15.08-5.34ZM224,180a44,44,0,0,1-85.49,14.67,8,8,0,0,1,15.08-5.34,28,28,0,1,0,35.74-35.74,8,8,0,0,1,5.34-15.08A44.07,44.07,0,0,1,224,180ZM117.49,194.67a44,44,0,1,1-56.16-56.16,8,8,0,0,1,5.34,15.08,28,28,0,1,0,35.74,35.74,8,8,0,0,1,15.08,5.34ZM32,76a44,44,0,0,1,85.49-14.67,8,8,0,1,1-15.08,5.34,28,28,0,1,0-35.74,35.74A8,8,0,0,1,64,118a7.86,7.86,0,0,1-2.67-.46A44.07,44.07,0,0,1,32,76Z"/></svg></a>
+</div>
 <button type="button" class="oa-zoomread" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
 <div class="oa-search oa-collapsed" role="search" hidden>
   <div class="oa-field" title="Search cities">
@@ -466,12 +471,21 @@ document.addEventListener('DOMContentLoaded', function () {
      changes. So the page tells it the screen's pixel ratio is 1/BLOCK: the canvas is drawn at 1/BLOCK of the
      window's size, and CSS scales it back up with hard edges. */
   try { Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: function () { return 1 / BLOCK; } }); } catch (e) {}
+  /* Coming from the other version (the drone / lego button): its link carries the spot and zoom as #lng/lat/zoom.
+     The map opens there and the address is cleaned up, so a reload opens as usual. */
+  var ARRIVE = (function () {
+    var m = /^#(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(location.hash);
+    if (!m) return null;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    return { center: [+m[1], +m[2]], zoom: Math.min(22, +m[3]) };
+  })();
   mapboxgl.accessToken = '{{ page.access_token }}';
   var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
     projection: 'globe',   // a planet, so a city change can spin it
-    center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
+    center: ARRIVE ? ARRIVE.center : HOME.center,
+    zoom: ARRIVE ? ARRIVE.zoom : savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
 
@@ -515,6 +529,7 @@ document.addEventListener('DOMContentLoaded', function () {
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
   var blocksCtrl = document.querySelector('.oa-blocks');   asControl(blocksCtrl);
+  var switchCtrl = document.querySelector('.tc-switch');   asControl(switchCtrl);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
 
@@ -533,6 +548,13 @@ document.addEventListener('DOMContentLoaded', function () {
   zoomRead.addEventListener('click', function () {
     if (calm.matches) map.jumpTo({ zoom: HOME.zoom }); else map.easeTo({ zoom: HOME.zoom, duration: 600 });
   });
+  /* The switch button's link follows the map, so a tap (or open-in-new-tab) lands on the same spot and zoom */
+  var switchLink = switchCtrl.querySelector('a'), switchBase = switchLink.getAttribute('href');
+  function aimSwitch() {
+    var c = map.getCenter().wrap(), z = Math.round(map.getZoom() * 10) / 10;
+    switchLink.href = switchBase + '#' + c.lng.toFixed(4) + '/' + c.lat.toFixed(4) + '/' + z;
+  }
+  map.on('moveend', aimSwitch); aimSwitch();
   map.on('zoom', showZoom);
   map.on('zoomend', function () { try { localStorage.setItem('tm-zoom', String(Math.round(map.getZoom() * 10) / 10)); } catch (e) {} });
   showZoom();

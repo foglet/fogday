@@ -191,6 +191,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-zoomread:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (hover: hover) { .oa-zoomread:hover { color: var(--accent); } }
   .mapboxgl-ctrl.oa-regions { position: relative; }
+  .tc-switch .oa-pin { text-decoration: none; }   /* a link styled as a stack button */
   .oa-pin {
     display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
     background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
@@ -354,6 +355,9 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </ul>
   </div>
 </div>
+<div class="tc-switch" hidden>  <!-- the other version of this map, at the same spot and zoom (icons: Phosphor, MIT, phosphoricons.com) -->
+  <a class="oa-pin" href="{{ '/transitMine/' | relative_url }}" aria-label="Blocky planet version" title="Blocky planet version"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M243.58,72.84,197.29,49.7C191.54,39.24,177.21,32,160,32c-22.43,0-40,12.3-40,28a20.77,20.77,0,0,0,1.06,6.53l-19.52,9.76A53.69,53.69,0,0,0,80,72c-22.43,0-40,12.3-40,28a20.77,20.77,0,0,0,1.06,6.53L12.42,120.84A8,8,0,0,0,8,128v64a8,8,0,0,0,4.42,7.16l64,32a8,8,0,0,0,7.16,0l160-80A8,8,0,0,0,248,144V80A8,8,0,0,0,243.58,72.84ZM80,151.06,33.89,128,51,119.45c7.24,5.29,17.48,8.55,29,8.55,22.43,0,40-12.3,40-28a21.77,21.77,0,0,0-4.35-12.88L131,79.45c7.24,5.29,17.48,8.55,29,8.55,18.38,0,33.49-8.26,38.35-19.88L222.11,80ZM160,48c13.74,0,24,6.34,24,12s-10.26,12-24,12-24-6.34-24-12S146.26,48,160,48ZM80,88c13.74,0,24,6.34,24,12s-10.26,12-24,12c-9.67,0-17.61-3.14-21.47-7a8.29,8.29,0,0,0-.84-.93A6.62,6.62,0,0,1,56,100C56,94.34,66.26,88,80,88ZM24,140.94l48,24v46.12l-48-24Zm64,70.12V164.94l144-72v46.12Z"/></svg></a>
+</div>
 <button type="button" class="oa-zoomread" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
 <div class="oa-search oa-collapsed" role="search" hidden>
   <div class="oa-field" title="Search cities">
@@ -373,11 +377,20 @@ document.addEventListener('DOMContentLoaded', function () {
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function savedZoom() { try { var z = parseFloat(localStorage.getItem('tc-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
+  /* Coming from the other version (the drone / lego button): its link carries the spot and zoom as #lng/lat/zoom.
+     The map opens there and the address is cleaned up, so a reload opens as usual. */
+  var ARRIVE = (function () {
+    var m = /^#(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/.exec(location.hash);
+    if (!m) return null;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    return { center: [+m[1], +m[2]], zoom: Math.min(22, +m[3]) };
+  })();
   mapboxgl.accessToken = '{{ page.access_token }}';
   var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
-    center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
+    center: ARRIVE ? ARRIVE.center : HOME.center,
+    zoom: ARRIVE ? ARRIVE.zoom : savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
   function go(view) {
@@ -392,6 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
+  var switchCtrl = document.querySelector('.tc-switch');   asControl(switchCtrl);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
   var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
 
@@ -410,6 +424,13 @@ document.addEventListener('DOMContentLoaded', function () {
   zoomRead.addEventListener('click', function () {
     if (calm.matches) map.jumpTo({ zoom: HOME.zoom }); else map.easeTo({ zoom: HOME.zoom, duration: 600 });
   });
+  /* The switch button's link follows the map, so a tap (or open-in-new-tab) lands on the same spot and zoom */
+  var switchLink = switchCtrl.querySelector('a'), switchBase = switchLink.getAttribute('href');
+  function aimSwitch() {
+    var c = map.getCenter().wrap(), z = Math.round(map.getZoom() * 10) / 10;
+    switchLink.href = switchBase + '#' + c.lng.toFixed(4) + '/' + c.lat.toFixed(4) + '/' + z;
+  }
+  map.on('moveend', aimSwitch); aimSwitch();
   map.on('zoom', showZoom);
   map.on('zoomend', function () { try { localStorage.setItem('tc-zoom', String(Math.round(map.getZoom() * 10) / 10)); } catch (e) {} });
   showZoom();
