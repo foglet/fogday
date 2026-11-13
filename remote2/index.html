@@ -1,0 +1,841 @@
+---
+layout: null   # self-contained page with the Transit Connected / Oyster Atlas interface, not the shared map layout
+title: The Digital Atlas of Remote Islands
+header_title: Remote Islands   # the title button; the full title is used for the tab and search engines
+description: The fifty islands of Judith Schalansky's Atlas of Remote Islands, mapped to give a sense of their isolation. Search them, list them by ocean, read about each. A map by Fogday Studios.
+mapbox_style: cig7qho11000fa3lz844zk6in
+access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJOeXZlMF9FIn0.I3vP7TOUVxyKTaW27p_IqA
+center: [-144.347, -27.598]   # opening view: Rapa Iti, alone in the Pacific (as on /remote/)
+zoom: 11
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#021724">
+
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&display=swap">
+
+<style>
+  /* The Digital Atlas of Remote Islands — the same interface as Transit Connected and the Oyster Atlas (oysteratlas.com),
+     one self-contained page. Always dark.
+     Class names are kept from the Oyster Atlas (oa-…) so fixes can be copied between the two pages. */
+  :root {
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+    --kb: 0px;  /* on-screen keyboard height while searching (set by the script) */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; }
+  #map { position: fixed; inset: 0; }
+
+  /* Frosted panels over the map */
+  .map-legend-panel, .title {
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: var(--ink); border: 1px solid var(--line);
+  }
+
+  /* Title, top left (centered on phones): tap it to fly to another city */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0 0 0 12px; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .sky-text { color: #4a90c8; }
+  .title-text { background-image: linear-gradient(to right, #2f7fc1, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The title and, beside it, the chevron that opens the list of all Fogday maps */
+  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
+  .title-row .title { margin: 0; }
+  .maps-btn {
+    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: #4a90c8;
+  }
+  .maps-btn svg { transition: transform .2s ease; }
+  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
+  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The maps menu: the same drop-down as on fogday.com/maps and the other map pages
+     (_includes/map-menu.html), in the site's dark-mode colors and type */
+  .maps-menu {
+    --surface: #1e2a36; --site-line: #2a3846; --title-1: #7cc4f0;   /* fogday.css dark mode */
+    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
+    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px;
+    animation: maps-menu-in .16s ease-out;
+  }
+  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
+  .maps-menu[hidden] { display: none; }
+  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
+  .maps-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .12em;   /* the site's nav links (fogday.css "nav a") */
+  }
+  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .maps-menu a:hover { color: #ff5500; }   /* the site's nav hover (--hot) */
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: var(--title-1); }
+  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }  /* dot = you are here */
+  .maps-menu .ext {  /* AIGA forward-and-right arrow = another site; masked so it takes the text color */
+    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
+    -webkit-mask: url("{{ '/assets/icons/Aiga_forwardandrightarrow.svg' | relative_url }}") center / contain no-repeat;
+            mask: url("{{ '/assets/icons/Aiga_forwardandrightarrow.svg' | relative_url }}") center / contain no-repeat;
+  }
+  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
+  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
+  @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
+  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
+
+  /* Bottom left, above the Mapbox logo: the legend */
+  .map-bottom-left {
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab));
+    display: flex; flex-direction: column; gap: 8px;
+    width: 320px; max-width: calc(100% - 24px - var(--sal) - var(--sar)); max-height: calc(100% - 180px - var(--sat) - var(--sab));
+    pointer-events: none;   /* its empty area mustn't swallow taps meant for the map or, on narrow phones, the right-hand controls */
+  }
+  .map-bottom-left > * { pointer-events: auto; }
+  /* Legend: starts collapsed; opens only when tapped. Just its title while shut, the panel once open. */
+  .map-legend-panel { min-height: 0; overflow-y: auto; border-radius: 8px; border-color: color-mix(in srgb, var(--line) 50%, transparent);
+                      transition: background-color .18s ease, border-color .18s ease; align-self: flex-start; }
+  .map-legend-panel:has(.map-legend:not([open])) { background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
+                        font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend summary::after { content: " +"; color: var(--muted); }
+  .map-legend[open] summary::after { content: " –"; }
+  .map-legend summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+  .map-legend ul { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 6px; font-size: .9rem; }
+  .map-legend li { display: flex; align-items: center; gap: 10px; }
+  .map-legend .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); }  /* route swatch (the atlas uses dots) */
+  .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
+
+  /* Tapped spot, above the legend (same card as the atlas's picked oyster): place, coordinates, local time.
+     No panel: each line gets its own frosted background, only as wide as its text; all three flush left. */
+  /* Text lines up with "Transport mode": legend border 1px + summary padding 14px, minus each line's 8px padding = 7px */
+  .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 7px; max-width: calc(100% - 7px); font-size: .9rem; line-height: 1.35; }
+  .oa-detail-panel[hidden] { display: none; }
+  .oa-detail-panel > div {
+    width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .oa-detail-name { font-weight: 700; }
+  .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
+  .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .oa-detail-offset { color: var(--muted); }
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
+  .oa-detail-ampm { font-size: .667em; }   /* AM/PM at 2/3 the size of the digits */
+  /* Time, a space, then its GMT offset, in one pill; each keeps its own look */
+  .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
+  /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
+  .tc-spot-wrap { pointer-events: none; }
+  .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
+
+  /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--kb)); }
+
+  /* Zoom + compass: dark panel, 50% border, thin muted icons (same as the atlas) */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group button { width: 30px; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint); background-size: 18px 18px; }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E"); }
+
+  /* Square buttons in the stack (Cities), same size as zoom */
+  .oa-regions[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
+
+  /* Zoom readout (above zoom/compass): the current zoom, live. Tap it to go back to the map's default zoom. */
+  .oa-zoomread {
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; cursor: pointer;
+    background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
+    color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+  }
+  .mapboxgl-ctrl button.oa-zoomread:not(:disabled):hover { background-color: transparent; }
+  .oa-zoomread:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .oa-zoomread:hover { color: var(--accent); } }
+  .mapboxgl-ctrl.oa-regions { position: relative; }
+  .oa-pin {
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+    background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
+    color: var(--muted); cursor: pointer;
+  }
+  .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: var(--panel); }
+  .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { color: var(--accent); }   /* menu open */
+  .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Cities menu: the same pop-out as oysteratlas.com's Regions menu. It opens to the left of the folded-map button,
+     on every screen size, with no panel and no boxes: the "Cities" title and each row are bare text with a navy halo
+     so they read over the map. The menu itself is as wide as its longest line. */
+  .oa-regions-pop {
+    position: absolute; right: calc(100% + 8px); bottom: 0; padding: 0;
+    max-height: calc(100vh - 160px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0;  /* lines stacked flush */
+    color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left;
+  }
+  .oa-regions-pop[hidden] { display: none; }
+  .oa-regions-title, .oa-regions-pop li button span {
+    display: block; width: fit-content; box-sizing: border-box; padding: 2px 8px; border-radius: 4px;
+    text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);   /* no box behind the line: a navy halo, like the icons */
+  }
+  .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 0; font-size: .9rem; }
+  /* The row's button is the tap target; its span carries the background */
+  .oa-regions-pop li button {
+    all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap;
+  }
+  .oa-regions-pop li button:hover { color: var(--accent); }
+  /* Beat Mapbox's light-gray hover on control buttons (it sticks after a tap on phones): only the line's own background shows */
+  .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
+  .oa-regions-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Search for any city (Mapbox geocoding). Starts minimized to its magnifying glass. */
+  .oa-search { display: flex; flex-direction: column; }
+  .mapboxgl-ctrl.oa-search { width: 270px; max-width: calc(100vw - 20px); padding: 0; border: 0; background: none; color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  .oa-field {
+    display: flex; align-items: center; gap: 8px; width: 270px; max-width: 100%; height: 35px; padding: 0 12px; margin-left: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; transition: width .18s ease; cursor: text;
+  }
+  .oa-field:not(:focus-within) { border-color: color-mix(in srgb, var(--line) 50%, transparent); }
+  .oa-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .oa-field svg { flex: none; color: var(--muted); }
+  .oa-input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; color: var(--ink); font: 400 .9rem/1 var(--font); }
+  .oa-input::placeholder { color: var(--muted); }
+  .oa-input:focus { outline: none; }
+  .oa-input::-webkit-search-cancel-button { display: none; }
+  .oa-status, .oa-results { border-radius: 8px; background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .oa-status { margin: 4px 0 0; padding: 6px 10px; align-self: flex-start; width: fit-content; max-width: 100%; font-size: .8rem; color: var(--muted); }
+  .oa-status:empty { display: none; }
+  .oa-results { list-style: none; margin: 4px 0 0; padding: 4px; font-size: .9rem; max-height: calc(5 * 40px); overflow-y: auto; overscroll-behavior: contain; }
+  .oa-results:empty { display: none; }
+  .oa-result { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+  .oa-result:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .oa-result[aria-selected="true"] { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .oa-name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .oa-where { margin-left: auto; padding-left: 12px; color: var(--muted); text-align: right; line-height: 1.25; max-width: 55%; }
+  .oa-search.oa-collapsed { width: auto; }
+  .oa-search.oa-collapsed .oa-results, .oa-search.oa-collapsed .oa-status { display: none; }
+  .oa-search.oa-collapsed .oa-field { width: 32px; height: 32px; border-radius: 4px; gap: 0; padding: 0; justify-content: center; cursor: pointer; }
+  .oa-search.oa-collapsed .oa-input { flex: 0 0 0; width: 0; padding: 0; opacity: 0; }
+
+
+  /* No backgrounds on the icon buttons: zoom/compass, Cities, the search glass (while minimized) and the zoom readout
+     lose their panels; icons and numbers get a navy halo so they read over the map. The open search bar keeps its panel. */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
+  .oa-pin, .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background: transparent; border-color: transparent; }
+  .oa-search.oa-collapsed .oa-field { background: transparent; border-color: transparent; }
+  .oa-zoomread { background: transparent; border-color: transparent; text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
+  .oa-pin svg, .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
+  @media (hover: hover) { .oa-pin:hover, .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { color: var(--accent); } }
+
+  /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
+  @media (pointer: coarse) {
+    .oa-pin { width: 44px; height: 44px; }
+    .oa-zoomread { width: 44px; height: 44px; font-size: .85rem; }
+    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; height: 42px; }
+    .oa-field { height: 44px; }
+    .oa-search.oa-collapsed .oa-field { width: 44px; height: 44px; }
+    .oa-input { font-size: 16px; }  /* under 16px, iPhone Safari zooms the page */
+    .mapboxgl-ctrl.oa-search:not(.oa-collapsed), .mapboxgl-ctrl.oa-search:not(.oa-collapsed) .oa-field { width: 290px; }
+    .oa-result { min-height: 44px; }
+    /* Cities rows stay single-spaced (no gaps) but each is a 44px tap target: 24px leading + 10px above and below */
+    .oa-regions-pop li button span { padding-top: 10px; padding-bottom: 10px; line-height: 24px; }
+    .oa-results { max-height: calc(5 * 44px); }
+  }
+  /* Map credits (© Mapbox © OpenStreetMap · © Fogday Studios | @fogfish), styled as on oysteratlas.com:
+     muted to sit back — smaller text, soft color, the panels' navy behind.
+     Mapbox allows restyling the text if it stays legible: the 90% navy keeps --muted at 4.5:1+ even over white map.
+     The Mapbox logo (.mapboxgl-ctrl-logo) must not be styled, so it's left alone. */
+  .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4;
+    background: color-mix(in srgb, var(--bg) 90%, transparent); }
+  .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
+  .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
+  /* Phones fold the credits into an (i) button; its icon is dark, so lighten it to show on the navy */
+  .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
+</style>
+  /* ---- Remote Islands additions ---- */
+
+  /* Credits: always written out in full (no folded (i) button on phones), and the bottom-left card
+     sits just above them however many lines they wrap to (--attrib, set by the script) */
+  .map-bottom-left { bottom: calc(var(--attrib, 50px) + 8px + var(--sab)); }
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib { max-width: calc(100vw - 110px - var(--sal) - var(--sar)); }
+
+  /* The picked island, above the credits: name, ocean · what it is, coordinates, local time, then Wikipedia's description */
+  .oa-detail-panel { margin-left: 0; max-width: 100%; }
+  .oa-detail-desc, .oa-detail-credit { font-size: .85rem; line-height: 1.4; }
+  .oa-detail-panel > .oa-detail-desc { width: auto; margin-top: 6px; padding: 6px 8px; max-height: 9.6em; overflow-y: auto; overscroll-behavior: contain; }
+  .oa-detail-credit { margin-top: 2px; color: var(--muted); }
+  .oa-detail-credit a { color: var(--muted); }
+  .oa-detail-credit a:hover, .oa-detail-credit a:focus-visible { color: var(--ink); }
+  .oa-detail-sub { margin-top: 2px; color: var(--muted); }
+
+  /* Islands menu: the Cities pop-out, with the book's five oceans as headings */
+  .oa-regions-pop .ri-ocean { margin-top: 6px; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .oa-regions-pop .ri-ocean span { padding-top: 2px; padding-bottom: 2px; line-height: 1.4; }
+  .oa-regions-pop li button[aria-current="true"] span { font-weight: 700; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="map" role="region" aria-label="{{ page.title }} map"></div>
+<!-- Recolors Mapbox's zoom/compass icons to the muted icon color -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="oa-ctrl-tint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="-0.6017 0 0 0 0.6813  -0.6817 0 0 0 0.7753  -0.7400 0 0 0 0.8420  0 0 0 1 0"/>
+  </filter>
+</svg>
+
+<div class="top">
+  <div class="title-row">
+    <h1 style="margin:0;display:flex"><button type="button" class="title" data-home title="Go to another island"><span class="title-text">{{ page.header_title }}</span></button></h1>
+    <button type="button" class="maps-btn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>  <!-- the list comes from _data/maps.yml, same as the other map pages -->
+      <ul>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url or m.url == '/remote/' %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% endfor %}
+        <li class="all"><a href="{{ '/maps/' | relative_url }}">All maps →</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div class="map-bottom-left">
+<div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the picked island or tapped spot; filled by the script -->
+</div>
+
+<!-- Moved into the map's bottom-right stack by the script: search, Islands, zoom readout, then zoom -->
+<div class="oa-regions" hidden>
+  <button type="button" class="oa-pin" aria-expanded="false" aria-controls="ri-islands" aria-label="Islands" title="Islands">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+  </button>
+  <div class="oa-regions-pop" id="ri-islands" hidden>  <!-- opens to the left of the button, as on oysteratlas.com; filled by the script -->
+    <p class="oa-regions-title"><span class="sky-text">Islands</span></p>
+    <ul aria-label="Fly to an island"></ul>
+  </div>
+</div>
+<button type="button" class="oa-zoomread" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
+<div class="oa-search oa-collapsed" role="search" hidden>
+  <div class="oa-field" title="Search the fifty islands">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="oa-search-input" class="oa-input" type="search"
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="oa-search-results"
+           autocomplete="off" spellcheck="false" placeholder="E.g., Pitcairn, Bouvet or Pacific" aria-label="Search the fifty islands">
+  </div>
+  <p id="oa-search-status" class="oa-status" aria-live="polite"></p>
+  <ul id="oa-search-results" class="oa-results" role="listbox" aria-label="Matching islands"></ul>
+</div>
+
+<script>
+/* The fifty islands of Judith Schalansky's Atlas of Remote Islands, in the book's order and oceans.
+   Each: [name in the book, Wikipedia article, longitude, latitude, Wikidata short description (CC0)].
+   Names and order: the book's table of contents. Articles: the list on en.wikipedia.org/wiki/Atlas_of_Remote_Islands.
+   Coordinates: each article's own (South Keeling corrected to 12.17°S; Wikipedia's coordinate API had it north). */
+var OCEANS = [
+  ['Arctic Ocean', [
+    ['Lonely Island', 'Uyedineniya Island', 82.5, 77.4833, 'Island in the central Kara Sea'],
+    ['Bear Island', 'Bjørnøya', 19.0475, 74.44, 'Southernmost island of Svalbard, Norway'],
+    ['Rudolf Island', 'Rudolf Island', 58.56, 81.7672, 'Island of the Franz Josef Archipelago, Russia']]],
+  ['Atlantic Ocean', [
+    ['St Kilda', 'St Kilda, Scotland', -8.5875, 57.815, 'Archipelago in the Outer Hebrides, Scotland'],
+    ['Ascension Island', 'Ascension Island', -14.3667, -7.9333, 'Island in the South Atlantic Ocean'],
+    ['Brava', 'Brava, Cape Verde', -24.7, 14.8667, 'Island of Cape Verde'],
+    ['Annobón', 'Annobón', 5.6375, -1.435, 'Southern island province of Equatorial Guinea'],
+    ['St Helena', 'Saint Helena', -5.715, -15.965, 'Island belonging to the United Kingdom'],
+    ['Trindade', 'Trindade and Martim Vaz', -29.325, -20.525, 'Archipelago in Brazil'],
+    ['Bouvet Island', 'Bouvet Island', 3.36, -54.42, 'Uninhabited subantarctic volcanic island'],
+    ['Tristan da Cunha', 'Tristan da Cunha', -12.285, -37.115, 'Group of islands in the South Atlantic'],
+    ['Southern Thule', 'Southern Thule', -27.23, -59.42, 'Island group in the South Sandwich Islands']]],
+  ['Indian Ocean', [
+    ['Saint Paul Island', 'Île Saint-Paul', 77.5167, -38.7167, 'Island in the southern Indian Ocean'],
+    ['South Keeling Islands', 'South Keeling Islands', 96.8667, -12.1667, 'Australian island group'],
+    ['Possession Island', 'Île de la Possession', 51.7575, -46.4075, 'Largest and only inhabited Crozet Island'],
+    ['Diego Garcia', 'Diego Garcia', 72.4111, -7.3133, 'Atoll in the Chagos Archipelago'],
+    ['Amsterdam Island', 'Île Amsterdam', 77.55, -37.8333, 'Island in the southern Indian Ocean'],
+    ['Christmas Island', 'Christmas Island', 105.6275, -10.49, 'External territory of Australia'],
+    ['Tromelin', 'Tromelin Island', 54.5247, -15.8922, 'Disputed island in the Indian Ocean']]],
+  ['Pacific Ocean', [
+    ['Napuka', 'Napuka', -141.2311, -14.1701, 'Atoll in French Polynesia'],
+    ['Rapa Iti', 'Rapa Iti', -144.33, -27.6, 'Island in French Polynesia, France'],
+    ['Robinson Crusoe', 'Robinson Crusoe Island', -78.8411, -33.6414, 'Island of Chile'],
+    ['Howland Island', 'Howland Island', -176.6165, 0.8072, 'US coral island in the central Pacific Ocean'],
+    ['Macquarie Island', 'Macquarie Island', 158.86, -54.63, 'Subantarctic island of Australia'],
+    ['Fangataufa', 'Fangataufa', -138.75, -22.25, 'Atoll in French Polynesia'],
+    ['Atlasov Island', 'Atlasov Island', 155.5642, 50.8608, 'Northernmost island of the Kuril chain'],
+    ['Taongi Atoll', 'Bokak Atoll', 169, 14.5333, 'Atoll in the Marshall Islands'],
+    ['Norfolk Island', 'Norfolk Island', 167.95, -29.0333, 'External territory of Australia'],
+    ['Pukapuka', 'Pukapuka', -165.85, -10.8833, 'Atoll in the northern Cook Islands'],
+    ['Antipodes Island', 'Antipodes Islands', 178.78, -49.68, 'Subantarctic archipelago of New Zealand'],
+    ['Floreana', 'Floreana Island', -90.4342, -1.2975, 'Island in the Galápagos, Ecuador'],
+    ['Banaba', 'Banaba', 169.5369, -0.8594, 'Island in the Pacific, Kiribati'],
+    ['Campbell Island', 'Campbell Island, New Zealand', 169.145, -52.54, 'Subantarctic island of New Zealand'],
+    ['Pingelap', 'Pingelap', 160.7028, 6.2181, 'Atoll in Pohnpei, Micronesia'],
+    ['Easter Island', 'Easter Island', -109.35, -27.12, 'Island in the southeastern Pacific'],
+    ['Pitcairn Island', 'Pitcairn Island', -130.1067, -25.0667, 'Only inhabited island of the Pitcairn Islands'],
+    ['Semisopochnoi', 'Semisopochnoi Island', 179.6008, 51.9514, 'Island in the Aleutians, Alaska'],
+    ['Clipperton Atoll', 'Clipperton Island', -109.2167, 10.3, 'Atoll in the eastern Pacific Ocean'],
+    ['Raoul Island', 'Raoul Island', -177.9167, -29.2667, 'Volcano in the Kermadec Islands, New Zealand'],
+    ['Socorro Island', 'Socorro Island', -110.975, 18.7844, 'Volcanic island off the west coast of Mexico'],
+    ['Iwo Jima', 'Iwo Jima', 141.3244, 24.7803, 'One of the Japanese Volcano Islands'],
+    ['St George Island', 'St. George, Alaska', -169.5596, 56.6055, 'Pribilof Islands, Alaska'],
+    ['Tikopia', 'Tikopia', 168.8319, -12.2965, 'Island in the Solomon Islands'],
+    ['Pagan', 'Pagan (island)', 145.7667, 18.1167, 'Island of the Northern Mariana Islands'],
+    ['Cocos Island', 'Cocos Island', -87.0611, 5.5281, 'National park island off Costa Rica'],
+    ['Takuu', 'Takuu Atoll', 156.9833, -4.75, 'Atoll in Papua New Guinea']]],
+  ['Antarctic Ocean', [
+    ['Laurie Island', 'Laurie Island', -44.5181, -60.7286, 'Island in the South Orkney Islands'],
+    ['Deception Island', 'Deception Island', -60.6417, -62.9583, 'Active volcanic island in the South Shetlands'],
+    ['Franklin Island', 'Franklin Island (Antarctica)', 168.3167, -76.0833, 'Island in the Ross Sea, Antarctica'],
+    ['Peter I Island', 'Peter I Island', -90.5833, -68.85, 'Norwegian island in Antarctica']]]
+];
+
+document.addEventListener('DOMContentLoaded', function () {
+  var ISLANDS = [];
+  OCEANS.forEach(function (o) { o[1].forEach(function (r) {
+    ISLANDS.push({ name: r[0], article: r[1], center: [r[2], r[3]], what: r[4], ocean: o[0],
+                   slug: r[0].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-') });
+  }); });
+  function bySlug(s) { return ISLANDS.filter(function (i) { return i.slug === s; })[0] || null; }
+
+  var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
+  var FLY = { speed: 2.7, curve: 1, easing: function (t) { return t; } };          /* the Transit Connected glide */
+  var ISLAND_ZOOM = 8;   /* flights keep the visitor's zoom (every island at one scale, as in the book), but never land farther out than this */
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function savedZoom() { try { var z = parseFloat(localStorage.getItem('ri-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
+  /* A link to one island (fogday.com/remote2/#pitcairn-island) opens there */
+  var ARRIVE = bySlug(location.hash.slice(1));
+  mapboxgl.accessToken = '{{ page.access_token }}';
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
+    center: ARRIVE ? ARRIVE.center : HOME.center,
+    zoom: Math.max(savedZoom() != null ? savedZoom() : HOME.zoom, ARRIVE ? ISLAND_ZOOM : 0),
+    attributionControl: false
+  });
+  /* Full credits, written out on every screen size (never folded into an (i) button) */
+  map.addControl(new mapboxgl.AttributionControl({ compact: false, customAttribution: [
+    'Islands: <a href="https://en.wikipedia.org/wiki/Atlas_of_Remote_Islands"><i>Atlas of Remote Islands</i>, Judith Schalansky</a>',
+    'Descriptions: <a href="https://www.wikipedia.org/">Wikipedia</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>',
+    '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
+  ] }), 'bottom-left');
+  function go(view) {
+    view = Object.assign({}, view);
+    view.zoom = Math.max(map.getZoom(), ISLAND_ZOOM);
+    if (calm.matches) map.jumpTo(view); else map.flyTo(Object.assign({}, FLY, view));
+  }
+
+  /* Keep the bottom-left card just above the credits, however many lines they wrap to */
+  var attrib = map.getContainer().querySelector('.mapboxgl-ctrl-attrib');
+  function placeCard() { if (attrib) document.documentElement.style.setProperty('--attrib', (attrib.getBoundingClientRect().height + 10) + 'px'); }
+  if (attrib && window.ResizeObserver) new ResizeObserver(placeCard).observe(attrib);
+  window.addEventListener('resize', placeCard); placeCard();
+
+  /* Bottom-right stack, top to bottom: search, Islands, zoom readout, zoom + compass (added bottom first) */
+  function asControl(el) {
+    map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
+                     onRemove: function () { el.remove(); } }, 'bottom-right');
+  }
+  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+  var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
+  var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
+  var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
+
+  /* A tap that only shuts a menu (Islands, Maps, an open search) shouldn't also show the tapped spot */
+  var menuWasOpen = false;
+  document.addEventListener('pointerdown', function () {
+    menuWasOpen = !document.getElementById('maps-menu').hidden || isOpen() ||
+                  !searchCard.classList.contains('oa-collapsed');
+  }, true);
+
+  /* Zoom readout: live, to one decimal; tap it to go back to the default zoom. The zoom is remembered for the next visit. */
+  function showZoom() { var t = (Math.round(map.getZoom() * 10) / 10).toFixed(1); zoomRead.textContent = t; zoomRead.setAttribute('aria-label', 'Zoom level ' + t + '. Reset to ' + HOME.zoom); }
+  zoomRead.addEventListener('click', function () {
+    if (calm.matches) map.jumpTo({ zoom: HOME.zoom }); else map.easeTo({ zoom: HOME.zoom, duration: 600 });
+  });
+  map.on('zoom', showZoom);
+  map.on('zoomend', function () { try { localStorage.setItem('ri-zoom', String(Math.round(map.getZoom() * 10) / 10)); } catch (e) {} });
+  showZoom();
+
+  /* +/− step the zoom by 0.1, as on Transit Connected */
+  var zTarget = null;
+  map.getContainer().querySelector('.mapboxgl-ctrl-zoom-in').parentNode.addEventListener('click', function (e) {
+    var b = e.target.closest('button'), dir = b && b.classList.contains('mapboxgl-ctrl-zoom-in') ? 1 : b && b.classList.contains('mapboxgl-ctrl-zoom-out') ? -1 : 0;
+    if (!dir) return;
+    e.stopPropagation(); e.preventDefault();
+    var base = zTarget != null && map.isEasing() ? zTarget : Math.round(map.getZoom() * 10) / 10;
+    zTarget = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), Math.round((base + dir * 0.1) * 10) / 10));
+    if (calm.matches) map.jumpTo({ zoom: zTarget }); else map.easeTo({ zoom: zTarget, duration: 160 });
+  }, true);
+
+  /* Lines run up into place one by one (same motion as the atlas) */
+  var LINE_IN = [{ opacity: 0, transform: 'translateY(18px)', easing: 'cubic-bezier(.2,.7,.35,1)' },
+                 { opacity: 1, transform: 'translateY(-2px)', offset: .78, easing: 'ease-in-out' },
+                 { opacity: 1, transform: 'none' }];
+  function slideLines(els) {
+    els = Array.prototype.slice.call(els);
+    var gap = els.length > 1 ? Math.min(60, 380 / (els.length - 1)) : 0, at = 0;
+    return els.map(function (el, i) {
+      if (i) at += gap + (Math.random() * 2 - 1) * Math.min(15, gap / 3);
+      return el.animate(LINE_IN, { duration: 420, delay: Math.max(0, at), fill: 'backwards' });
+    });
+  }
+
+  /* Islands menu: the Cities pop-out from Transit Connected, all fifty grouped by the book's oceans */
+  var pin = regionsCtrl.querySelector('.oa-pin'), pop = document.getElementById('ri-islands'), popList = pop.querySelector('ul');
+  OCEANS.forEach(function (o) {
+    var h = document.createElement('li'), hs = document.createElement('span');
+    h.className = 'ri-ocean'; h.setAttribute('role', 'presentation'); hs.textContent = o[0]; h.appendChild(hs); popList.appendChild(h);
+    o[1].forEach(function (r) {
+      var li = document.createElement('li'), b = document.createElement('button'), s = document.createElement('span');
+      b.type = 'button'; b.dataset.name = r[0]; s.textContent = r[0]; b.appendChild(s); li.appendChild(b); popList.appendChild(li);
+    });
+  });
+  var rows = Array.prototype.slice.call(pop.querySelectorAll('li button')), popAnims = [];
+  var POP_OUT = [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }];
+  function isOpen() { return pin.getAttribute('aria-expanded') === 'true'; }
+  function markIsland(isl) {
+    rows.forEach(function (x) { if (isl && x.dataset.name === isl.name) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); });
+  }
+  function setPop(open) {
+    if (open === isOpen()) return;
+    pin.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) search.minimize();
+    popAnims.forEach(function (a) { a.cancel(); }); popAnims = [];
+    pop.hidden = false;
+    if (open) { var cur = pop.querySelector('[aria-current="true"]'); if (cur) cur.scrollIntoView({ block: 'center' }); }
+    if (calm.matches || !pop.animate) { pop.hidden = !open; return; }
+    if (open) {
+      /* only the first lines animate in; the rest are below the fold of the scrolling menu */
+      popAnims = slideLines([pop.querySelector('.oa-regions-title')].concat(Array.prototype.slice.call(pop.querySelectorAll('li')).slice(0, 14)));
+    } else {
+      var a = pop.animate(POP_OUT, { duration: 240, easing: 'cubic-bezier(0,0,.2,1)', fill: 'forwards' });
+      popAnims = [a];
+      a.onfinish = function () { popAnims = []; pop.hidden = true; a.cancel(); };
+    }
+  }
+  rows.forEach(function (b) { b.addEventListener('click', function () {
+    var isl = ISLANDS.filter(function (i) { return i.name === b.dataset.name; })[0];
+    flyToIsland(isl); setPop(false);
+  }); });
+
+  /* Maps menu (the chevron beside the title) */
+  var mapsBtn = document.querySelector('.maps-btn'), mapsMenu = document.getElementById('maps-menu');
+  function setMaps(open) {
+    if (open === (mapsBtn.getAttribute('aria-expanded') === 'true')) return;
+    mapsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    mapsMenu.hidden = !open;
+    if (open) { setPop(false); search.minimize(); }
+  }
+  mapsBtn.addEventListener('click', function () { setMaps(mapsBtn.getAttribute('aria-expanded') !== 'true'); });
+  document.addEventListener('pointerdown', function (e) { if (!mapsBtn.contains(e.target) && !mapsMenu.contains(e.target)) setMaps(false); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); } });
+  pin.addEventListener('click', function () { setPop(!isOpen()); });
+  document.addEventListener('pointerdown', function (e) { if (isOpen() && !regionsCtrl.contains(e.target)) setPop(false); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { setPop(false); pin.focus(); } });
+
+  /* Title: fly to another island (never the one on screen, or the last one in this tab) */
+  var current = null;
+  document.querySelector('[data-home]').addEventListener('click', function () {
+    var last = null;
+    try { last = sessionStorage.getItem('ri-island'); } catch (e) {}
+    var pool = ISLANDS.filter(function (i) { return i !== current && i.name !== last; });
+    var isl = pool[Math.floor(Math.random() * pool.length)];
+    try { sessionStorage.setItem('ri-island', isl.name); } catch (e) {}
+    flyToIsland(isl);
+  });
+
+  /* Search: the fifty islands, by the book's name, the Wikipedia name (Bjørnøya, Uyedineniya …), ocean or what it is.
+     Accents don't matter. Names that start with the text come first. */
+  function fold(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  var search = (function () {
+    var input = document.getElementById('oa-search-input'), list = document.getElementById('oa-search-results'),
+        status = document.getElementById('oa-search-status'), field = searchCard.querySelector('.oa-field');
+    var HINT = 'Type an island, a country or an ocean', shown = [], active = -1;
+    function setStatus(t) { status.textContent = t; }
+    function minimize(keepFocus) {
+      searchCard.classList.add('oa-collapsed'); input.setAttribute('aria-expanded', 'false');
+      if (!keepFocus && document.activeElement === input) input.blur();
+    }
+    function expand() {
+      searchCard.classList.remove('oa-collapsed');
+      if (shown.length) input.setAttribute('aria-expanded', 'true');
+      setPop(false);
+    }
+    function setActive(i) {
+      active = i;
+      Array.prototype.forEach.call(list.children, function (li, k) { li.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+      if (list.children[i]) { input.setAttribute('aria-activedescendant', list.children[i].id); list.children[i].scrollIntoView({ block: 'nearest' }); }
+      else input.removeAttribute('aria-activedescendant');
+    }
+    function render() {
+      list.textContent = '';
+      shown.forEach(function (f, i) {
+        var li = document.createElement('li'), name = document.createElement('span'), where = document.createElement('span');
+        li.className = 'oa-result'; li.id = 'oa-opt-' + i; li.setAttribute('role', 'option'); li.dataset.index = i;
+        name.className = 'oa-name'; name.textContent = f.name;
+        where.className = 'oa-where'; where.textContent = f.ocean;
+        li.appendChild(name); li.appendChild(where); list.appendChild(li);
+      });
+      setActive(-1);
+      input.setAttribute('aria-expanded', shown.length ? 'true' : 'false');
+    }
+    function lookup() {
+      var q = fold(input.value.trim());
+      if (!q) { shown = []; render(); setStatus(HINT); return; }
+      var first = [], rest = [];
+      ISLANDS.forEach(function (i) {
+        var names = fold(i.name + ' ' + i.article);
+        if (names.indexOf(q) === 0 || names.indexOf(' ' + q) >= 0) first.push(i);
+        else if (fold(names + ' ' + i.ocean + ' ' + i.what).indexOf(q) >= 0) rest.push(i);
+      });
+      shown = first.concat(rest);
+      render();
+      setStatus(shown.length ? '' : 'None of the fifty islands match “' + input.value.trim() + '”.');
+    }
+    function pick(i, byKeyboard) {
+      var f = shown[i];
+      if (!f) return;
+      flyToIsland(f);
+      minimize(byKeyboard);
+    }
+    field.addEventListener('click', function () { if (document.activeElement !== input) input.focus(); });
+    input.addEventListener('focus', expand);
+    input.addEventListener('input', function () { expand(); lookup(); });
+    input.addEventListener('keydown', function (e) {
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && searchCard.classList.contains('oa-collapsed')) { e.preventDefault(); expand(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (shown.length) setActive(Math.min(active + 1, shown.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (shown.length) setActive(Math.max(active - 1, 0)); }
+      else if (e.key === 'Enter') { e.preventDefault(); pick(active >= 0 ? active : 0, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; shown = []; render(); setStatus(HINT); minimize(); }
+    });
+    list.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    list.addEventListener('click', function (e) { var li = e.target.closest('.oa-result'); if (li) pick(+li.dataset.index); });
+    document.addEventListener('pointerdown', function (e) { if (!searchCard.contains(e.target)) minimize(); }, true);
+    setStatus(HINT);
+    return { minimize: function () { minimize(); } };
+  })();
+
+  /* iPhone keyboard: raise the bottom-right stack so the search sits just above it */
+  var vv = window.visualViewport;
+  function liftForKeyboard() {
+    var root = document.documentElement, list = document.getElementById('oa-search-results'), kb = 0, lift = 0;
+    if (vv && vv.scale < 1.01 && document.activeElement && document.activeElement.id === 'oa-search-input')
+      kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    list.style.maxHeight = '';
+    if (kb > 0) {
+      var css = getComputedStyle(root), cur = parseFloat(css.getPropertyValue('--kb')) || 0;
+      var gap = window.innerHeight - (searchCard.getBoundingClientRect().bottom + cur);
+      lift = Math.max(0, kb + 8 - gap);
+      var room = (window.innerHeight - kb - 8) - ((parseFloat(css.getPropertyValue('--sat')) || 0) + 8);
+      var rest = searchCard.getBoundingClientRect().height - list.getBoundingClientRect().height;
+      var fiveRows = list.firstElementChild ? 5 * list.firstElementChild.offsetHeight : 220;
+      list.style.maxHeight = Math.max(44, Math.min(fiveRows, room - rest)) + 'px';
+    }
+    root.style.setProperty('--kb', lift + 'px');
+  }
+  if (vv) { vv.addEventListener('resize', liftForKeyboard); vv.addEventListener('scroll', liftForKeyboard); }
+  document.addEventListener('focusin', liftForKeyboard);
+  document.addEventListener('focusout', function () { setTimeout(liftForKeyboard, 50); });
+
+  /* The card, above the credits. For an island: its name, ocean · what it is, coordinates, local time,
+     then the opening of its Wikipedia article (fetched live, CC BY-SA 4.0) with a link to the article.
+     For a tap on open water: the place (if any), coordinates and local time, as on Transit Connected. */
+  var spotCard = document.getElementById('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotZone = null, spotAnim = null;
+  var spotWrap = document.createElement('div'), spotDot = document.createElement('div');
+  spotWrap.className = 'tc-spot-wrap'; spotDot.className = 'tc-spot'; spotWrap.appendChild(spotDot);
+  var spotMarker = new mapboxgl.Marker({ element: spotWrap });
+  var SPOT_LIFE = 15000, spotLife = 0, spotFade = null;
+  function spotStop() { clearTimeout(spotLife); if (spotFade) { spotFade.cancel(); spotFade = null; } }
+  function spotStart() {
+    spotStop();
+    if (!calm.matches && spotDot.animate)
+      spotFade = spotDot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPOT_LIFE, easing: 'linear', fill: 'forwards' });
+    spotLife = setTimeout(function () { spotStop(); spotMarker.remove(); }, SPOT_LIFE);
+  }
+  var tzReady = null;
+  function loadTz() {
+    return tzReady || (tzReady = new Promise(function (ok) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@photostructure/tz-lookup@11.7.0/tz.js';
+      s.onload = function () { ok(window.tzlookup || null); };
+      s.onerror = function () { tzReady = null; ok(null); };
+      document.head.appendChild(s);
+    }));
+  }
+  function placeName(lng, lat) {
+    var url = 'https://api.mapbox.com/search/geocode/v6/reverse?longitude=' + lng + '&latitude=' + lat +
+              '&language=en&access_token=' + mapboxgl.accessToken;
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+      var c = {};
+      (j.features || []).forEach(function (f) {
+        var p = f.properties || {};
+        Object.keys(p.context || {}).forEach(function (k) { if (!c[k]) c[k] = p.context[k]; });
+        if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
+      });
+      var parts = [(c.place || c.locality || c.district || {}).name, (c.region || {}).name, (c.country || {}).name]
+                    .filter(Boolean).filter(function (n, i, a) { return a.indexOf(n) === i; });
+      return parts.length ? parts.join(', ') : 'Open water';
+    }).catch(function () { return 'Place name unavailable'; });
+  }
+  var wikiCache = {};
+  function wikiSummary(article) {   // Wikipedia's REST API allows calls from any site (CORS)
+    return wikiCache[article] || (wikiCache[article] = fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' +
+        encodeURIComponent(article.replace(/ /g, '_')) + '?redirect=true')
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .catch(function () { delete wikiCache[article]; return null; }));
+  }
+  function offsetText(zone) {
+    try {
+      var o = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(new Date())
+                .filter(function (p) { return p.type === 'timeZoneName'; })[0].value;
+      return o === 'GMT' ? 'GMT+0' : o;
+    } catch (e) { return zone; }
+  }
+  function setTime(el, zone) {
+    el.textContent = '';
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(new Date());
+      var digits = parts.filter(function (p) { return p.type !== 'dayPeriod'; }).map(function (p) { return p.value; }).join('').trim();
+      var period = parts.filter(function (p) { return p.type === 'dayPeriod'; }).map(function (p) { return p.value; }).join('');
+      el.appendChild(document.createTextNode(digits));
+      if (period) { var ap = document.createElement('span'); ap.className = 'oa-detail-ampm'; ap.textContent = period;
+                    el.appendChild(document.createTextNode(' ')); el.appendChild(ap); }
+    } catch (e) {}
+  }
+  function tick() {
+    clearTimeout(spotTimer);
+    var t = spotCard.querySelector('.oa-detail-time'), o = spotCard.querySelector('.oa-detail-offset');
+    if (!t || !spotZone) return;
+    setTime(t, spotZone); o.textContent = offsetText(spotZone);
+    spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
+  }
+  function dms(v, pos, neg) {
+    var t = Math.round(Math.abs(v) * 3600), d = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    return two(d) + '°' + two(m) + '′' + two(sec) + '″' + (v < 0 ? neg : pos);
+  }
+  function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
+  function showSpot(lngLat, isl) {
+    var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
+    if (!isl) { spotMarker.setLngLat(ll).addTo(map); spotStart(); }
+    Promise.all([isl ? wikiSummary(isl.article) : placeName(lng, lat), loadTz()]).then(function (r) {
+      if (mine !== spotTurn) return;
+      var zone = null;
+      try { zone = r[1] ? r[1](+lat, +lng) : null; } catch (e) {}
+      spotZone = zone;
+      if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
+      spotCard.textContent = '';
+      spotCard.appendChild(line('oa-detail-name', isl ? isl.name : r[0]));
+      if (isl) spotCard.appendChild(line('oa-detail-sub', isl.ocean + ' · ' + isl.what));
+      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      if (zone) {
+        var clock = document.createElement('div'), tm = document.createElement('span'), off = document.createElement('span');
+        clock.className = 'oa-detail-clock'; tm.className = 'oa-detail-time'; off.className = 'oa-detail-offset';
+        setTime(tm, zone); off.textContent = offsetText(zone);
+        clock.appendChild(tm); clock.appendChild(document.createTextNode(' ')); clock.appendChild(off);
+        spotCard.appendChild(clock);
+      } else spotCard.appendChild(line('oa-detail-offset', 'Time zone unavailable'));
+      if (isl) {
+        var w = r[0], url = (w && w.content_urls && w.content_urls.desktop.page) || 'https://en.wikipedia.org/wiki/' + encodeURIComponent(isl.article.replace(/ /g, '_'));
+        if (w && w.extract) spotCard.appendChild(line('oa-detail-desc', w.extract.trim()));
+        var credit = document.createElement('div'), a = document.createElement('a'), lic = document.createElement('a');
+        credit.className = 'oa-detail-credit';
+        a.href = url; a.textContent = (w && w.extract ? 'From Wikipedia: ' : 'Read on Wikipedia: ') + ((w && w.title) || isl.article);
+        lic.href = 'https://creativecommons.org/licenses/by-sa/4.0/'; lic.textContent = 'CC BY-SA 4.0';
+        credit.appendChild(a); credit.appendChild(document.createTextNode(' · ')); credit.appendChild(lic);
+        spotCard.appendChild(credit);
+      }
+      spotCard.hidden = false;
+      if (!calm.matches && spotCard.animate) slideLines(spotCard.children);
+      tick();
+    });
+  }
+  function clearSpot() {
+    spotTurn++; spotZone = null; clearTimeout(spotTimer); spotStop(); spotMarker.remove();
+    if (spotCard.hidden || spotAnim) return;
+    if (calm.matches || !spotCard.animate) { spotCard.hidden = true; return; }
+    spotAnim = spotCard.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(16px)' }],
+                                { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    spotAnim.onfinish = function () { var a = spotAnim; spotAnim = null; spotCard.hidden = true; spotCard.textContent = ''; a.cancel(); };
+  }
+
+  /* Picking an island (menu, search, title, a tap on its dot, or a #link): fly there; its card appears on landing */
+  function flyToIsland(isl, jump) {
+    current = isl; markIsland(isl); clearSpot();
+    try { history.replaceState(null, '', location.pathname + location.search + '#' + isl.slug); } catch (e) {}
+    var t = spotTurn;
+    if (jump) { showSpot(mapboxgl.LngLat.convert(isl.center), isl); return; }
+    map.once('moveend', function () { if (t === spotTurn) showSpot(mapboxgl.LngLat.convert(isl.center), isl); });
+    go({ center: isl.center, bearing: 0 });
+  }
+
+  /* All fifty as small orange dots (the book's orange) and names when zoomed out; at island zoom the island speaks for itself */
+  map.on('load', function () {
+    map.addSource('ri-islands', { type: 'geojson', data: { type: 'FeatureCollection', features: ISLANDS.map(function (i) {
+      return { type: 'Feature', properties: { name: i.name, slug: i.slug }, geometry: { type: 'Point', coordinates: i.center } }; }) } });
+    map.addLayer({ id: 'ri-dots', type: 'circle', source: 'ri-islands', maxzoom: 7,
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3, 6, 5], 'circle-color': '#ff5500',
+               'circle-stroke-color': '#021724', 'circle-stroke-width': 1.5 } });
+    map.addLayer({ id: 'ri-names', type: 'symbol', source: 'ri-islands', minzoom: 2.5, maxzoom: 7,
+      layout: { 'text-field': ['get', 'name'], 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'], 'text-size': 12,
+                'text-offset': [0, 0.9], 'text-anchor': 'top', 'text-optional': true },
+      paint: { 'text-color': '#e3eaee', 'text-halo-color': '#021724', 'text-halo-width': 1.5 } });
+    map.on('mouseenter', 'ri-dots', function () { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'ri-dots', function () { map.getCanvas().style.cursor = ''; });
+    if (ARRIVE) flyToIsland(ARRIVE, true);
+  });
+
+  /* Tap: an island's dot (or name) picks it; anywhere else shows that spot */
+  map.on('click', function (e) {
+    if (menuWasOpen) return;
+    var r = matchMedia('(pointer: coarse)').matches ? 16 : 8, p = e.point;
+    var layers = ['ri-dots', 'ri-names'].filter(function (id) { return map.getLayer(id); });
+    var hit = layers.length ? map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: layers })[0] : null;
+    if (hit) { flyToIsland(bySlug(hit.properties.slug)); return; }
+    current = null; markIsland(null);
+    showSpot(e.lngLat);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !spotCard.hidden && document.getElementById('maps-menu').hidden &&
+        !isOpen() && searchCard.classList.contains('oa-collapsed')) clearSpot();
+  }, true);
+
+  /* A drag, pinch or scroll leaves the menu's mark behind: the map is somewhere else now */
+  map.on('movestart', function (e) { if (e.originalEvent) { markIsland(null); current = null; } });
+});
+</script>
+</body>
+</html>
