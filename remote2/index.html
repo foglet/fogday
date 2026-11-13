@@ -471,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (attrib && window.ResizeObserver) new ResizeObserver(placeCard).observe(attrib);
   window.addEventListener('resize', placeCard); placeCard();
 
-  /* Bottom-right stack, top to bottom: search, Islands, zoom readout, zoom + compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: Islands, zoom readout, zoom + compass (added bottom first) */
   function asControl(el) {
     map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
                      onRemove: function () { el.remove(); } }, 'bottom-right');
@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function () {
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
   var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
   var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
-  var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
+  var searchCard = document.querySelector('.oa-search');   /* search (the magnifying glass) is off: left hidden, not added to the stack */
 
   /* A tap that only shuts a menu (Islands, Maps, an open search) shouldn't also show the tapped spot */
   var menuWasOpen = false;
