@@ -1,0 +1,1025 @@
+---
+layout: null   # self-contained page with the Oyster Atlas interface (oysteratlas.com), not the shared map layout
+title: Transit Connected
+description: Metro, rail, tram, trolley bus, monorail, cable car and ferry lines in more than 400 cities worldwide, on a blocky planet. A map by Fogday Studios.
+# transitMine: the Transit Connected map (/transit/) in a Minecraft skin, after Blocky Planet (bowerbyte.com/posts/blocky-planet/).
+# Same Mapbox style and data; the map is drawn at low resolution and scaled up with hard pixels, water and land get
+# noise-tinted block textures, and every city change spins the globe.
+mapbox_style: cildewrgb007h9jm16r0j102k
+access_token: pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw
+center: [21.22, 45.75]
+zoom: 11.6
+places:   # the Cities menu (folded-map button). Optional per city: zoom (default 10), bearing (default 0)
+  - { name: Berlin,        center: [13.409779, 52.520645] }
+  - { name: Hong Kong,     center: [114.08, 22.49] }
+  - { name: London,        center: [-0.15, 51.52] }
+  - { name: New York,      center: [-73.97, 40.75] }
+  - { name: Paris,         center: [2.35, 48.86] }
+  - { name: San Francisco, center: [-122.34, 37.77] }
+  - { name: Shanghai,      center: [121.46, 31.21] }
+  - { name: Stockholm,     center: [18.06, 59.33] }
+  - { name: Tokyo,         center: [139.73, 35.75] }
+  - { name: Vienna,        center: [16.36, 48.21] }
+  - { name: Zurich,        center: [8.54111, 47.37444] }
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#021724">
+
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@300;500;700&family=Pixelify+Sans:wght@400;600;700&family=Silkscreen:wght@400;700&display=swap">
+
+<style>
+  /* Transit Connected — the Oyster Atlas interface (oysteratlas.com), one self-contained page. Always dark.
+     Class names are kept from the Oyster Atlas (oa-…) so fixes can be copied between the two pages. */
+  :root {
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+    --kb: 0px;  /* on-screen keyboard height while searching (set by the script) */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; }
+  #map { position: fixed; inset: 0; }
+
+  /* Frosted panels over the map */
+  .map-legend-panel, .title {
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: var(--ink); border: 1px solid var(--line);
+  }
+
+  /* Title, top left (centered on phones): tap it to fly to another city */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0 0 0 12px; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .sky-text { color: #4a90c8; }
+  .title-text { background-image: linear-gradient(to right, #2f7fc1, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The title and, beside it, the chevron that opens the list of all Fogday maps */
+  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
+  .title-row .title { margin: 0; }
+  .maps-btn {
+    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: #4a90c8;
+  }
+  .maps-btn svg { transition: transform .2s ease; }
+  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
+  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The maps menu: the same drop-down as on fogday.com/maps and the other map pages
+     (_includes/map-menu.html), in the site's dark-mode colors and type */
+  .maps-menu {
+    --surface: #1e2a36; --site-line: #2a3846; --title-1: #7cc4f0;   /* fogday.css dark mode */
+    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
+    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px;
+    animation: maps-menu-in .16s ease-out;
+  }
+  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
+  .maps-menu[hidden] { display: none; }
+  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
+  .maps-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .12em;   /* the site's nav links (fogday.css "nav a") */
+  }
+  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .maps-menu a:hover { color: #ff5500; }   /* the site's nav hover (--hot) */
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: var(--title-1); }
+  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }  /* dot = you are here */
+  .maps-menu .ext {  /* AIGA forward-and-right arrow = another site; masked so it takes the text color */
+    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
+    -webkit-mask: url("{{ '/assets/icons/Aiga_forwardandrightarrow.svg' | relative_url }}") center / contain no-repeat;
+            mask: url("{{ '/assets/icons/Aiga_forwardandrightarrow.svg' | relative_url }}") center / contain no-repeat;
+  }
+  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
+  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
+  @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
+  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
+
+  /* Bottom left, above the Mapbox logo: the legend */
+  .map-bottom-left {
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab));
+    display: flex; flex-direction: column; gap: 8px;
+    width: 320px; max-width: calc(100% - 24px - var(--sal) - var(--sar)); max-height: calc(100% - 180px - var(--sat) - var(--sab));
+    pointer-events: none;   /* its empty area mustn't swallow taps meant for the map or, on narrow phones, the right-hand controls */
+  }
+  .map-bottom-left > * { pointer-events: auto; }
+  /* Legend: starts collapsed; opens only when tapped. Just its title while shut, the panel once open. */
+  .map-legend-panel { min-height: 0; overflow-y: auto; border-radius: 8px; border-color: color-mix(in srgb, var(--line) 50%, transparent);
+                      transition: background-color .18s ease, border-color .18s ease; align-self: flex-start; }
+  .map-legend-panel:has(.map-legend:not([open])) { background: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 10px 14px; min-height: 40px;
+                        font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend summary::after { content: " +"; color: var(--muted); }
+  .map-legend[open] summary::after { content: " –"; }
+  .map-legend summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+  .map-legend ul { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 6px; font-size: .9rem; }
+  .map-legend li { display: flex; align-items: center; gap: 10px; }
+  .map-legend .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); }  /* route swatch (the atlas uses dots) */
+  .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
+
+  /* Tapped spot, above the legend (same card as the atlas's picked oyster): place, coordinates, local time.
+     No panel: each line gets its own frosted background, only as wide as its text; all three flush left. */
+  /* Text lines up with "Transport mode": legend border 1px + summary padding 14px, minus each line's 8px padding = 7px */
+  .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 7px; max-width: calc(100% - 7px); font-size: .9rem; line-height: 1.35; }
+  .oa-detail-panel[hidden] { display: none; }
+  .oa-detail-panel > div {
+    width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .oa-detail-name { font-weight: 700; }
+  .oa-detail-code { color: #7cc4f0; letter-spacing: .04em; }   /* airport code, in the site's light title blue */
+  .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
+  .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .oa-detail-offset { color: var(--muted); }
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }   /* the local time, big */
+  .oa-detail-ampm { font-size: .667em; }   /* AM/PM at 2/3 the size of the digits */
+  /* Time, a space, then its GMT offset, in one pill; each keeps its own look */
+  .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
+  /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
+  .tc-spot-wrap { pointer-events: none; }
+  .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
+
+  /* Mapbox corners stay clear of the home indicator and notch; the right stack rises above the keyboard */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: var(--sab); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--kb)); }
+
+  /* Zoom + compass: dark panel, 50% border, thin muted icons (same as the atlas) */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group button { width: 30px; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint); background-size: 18px 18px; }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E"); }
+
+  /* Square buttons in the stack (Cities), same size as zoom */
+  .oa-regions[hidden], .oa-search[hidden], .oa-zoomread[hidden] { display: none; }
+
+  /* Zoom readout (above zoom/compass): the current zoom, live. Display only — taps pass through to the map. */
+  .oa-zoomread {
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; pointer-events: none;
+    background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
+    color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+  }
+  .mapboxgl-ctrl.oa-regions { position: relative; }
+  .oa-pin {
+    display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+    background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); border-radius: 4px;
+    color: var(--muted); cursor: pointer;
+  }
+  .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background-color: var(--panel); }
+  .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { color: var(--accent); }   /* menu open, or rivers on */
+  .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Cities menu: the same pop-out as oysteratlas.com's Regions menu. It opens to the left of the folded-map button,
+     on every screen size, with no panel and no boxes: the "Cities" title and each row are bare text with a navy halo
+     so they read over the map. The menu itself is as wide as its longest line. */
+  .oa-regions-pop {
+    position: absolute; right: calc(100% + 8px); bottom: 0; padding: 0;
+    max-height: calc(100vh - 160px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0;  /* lines stacked flush */
+    color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left;
+  }
+  .oa-regions-pop[hidden] { display: none; }
+  .oa-regions-title, .oa-regions-pop li button span {
+    display: block; width: fit-content; box-sizing: border-box; padding: 2px 8px; border-radius: 4px;
+    text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);   /* no box behind the line: a navy halo, like the icons */
+  }
+  .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 0; font-size: .9rem; }
+  /* The row's button is the tap target; its span carries the background */
+  .oa-regions-pop li button {
+    all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap;
+  }
+  .oa-regions-pop li button:hover { color: var(--accent); }
+  /* Beat Mapbox's light-gray hover on control buttons (it sticks after a tap on phones): only the line's own background shows */
+  .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
+  .oa-regions-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Search for any city (Mapbox geocoding). Starts minimized to its magnifying glass. */
+  .oa-search { display: flex; flex-direction: column; }
+  .mapboxgl-ctrl.oa-search { width: 270px; max-width: calc(100vw - 20px); padding: 0; border: 0; background: none; color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  .oa-field {
+    display: flex; align-items: center; gap: 8px; width: 270px; max-width: 100%; height: 35px; padding: 0 12px; margin-left: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; transition: width .18s ease; cursor: text;
+  }
+  .oa-field:not(:focus-within) { border-color: color-mix(in srgb, var(--line) 50%, transparent); }
+  .oa-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .oa-field svg { flex: none; color: var(--muted); }
+  .oa-input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; color: var(--ink); font: 400 .9rem/1 var(--font); }
+  .oa-input::placeholder { color: var(--muted); }
+  .oa-input:focus { outline: none; }
+  .oa-input::-webkit-search-cancel-button { display: none; }
+  .oa-status, .oa-results { border-radius: 8px; background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .oa-status { margin: 4px 0 0; padding: 6px 10px; align-self: flex-start; width: fit-content; max-width: 100%; font-size: .8rem; color: var(--muted); }
+  .oa-status:empty { display: none; }
+  .oa-results { list-style: none; margin: 4px 0 0; padding: 4px; font-size: .9rem; max-height: calc(5 * 40px); overflow-y: auto; overscroll-behavior: contain; }
+  .oa-results:empty { display: none; }
+  .oa-result { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+  .oa-result:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .oa-result[aria-selected="true"] { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .oa-name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .oa-where { margin-left: auto; padding-left: 12px; color: var(--muted); text-align: right; line-height: 1.25; max-width: 55%; }
+  .oa-search.oa-collapsed { width: auto; }
+  .oa-search.oa-collapsed .oa-results, .oa-search.oa-collapsed .oa-status { display: none; }
+  .oa-search.oa-collapsed .oa-field { width: 32px; height: 32px; border-radius: 4px; gap: 0; padding: 0; justify-content: center; cursor: pointer; }
+  .oa-search.oa-collapsed .oa-input { flex: 0 0 0; width: 0; padding: 0; opacity: 0; }
+
+
+  /* No backgrounds on the icon buttons: zoom/compass, Cities, the search glass (while minimized) and the zoom readout
+     lose their panels; icons and numbers get a navy halo so they read over the map. The open search bar keeps its panel. */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
+  .oa-pin, .mapboxgl-ctrl button.oa-pin:not(:disabled):hover { background: transparent; border-color: transparent; }
+  .oa-search.oa-collapsed .oa-field { background: transparent; border-color: transparent; }
+  .oa-zoomread { background: transparent; border-color: transparent; text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
+  .oa-pin svg, .oa-search.oa-collapsed .oa-field svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); width: 20px; height: 20px; }
+  @media (hover: hover) { .oa-pin:hover, .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { color: var(--accent); } }
+
+  /* Touch screens: 44-point tap targets; pinch replaces +/−, the compass stays */
+  @media (pointer: coarse) {
+    .oa-pin { width: 44px; height: 44px; }
+    .oa-zoomread { width: 44px; height: 44px; font-size: .85rem; }
+    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .mapboxgl-map .mapboxgl-ctrl-group button { width: 42px; height: 44px; }
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; height: 42px; }
+    .oa-field { height: 44px; }
+    .oa-search.oa-collapsed .oa-field { width: 44px; height: 44px; }
+    .oa-input { font-size: 16px; }  /* under 16px, iPhone Safari zooms the page */
+    .mapboxgl-ctrl.oa-search:not(.oa-collapsed), .mapboxgl-ctrl.oa-search:not(.oa-collapsed) .oa-field { width: 290px; }
+    .oa-result { min-height: 44px; }
+    /* Cities rows stay single-spaced (no gaps) but each is a 44px tap target: 24px leading + 10px above and below */
+    .oa-regions-pop li button span { padding-top: 10px; padding-bottom: 10px; line-height: 24px; }
+    .oa-results { max-height: calc(5 * 44px); }
+  }
+  /* Map credits (© Mapbox © OpenStreetMap · © Fogday Studios | @fogfish), styled as on oysteratlas.com:
+     muted to sit back — smaller text, soft color, the panels' navy behind.
+     Mapbox allows restyling the text if it stays legible: the 90% navy keeps --muted at 4.5:1+ even over white map.
+     The Mapbox logo (.mapboxgl-ctrl-logo) must not be styled, so it's left alone. */
+  .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4;
+    background: color-mix(in srgb, var(--bg) 90%, transparent); }
+  .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
+  .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
+  /* Phones fold the credits into an (i) button; its icon is dark, so lighten it to show on the navy */
+  .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
+
+  /* ================= Minecraft skin (transitMine) =================
+     Everything above is the /transit/ page unchanged; this block reskins it.
+     Pixel type, square corners, bevelled stone-gray panels like the game's inventory, hard-edged map pixels. */
+  :root {
+    --font: "Pixelify Sans", "Source Sans 3", system-ui, sans-serif;
+    --pixel: "Silkscreen", "Pixelify Sans", monospace;
+    --stone: #8b8b8b; --stone-hi: #c6c6c6; --stone-lo: #373737;
+    --bg: #1d1d1d; --panel: #3a3a3a; --ink: #f2f2f2; --muted: #b8b8b8; --line: #000; --accent: #ffff55;  /* the game's yellow text */
+    --bevel: inset 2px 2px 0 rgb(255 255 255 / .35), inset -2px -2px 0 rgb(0 0 0 / .45);
+  }
+  /* The map is drawn at a fraction of the screen's resolution (pixelRatio, set by the script) and scaled up
+     with nearest-neighbour, so every map pixel becomes a visible block */
+  .mapboxgl-canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  .title, .maps-btn, .map-legend-panel, .oa-detail-panel > div, .oa-status, .oa-results, .oa-field, .maps-menu, .oa-zoomread, .oa-pin,
+  .mapboxgl-map .mapboxgl-ctrl-group, .mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+    border-radius: 0 !important;
+  }
+  /* Panels: stone button / inventory slab, 2px black outline, bevel */
+  .title, .maps-btn, .map-legend-panel, .maps-menu, .oa-results, .oa-status, .oa-field {
+    background: var(--panel); border: 2px solid #000; box-shadow: var(--bevel);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .title { font: 700 1.05rem/1 var(--pixel); letter-spacing: .06em; padding: 9px 14px 8px; }
+  .title-text { background: none; color: var(--ink); text-shadow: 2px 2px 0 #3f3f3f; }   /* the game's drop shadow */
+  .title:hover .title-text { color: var(--accent); text-shadow: 2px 2px 0 #3f3f15; }
+  .title:hover, .maps-btn:hover, .maps-btn[aria-expanded="true"] { background: #5a6aa8; }   /* the hovered-button blue */
+  .maps-btn { color: var(--ink); }
+  .sky-text { color: var(--accent); text-shadow: 2px 2px 0 #3f3f15; }
+  .maps-menu { --surface: var(--panel); --site-line: #000; --title-1: var(--accent); }
+  .maps-menu a { font: 400 .95rem/1.2 var(--pixel); letter-spacing: .04em; border-radius: 0; }
+  .maps-menu a:hover { color: var(--accent); }
+  /* Legend: shut, just its title on a stone slab; open, the slab holds the rows */
+  .map-legend-panel, .map-legend-panel:has(.map-legend:not([open])) { background: var(--panel); border: 2px solid #000; box-shadow: var(--bevel); }
+  .map-legend summary { font: 400 .8rem/1 var(--pixel); display: flex; align-items: center; }
+  .map-legend ul { font-size: .95rem; }
+  .map-legend .line { height: 6px; border-radius: 0; box-shadow: 0 0 0 1px #000; }
+  .map-legend .line.dashed { background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 10px); }
+  .oa-detail-panel > div { background: rgb(16 16 16 / .78); -webkit-backdrop-filter: none; backdrop-filter: none; }   /* the chat/tooltip box */
+  .oa-detail-code { color: var(--accent); }
+  .oa-detail-time { font-family: var(--pixel); font-weight: 400; font-size: 1.35rem; }
+  /* The tapped spot: a block, not a dot */
+  .tc-spot { width: 14px; height: 14px; border-radius: 0; border: 2px solid #000; background: #ff5500;
+             box-shadow: inset 2px 2px 0 rgb(255 255 255 / .45), inset -2px -2px 0 rgb(0 0 0 / .35); }
+  /* Right-hand stack: stone buttons */
+  .oa-pin, .mapboxgl-ctrl button.oa-pin:not(:disabled):hover, .oa-search.oa-collapsed .oa-field, .oa-zoomread {
+    background: var(--panel); border: 2px solid #000; box-shadow: var(--bevel); color: var(--ink);
+  }
+  .oa-pin svg, .oa-search.oa-collapsed .oa-field svg { filter: none; }
+  .oa-pin:hover, .oa-pin[aria-expanded="true"], .oa-pin[aria-pressed="true"] { background: #5a6aa8 !important; color: var(--accent); }
+  .oa-zoomread { font: 400 .7rem/1 var(--pixel); text-shadow: 1px 1px 0 #000; color: var(--ink); }
+  .oa-blocks .oa-pin { font: 400 .7rem/1 var(--pixel); }
+  .mapboxgl-map .mapboxgl-ctrl-group { background: var(--panel); border: 2px solid #000; box-shadow: var(--bevel); }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top: 2px solid #000; }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(1); }
+  .oa-regions-title, .oa-regions-pop li button span { text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+  .oa-regions-title { font: 400 .8rem/1.4 var(--pixel); }
+  .oa-regions-pop ul { font-size: 1rem; }
+  .oa-field:focus-within { border-color: #000; box-shadow: var(--bevel), 0 0 0 2px var(--accent); }
+  .oa-result { border-radius: 0; }
+  .mapboxgl-ctrl.mapboxgl-ctrl-attrib { background: rgb(16 16 16 / .78); }
+  @media (pointer: coarse) { .oa-blocks .oa-pin { width: 44px; height: 44px; } }
+</style>
+</head>
+<body>
+
+<div id="map" role="region" aria-label="{{ page.title }} map"></div>
+<!-- Recolors Mapbox's zoom/compass icons to the muted icon color -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="oa-ctrl-tint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="-0.6017 0 0 0 0.6813  -0.6817 0 0 0 0.7753  -0.7400 0 0 0 0.8420  0 0 0 1 0"/>
+  </filter>
+</svg>
+
+<div class="top">
+  <div class="title-row">
+    <h1 style="margin:0;display:flex"><button type="button" class="title" data-home title="Go to another city"><span class="title-text">{{ page.title }}</span></button></h1>
+    <button type="button" class="maps-btn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>  <!-- the list comes from _data/maps.yml, same as the other map pages -->
+      <ul>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% endfor %}
+        <li class="all"><a href="{{ '/maps/' | relative_url }}">All maps →</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div class="map-bottom-left">
+<div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
+<div class="map-legend-panel">
+<details class="map-legend">
+  <summary><span class="sky-text">Transport mode</span></summary>
+  <ul>
+    <li><span class="line" style="--c:#edeff5"></span>Metro / U-Bahn</li>
+    <li><span class="line" style="--c:#d92020"></span>Passenger / freight rail</li>
+    <li><span class="line" style="--c:#31ad90"></span>Light rail / tram / S-Bahn</li>
+    <li><span class="line" style="--c:#775f95"></span>Trolley bus</li>
+    <li><span class="line" style="--c:#c945af"></span>Monorail / maglev</li>
+    <li><span class="line" style="--c:#68ad68"></span>Amtrak passenger rail</li>
+    <li><span class="line" style="--c:#d95520"></span>Cable car / funicular</li>
+    <li><span class="line dashed" style="--c:#8f91b5"></span>Ferry route</li>
+  </ul>
+</details>
+</div>
+</div>
+
+<!-- Moved into the map's bottom-right stack by the script: search, Cities, Rivers, zoom readout, then zoom -->
+<div class="tc-rivers" hidden>
+  <button type="button" class="oa-pin" aria-pressed="false" aria-label="Rivers" title="Rivers">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3.6 4.7-6 8.1-6 11a6 6 0 0 0 12 0c0-2.9-2.4-6.3-6-11z"/></svg>
+  </button>
+</div>
+<div class="oa-regions" hidden>
+  <button type="button" class="oa-pin" aria-expanded="false" aria-controls="tc-cities" aria-label="Cities" title="Cities">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+  </button>
+  <div class="oa-regions-pop" id="tc-cities" hidden>  <!-- opens to the left of the button, as on oysteratlas.com -->
+    <p class="oa-regions-title"><span class="sky-text">Cities</span></p>
+    <ul aria-label="Fly to a city">
+      {% for p in page.places %}<li><button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}" data-zoom="{{ p.zoom | default: 10 }}" data-bearing="{{ p.bearing | default: 0 }}"><span>{{ p.name }}</span></button></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+<div class="oa-blocks" hidden>  <!-- block size: how many screen pixels each map pixel covers (1×–4×) -->
+  <button type="button" class="oa-pin" aria-label="Block size" title="Block size">2×</button>
+</div>
+<div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
+<div class="oa-search oa-collapsed" role="search" hidden>
+  <div class="oa-field" title="Search cities">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="oa-search-input" class="oa-input" type="search"
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="oa-search-results"
+           autocomplete="off" spellcheck="false" placeholder="E.g., Osaka, Madrid or SFO" aria-label="Search for a city or airport code">
+  </div>
+  <p id="oa-search-status" class="oa-status" aria-live="polite"></p>
+  <ul id="oa-search-results" class="oa-results" role="listbox" aria-label="Matching cities"></ul>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
+  var FLY = { speed: 2.7, curve: 1, easing: function (t) { return t; } };          /* the atlas glide (1.8), 50% faster */
+  var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function savedZoom() { try { var z = parseFloat(localStorage.getItem('tm-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
+  /* Block size: each map pixel covers this many CSS pixels (the canvas is drawn at 1/BLOCK and scaled up with hard
+     edges). 2× by default; the block button cycles 1×–4× and the choice is remembered. */
+  function savedBlock() { try { var b = parseInt(localStorage.getItem('tm-block'), 10); return b >= 1 && b <= 4 ? b : 2; } catch (e) { return 2; } }
+  var BLOCK = savedBlock();
+  mapboxgl.accessToken = '{{ page.access_token }}';
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
+    projection: 'globe',   // a planet, so a city change can spin it
+    pixelRatio: 1 / BLOCK,
+    center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
+    customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
+  });
+
+  /* Going to a city spins the planet: rise out to the globe, turn it eastward at least one full revolution until the
+     city comes round, then drop back in at the visitor's zoom. A drag, pinch or scroll stops the spin where it is.
+     Reduced motion: a straight jump. */
+  var SPIN = { up: 900, turn: 2600, down: 1300, height: 2.2, extra: 360 };
+  var spinTurn = 0, spinFrame = 0;
+  function stopSpin() { spinTurn++; cancelAnimationFrame(spinFrame); }
+  function ease(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }   // cubic in-out
+  function go(view, landed) {   // landed: called once the map has settled on the city
+    var keep = map.getZoom(), to = mapboxgl.LngLat.convert(view.center);
+    if (calm.matches) { map.jumpTo({ center: to, bearing: view.bearing || 0 }); if (landed) landed(); return; }
+    stopSpin(); map.stop();
+    var mine = spinTurn, high = Math.min(SPIN.height, keep);
+    function after(ms, fn) { setTimeout(function () { if (mine === spinTurn) fn(); }, ms); }
+    map.easeTo({ zoom: high, pitch: 0, bearing: 0, duration: keep > high ? SPIN.up : 0, easing: ease });
+    after(keep > high ? SPIN.up + 30 : 0, function () {
+      var from = map.getCenter(), dLng = ((to.lng - from.lng) % 360 + 360) % 360 + SPIN.extra, t0 = performance.now();
+      (function frame(now) {
+        if (mine !== spinTurn) return;
+        var t = Math.min(1, (now - t0) / SPIN.turn), k = ease(t);
+        map.jumpTo({ center: [from.lng + dLng * k, from.lat + (to.lat - from.lat) * k] });
+        if (t < 1) { spinFrame = requestAnimationFrame(frame); return; }
+        map.easeTo({ center: to, zoom: keep, bearing: view.bearing || 0, duration: keep > high ? SPIN.down : 0, easing: ease });
+        if (landed) after((keep > high ? SPIN.down : 0) + 30, landed);
+      })(t0);
+    });
+  }
+  ['mousedown', 'touchstart', 'wheel'].forEach(function (ev) { map.on(ev, stopSpin); });
+
+  /* Bottom-right stack, top to bottom: search, Cities, Rivers, zoom readout, zoom + compass (added bottom first) */
+  function asControl(el) {
+    map.addControl({ onAdd: function () { el.classList.add('mapboxgl-ctrl'); el.hidden = false; return el; },
+                     onRemove: function () { el.remove(); } }, 'bottom-right');
+  }
+  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+  var zoomRead = document.querySelector('.oa-zoomread');  asControl(zoomRead);
+  var blocksCtrl = document.querySelector('.oa-blocks');   asControl(blocksCtrl);
+  var riversCtrl = document.querySelector('.tc-rivers');   asControl(riversCtrl);
+  var regionsCtrl = document.querySelector('.oa-regions'); asControl(regionsCtrl);
+  var searchCard = document.querySelector('.oa-search');   asControl(searchCard);
+
+  /* A tap that only shuts a menu (Cities, Maps, an open search) shouldn't also show the tapped spot.
+     Registered before the menus' own listeners, so it sees them still open. */
+  var menuWasOpen = false;
+  document.addEventListener('pointerdown', function () {
+    menuWasOpen = !document.getElementById('maps-menu').hidden || isOpen() ||
+                  !searchCard.classList.contains('oa-collapsed');
+  }, true);
+
+  /* Zoom: whatever zoom the visitor pinches or +/−s to is the zoom every flight keeps (Cities, search, the title),
+     and it's remembered in this browser for their next visit. The readout shows it live, to one decimal. */
+  function showZoom() { var t = (Math.round(map.getZoom() * 10) / 10).toFixed(1); zoomRead.textContent = t; zoomRead.setAttribute('aria-label', 'Zoom level ' + t); }
+  map.on('zoom', showZoom);
+  map.on('zoomend', function () { try { localStorage.setItem('tm-zoom', String(Math.round(map.getZoom() * 10) / 10)); } catch (e) {} });
+  showZoom();
+
+  /* +/− step the zoom by 0.1 (Mapbox's own step is 1), so a visitor can dial in the level they like,
+     and flights keep it. Quick taps add up: each step builds on the last target, not mid-glide. */
+  var zTarget = null;
+  map.getContainer().querySelector('.mapboxgl-ctrl-zoom-in').parentNode.addEventListener('click', function (e) {
+    var b = e.target.closest('button'), dir = b && b.classList.contains('mapboxgl-ctrl-zoom-in') ? 1 : b && b.classList.contains('mapboxgl-ctrl-zoom-out') ? -1 : 0;
+    if (!dir) return;   // the compass keeps its own behavior
+    e.stopPropagation(); e.preventDefault();   // capture phase: Mapbox's 1-step handler never sees it
+    var base = zTarget != null && map.isEasing() ? zTarget : Math.round(map.getZoom() * 10) / 10;
+    zTarget = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), Math.round((base + dir * 0.1) * 10) / 10));
+    if (calm.matches) map.jumpTo({ zoom: zTarget }); else map.easeTo({ zoom: zTarget, duration: 160 });
+  }, true);
+
+  /* Lines run up into place one by one (same motion as the atlas) */
+  var LINE_IN = [{ opacity: 0, transform: 'translateY(18px)', easing: 'cubic-bezier(.2,.7,.35,1)' },
+                 { opacity: 1, transform: 'translateY(-2px)', offset: .78, easing: 'ease-in-out' },
+                 { opacity: 1, transform: 'none' }];
+  function slideLines(els) {
+    els = Array.prototype.slice.call(els);
+    var gap = els.length > 1 ? Math.min(60, 380 / (els.length - 1)) : 0, at = 0;
+    return els.map(function (el, i) {
+      if (i) at += gap + (Math.random() * 2 - 1) * Math.min(15, gap / 3);
+      return el.animate(LINE_IN, { duration: 420, delay: Math.max(0, at), fill: 'backwards' });
+    });
+  }
+
+  /* Cities menu (as on oysteratlas.com): opens to the left of the folded-map button. Opening, the lines run up into
+     place one by one, the "Cities" title first and then each city (slideLines, above). Shutting eases the whole menu
+     out at once (240ms, fading and drifting down). Picking a city flies there and the menu eases out.
+     Search and Cities are either/or. A tap anywhere else, or Escape, shuts it. */
+  var pin = regionsCtrl.querySelector('.oa-pin'), pop = document.getElementById('tc-cities');
+  var cities = Array.prototype.slice.call(pop.querySelectorAll('li button')), popAnims = [];
+  var POP_OUT = [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(10px)' }];
+  function isOpen() { return pin.getAttribute('aria-expanded') === 'true'; }
+  function markCity(b) {
+    var name = b && b.dataset.name;
+    cities.forEach(function (x) { if (name && x.dataset.name === name) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); });
+  }
+  function setPop(open) {
+    if (open === isOpen()) return;
+    pin.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) search.minimize();   // either/or with search
+    popAnims.forEach(function (a) { a.cancel(); }); popAnims = [];
+    pop.hidden = false;
+    if (calm.matches || !pop.animate) { pop.hidden = !open; return; }
+    if (open) {
+      popAnims = slideLines([pop.querySelector('.oa-regions-title')].concat(Array.prototype.slice.call(pop.querySelectorAll('li'))));
+    } else {
+      var a = pop.animate(POP_OUT, { duration: 240, easing: 'cubic-bezier(0,0,.2,1)', fill: 'forwards' });   // ease-out
+      popAnims = [a];
+      a.onfinish = function () { popAnims = []; pop.hidden = true; a.cancel(); };
+    }
+  }
+  function flyToCity(b) {
+    markCity(b);
+    clearSpot();   // the tapped spot belongs to the old view
+    go({ center: JSON.parse(b.dataset.center), zoom: +b.dataset.zoom, bearing: +b.dataset.bearing || 0 });
+  }
+  cities.forEach(function (b) { b.addEventListener('click', function () { flyToCity(b); setPop(false); }); });
+
+  /* Maps menu (the chevron beside the title): shuts on a pick,
+     a tap elsewhere or Escape. Opening it shuts Cities and search, like they shut each other. */
+  var mapsBtn = document.querySelector('.maps-btn'), mapsMenu = document.getElementById('maps-menu');
+  function setMaps(open) {
+    if (open === (mapsBtn.getAttribute('aria-expanded') === 'true')) return;
+    mapsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    mapsMenu.hidden = !open;
+    if (open) { setPop(false); search.minimize(); }   // the menu fades in (CSS), as on the other map pages
+  }
+  mapsBtn.addEventListener('click', function () { setMaps(mapsBtn.getAttribute('aria-expanded') !== 'true'); });
+  document.addEventListener('pointerdown', function (e) { if (!mapsBtn.contains(e.target) && !mapsMenu.contains(e.target)) setMaps(false); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !mapsMenu.hidden) { setMaps(false); mapsBtn.focus(); } });
+  pin.addEventListener('click', function () { setPop(!isOpen()); });
+  document.addEventListener('pointerdown', function (e) { if (isOpen() && !regionsCtrl.contains(e.target)) setPop(false); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { setPop(false); pin.focus(); } });
+
+  /* Title: fly to another city from the menu (never the one on screen, or the last one in this tab) */
+  document.querySelector('[data-home]').addEventListener('click', function () {
+    var last = null;
+    try { last = sessionStorage.getItem('tm-city'); } catch (e) {}
+    var pool = cities.filter(function (b) { return b.getAttribute('aria-current') !== 'true' && b.dataset.name !== last; });
+    if (!pool.length) pool = cities;
+    var b = pool[Math.floor(Math.random() * pool.length)];
+    try { sessionStorage.setItem('tm-city', b.dataset.name); } catch (e) {}
+    flyToCity(b);
+  });
+
+  /* Legend: starts collapsed and opens only when tapped; slides open/shut in 180ms */
+  (function (menu) {
+    var sum = menu.querySelector('summary'), list = menu.querySelector('ul'), slide = null, shutting = false;
+    sum.addEventListener('click', function (e) {
+      if (calm.matches || !list.animate) return;   /* native instant toggle */
+      e.preventDefault();
+      var opening = !menu.open || shutting;
+      var from = menu.open ? list.getBoundingClientRect().height : 0;
+      if (slide) slide.cancel();
+      menu.open = true;
+      var to = opening ? list.scrollHeight : 0;
+      shutting = !opening;
+      list.style.overflow = 'hidden';
+      slide = list.animate({ height: [from + 'px', to + 'px'] },
+        { duration: 180, easing: opening ? 'cubic-bezier(.2,.7,.3,1)' : 'cubic-bezier(.4,0,.8,.3)', fill: 'forwards' });
+      slide.onfinish = function () { if (shutting) menu.open = false; slide.cancel(); slide = null; shutting = false; list.style.overflow = ''; };
+    });
+  })(document.querySelector('.map-legend'));
+
+  /* Search: any city in the world, via Mapbox geocoding. Picking one flies there and minimizes the bar. */
+  var search = (function () {
+    var input = document.getElementById('oa-search-input'), list = document.getElementById('oa-search-results'),
+        status = document.getElementById('oa-search-status'), field = searchCard.querySelector('.oa-field');
+    var HINT = 'Type a city or a 3-letter airport code', shown = [], active = -1, timer = 0, turn = 0;
+    function setStatus(t) { status.textContent = t; }
+    function minimize(keepFocus) {
+      searchCard.classList.add('oa-collapsed'); input.setAttribute('aria-expanded', 'false');
+      if (!keepFocus && document.activeElement === input) input.blur();
+    }
+    function expand() {
+      searchCard.classList.remove('oa-collapsed');
+      if (shown.length) input.setAttribute('aria-expanded', 'true');
+      setPop(false);
+      loadAirports();   // fetch the codes while the visitor types
+      /* Phones: an open legend would cover the search bar, so it shuts (it never opens again by itself) */
+      var legend = document.querySelector('.map-legend');
+      if (legend.open && window.innerWidth < 760) legend.open = false;
+    }
+    function setActive(i) {
+      active = i;
+      Array.prototype.forEach.call(list.children, function (li, k) { li.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+      if (list.children[i]) { input.setAttribute('aria-activedescendant', list.children[i].id); list.children[i].scrollIntoView({ block: 'nearest' }); }
+      else input.removeAttribute('aria-activedescendant');
+    }
+    function render() {
+      list.textContent = '';
+      shown.forEach(function (f, i) {
+        var li = document.createElement('li'), name = document.createElement('span'), where = document.createElement('span');
+        li.className = 'oa-result'; li.id = 'oa-opt-' + i; li.setAttribute('role', 'option'); li.dataset.index = i;
+        name.className = 'oa-name'; name.textContent = f.name;
+        where.className = 'oa-where'; where.textContent = f.where;
+        li.appendChild(name); li.appendChild(where); list.appendChild(li);
+      });
+      setActive(-1);
+      input.setAttribute('aria-expanded', shown.length ? 'true' : 'false');
+    }
+    /* Airport codes: three letters (SFO, LHR, NRT …) → that airport. airports.json, in this folder, is every
+       IATA code in OurAirports (public domain, ourairports.com): code → [name, city, country, lon, lat].
+       Fetched once, the first time search opens, so it never slows the map's first load. */
+    var airports = null;
+    function loadAirports() {
+      return airports || (airports = fetch('{{ "/transit/airports.json" | relative_url }}')
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .catch(function () { airports = null; return {}; }));
+    }
+    function airportHit(q) {
+      if (!/^[a-z]{3}$/i.test(q)) return Promise.resolve(null);
+      return loadAirports().then(function (all) {
+        var a = all[q.toUpperCase()];
+        return a ? { name: q.toUpperCase() + ' · ' + a[0], where: [a[1], a[2]].filter(Boolean).join(', '), center: [a[3], a[4]], zoom: 11,
+                     airport: { code: q.toUpperCase(), name: a[0], city: a[1] } } : null;
+      });
+    }
+    function lookup() {
+      var q = input.value.trim(), mine = ++turn;
+      if (!q) { shown = []; render(); setStatus(HINT); return; }
+      var url = 'https://api.mapbox.com/search/geocode/v6/forward?q=' + encodeURIComponent(q) +
+                '&types=place&limit=6&autocomplete=true&access_token=' + mapboxgl.accessToken;
+      var airport = airportHit(q);
+      airport.then(function (a) { if (a && mine === turn) { shown = [a]; render(); setStatus(''); } });   // the airport shows at once
+      var places = fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+        return (j.features || []).map(function (f) {
+          var p = f.properties || {};
+          return { name: p.name || p.full_address || q, where: p.place_formatted || '', center: f.geometry.coordinates, zoom: 10 };
+        });
+      }).catch(function () { return null; });   // null = search failed (an airport can still show)
+      Promise.all([airport, places]).then(function (r) {
+        if (mine !== turn) return;   // a newer keystroke won
+        var a = r[0], p = r[1];
+        shown = (a ? [a] : []).concat(p || []);   // airport first, then cities
+        render();
+        if (shown.length) setStatus('');
+        else setStatus(p === null ? 'Search isn’t available right now.' : 'No cities or airport codes match “' + q + '”.');
+      });
+    }
+    function pick(i, byKeyboard) {
+      var f = shown[i];
+      if (!f) return;
+      markCity(cities.filter(function (b) { return b.dataset.name === f.name; })[0] || null);
+      clearSpot();
+      var t = spotTurn;   // the searched city's details appear on landing (as the atlas does), unless a tap came first
+      go({ center: f.center, zoom: f.zoom || 10, bearing: 0 }, function () { if (t === spotTurn) showSpot(mapboxgl.LngLat.convert(f.center), f.airport); });
+      minimize(byKeyboard);
+    }
+    field.addEventListener('click', function () { if (document.activeElement !== input) input.focus(); });
+    input.addEventListener('focus', expand);
+    input.addEventListener('input', function () { expand(); clearTimeout(timer); timer = setTimeout(lookup, 200); });
+    input.addEventListener('keydown', function (e) {
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && searchCard.classList.contains('oa-collapsed')) { e.preventDefault(); expand(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (shown.length) setActive(Math.min(active + 1, shown.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (shown.length) setActive(Math.max(active - 1, 0)); }
+      else if (e.key === 'Enter') { e.preventDefault(); pick(active >= 0 ? active : 0, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; shown = []; render(); setStatus(HINT); minimize(); }
+    });
+    list.addEventListener('mousedown', function (e) { e.preventDefault(); });   // keep focus in the box
+    list.addEventListener('click', function (e) { var li = e.target.closest('.oa-result'); if (li) pick(+li.dataset.index); });
+    document.addEventListener('pointerdown', function (e) { if (!searchCard.contains(e.target)) minimize(); }, true);
+    setStatus(HINT);
+    return { minimize: function () { minimize(); }, airports: loadAirports };   // airports: also used by a tap on an airport
+  })();
+
+  /* iPhone keyboard: raise the bottom-right stack so the search sits just above it */
+  var vv = window.visualViewport;
+  function liftForKeyboard() {
+    var root = document.documentElement, list = document.getElementById('oa-search-results'), kb = 0, lift = 0;
+    if (vv && vv.scale < 1.01 && document.activeElement && document.activeElement.id === 'oa-search-input')
+      kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    list.style.maxHeight = '';
+    if (kb > 0) {
+      var css = getComputedStyle(root), current = parseFloat(css.getPropertyValue('--kb')) || 0;
+      var gap = window.innerHeight - (searchCard.getBoundingClientRect().bottom + current);
+      lift = Math.max(0, kb + 8 - gap);
+      var room = (window.innerHeight - kb - 8) - ((parseFloat(css.getPropertyValue('--sat')) || 0) + 8);
+      var rest = searchCard.getBoundingClientRect().height - list.getBoundingClientRect().height;
+      var fiveRows = list.firstElementChild ? 5 * list.firstElementChild.offsetHeight : 220;
+      list.style.maxHeight = Math.max(44, Math.min(fiveRows, room - rest)) + 'px';
+    }
+    root.style.setProperty('--kb', lift + 'px');
+  }
+  if (vv) { vv.addEventListener('resize', liftForKeyboard); vv.addEventListener('scroll', liftForKeyboard); }
+  document.addEventListener('focusin', liftForKeyboard);
+  document.addEventListener('focusout', function () { setTimeout(liftForKeyboard, 50); });
+
+  /* Tap the map: above the legend, show where that is —
+       San Francisco, CA, United States
+       37°46′30″N 122°25′10″W
+       GMT-7
+       3:18 PM   (larger)
+     Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
+     coordinates with tz-lookup (@photostructure/tz-lookup, CC0), loaded once on the first tap.
+     The clock keeps ticking. A new tap replaces it; a search pick shows the found city's; a Cities flight or Escape clears it. */
+  var spotCard = document.getElementById('oa-detail-panel'), spotTurn = 0, spotTimer = 0, spotZone = null, spotAnim = null;
+  /* The dot sits inside a wrapper: Mapbox sets the marker element's own opacity (to dim it behind the globe),
+     so the fade runs on the inner dot and the two don't fight. */
+  var spotWrap = document.createElement('div'), spotDot = document.createElement('div');
+  spotWrap.className = 'tc-spot-wrap'; spotDot.className = 'tc-spot'; spotWrap.appendChild(spotDot);
+  var spotMarker = new mapboxgl.Marker({ element: spotWrap });   // centered on the spot
+  /* The dot fades out over 15s and is then removed (the card stays). A new tap or search pick restarts it.
+     Reduced motion: no fade, the dot simply goes at 15s. */
+  var SPOT_LIFE = 15000, spotLife = 0, spotFade = null;
+  function spotStop() { clearTimeout(spotLife); if (spotFade) { spotFade.cancel(); spotFade = null; } }
+  function spotStart() {
+    spotStop();
+    if (!calm.matches && spotDot.animate)
+      spotFade = spotDot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPOT_LIFE, easing: 'linear', fill: 'forwards' });
+    spotLife = setTimeout(function () { spotStop(); spotMarker.remove(); }, SPOT_LIFE);
+  }
+  var tzReady = null;
+  function loadTz() {
+    return tzReady || (tzReady = new Promise(function (ok) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@photostructure/tz-lookup@11.7.0/tz.js';
+      s.onload = function () { ok(window.tzlookup || null); };
+      s.onerror = function () { tzReady = null; ok(null); };   // try again on the next tap
+      document.head.appendChild(s);
+    }));
+  }
+  function placeName(lng, lat, cityName) {   // cityName: an airport's own city, which beats the suburb it sits in
+    var url = 'https://api.mapbox.com/search/geocode/v6/reverse?longitude=' + lng + '&latitude=' + lat +
+              '&language=en&access_token=' + mapboxgl.accessToken;
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (j) {
+      var c = {};   // every level found, from the features themselves and their context
+      (j.features || []).forEach(function (f) {
+        var p = f.properties || {};
+        Object.keys(p.context || {}).forEach(function (k) { if (!c[k]) c[k] = p.context[k]; });
+        if (p.feature_type && !c[p.feature_type]) c[p.feature_type] = { name: p.name };
+      });
+      var city = c.place || c.locality || c.district, region = c.region, country = c.country;
+      /* New York: the borough in place of the city (Brooklyn, NY, United States). Mapbox gives it as the locality. */
+      if (city && city.name === 'New York City' && c.locality && BOROUGHS.indexOf(c.locality.name) >= 0) city = c.locality;
+      /* State/province as its postal code (CA, ON, NSW); the country spelled out (United States, Japan).
+         Where the region's code is only a number (Tokyo's is 13), its name reads better, so that stays. */
+      var rc = region && region.region_code;
+      var st = region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
+      var co = country && country.name;
+      var parts = [cityName || (city && city.name), st, co].filter(Boolean)
+                    .filter(function (n, i, a) { return a.indexOf(n) === i; });   // Singapore, not "Singapore, Singapore"
+      return parts.length ? parts.join(', ') : 'Open water';
+    }).catch(function () { return 'Place name unavailable'; });
+  }
+  function offsetText(zone) {   // GMT-7, GMT+5:30, GMT+0
+    try {
+      var o = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(new Date())
+                .filter(function (p) { return p.type === 'timeZoneName'; })[0].value;
+      return o === 'GMT' ? 'GMT+0' : o;
+    } catch (e) { return zone; }
+  }
+  function setTime(el, zone) {   // 3:18 PM, with AM/PM at 2/3 the size of the digits
+    el.textContent = '';
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true }).formatToParts(new Date());
+      var digits = parts.filter(function (p) { return p.type !== 'dayPeriod'; }).map(function (p) { return p.value; }).join('').trim();
+      var period = parts.filter(function (p) { return p.type === 'dayPeriod'; }).map(function (p) { return p.value; }).join('');
+      el.appendChild(document.createTextNode(digits));
+      if (period) { var ap = document.createElement('span'); ap.className = 'oa-detail-ampm'; ap.textContent = period;
+                    el.appendChild(document.createTextNode(' ')); el.appendChild(ap); }
+    } catch (e) {}
+  }
+  function tick() {   // refresh on each new minute (the offset too, in case daylight saving starts or ends)
+    clearTimeout(spotTimer);
+    var t = spotCard.querySelector('.oa-detail-time'), o = spotCard.querySelector('.oa-detail-offset');
+    if (!t || !spotZone) return;
+    setTime(t, spotZone); o.textContent = offsetText(spotZone);
+    spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
+  }
+  /* 46°51′48″N 03°09′48″E — degrees, minutes, seconds (rounded to the second), as on Wikipedia */
+  function dms(v, pos, neg) {
+    var t = Math.round(Math.abs(v) * 3600), d = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    return two(d) + '°' + two(m) + '′' + two(sec) + '″' + (v < 0 ? neg : pos);
+  }
+  function line(cls, text) { var d = document.createElement('div'); d.className = cls; d.textContent = text; return d; }
+  function showSpot(lngLat, airport) {   // airport (from search): { code, name, city }
+    var mine = ++spotTurn, ll = lngLat.wrap(), lat = ll.lat.toFixed(6), lng = ll.lng.toFixed(6);
+    spotMarker.setLngLat(ll).addTo(map); spotStart();
+    Promise.all([placeName(lng, lat, airport && airport.city), loadTz()]).then(function (r) {
+      if (mine !== spotTurn) return;   // a newer tap, or a clear, won
+      var zone = null;
+      try { zone = r[1] ? r[1](+lat, +lng) : null; } catch (e) {}
+      spotZone = zone;
+      if (spotAnim) { spotAnim.cancel(); spotAnim = null; }
+      spotCard.textContent = '';
+      if (airport) {   // SFO San Francisco International Airport, then the city
+        var head = line('oa-detail-name', (airport.code ? ' ' : '') + airport.name), code = document.createElement('span');
+        code.className = 'oa-detail-code'; code.textContent = airport.code;
+        if (airport.code) head.insertBefore(code, head.firstChild);   // SFO San Francisco International Airport, on one line
+        spotCard.appendChild(head);
+        spotCard.appendChild(line('oa-detail-place', r[0]));
+      } else spotCard.appendChild(line('oa-detail-name', r[0]));
+      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      if (zone) {
+        var clock = document.createElement('div'), tm = document.createElement('span'), off = document.createElement('span');
+        clock.className = 'oa-detail-clock'; tm.className = 'oa-detail-time'; off.className = 'oa-detail-offset';
+        setTime(tm, zone); off.textContent = offsetText(zone);
+        clock.appendChild(tm); clock.appendChild(document.createTextNode(' ')); clock.appendChild(off);   // 8:30 PM GMT-7
+        spotCard.appendChild(clock);
+      } else spotCard.appendChild(line('oa-detail-offset', 'Time zone unavailable'));
+      spotCard.hidden = false;
+      if (!calm.matches && spotCard.animate) slideLines(spotCard.children);   // lines run up, as in the atlas
+      tick();
+    });
+  }
+  function clearSpot() {   // leaves as one piece: 180ms fade + 16px drop, as in the atlas
+    spotTurn++; spotZone = null; clearTimeout(spotTimer); spotStop(); spotMarker.remove();
+    if (spotCard.hidden || spotAnim) return;
+    if (calm.matches || !spotCard.animate) { spotCard.hidden = true; return; }
+    spotAnim = spotCard.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(16px)' }],
+                                { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    spotAnim.onfinish = function () { var a = spotAnim; spotAnim = null; spotCard.hidden = true; spotCard.textContent = ''; a.cancel(); };
+  }
+  /* New York's five boroughs: a label each from zoom 10 (the card names the borough from the geocoder, above). */
+  var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'The Bronx', 'Bronx', 'Staten Island'];
+  var BOROUGH_LABELS = [['Manhattan', -73.9712, 40.7831], ['Brooklyn', -73.9496, 40.6500], ['Queens', -73.7949, 40.7282],
+                        ['The Bronx', -73.8648, 40.8448], ['Staten Island', -74.1502, 40.5795]];
+  map.on('load', function () {
+    function pts(rows, kind) { return rows.map(function (r) {
+      return { type: 'Feature', properties: { name: r[0], kind: kind }, geometry: { type: 'Point', coordinates: r[1].length ? r[1] : [r[1], r[2]] } }; }); }
+    map.addSource('tc-places', { type: 'geojson', data: { type: 'FeatureCollection',
+      features: pts(BOROUGH_LABELS.map(function (b) { return [b[0], [b[1], b[2]]]; }), 'borough') } });
+    map.addLayer({ id: 'tc-borough-labels', type: 'symbol', source: 'tc-places', minzoom: 10, maxzoom: 15, filter: ['==', ['get', 'kind'], 'borough'],
+      layout: { 'text-field': ['upcase', ['get', 'name']], 'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
+                'text-size': ['interpolate', ['linear'], ['zoom'], 10, 12, 13, 16], 'text-letter-spacing': 0.2, 'text-max-width': 8 },
+      paint: { 'text-color': 'rgba(237,239,245,0.7)', 'text-halo-color': '#000', 'text-halo-width': 1.5 } });   // the city labels' colors, softened
+  });
+  /* Rivers: the water-drop button turns on rivers, canals and streams in blue, with river names along them
+     (Mapbox Streets waterways, already in the map's tiles; the base map draws them near-black, all but invisible).
+     Drawn under the transit lines so the lines stay on top. Off at first; the choice is remembered for next time. */
+  var RIVER_LAYERS = ['tc-rivers', 'tc-river-labels'], riverBtn = riversCtrl.querySelector('.oa-pin');
+  var riversOn = false;
+  try { riversOn = localStorage.getItem('tm-rivers') === '1'; } catch (e) {}
+  function showRivers(on) {
+    riversOn = on; riverBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    RIVER_LAYERS.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); });
+    try { localStorage.setItem('tm-rivers', on ? '1' : '0'); } catch (e) {}
+  }
+  riverBtn.addEventListener('click', function () { showRivers(!riversOn); });
+  map.on('load', function () {
+    var src = 'mapbox://mapbox.mapbox-streets-v7', under = map.getLayer('amtrak routes 8fdb63') ? 'amtrak routes 8fdb63' : undefined;
+    if (!map.getSource(src)) return;   // the base style changed: no waterways to show
+    var vis = riversOn ? 'visible' : 'none', isStream = ['==', ['get', 'class'], 'stream'];
+    map.addLayer({ id: 'tc-rivers', type: 'line', source: src, 'source-layer': 'waterway',
+      filter: ['match', ['get', 'class'], ['river', 'canal', 'stream'], true, false],
+      layout: { visibility: vis, 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#4aa3df', 'line-opacity': ['case', isStream, 0.18, 0.25],   // 75% transparent (streams a bit fainter)
+               'line-width': ['interpolate', ['linear'], ['zoom'], 5, ['case', isStream, 0, 0.6], 10, ['case', isStream, 0.4, 1.4],
+                              14, ['case', isStream, 1, 3], 18, ['case', isStream, 2.5, 6]] } }, under);
+    map.addLayer({ id: 'tc-river-labels', type: 'symbol', source: src, 'source-layer': 'waterway_label', minzoom: 10,   // names live here, not on the lines
+      filter: ['==', ['get', 'class'], 'river'],
+      layout: { visibility: vis, 'symbol-placement': 'line', 'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']],
+                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 10, 11, 16, 14],
+                'text-letter-spacing': 0.1, 'symbol-spacing': 400 },
+      paint: { 'text-color': '#8fcdf3', 'text-halo-color': '#000', 'text-halo-width': 1 } });
+    showRivers(riversOn);
+  });
+
+  /* Tapping an airport names it, as a search pick does. The map draws an airport from zoom 10 as runways and
+     taxiways, and from zoom 12 also as its code (SFO); a tap within a fingertip of any of these counts.
+     The code label names the airport directly. A runway or taxiway carries no code, so it goes to the nearest
+     airport in airports.json within 8 km (heliports, seaplane bases and stations skipped). Anything else is a plain tap. */
+  var AIR_LABEL = 'aeroway labels v7', AIR_LAYERS = [AIR_LABEL, 'aeroway_runway', 'aeroway_taxiway'], AIR_REACH = 8000;
+  var NOT_AIRFIELD = /heliport|seaplane|railway|train station|rail station|bus station|ferry/i;
+  function metres(ll, lng, lat) {   // short distances: flat-earth approximation is plenty
+    var k = Math.PI / 180, x = (lng - ll.lng) * k * Math.cos((lat + ll.lat) / 2 * k), y = (lat - ll.lat) * k;
+    return Math.sqrt(x * x + y * y) * 6371000;
+  }
+  function tapAirport(e) {
+    var r = matchMedia('(pointer: coarse)').matches ? 16 : 8, p = e.point;
+    var layers = AIR_LAYERS.filter(function (id) { return map.getLayer(id); });
+    var hits = layers.length ? map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: layers }) : [];
+    if (!hits.length) return Promise.resolve(null);
+    var label = hits.filter(function (f) { return f.layer.id === AIR_LABEL; })[0], ll = e.lngLat.wrap();
+    return search.airports().then(function (all) {
+      var ref = label ? String(label.properties.ref || '').toUpperCase() : '', a = ref && all[ref];
+      if (a) return { code: ref, name: a[0], city: a[1] };
+      if (label && label.properties.name) return { code: /^[A-Z]{3}$/.test(ref) ? ref : '', name: label.properties.name, city: null };
+      var best = null, bd = AIR_REACH;
+      Object.keys(all).forEach(function (c) {
+        var v = all[c]; if (NOT_AIRFIELD.test(v[0])) return;
+        var d = metres(ll, v[3], v[4]); if (d < bd) { bd = d; best = c; }
+      });
+      return best ? { code: best, name: all[best][0], city: all[best][1] } : null;
+    });
+  }
+  map.on('click', function (e) {
+    if (menuWasOpen) return;
+    var mine = spotTurn;   // a newer tap, a search pick or a clear while the airport list loads wins
+    tapAirport(e).catch(function () { return null; })
+      .then(function (a) { if (mine === spotTurn) showSpot(e.lngLat, a || undefined); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !spotCard.hidden && document.getElementById('maps-menu').hidden &&
+        !isOpen() && searchCard.classList.contains('oa-collapsed')) clearSpot();
+  }, true);   // capture: checked before Escape shuts a menu, so one Escape shuts one thing
+
+  /* ===== Blocky planet: the base style, reskinned in the browser =====
+     As in Blocky Planet, the block textures are random noise tinted with a color: grass on land, water in the seas,
+     sand and snow where the base map has them. Lines get square ends and mitred corners; label halos go hard-edged.
+     A night sky with stars rings the globe. The transit layers' own colors are left alone, so the legend still reads. */
+  var TEX = 16, TEXEL_PX = 4;   // 16×16 texels, each 4 CSS px across (1, 2 or 4 map pixels, by block size)
+  var BLOCKS = {
+    'mc-grass': { base: [62, 104, 40],  spread: .16, fleck: [[78, 128, 50], .10] },
+    'mc-water': { base: [38, 66, 150],  spread: .10, fleck: [[56, 92, 190], .08] },
+    'mc-sand':  { base: [196, 184, 132], spread: .08, fleck: [[176, 162, 112], .12] },
+    'mc-snow':  { base: [226, 234, 240], spread: .05, fleck: [[196, 212, 224], .10] },
+    'mc-stone': { base: [96, 96, 96],   spread: .14, fleck: [[72, 72, 72], .14] }
+  };
+  function noiseTexture(b, seed) {   // seeded, so a block looks the same on every visit
+    var data = new Uint8Array(TEX * TEX * 4), s = seed;
+    function rnd() { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }
+    for (var i = 0; i < TEX * TEX; i++) {
+      var c = rnd() < b.fleck[1] ? b.fleck[0] : b.base, k = 1 + (rnd() * 2 - 1) * b.spread;
+      for (var j = 0; j < 3; j++) data[i * 4 + j] = Math.max(0, Math.min(255, Math.round(c[j] * k)));
+      data[i * 4 + 3] = 255;
+    }
+    return { width: TEX, height: TEX, data: data };
+  }
+  function addBlocks() {
+    Object.keys(BLOCKS).forEach(function (id, n) {
+      if (!map.hasImage(id)) map.addImage(id, noiseTexture(BLOCKS[id], 9973 * (n + 1)), { pixelRatio: 1 / TEXEL_PX });
+    });
+  }
+  var KIND = [   // which texture a base-map layer gets, by its id
+    [/water|ocean|sea\b|lake|river|reservoir|bay/i, 'mc-water'],
+    [/sand|beach|desert/i, 'mc-sand'],
+    [/glacier|snow|ice/i, 'mc-snow'],
+    [/^land$|landcover|land[-_ ]?mass|^earth|park|wood|forest|grass|national/i, 'mc-grass']
+  ];
+  function kindOf(id) { for (var i = 0; i < KIND.length; i++) if (KIND[i][0].test(id)) return KIND[i][1]; return null; }
+  function blockify() {
+    addBlocks();
+    map.getStyle().layers.forEach(function (l) {
+      if (/^tc-/.test(l.id)) return;   // this page's own layers keep their look
+      try {
+        if (l.type === 'background') map.setPaintProperty(l.id, 'background-pattern', kindOf(l.id) || 'mc-grass');
+        else if (l.type === 'fill') { var k = kindOf(l.id); if (k) map.setPaintProperty(l.id, 'fill-pattern', k); }
+        else if (l.type === 'line') {
+          var dashed = map.getPaintProperty(l.id, 'line-dasharray') != null;
+          map.setLayoutProperty(l.id, 'line-cap', dashed ? 'butt' : 'square');
+          map.setLayoutProperty(l.id, 'line-join', 'miter');
+        } else if (l.type === 'symbol') map.setPaintProperty(l.id, 'text-halo-blur', 0);
+      } catch (e) {}   // a layer that refuses a property just keeps its own
+    });
+    if (map.setFog) map.setFog({ color: '#2b3f8a', 'high-color': '#16205a', 'horizon-blend': .06,
+                                  'space-color': '#05050f', 'star-intensity': .7 });
+  }
+  map.on('style.load', blockify);
+
+  /* Block size button: 1× → 2× → 4× → 1× … */
+  var blockBtn = blocksCtrl.querySelector('.oa-pin'), STEPS = [1, 2, 4];
+  if (STEPS.indexOf(BLOCK) < 0) BLOCK = 2;
+  function showBlock() { blockBtn.textContent = BLOCK + '×'; blockBtn.setAttribute('aria-label', 'Block size ' + BLOCK + '×'); }
+  blockBtn.addEventListener('click', function () {
+    BLOCK = STEPS[(STEPS.indexOf(BLOCK) + 1) % STEPS.length];
+    try { localStorage.setItem('tm-block', String(BLOCK)); } catch (e) {}
+    showBlock();
+    if (map.setPixelRatio) map.setPixelRatio(1 / BLOCK); else location.reload();
+  });
+  showBlock();
+
+  /* A drag, pinch or scroll leaves the city menu's bold mark behind: the map is somewhere else now */
+  map.on('movestart', function (e) { if (e.originalEvent) markCity(null); });
+});
+</script>
+</body>
+</html>
