@@ -421,8 +421,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </ul>
   </div>
 </div>
-<div class="oa-blocks" hidden>  <!-- block size: how many screen pixels each map pixel covers (1×–4×) -->
-  <button type="button" class="oa-pin" aria-label="Block size" title="Block size">2×</button>
+<div class="oa-blocks" hidden>  <!-- block size: how many screen pixels each map pixel covers (4× default, 1×, 2×) -->
+  <button type="button" class="oa-pin" aria-label="Block size" title="Block size">4×</button>
 </div>
 <div class="oa-zoomread" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>
 <div class="oa-search oa-collapsed" role="search" hidden>
@@ -444,8 +444,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function savedZoom() { try { var z = parseFloat(localStorage.getItem('tm-zoom')); return z >= 0 && z <= 22 ? z : null; } catch (e) { return null; } }
   /* Block size: each map pixel covers this many CSS pixels (the canvas is drawn at 1/BLOCK and scaled up with hard
-     edges). 2× by default; the block button cycles 1×–4× and the choice is remembered. */
-  function savedBlock() { try { var b = parseInt(localStorage.getItem('tm-block'), 10); return b >= 1 && b <= 4 ? b : 2; } catch (e) { return 2; } }
+     edges). 4× by default: the Pixel Waves v9 level (chunky hard pixels, about frame width / 4, as on /waves).
+     The block button cycles 4× → 1× → 2× and the choice is remembered. */
+  function savedBlock() { try { var b = parseInt(localStorage.getItem('tm-block2'), 10); return b === 1 || b === 2 || b === 4 ? b : 4; } catch (e) { return 4; } }
   var BLOCK = savedBlock();
   mapboxgl.accessToken = '{{ page.access_token }}';
   var map = new mapboxgl.Map({
@@ -1024,13 +1025,12 @@ document.addEventListener('DOMContentLoaded', function () {
   map.on('style.load', blockify);
   window.tmMap = map;   // for poking at the planet from the console
 
-  /* Block size button: 1× → 2× → 4× → 1× … */
-  var blockBtn = blocksCtrl.querySelector('.oa-pin'), STEPS = [1, 2, 4];
-  if (STEPS.indexOf(BLOCK) < 0) BLOCK = 2;
+  /* Block size button: 4× → 1× → 2× → 4× … */
+  var blockBtn = blocksCtrl.querySelector('.oa-pin'), STEPS = [4, 1, 2];
   function showBlock() { blockBtn.textContent = BLOCK + '×'; blockBtn.setAttribute('aria-label', 'Block size ' + BLOCK + '×'); }
   blockBtn.addEventListener('click', function () {
     BLOCK = STEPS[(STEPS.indexOf(BLOCK) + 1) % STEPS.length];
-    try { localStorage.setItem('tm-block', String(BLOCK)); } catch (e) {}
+    try { localStorage.setItem('tm-block2', String(BLOCK)); } catch (e) {}
     showBlock();
     if (map.setPixelRatio) map.setPixelRatio(1 / BLOCK); else location.reload();
   });
