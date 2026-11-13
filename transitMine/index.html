@@ -1004,6 +1004,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                   'space-color': '#05050f', 'star-intensity': .7 });
   }
   map.on('style.load', blockify);
+  window.tmMap = map;   // for poking at the planet from the console
 
   /* Block size button: 1× → 2× → 4× → 1× … */
   var blockBtn = blocksCtrl.querySelector('.oa-pin'), STEPS = [1, 2, 4];
