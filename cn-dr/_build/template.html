@@ -151,7 +151,13 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-weight:9
 .scard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:var(--s4);background:var(--surface);border:1.5px solid var(--line);border-bottom-width:calc(1.5px + var(--edge));border-radius:var(--r-lg);text-align:left;cursor:pointer;width:100%;box-shadow:var(--shadow-card)}
 @media (hover:hover){.scard:hover{border-color:var(--line-strong)}}
 .scard:active{transform:translateY(2px);border-bottom-width:3px}
-.scard.feat{border-color:var(--primary);background:var(--primary-tint)}
+.acc{min-width:0}
+.acc[data-open="true"]{grid-column:1/-1}
+.acc.feat .scard{border-color:var(--primary);background:var(--primary-tint)}
+.scard{grid-template-columns:minmax(0,1fr) auto auto}
+.scard .chev{width:24px;height:24px;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
+.scard[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.acc-panel{padding:var(--s1) var(--s1) var(--s3)}
 .scard b{display:block;font-size:1.0625rem;font-weight:900;line-height:1.25}
 .scard span{display:block;font-size:var(--fs-sm);color:var(--ink-2)}
 .ring{width:48px;height:48px}
@@ -261,7 +267,7 @@ const store = {
   set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
 };
 let done = store.get('done', {});           // id -> timestamp
-let S = { tab: store.get('tab','learn'), level: store.get('level','beginner'), sub:'all', open:{}, q:'', series:null };
+let S = { tab: store.get('tab','learn'), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'' };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -319,9 +325,22 @@ function ring(n, total){
   const C = 2*Math.PI*20, f = total ? n/total : 0;
   return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle">${n}/${total}</text></svg>`;
 }
+function accPanel(key){
+  let it, opts;
+  if(key.startsWith('ser:')){ const sid=key.slice(4); it=seriesItems(sid); const lab=sid==='survival30'?'Day':'Part';
+    CTX[key]=it.map(r=>r.id);
+    return (sid==='survival30'?'<p class="sec-note">Days 8, 10, 11, 12, 14, 16, 26, 27 and 29 have no day number in their titles; their place is inferred from posting order.</p>':'')
+      + `<ul class="list">${it.map((r,i)=>row(r,key,{ord:sid==='survival30'?r.ord:i+1,ordLabel:lab})).join('')}</ul>`; }
+  it=drillPool(key.slice(6)); CTX[key]=it.map(r=>r.id);
+  return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:i+1,ordLabel:'Drill',level:true})).join('')}</ul>`;
+}
+function acc(key, name, sub, n, total, feat){
+  const open=!!S.acc[key], pid='p-'+key.replace(/[^a-z0-9]/gi,'-');
+  return `<div class="acc${feat?' feat':''}" data-open="${open}"><button class="scard" data-acc="${esc(key)}" aria-expanded="${open}" aria-controls="${pid}" aria-label="${esc(name)}, ${n} of ${total} done"><span><b>${esc(name)}</b><span>${esc(sub)}</span></span>${ring(n,total)}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="acc-panel" id="${pid}"${open?'':' hidden'}>${open?accPanel(key):''}</div></div>`;
+}
 function scard(sid){
   const s = SER[sid], it = seriesItems(sid), n = it.filter(r=>isDone(r.id)).length;
-  return `<button class="scard" data-series="${sid}" aria-label="${esc(s.name)}, ${it.length} lessons, ${n} done"><span><b>${esc(s.name)}</b><span>${it.length} lessons · ${esc(s.blurb)}</span></span>${ring(n,it.length)}</button>`;
+  return acc('ser:'+sid, s.name, `${it.length} lessons · ${s.blurb}`, n, it.length);
 }
 // context lists drive "Next lesson"
 const CTX = {};
@@ -402,14 +421,6 @@ function updateLevel(){
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
 }
 function viewSeries(){
-  if(S.series){
-    const s = SER[S.series], it = seriesItems(S.series), n = it.filter(r=>isDone(r.id)).length;
-    const label = S.series==='survival30' ? 'Day' : 'Part';
-    return `<p class="kicker"><button class="btn ghost" data-back style="margin-left:calc(-1 * var(--s4))"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(90deg)"><path d="m6 9 6 6 6-6"/></svg>All courses</button></p>
-      <h1 class="display">${esc(s.name)}</h1><p class="lede">${esc(s.blurb)} ${n} of ${it.length} done.</p>
-      ${S.series==='survival30'?'<p class="sec-note">Days 8, 10, 11, 12, 14, 16, 26, 27 and 29 have no day number in their titles; their place is inferred from posting order.</p>':''}
-      <section class="sec" style="margin-top:var(--s4)" aria-label="Lessons">${(()=>{CTX['ser:'+S.series]=it.map(r=>r.id);return `<ul class="list">${it.map((r,i)=>row(r,'ser:'+S.series,{ord: S.series==='survival30'||['apartment','tastes','help','kinship','countries'].includes(S.series) ? (S.series==='survival30'?r.ord:i+1) : i+1, ordLabel: label, level:true})).join('')}</ul>`;})()}</section>` + foot();
-  }
   const groups = LEVELS.map(l => ({l, sids: DATA.series.map(s=>s.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
   return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Runs of lessons Dr. Jia released in order, plus themes she kept coming back to. Progress saves on this device.</p>
     ${groups.map(g=>`<section class="sec" aria-labelledby="h-s-${g.l.id}">${secHead('s-'+g.l.id, g.l.name)}<div class="series">${g.sids.map(scard).join('')}</div></section>`).join('')}` + foot();
@@ -422,15 +433,8 @@ function viewPractice(){
   const dayMs = 864e5, now = Date.now();
   const due = watched.filter(r => now - done[r.id] > dayMs);
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
-  if(S.drill){
-    const it = drillPool(S.drill), n = it.filter(r=>isDone(r.id)).length, key='drill:'+S.drill;
-    const name = S.drill==='all' ? 'Mixed drill session' : S.drill; CTX[key] = it.map(r=>r.id);
-    return `<p class="kicker"><button class="btn ghost" data-back style="margin-left:calc(-1 * var(--s4))"><svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(90deg)"><path d="m6 9 6 6 6-6"/></svg>All practice</button></p>
-      <h1 class="display">${esc(name)}</h1><p class="lede">${esc(S.drill==='all'?'Every drill, all four types.':blurbs[S.drill])} ${n} of ${it.length} done.</p>
-      <section class="sec" style="margin-top:var(--s4)" aria-label="Drills"><ul class="list">${it.map((r,i)=>row(r,key,{ord:i+1,ordLabel:'Drill',level:true})).join('')}</ul></section>` + foot();
-  }
   return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
-    <p class="lede">Pick a drill type, then pick a drill. Say each answer aloud, then let her confirm it.</p>
+    <p class="lede">Open a drill type and pick a drill. Say each answer aloud, then let her confirm it.</p>
     <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
     <section class="sec" aria-labelledby="h-review">${secHead('review','Review what you watched')}
       <p class="sec-note">Lessons you marked done more than a day ago come back here, oldest first.</p>
@@ -476,7 +480,7 @@ function render(focusMain){
   if(S.tab==='search'){ const i=$('#q'); i.focus(); i.setSelectionRange(i.value.length,i.value.length); }
   else if(focusMain){ $('#main').focus({preventScroll:true}); }
 }
-function go(tab){ S.tab=tab; if(tab!=='series') S.series=null; S.drill=null; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
+function go(tab){ S.tab=tab; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
 
 /* ---------- player ---------- */
 let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '';
@@ -513,8 +517,9 @@ function closePlayer(){
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
   document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', r.t+(d?', done':'')); });
-  document.querySelectorAll('.scard[data-series]').forEach(c=>{ const w=document.createElement('div'); w.innerHTML=scard(c.dataset.series); c.replaceWith(w.firstElementChild); });
-  document.querySelectorAll('.scard[data-drill]').forEach(c=>{ const w=document.createElement('div'); w.innerHTML=drillCard(c.dataset.drill, c.dataset.label, c.dataset.blurb, c.classList.contains('feat')); c.replaceWith(w.firstElementChild); });
+  document.querySelectorAll('.scard[data-acc]').forEach(c=>{ const k=c.dataset.acc, it=k.startsWith('ser:')?seriesItems(k.slice(4)):drillPool(k.slice(6)), n=it.filter(r=>isDone(r.id)).length;
+    const w=document.createElement('div'); w.innerHTML=ring(n,it.length); c.querySelector('.ring').replaceWith(w.firstElementChild);
+    c.setAttribute('aria-label', c.getAttribute('aria-label').replace(/, \d+ of \d+ done$/, `, ${n} of ${it.length} done`)); });
   const lead=document.querySelector('.lead[data-ser]');
   if(lead){ const it=seriesItems(lead.dataset.ser), n=it.filter(r=>isDone(r.id)).length;
     lead.querySelector('.meter i').style.width=(100*n/it.length)+'%'; lead.querySelector('.count').textContent=`${n} of ${it.length} done`;
@@ -530,7 +535,7 @@ function drillPool(kind){
 }
 function drillCard(kind, label, blurb, feat){
   const pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length;
-  return `<button class="scard${feat?' feat':''}" data-drill="${esc(kind)}" data-label="${esc(label)}" data-blurb="${esc(blurb)}" aria-label="${esc(label)}, ${pool.length} drills, ${n} done. "><span><b>${esc(label)}</b><span>${pool.length} drills · ${esc(blurb)}</span></span>${ring(n,pool.length)}</button>`;
+  return acc('drill:'+kind, label, `${pool.length} drills · ${blurb}`, n, pool.length, feat);
 }
 function startDrill(kind){
   let pool = drillPool(kind);
@@ -548,12 +553,11 @@ document.addEventListener('click', e => {
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
   if(t.dataset.sub){ S.sub=t.dataset.sub; render(false); const b=document.querySelector(`[data-sub="${S.sub}"]`); b&&b.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
-  if(t.dataset.series){ S.tab='series'; S.series=t.dataset.series; window.scrollTo(0,0); render(true); return; }
-  if(t.hasAttribute('data-back')){ S.series=null; S.drill=null; render(true); return; }
+  if(t.dataset.acc){ const k=t.dataset.acc, open=!S.acc[k]; S.acc[k]=open; const w=t.parentElement, pn=w.querySelector('.acc-panel');
+    if(open && !pn.firstChild) pn.innerHTML=accPanel(k); pn.hidden=!open; w.dataset.open=String(open); t.setAttribute('aria-expanded', String(open)); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
-  if(t.dataset.drill){ S.tab='practice'; S.drill=t.dataset.drill; window.scrollTo(0,0); render(true); return; }
   if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
-  if(t.matches('.row') && t.dataset.id){ drillName = (t.dataset.ctx||'').startsWith('drill:') ? (S.drill==='all'?'Mixed session':S.drill) : ''; return openPlayer(t.dataset.id, t.dataset.ctx); }
+  if(t.matches('.row') && t.dataset.id){ drillName = (t.dataset.ctx||'').startsWith('drill:') ? (t.dataset.ctx==='drill:all'?'Mixed session':t.dataset.ctx.slice(6)) : ''; return openPlayer(t.dataset.id, t.dataset.ctx); }
 });
 $('#searchBtn').addEventListener('click', () => { S.tab='search'; render(false); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; const pos=e.target.selectionStart; render(false); const i=$('#q'); i.setSelectionRange(pos,pos); } });
