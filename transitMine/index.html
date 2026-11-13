@@ -958,8 +958,8 @@ document.addEventListener('DOMContentLoaded', function () {
      A night sky with stars rings the globe. The transit layers' own colors are left alone, so the legend still reads. */
   var TEX = 16, TEXEL_PX = 4;   // 16×16 texels, each 4 CSS px across (1, 2 or 4 map pixels, by block size)
   var BLOCKS = {
-    'mc-grass': { base: [62, 104, 40],  spread: .16, fleck: [[78, 128, 50], .10] },
-    'mc-water': { base: [38, 66, 150],  spread: .10, fleck: [[56, 92, 190], .08] },
+    'mc-grass': { base: [30, 50, 27],   spread: .16, fleck: [[42, 68, 34], .12] },   /* grass and water by night: dark enough */
+    'mc-water': { base: [14, 28, 74],   spread: .12, fleck: [[24, 46, 110], .10] },  /* that the transit lines read as on /transit/ */
     'mc-sand':  { base: [196, 184, 132], spread: .08, fleck: [[176, 162, 112], .12] },
     'mc-snow':  { base: [226, 234, 240], spread: .05, fleck: [[196, 212, 224], .10] },
     'mc-stone': { base: [96, 96, 96],   spread: .14, fleck: [[72, 72, 72], .14] }
