@@ -430,6 +430,10 @@ var OCEANS = [
 ];
 
 document.addEventListener('DOMContentLoaded', function () {
+  /* The list above is the book's order. Most visitors won't have the book, so each ocean is listed
+     alphabetically instead (accents ignored, so Annobón sits under A). The oceans keep the book's order. */
+  OCEANS.forEach(function (o) { o[1].sort(function (a, b) { return a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }); }); });
+
   var ISLANDS = [];
   OCEANS.forEach(function (o) { o[1].forEach(function (r) {
     ISLANDS.push({ name: r[0], article: r[1], center: [r[2], r[3]], what: r[4], ocean: o[0],
