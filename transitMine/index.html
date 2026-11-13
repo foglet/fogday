@@ -1027,20 +1027,40 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   showBlock();
 
-  /* ===== Pixel place names =====
-     Every point-placed label layer (cities, places, countries, states, oceans' point names, NYC boroughs, airport
-     codes) keeps running in Mapbox, so it still decides which labels fit and where, but with its text made invisible.
-     After each frame the placed labels are read back and redrawn as HTML in Silkscreen, a pixel font, at sizes on its
-     8px grid (16px, or 24px for the biggest names), with a hard 2px black outline. Being HTML, they're never scaled up
-     with the map, so they read the same at every block size. Labels that run along lines (roads, seas) stay as they were. */
+  /* ===== Pixel names: places and geography, no roads =====
+     Every text label on the map keeps running in Mapbox, so it still decides which names fit and where, but with its
+     own text made invisible. After each frame the placed names are read back and redrawn as HTML in Silkscreen,
+     a pixel font, at sizes on its 8px grid (16px, or 24px for the biggest names), with a hard 2px black outline.
+     Being HTML, they're never scaled up with the map, so they read the same at every block size.
+     Road names are switched off. Geography is added from Mapbox Streets: lakes and bays, rivers, mountain peaks
+     (seas and oceans are already in the base style). Names that follow a line (rivers, seas) are written level,
+     centered on the part of the line in view. */
+  var GEO_SRC = 'mapbox://mapbox.mapbox-streets-v7', GEO_FONT = ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'];
+  var GEO_NAME = ['coalesce', ['get', 'name_en'], ['get', 'name']];
+  map.on('load', function () {
+    if (!map.getSource(GEO_SRC)) return;   // the base style changed: no geography to add
+    var before = map.getStyle().layers.filter(function (l) { return l.type === 'symbol'; })[0];   // under every other name
+    [{ id: 'tm-geo-water', 'source-layer': 'water_label', minzoom: 6, color: '#8fcdf3', size: 13 },                    // lakes, bays
+     { id: 'tm-geo-river', 'source-layer': 'waterway_label', minzoom: 9, color: '#8fcdf3', size: 12, line: true,
+       filter: ['==', ['get', 'class'], 'river'] },
+     { id: 'tm-geo-peak', 'source-layer': 'mountain_peak_label', minzoom: 9, color: '#d8c9a3', size: 12 }              // peaks
+    ].forEach(function (g) {
+      var layer = { id: g.id, type: 'symbol', source: GEO_SRC, 'source-layer': g['source-layer'], minzoom: g.minzoom,
+        layout: { 'text-field': GEO_NAME, 'text-font': GEO_FONT, 'text-size': g.size, 'text-max-width': 12,
+                  'symbol-placement': g.line ? 'line' : 'point', 'symbol-spacing': 600 },
+        paint: { 'text-color': g.color, 'text-opacity': 0 } };
+      if (g.filter) layer.filter = g.filter;
+      try { map.addLayer(layer, before && before.id); } catch (e) {}
+    });
+  });
   var labelBox = document.createElement('div'); labelBox.className = 'tm-labels'; labelBox.setAttribute('aria-hidden', 'true');
   map.getCanvasContainer().appendChild(labelBox);
   var pointLabels = [], labelFrame = 0;
+  function isRoad(l) { return /road/.test(l['source-layer'] || '') || /^road-label/.test(l.id); }
   function findPointLabels() {
-    pointLabels = map.getStyle().layers.filter(function (l) {
-      return l.type === 'symbol' && (map.getLayoutProperty(l.id, 'symbol-placement') || 'point') === 'point' &&
-             map.getLayoutProperty(l.id, 'text-field') != null;
-    }).map(function (l) { return l.id; });
+    var layers = map.getStyle().layers.filter(function (l) { return l.type === 'symbol' && map.getLayoutProperty(l.id, 'text-field') != null; });
+    layers.filter(isRoad).forEach(function (l) { if (map.getLayoutProperty(l.id, 'visibility') !== 'none') map.setLayoutProperty(l.id, 'visibility', 'none'); });
+    pointLabels = layers.filter(function (l) { return !isRoad(l); }).map(function (l) { return l.id; });
     pointLabels.forEach(function (id) { if (map.getPaintProperty(id, 'text-opacity') !== 0) map.setPaintProperty(id, 'text-opacity', 0); });
   }
   function labelText(f) {
@@ -1055,17 +1075,28 @@ document.addEventListener('DOMContentLoaded', function () {
   function cssColor(c) { return c && c.r != null ? 'rgba(' + Math.round(c.r * 255) + ',' + Math.round(c.g * 255) + ',' + Math.round(c.b * 255) + ',' + c.a + ')' : '#edeff5'; }
   var ANCHOR = { center: [-.5, -.5], left: [0, -.5], right: [-1, -.5], top: [-.5, 0], bottom: [-.5, -1],
                  'top-left': [0, 0], 'top-right': [-1, 0], 'bottom-left': [0, -1], 'bottom-right': [-1, -1] };
+  /* Where a name goes: a point's own spot; for a line, the middle of the stretch that's on screen */
+  function labelSpot(g) {
+    if (g.type === 'Point') return map.project(g.coordinates);
+    var lines = g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : null;
+    if (!lines) return null;
+    var w = labelBox.clientWidth, h = labelBox.clientHeight, pts = [];
+    lines.forEach(function (ln) { ln.forEach(function (c) { var q = map.project(c); if (q.x > 20 && q.y > 20 && q.x < w - 20 && q.y < h - 20) pts.push(q); }); });
+    return pts.length ? pts[pts.length >> 1] : null;
+  }
   function drawLabels() {
     labelFrame = 0;
     var layers = pointLabels.filter(function (id) { return map.getLayer(id); });
     var feats = layers.length ? map.queryRenderedFeatures({ layers: layers }) : [], seen = {}, html = document.createDocumentFragment();
     feats.forEach(function (f) {
-      if (!f.geometry || f.geometry.type !== 'Point') return;
+      if (!f.geometry) return;
       var text = labelText(f).trim(); if (!text) return;
-      var c = f.geometry.coordinates, key = f.layer.id + '|' + text + '|' + c[0].toFixed(3) + ',' + c[1].toFixed(3);
+      var isPoint = f.geometry.type === 'Point', c = isPoint && f.geometry.coordinates;
+      var key = f.layer.id + '|' + text + (isPoint ? '|' + c[0].toFixed(3) + ',' + c[1].toFixed(3) : '');   // a line: one name per view
       if (seen[key]) return; seen[key] = 1;   // a label can come back once per tile it touches
-      var pt = map.project(c), lay = f.layer.layout || {}, size = (lay['text-size'] || 16) >= 22 ? 24 : 16;
-      var a = ANCHOR[lay['text-anchor']] || ANCHOR.center, off = lay['text-offset'] || [0, 0];
+      var pt = labelSpot(f.geometry); if (!pt) return;
+      var lay = f.layer.layout || {}, size = (lay['text-size'] || 16) >= 22 ? 24 : 16;
+      var a = isPoint ? ANCHOR[lay['text-anchor']] || ANCHOR.center : ANCHOR.center, off = isPoint && lay['text-offset'] || [0, 0];
       var el = document.createElement('span'); el.className = 'tm-label'; el.textContent = text;
       el.style.fontSize = size + 'px'; el.style.color = cssColor(f.layer.paint && f.layer.paint['text-color']);
       el.style.transform = 'translate(' + Math.round(pt.x + off[0] * size) + 'px,' + Math.round(pt.y + off[1] * size) + 'px) translate(' + (a[0] * 100) + '%,' + (a[1] * 100) + '%)';
