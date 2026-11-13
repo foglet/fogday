@@ -357,6 +357,15 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .oa-result { border-radius: 0; }
   .mapboxgl-ctrl.mapboxgl-ctrl-attrib { background: rgb(16 16 16 / .78); }
   @media (pointer: coarse) { .oa-blocks .oa-pin { width: 44px; height: 44px; } }
+  /* Place names (cities, countries, states, NYC boroughs, airport codes): drawn as pixel type over the map, so they
+     stay crisp and legible at 1×, 2× and 4×. Mapbox still places them (collision, fading); its own text is hidden. */
+  .tm-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+  .tm-label {
+    position: absolute; left: 0; top: 0; white-space: nowrap; line-height: 1;
+    font-family: "Silkscreen", "Pixelify Sans", monospace; font-weight: 400;
+    -webkit-font-smoothing: none; font-smooth: never;
+    text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
+  }
 </style>
 </head>
 <body>
@@ -1017,6 +1026,55 @@ document.addEventListener('DOMContentLoaded', function () {
     box.style.right = '1px'; map.resize(); box.style.right = ''; map.resize();
   });
   showBlock();
+
+  /* ===== Pixel place names =====
+     Every point-placed label layer (cities, places, countries, states, oceans' point names, NYC boroughs, airport
+     codes) keeps running in Mapbox, so it still decides which labels fit and where, but with its text made invisible.
+     After each frame the placed labels are read back and redrawn as HTML in Silkscreen, a pixel font, at sizes on its
+     8px grid (16px, or 24px for the biggest names), with a hard 2px black outline. Being HTML, they're never scaled up
+     with the map, so they read the same at every block size. Labels that run along lines (roads, seas) stay as they were. */
+  var labelBox = document.createElement('div'); labelBox.className = 'tm-labels'; labelBox.setAttribute('aria-hidden', 'true');
+  map.getCanvasContainer().appendChild(labelBox);
+  var pointLabels = [], labelFrame = 0;
+  function findPointLabels() {
+    pointLabels = map.getStyle().layers.filter(function (l) {
+      return l.type === 'symbol' && (map.getLayoutProperty(l.id, 'symbol-placement') || 'point') === 'point' &&
+             map.getLayoutProperty(l.id, 'text-field') != null;
+    }).map(function (l) { return l.id; });
+    pointLabels.forEach(function (id) { if (map.getPaintProperty(id, 'text-opacity') !== 0) map.setPaintProperty(id, 'text-opacity', 0); });
+  }
+  function labelText(f) {
+    var tf = f.layer.layout && f.layer.layout['text-field'], p = f.properties || {}, t = '';
+    if (typeof tf === 'string') t = tf.replace(/\{([^}]+)\}/g, function (_, k) { return p[k] != null ? p[k] : ''; });
+    else if (tf && tf.sections) t = tf.sections.map(function (x) { return x.text; }).join('');
+    else if (tf && tf.toString) t = String(tf);
+    if (!t || t === '[object Object]') t = p.name_en || p.name || '';
+    var tt = f.layer.layout && f.layer.layout['text-transform'];
+    return tt === 'uppercase' ? t.toUpperCase() : tt === 'lowercase' ? t.toLowerCase() : t;
+  }
+  function cssColor(c) { return c && c.r != null ? 'rgba(' + Math.round(c.r * 255) + ',' + Math.round(c.g * 255) + ',' + Math.round(c.b * 255) + ',' + c.a + ')' : '#edeff5'; }
+  var ANCHOR = { center: [-.5, -.5], left: [0, -.5], right: [-1, -.5], top: [-.5, 0], bottom: [-.5, -1],
+                 'top-left': [0, 0], 'top-right': [-1, 0], 'bottom-left': [0, -1], 'bottom-right': [-1, -1] };
+  function drawLabels() {
+    labelFrame = 0;
+    var layers = pointLabels.filter(function (id) { return map.getLayer(id); });
+    var feats = layers.length ? map.queryRenderedFeatures({ layers: layers }) : [], seen = {}, html = document.createDocumentFragment();
+    feats.forEach(function (f) {
+      if (!f.geometry || f.geometry.type !== 'Point') return;
+      var text = labelText(f).trim(); if (!text) return;
+      var c = f.geometry.coordinates, key = f.layer.id + '|' + text + '|' + c[0].toFixed(3) + ',' + c[1].toFixed(3);
+      if (seen[key]) return; seen[key] = 1;   // a label can come back once per tile it touches
+      var pt = map.project(c), lay = f.layer.layout || {}, size = (lay['text-size'] || 16) >= 22 ? 24 : 16;
+      var a = ANCHOR[lay['text-anchor']] || ANCHOR.center, off = lay['text-offset'] || [0, 0];
+      var el = document.createElement('span'); el.className = 'tm-label'; el.textContent = text;
+      el.style.fontSize = size + 'px'; el.style.color = cssColor(f.layer.paint && f.layer.paint['text-color']);
+      el.style.transform = 'translate(' + Math.round(pt.x + off[0] * size) + 'px,' + Math.round(pt.y + off[1] * size) + 'px) translate(' + (a[0] * 100) + '%,' + (a[1] * 100) + '%)';
+      html.appendChild(el);
+    });
+    labelBox.textContent = ''; labelBox.appendChild(html);
+  }
+  map.on('styledata', findPointLabels);
+  map.on('render', function () { if (!labelFrame) labelFrame = requestAnimationFrame(drawLabels); });
 
   /* A drag, pinch or scroll leaves the city menu's bold mark behind: the map is somewhere else now */
   map.on('movestart', function (e) { if (e.originalEvent) markCity(null); });
