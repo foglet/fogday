@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var ISLANDS = [];
   OCEANS.forEach(function (o) { o[1].forEach(function (r) {
     ISLANDS.push({ name: r[0], article: r[1], center: [r[2], r[3]], what: r[4], ocean: o[0],
-                   slug: r[0].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-') });
+                   slug: r[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-') });
   }); });
   function bySlug(s) { return ISLANDS.filter(function (i) { return i.slug === s; })[0] || null; }
 
@@ -579,7 +579,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Search: the fifty islands, by the book's name, the Wikipedia name (Bjørnøya, Uyedineniya …), ocean or what it is.
      Accents don't matter. Names that start with the text come first. */
-  function fold(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  function fold(s) {   // ø, æ and ß don't lose their marks to NFD, so they're spelled out first (Bjørnøya → bjornoya)
+    return s.toLowerCase().replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ß/g, 'ss')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
   var search = (function () {
     var input = document.getElementById('oa-search-input'), list = document.getElementById('oa-search-results'),
         status = document.getElementById('oa-search-status'), field = searchCard.querySelector('.oa-field');
