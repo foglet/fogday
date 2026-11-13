@@ -448,12 +448,15 @@ document.addEventListener('DOMContentLoaded', function () {
      The block button cycles 4× → 1× → 2× and the choice is remembered. */
   function savedBlock() { try { var b = parseInt(localStorage.getItem('tm-block2'), 10); return b === 1 || b === 2 || b === 4 ? b : 4; } catch (e) { return 4; } }
   var BLOCK = savedBlock();
+  /* Mapbox GL v3 ignores its pixelRatio option and draws at window.devicePixelRatio, read whenever the map's size
+     changes. So the page tells it the screen's pixel ratio is 1/BLOCK: the canvas is drawn at 1/BLOCK of the
+     window's size, and CSS scales it back up with hard edges. */
+  try { Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: function () { return 1 / BLOCK; } }); } catch (e) {}
   mapboxgl.accessToken = '{{ page.access_token }}';
   var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/fogfish/{{ page.mapbox_style }}',
     projection: 'globe',   // a planet, so a city change can spin it
-    pixelRatio: 1 / BLOCK,
     center: HOME.center, zoom: savedZoom() != null ? savedZoom() : HOME.zoom,   // the zoom a visitor last used opens the map
     customAttribution: '<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'
   });
@@ -1032,7 +1035,9 @@ document.addEventListener('DOMContentLoaded', function () {
     BLOCK = STEPS[(STEPS.indexOf(BLOCK) + 1) % STEPS.length];
     try { localStorage.setItem('tm-block2', String(BLOCK)); } catch (e) {}
     showBlock();
-    if (map.setPixelRatio) map.setPixelRatio(1 / BLOCK); else location.reload();
+    /* Mapbox only re-reads the pixel ratio when the map's size changes, so nudge the size by a pixel and back */
+    var box = map.getContainer();
+    box.style.right = '1px'; map.resize(); box.style.right = ''; map.resize();
   });
   showBlock();
 
