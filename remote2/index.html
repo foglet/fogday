@@ -287,18 +287,22 @@ zoom: 11
 
   /* Credits: always written out in full (no folded (i) button on phones), and the bottom-left card
      sits just above them however many lines they wrap to (--attrib, set by the script) */
-  .map-bottom-left { bottom: calc(var(--attrib, 50px) + 6px); }   /* --attrib already includes the safe area */
+  .map-bottom-left { bottom: calc(var(--attrib, 50px) + 6px);   /* --attrib already includes the safe area */
+                     max-height: calc(100% - var(--attrib, 50px) - 6px - 72px - var(--sat)); }   /* everything below the title */
+  /* The card takes the height it needs; only when the window is too short does the description scroll */
+  .oa-detail-panel:not([hidden]) { display: flex; flex-direction: column; align-items: flex-start; min-height: 0; max-height: 100%; }
+  .oa-detail-panel > * { flex: none; }
+  .oa-detail-panel > .oa-detail-desc { flex: 0 1 auto; min-height: 4.2em; }
   /* Phones: the card stops short of the right-hand buttons, and the description is shorter (it scrolls) */
   @media (max-width: 759px) {
     .map-bottom-left { max-width: calc(100% - 24px - 56px - var(--sal) - var(--sar)); }
-    .oa-detail-panel > .oa-detail-desc { max-height: 7em; }
   }
   .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib { max-width: calc(100vw - 110px - var(--sal) - var(--sar)); }
 
   /* The picked island, above the credits: name, ocean · what it is, coordinates, local time, then Wikipedia's description */
   .oa-detail-panel { margin-left: 0; max-width: 100%; }
   .oa-detail-desc, .oa-detail-credit { font-size: .85rem; line-height: 1.4; }
-  .oa-detail-panel > .oa-detail-desc { width: auto; margin-top: 6px; padding: 6px 8px; max-height: 9.6em; overflow-y: auto; overscroll-behavior: contain; }
+  .oa-detail-panel > .oa-detail-desc { width: auto; margin-top: 6px; padding: 6px 8px; overflow-y: auto; overscroll-behavior: contain; }
   .oa-detail-credit { margin-top: 2px; color: var(--muted); }
   .oa-detail-credit a { color: var(--muted); }
   .oa-detail-credit a:hover, .oa-detail-credit a:focus-visible { color: var(--ink); }
