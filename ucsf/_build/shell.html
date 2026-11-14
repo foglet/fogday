@@ -14,6 +14,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 <meta name="theme-color" content="#021724">
 <script>try{var t=localStorage.getItem('fogday-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="{{ '/assets/js/theme.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
@@ -210,19 +211,34 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
   .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
   @keyframes here-pulse { 50% { opacity: .35; } }
-  /* Top right: light / dark and the bento, as in the site header (frosted squares like the maps chevron) */
-  .corner { position: fixed; z-index: 3; top: calc(12px + var(--sat)); right: calc(12px + var(--sar)); display: flex; gap: 6px; }
-  .cbtn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 10px; border: 0; border-radius: 8px; cursor: pointer;
-          background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--muted); }
-  .cbtn svg { display: block; width: 100%; height: 100%; }
-  .cbtn:hover { color: var(--accent); }
-  .cbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .cbtn.bento { color: #4a90c8; }
-  :root[data-theme="light"] .cbtn.bento { color: #1d5f96; }
-  .theme .icon-sun { display: none; }
-  :root[data-theme="dark"] .theme .icon-sun { display: block; color: #f2c94c; }
-  :root[data-theme="dark"] .theme .icon-moon { display: none; }
-  @media (pointer: coarse) { .cbtn { width: 44px; height: 44px; } }
+  /* Top right: the light / dark toggle and the bento, formatted as in the site header (fogday.css, as on /fog/):
+     no panel, 40px tap targets, a 16px moon / sun and an 18px bento grid. theme.js (the site's) drifts the sun
+     between yellow and orange and fills the bento with a random gradient on hover or tap. Over the map each icon
+     gets a soft navy halo so it reads on streets and routes. */
+  .corner { position: fixed; z-index: 3; top: calc(9px + var(--sat)); right: calc(8px + var(--sar)); display: flex; align-items: center; gap: 0; }
+  .corner svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  :root { --fade-in: .6s; --fade-out: 1.2s; --blend: .8s; }
+  @media (prefers-reduced-motion: reduce) { :root { --fade-in: .01s; --fade-out: .01s; --blend: .01s; } }
+  @property --g1 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+  @property --g2 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+  .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 11px; margin-left: -6px; color: var(--muted); transition: color .15s ease; }
+  .bento svg { display: block; width: 100%; height: 100%; }
+  .bento:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .bento stop { stop-color: currentColor; transition: stop-color var(--fade-out) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
+  .bento:hover stop, .bento.lit stop { transition: stop-color var(--fade-in) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
+  .bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
+  .bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
+  :root[data-theme="dark"] .bento { color: var(--ink); }
+  .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; margin: 0; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 4px; transition: color .15s ease; }
+  .theme-toggle:hover { color: var(--muted); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .theme-toggle svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .theme-toggle .icon-sun { display: none; transition: color 1.5s ease; }
+  .theme-toggle:hover .icon-moon path { fill: currentColor; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+  :root[data-theme="dark"] .theme-toggle:hover { color: #ffe680; }
+  @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .theme-toggle, .bento { width: 44px; height: 44px; } .theme-toggle { padding: 14px; } .bento { padding: 13px; } }   /* centered on the title row */
   .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
                  width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
                  background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
@@ -267,12 +283,12 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 
 <!-- Top right, as in the site header: light / dark, then the bento (all projects) -->
 <nav class="corner" aria-label="Site">
-  <button type="button" class="cbtn theme" id="themeBtn" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
-    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+  <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
   </button>
-  <a class="cbtn bento" href="/works/" aria-label="Projects" title="Projects">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg>
+  <a href="/works/" class="bento" aria-label="Projects" title="Projects">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg>
   </a>
 </nav>
 

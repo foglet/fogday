@@ -174,17 +174,14 @@ $("hereBtn").addEventListener("click", ()=>{
 });
 
 /* ---------- light / dark ---------- */
-function setTheme(t){
-  document.documentElement.dataset.theme=t;
-  try{ localStorage.setItem("fogday-theme", t) }catch(e){}
-  const b=$("themeBtn"), dark=t==="dark";
-  b.setAttribute("aria-pressed", String(dark));
-  b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
-  document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+/* The site's theme.js runs the toggle (sets html[data-theme], saves fogday-theme); the map follows it */
+function applyTheme(){
+  document.querySelector('meta[name="theme-color"]').content = THEME.get()==="dark" ? "#021724" : "#edf1f2";
   ROUTE_FC=null; paintSwatches();
   if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
 }
-$("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
+let lastTheme=THEME.get();
+new MutationObserver(()=>{ const t=THEME.get(); if(t!==lastTheme){ lastTheme=t; applyTheme() } }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
 
 /* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
 function pad(){
@@ -333,7 +330,7 @@ $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIn
 /* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
 setLegend(store.get("legend")!=="0");
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
-(function(){ const dark=THEME.get()==="dark", b=$("themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label"); document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2" })();
+document.querySelector('meta[name="theme-color"]').content = THEME.get()==="dark" ? "#021724" : "#edf1f2";
 buildRoutes(); initMap(); render();
 if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);
