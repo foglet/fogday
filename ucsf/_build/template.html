@@ -39,6 +39,14 @@ a{color:var(--felt)}
 
 .stage{position:relative;min-height:0}
 #map{position:absolute;inset:0;background:#e9e5da}
+.fab{position:absolute;right:12px;z-index:1;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:var(--felt);box-shadow:0 1px 3px rgba(29,36,33,.25),0 2px 8px rgba(29,36,33,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.fab:hover{background:var(--paper)}
+.fab:active{transform:scale(.96)}
+.fab svg{width:22px;height:22px}
+#fabLocate{top:12px}
+#fabCompass{top:64px}
+.fab[hidden]{display:none}
+@media (pointer:fine) and (min-width:860px){ #fabLocate{top:auto;bottom:24px} #fabCompass{top:auto;bottom:76px} }
 .mapfallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted)}
 
 .sheet{position:absolute;left:0;right:0;bottom:0;max-height:var(--sheet-h);display:flex;flex-direction:column;background:var(--bone);border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(29,36,33,.12);z-index:2;padding-bottom:env(safe-area-inset-bottom)}
@@ -125,6 +133,8 @@ ul.list{list-style:none;margin:0;padding:0}
   </header>
   <main class="stage">
     <div id="map" role="region" aria-label="Map of UCSF shuttle routes, stops and shuttles"></div>
+    <button class="fab" id="fabLocate" type="button" aria-label="Show my location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+    <button class="fab" id="fabCompass" type="button" aria-label="Turn map to north up" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><g id="needle"><path d="M12 3l4 9h-8z" fill="#b8352b"/><path d="M12 21l-4-9h8z" fill="#9aa39f"/></g></svg></button>
     <section class="sheet" id="sheet" data-open="true" aria-labelledby="sheetTitle">
       <button class="handle" id="sheetToggle" aria-expanded="true" aria-controls="sheetBody">
         <span class="grip" aria-hidden="true"></span>
@@ -349,7 +359,12 @@ function initMap(){
     mapboxgl.accessToken=CFG.token;
     map=new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/light-v11", center:[-122.432,37.768], zoom:12.3, attributionControl:true, cooperativeGestures:false});
   }catch(e){ el.innerHTML='<div class="mapfallback">The map could not load. The shuttle lists below still work.</div>'; return }
-  map.addControl(new mapboxgl.NavigationControl({showCompass:false}), "top-right");
+  const touch = matchMedia("(pointer: coarse)").matches || innerWidth < 860;
+  if(!touch) map.addControl(new mapboxgl.NavigationControl({showCompass:false}), "top-right");
+  else map.touchPitch.disable();
+  const comp=document.getElementById("fabCompass"), needle=document.getElementById("needle");
+  map.on("rotate", ()=>{ const b=map.getBearing(); comp.hidden = Math.abs(b)<0.5; needle.setAttribute("transform","rotate("+(-b)+" 12 12)") });
+  comp.addEventListener("click", ()=>{ map.easeTo({bearing:0, pitch:0, duration:400}) });
   map.on("load", () => {
     map.addImage("arrow", arrowImage(), {pixelRatio:2});
     map.addSource("routes", {type:"geojson", data:routeFeatures()});
@@ -539,6 +554,7 @@ function toggleSheet(){
 }
 $("sheetToggle").addEventListener("click", toggleSheet);
 $("locBtn").addEventListener("click", locate);
+$("fabLocate").addEventListener("click", ()=>{ if(state.user && map){ map.flyTo({center:[state.user[1],state.user[0]], zoom:Math.max(map.getZoom(),14.6), padding:fitPad(), duration:700}); locate() } else locate() });
 $("moreBtn").addEventListener("click", ()=>{ state.showAll=!state.showAll; render() });
 if(store.get("sheet")==="0") toggleSheet();
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
