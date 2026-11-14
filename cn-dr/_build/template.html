@@ -79,13 +79,14 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* Level switch (segmented) */
-.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s4) 0 var(--s3)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s5) 0 var(--s3)}
 .seg button{min-height:var(--tap);border:0;border-radius:calc(var(--r-md) - 4px);background:transparent;font-weight:600;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer;padding:0 var(--s1);
   transition:background-color var(--dur-fast)}
 @media (hover:hover){.seg button:hover{background:var(--surface-3);color:var(--ink)}}
 .seg button:active{transform:scale(.98)}
-.seg button[aria-selected="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
-.seg small{display:block;font-weight:400;font-size:var(--fs-cap);color:var(--ink-3)}
+.seg button{text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
+.seg small{display:block;text-transform:none;letter-spacing:0;font-weight:400;font-size:var(--fs-cap);color:var(--ink-3)}
 
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
@@ -375,7 +376,7 @@ function sec(id, name, body, hint){
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<p class="kicker">Lesson library</p><h1 class="display">${L.name}</h1>`; }
+  return `<h1 class="vh">${L.name} lessons</h1>`; }
 function viewLearn(bodyOnly){
   let items = ITEMS.filter(r => r.lv===S.level);
   if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>
