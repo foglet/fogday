@@ -37,8 +37,15 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
   body { overflow: hidden; overscroll-behavior: none; }
   [hidden] { display: none !important; }
+  /* The map runs under Safari's toolbars (large viewport), so tiles show through the translucent bars;
+     --bar is how much of it they cover, to keep Mapbox's bottom controls and logo in view (as on /treesf/) */
+  :root { --bar: 0px; }
+  @supports (height: 100lvh) { :root { --bar: calc(100lvh - 100svh); } }
   #map { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
   @supports (height: 100lvh) { #map { height: 100lvh; } }
+  /* Mapbox corners clear the home indicator, the notch and Safari's bottom bar, level with the legend */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: calc(var(--sab) + var(--bar)); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--bar)); }
 
   /* Title, top left (centered on phones): tap it to see every route */
   .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
@@ -184,7 +191,9 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; width: 32px; height: 32px; }
 
   /* Map controls, bottom right as on /transit/: no panels, icons with a navy halo */
-  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border-color: transparent; box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border: 0; box-shadow: none; }
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl { margin: 0 10px 6px 0; }
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib { margin: 0; }
   .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
@@ -214,6 +223,8 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   }
   /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it) */
   @media (pointer: coarse), (max-width: 759px) {
+    .oa-pin { width: 44px; height: 44px; }
+    .oa-pin svg { width: 22px; height: 22px; }
     .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
     .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; width: 44px; height: 44px; }
   }
