@@ -129,7 +129,7 @@ function initMap(){
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
   /* Tap a route line: that route is selected, and stays selected. Another line's tap picks that one instead;
-     nothing else (a tap elsewhere, the same line again, the title) brings the others back. Only a reload does. */
+     a tap elsewhere or on the same line changes nothing. The title (or a reload) brings back all routes. */
   map.on("click","route-hit", ev => {
     if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
     const f=state.focus==null ? null : +state.focus;
@@ -325,7 +325,7 @@ async function pollLive(){
   document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
 })();
-$("home").addEventListener("click", ()=>{ if(map) map.fitBounds(HOME, {padding:pad(), duration:600}) });   // back to the whole map; the selection stays
+$("home").addEventListener("click", ()=>pickRoute(null, true));   // the title clears the selection: all routes, the whole map
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
