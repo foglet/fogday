@@ -144,6 +144,19 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .ring circle{stroke-width:5}
 .ring .bg{stroke:var(--surface-3)} .ring .fg{stroke:var(--done)}
 .ring text{fill:var(--ink);stroke:none;font-size:13px;font-weight:700;font-family:var(--font)}
+.ring text.sm{font-size:10.5px}
+.acc-panel .series{margin-top:var(--s2)}
+.acc-panel .tile:first-child{margin-top:var(--s2)}
+
+/* Drill picker: Drill 1, Drill 2 ... laid out in a row that wraps */
+.dgrid{list-style:none;margin:0;padding:var(--s2) 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:var(--s2)}
+.dtile{display:flex;align-items:center;justify-content:center;gap:var(--s1);width:100%;min-height:var(--tap);padding:0 var(--s2);border-radius:var(--r-md);
+  border:1.5px solid var(--line-strong);border-bottom-width:calc(1.5px + var(--edge));background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
+@media (hover:hover){.dtile:hover{background:var(--surface-2)}}
+.dtile:active{transform:translateY(2px);border-bottom-width:3px}
+.dtile svg{width:16px;height:16px;stroke-width:3;display:none}
+.dtile[data-done="true"]{background:var(--done);border-color:var(--primary-edge);color:var(--on-done)}
+.dtile[data-done="true"] svg{display:block}
 
 /* Practice + materials */
 .tile{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:var(--s4);margin-top:var(--s3)}
@@ -258,15 +271,15 @@ const LEVELS = [
   {id:'advanced', name:'Advanced', note:'HSK 5+'}
 ];
 const SECTIONS = [
-  {id:'series', name:'Serial Course', hint:'Watch in order.'},
+  {id:'series', name:'Serial Course', note:'Runs of lessons to watch in order.'},
   {id:'drills', name:'Repetition Training', note:'Tone, homophone, listening and HSK quizzes.'},
   {id:'pron', name:'Pronunciation', note:'Tones, tricky sounds and what pinyin spelling hides.'},
-  {id:'grammar', name:'Grammar & Patterns'},
-  {id:'vocab', name:'Vocabulary & Word Building'},
+  {id:'grammar', name:'Grammar & Patterns', note:'Sentence patterns, particles and word order.'},
+  {id:'vocab', name:'Vocabulary & Word Building', note:'Word families and how Chinese words are put together.'},
   {id:'phrases', name:'Everyday Phrases', note:'Grouped by the situation you will be in.'},
-  {id:'culture', name:'Culture, Idioms & Slang'},
+  {id:'culture', name:'Culture, Idioms & Slang', note:'Idioms, slang, etiquette and festivals.'},
   {id:'tips', name:'How to Study', note:'Dr. Jia on why learning stalls and what to do instead.'},
-  {id:'materials', name:'Materials'}
+  {id:'materials', name:'Materials', note:'Her courses and guides for this level.'}
 ];
 const TOPIC_ORDER = ['Greetings & goodbyes','Essential phrases',"When you don't understand",'Politeness, thanks & apologies','Conversation & small talk','Feelings & reactions',
   'Travel & getting around','Eating out','Shopping & money','Home & daily life','Phone calls','Emergencies & help',
@@ -303,16 +316,33 @@ function row(r, ctx, opts={}){
     <span><span class="t">${esc(T(r))}</span>${m}</span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
 }
 function ring(n, total){
-  const C = 2*Math.PI*20, f = total ? n/total : 0;
-  return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle">${n}/${total}</text></svg>`;
+  const C = 2*Math.PI*20, f = total ? n/total : 0, txt = `${n}/${total}`;
+  return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle"${txt.length>5?' class="sm"':''}>${txt}</text></svg>`;
+}
+// Drill picker: one tile per drill, labelled Drill 1, Drill 2 ...
+function drillGrid(ctx, items){
+  CTX[ctx] = items.map(r=>r.id);
+  return `<ul class="dgrid">${items.map((r,i)=>{ const base=`Drill ${i+1}: ${T(r)}`;
+    return `<li><button class="dtile" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" data-label="${esc(base)}" aria-label="${esc(base+(isDone(r.id)?', done':''))}">Drill ${i+1}${ICON_CHECK}</button></li>`; }).join('')}</ul>`;
+}
+// Every card on every tab is an accordion like Practice. ACC holds the items and panel for cards that are not series or drill types.
+const ACC = {};
+function accItems(key){
+  if(key.startsWith('ser:')) return seriesItems(key.slice(4));
+  if(key.startsWith('drill:')) return drillPool(key.slice(6));
+  return (ACC[key] && ACC[key].items) || [];
 }
 function accPanel(key){
-  let it;
-  if(key.startsWith('ser:')){ const sid=key.slice(4); it=seriesItems(sid); const lab=sid==='survival30'?'Day':'Part';
+  if(key.startsWith('ser:')){ const sid=key.slice(4), it=seriesItems(sid), lab=sid==='survival30'?'Day':'Part';
     CTX[key]=it.map(r=>r.id);
     return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:sid==='survival30'?r.ord:i+1,ordLabel:lab,nometa:true})).join('')}</ul>`; }
-  it=drillPool(key.slice(6)); CTX[key]=it.map(r=>r.id);
-  return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:it.length>1?i+1:null,ordLabel:'Drill',nometa:true})).join('')}</ul>`;
+  if(key.startsWith('drill:')) return drillGrid(key, drillPool(key.slice(6)));
+  return ACC[key] ? ACC[key].panel() : '';
+}
+function card(key, name, sub, items, panel, o={}){
+  ACC[key] = {items, panel};
+  const n = items.filter(r=>isDone(r.id)).length;
+  return acc(key, name, sub, n, o.ring===false ? 0 : items.length, o.feat);
 }
 function acc(key, name, sub, n, total, feat){
   const open=!!S.acc[key], pid='p-'+key.replace(/[^a-z0-9]/gi,'-');
@@ -358,27 +388,30 @@ function viewLearn(bodyOnly){
   let h = '';
   if(subs.length) h += `<div class="chips" role="group" aria-label="Dr. Jia's own level labels"><button class="chip" data-sub="all" aria-pressed="${S.sub==='all'}">All</button>${subs.map(s=>`<button class="chip" data-sub="${s}" aria-pressed="${S.sub===s}">${s}</button>`).join('')}</div>`;
 
+  const cards = [];
   SECTIONS.forEach(def => {
     if(def.id==='series'){
       if(S.sub!=='all') return;
       const sids = DATA.series.map(x=>x.id).filter(sid => seriesLevel(sid)===S.level);
       if(!sids.length) return;
-      h += sec('series', def.name, `<div class="series">${sids.map(scard).join('')}</div>`, def.hint);
+      cards.push(card('lv:series', def.name, def.note, sids.flatMap(seriesItems), () => `<div class="series">${sids.map(scard).join('')}</div>`));
       return;
     }
     if(def.id==='materials'){
       if(S.sub!=='all') return;
       const c = MAT.courses.filter(c => c.levels.includes(S.level));
-      h += sec('materials', def.name, `${c.map(courseTile).join('')}<button class="btn more" data-goto="materials">All materials, guides and long lessons</button>`);
+      cards.push(card('lv:materials', def.name, def.note, [], () => `${c.map(courseTile).join('')}<button class="btn more" data-goto="materials">All materials, guides and long lessons</button>`, {ring:false}));
       return;
     }
     const its = items.filter(r => r.sec===def.id);
     if(!its.length) return;
-    const o = {nometa: def.id==='drills'};
-    const body = ['phrases','pron','culture','drills'].includes(def.id) ? grouped(`lv:${def.id}`, its, o) : list(`lv:${def.id}`, its, o);
-    h += sec(def.id, def.name, `${def.note?`<p class="sec-note">${def.note}</p>`:''}${body}`);
+    let panel;
+    if(def.id==='drills') panel = () => { const g={}; its.forEach(r=>(g[r.top]=g[r.top]||[]).push(r));
+      return Object.keys(g).sort((a,b)=>TOPIC_ORDER.indexOf(a)-TOPIC_ORDER.indexOf(b)).map(n=>`<h3 class="sub">${esc(n)}</h3>${drillGrid('lvdrill:'+n, g[n])}`).join(''); };
+    else panel = () => ['phrases','pron','culture'].includes(def.id) ? grouped(`lv:${def.id}`, its) : list(`lv:${def.id}`, its);
+    cards.push(card('lv:'+def.id, def.name, def.note || `${its.length} lessons`, its, panel));
   });
-  return h;
+  return h + `<div class="series">${cards.join('')}</div>`;
 }
 function updateLevel(){
   $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true);
@@ -386,8 +419,8 @@ function updateLevel(){
 }
 function viewSeries(){
   const groups = LEVELS.map(l => ({l, sids: DATA.series.map(x=>x.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
-  return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Runs of lessons Dr. Jia released in order, plus themes she kept coming back to. Progress saves on this device.</p>
-    ${groups.map(g=>sec('s-'+g.l.id, g.l.name, `<div class="series">${g.sids.map(scard).join('')}</div>`)).join('')}` + foot();
+  return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Open a course and pick a lesson. Runs of lessons Dr. Jia released in order, plus themes she kept coming back to.</p>
+    ${groups.map(g=>`<h2 class="sub">${esc(g.l.name)} <span style="font-weight:700">· ${esc(g.l.note)}</span></h2><div class="series">${g.sids.map(scard).join('')}</div>`).join('')}` + foot();
 }
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
@@ -409,12 +442,15 @@ function viewMaterials(){
   const longs = ITEMS.filter(r=>r.k==='long');
   const promos = ITEMS.filter(r=>r.sec==='materials');
   CTX['long'] = longs.map(r=>r.id);
-  return `<p class="kicker">Materials</p><h1 class="display">Courses, guides & long lessons</h1>
-    ${sec('courses','Courses with Dr. Jia', MAT.courses.map(courseTile).join(''))}
-    ${sec('free','Free guides', MAT.free.map(courseTile).join(''))}
-    ${sec('long','Long-form lessons', `<p class="sec-note">Her full-length YouTube lessons, 5 to 15 minutes each.</p>${list('long', longs, {level:true})}`)}
-    ${sec('promo','Announcements', list('promo', promos, {nometa:true}))}
-    ${sec('follow','Follow', `<div class="acts" style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>`)}` + foot();
+  return `<p class="kicker">Materials</p><h1 class="display">Materials</h1>
+    <p class="lede">Open a group to see her courses, free guides and full-length lessons.</p>
+    <div class="series">${[
+      card('mat:courses','Courses with Dr. Jia','Self-paced, live group and private lessons.',[],()=>MAT.courses.map(courseTile).join(''),{ring:false,feat:true}),
+      card('mat:free','Free guides','Pinyin spelling guide and a weekly tip.',[],()=>MAT.free.map(courseTile).join(''),{ring:false}),
+      card('mat:long','Long-form lessons','Full-length YouTube lessons, 5 to 15 minutes each.',longs,()=>list('long', longs, {level:true})),
+      card('mat:promo','Announcements','News about her courses and channel.',promos,()=>list('promo', promos, {nometa:true})),
+      card('mat:follow','Follow','YouTube, Instagram, TikTok and her site.',[],()=>`<div class="acts" style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>`,{ring:false})
+    ].join('')}</div>` + foot();
 }
 function viewSearch(){
   const q = S.q.trim().toLowerCase();
@@ -475,8 +511,9 @@ function closePlayer(){
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
   document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', T(r)+(d?', done':'')); });
+  document.querySelectorAll('.dtile[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); b.setAttribute('aria-label', b.dataset.label+(d?', done':'')); });
   document.querySelectorAll('.scard[data-acc]').forEach(c=>{ const rg=c.querySelector('.ring'); if(!rg) return;
-    const k=c.dataset.acc, it=k.startsWith('ser:')?seriesItems(k.slice(4)):drillPool(k.slice(6)), n=it.filter(r=>isDone(r.id)).length;
+    const k=c.dataset.acc, it=accItems(k), n=it.filter(r=>isDone(r.id)).length;
     const w=document.createElement('div'); w.innerHTML=ring(n,it.length); rg.replaceWith(w.firstElementChild);
     c.setAttribute('aria-label', c.getAttribute('aria-label').replace(/, \d+ of \d+ done$/, `, ${n} of ${it.length} done`)); });
 }
@@ -513,7 +550,9 @@ document.addEventListener('click', e => {
     if(open && !pn.firstChild) pn.innerHTML=accPanel(k); pn.hidden=!open; w.dataset.open=String(open); t.setAttribute('aria-expanded', String(open)); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
   if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
-  if(t.matches('.row') && t.dataset.id){ drillName = (t.dataset.ctx||'').startsWith('drill:') ? (t.dataset.ctx==='drill:all'?'Mixed session':t.dataset.ctx.slice(6)) : ''; return openPlayer(t.dataset.id, t.dataset.ctx); }
+  if(t.matches('.row, .dtile') && t.dataset.id){ const c=t.dataset.ctx||'';
+    drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
+    return openPlayer(t.dataset.id, c); }
 });
 $('#searchBtn').addEventListener('click', () => { S.tab='search'; render(false); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; const pos=e.target.selectionStart; render(false); const i=$('#q'); i.setSelectionRange(pos,pos); } });
