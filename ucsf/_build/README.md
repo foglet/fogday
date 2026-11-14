@@ -3,7 +3,7 @@
 Single-file mobile web app. Edit `shell.html` (page, styles) and `app_head.js` / `engine.js` / `app_tail.js` (script), run `python3 build.py`, commit `../index.html`. The page has Jekyll front matter (for the maps menu, `_data/maps.yml`), so the script must hold no Liquid; build.py checks.
 
 ## What it shows
-Site wrapper as /tides/: head.html, header.html (map name + all-maps menu, light/dark toggle, bento) and footer.html; the map fills the window between header and the fixed footer (--top / --foot measured by the script). Map colors are scoped to .mapwrap so fogday.css keeps its own. Legend bottom left, Mapbox controls bottom right.
+Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu top left; light/dark toggle and bento (to /works/) top right, as in the site header; legend bottom left; Mapbox controls bottom right.
 - Shuttle Legend: every route with its color and how many shuttles are running. Tap a route (in the legend or on
   the map) to highlight it; tap again for all. Kept in localStorage (`ucsf:route`).
 - Routes sharing a street are drawn side by side (offset slots per stretch, computed in the page).
