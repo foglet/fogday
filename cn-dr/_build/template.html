@@ -125,7 +125,8 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .row[data-done="true"] .state{background:var(--done);border-color:var(--done);color:var(--on-done)}
 .row[data-done="true"] .state svg{width:16px;height:16px;stroke-width:3}
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
-.ord small{display:block;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+.ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
+.ord small{display:block;margin:0;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:center}
 .more{margin-top:var(--s2);width:100%}
 
 /* Section rows: flat list, each row opens its own page */
