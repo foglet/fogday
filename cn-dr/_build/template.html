@@ -141,17 +141,9 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .ring text{fill:var(--ink);stroke:none;font-size:13px;font-weight:700;font-family:var(--font)}
 .ring text.sm{font-size:10.5px}
 .acc-panel .series{margin-top:var(--s2)}
-/* An open card encloses its own list, so it is clear which items belong to it */
-.acc[data-open="true"]{border:2px solid var(--primary);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-card)}
-.acc[data-open="true"]>.scard{border:0;border-bottom:1.5px solid var(--line);border-radius:calc(var(--r-lg) - 2px) calc(var(--r-lg) - 2px) 0 0;box-shadow:none}
-.acc[data-open="true"]>.scard:active{transform:none}
-.acc[data-open="true"]>.acc-panel{padding:var(--s2) var(--s3) var(--s3)}
-/* Cards nested inside another card: smaller, shaded */
-.acc-panel .scard{padding:var(--s3);background:var(--surface-2);border-color:var(--line);box-shadow:none}
+/* Contents of an open card sit beside a red bar, indented, so it is clear which card they belong to */
+.acc[data-open="true"]>.acc-panel{margin:var(--s2) 0 var(--s1) var(--s2);padding:0 0 0 var(--s3);border-left:3px solid var(--accent)}
 .acc-panel .scard b{font-size:1rem}
-.acc-panel .ring{width:40px;height:40px}
-.acc-panel .acc[data-open="true"]{border-color:var(--ink-3);background:var(--surface-2)}
-.acc-panel .acc[data-open="true"]>.scard{background:var(--surface-3)}
 .acc-panel .tile:first-child{margin-top:var(--s2)}
 
 /* Drill picker: Drill 1, Drill 2 ... laid out in a row that wraps */
