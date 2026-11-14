@@ -12,6 +12,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 <meta name="description" content="{{ page.description }}">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#021724">
+<script>try{var t=localStorage.getItem('fogday-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +26,12 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     color-scheme: dark;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  }
+  /* Light: fogday.com's morning fog (assets/css/fogday.css), with white glass */
+  :root[data-theme="light"] {
+    --glass: rgb(255 255 255 / .72); --glass-edge: rgb(28 40 48 / .14);
+    --bg: #edf1f2; --panel: #f8fafa; --ink: #1c2830; --muted: #4f5e66; --line: #cfd8dc; --accent: #1f5f6b;
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
@@ -104,6 +111,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .row2.foot .notes > summary { display: inline-flex; align-items: center; min-height: 28px; }
   .notes .note { border-radius: var(--glass-r); }
   .controls { --muted: #c5ced5; }
+  :root[data-theme="light"] .controls { --muted: #44535b; }
   .map-legend summary { list-style: none; cursor: pointer; padding: 6px 14px !important; min-height: 30px; border-radius: 8px;
                         font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
   .map-legend summary::-webkit-details-marker { display: none; }
@@ -117,6 +125,14 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .map-legend[open] > summary::after, .notes[open] summary::after { transform: rotate(180deg); }
   .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .sky-text { color: #8fd0ff; }
+  :root[data-theme="light"] .sky-text { color: #1d5f96; }
+  :root[data-theme="light"] .title-text { background-image: linear-gradient(to right, #1d5f96, #1f5f6b); }
+  :root[data-theme="light"] .maps-btn { color: #1d5f96; }
+  :root[data-theme="light"] .maps-menu { --surface: #f8fafa; --site-line: #cfd8dc; }
+  :root[data-theme="light"] .maps-menu a[aria-current="page"] { color: #1d5f96; }
+  :root[data-theme="light"] .bus { border-color: #1d5f96; }
+  :root[data-theme="light"] .bus.live { background: #1d5f96; }
+  :root[data-theme="light"] .line { box-shadow: 0 0 0 1px rgb(28 40 48 / .25); }
   /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
   .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 6px;
                  max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
@@ -171,10 +187,29 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
-  .mapboxgl-map .mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon, .mapboxgl-map .mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)); }
+  :root[data-theme="light"] .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  /* Location and light/dark: icon buttons in the bottom-right stack, as /treesf/'s "here" */
+  .mapboxgl-ctrl.oa-here, .mapboxgl-ctrl.oa-theme { position: relative; }
+  .oa-pin { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 4px;
+            background: transparent; color: var(--muted); cursor: pointer; }
+  .oa-pin svg { width: 20px; height: 20px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
+  .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
+  @keyframes here-pulse { 50% { opacity: .35; } }
+  .oa-theme .icon-sun { display: none; }
+  :root[data-theme="dark"] .oa-theme .icon-sun { display: block; }
+  :root[data-theme="dark"] .oa-theme .icon-moon { display: none; }
+  .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
+                 width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
+                 background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  /* You are here: a blue dot with a white ring and a soft halo */
+  .here-dot { width: 14px; height: 14px; border-radius: 50%; background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 6px rgb(61 139 255 / .25); pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { .oa-here .oa-pin[aria-busy="true"] svg { animation: none; } }
   @media (pointer: coarse) {
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 44px; height: 44px; }
+    .oa-pin { width: 44px; height: 44px; }
   }
   /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it) */
   @media (pointer: coarse), (max-width: 759px) {
@@ -199,6 +234,20 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 </head>
 <body>
 <div id="map" role="region" aria-label="UCSF Shuttles map"></div>
+
+<!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
+<div class="oa-here" id="here" hidden>
+  <button type="button" class="oa-pin" id="hereBtn" aria-label="Show where I am" title="Where I am">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+  </button>
+  <p class="oa-here-msg" id="hereMsg" role="status" hidden></p>
+</div>
+<div class="oa-theme" id="themeCtl" hidden>
+  <button type="button" class="oa-pin" id="themeBtn" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+  </button>
+</div>
 
 <div class="top">
   <div class="title-row">
@@ -228,7 +277,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
         <div class="notes-body">
           <p class="note" id="nearNote" hidden></p>
           <p class="note" id="srcNote"></p>
-          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you and Info lists the stops nearest you; nothing is kept. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon switches light and dark, shared with fogday.com. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
           <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
           <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
         </div>
@@ -458,53 +507,103 @@ function arrowImage(){
   g.beginPath(); g.moveTo(s/2,3); g.lineTo(s/2+9,17); g.lineTo(s/2-9,17); g.closePath(); g.fill(); g.stroke();
   return {width:s, height:s, data:g.getImageData(0,0,s,s).data};
 }
+/* Light or dark: the site's own choice (fogday-theme, shared with the header toggle on fogday.com), else the system's */
+const THEME = {
+  get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
+  style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11" },
+  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35} }
+};
+function addLayers(){
+  if(map.getSource("routes")) return;
+  const k=THEME.ink();
+  if(!map.hasImage("arrow")) map.addImage("arrow", arrowImage(), {pixelRatio:2});
+  map.addSource("routes", {type:"geojson", data:ROUTE_FC || (ROUTE_FC=routeFeatures())});
+  map.addSource("stops", {type:"geojson", data:stopFeatures()});
+  map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
+  map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.casing,"line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":k.casingOp,"line-offset":OFFSET}});
+  map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}});
+  map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
+  map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":k.stopFill,"circle-stroke-color":k.stopLine,"circle-stroke-width":1.6}});
+  map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
+  map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],k.hollow],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
+  map.addLayer({id:"veh-arrow", type:"symbol", source:"veh", filter:["==",["get","hasHd"],1], layout:{"icon-image":"arrow","icon-rotate":["get","hd"],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.8,15,1.15]}});
+  mapReady=true; applyFocus(false); paintVehicles();
+}
+let ROUTE_FC=null;
+/* A control from a page element, in the bottom-right stack (as on /treesf/) */
+function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
 function initMap(){
   if(!window.mapboxgl) return;
   try{
     mapboxgl.accessToken=CFG.token;
-    map=new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/dark-v11", bounds:HOME, fitBoundsOptions:{padding:pad()},
+    map=new mapboxgl.Map({container:"map", style:THEME.style(), bounds:HOME, fitBoundsOptions:{padding:pad()},
       pitchWithRotate:false, maxPitch:0,
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
-  /* Bottom right, as on /transit/: the locate button, then the compass (and + and − with a mouse) */
-  const geo=new mapboxgl.GeolocateControl({positionOptions:{enableHighAccuracy:true}, trackUserLocation:true, showUserHeading:true, fitBoundsOptions:{maxZoom:15}});
+  map.touchPitch && map.touchPitch.disable();
+  /* Bottom-right stack, as on /treesf/, top to bottom: light/dark, location (here), then + − and compass.
+     Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
-  map.addControl(geo, "bottom-right");
-  let first=true;
-  geo.on("geolocate", p => {
-    state.user=[p.coords.latitude, p.coords.longitude];
-    const near=Math.min(...STOPS.map(s=>meters(state.user, s.ll)));
-    if(first && near>30000) setTimeout(()=>map.fitBounds(HOME, {padding:pad()}), 50);   // far from UCSF: stay on the routes
-    first=false; render();
+  asControl($("here")); asControl($("themeCtl"));
+  map.on("style.load", addLayers);
+  map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
+  map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
+  /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
+  map.on("click","route-hit", ev => {
+    if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
+    const f=state.focus==null ? null : +state.focus;
+    const hits=[...new Set(ev.features.map(x=>x.properties.r))];
+    const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
+    pickRoute(r===f && hits.length===1 ? null : r, false);
   });
-  geo.on("trackuserlocationend", ()=>{});
-  map.on("load", () => {
-    map.addImage("arrow", arrowImage(), {pixelRatio:2});
-    map.addSource("routes", {type:"geojson", data:routeFeatures()});
-    map.addSource("stops", {type:"geojson", data:stopFeatures()});
-    map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
-    map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":"#c5ced5","line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":0.35,"line-offset":OFFSET}});
-    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}});
-    map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
-    map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":"#021724","circle-stroke-color":"#e3eaee","circle-stroke-width":1.6}});
-    map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
-    map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],"#021724"],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
-    map.addLayer({id:"veh-arrow", type:"symbol", source:"veh", filter:["==",["get","hasHd"],1], layout:{"icon-image":"arrow","icon-rotate":["get","hd"],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.8,15,1.15]}});
-    map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
-    map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
-    /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
-    map.on("click","route-hit", ev => {
-      if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
-      const f=state.focus==null ? null : +state.focus;
-      const hits=[...new Set(ev.features.map(x=>x.properties.r))];
-      const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
-      pickRoute(r===f && hits.length===1 ? null : r, false);
-    });
-    ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
-    mapReady=true; applyFocus(false); paintVehicles();
-    geo.trigger();   // with location allowed (or once the visitor allows it), the map finds them
-  });
+  ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
+  map.on("load", startLocation);
 }
+
+/* ---------- location: starts by itself; the crosshair flies back to you ---------- */
+let hereDot=null, hereT=0, firstFix=true;
+function hereSay(t, ms){ const m=$("hereMsg"); clearTimeout(hereT); m.textContent=t; m.hidden=false; hereT=setTimeout(()=>m.hidden=true, ms||4000) }
+function onFix(p){
+  state.user=[p.coords.latitude, p.coords.longitude];
+  $("hereBtn").removeAttribute("aria-busy");
+  if(map){
+    if(!hereDot){ const el=document.createElement("div"); el.className="here-dot"; el.setAttribute("aria-label","You are here"); hereDot=new mapboxgl.Marker({element:el}) }
+    hereDot.setLngLat([state.user[1], state.user[0]]).addTo(map);
+  }
+  const near=Math.min(...STOPS.map(s=>meters(state.user, s.ll)));
+  if(firstFix && map && near<30000) map.flyTo({center:[state.user[1], state.user[0]], zoom:Math.max(map.getZoom(),14.5), padding:pad(), duration:900});
+  if(firstFix && near>=30000) hereSay("You're "+dist(near)+" from the nearest UCSF shuttle stop.", 6000);
+  firstFix=false; render();
+}
+function onFixErr(err){
+  $("hereBtn").removeAttribute("aria-busy");
+  if(err.code===1){ hereSay("Location is off. Info says how to turn it on.", 6000) }
+  else if(!state.user) hereSay("Couldn't find your location.");
+}
+let watching=false;
+function startLocation(){
+  if(!navigator.geolocation){ $("here").hidden=true; return }
+  if(watching) return; watching=true;
+  $("hereBtn").setAttribute("aria-busy","true");
+  navigator.geolocation.watchPosition(onFix, e=>{ watching=false; onFixErr(e) }, {enableHighAccuracy:true, timeout:15000, maximumAge:30000});
+}
+$("hereBtn").addEventListener("click", ()=>{
+  if(state.user && map){ map.flyTo({center:[state.user[1], state.user[0]], zoom:Math.max(map.getZoom(),15.5), padding:pad(), duration:700}) }
+  else { firstFix=true; startLocation() }
+});
+
+/* ---------- light / dark ---------- */
+function setTheme(t){
+  document.documentElement.dataset.theme=t;
+  try{ localStorage.setItem("fogday-theme", t) }catch(e){}
+  const b=$("themeBtn"), dark=t==="dark";
+  b.setAttribute("aria-pressed", String(dark));
+  b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+  if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
+}
+$("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
+
 /* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
 function pad(){
   const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legend").open;
@@ -622,7 +721,9 @@ $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIn
 if(store.get("legend")!=="0") $("legend").open=true;
 $("legend").addEventListener("toggle", ()=>store.set("legend", $("legend").open ? "1" : "0"));
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
+(function(){ const dark=THEME.get()==="dark", b=$("themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label"); document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2" })();
 buildRoutes(); initMap(); render();
+if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);
 if(LIVE){ pollLive(); setInterval(pollLive, 10000) }
 

@@ -12,6 +12,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 <meta name="description" content="{{ page.description }}">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#021724">
+<script>try{var t=localStorage.getItem('fogday-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +26,12 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     color-scheme: dark;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  }
+  /* Light: fogday.com's morning fog (assets/css/fogday.css), with white glass */
+  :root[data-theme="light"] {
+    --glass: rgb(255 255 255 / .72); --glass-edge: rgb(28 40 48 / .14);
+    --bg: #edf1f2; --panel: #f8fafa; --ink: #1c2830; --muted: #4f5e66; --line: #cfd8dc; --accent: #1f5f6b;
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
@@ -104,6 +111,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .row2.foot .notes > summary { display: inline-flex; align-items: center; min-height: 28px; }
   .notes .note { border-radius: var(--glass-r); }
   .controls { --muted: #c5ced5; }
+  :root[data-theme="light"] .controls { --muted: #44535b; }
   .map-legend summary { list-style: none; cursor: pointer; padding: 6px 14px !important; min-height: 30px; border-radius: 8px;
                         font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
   .map-legend summary::-webkit-details-marker { display: none; }
@@ -117,6 +125,14 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .map-legend[open] > summary::after, .notes[open] summary::after { transform: rotate(180deg); }
   .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .sky-text { color: #8fd0ff; }
+  :root[data-theme="light"] .sky-text { color: #1d5f96; }
+  :root[data-theme="light"] .title-text { background-image: linear-gradient(to right, #1d5f96, #1f5f6b); }
+  :root[data-theme="light"] .maps-btn { color: #1d5f96; }
+  :root[data-theme="light"] .maps-menu { --surface: #f8fafa; --site-line: #cfd8dc; }
+  :root[data-theme="light"] .maps-menu a[aria-current="page"] { color: #1d5f96; }
+  :root[data-theme="light"] .bus { border-color: #1d5f96; }
+  :root[data-theme="light"] .bus.live { background: #1d5f96; }
+  :root[data-theme="light"] .line { box-shadow: 0 0 0 1px rgb(28 40 48 / .25); }
   /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
   .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 6px;
                  max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
@@ -171,10 +187,29 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
-  .mapboxgl-map .mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon, .mapboxgl-map .mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)); }
+  :root[data-theme="light"] .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  /* Location and light/dark: icon buttons in the bottom-right stack, as /treesf/'s "here" */
+  .mapboxgl-ctrl.oa-here, .mapboxgl-ctrl.oa-theme { position: relative; }
+  .oa-pin { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 4px;
+            background: transparent; color: var(--muted); cursor: pointer; }
+  .oa-pin svg { width: 20px; height: 20px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
+  .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
+  @keyframes here-pulse { 50% { opacity: .35; } }
+  .oa-theme .icon-sun { display: none; }
+  :root[data-theme="dark"] .oa-theme .icon-sun { display: block; }
+  :root[data-theme="dark"] .oa-theme .icon-moon { display: none; }
+  .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
+                 width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
+                 background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  /* You are here: a blue dot with a white ring and a soft halo */
+  .here-dot { width: 14px; height: 14px; border-radius: 50%; background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 6px rgb(61 139 255 / .25); pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { .oa-here .oa-pin[aria-busy="true"] svg { animation: none; } }
   @media (pointer: coarse) {
     .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 44px; height: 44px; }
+    .oa-pin { width: 44px; height: 44px; }
   }
   /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it) */
   @media (pointer: coarse), (max-width: 759px) {
@@ -199,6 +234,20 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 </head>
 <body>
 <div id="map" role="region" aria-label="UCSF Shuttles map"></div>
+
+<!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
+<div class="oa-here" id="here" hidden>
+  <button type="button" class="oa-pin" id="hereBtn" aria-label="Show where I am" title="Where I am">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+  </button>
+  <p class="oa-here-msg" id="hereMsg" role="status" hidden></p>
+</div>
+<div class="oa-theme" id="themeCtl" hidden>
+  <button type="button" class="oa-pin" id="themeBtn" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+  </button>
+</div>
 
 <div class="top">
   <div class="title-row">
@@ -228,7 +277,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
         <div class="notes-body">
           <p class="note" id="nearNote" hidden></p>
           <p class="note" id="srcNote"></p>
-          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you and Info lists the stops nearest you; nothing is kept. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon switches light and dark, shared with fogday.com. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
           <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
           <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
         </div>

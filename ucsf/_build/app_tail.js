@@ -62,53 +62,103 @@ function arrowImage(){
   g.beginPath(); g.moveTo(s/2,3); g.lineTo(s/2+9,17); g.lineTo(s/2-9,17); g.closePath(); g.fill(); g.stroke();
   return {width:s, height:s, data:g.getImageData(0,0,s,s).data};
 }
+/* Light or dark: the site's own choice (fogday-theme, shared with the header toggle on fogday.com), else the system's */
+const THEME = {
+  get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
+  style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11" },
+  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35} }
+};
+function addLayers(){
+  if(map.getSource("routes")) return;
+  const k=THEME.ink();
+  if(!map.hasImage("arrow")) map.addImage("arrow", arrowImage(), {pixelRatio:2});
+  map.addSource("routes", {type:"geojson", data:ROUTE_FC || (ROUTE_FC=routeFeatures())});
+  map.addSource("stops", {type:"geojson", data:stopFeatures()});
+  map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
+  map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.casing,"line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":k.casingOp,"line-offset":OFFSET}});
+  map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}});
+  map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
+  map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":k.stopFill,"circle-stroke-color":k.stopLine,"circle-stroke-width":1.6}});
+  map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
+  map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],k.hollow],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
+  map.addLayer({id:"veh-arrow", type:"symbol", source:"veh", filter:["==",["get","hasHd"],1], layout:{"icon-image":"arrow","icon-rotate":["get","hd"],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.8,15,1.15]}});
+  mapReady=true; applyFocus(false); paintVehicles();
+}
+let ROUTE_FC=null;
+/* A control from a page element, in the bottom-right stack (as on /treesf/) */
+function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
 function initMap(){
   if(!window.mapboxgl) return;
   try{
     mapboxgl.accessToken=CFG.token;
-    map=new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/dark-v11", bounds:HOME, fitBoundsOptions:{padding:pad()},
+    map=new mapboxgl.Map({container:"map", style:THEME.style(), bounds:HOME, fitBoundsOptions:{padding:pad()},
       pitchWithRotate:false, maxPitch:0,
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
-  /* Bottom right, as on /transit/: the locate button, then the compass (and + and − with a mouse) */
-  const geo=new mapboxgl.GeolocateControl({positionOptions:{enableHighAccuracy:true}, trackUserLocation:true, showUserHeading:true, fitBoundsOptions:{maxZoom:15}});
+  map.touchPitch && map.touchPitch.disable();
+  /* Bottom-right stack, as on /treesf/, top to bottom: light/dark, location (here), then + − and compass.
+     Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
-  map.addControl(geo, "bottom-right");
-  let first=true;
-  geo.on("geolocate", p => {
-    state.user=[p.coords.latitude, p.coords.longitude];
-    const near=Math.min(...STOPS.map(s=>meters(state.user, s.ll)));
-    if(first && near>30000) setTimeout(()=>map.fitBounds(HOME, {padding:pad()}), 50);   // far from UCSF: stay on the routes
-    first=false; render();
+  asControl($("here")); asControl($("themeCtl"));
+  map.on("style.load", addLayers);
+  map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
+  map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
+  /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
+  map.on("click","route-hit", ev => {
+    if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
+    const f=state.focus==null ? null : +state.focus;
+    const hits=[...new Set(ev.features.map(x=>x.properties.r))];
+    const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
+    pickRoute(r===f && hits.length===1 ? null : r, false);
   });
-  geo.on("trackuserlocationend", ()=>{});
-  map.on("load", () => {
-    map.addImage("arrow", arrowImage(), {pixelRatio:2});
-    map.addSource("routes", {type:"geojson", data:routeFeatures()});
-    map.addSource("stops", {type:"geojson", data:stopFeatures()});
-    map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
-    map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":"#c5ced5","line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":0.35,"line-offset":OFFSET}});
-    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}});
-    map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
-    map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":"#021724","circle-stroke-color":"#e3eaee","circle-stroke-width":1.6}});
-    map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
-    map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],"#021724"],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
-    map.addLayer({id:"veh-arrow", type:"symbol", source:"veh", filter:["==",["get","hasHd"],1], layout:{"icon-image":"arrow","icon-rotate":["get","hd"],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.8,15,1.15]}});
-    map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
-    map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
-    /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
-    map.on("click","route-hit", ev => {
-      if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
-      const f=state.focus==null ? null : +state.focus;
-      const hits=[...new Set(ev.features.map(x=>x.properties.r))];
-      const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
-      pickRoute(r===f && hits.length===1 ? null : r, false);
-    });
-    ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
-    mapReady=true; applyFocus(false); paintVehicles();
-    geo.trigger();   // with location allowed (or once the visitor allows it), the map finds them
-  });
+  ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
+  map.on("load", startLocation);
 }
+
+/* ---------- location: starts by itself; the crosshair flies back to you ---------- */
+let hereDot=null, hereT=0, firstFix=true;
+function hereSay(t, ms){ const m=$("hereMsg"); clearTimeout(hereT); m.textContent=t; m.hidden=false; hereT=setTimeout(()=>m.hidden=true, ms||4000) }
+function onFix(p){
+  state.user=[p.coords.latitude, p.coords.longitude];
+  $("hereBtn").removeAttribute("aria-busy");
+  if(map){
+    if(!hereDot){ const el=document.createElement("div"); el.className="here-dot"; el.setAttribute("aria-label","You are here"); hereDot=new mapboxgl.Marker({element:el}) }
+    hereDot.setLngLat([state.user[1], state.user[0]]).addTo(map);
+  }
+  const near=Math.min(...STOPS.map(s=>meters(state.user, s.ll)));
+  if(firstFix && map && near<30000) map.flyTo({center:[state.user[1], state.user[0]], zoom:Math.max(map.getZoom(),14.5), padding:pad(), duration:900});
+  if(firstFix && near>=30000) hereSay("You're "+dist(near)+" from the nearest UCSF shuttle stop.", 6000);
+  firstFix=false; render();
+}
+function onFixErr(err){
+  $("hereBtn").removeAttribute("aria-busy");
+  if(err.code===1){ hereSay("Location is off. Info says how to turn it on.", 6000) }
+  else if(!state.user) hereSay("Couldn't find your location.");
+}
+let watching=false;
+function startLocation(){
+  if(!navigator.geolocation){ $("here").hidden=true; return }
+  if(watching) return; watching=true;
+  $("hereBtn").setAttribute("aria-busy","true");
+  navigator.geolocation.watchPosition(onFix, e=>{ watching=false; onFixErr(e) }, {enableHighAccuracy:true, timeout:15000, maximumAge:30000});
+}
+$("hereBtn").addEventListener("click", ()=>{
+  if(state.user && map){ map.flyTo({center:[state.user[1], state.user[0]], zoom:Math.max(map.getZoom(),15.5), padding:pad(), duration:700}) }
+  else { firstFix=true; startLocation() }
+});
+
+/* ---------- light / dark ---------- */
+function setTheme(t){
+  document.documentElement.dataset.theme=t;
+  try{ localStorage.setItem("fogday-theme", t) }catch(e){}
+  const b=$("themeBtn"), dark=t==="dark";
+  b.setAttribute("aria-pressed", String(dark));
+  b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+  if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
+}
+$("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
+
 /* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
 function pad(){
   const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legend").open;
@@ -226,6 +276,8 @@ $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIn
 if(store.get("legend")!=="0") $("legend").open=true;
 $("legend").addEventListener("toggle", ()=>store.set("legend", $("legend").open ? "1" : "0"));
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
+(function(){ const dark=THEME.get()==="dark", b=$("themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label"); document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2" })();
 buildRoutes(); initMap(); render();
+if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);
 if(LIVE){ pollLive(); setInterval(pollLive, 10000) }
