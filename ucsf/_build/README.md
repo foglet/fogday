@@ -4,8 +4,9 @@ Single-file mobile web app. Edit `shell.html` (page, styles) and `app_head.js` /
 
 ## What it shows
 Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu top left; light/dark toggle and bento (to /works/) top right, as in the site header; legend bottom left; Mapbox controls bottom right.
-- Shuttle Legend: every route with its color and how many shuttles are running. Tap a route (in the legend or on
-  the map) to highlight it; tap again for all. Kept in localStorage (`ucsf:route`).
+- No color legend. Tap a route line on the map to highlight it; tap again for all. Kept in localStorage (`ucsf:route`).
+- Bottom left, bottom up: the Info toggle (starts shut, `ucsf:info`), the service lines, and (open) the notes.
+- Weekends: one line only, "No weekend service"; no next-departure line and no near-you departures in Info.
 - Routes sharing a street are drawn side by side (offset slots per stretch, computed in the page).
 - Shuttles running now: hollow dots are schedule estimates; filled dots are live GPS once the proxy is set.
 - Location: starts by itself (watchPosition, blue dot); the crosshair above the compass flies back to you (same place as /treesf/). Info lists the 3 nearest stops with departures.

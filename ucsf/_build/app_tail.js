@@ -268,7 +268,9 @@ function render(){
   if(st.dataset.mode!==mode) st.dataset.mode=mode;
   /* Service, one message per line: what is running now, then when the next shuttle comes
      (at the stop nearest you once location is allowed, else the next service anywhere) */
-  setText($("statusText"), n ? n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : "No service now");
+  /* Weekends (no UCSF service): that one line only, nothing else */
+  const weekend = !n && now.wd>=5;
+  setText($("statusText"), n ? n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : weekend ? "No weekend service" : "No service now");
   const nl=$("nextLine"); let next=null, here=false;
   const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0] : null;
   if(st0 && st0.d<=8000){
@@ -281,6 +283,7 @@ function render(){
     const ns=nextService(nowMs);
     next = ns ? "Next service: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
   }
+  if(weekend) next=null;
   nl.hidden=!next; if(next) setText($("nextText"), next);
   $("nextMe").hidden=!here;
   const counts=ROUTES.map(()=>0); state.vehicles.forEach(v=>counts[v.route]++);
@@ -293,7 +296,8 @@ function render(){
   setText($("srcNote"), state.live ? "Filled dots are live GPS; hollow dots are estimated from the timetable, for routes without live data. The arrow shows the direction of travel." : "Shuttles are placed where the timetable says they are now (hollow dots), not by live GPS. The arrow shows the direction of travel.");
 
   const nn=$("nearNote");
-  if(state.user){
+  if(weekend) nn.hidden=true;
+  else if(state.user){
     const near=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d).slice(0,3);
     if(near[0].d>8000){ nn.hidden=false; setText(nn, "Nearest UCSF shuttle stop: "+STOPS[near[0].i].short+", "+dist(near[0].d)+" away."); }
     else {
@@ -323,15 +327,14 @@ async function pollLive(){
 })();
 $("home").addEventListener("click", ()=>pickRoute(null, true));
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
-function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("legend", open?"1":"0") }
+function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
 /* Info opens below the routes: bring it into view inside the legend */
-$("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIntoView({block:"nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}) });
 /* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
-setLegend(store.get("legend")!=="0");
+setLegend(store.get("info")==="1");   // Info starts shut
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
 document.querySelector('meta[name="theme-color"]').content = THEME.get()==="dark" ? "#021724" : "#edf1f2";
-buildRoutes(); initMap(); render();
+initMap(); render();
 if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);
 if(LIVE){ pollLive(); setInterval(pollLive, 10000) }
