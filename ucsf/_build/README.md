@@ -4,7 +4,7 @@ Single-file mobile web app. Edit `shell.html` (page, styles) and `app_head.js` /
 
 ## What it shows
 Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu top left; light/dark toggle and bento (to /works/) top right, as in the site header; legend bottom left; Mapbox controls bottom right.
-- No color legend. Tap a route line on the map to highlight it; tap it again, or tap more than 50px from it, for all. Not remembered: every load starts with all routes.
+- No color legend. Tap a route line to select it; it stays selected (another line switches). Only a reload brings back all routes (the selection is not remembered).
 - Bottom left, bottom up: the Info toggle (starts shut, `ucsf:info`), the service lines, and (open) the notes.
 - Weekends: one line only, "No weekend service"; no next-departure line and no near-you departures in Info.
 - Routes sharing a street are drawn side by side (offset slots per stretch, computed in the page).

@@ -128,22 +128,14 @@ function initMap(){
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
-  /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
+  /* Tap a route line: that route is selected, and stays selected. Another line's tap picks that one instead;
+     nothing else (a tap elsewhere, the same line again, the title) brings the others back. Only a reload does. */
   map.on("click","route-hit", ev => {
     if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
     const f=state.focus==null ? null : +state.focus;
     const hits=[...new Set(ev.features.map(x=>x.properties.r))];
     const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
-    pickRoute(r===f && hits.length===1 ? null : r, false);
-  });
-  /* With a route highlighted, a tap more than 50px from it brings back all routes
-     (a tap right on another route's line picks that route instead; stops and shuttles keep their popups) */
-  map.on("click", ev => {
-    if(state.focus==null || !mapReady) return;
-    if(map.queryRenderedFeatures(ev.point, {layers:["route-hit","stop-dot","veh-dot"]}).length) return;
-    const R=50, p=ev.point, f=+state.focus;
-    const near=map.queryRenderedFeatures([[p.x-R, p.y-R], [p.x+R, p.y+R]], {layers:["route-line"]}).some(x=>x.properties.r===f);
-    if(!near) pickRoute(null, false);
+    if(r!==f) pickRoute(r, false);
   });
   ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
   map.on("load", startLocation);
@@ -333,7 +325,7 @@ async function pollLive(){
   document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
 })();
-$("home").addEventListener("click", ()=>pickRoute(null, true));
+$("home").addEventListener("click", ()=>{ if(map) map.fitBounds(HOME, {padding:pad(), duration:600}) });   // back to the whole map; the selection stays
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));

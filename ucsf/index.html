@@ -300,7 +300,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 
 <div class="top">
   <div class="title-row">
-    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Show every route"><span class="title-text">UCSF Shuttles</span></button></h1>
+    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Show the whole map"><span class="title-text">UCSF Shuttles</span></button></h1>
     <button type="button" class="maps-btn" id="mapsBtn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
       <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -321,7 +321,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     <div class="notes-body">
           <p class="note" id="nearNote" hidden></p>
           <p class="note" id="srcNote"></p>
-          <p class="note">Tap a route line on the map to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon at the top right switches light and dark, for all of fogday.com; the grid opens all projects. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Tap a route line on the map to select it; it stays selected (tap another line to switch). Reload the page to see all routes again. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon at the top right switches light and dark, for all of fogday.com; the grid opens all projects. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
           <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
           <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
         </div>
@@ -624,22 +624,14 @@ function initMap(){
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
-  /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
+  /* Tap a route line: that route is selected, and stays selected. Another line's tap picks that one instead;
+     nothing else (a tap elsewhere, the same line again, the title) brings the others back. Only a reload does. */
   map.on("click","route-hit", ev => {
     if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
     const f=state.focus==null ? null : +state.focus;
     const hits=[...new Set(ev.features.map(x=>x.properties.r))];
     const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
-    pickRoute(r===f && hits.length===1 ? null : r, false);
-  });
-  /* With a route highlighted, a tap more than 50px from it brings back all routes
-     (a tap right on another route's line picks that route instead; stops and shuttles keep their popups) */
-  map.on("click", ev => {
-    if(state.focus==null || !mapReady) return;
-    if(map.queryRenderedFeatures(ev.point, {layers:["route-hit","stop-dot","veh-dot"]}).length) return;
-    const R=50, p=ev.point, f=+state.focus;
-    const near=map.queryRenderedFeatures([[p.x-R, p.y-R], [p.x+R, p.y+R]], {layers:["route-line"]}).some(x=>x.properties.r===f);
-    if(!near) pickRoute(null, false);
+    if(r!==f) pickRoute(r, false);
   });
   ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
   map.on("load", startLocation);
@@ -829,7 +821,7 @@ async function pollLive(){
   document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
 })();
-$("home").addEventListener("click", ()=>pickRoute(null, true));
+$("home").addEventListener("click", ()=>{ if(map) map.fitBounds(HOME, {padding:pad(), duration:600}) });   // back to the whole map; the selection stays
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
