@@ -65,7 +65,7 @@ function arrowImage(){
 /* Light or dark: the site's own choice (fogday-theme, shared with the header toggle on fogday.com), else the system's */
 const THEME = {
   get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
-  style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11" },
+  style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/fogfish/cilhmh2ah00959gm3fy54zuik" },   // dark: the Spy map style (/spy/)
   ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35} }
 };
 function addLayers(){
