@@ -167,6 +167,12 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
 .tile .acts{display:flex;gap:var(--s2);flex-wrap:wrap}
 .tile.feature{border-color:var(--primary);background:var(--primary-tint)}
+.follow{list-style:none;margin:var(--s3) 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2)}
+.follow a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s1);min-height:72px;padding:var(--s2) var(--s1);border-radius:var(--r-lg);background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-decoration:none;font-size:var(--fs-cap);font-weight:600;text-align:center}
+.follow svg{width:26px;height:26px;fill:none;stroke:var(--primary);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (hover:hover){.follow a:hover{border-color:var(--line-strong)}}
+.follow a:active{transform:scale(.97)}
+.follow a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .empty{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-2);background:var(--surface);border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);margin-top:var(--s3)}
 .empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
 .foot{margin-top:var(--s8);padding:var(--s5) 0;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
@@ -446,6 +452,13 @@ function viewPractice(){
 function courseTile(c){
   return `<div class="tile${c.feature?' feature':''}"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><div class="acts"><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></div></div>`;
 }
+// Generic glyphs, not brand marks: video for YouTube, camera for Instagram, note for TikTok, globe for her site.
+const FOLLOW_ICON = {
+  'YouTube':'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10 9 15 12 10 15 10 9"/></svg>',
+  'Instagram':'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5"/></svg>',
+  'TikTok':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  web:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>'
+};
 function viewMaterials(){
   const longs = ITEMS.filter(r=>r.k==='long');
   const tips = ITEMS.filter(r=>r.sec==='tips');
@@ -458,7 +471,7 @@ function viewMaterials(){
       card('mat:long','Long-form lessons','Full-length YouTube lessons, 5 to 15 minutes each.',longs,()=>list('long', longs, {level:true})),
       card('mat:tips','How to Study','Dr. Jia on why learning stalls and what to do instead.',tips,()=>list('tips', tips))
     ].join('')}</div>
-    <h2 class="sub">Follow</h2><div style="display:flex;flex-wrap:wrap;gap:var(--s2)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>` + foot();
+    <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}<span>${esc(f.label||f.name)}</span></a></li>`).join('')}</ul>` + foot();
 }
 const PATH = 'survival30';
 // Continue goes to the last day opened if it is not done yet, else the next undone day after it, else the first gap.

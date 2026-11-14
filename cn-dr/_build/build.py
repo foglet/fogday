@@ -29,7 +29,7 @@ MAT = {
   {"name":"YouTube","url":"https://www.youtube.com/@Mandarin-Insights"},
   {"name":"Instagram","url":"https://www.instagram.com/mandarininsights/"},
   {"name":"TikTok","url":"https://www.tiktok.com/@mandarininsights"},
-  {"name":"mandarininsights.com","url":"https://www.mandarininsights.com/"},
+  {"name":"mandarininsights.com","label":"Website","url":"https://www.mandarininsights.com/"},
  ],
 }
 html = (root/"template.html").read_text(encoding="utf-8")
