@@ -172,6 +172,15 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .foot{margin-top:var(--s8);padding:var(--s5) 0;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
 .foot p{margin:0 0 var(--s2);max-width:65ch}
 
+/* Home path card */
+.path{margin-top:var(--s4);background:var(--primary-tint);border:1.5px solid var(--primary);border-radius:var(--r-lg);padding:var(--s4);box-shadow:var(--shadow-card)}
+.path-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center}
+.path .day{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-ink);margin:0}
+.path h2{margin:var(--s1) 0 0;font-family:var(--display);font-weight:400;font-size:1.25rem;line-height:1.3}
+.path .btn{width:100%;margin-top:var(--s4)}
+.path .hint{margin:var(--s3) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
+.links{display:grid;gap:var(--s2);margin-top:var(--s4)}
+
 /* Search */
 .search{display:flex;gap:var(--s2);align-items:center;margin-top:var(--s4)}
 .search input{flex:1;min-width:0;min-height:var(--tap);border-radius:var(--r-md);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;padding:0 var(--s3)}
@@ -227,10 +236,10 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 
 <nav class="bar" aria-label="Sections">
   <div class="wrap" role="tablist">
-    <button class="tab" role="tab" data-tab="learn" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Learn</button>
-    <button class="tab" role="tab" data-tab="series" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>Courses</button>
+    <button class="tab" role="tab" data-tab="home" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+    <button class="tab" role="tab" data-tab="learn" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</button>
     <button class="tab" role="tab" data-tab="practice" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>Practice</button>
-    <button class="tab" role="tab" data-tab="materials" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>Materials</button>
+    <button class="tab" role="tab" data-tab="materials" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>About</button>
   </div>
 </nav>
 
@@ -263,7 +272,8 @@ const store = {
   set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
 };
 let done = store.get('done', {});           // id -> timestamp
-let S = { tab: store.get('tab','learn'), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, sec:{}, q:'' };
+const OLD_TAB = {series:'learn', search:'learn'};
+let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, sec:{}, q:'' };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -274,8 +284,7 @@ const LEVELS = [
   {id:'advanced', name:'Advanced', note:'HSK 5+'}
 ];
 const SECTIONS = [
-  {id:'series', name:'Serial Course', note:'Runs of lessons to watch in order.'},
-  {id:'drills', name:'Repetition Training', note:'Tone, homophone, listening and HSK quizzes.'},
+  {id:'series', name:'Lesson Series', note:'Runs of lessons to watch in order.'},
   {id:'pron', name:'Pronunciation', note:'Tones, tricky sounds and what pinyin spelling hides.'},
   {id:'grammar', name:'Grammar & Patterns', note:'Sentence patterns, particles and word order.'},
   {id:'vocab', name:'Vocabulary & Word Building', note:'Word families and how Chinese words are put together.'},
@@ -377,7 +386,7 @@ function sec(id, name, body, hint){
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<h1 class="page-h">Learn</h1>`; }
+  return `<h1 class="page-h">Library</h1>`; }
 function viewLearn(bodyOnly){
   let items = ITEMS.filter(r => r.lv===S.level);
   if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>
@@ -407,11 +416,6 @@ function updateLevel(){
   $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true);
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
 }
-function viewSeries(){
-  const groups = LEVELS.map(l => ({l, sids: DATA.series.map(x=>x.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
-  return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Open a course and pick a lesson. Runs of lessons Dr. Jia released in order, plus themes she kept coming back to.</p>
-    ${groups.map(g=>`<h2 class="sub">${esc(g.l.name)} <span style="font-weight:400">· ${esc(g.l.note)}</span></h2><div class="series">${g.sids.map(scard).join('')}</div>`).join('')}` + foot();
-}
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
   const topics = ['Tone ear training','Homophone listening','Listening challenges','HSK quizzes'];
@@ -432,15 +436,50 @@ function viewMaterials(){
   const longs = ITEMS.filter(r=>r.k==='long');
   const tips = ITEMS.filter(r=>r.sec==='tips');
   CTX['long'] = longs.map(r=>r.id);
-  return `<p class="kicker">Materials</p><h1 class="display">Materials</h1>
-    <p class="lede">Open a group to see her courses, free guides, full-length lessons and study advice.</p>
+  return `<p class="kicker">About</p><h1 class="display">Dr. Jia</h1>
+    <p class="lede">Her classes, free guides, full-length lessons and study advice.</p>
     <div class="series">${[
-      card('mat:courses','Courses with Dr. Jia','Self-paced, live group and private lessons.',[],()=>MAT.courses.map(courseTile).join(''),{ring:false,feat:true}),
+      card('mat:courses','Classes with Dr. Jia','Self-paced, live group and private lessons.',[],()=>MAT.courses.map(courseTile).join(''),{ring:false,feat:true}),
       card('mat:free','Free guides','Pinyin spelling guide and a weekly tip.',[],()=>MAT.free.map(courseTile).join(''),{ring:false}),
       card('mat:long','Long-form lessons','Full-length YouTube lessons, 5 to 15 minutes each.',longs,()=>list('long', longs, {level:true})),
       card('mat:tips','How to Study','Dr. Jia on why learning stalls and what to do instead.',tips,()=>list('tips', tips))
     ].join('')}</div>
     <h2 class="sub">Follow</h2><div style="display:flex;flex-wrap:wrap;gap:var(--s2)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>` + foot();
+}
+const PATH = 'survival30';
+function pathState(){
+  const it = seriesItems(PATH), n = it.filter(r=>isDone(r.id)).length;
+  const next = it.find(r=>!isDone(r.id));
+  return {it, n, next};
+}
+function homeCard(){
+  const {it, n, next} = pathState(), s = SER[PATH];
+  if(!next) return `<div class="path" id="pathCard"><div class="path-top"><div><p class="day" id="pathDay">All ${it.length} days done</p><h2 id="pathTitle">You finished ${esc(s.name)}</h2></div>${ring(n,it.length)}</div>
+    <button class="btn primary" data-goto="learn">Find your next lessons in the Library</button></div>`;
+  const label = n ? 'Continue' : 'Start';
+  return `<div class="path" id="pathCard"><div class="path-top"><div><p class="day" id="pathDay">Day ${next.ord} of ${it.length}</p><h2 id="pathTitle">${esc(T(next))}</h2></div>${ring(n,it.length)}</div>
+    <button class="btn primary" id="pathBtn" data-play="${next.id}" data-ctx="ser:${PATH}"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg><span>${label}: Day ${next.ord}</span></button>
+    <p class="hint">Mark each day done to move ahead.</p></div>`;
+}
+function updateHome(){
+  const c = $('#pathCard'); if(!c) return;
+  const {it, n, next} = pathState();
+  const w=document.createElement('div'); w.innerHTML=ring(n,it.length); c.querySelector('.ring').replaceWith(w.firstElementChild);
+  const b = $('#pathBtn');
+  if(!next || !b){ c.outerHTML = homeCard(); return; }
+  $('#pathDay').textContent = `Day ${next.ord} of ${it.length}`;
+  $('#pathTitle').textContent = T(next);
+  b.dataset.play = next.id; b.querySelector('span').textContent = `${n?'Continue':'Start'}: Day ${next.ord}`;
+}
+function viewHome(){
+  const s = SER[PATH];
+  return `<p class="kicker">Start here</p><h1 class="display">${esc(s.name)}</h1>
+    <p class="lede">New to Mandarin? Watch one short lesson a day, in Dr. Jia's order.</p>
+    ${homeCard()}
+    <div class="links">
+      <button class="btn" data-goto="learn">Browse all ${ITEMS.length} lessons</button>
+      <button class="btn" data-goto="practice">Practice and review</button>
+    </div>` + foot();
 }
 function viewSearch(){
   const q = S.q.trim().toLowerCase();
@@ -457,7 +496,7 @@ function foot(){
 
 /* ---------- render ---------- */
 function render(focusMain){
-  const v = S.tab==='search' ? viewSearch() : S.tab==='series' ? viewSeries() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn();
+  const v = S.tab==='search' ? viewSearch() : S.tab==='home' ? viewHome() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn();
   $('#main').innerHTML = v;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab===S.tab)));
   rove();
@@ -495,7 +534,7 @@ function openPlayer(id, ctx, keepQueue){
 }
 function closePlayer(){
   $('#player').innerHTML = ''; $('#sheetWrap').dataset.open = 'false'; document.body.style.overflow = ''; drillName='';
-  refreshProgress(); if(lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+  refreshProgress(); updateHome(); if(lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
   else { const b = document.querySelector(`[data-id="${cur&&cur.id}"]`); if(b) b.focus(); }
 }
 function refreshProgress(){
@@ -529,7 +568,7 @@ function startDrill(kind){
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
-  if(t.id==='home'){ e.preventDefault(); return go('learn'); }
+  if(t.id==='home'){ e.preventDefault(); return go('home'); }
   if(t.dataset.sec){ const k=t.dataset.sec, open=!S.sec[k]; S.sec[k]=open; t.setAttribute('aria-expanded', String(open)); document.getElementById(t.getAttribute('aria-controls')).hidden=!open; return; }
   if(t.matches('.tab')) return go(t.dataset.tab);
   if(t.dataset.tabGo) return go(t.dataset.tabGo);
