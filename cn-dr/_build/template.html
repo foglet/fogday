@@ -211,10 +211,14 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .player.long{aspect-ratio:16/9}
 .player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .player .loading{position:absolute;inset:0;display:grid;place-items:center;color:#F3ECE2;font-weight:600;font-size:var(--fs-sm)}
-.sheet .meta{font-size:var(--fs-sm);color:var(--ink-2);margin:0 0 var(--s3)}
-.sheet .acts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s2)}
-.sheet .acts .wide{grid-column:1/-1}
-.drillbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);margin-top:var(--s2)}
+.sheet-tt{flex:1;min-width:0}
+.sheet-tt .kicker{margin:var(--s2) 0 0}
+.sheet-tt h2{margin-top:var(--s1)}
+.sheet .acts{display:grid;gap:var(--s1)}
+.sheet .acts .btn.primary{width:100%}
+.linkbtn{min-height:var(--tap);border:0;background:none;color:var(--ink-2);font:inherit;font-size:var(--fs-sm);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:var(--r-sm)}
+@media (hover:hover){.linkbtn:hover{color:var(--ink)}}
+.linkbtn:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media (min-width:40rem){
@@ -248,17 +252,15 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" id="sheet">
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-h">
-      <h2 id="sheetTitle"></h2>
+      <div class="sheet-tt"><p class="kicker" id="sheetKicker"></p><h2 id="sheetTitle"></h2></div>
+      <a class="btn ghost icon-btn" id="ytLink" target="_blank" rel="noopener" aria-label="Watch on YouTube, opens a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
       <button class="btn ghost icon-btn" id="closeBtn" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     </div>
     <div class="player" id="player"></div>
-    <p class="meta" id="sheetMeta"></p>
     <div class="acts">
-      <button class="btn" id="doneBtn" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Mark done</span></button>
-      <a class="btn" id="ytLink" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>YouTube</a>
-      <button class="btn primary wide" id="nextBtn"><span>Next lesson</span><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
+      <button class="btn primary" id="nextBtn"><span>Next lesson</span><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg></button>
+      <button class="linkbtn" id="altBtn"></button>
     </div>
-    <div class="drillbar" id="drillBar" hidden></div>
   </div>
 </div>
 
@@ -506,7 +508,7 @@ function render(focusMain){
 function go(tab){ S.tab=tab; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
 
 /* ---------- player ---------- */
-let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '';
+let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '', pathMode = false;
 function openPlayer(id, ctx, keepQueue){
   const r = byId[id]; if(!r) return;
   cur = r;
@@ -514,20 +516,18 @@ function openPlayer(id, ctx, keepQueue){
   else {
     if(ctx && !CTX[ctx] && ctx.startsWith('ser:')) CTX[ctx] = seriesItems(ctx.slice(4)).map(x=>x.id);
     if(ctx && CTX[ctx]){ queue = CTX[ctx].slice(); qi = queue.indexOf(id); } else { queue=[id]; qi=0; }
+    pathMode = ctx === 'ser:'+PATH;
   }
   if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
   $('#sheetTitle').textContent = T(r);
-  $('#sheetMeta').textContent = [r.lab&&r.lab.join(', '), LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
   const p = $('#player'); p.className = 'player ' + (r.k==='long'?'long':'short');
   p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(T(r))}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
   p.querySelector('iframe').addEventListener('load', () => { const l=p.querySelector('.loading'); if(l) l.remove(); }, {once:true});
   $('#ytLink').href = url(r);
-  syncDone();
-  const hasNext = queue && qi > -1 && qi < queue.length-1;
-  $('#nextBtn').disabled = !hasNext; $('#nextBtn').setAttribute('aria-disabled', String(!hasNext));
-  $('#nextBtn').querySelector('span').textContent = hasNext ? (drillName?'Next drill':'Next lesson') : 'End of list';
-  const db = $('#drillBar');
-  if(drillName){ db.hidden=false; db.textContent = `${drillName}: ${qi+1} of ${queue.length}`; } else db.hidden = true;
+  $('#sheetKicker').textContent = drillName ? `${drillName}: ${qi+1} of ${queue.length}`
+    : pathMode ? `Day ${r.ord} of ${queue.length}`
+    : [r.lab&&r.lab.join(', '), LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
+  syncActs();
   $('#sheetWrap').dataset.open = 'true';
   document.body.style.overflow = 'hidden';
   $('#closeBtn').focus();
@@ -535,7 +535,7 @@ function openPlayer(id, ctx, keepQueue){
 function closePlayer(){
   $('#player').innerHTML = ''; $('#sheetWrap').dataset.open = 'false'; document.body.style.overflow = ''; drillName='';
   refreshProgress(); updateHome(); if(lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
-  else { const b = document.querySelector(`[data-id="${cur&&cur.id}"]`); if(b) b.focus(); }
+  else { const b = document.querySelector(`[data-id="${cur&&cur.id}"]`) || document.querySelector('#pathCard .btn'); if(b) b.focus(); }
 }
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
@@ -546,7 +546,34 @@ function refreshProgress(){
     const w=document.createElement('div'); w.innerHTML=ring(n,it.length); rg.replaceWith(w.firstElementChild);
     c.setAttribute('aria-label', c.getAttribute('aria-label').replace(/, \d+ of \d+ done$/, `, ${n} of ${it.length} done`)); });
 }
-function syncDone(){ const d = isDone(cur.id); const b=$('#doneBtn'); b.setAttribute('aria-pressed', String(d)); b.querySelector('span').textContent = d ? 'Done' : 'Mark done'; }
+const hasNext = () => queue && qi > -1 && qi < queue.length-1;
+const nextName = () => pathMode ? `Day ${byId[queue[qi+1]].ord}` : 'lesson';
+// One primary action: mark done (if not yet) and move on. A text link covers skipping, undoing, or marking a drill.
+function syncActs(){
+  const d = isDone(cur.id), nx = hasNext(), b = $('#nextBtn'), a = $('#altBtn');
+  let label;
+  if(drillName) label = nx ? 'Next drill' : 'End of drills';
+  else if(nx) label = (d ? '' : 'Done · ') + (pathMode ? `Next: ${nextName()}` : 'Next lesson');
+  else label = (d ? '' : 'Done · ') + (pathMode ? 'Finish' : 'Close');
+  b.querySelector('span').textContent = label;
+  const off = drillName && !nx; b.disabled = off; b.setAttribute('aria-disabled', String(off));
+  if(drillName) a.textContent = d ? 'Mark not done' : 'Mark done';
+  else if(d) a.textContent = 'Mark not done';
+  else a.textContent = nx ? `Skip to ${pathMode ? nextName() : 'next lesson'} without marking done` : '';
+  a.hidden = !a.textContent;
+}
+function markDone(v){ if(v) done[cur.id]=Date.now(); else delete done[cur.id]; store.set('done',done); }
+function primaryAct(){
+  if(drillName){ if(hasNext()) openPlayer(queue[qi+1], null, true); return; }
+  if(!isDone(cur.id)) markDone(true);
+  if(hasNext()) return openPlayer(queue[qi+1], null, true);
+  const wasPath = pathMode; closePlayer();
+  if(wasPath && S.tab!=='home') go('home');
+}
+function altAct(){
+  if(drillName || isDone(cur.id)){ markDone(!isDone(cur.id)); syncActs(); $(isDone(cur.id)||drillName ? '#altBtn' : '#nextBtn').focus(); return; }
+  if(hasNext()) openPlayer(queue[qi+1], null, true);
+}
 function drillPool(kind){
   let pool = ITEMS.filter(r=>r.sec==='drills');
   if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
@@ -587,8 +614,8 @@ $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.targe
 $('#main').addEventListener('submit', e => { e.preventDefault(); const i=$('#q'); i&&i.blur(); });
 $('#closeBtn').addEventListener('click', closePlayer);
 $('#scrim').addEventListener('click', closePlayer);
-$('#doneBtn').addEventListener('click', () => { if(isDone(cur.id)) delete done[cur.id]; else done[cur.id]=Date.now(); store.set('done',done); syncDone(); });
-$('#nextBtn').addEventListener('click', () => { if(queue && qi < queue.length-1) openPlayer(queue[qi+1], null, true); });
+$('#nextBtn').addEventListener('click', primaryAct);
+$('#altBtn').addEventListener('click', altAct);
 function rove(){ document.querySelectorAll('[role="tablist"]').forEach(l=>{ l.querySelectorAll('[role="tab"]').forEach(t=>t.tabIndex = t.getAttribute('aria-selected')==='true'?0:-1); }); }
 document.addEventListener('keydown', e => {
   const tab = e.target.closest && e.target.closest('[role="tab"]');
@@ -600,7 +627,7 @@ document.addEventListener('keydown', e => {
   }
   if($('#sheetWrap').dataset.open!=='true') return;
   if(e.key==='Escape'){ e.preventDefault(); closePlayer(); }
-  if(e.key==='Tab'){ const f=[...$('#sheet').querySelectorAll('button:not([disabled]),a[href],iframe')]; const a=f[0], z=f[f.length-1];
+  if(e.key==='Tab'){ const f=[...$('#sheet').querySelectorAll('button:not([disabled]):not([hidden]),a[href],iframe')]; const a=f[0], z=f[f.length-1];
     if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); } }
 });
 document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && !sh.hidden && sh.offsetParent!==null && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
