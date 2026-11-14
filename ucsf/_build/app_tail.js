@@ -137,6 +137,15 @@ function initMap(){
     const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
     pickRoute(r===f && hits.length===1 ? null : r, false);
   });
+  /* With a route highlighted, a tap more than 50px from it brings back all routes
+     (a tap right on another route's line picks that route instead; stops and shuttles keep their popups) */
+  map.on("click", ev => {
+    if(state.focus==null || !mapReady) return;
+    if(map.queryRenderedFeatures(ev.point, {layers:["route-hit","stop-dot","veh-dot"]}).length) return;
+    const R=50, p=ev.point, f=+state.focus;
+    const near=map.queryRenderedFeatures([[p.x-R, p.y-R], [p.x+R, p.y+R]], {layers:["route-line"]}).some(x=>x.properties.r===f);
+    if(!near) pickRoute(null, false);
+  });
   ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
   map.on("load", startLocation);
 }
