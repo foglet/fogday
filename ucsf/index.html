@@ -105,7 +105,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   }
   .controls { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
   .controls[data-open="false"] .legend-body { display: none; }
-  .avail { display: flex; flex-wrap: wrap; gap: 4px; max-width: 100%; }
+  .avail { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 100%; }   /* one service message per line */
   .legend-toggle, .legend-body > .key, .routes li, .notes summary, .notes .note, .status {
     background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
     width: fit-content; max-width: 100%; border-radius: 999px; padding: 3px 10px;
@@ -163,6 +163,9 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .cnt { margin-left: 0; padding-left: 0; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
   .status { font-size: .9rem; color: var(--ink); margin: 0; }
   .status.next { color: var(--ink); }
+  /* Your location, beside the service at the stop nearest you: the map's blue "here" dot, small */
+  .status .me { display: inline-block; width: 11px; height: 11px; margin-right: 7px; vertical-align: -1px; border-radius: 50%;
+                background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 3px rgb(61 139 255 / .3); }
   .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #c98a1b; vertical-align: 1px; }
   .status[data-mode="live"] .dot { background: #4cd07a; }
   .status[data-mode="none"] .dot { background: #8fa3b1; }
@@ -250,7 +253,6 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   <button type="button" class="oa-pin" id="hereBtn" aria-label="Show where I am" title="Where I am">
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
   </button>
-  <p class="oa-here-msg" id="hereMsg" role="status" hidden></p>
 </div>
 <div class="oa-theme" id="themeCtl" hidden>
   <button type="button" class="oa-pin" id="themeBtn" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
@@ -293,7 +295,8 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   </div>
   <div class="avail" role="status" aria-live="polite">
     <p class="status" id="status" data-mode="sched"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading the schedule</span></p>
-    <p class="status next" id="nextLine" hidden></p>
+    <p class="status next" id="nextLine" hidden><span class="me" id="nextMe" aria-label="At your location" role="img" hidden></span><span id="nextText"></span></p>
+    <p class="status next" id="hereMsg" hidden></p>
   </div>
   <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="true" aria-controls="legendBody"><span class="sky-text">Shuttle Legend</span></button>
 </section>
@@ -696,22 +699,23 @@ function render(){
   const n=state.vehicles.length, st=$("status");
   const mode = state.live && state.live.length ? "live" : n ? "sched" : "none";
   if(st.dataset.mode!==mode) st.dataset.mode=mode;
-  let txt;
-  if(n) txt=n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "");
-  else if(state.user && Math.min(...STOPS.map(s=>meters(state.user, s.ll)))<=8000) txt="No service now";   // the next line below says when, at your stop
-  else {
+  /* Service, one message per line: what is running now, then when the next shuttle comes
+     (at the stop nearest you once location is allowed, else the next service anywhere) */
+  setText($("statusText"), n ? n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : "No service now");
+  const nl=$("nextLine"); let next=null, here=false;
+  const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0] : null;
+  if(st0 && st0.d<=8000){
+    const nx=nextAtStop(st0.i, nowMs);
+    if(nx){ next="Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx); here=true }
+  } else if(st0){
+    next="Nearest stop: "+STOPS[st0.i].short+", "+dist(st0.d)+" away";
+  }
+  if(!next && !n){
     const ns=nextService(nowMs);
-    txt = ns ? "No service now. Next: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
+    next = ns ? "Next service: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
   }
-  setText($("statusText"), txt);
-  /* With location: the next departure from the nearest stop */
-  const nl=$("nextLine");
-  if(state.user){
-    const st0=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0];
-    const nx = st0.d<=8000 ? nextAtStop(st0.i, nowMs) : null;
-    nl.hidden = !nx;
-    if(nx) setText(nl, "Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx));
-  }
+  nl.hidden=!next; if(next) setText($("nextText"), next);
+  $("nextMe").hidden=!here;
   const counts=ROUTES.map(()=>0); state.vehicles.forEach(v=>counts[v.route]++);
   document.querySelectorAll("#routes .pick").forEach(b => {
     const i=+b.dataset.r; b.setAttribute("aria-pressed", String(state.focus!=null && +state.focus===i));

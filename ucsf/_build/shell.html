@@ -105,7 +105,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   }
   .controls { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
   .controls[data-open="false"] .legend-body { display: none; }
-  .avail { display: flex; flex-wrap: wrap; gap: 4px; max-width: 100%; }
+  .avail { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 100%; }   /* one service message per line */
   .legend-toggle, .legend-body > .key, .routes li, .notes summary, .notes .note, .status {
     background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
     width: fit-content; max-width: 100%; border-radius: 999px; padding: 3px 10px;
@@ -163,6 +163,9 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .cnt { margin-left: 0; padding-left: 0; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
   .status { font-size: .9rem; color: var(--ink); margin: 0; }
   .status.next { color: var(--ink); }
+  /* Your location, beside the service at the stop nearest you: the map's blue "here" dot, small */
+  .status .me { display: inline-block; width: 11px; height: 11px; margin-right: 7px; vertical-align: -1px; border-radius: 50%;
+                background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 3px rgb(61 139 255 / .3); }
   .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #c98a1b; vertical-align: 1px; }
   .status[data-mode="live"] .dot { background: #4cd07a; }
   .status[data-mode="none"] .dot { background: #8fa3b1; }
@@ -250,7 +253,6 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   <button type="button" class="oa-pin" id="hereBtn" aria-label="Show where I am" title="Where I am">
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
   </button>
-  <p class="oa-here-msg" id="hereMsg" role="status" hidden></p>
 </div>
 <div class="oa-theme" id="themeCtl" hidden>
   <button type="button" class="oa-pin" id="themeBtn" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
@@ -293,7 +295,8 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   </div>
   <div class="avail" role="status" aria-live="polite">
     <p class="status" id="status" data-mode="sched"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading the schedule</span></p>
-    <p class="status next" id="nextLine" hidden></p>
+    <p class="status next" id="nextLine" hidden><span class="me" id="nextMe" aria-label="At your location" role="img" hidden></span><span id="nextText"></span></p>
+    <p class="status next" id="hereMsg" hidden></p>
   </div>
   <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="true" aria-controls="legendBody"><span class="sky-text">Shuttle Legend</span></button>
 </section>

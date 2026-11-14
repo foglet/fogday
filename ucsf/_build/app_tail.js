@@ -241,22 +241,23 @@ function render(){
   const n=state.vehicles.length, st=$("status");
   const mode = state.live && state.live.length ? "live" : n ? "sched" : "none";
   if(st.dataset.mode!==mode) st.dataset.mode=mode;
-  let txt;
-  if(n) txt=n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "");
-  else if(state.user && Math.min(...STOPS.map(s=>meters(state.user, s.ll)))<=8000) txt="No service now";   // the next line below says when, at your stop
-  else {
+  /* Service, one message per line: what is running now, then when the next shuttle comes
+     (at the stop nearest you once location is allowed, else the next service anywhere) */
+  setText($("statusText"), n ? n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : "No service now");
+  const nl=$("nextLine"); let next=null, here=false;
+  const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0] : null;
+  if(st0 && st0.d<=8000){
+    const nx=nextAtStop(st0.i, nowMs);
+    if(nx){ next="Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx); here=true }
+  } else if(st0){
+    next="Nearest stop: "+STOPS[st0.i].short+", "+dist(st0.d)+" away";
+  }
+  if(!next && !n){
     const ns=nextService(nowMs);
-    txt = ns ? "No service now. Next: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
+    next = ns ? "Next service: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
   }
-  setText($("statusText"), txt);
-  /* With location: the next departure from the nearest stop */
-  const nl=$("nextLine");
-  if(state.user){
-    const st0=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0];
-    const nx = st0.d<=8000 ? nextAtStop(st0.i, nowMs) : null;
-    nl.hidden = !nx;
-    if(nx) setText(nl, "Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx));
-  }
+  nl.hidden=!next; if(next) setText($("nextText"), next);
+  $("nextMe").hidden=!here;
   const counts=ROUTES.map(()=>0); state.vehicles.forEach(v=>counts[v.route]++);
   document.querySelectorAll("#routes .pick").forEach(b => {
     const i=+b.dataset.r; b.setAttribute("aria-pressed", String(state.focus!=null && +state.focus===i));
