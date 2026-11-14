@@ -144,6 +144,9 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 /* Contents of an open card sit beside a red bar, indented, so it is clear which card they belong to */
 .acc[data-open="true"]>.acc-panel{margin:var(--s2) 0 var(--s1) var(--s2);padding:0 0 0 var(--s3);border-left:3px solid var(--accent)}
 .acc-panel .scard b{font-size:1rem}
+/* Double nesting: the outer bar turns grey and the inner bar is a lighter red */
+.acc[data-open="true"]>.acc-panel:has(.acc[data-open="true"]){border-left-color:#a3aba7}
+.acc-panel .acc[data-open="true"]>.acc-panel{border-left-color:#dc8a82}
 .acc-panel .tile:first-child{margin-top:var(--s2)}
 
 /* Drill picker: Drill 1, Drill 2 ... laid out in a row that wraps */
