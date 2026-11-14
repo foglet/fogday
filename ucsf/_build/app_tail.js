@@ -1,6 +1,5 @@
 /* ---------- state ---------- */
-const state = { user:null, focus:(store.get("route")||null), live:null, vehicles:[] };
-if(state.focus!=null && !ROUTES[+state.focus]) state.focus=null;
+const state = { user:null, focus:null, live:null, vehicles:[] };   // every load starts with all routes
 const $ = id => document.getElementById(id);
 function setText(el, t){ if(el.textContent!==t) el.textContent=t }
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
@@ -232,7 +231,7 @@ function applyFocus(fly){
 function paintSwatches(){ document.querySelectorAll("#routes .pick").forEach(b=>b.firstChild.style.setProperty("--c", ROUTES[+b.dataset.r].color)) }
 function pickRoute(i, fly){
   state.focus = i==null ? null : String(i);
-  store.set("route", state.focus==null ? "" : state.focus); applyFocus(fly); render();
+  applyFocus(fly); render();
 }
 function buildRoutes(){
   const ul=$("routes");
@@ -347,3 +346,5 @@ initMap(); render();
 if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);
 if(LIVE){ pollLive(); setInterval(pollLive, 10000) }
+
+try{ localStorage.removeItem("ucsf:route") }catch(e){}   // retire the old remembered route
