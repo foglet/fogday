@@ -337,7 +337,12 @@ function pointAt(sh, d){
 
 /* ---------- routes ---------- */
 function lum(hex){ const n=parseInt(hex.slice(1),16); const c=[n>>16&255,n>>8&255,n&255].map(v=>{v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)}); return .2126*c[0]+.7152*c[1]+.0722*c[2] }
-const ROUTES = D.routes.map((r, i) => ({i, id:r.id, name:r.n, long:r.ln, color:r.c.toUpperCase(), text: lum(r.c) > .35 ? "#1d2421" : "#ffffff"}));
+/* Dark mode (the Spy map): night versions of UCSF's colors, same hue so each route keeps its name,
+   neons softened and dark ones lifted so they glow evenly on dark streets; black VA becomes silver */
+const NIGHT = {"Gold":"#f2d15c","Lilac AM":"#b79cff","Lilac PM":"#b79cff","Orange (Oakland)":"#ff8a3d","Grey":"#a7b0b6","VA":"#e4e8eb",
+  "Blue":"#6e8bff","Cherry":"#e0607e","Bronze":"#d9a26a","Red":"#ff5a4f","Pink AM":"#ff8fc8","Pink PM":"#ff8fc8","Green (Oakland)":"#7fcf4a","Lime":"#c6f25a"};
+const ROUTES = D.routes.map((r, i) => ({i, id:r.id, name:r.n, long:r.ln, day:r.c.toUpperCase(), night:NIGHT[r.ln]||r.c,
+  get color(){ return document.documentElement.dataset.theme==="light" ? this.day : this.night }, text: lum(r.c) > .35 ? "#1d2421" : "#ffffff"}));
 const byName = ROUTES.slice().sort((a,b)=>a.name.localeCompare(b.name));
 const routeShapes = ROUTES.map(()=>new Set());
 D.trips.forEach(t => { if(t[2] >= 0) routeShapes[t[0]].add(t[2]) });
@@ -617,6 +622,7 @@ function setTheme(t){
   b.setAttribute("aria-pressed", String(dark));
   b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
   document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+  ROUTE_FC=null; paintSwatches();
   if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
 }
 $("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
@@ -658,6 +664,7 @@ function applyFocus(fly){
 }
 
 /* ---------- legend ---------- */
+function paintSwatches(){ document.querySelectorAll("#routes .pick").forEach(b=>b.firstChild.style.setProperty("--c", ROUTES[+b.dataset.r].color)) }
 function pickRoute(i, fly){
   state.focus = i==null ? null : String(i);
   store.set("route", state.focus==null ? "" : state.focus); applyFocus(fly); render();

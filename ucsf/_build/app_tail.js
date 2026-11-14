@@ -159,6 +159,7 @@ function setTheme(t){
   b.setAttribute("aria-pressed", String(dark));
   b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
   document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+  ROUTE_FC=null; paintSwatches();
   if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
 }
 $("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
@@ -200,6 +201,7 @@ function applyFocus(fly){
 }
 
 /* ---------- legend ---------- */
+function paintSwatches(){ document.querySelectorAll("#routes .pick").forEach(b=>b.firstChild.style.setProperty("--c", ROUTES[+b.dataset.r].color)) }
 function pickRoute(i, fly){
   state.focus = i==null ? null : String(i);
   store.set("route", state.focus==null ? "" : state.focus); applyFocus(fly); render();
