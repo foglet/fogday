@@ -166,6 +166,13 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 .dtile[data-done="true"] svg{display:block}
 
 /* Practice + materials */
+.bio{margin-top:var(--s3);max-width:60ch}
+.bio p{margin:0 0 var(--s3);color:var(--ink-2)}
+.bio p:first-child{color:var(--ink);font-size:1.0625rem}
+.offers{list-style:none;margin:var(--s2) 0 0;padding:0;border-top:1px solid var(--line)}
+.offer{padding:var(--s4) 0;border-bottom:1px solid var(--line)}
+.offer h3{margin:0 0 var(--s1);font-size:1.0625rem;line-height:1.25;font-family:var(--display);font-weight:400}
+.offer p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .tile{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:var(--s4);margin-top:var(--s3)}
 .tile h3{margin:0 0 var(--s1);font-size:var(--fs-h3);line-height:1.25;font-family:var(--display);font-weight:400}
 .tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
@@ -344,7 +351,7 @@ function row(r, ctx, opts={}){
     ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
     : `<img class="thumb" src="${thumb(r)}" alt="" loading="lazy" width="56" height="56">`;
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
-  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.cur?'cur':'skip'}">${esc(opts.tag)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
+  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.cur?'cur':'skip'}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson · ${esc(r.d)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
   return `<li><button class="row${opts.cur?' cur':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
 }
@@ -476,9 +483,6 @@ function viewPractice(){
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>` + foot();
 }
-function courseTile(c){
-  return `<div class="tile${c.feature?' feature':''}"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><div class="acts"><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></div></div>`;
-}
 // Generic glyphs, not brand marks: video for YouTube, camera for Instagram, note for TikTok, globe for her site.
 const FOLLOW_ICON = {
   'YouTube':'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10 9 15 12 10 15 10 9"/></svg>',
@@ -486,18 +490,14 @@ const FOLLOW_ICON = {
   'TikTok':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
   web:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>'
 };
+function offer(c){
+  return `<li class="offer"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></li>`;
+}
 function viewMaterials(){
-  const longs = ITEMS.filter(r=>r.k==='long');
-  const tips = ITEMS.filter(r=>r.sec==='tips');
-  CTX['long'] = longs.map(r=>r.id);
   return `<p class="kicker">About</p><h1 class="display">Dr. Jia</h1>
-    <p class="lede">Her classes, free guides, full-length lessons and study advice.</p>
-    <div class="series">${[
-      card('mat:courses','Classes with Dr. Jia','Self-paced, live group and private lessons.',[],()=>MAT.courses.map(courseTile).join(''),{ring:false,feat:true}),
-      card('mat:free','Free guides','Pinyin spelling guide and a weekly tip.',[],()=>MAT.free.map(courseTile).join(''),{ring:false}),
-      card('mat:long','Long-form lessons','Full-length YouTube lessons, 5 to 15 minutes each.',longs,()=>list('long', longs, {level:true})),
-      card('mat:tips','How to Study','Dr. Jia on why learning stalls and what to do instead.',tips,()=>list('tips', tips))
-    ].join('')}</div>
+    <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
+    <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
+    <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>
     <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}<span>${esc(f.label||f.name)}</span></a></li>`).join('')}</ul>` + foot();
 }
 const PATH = 'survival30';
@@ -538,6 +538,8 @@ function viewHome(){
   return `<p class="kicker">Start here</p><h1 class="display">${esc(s.name)}</h1>
     <p class="lede">New to Mandarin? Watch one short lesson a day, in Dr. Jia's order.</p>
     ${homeCard()}
+    <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
+      return card('home:tips','How to study','Short talks from Dr. Jia on why learning stalls and what to do instead.', tips, ()=>list('tips', tips)); })()}</div>
     <div class="links">
       <button class="btn" data-goto="learn">Browse all ${ITEMS.length} lessons</button>
       <button class="btn" data-goto="practice">Practice and review</button>

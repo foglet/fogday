@@ -8,6 +8,12 @@ for r in data["items"]:
     if not r.get("lab"): r.pop("lab", None)
 
 MAT = {
+ # Paraphrased from mandarininsights.com (home page), 2026-11-14.
+ "bio": [
+  "Dr. Hanyu Jia teaches Mandarin online and holds a PhD in applied linguistics from the University of Arizona.",
+  "Her lessons are built around real situations: getting something done in Chinese, with pronunciation, tones, grammar and core words taught along the way. More than 500 students have learned with her.",
+  "Her goal for learners is to speak Chinese with confidence and adapt it to everyday life, not just pass a test.",
+ ],
  "courses": [
   {"name":"Mandarin Foundation: Beginner Course","levels":["beginner"],"feature":True,
    "desc":"Her self-paced, step-by-step beginner course: the Mandarin you need first, in order, instead of scattered resources.",
