@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#fbf8f1">
-<meta name="description" content="Every Mandarin Insights lesson by Dr. Jia, sorted by level and topic: serial courses, repetition training, pronunciation, grammar, phrases and materials.">
-<title>Mandarin with Dr. Jia · Lesson Library</title>
+<meta name="description" content="Practical Chinese Made Easy. Every Mandarin Insights lesson by Dr. Jia, sorted by level and topic.">
+<title>Mandarin Insights</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -36,7 +36,6 @@
   --shadow-sheet:0 -8px 32px rgba(42,36,32,.18);
   --ring-w:3px;
   --shadow-card:0 1px 2px rgba(42,36,32,.06);
-  --shadow-lead:0 10px 24px -12px rgba(18,58,47,.55);
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -54,7 +53,8 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 .top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
 .top .wrap{display:flex;align-items:center;gap:var(--s3);min-height:56px}
-.brand{display:flex;align-items:center;gap:var(--s2);min-width:0;flex:1}
+.brand{display:flex;align-items:center;gap:var(--s2);min-width:0;flex:1;min-height:var(--tap);color:inherit;text-decoration:none}
+.brand:hover b,.brand:active b{text-decoration:underline;text-underline-offset:3px}
 .seal{flex:none;width:32px;height:32px;border-radius:8px;font-family:var(--display);background:var(--accent);color:var(--on-primary);display:grid;place-items:center;font-weight:700;font-size:1.05rem;line-height:1}
 .brand-txt{min-width:0}
 .brand-txt b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-body);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -97,29 +97,17 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:var(--display);font-weight:400;margin:0;letter-spacing:0;max-width:18ch}
 .lede{color:var(--ink-2);margin:var(--s2) 0 0;max-width:46ch}
 
-/* Lead card: one thing leads */
-.lead{margin:var(--s5) 0 var(--s2);background:var(--primary);color:var(--on-primary);border-radius:var(--r-lg);padding:var(--s5);position:relative;overflow:hidden;
-  box-shadow:var(--shadow-lead)}
-.lead .glyph{position:absolute;right:-10px;bottom:-34px;font-size:9rem;font-weight:700;line-height:1;opacity:.14;pointer-events:none}
-.lead .k{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
-.lead{display:block;width:100%;border:0;text-align:left;font:inherit;cursor:pointer;transition:transform var(--dur-fast) var(--ease),background-color var(--dur-fast)}
-@media (hover:hover){.lead:hover{background:var(--primary-hover)}}
-.lead:active{transform:translateY(2px);background:var(--primary-press)}
-.lead .k{display:block}
-.lead .lh{display:block;font-size:1.75rem;line-height:var(--lh-tight);margin:var(--s1) 0 var(--s2);font-family:var(--display);font-weight:400;max-width:16ch}
-.lead .p{display:block;margin:0 0 var(--s4);max-width:34ch;opacity:.95}
-.lead .go{display:inline-grid;place-items:center;width:var(--tap);height:var(--tap);border-radius:50%;background:var(--on-primary);color:var(--primary)}
-.lead .go svg{width:20px;height:20px;fill:currentColor;stroke:none}
-.meter{height:8px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--on-primary) 25%,transparent);margin:0 0 var(--s4);overflow:hidden;max-width:20rem}
-.meter i{display:block;height:100%;background:var(--on-primary);border-radius:inherit}
-.lead .row-actions{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap}
-.lead .count{font-weight:600;font-size:var(--fs-sm)}
-
 /* Sections */
-.sec{margin-top:var(--s7)}
-.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);border-bottom:2px solid var(--ink);padding-bottom:var(--s2);margin-bottom:var(--s2)}
-.sec-h h2{font-size:var(--fs-h2);line-height:var(--lh-tight);margin:0;font-family:var(--display);font-weight:400}
-.sec-h .n{font-size:var(--fs-sm);color:var(--ink-3);font-weight:600;white-space:nowrap}
+.sec{margin-top:var(--s5)}
+.sec-h{margin:0;font-size:inherit;font-weight:inherit;border-bottom:2px solid var(--ink)}
+.sec-btn{display:flex;align-items:center;gap:var(--s3);width:100%;min-height:var(--tap);padding:var(--s2) var(--s1);background:none;border:0;text-align:left;cursor:pointer;color:var(--ink);font:inherit;border-radius:var(--r-sm) var(--r-sm) 0 0}
+@media (hover:hover){.sec-btn:hover{background:var(--surface-2)}}
+.sec-btn:active{background:var(--surface-3)}
+.sec-name{font-family:var(--display);font-weight:400;font-size:var(--fs-h2);line-height:var(--lh-tight)}
+.sec-btn .hint{color:var(--accent);font-size:var(--fs-sm);font-weight:600}
+.sec-btn .chev{margin-left:auto;width:24px;height:24px;flex:none;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
+.sec-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.sec-body{padding-top:var(--s2)}
 .sec-note{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s2) 0 var(--s3);max-width:65ch}
 .sub{font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);margin:var(--s5) 0 var(--s1);text-transform:uppercase;letter-spacing:.06em}
 .list{list-style:none;margin:0;padding:0}
@@ -147,10 +135,10 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .acc[data-open="true"]{grid-column:1/-1}
 .acc.feat .scard{border-color:var(--primary);background:var(--primary-tint)}
 .scard{grid-template-columns:minmax(0,1fr) auto auto}
-.scard .chev{width:24px;height:24px;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
+.scard .chev{grid-column:3;width:24px;height:24px;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
 .scard[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .acc-panel{padding:var(--s1) var(--s1) var(--s3)}
-.scard b{display:block;font-size:1.0625rem;font-family:var(--display);font-weight:400;line-height:1.25}
+.scard b{color:var(--ink);display:block;font-size:1.0625rem;font-family:var(--display);font-weight:400;line-height:1.25}
 .scard span{display:block;font-size:var(--fs-sm);color:var(--ink-2)}
 .ring{width:48px;height:48px}
 .ring circle{stroke-width:5}
@@ -214,7 +202,7 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="brand"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin with Dr. Jia</b><span>Mandarin Insights · lesson library</span></div></div>
+    <a class="brand" id="home" href="./" aria-label="Mandarin Insights, Practical Chinese Made Easy. Home"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin Insights</b><span>Practical Chinese Made Easy</span></div></a>
     <button class="btn ghost icon-btn" id="searchBtn" aria-label="Search lessons"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
   </div>
 </header>
@@ -259,7 +247,7 @@ const store = {
   set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
 };
 let done = store.get('done', {});           // id -> timestamp
-let S = { tab: store.get('tab','learn'), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'' };
+let S = { tab: store.get('tab','learn'), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, sec:{}, q:'' };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -267,11 +255,11 @@ const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
 const LEVELS = [
   {id:'beginner', name:'Beginner', note:'HSK 1 to 2'},
   {id:'intermediate', name:'Intermediate', note:'HSK 3 to 4'},
-  {id:'advanced', name:'Advanced', note:'Idiom & register'}
+  {id:'advanced', name:'Advanced', note:'HSK 5+'}
 ];
 const SECTIONS = [
-  {id:'series', name:'Serial Course', note:'Lessons she released as a numbered run. Watch them in order.'},
-  {id:'drills', name:'Repetition Training', note:'Tone, homophone, listening and HSK quizzes. Replay until you answer before she does.'},
+  {id:'series', name:'Serial Course', hint:'Watch in order.'},
+  {id:'drills', name:'Repetition Training', note:'Tone, homophone, listening and HSK quizzes.'},
   {id:'pron', name:'Pronunciation', note:'Tones, tricky sounds and what pinyin spelling hides.'},
   {id:'grammar', name:'Grammar & Patterns'},
   {id:'vocab', name:'Vocabulary & Word Building'},
@@ -293,7 +281,6 @@ const thumb = r => `https://i.ytimg.com/vi/${r.id}/${r.k==='long'?'mqdefault':'h
 const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
-const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg>';
 const ICON_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
@@ -305,34 +292,35 @@ function meta(r, opts={}){
   if(opts.level) bits.push(LEVELS.find(l=>l.id===r.lv).name);
   return bits.map(b=>`<span>${b}</span>`).join('');
 }
+const T = r => r.t.replace(/\s*\((?:Day\s?)?\d+\/\d+\)/, '');   // "(Day 2/30)" and "(1/30)" are dropped from titles
 function row(r, ctx, opts={}){
   const lead = opts.ord!=null
     ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
     : `<img class="thumb" src="${thumb(r)}" alt="" loading="lazy" width="56" height="56">`;
-  const label = `${r.t}${isDone(r.id)?', done':''}`;
+  const label = `${T(r)}${isDone(r.id)?', done':''}`;
+  const m = opts.nometa ? '' : `<span class="m">${meta(r,opts)}</span>`;
   return `<li><button class="row" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
-    <span><span class="t">${esc(r.t)}</span><span class="m">${meta(r,opts)}</span></span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
+    <span><span class="t">${esc(T(r))}</span>${m}</span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
 }
 function ring(n, total){
   const C = 2*Math.PI*20, f = total ? n/total : 0;
   return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle">${n}/${total}</text></svg>`;
 }
 function accPanel(key){
-  let it, opts;
+  let it;
   if(key.startsWith('ser:')){ const sid=key.slice(4); it=seriesItems(sid); const lab=sid==='survival30'?'Day':'Part';
     CTX[key]=it.map(r=>r.id);
-    return (sid==='survival30'?'<p class="sec-note">Days 8, 10, 11, 12, 14, 16, 26, 27 and 29 have no day number in their titles; their place is inferred from posting order.</p>':'')
-      + `<ul class="list">${it.map((r,i)=>row(r,key,{ord:sid==='survival30'?r.ord:i+1,ordLabel:lab})).join('')}</ul>`; }
+    return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:sid==='survival30'?r.ord:i+1,ordLabel:lab,nometa:true})).join('')}</ul>`; }
   it=drillPool(key.slice(6)); CTX[key]=it.map(r=>r.id);
-  return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:i+1,ordLabel:'Drill',level:true})).join('')}</ul>`;
+  return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:it.length>1?i+1:null,ordLabel:'Drill',nometa:true})).join('')}</ul>`;
 }
 function acc(key, name, sub, n, total, feat){
   const open=!!S.acc[key], pid='p-'+key.replace(/[^a-z0-9]/gi,'-');
-  return `<div class="acc${feat?' feat':''}" data-open="${open}"><button class="scard" data-acc="${esc(key)}" aria-expanded="${open}" aria-controls="${pid}" aria-label="${esc(name)}, ${n} of ${total} done"><span><b>${esc(name)}</b><span>${esc(sub)}</span></span>${ring(n,total)}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="acc-panel" id="${pid}"${open?'':' hidden'}>${open?accPanel(key):''}</div></div>`;
+  return `<div class="acc${feat?' feat':''}" data-open="${open}"><button class="scard" data-acc="${esc(key)}" aria-expanded="${open}" aria-controls="${pid}" aria-label="${esc(name)}${total>1?`, ${n} of ${total} done`:''}"><span><b>${esc(name)}</b><span>${esc(sub)}</span></span>${total>1?ring(n,total):''}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="acc-panel" id="${pid}"${open?'':' hidden'}>${open?accPanel(key):''}</div></div>`;
 }
 function scard(sid){
   const s = SER[sid], it = seriesItems(sid), n = it.filter(r=>isDone(r.id)).length;
-  return acc('ser:'+sid, s.name, `${it.length} lessons · ${s.blurb}`, n, it.length);
+  return acc('ser:'+sid, s.name, s.blurb, n, it.length);
 }
 // context lists drive "Next lesson"
 const CTX = {};
@@ -344,21 +332,22 @@ function list(key, items, opts={}){
   if(items.length > LIMIT+1) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="m6 9 6 6 6-6"/></svg></button>`;
   return h;
 }
-function grouped(key, items){
+function grouped(key, items, opts={}){
   const groups = {};
   items.forEach(r => (groups[r.top] = groups[r.top] || []).push(r));
   const names = Object.keys(groups).sort((a,b)=>(TOPIC_ORDER.indexOf(a)+99)%999-(TOPIC_ORDER.indexOf(b)+99)%999);
-  if(names.length===1) return list(key, items);
-  return names.map(n => `<h3 class="sub">${esc(n)} <span style="font-weight:700">· ${groups[n].length}</span></h3>${list(key+':'+n, groups[n])}`).join('');
+  if(names.length===1) return list(key, items, opts);
+  return names.map(n => `<h3 class="sub">${esc(n)}${groups[n].length>1?` <span style="font-weight:700">· ${groups[n].length}</span>`:''}</h3>${list(key+':'+n, groups[n], opts)}`).join('');
 }
-function secHead(id, name, items){
-  const n = items ? items.filter(r=>isDone(r.id)).length : 0;
-  return `<div class="sec-h"><h2 id="h-${id}">${esc(name)}</h2>${items?`<span class="n">${n ? n+' of ' : ''}${items.length}</span>`:''}</div>`;
+// every section is a collapsible block, closed until tapped
+function sec(id, name, body, hint){
+  const open = !!S.sec[id], pid = 'sec-' + id.replace(/[^a-z0-9]/gi,'-');
+  return `<section class="sec"><h2 class="sec-h"><button class="sec-btn" data-sec="${esc(id)}" aria-expanded="${open}" aria-controls="${pid}"><span class="sec-name">${esc(name)}</span>${hint?`<span class="hint">${esc(hint)}</span>`:''}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></h2><div class="sec-body" id="${pid}"${open?'':' hidden'}>${body}</div></section>`;
 }
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<p class="kicker">Lesson library</p><h1 class="display">${L.name}</h1><p class="lede">${ITEMS.filter(r=>r.lv===S.level).length} lessons from Dr. Jia, sorted by what they teach.</p>`; }
+  return `<p class="kicker">Lesson library</p><h1 class="display">${L.name}</h1>`; }
 function viewLearn(bodyOnly){
   let items = ITEMS.filter(r => r.lv===S.level);
   const subs = S.level==='beginner' ? ['HSK 1','HSK 2'] : [];
@@ -369,53 +358,36 @@ function viewLearn(bodyOnly){
   let h = '';
   if(subs.length) h += `<div class="chips" role="group" aria-label="Dr. Jia's own level labels"><button class="chip" data-sub="all" aria-pressed="${S.sub==='all'}">All</button>${subs.map(s=>`<button class="chip" data-sub="${s}" aria-pressed="${S.sub===s}">${s}</button>`).join('')}</div>`;
 
-  // lead
-  if(S.sub==='all'){
-    const leadSer = {beginner:'survival30', intermediate:'yao', advanced:null}[S.level];
-    if(leadSer){
-      const it = seriesItems(leadSer), n = it.filter(r=>isDone(r.id)).length, next = it.find(r=>!isDone(r.id)) || it[0];
-      h += `<button class="lead" data-ser="${leadSer}" data-play="${next.id}" data-ctx="ser:${leadSer}" aria-label="${esc(SER[leadSer].name)}, ${n} of ${it.length} done. Plays the next lesson"><span class="glyph" aria-hidden="true">${S.level==='beginner'?'学':'要'}</span>
-        <span class="k">${n? 'Keep going' : 'Start here'}</span><span class="lh">${esc(SER[leadSer].name)}</span><span class="p">${esc(SER[leadSer].blurb)}</span>
-        <span class="meter" aria-hidden="true"><i style="width:${100*n/it.length}%"></i></span>
-        <span class="row-actions"><span class="go" aria-hidden="true">${ICON_PLAY}</span><span class="count">${n} of ${it.length} done</span></span></button>`;
-    } else {
-      const idi = items.filter(r=>r.sec==='culture');
-      h += `<button class="lead" data-play="${idi[0].id}" data-ctx="lv:culture" aria-label="Idioms, slang and register. Plays the first lesson"><span class="glyph" aria-hidden="true">成</span><span class="k">Start here</span><span class="lh">Idioms, slang and register</span>
-        <span class="p">Dr. Jia's channel is mostly beginner material. This shelf collects what goes beyond it: idioms, internet slang and formal speech.</span>
-        <span class="row-actions"><span class="go" aria-hidden="true">${ICON_PLAY}</span><span class="count">${idi.length} lessons</span></span></button>`;
-    }
-  }
-
-  SECTIONS.forEach(sec => {
-    if(sec.id==='series'){
+  SECTIONS.forEach(def => {
+    if(def.id==='series'){
       if(S.sub!=='all') return;
-      const sids = DATA.series.map(s=>s.id).filter(sid => seriesLevel(sid)===S.level);
+      const sids = DATA.series.map(x=>x.id).filter(sid => seriesLevel(sid)===S.level);
       if(!sids.length) return;
-      h += `<section class="sec" aria-labelledby="h-series">${secHead('series', sec.name)}<p class="sec-note">${sec.note}</p><div class="series">${sids.map(scard).join('')}</div></section>`;
+      h += sec('series', def.name, `<div class="series">${sids.map(scard).join('')}</div>`, def.hint);
       return;
     }
-    if(sec.id==='materials'){
+    if(def.id==='materials'){
       if(S.sub!=='all') return;
       const c = MAT.courses.filter(c => c.levels.includes(S.level));
-      h += `<section class="sec" aria-labelledby="h-materials">${secHead('materials', sec.name)}${c.map(courseTile).join('')}
-        <button class="btn more" data-goto="materials">All materials, guides and long lessons</button></section>`;
+      h += sec('materials', def.name, `${c.map(courseTile).join('')}<button class="btn more" data-goto="materials">All materials, guides and long lessons</button>`);
       return;
     }
-    const its = items.filter(r => r.sec===sec.id);
+    const its = items.filter(r => r.sec===def.id);
     if(!its.length) return;
-    let body = ['phrases','pron','culture','drills'].includes(sec.id) ? grouped(`lv:${sec.id}`, its) : list(`lv:${sec.id}`, its);
-    h += `<section class="sec" aria-labelledby="h-${sec.id}">${secHead(sec.id, sec.name, its)}${sec.note?`<p class="sec-note">${sec.note}</p>`:''}${body}</section>`;
+    const o = {nometa: def.id==='drills'};
+    const body = ['phrases','pron','culture','drills'].includes(def.id) ? grouped(`lv:${def.id}`, its, o) : list(`lv:${def.id}`, its, o);
+    h += sec(def.id, def.name, `${def.note?`<p class="sec-note">${def.note}</p>`:''}${body}`);
   });
-  return h + foot();
+  return h;
 }
 function updateLevel(){
   $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true);
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
 }
 function viewSeries(){
-  const groups = LEVELS.map(l => ({l, sids: DATA.series.map(s=>s.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
+  const groups = LEVELS.map(l => ({l, sids: DATA.series.map(x=>x.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
   return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Runs of lessons Dr. Jia released in order, plus themes she kept coming back to. Progress saves on this device.</p>
-    ${groups.map(g=>`<section class="sec" aria-labelledby="h-s-${g.l.id}">${secHead('s-'+g.l.id, g.l.name)}<div class="series">${g.sids.map(scard).join('')}</div></section>`).join('')}` + foot();
+    ${groups.map(g=>sec('s-'+g.l.id, g.l.name, `<div class="series">${g.sids.map(scard).join('')}</div>`)).join('')}` + foot();
 }
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
@@ -428,10 +400,7 @@ function viewPractice(){
   return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
     <p class="lede">Open a drill type and pick a drill. Say each answer aloud, then let her confirm it.</p>
     <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
-    <section class="sec" aria-labelledby="h-review">${secHead('review','Review what you watched')}
-      <p class="sec-note">Lessons you marked done more than a day ago come back here, oldest first.</p>
-      ${watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`}
-    </section>` + foot();
+    ${sec('review','Review what you watched', `<p class="sec-note">Lessons you marked done more than a day ago come back here, oldest first.</p>${watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`}`)}` + foot();
 }
 function courseTile(c){
   return `<div class="tile${c.feature?' feature':''}"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><div class="acts"><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></div></div>`;
@@ -441,13 +410,11 @@ function viewMaterials(){
   const promos = ITEMS.filter(r=>r.sec==='materials');
   CTX['long'] = longs.map(r=>r.id);
   return `<p class="kicker">Materials</p><h1 class="display">Courses, guides & long lessons</h1>
-    <section class="sec" aria-labelledby="h-courses">${secHead('courses','Courses with Dr. Jia')}${MAT.courses.map(courseTile).join('')}</section>
-    <section class="sec" aria-labelledby="h-free">${secHead('free','Free guides')}${MAT.free.map(courseTile).join('')}</section>
-    <section class="sec" aria-labelledby="h-long">${secHead('long','Long-form lessons', longs)}<p class="sec-note">Her full-length YouTube lessons, 5 to 15 minutes each.</p>${list('long', longs, {level:true})}</section>
-    <section class="sec" aria-labelledby="h-ig">${secHead('ig','Recent on Instagram')}<p class="sec-note">Grammar cards and reels from @mandarininsights. Opens Instagram.</p>
-      <ul class="list">${MAT.ig.map(p=>`<li><a class="row" href="https://www.instagram.com${p.path}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="ord" aria-hidden="true"><span><small>${p.kind}</small>${p.day}</span></span><span><span class="t">${esc(p.text)}</span><span class="m"><span>${esc(p.date)}</span></span></span><span class="state" aria-hidden="true" style="border:0;color:var(--ink-3)"><svg viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></span></a></li>`).join('')}</ul></section>
-    <section class="sec" aria-labelledby="h-promo">${secHead('promo','Announcements', promos)}${list('promo', promos)}</section>
-    <section class="sec" aria-labelledby="h-follow">${secHead('follow','Follow')}<div class="acts" style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div></section>` + foot();
+    ${sec('courses','Courses with Dr. Jia', MAT.courses.map(courseTile).join(''))}
+    ${sec('free','Free guides', MAT.free.map(courseTile).join(''))}
+    ${sec('long','Long-form lessons', `<p class="sec-note">Her full-length YouTube lessons, 5 to 15 minutes each.</p>${list('long', longs, {level:true})}`)}
+    ${sec('promo','Announcements', list('promo', promos, {nometa:true}))}
+    ${sec('follow','Follow', `<div class="acts" style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>`)}` + foot();
 }
 function viewSearch(){
   const q = S.q.trim().toLowerCase();
@@ -459,8 +426,7 @@ function viewSearch(){
     ${q && !res.length ? `<div class="empty"><b>No lessons match "${esc(S.q)}"</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search',{level:true})).join('')}</ul>`}`;
 }
 function foot(){
-  return `<footer class="foot"><p>All ${ITEMS.length} lessons: ${ITEMS.filter(r=>r.k==='short').length} Shorts and ${ITEMS.filter(r=>r.k==='long').length} long videos from <a href="https://www.youtube.com/@Mandarin-Insights" target="_blank" rel="noopener">Mandarin Insights</a>, collected ${MAT.crawled}.</p>
-  <p>Levels Dr. Jia labels herself (Beginner, HSK 1, HSK 2) show in red on each lesson. Every other level and topic is assigned from what the lesson teaches.</p><p>Videos and course content belong to Dr. Jia.</p></footer>`;
+  return `<footer class="foot"><p>© Mandarin Insights by Dr. Hanyu Jia.</p></footer>`;
 }
 
 /* ---------- render ---------- */
@@ -485,10 +451,10 @@ function openPlayer(id, ctx, keepQueue){
     if(ctx && CTX[ctx]){ queue = CTX[ctx].slice(); qi = queue.indexOf(id); } else { queue=[id]; qi=0; }
   }
   if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
-  $('#sheetTitle').textContent = r.t;
+  $('#sheetTitle').textContent = T(r);
   $('#sheetMeta').textContent = [r.lab&&r.lab.join(', '), r.k==='long'?`Lesson, ${r.d}`:'Short', r.v&&`${r.v} views`, LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
   const p = $('#player'); p.className = 'player ' + (r.k==='long'?'long':'short');
-  p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(r.t)}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
+  p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(T(r))}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
   p.querySelector('iframe').addEventListener('load', () => { const l=p.querySelector('.loading'); if(l) l.remove(); }, {once:true});
   $('#ytLink').href = url(r);
   syncDone();
@@ -508,15 +474,11 @@ function closePlayer(){
 }
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
-  document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', r.t+(d?', done':'')); });
-  document.querySelectorAll('.scard[data-acc]').forEach(c=>{ const k=c.dataset.acc, it=k.startsWith('ser:')?seriesItems(k.slice(4)):drillPool(k.slice(6)), n=it.filter(r=>isDone(r.id)).length;
-    const w=document.createElement('div'); w.innerHTML=ring(n,it.length); c.querySelector('.ring').replaceWith(w.firstElementChild);
+  document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', T(r)+(d?', done':'')); });
+  document.querySelectorAll('.scard[data-acc]').forEach(c=>{ const rg=c.querySelector('.ring'); if(!rg) return;
+    const k=c.dataset.acc, it=k.startsWith('ser:')?seriesItems(k.slice(4)):drillPool(k.slice(6)), n=it.filter(r=>isDone(r.id)).length;
+    const w=document.createElement('div'); w.innerHTML=ring(n,it.length); rg.replaceWith(w.firstElementChild);
     c.setAttribute('aria-label', c.getAttribute('aria-label').replace(/, \d+ of \d+ done$/, `, ${n} of ${it.length} done`)); });
-  const lead=document.querySelector('.lead[data-ser]');
-  if(lead){ const it=seriesItems(lead.dataset.ser), n=it.filter(r=>isDone(r.id)).length;
-    lead.querySelector('.meter i').style.width=(100*n/it.length)+'%'; lead.querySelector('.count').textContent=`${n} of ${it.length} done`;
-    const nx=it.find(r=>!isDone(r.id))||it[0]; lead.dataset.play=nx.id; lead.querySelector('.k').textContent=n?'Keep going':'Start here';
-    lead.setAttribute('aria-label', `${SER[lead.dataset.ser].name}, ${n} of ${it.length} done. Plays the next lesson`); }
 }
 function syncDone(){ const d = isDone(cur.id); const b=$('#doneBtn'); b.setAttribute('aria-pressed', String(d)); b.querySelector('span').textContent = d ? 'Done' : 'Mark done'; }
 function drillPool(kind){
@@ -527,7 +489,7 @@ function drillPool(kind){
 }
 function drillCard(kind, label, blurb, feat){
   const pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length;
-  return acc('drill:'+kind, label, `${pool.length} drills · ${blurb}`, n, pool.length, feat);
+  return acc('drill:'+kind, label, blurb, n, pool.length, feat);
 }
 function startDrill(kind){
   let pool = drillPool(kind);
@@ -540,6 +502,8 @@ function startDrill(kind){
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
+  if(t.id==='home'){ e.preventDefault(); return go('learn'); }
+  if(t.dataset.sec){ const k=t.dataset.sec, open=!S.sec[k]; S.sec[k]=open; t.setAttribute('aria-expanded', String(open)); document.getElementById(t.getAttribute('aria-controls')).hidden=!open; return; }
   if(t.matches('.tab')) return go(t.dataset.tab);
   if(t.dataset.tabGo) return go(t.dataset.tabGo);
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
@@ -572,6 +536,7 @@ document.addEventListener('keydown', e => {
   if(e.key==='Tab'){ const f=[...$('#sheet').querySelectorAll('button:not([disabled]),a[href],iframe')]; const a=f[0], z=f[f.length-1];
     if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); } }
 });
+document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && !sh.hidden && sh.offsetParent!==null && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
 render(false);
 </script>
 </body>
