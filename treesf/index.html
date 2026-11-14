@@ -120,6 +120,12 @@ zoom: 11.8
     .t-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .t-short { display: inline; }
   }
+  /* The maps chevron sits right after the name, in one pill with it: the title's box ends at the text,
+     the chevron's box carries on, flush, with the rounded end */
+  .title-row { gap: 0; }
+  .title-row .title { border-radius: 8px 0 0 8px; padding-right: 6px; }
+  .maps-btn { border-radius: 0 8px 8px 0; width: 30px; justify-content: flex-start; padding-left: 2px; }
+  @media (pointer: coarse) { .maps-btn { width: 40px; } }
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
   @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 

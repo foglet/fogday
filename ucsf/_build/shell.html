@@ -95,6 +95,12 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
   .maps-menu .all a { color: var(--muted); font-size: .9rem; }
   @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  /* The maps chevron sits right after the name, in one pill with it: the title's box ends at the text,
+     the chevron's box carries on, flush, with the rounded end */
+  .title-row { gap: 0; }
+  .title-row .title { border-radius: 8px 0 0 8px; padding-right: 6px; }
+  .maps-btn { border-radius: 0 8px 8px 0; width: 30px; justify-content: flex-start; padding-left: 2px; }
+  @media (pointer: coarse) { .maps-btn { width: 40px; } }
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
   @media (max-width: 759px) { .title-row { margin-left: 12px; } .maps-menu { left: 0; } }
 
