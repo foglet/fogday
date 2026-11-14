@@ -161,7 +161,7 @@ $("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "lig
 
 /* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
 function pad(){
-  const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legend").open;
+  const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legendBtn").getAttribute("aria-expanded")==="true";
   if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
   return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
 }
@@ -211,6 +211,25 @@ function buildRoutes(){
   });
 }
 
+/* Next departure from a stop: today first, then the days after (up to a week) */
+function nextAtStop(stopIdx, nowMs){
+  for(let day=0; day<8; day++){
+    const n=sfNow(nowMs+day*86400000); let best=null;
+    D.trips.forEach(t => {
+      if(!runsOn(t[1], n.ymd, n.wd)) return;
+      const p=D.patterns[t[3]];
+      for(let k=0;k<p.length-1;k++){
+        if(p[k][0]!==stopIdx) continue;
+        const sec=t[4]+p[k][1]; if(day===0 && sec<n.sec-30) continue;
+        if(!best || sec<best.sec) best={sec, route:t[0]};
+      }
+    });
+    if(best) return Object.assign(best, {day, wd:n.wd, at: day===0 ? best.sec-n.sec : null});
+  }
+  return null;
+}
+function when(x){ return x.day===0 ? (x.at<=5400 ? "in "+mins(x.at).replace("now","under a minute") : "at "+hhmm(x.sec)) : (x.day===1 ? "tomorrow " : DAYS[x.wd]+" ")+hhmm(x.sec) }
+
 /* ---------- render (updates text in place, so focus stays put) ---------- */
 function render(){
   const nowMs=Date.now(), now=sfNow(nowMs);
@@ -220,16 +239,23 @@ function render(){
   paintVehicles();
 
   const n=state.vehicles.length, st=$("status");
-  let mode, txt;
-  if(state.live && state.live.length){ mode="live"; txt="Live, "+clock.format(new Date(nowMs)) }
-  else if(n){ mode="sched"; txt="Schedule estimate, "+clock.format(new Date(nowMs)) }
-  else { mode="none"; txt="No service now" }
-  if(st.dataset.mode!==mode) st.dataset.mode=mode; setText($("statusText"), txt);
-
-  if(n) setText($("summary"), n+(n===1?" shuttle":" shuttles")+" running");
+  const mode = state.live && state.live.length ? "live" : n ? "sched" : "none";
+  if(st.dataset.mode!==mode) st.dataset.mode=mode;
+  let txt;
+  if(n) txt=n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "");
+  else if(state.user && Math.min(...STOPS.map(s=>meters(state.user, s.ll)))<=8000) txt="No service now";   // the next line below says when, at your stop
   else {
     const ns=nextService(nowMs);
-    setText($("summary"), ns ? "None running. Next: "+(ns.day===0?"today":ns.day===1?"tomorrow":DAYS[ns.wd])+" "+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "None running this week");
+    txt = ns ? "No service now. Next: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
+  }
+  setText($("statusText"), txt);
+  /* With location: the next departure from the nearest stop */
+  const nl=$("nextLine");
+  if(state.user){
+    const st0=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0];
+    const nx = st0.d<=8000 ? nextAtStop(st0.i, nowMs) : null;
+    nl.hidden = !nx;
+    if(nx) setText(nl, "Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx));
   }
   const counts=ROUTES.map(()=>0); state.vehicles.forEach(v=>counts[v.route]++);
   document.querySelectorAll("#routes .pick").forEach(b => {
@@ -270,11 +296,13 @@ async function pollLive(){
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
 })();
 $("home").addEventListener("click", ()=>pickRoute(null, true));
+/* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
+function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("legend", open?"1":"0") }
+$("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
 /* Info opens below the routes: bring it into view inside the legend */
 $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIntoView({block:"nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}) });
 /* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
-if(store.get("legend")!=="0") $("legend").open=true;
-$("legend").addEventListener("toggle", ()=>store.set("legend", $("legend").open ? "1" : "0"));
+setLegend(store.get("legend")!=="0");
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
 (function(){ const dark=THEME.get()==="dark", b=$("themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label"); document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2" })();
 buildRoutes(); initMap(); render();
