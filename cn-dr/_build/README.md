@@ -13,3 +13,5 @@ To add new videos: append rows to `shorts.txt` with the next index, then
 
     python3 classify.py data/shorts.txt data/overrides.txt data/content.json
     python3 build.py
+
+30-Day Survival Chinese: 21 days come from "Day N" in the title; the other 9 (Days 8, 10, 11, 12, 14, 16, 26, 27, 29) are set in `classify.py` `DAY_INFERRED`. The inferred order was accepted on 2026-11-14 without confirmation from Dr. Jia.

@@ -73,7 +73,7 @@ Opportunity = Importance + (Importance − Satisfaction). The scores are my esti
 | **Practice** | Drills plus Review, unchanged. | Practice (drills no longer repeated in Learn) |
 | **About Dr. Jia** | Paid classes, free guides, long lessons, How to Study, Follow. | Materials |
 
-**Path spine**: *30-Day Survival Chinese* is Dr. Jia's own Day 1–30 series, all beginner. **9 of the 30 positions are inferred** by the classifier rather than read from a "Day N" title *(Verified)*.
+**Path spine**: *30-Day Survival Chinese* is Dr. Jia's own Day 1–30 series, all beginner. **9 of the 30 positions are inferred** by the classifier rather than read from a "Day N" title *(Verified)*. Fogfish accepted the inferred order on 2026-11-14 (Days 8, 10, 11, 12, 14, 16, 26, 27, 29).
 
 ### Gap analysis
 | Gap | Priority |
@@ -155,7 +155,7 @@ Opportunity = Importance + (Importance − Satisfaction). The scores are my esti
 **Risks**
 | Risk | L | I | Mitigation |
 |---|---|---|---|
-| The 9 inferred Day positions are wrong | Med | Med | Dr. Jia confirms the order before launch |
+| The 9 inferred Day positions are wrong | Med | Low | Accepted as guessed (Dr. Jia not confirming). Each day is a standalone phrase, so a wrong slot costs little. Fix in `overrides.txt` if she objects |
 | Progress lives only in localStorage and is lost when browser data is cleared or on a new device | Med | Low | Accept for v1; note it on Home |
 | The 30-day path ends with no next step | High | Med | Define path 2 (e.g. beginner grammar) soon after launch |
 
@@ -171,7 +171,7 @@ Opportunity = Importance + (Importance − Satisfaction). The scores are my esti
 No raw research data was provided. Next steps include a light validation pass.
 
 ## 10. Recommended Next Steps
-- [ ] Send Dr. Jia the 9 inferred Day positions to confirm
+- [x] Inferred Day positions accepted as guessed (2026-11-14)
 - [ ] Ask Dr. Jia: phrases-first or tones-first for the beginner spine?
 - [ ] Pull YouTube Studio audience and traffic-source data (5 minutes) to test the persona
 - [x] Restructure shipped 2026-11-14: Home path card, Library (absorbs Courses tab, drills only in Practice), About Dr. Jia, Classes rename
