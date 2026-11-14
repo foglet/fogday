@@ -85,12 +85,7 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 @media (hover:hover){.seg button:hover{background:var(--surface-3);color:var(--ink)}}
 .seg button:active{transform:scale(.98)}
 .seg button[aria-selected="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
-.seg small{display:block;font-weight:700;font-size:var(--fs-cap);color:var(--ink-3)}
-.chips{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
-.chip{min-height:36px;padding:0 var(--s3);border-radius:var(--r-pill);border:1.5px solid var(--line-strong);background:var(--surface);font-weight:600;font-size:var(--fs-sm);cursor:pointer;color:var(--ink-2)}
-@media (hover:hover){.chip:hover{border-color:var(--ink-3);color:var(--ink)}}
-.chip:active{transform:scale(.97)}
-.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.seg small{display:block;font-weight:400;font-size:var(--fs-cap);color:var(--ink-3)}
 
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
@@ -278,8 +273,6 @@ const SECTIONS = [
   {id:'vocab', name:'Vocabulary & Word Building', note:'Word families and how Chinese words are put together.'},
   {id:'phrases', name:'Everyday Phrases', note:'Grouped by the situation you will be in.'},
   {id:'culture', name:'Culture, Idioms & Slang', note:'Idioms, slang, etiquette and festivals.'},
-  {id:'tips', name:'How to Study', note:'Dr. Jia on why learning stalls and what to do instead.'},
-  {id:'materials', name:'Materials', note:'Her courses and guides for this level.'}
 ];
 const TOPIC_ORDER = ['Greetings & goodbyes','Essential phrases',"When you don't understand",'Politeness, thanks & apologies','Conversation & small talk','Feelings & reactions',
   'Travel & getting around','Eating out','Shopping & money','Home & daily life','Phone calls','Emergencies & help',
@@ -311,7 +304,7 @@ function row(r, ctx, opts={}){
     ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
     : `<img class="thumb" src="${thumb(r)}" alt="" loading="lazy" width="56" height="56">`;
   const label = `${T(r)}${isDone(r.id)?', done':''}`;
-  const m = opts.nometa ? '' : `<span class="m">${meta(r,opts)}</span>`;
+  const m = '';   // listings show titles only
   return `<li><button class="row" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
 }
@@ -380,27 +373,17 @@ function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
   return `<p class="kicker">Lesson library</p><h1 class="display">${L.name}</h1>`; }
 function viewLearn(bodyOnly){
   let items = ITEMS.filter(r => r.lv===S.level);
-  const subs = S.level==='beginner' ? ['HSK 1','HSK 2'] : [];
-  if(S.sub!=='all') items = items.filter(r => (r.lab||[]).includes(S.sub));
   if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>
     <div class="seg" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
     <div id="learnBody">${viewLearn(true)}</div>`;
   let h = '';
-  if(subs.length) h += `<div class="chips" role="group" aria-label="Dr. Jia's own level labels"><button class="chip" data-sub="all" aria-pressed="${S.sub==='all'}">All</button>${subs.map(s=>`<button class="chip" data-sub="${s}" aria-pressed="${S.sub===s}">${s}</button>`).join('')}</div>`;
 
   const cards = [];
   SECTIONS.forEach(def => {
     if(def.id==='series'){
-      if(S.sub!=='all') return;
       const sids = DATA.series.map(x=>x.id).filter(sid => seriesLevel(sid)===S.level);
       if(!sids.length) return;
       cards.push(card('lv:series', def.name, def.note, sids.flatMap(seriesItems), () => `<div class="series">${sids.map(scard).join('')}</div>`));
-      return;
-    }
-    if(def.id==='materials'){
-      if(S.sub!=='all') return;
-      const c = MAT.courses.filter(c => c.levels.includes(S.level));
-      cards.push(card('lv:materials', def.name, def.note, [], () => `${c.map(courseTile).join('')}<button class="btn more" data-goto="materials">All materials, guides and long lessons</button>`, {ring:false}));
       return;
     }
     const its = items.filter(r => r.sec===def.id);
@@ -420,7 +403,7 @@ function updateLevel(){
 function viewSeries(){
   const groups = LEVELS.map(l => ({l, sids: DATA.series.map(x=>x.id).filter(sid=>seriesLevel(sid)===l.id)})).filter(g=>g.sids.length);
   return `<p class="kicker">Serial courses</p><h1 class="display">Courses</h1><p class="lede">Open a course and pick a lesson. Runs of lessons Dr. Jia released in order, plus themes she kept coming back to.</p>
-    ${groups.map(g=>`<h2 class="sub">${esc(g.l.name)} <span style="font-weight:700">· ${esc(g.l.note)}</span></h2><div class="series">${g.sids.map(scard).join('')}</div>`).join('')}` + foot();
+    ${groups.map(g=>`<h2 class="sub">${esc(g.l.name)} <span style="font-weight:400">· ${esc(g.l.note)}</span></h2><div class="series">${g.sids.map(scard).join('')}</div>`).join('')}` + foot();
 }
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
@@ -440,17 +423,17 @@ function courseTile(c){
 }
 function viewMaterials(){
   const longs = ITEMS.filter(r=>r.k==='long');
-  const promos = ITEMS.filter(r=>r.sec==='materials');
+  const tips = ITEMS.filter(r=>r.sec==='tips');
   CTX['long'] = longs.map(r=>r.id);
   return `<p class="kicker">Materials</p><h1 class="display">Materials</h1>
-    <p class="lede">Open a group to see her courses, free guides and full-length lessons.</p>
+    <p class="lede">Open a group to see her courses, free guides, full-length lessons and study advice.</p>
     <div class="series">${[
       card('mat:courses','Courses with Dr. Jia','Self-paced, live group and private lessons.',[],()=>MAT.courses.map(courseTile).join(''),{ring:false,feat:true}),
       card('mat:free','Free guides','Pinyin spelling guide and a weekly tip.',[],()=>MAT.free.map(courseTile).join(''),{ring:false}),
       card('mat:long','Long-form lessons','Full-length YouTube lessons, 5 to 15 minutes each.',longs,()=>list('long', longs, {level:true})),
-      card('mat:promo','Announcements','News about her courses and channel.',promos,()=>list('promo', promos, {nometa:true})),
-      card('mat:follow','Follow','YouTube, Instagram, TikTok and her site.',[],()=>`<div class="acts" style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>`,{ring:false})
-    ].join('')}</div>` + foot();
+      card('mat:tips','How to Study','Dr. Jia on why learning stalls and what to do instead.',tips,()=>list('tips', tips))
+    ].join('')}</div>
+    <h2 class="sub">Follow</h2><div style="display:flex;flex-wrap:wrap;gap:var(--s2)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>` + foot();
 }
 function viewSearch(){
   const q = S.q.trim().toLowerCase();
@@ -544,7 +527,6 @@ document.addEventListener('click', e => {
   if(t.matches('.tab')) return go(t.dataset.tab);
   if(t.dataset.tabGo) return go(t.dataset.tabGo);
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
-  if(t.dataset.sub){ S.sub=t.dataset.sub; render(false); const b=document.querySelector(`[data-sub="${S.sub}"]`); b&&b.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
   if(t.dataset.acc){ const k=t.dataset.acc, open=!S.acc[k]; S.acc[k]=open; const w=t.parentElement, pn=w.querySelector('.acc-panel');
     if(open && !pn.firstChild) pn.innerHTML=accPanel(k); pn.hidden=!open; w.dataset.open=String(open); t.setAttribute('aria-expanded', String(open)); return; }
