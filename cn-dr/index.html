@@ -106,6 +106,19 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .row:active{background:var(--surface-3)}
 .thumb{width:56px;height:56px;border-radius:var(--r-sm);object-fit:cover;background:var(--surface-3)}
 .row .t{font-weight:600;font-size:.9375rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row.cur{background:var(--primary-tint)}
+.row .m.tag-cur{color:var(--primary-ink)}
+.row .m.tag-skip{color:var(--accent)}
+.row .ord{width:44px;height:44px;font-size:1.125rem}
+.row:has(.ord){grid-template-columns:44px minmax(0,1fr) auto}
+.pg-start{width:100%;margin-bottom:var(--s3)}
+.meter{margin:0 0 var(--s3)}
+.meter .bar{height:8px;border-radius:var(--r-pill);background:var(--surface-3);overflow:hidden}
+.meter .bar span{display:block;height:100%;background:var(--done);border-radius:inherit}
+.meter p{margin:var(--s1) 0 0;font-size:var(--fs-sm);color:var(--ink-2);font-weight:600}
+.pick{display:flex;align-items:center;gap:var(--s1);margin-top:var(--s1)}
+.pick svg{width:18px;height:18px;transition:transform var(--dur) var(--ease)}
+.pick[aria-expanded="true"] svg{transform:rotate(90deg)}
 .row .m{font-size:var(--fs-cap);color:var(--ink-3);font-weight:700;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
 .state{width:28px;height:28px;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;color:transparent}
@@ -283,7 +296,7 @@ const store = {
 };
 let done = store.get('done', {});           // id -> timestamp
 const OLD_TAB = {series:'learn', search:'learn'};
-let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', phr:false, stack:[] };
+let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', phr:false, pick:false, stack:[] };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -330,9 +343,9 @@ function row(r, ctx, opts={}){
   const lead = opts.ord!=null
     ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
     : `<img class="thumb" src="${thumb(r)}" alt="" loading="lazy" width="56" height="56">`;
-  const label = `${T(r)}${isDone(r.id)?', done':''}`;
-  const m = '';   // listings show titles only
-  return `<li><button class="row" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
+  const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
+  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.cur?'cur':'skip'}">${esc(opts.tag)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
+  return `<li><button class="row${opts.cur?' cur':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
 }
 function ring(n, total){
@@ -352,10 +365,32 @@ function accItems(key){
   if(key.startsWith('drill:')) return drillPool(key.slice(6));
   return (ACC[key] && ACC[key].items) || [];
 }
+// Series page: Continue button, then a numbered list with titles.
+function seriesPanel(sid){
+  const key = 'ser:'+sid, it = seriesItems(sid), isPath = sid===PATH, lab = isPath ? 'Day' : 'Part';
+  const num = (r,i) => isPath ? r.ord : i+1;
+  let next, max = 0;
+  if(isPath){ const ps = pathState(); next = ps.next; max = ps.max; } else next = it.find(r=>!isDone(r.id));
+  const n = it.filter(r=>isDone(r.id)).length;
+  CTX[key] = it.map(r=>r.id);
+  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab} ${num(next, it.indexOf(next))}</span></button>`
+    : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${lab.toLowerCase()} to watch it again.</p>`;
+  return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next, skip = isPath && !isDone(r.id) && !cur && r.ord < max;
+    return row(r, key, {ord:num(r,i), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
+}
+// Drill page: progress, one Start button (unfinished first, shuffled), and an optional numbered list.
+function drillPanel(kind){
+  const key = 'drill:'+kind, pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length, left = pool.length - n;
+  CTX[key] = pool.map(r=>r.id);
+  const open = !!S.pick;
+  return `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${pool.length?Math.round(100*n/pool.length):0}%"></span></div><p>${n} of ${pool.length} done</p></div>
+    <button class="btn primary pg-start" id="pgStart" data-drill="${esc(kind)}"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg><span>${left ? `Start: ${left} drill${left===1?'':'s'} left` : `Start again: all ${pool.length}, shuffled`}</span></button>
+    <button class="linkbtn pick" data-pick aria-expanded="${open}" aria-controls="pickList">Pick one<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <ul class="list" id="pickList"${open?'':' hidden'}>${pool.map((r,i)=>row(r, key, {ord:i+1, ordLabel:'Drill'})).join('')}</ul>`;
+}
 function accPanel(key){
-  if(key.startsWith('ser:')){ const sid=key.slice(4), d=sid==='survival30';
-    return drillGrid(key, seriesItems(sid), d?'Day':'Part', d?(r=>r.ord):undefined); }
-  if(key.startsWith('drill:')) return drillGrid(key, drillPool(key.slice(6)));
+  if(key.startsWith('ser:')) return seriesPanel(key.slice(4));
+  if(key.startsWith('drill:')) return drillPanel(key.slice(6));
   return ACC[key] ? ACC[key].panel() : '';
 }
 function card(key, name, sub, items, panel, o={}){
@@ -535,7 +570,7 @@ function viewPage(){
 }
 function push(key){
   try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
-  S.stack = S.stack.concat(key);
+  S.stack = S.stack.concat(key); S.pick = false;
   try{ history.pushState({tab:S.tab, stack:S.stack, y:0}, ''); }catch(e){}
   window.scrollTo(0,0); render(false); $('#pgH').focus({preventScroll:true});
 }
@@ -594,6 +629,7 @@ function closePlayer(){
   const lf = lastFocus, inCard = lf && lf.closest && lf.closest('#pathCard');
   const sel = lf ? (lf.id ? '#'+lf.id : (lf.dataset && lf.dataset.id) ? `${inCard?'#pathCard ':''}.${lf.classList[0]}[data-id="${lf.dataset.id}"]` : null) : null;
   refreshProgress(); updateHome();
+  if(S.stack.length){ const y = window.scrollY; $('#main').innerHTML = viewPage(); window.scrollTo(0, y); }
   const t = (lf && document.body.contains(lf)) ? lf : (sel && document.querySelector(sel)) || document.querySelector(`[data-id="${cur&&cur.id}"]`) || document.querySelector('#pathCard .btn');
   if(t) t.focus();
 }
@@ -644,8 +680,9 @@ function drillCard(kind, label, blurb, feat){
   return acc('drill:'+kind, label, blurb, n, pool.length, feat);
 }
 function startDrill(kind){
-  let pool = drillPool(kind);
-  pool = pool.map(r=>[Math.random(),r]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  const shuffle = a => a.map(r=>[Math.random(),r]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+  const all = drillPool(kind), left = all.filter(r=>!isDone(r.id));
+  const pool = left.length ? shuffle(left).concat(shuffle(all.filter(r=>isDone(r.id)))) : shuffle(all);
   CTX['drill'] = pool.map(r=>r.id);
   drillName = kind==='all' ? 'Mixed session' : kind==='level' ? `${LEVELS.find(l=>l.id===S.level).name} drills` : kind;
   openPlayer(pool[0].id, 'drill');
@@ -656,6 +693,8 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
   if(t.dataset.push){ return push(t.dataset.push); }
+  if(t.dataset.drill){ return startDrill(t.dataset.drill); }
+  if(t.dataset.pick!==undefined){ S.pick=!S.pick; t.setAttribute('aria-expanded', String(S.pick)); $('#pickList').hidden=!S.pick; return; }
   if(t.dataset.back!==undefined){ return back(); }
   if(t.matches('.tab')) return go(t.dataset.tab);
   if(t.dataset.tabGo) return go(t.dataset.tabGo);
