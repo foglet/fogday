@@ -122,10 +122,10 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, as on /treesf/, top to bottom: light/dark, location (here), then + − and compass.
+  /* Bottom-right stack, as on /treesf/, top to bottom: location (here), then + − and compass.
      Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
-  asControl($("here")); asControl($("themeCtl"));
+  asControl($("here"));
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
@@ -173,24 +173,22 @@ $("hereBtn").addEventListener("click", ()=>{
   else { firstFix=true; startLocation() }
 });
 
-/* ---------- light / dark ---------- */
-function setTheme(t){
-  document.documentElement.dataset.theme=t;
-  try{ localStorage.setItem("fogday-theme", t) }catch(e){}
-  const b=$("themeBtn"), dark=t==="dark";
-  b.setAttribute("aria-pressed", String(dark));
-  b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
-  document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+/* ---------- light / dark: the site header's sun / moon (theme.js) sets html[data-theme]; the map follows ---------- */
+function applyTheme(){
+  const dark=THEME.get()==="dark";
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#0e1418" : "#edf1f2";
   ROUTE_FC=null; paintSwatches();
   if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
 }
-$("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
+let lastTheme=THEME.get();
+new MutationObserver(()=>{ const t=THEME.get(); if(t!==lastTheme){ lastTheme=t; applyTheme() } }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+
 
 /* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
 function pad(){
-  const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legendBtn").getAttribute("aria-expanded")==="true";
-  if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
-  return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
+  const W=$("mapwrap").getBoundingClientRect(), lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legendBtn").getAttribute("aria-expanded")==="true";
+  if(innerWidth>=760) return {top:30, bottom:40, right:70, left: open ? Math.round(lg.right-W.left)+30 : 40};
+  return {top:24, left:24, right:60, bottom: Math.max(60, Math.round(W.bottom-lg.top)+16)};
 }
 function stopPopup(i){
   const now=sfNow(Date.now()); const deps=departures(i, now, 3600).slice(0,5);
@@ -316,15 +314,7 @@ async function pollLive(){
   try{ state.live=await fetchLive() } catch(e){ state.live=null }
   render();
 }
-/* Maps menu, as on /transit/ */
-(function(){
-  const btn=$("mapsBtn"), menu=$("maps-menu");
-  const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
-  btn.addEventListener("click", e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded", String(open)) });
-  document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
-  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
-})();
-$("home").addEventListener("click", ()=>pickRoute(null, true));
+
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("legend", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
@@ -333,7 +323,16 @@ $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIn
 /* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
 setLegend(store.get("legend")!=="0");
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
-(function(){ const dark=THEME.get()==="dark", b=$("themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label"); document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2" })();
+/* The map fills the window between the site header and the fixed footer */
+function fitWrap(){
+  const h=document.querySelector("body > header"), f=document.querySelector("body > footer"), r=document.documentElement.style;
+  if(h) r.setProperty("--top", Math.round(h.getBoundingClientRect().bottom)+"px");
+  if(f) r.setProperty("--foot", Math.round(f.getBoundingClientRect().height)+"px");
+  if(map) map.resize();
+}
+fitWrap(); addEventListener("resize", fitWrap); addEventListener("load", fitWrap);
+if(window.ResizeObserver){ const ro=new ResizeObserver(fitWrap); ["body > header","body > footer"].forEach(q=>{ const el=document.querySelector(q); if(el) ro.observe(el) }) }
+document.querySelector('meta[name="theme-color"]').content = THEME.get()==="dark" ? "#0e1418" : "#edf1f2";
 buildRoutes(); initMap(); render();
 if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);

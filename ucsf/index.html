@@ -1,5 +1,5 @@
 ---
-layout: null   # self-contained map page in the Transit Connected / SF Trees interface; built by ucsf/_build/build.py
+layout: null   # map page in the site wrapper (header, footer, light/dark, bento), as /tides/; built by ucsf/_build/build.py
 title: UCSF Shuttles
 description: Every UCSF shuttle route on one map, with the shuttles running now and the next departures at the stops near you. A map by Fogday Studios.
 ---
@@ -12,95 +12,42 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
 <meta name="description" content="{{ page.description }}">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#021724">
-<script>try{var t=localStorage.getItem('fogday-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
+{% include head.html %}
+<!-- With no saved choice the site follows the system; the map needs to know which, so it is written down (not saved) -->
+<script>(function(){var r=document.documentElement;if(r.dataset.theme!=='dark'&&r.dataset.theme!=='light')r.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'})()</script>
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
 <style>
-  /* UCSF Shuttles: the SF Trees / Transit Connected map interface. Always dark. */
-  :root {
+  /* UCSF Shuttles: the map fills the window between the site header and the fixed site footer (as on /tides/).
+     Map colors live on .mapwrap, so the site's own --bg, --ink and the rest (fogday.css) stay as they are. */
+  .mapwrap {
     --glass: rgb(98 98 102 / .15); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
-    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    --font: var(--font-ui);
     color-scheme: dark;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
     --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
   }
   /* Light: fogday.com's morning fog (assets/css/fogday.css), with white glass */
-  :root[data-theme="light"] {
+  :root[data-theme="light"] .mapwrap {
     --glass: rgb(255 255 255 / .72); --glass-edge: rgb(28 40 48 / .14);
     --bg: #edf1f2; --panel: #f8fafa; --ink: #1c2830; --muted: #4f5e66; --line: #cfd8dc; --accent: #1f5f6b;
     color-scheme: light;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  .mapwrap, .mapwrap * { box-sizing: border-box; }
   body { overflow: hidden; overscroll-behavior: none; }
+  main { padding: 0; }
+  /* --top and --foot: the site header's bottom and the footer's height, measured by the script */
+  .mapwrap { position: fixed; left: 0; right: 0; top: var(--top, 90px); bottom: var(--foot, 50px); z-index: 1;
+             color: var(--ink); font: 400 1rem/1.4 var(--font); background: var(--bg); overflow: hidden; }
   [hidden] { display: none !important; }
-  /* The map runs under Safari's toolbars (large viewport), so tiles show through the translucent bars;
-     --bar is how much of it they cover, to keep Mapbox's bottom controls and logo in view (as on /treesf/) */
-  :root { --bar: 0px; }
-  @supports (height: 100lvh) { :root { --bar: calc(100lvh - 100svh); } }
-  #map { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
-  @supports (height: 100lvh) { #map { height: 100lvh; } }
-  /* Mapbox corners clear the home indicator, the notch and Safari's bottom bar, level with the legend */
-  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: calc(var(--sab) + var(--bar)); }
-  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--bar)); }
-
-  /* Title, top left (centered on phones): tap it to see every route */
-  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
-  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
-  .title {
-    pointer-events: auto; display: inline-block; margin: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
-  }
-  .title-text { background-image: linear-gradient(to right, #8fd0ff, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .title:hover .title-text { background-image: none; color: var(--accent); }
-  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .maps-btn {
-    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
-    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    color: #4a90c8;
-  }
-  .maps-btn svg { transition: transform .2s ease; }
-  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
-  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
-  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .maps-menu {
-    --surface: #1e2a36; --site-line: #2a3846;
-    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
-    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
-    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
-    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
-    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px; animation: maps-menu-in .16s ease-out;
-  }
-  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
-  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
-  .maps-menu a {
-    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
-    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
-    text-transform: uppercase; letter-spacing: .12em;
-  }
-  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
-  .maps-menu a:hover { color: #ff5500; }
-  .maps-menu a[aria-current="page"] { font-weight: 700; color: #8fd0ff; }
-  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }
-  .maps-menu .ext {
-    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
-    -webkit-mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
-            mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
-  }
-  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
-  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
-  @media (pointer: coarse) { .maps-btn { width: 44px; } }
-  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
-  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
+  #map { position: absolute; inset: 0; }
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); }
 
   /* The legend, bottom left above the Mapbox logo, as on /treesf/ and /transit/: shut, just its title;
      open, the routes (tap one to show only it) and Info. Each line sits on its own glass box. */
   .controls {
-    position: fixed; z-index: 2; left: calc(10px + var(--sal)); bottom: calc(36px + var(--sab)); width: 380px;
+    position: absolute; z-index: 2; left: calc(10px + var(--sal)); bottom: 36px; width: 380px;
     max-width: calc(100% - 24px - var(--sal) - var(--sar));
   }
   .controls { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
@@ -133,16 +80,12 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .legend-toggle[aria-expanded="true"] { background: linear-gradient(color-mix(in srgb, var(--ink) 12%, transparent), color-mix(in srgb, var(--ink) 12%, transparent)), var(--glass); }
   .sky-text { color: #8fd0ff; }
   :root[data-theme="light"] .sky-text { color: #1d5f96; }
-  :root[data-theme="light"] .title-text { background-image: linear-gradient(to right, #1d5f96, #1f5f6b); }
-  :root[data-theme="light"] .maps-btn { color: #1d5f96; }
-  :root[data-theme="light"] .maps-menu { --surface: #f8fafa; --site-line: #cfd8dc; }
-  :root[data-theme="light"] .maps-menu a[aria-current="page"] { color: #1d5f96; }
   :root[data-theme="light"] .bus { border-color: #1d5f96; }
   :root[data-theme="light"] .bus.live { background: #1d5f96; }
   :root[data-theme="light"] .line { box-shadow: 0 0 0 1px rgb(28 40 48 / .25); }
   /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
   .legend-body { padding: 0; display: grid; justify-items: start; gap: 6px; width: 100%;
-                 max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
+                 max-height: calc(100dvh - var(--top, 90px) - var(--foot, 50px) - 190px);
                  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .key { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
   .key .bus { margin-left: 8px; }
@@ -202,7 +145,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
   :root[data-theme="light"] .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
   /* Location and light/dark: icon buttons in the bottom-right stack, as /treesf/'s "here" */
-  .mapboxgl-ctrl.oa-here, .mapboxgl-ctrl.oa-theme { position: relative; }
+  .mapboxgl-ctrl.oa-here { position: relative; }
   .oa-pin { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 4px;
             background: transparent; color: var(--muted); cursor: pointer; }
   .oa-pin svg { width: 20px; height: 20px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
@@ -210,9 +153,6 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
   .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
   @keyframes here-pulse { 50% { opacity: .35; } }
-  .oa-theme .icon-sun { display: none; }
-  :root[data-theme="dark"] .oa-theme .icon-sun { display: block; }
-  :root[data-theme="dark"] .oa-theme .icon-moon { display: none; }
   .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
                  width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
                  background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
@@ -242,10 +182,12 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     .notes summary { min-height: 32px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
-  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg, .legend-toggle::after, .notes summary::after { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .legend-toggle::after, .notes summary::after { transition: none; } }
 </style>
 </head>
-<body>
+<body class="wide">
+{% include header.html current="maps" title=page.title %}
+<main class="mapwrap" id="mapwrap">
 <div id="map" role="region" aria-label="UCSF Shuttles map"></div>
 
 <!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
@@ -254,29 +196,6 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
   </button>
 </div>
-<div class="oa-theme" id="themeCtl" hidden>
-  <button type="button" class="oa-pin" id="themeBtn" aria-pressed="true" aria-label="Switch to light mode" title="Switch to light mode">
-    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
-  </button>
-</div>
-
-<div class="top">
-  <div class="title-row">
-    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Show every route"><span class="title-text">UCSF Shuttles</span></button></h1>
-    <button type="button" class="maps-btn" id="mapsBtn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
-      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>
-      <ul>
-        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
-        {% endfor %}
-        <li class="all"><a href="/maps/">All maps →</a></li>
-      </ul>
-    </nav>
-  </div>
-</div>
-
 <section class="controls" aria-label="Legend">
   <!-- Bottom up: the Shuttle Legend toggle, service right above it, and (open) the routes and Info above that -->
   <div class="legend-body" id="legendBody">
@@ -287,7 +206,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
         <div class="notes-body">
           <p class="note" id="nearNote" hidden></p>
           <p class="note" id="srcNote"></p>
-          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon switches light and dark, shared with fogday.com. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon in the header switches light and dark, for all of fogday.com. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
           <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
           <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
         </div>
@@ -300,6 +219,8 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   </div>
   <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="true" aria-controls="legendBody"><span class="sky-text">Shuttle Legend</span></button>
 </section>
+</main>
+{% include footer.html %}
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js"></script>
 <script>
@@ -585,10 +506,10 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, as on /treesf/, top to bottom: light/dark, location (here), then + − and compass.
+  /* Bottom-right stack, as on /treesf/, top to bottom: location (here), then + − and compass.
      Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
-  asControl($("here")); asControl($("themeCtl"));
+  asControl($("here"));
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
@@ -636,24 +557,22 @@ $("hereBtn").addEventListener("click", ()=>{
   else { firstFix=true; startLocation() }
 });
 
-/* ---------- light / dark ---------- */
-function setTheme(t){
-  document.documentElement.dataset.theme=t;
-  try{ localStorage.setItem("fogday-theme", t) }catch(e){}
-  const b=$("themeBtn"), dark=t==="dark";
-  b.setAttribute("aria-pressed", String(dark));
-  b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label");
-  document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2";
+/* ---------- light / dark: the site header's sun / moon (theme.js) sets html[data-theme]; the map follows ---------- */
+function applyTheme(){
+  const dark=THEME.get()==="dark";
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#0e1418" : "#edf1f2";
   ROUTE_FC=null; paintSwatches();
   if(map){ mapReady=false; map.setStyle(THEME.style(), {diff:false}) }   // style.load re-adds the routes, stops and shuttles
 }
-$("themeBtn").addEventListener("click", ()=>setTheme(THEME.get()==="dark" ? "light" : "dark"));
+let lastTheme=THEME.get();
+new MutationObserver(()=>{ const t=THEME.get(); if(t!==lastTheme){ lastTheme=t; applyTheme() } }).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+
 
 /* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
 function pad(){
-  const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legendBtn").getAttribute("aria-expanded")==="true";
-  if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
-  return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
+  const W=$("mapwrap").getBoundingClientRect(), lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legendBtn").getAttribute("aria-expanded")==="true";
+  if(innerWidth>=760) return {top:30, bottom:40, right:70, left: open ? Math.round(lg.right-W.left)+30 : 40};
+  return {top:24, left:24, right:60, bottom: Math.max(60, Math.round(W.bottom-lg.top)+16)};
 }
 function stopPopup(i){
   const now=sfNow(Date.now()); const deps=departures(i, now, 3600).slice(0,5);
@@ -779,15 +698,7 @@ async function pollLive(){
   try{ state.live=await fetchLive() } catch(e){ state.live=null }
   render();
 }
-/* Maps menu, as on /transit/ */
-(function(){
-  const btn=$("mapsBtn"), menu=$("maps-menu");
-  const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
-  btn.addEventListener("click", e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded", String(open)) });
-  document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
-  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
-})();
-$("home").addEventListener("click", ()=>pickRoute(null, true));
+
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("legend", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
@@ -796,7 +707,16 @@ $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIn
 /* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
 setLegend(store.get("legend")!=="0");
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
-(function(){ const dark=THEME.get()==="dark", b=$("themeBtn"); b.setAttribute("aria-pressed", String(dark)); b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title=b.getAttribute("aria-label"); document.querySelector('meta[name="theme-color"]').content = dark ? "#021724" : "#edf1f2" })();
+/* The map fills the window between the site header and the fixed footer */
+function fitWrap(){
+  const h=document.querySelector("body > header"), f=document.querySelector("body > footer"), r=document.documentElement.style;
+  if(h) r.setProperty("--top", Math.round(h.getBoundingClientRect().bottom)+"px");
+  if(f) r.setProperty("--foot", Math.round(f.getBoundingClientRect().height)+"px");
+  if(map) map.resize();
+}
+fitWrap(); addEventListener("resize", fitWrap); addEventListener("load", fitWrap);
+if(window.ResizeObserver){ const ro=new ResizeObserver(fitWrap); ["body > header","body > footer"].forEach(q=>{ const el=document.querySelector(q); if(el) ro.observe(el) }) }
+document.querySelector('meta[name="theme-color"]').content = THEME.get()==="dark" ? "#0e1418" : "#edf1f2";
 buildRoutes(); initMap(); render();
 if(!window.mapboxgl) startLocation();
 setInterval(render, 5000);
