@@ -110,6 +110,10 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .row.cur{background:var(--primary-tint)}
 .row .m.tag-cur{color:var(--primary-ink)}
 .row .m.tag-skip{color:var(--accent)}
+.row .m.tag-seen{color:var(--ink-2);font-weight:600}
+.seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.seg.two button{text-transform:none;letter-spacing:0;font-size:var(--fs-sm)}
+.seg.two button[aria-pressed="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
 .row .ord{width:44px;height:44px;font-size:1.125rem}
 .row:has(.ord){grid-template-columns:44px minmax(0,1fr) auto}
 .pg-start{width:100%;margin-bottom:var(--s3)}
@@ -316,8 +320,9 @@ const store = {
   set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
 };
 let done = store.get('done', {});           // id -> timestamp
+let seen = store.get('seen', {});           // id -> timestamp, set whenever a lesson is opened
 const OLD_TAB = {series:'learn', search:'learn'};
-let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', phr:false, pick:false, stack:[] };
+let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', phr:false, pick:false, stack:[], phrSort: store.get('phrSort','date') };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -332,7 +337,7 @@ const SECTIONS = [
   {id:'pron', name:'Pronunciation', note:'Tones, tricky sounds and what pinyin spelling hides.'},
   {id:'grammar', name:'Grammar & Patterns', note:'Sentence patterns, particles and word order.'},
   {id:'vocab', name:'Vocabulary & Word Building', note:'Word families and how Chinese words are put together.'},
-  {id:'phrases', name:'Everyday Phrases', note:'Grouped by the situation you will be in.'},
+  {id:'phrases', name:'Everyday Phrases', note:'Numbered oldest first, or grouped by situation.'},
   {id:'culture', name:'Culture, Idioms & Slang', note:'Idioms, slang, etiquette and festivals.'},
 ];
 const TOPIC_ORDER = ['Greetings & goodbyes','Essential phrases',"When you don't understand",'Politeness, thanks & apologies','Conversation & small talk','Feelings & reactions',
@@ -364,7 +369,7 @@ function row(r, ctx, opts={}){
     ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
     : '';   // no thumbnails: they were all the same face and cost one image request per row
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
-  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.cur?'cur':'skip'}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson · ${esc(r.d)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
+  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || (opts.cur?'cur':'skip')}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson · ${esc(r.d)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
   return `<li><button class="row${opts.cur?' cur':''}${opts.ord==null?' nolead':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span><span class="state" aria-hidden="true">${ICON_CHECK}</span></button></li>`;
 }
@@ -407,6 +412,21 @@ function drillPanel(kind){
     <button class="btn primary pg-start" id="pgStart" data-drill="${esc(kind)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${left ? `Start: ${left} drill${left===1?'':'s'} left` : `Start again: all ${pool.length}, shuffled`}</span></button>
     <button class="linkbtn pick" data-pick aria-expanded="${open}" aria-controls="pickList">Pick one<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
     <ul class="list" id="pickList"${open?'':' hidden'}>${pool.map((r,i)=>row(r, key, {ord:i+1, ordLabel:'Drill'})).join('')}</ul>`;
+}
+// Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
+const isSeen = id => !!seen[id] || isDone(id);
+function phrasesPanel(its){
+  const lv = S.level, key = 'phr:'+lv, byDate = S.phrSort !== 'topic';
+  const seg = `<div class="seg two" role="group" aria-label="Order">${[['date','By number'],['topic','By situation']].map(([v,l])=>`<button data-phrsort="${v}" aria-pressed="${(v==='date')===byDate}">${l}</button>`).join('')}</div>`;
+  if(!byDate) return seg + grouped('lv:phrases', its);
+  const nums = its.filter(r=>r.no).sort((a,b)=>a.no-b.no), rest = its.filter(r=>!r.no);   // full lessons have no number
+  const all = nums.concat(rest), w = all.filter(r=>isSeen(r.id)).length, at = store.get('phrAt:'+lv, 0);
+  const next = nums.find(r=>r.no>at && !isSeen(r.id)) || nums.find(r=>!isSeen(r.id));
+  CTX[key] = all.map(r=>r.id);
+  return seg + `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${Math.round(100*w/all.length)}%"></span></div><p>${w} of ${all.length} watched</p></div>
+    ${next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${w?'Continue':'Start'}: No. ${next.no}</span></button>` : ''}
+    <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r===next ? 'Up next' : (!isDone(r.id) && seen[r.id]) ? 'Watched' : '', tagCls: r===next ? 'cur' : 'seen'})).join('')}</ul>
+    ${rest.length ? `<h3 class="sub">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
 }
 function accPanel(key){
   if(key.startsWith('ser:')) return seriesPanel(key.slice(4));
@@ -473,7 +493,8 @@ function viewLearn(bodyOnly){
     let panel;
     if(def.id==='drills') panel = () => { const g={}; its.forEach(r=>(g[r.top]=g[r.top]||[]).push(r));
       return Object.keys(g).sort((a,b)=>TOPIC_ORDER.indexOf(a)-TOPIC_ORDER.indexOf(b)).map(n=>`<h3 class="sub">${esc(n)}</h3>${drillGrid('lvdrill:'+n, g[n])}`).join(''); };
-    else panel = () => ['phrases','pron','culture'].includes(def.id) ? grouped(`lv:${def.id}`, its) : list(`lv:${def.id}`, its);
+    else if(def.id==='phrases') panel = () => phrasesPanel(its);
+    else panel = () => ['pron','culture'].includes(def.id) ? grouped(`lv:${def.id}`, its) : list(`lv:${def.id}`, its);
     cards.push(card('lv:'+def.id, def.name, def.note || `${its.length} lessons`, its, panel));
   });
   return h + `<div class="series">${cards.join('')}</div>`;
@@ -560,12 +581,13 @@ function viewHome(){
 }
 function viewSearch(){
   const q = S.q.trim().toLowerCase();
-  const res = q ? ITEMS.filter(r => r.t.toLowerCase().includes(q) || (r.top||'').toLowerCase().includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v)) : [];
+  const num = /^(?:#|no\.?\s*)?(\d+)$/.exec(q);
+  const res = !q ? [] : num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => r.t.toLowerCase().includes(q) || (r.top||'').toLowerCase().includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
   CTX['search'] = res.map(r=>r.id);
   return `<p class="kicker">Search</p><h1 class="display">Find a lesson</h1>
-    <form class="search" role="search" id="searchForm"><label class="vh" for="q">Search all ${ITEMS.length} lessons</label><input id="q" type="search" placeholder="Try 了, tones, bill, goodbye" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"><button class="btn" type="button" data-tab-go="learn">Cancel</button></form>
+    <form class="search" role="search" id="searchForm"><label class="vh" for="q">Search all ${ITEMS.length} lessons</label><input id="q" type="search" placeholder="Try 了, tones, bill, or No. 42" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"><button class="btn" type="button" data-tab-go="learn">Cancel</button></form>
     <p class="sec-note" aria-live="polite">${q ? `${res.length} result${res.length===1?'':'s'}, most viewed first` : `Searches titles and topics across all ${ITEMS.length} lessons.`}</p>
-    ${q && !res.length ? `<div class="empty"><b>No lessons match "${esc(S.q)}"</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search',{level:true})).join('')}</ul>`}`;
+    ${q && !res.length ? `<div class="empty"><b>No lessons match "${esc(S.q)}"</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search', r.no ? {ord:r.no, ordLabel:'No.'} : {})).join('')}</ul>`}`;
 }
 function foot(){
   return `<footer class="foot"><p>© Mandarin Insights by Dr. Hanyu Jia.</p></footer>`;
@@ -624,6 +646,8 @@ function openPlayer(id, ctx, keepQueue){
     if(ctx && CTX[ctx]){ queue = CTX[ctx].slice(); qi = queue.indexOf(id); } else { queue=[id]; qi=0; }
     pathMode = ctx === 'ser:'+PATH;
   }
+  seen[r.id] = Date.now(); store.set('seen', seen);
+  if(ctx && ctx.startsWith('phr:')) store.set('phrAt:'+ctx.slice(4), r.no||0);
   if(pathMode){ store.set('pathAt', r.ord); store.set('pathMax', Math.max(store.get('pathMax',0), r.ord)); }
   if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
   $('#sheetTitle').textContent = T(r);
@@ -709,6 +733,7 @@ document.addEventListener('click', e => {
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
   if(t.dataset.push){ return push(t.dataset.push); }
   if(t.dataset.drill){ return startDrill(t.dataset.drill); }
+  if(t.dataset.phrsort){ S.phrSort=t.dataset.phrsort; store.set('phrSort',S.phrSort); $('#main').innerHTML=viewPage(); const b=document.querySelector(`[data-phrsort="${S.phrSort}"]`); b&&b.focus(); return; }
   if(t.dataset.pick!==undefined){ S.pick=!S.pick; t.setAttribute('aria-expanded', String(S.pick)); $('#pickList').hidden=!S.pick; return; }
   if(t.dataset.back!==undefined){ return back(); }
   if(t.matches('.tab')) return go(t.dataset.tab);

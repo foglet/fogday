@@ -1,6 +1,19 @@
 import json, pathlib
 root = pathlib.Path(__file__).parent
 data = json.loads((root/"data/content.json").read_text(encoding="utf-8"))
+# Stable lesson numbers, oldest first (#1 = her first Short). Frozen in data/numbers.txt so they never shift;
+# new Shorts get the next number. shorts.txt lists newest first, so a higher crawl index means older.
+numf = root/"data/numbers.txt"
+nums = {}
+if numf.exists():
+    for line in numf.read_text(encoding="utf-8").splitlines():
+        if line.strip(): i, no = line.split("|"); nums[i] = int(no)
+new = sorted([r for r in data["items"] if r["k"]=="short" and r["id"] not in nums], key=lambda r: -r["n"])
+for r in new: nums[r["id"]] = max(nums.values(), default=0) + 1
+if new or not numf.exists():
+    numf.write_text("".join(f"{i}|{no}\n" for i, no in sorted(nums.items(), key=lambda x: x[1])), encoding="utf-8")
+for r in data["items"]:
+    if r["id"] in nums: r["no"] = nums[r["id"]]
 # drop fields the page does not use
 for r in data["items"]:
     r.pop("n", None)

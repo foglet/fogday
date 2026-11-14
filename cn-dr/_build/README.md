@@ -15,3 +15,5 @@ To add new videos: append rows to `shorts.txt` with the next index, then
     python3 build.py
 
 30-Day Survival Chinese: 21 days come from "Day N" in the title; the other 9 (Days 8, 10, 11, 12, 14, 16, 26, 27, 29) are set in `classify.py` `DAY_INFERRED`. The inferred order was accepted on 2026-11-14 without confirmation from Dr. Jia.
+
+Lesson numbers: every Short has a stable number, oldest first (No. 1 is her first Short). They are frozen in `data/numbers.txt`; `build.py` gives new Shorts the next number and never renumbers. Full-length lessons have no number. Search accepts "42", "#42" or "No. 42".
