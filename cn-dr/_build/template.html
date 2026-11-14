@@ -100,6 +100,7 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .sec{margin-top:var(--s5)}
 .sec-note{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s2) 0 var(--s3);max-width:65ch}
 .sub{font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);margin:var(--s5) 0 var(--s1);text-transform:uppercase;letter-spacing:.06em}
+.sub.grp{color:var(--accent)} .sub.grp .n{color:var(--ink-3)}   /* situation headers (Greetings & Goodbyes ...) stand out from the rows */
 .list{list-style:none;margin:0;padding:0}
 .list li+li{border-top:1px solid var(--line)}
 .row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:var(--s3);width:100%;padding:var(--s3) var(--s1);background:none;border:0;text-align:left;cursor:pointer;border-radius:var(--r-sm);min-height:var(--tap)}
@@ -126,9 +127,11 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .pick[aria-expanded="true"] svg{transform:rotate(90deg)}
 .row .m{font-size:var(--fs-cap);color:var(--ink-3);font-weight:700;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
-.state{width:28px;height:28px;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;color:transparent}
-.row[data-done="true"] .state{background:var(--done);border-color:var(--done);color:var(--on-done)}
-.row[data-done="true"] .state svg{width:16px;height:16px;stroke-width:3}
+/* Done mark: nothing until a lesson is done, then a plain check. The row opens the player, so no empty checkbox-like circle. */
+.state{width:24px;height:24px;display:grid;place-items:center;color:var(--done);visibility:hidden}
+.row[data-done="true"] .state{visibility:visible}
+.row[data-done="true"] .state svg{width:20px;height:20px;stroke-width:2.75}
+.row[data-done="true"] .t{color:var(--ink-2)}
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
 .ord small{display:block;margin:0;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:center}
@@ -417,7 +420,7 @@ function phrasesPanel(its){
   return seg + `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${Math.round(100*w/all.length)}%"></span></div><p>${w} of ${all.length} watched</p></div>
     ${next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${w?'Continue':'Start'}: No. ${next.no}</span></button>` : ''}
     <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r===next ? 'Up next' : (!isDone(r.id) && seen[r.id]) ? 'Watched' : '', tagCls: r===next ? 'cur' : 'seen'})).join('')}</ul>
-    ${rest.length ? `<h3 class="sub">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
+    ${rest.length ? `<h3 class="sub grp">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
 }
 function accPanel(key){
   if(key.startsWith('ser:')) return seriesPanel(key.slice(4));
@@ -458,7 +461,7 @@ function grouped(key, items, opts={}){
   items.forEach(r => (groups[r.top] = groups[r.top] || []).push(r));
   const names = Object.keys(groups).sort((a,b)=>(TOPIC_ORDER.indexOf(a)+99)%999-(TOPIC_ORDER.indexOf(b)+99)%999);
   if(names.length===1) return list(key, items, opts);
-  return names.map(n => `<h3 class="sub">${esc(n)}${groups[n].length>1?` <span style="font-weight:700">· ${groups[n].length}</span>`:''}</h3>${list(key+':'+n, groups[n], opts)}`).join('');
+  return names.map(n => `<h3 class="sub grp">${esc(n)}${groups[n].length>1?` <span class="n">· ${groups[n].length}</span>`:''}</h3>${list(key+':'+n, groups[n], opts)}`).join('');
 }
 
 /* ---------- views ---------- */
