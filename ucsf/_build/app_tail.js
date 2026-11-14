@@ -10,7 +10,8 @@ const HOME = [[-122.512, 37.745], [-122.385, 37.795]];   // San Francisco campus
 /* ---------- map ---------- */
 let map=null, mapReady=false;
 /* side-by-side spacing: one line width, growing with zoom */
-const OFFSET=["interpolate",["linear"],["zoom"],11,["*",["get","off"],1.7],13,["*",["get","off"],2.8],15,["*",["get","off"],4.8],17,["*",["get","off"],7]];
+const OFFSET=["interpolate",["linear"],["zoom"],11,["*",["get","off"],2],13,["*",["get","off"],3],15,["*",["get","off"],4.5],17,["*",["get","off"],6.5]];
+const WIDTH=["interpolate",["linear"],["zoom"],11,2,13,3,15,4.5,17,6.5];
 /* Routes that share a street are drawn side by side, each in its own color, as on a transit map.
    Every route is sampled every 12 m; each sample looks for other routes within about 30 m. A stretch of route
    where the same routes run together gets one slot each (alphabetical, centered on the street). Slots are
@@ -87,7 +88,7 @@ function initMap(){
     map.addSource("stops", {type:"geojson", data:stopFeatures()});
     map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
     map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":"#c5ced5","line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":0.35,"line-offset":OFFSET}});
-    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":["interpolate",["linear"],["zoom"],11,1.6,15,4.5],"line-opacity":0.95,"line-offset":OFFSET}});
+    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}});
     map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
     map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":"#021724","circle-stroke-color":"#e3eaee","circle-stroke-width":1.6}});
     map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
@@ -108,7 +109,12 @@ function initMap(){
     geo.trigger();   // with location allowed (or once the visitor allows it), the map finds them
   });
 }
-function pad(){ const s=Math.min(innerWidth, innerHeight); return innerWidth>=760 ? {top:70,bottom:60,left:340,right:70} : {top:70,left:20,right:60,bottom:Math.round(s*0.25)} }
+/* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
+function pad(){
+  const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legend").open;
+  if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
+  return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
+}
 function stopPopup(i){
   const now=sfNow(Date.now()); const deps=departures(i, now, 3600).slice(0,5);
   const html="<h3>"+esc(STOPS[i].name)+"</h3>"+(deps.length ? deps.map(d=>"<p>"+esc(ROUTES[d.route].name)+": "+mins(d.at)+"</p>").join("") : "<p>No departures in the next hour.</p>");
@@ -126,7 +132,7 @@ function applyFocus(fly){
   map.setPaintProperty("route-line","line-opacity", f==null ? 0.95 : ["case",["==",["get","r"],f],1,0.12]);
   map.setPaintProperty("route-casing","line-opacity", f==null ? 0.35 : ["case",["==",["get","r"],f],0.6,0]);
   const on=["==",["get","r"],f==null?-1:f];   // the highlighted route draws wider, on top of the rest
-  map.setPaintProperty("route-line","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,3,1.6],15,["case",on,7.5,4.5]]);
+  map.setPaintProperty("route-line","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,3.5,2],13,["case",on,5,3],15,["case",on,7,4.5],17,["case",on,9,6.5]]);
   map.setPaintProperty("route-casing","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,5,2.6],15,["case",on,11,7]]);
   map.setLayoutProperty("route-line","line-sort-key", ["case",on,1,0]);
   const vf = f==null ? null : ["==",["get","r"],f];
@@ -216,8 +222,9 @@ async function pollLive(){
 $("home").addEventListener("click", ()=>pickRoute(null, true));
 /* Info opens below the routes: bring it into view inside the legend */
 $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIntoView({block:"nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}) });
-/* Legend starts open on larger screens, shut on phones (as on the other map pages) */
-if(matchMedia("(min-width: 760px) and (min-height: 600px)").matches) $("legend").open=true;
+/* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
+if(store.get("legend")!=="0") $("legend").open=true;
+$("legend").addEventListener("toggle", ()=>store.set("legend", $("legend").open ? "1" : "0"));
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
 buildRoutes(); initMap(); render();
 setInterval(render, 5000);

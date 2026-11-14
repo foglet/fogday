@@ -86,15 +86,22 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   /* The legend, bottom left above the Mapbox logo, as on /treesf/ and /transit/: shut, just its title;
      open, the routes (tap one to show only it) and Info. Each line sits on its own glass box. */
   .controls {
-    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: max-content; min-width: 260px;
-    max-width: min(400px, calc(100% - 24px - var(--sal) - var(--sar)));
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: 380px;
+    max-width: calc(100% - 24px - var(--sal) - var(--sar));
   }
   .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; }
-  .map-legend > summary, .legend-body > .summary, .legend-body > .key, .routes li, .notes summary, .notes .note, .controls > .status {
+  .map-legend > summary, .row2 > .summary, .row2 > .key, .routes li, .notes summary, .notes .note, .status {
     background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
     width: fit-content; max-width: 100%; border-radius: 999px; padding: 3px 10px;
   }
-  .legend-body > .summary, .legend-body > .key, .notes .note { box-shadow: none; }
+  .row2 > .summary, .row2 > .key, .notes .note, .status { box-shadow: none; }
+  /* two pills to a row: the count beside the dot key; Info beside the status */
+  .row2 { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px; max-width: 100%; }
+  .row2.foot { width: 100%; }
+  .row2.foot { align-items: center; }
+  .row2.foot .notes { flex: 0 0 auto; }
+  .row2.foot .notes[open] { flex: 1 1 100%; }   /* open: the notes take the row, the status drops below */
+  .row2.foot .notes > summary { display: inline-flex; align-items: center; min-height: 28px; }
   .notes .note { border-radius: var(--glass-r); }
   .controls { --muted: #c5ced5; }
   .map-legend summary { list-style: none; cursor: pointer; padding: 6px 14px !important; min-height: 30px; border-radius: 8px;
@@ -111,26 +118,28 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .sky-text { color: #8fd0ff; }
   /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
-  .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 8px;
+  .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 6px;
                  max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
                  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
-  .key { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+  .key { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
   .key .bus { margin-left: 8px; }
   .key .bus:first-child { margin-left: 0; }
   .bus { flex: none; display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #8fd0ff; }
   .bus.live { background: #8fd0ff; }
-  .routes { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 2px; font-size: .9rem; max-width: 100%; }
-  .routes li { display: flex; align-items: center; padding: 0 4px !important; min-width: 0; }
-  .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; min-height: 24px; cursor: pointer; border-radius: 999px; padding: 2px 6px; }
+  /* Routes: compact pills that wrap, several to a row, so the whole legend fits on one screen */
+  .routes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; font-size: .85rem; max-width: 100%; }
+  .routes li { display: flex; align-items: center; padding: 0 !important; min-width: 0; }
+  .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 28px; cursor: pointer; border-radius: 999px; padding: 2px 9px 2px 8px; white-space: nowrap; }
   .pick:hover .name { color: var(--accent); }
   .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .pick[aria-pressed="true"] { background: color-mix(in srgb, var(--ink) 12%, transparent); }
   .pick[aria-pressed="true"] .name { font-weight: 700; }
-  .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); box-shadow: 0 0 0 1px rgb(255 255 255 / .35); }
+  .line { flex: none; width: 16px; height: 4px; border-radius: 2px; background: var(--c); box-shadow: 0 0 0 1px rgb(255 255 255 / .35); }
   .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
-  .cnt { margin-left: auto; padding-left: 10px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
-  .status { font-size: .85rem; color: var(--muted); margin: 6px 6px 0; }
+  .cnt:empty { display: none; }
+  .cnt { margin-left: 0; padding-left: 0; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
+  .status { font-size: .85rem; color: var(--muted); margin: 0; }
   .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #c98a1b; vertical-align: 1px; }
   .status[data-mode="live"] .dot { background: #4cd07a; }
   .status[data-mode="none"] .dot { background: #8fa3b1; }
@@ -141,7 +150,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   .notes summary:hover { color: var(--accent); }
   .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .notes .note { margin-top: 4px; }
-  .notes-body { display: grid; justify-items: start; }
+  .notes-body { display: grid; justify-items: start; max-height: min(26vh, 26dvh, 240px); overflow-y: auto; overscroll-behavior: contain; }
   .note { font-size: .78rem; color: var(--muted); margin: 0; }
   .note b { color: var(--ink); font-weight: 600; }
   .note a { color: var(--ink); }
@@ -179,8 +188,9 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   @media (max-width: 759px) {
     .controls { right: calc(66px + var(--sar)); width: auto; min-width: 0; max-width: none; }
     .controls:has(.map-legend:not([open])) { right: auto; }
-    .summary, .routes { font-size: 1rem; }
-    .pick { min-height: 30px; }
+    .summary { font-size: .95rem; }
+    .routes { font-size: .88rem; gap: 4px; }
+    .pick { min-height: 32px; padding-inline: 8px 9px; }
     .notes summary { min-height: 32px; display: inline-flex; align-items: center; font-size: .8rem; }
     .note { font-size: .88rem; line-height: 1.45; }
   }
@@ -210,9 +220,9 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
   <details class="map-legend" id="legend">
     <summary><span class="sky-text">Shuttle Legend</span></summary>
     <div class="legend-body">
-      <p class="summary" id="summary">Loading the schedule</p>
-      <p class="key"><span class="bus live" aria-hidden="true"></span>Live <span class="bus" aria-hidden="true"></span>Scheduled</p>
+      <div class="row2"><p class="summary" id="summary">Loading the schedule</p><p class="key"><span class="bus live" aria-hidden="true"></span>Live <span class="bus" aria-hidden="true"></span>Scheduled</p></div>
       <ul class="routes" id="routes" aria-label="Routes. Tap one to show only it; tap it again to show all."></ul>
+      <div class="row2 foot">
       <details class="notes" id="info">
         <summary>Info</summary>
         <div class="notes-body">
@@ -223,9 +233,10 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
           <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
         </div>
       </details>
+      <p class="status" id="status" data-mode="sched" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading</span></p>
+      </div>
     </div>
   </details>
-  <p class="status" id="status" data-mode="sched" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading</span></p>
 </section>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js"></script>
@@ -395,7 +406,8 @@ const HOME = [[-122.512, 37.745], [-122.385, 37.795]];   // San Francisco campus
 /* ---------- map ---------- */
 let map=null, mapReady=false;
 /* side-by-side spacing: one line width, growing with zoom */
-const OFFSET=["interpolate",["linear"],["zoom"],11,["*",["get","off"],1.7],13,["*",["get","off"],2.8],15,["*",["get","off"],4.8],17,["*",["get","off"],7]];
+const OFFSET=["interpolate",["linear"],["zoom"],11,["*",["get","off"],2],13,["*",["get","off"],3],15,["*",["get","off"],4.5],17,["*",["get","off"],6.5]];
+const WIDTH=["interpolate",["linear"],["zoom"],11,2,13,3,15,4.5,17,6.5];
 /* Routes that share a street are drawn side by side, each in its own color, as on a transit map.
    Every route is sampled every 12 m; each sample looks for other routes within about 30 m. A stretch of route
    where the same routes run together gets one slot each (alphabetical, centered on the street). Slots are
@@ -472,7 +484,7 @@ function initMap(){
     map.addSource("stops", {type:"geojson", data:stopFeatures()});
     map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
     map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":"#c5ced5","line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":0.35,"line-offset":OFFSET}});
-    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":["interpolate",["linear"],["zoom"],11,1.6,15,4.5],"line-opacity":0.95,"line-offset":OFFSET}});
+    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}});
     map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
     map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":"#021724","circle-stroke-color":"#e3eaee","circle-stroke-width":1.6}});
     map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
@@ -493,7 +505,12 @@ function initMap(){
     geo.trigger();   // with location allowed (or once the visitor allows it), the map finds them
   });
 }
-function pad(){ const s=Math.min(innerWidth, innerHeight); return innerWidth>=760 ? {top:70,bottom:60,left:340,right:70} : {top:70,left:20,right:60,bottom:Math.round(s*0.25)} }
+/* Fit routes into the part of the map the legend leaves clear: above it on phones, right of it on wide screens */
+function pad(){
+  const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legend").open;
+  if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
+  return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
+}
 function stopPopup(i){
   const now=sfNow(Date.now()); const deps=departures(i, now, 3600).slice(0,5);
   const html="<h3>"+esc(STOPS[i].name)+"</h3>"+(deps.length ? deps.map(d=>"<p>"+esc(ROUTES[d.route].name)+": "+mins(d.at)+"</p>").join("") : "<p>No departures in the next hour.</p>");
@@ -511,7 +528,7 @@ function applyFocus(fly){
   map.setPaintProperty("route-line","line-opacity", f==null ? 0.95 : ["case",["==",["get","r"],f],1,0.12]);
   map.setPaintProperty("route-casing","line-opacity", f==null ? 0.35 : ["case",["==",["get","r"],f],0.6,0]);
   const on=["==",["get","r"],f==null?-1:f];   // the highlighted route draws wider, on top of the rest
-  map.setPaintProperty("route-line","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,3,1.6],15,["case",on,7.5,4.5]]);
+  map.setPaintProperty("route-line","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,3.5,2],13,["case",on,5,3],15,["case",on,7,4.5],17,["case",on,9,6.5]]);
   map.setPaintProperty("route-casing","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,5,2.6],15,["case",on,11,7]]);
   map.setLayoutProperty("route-line","line-sort-key", ["case",on,1,0]);
   const vf = f==null ? null : ["==",["get","r"],f];
@@ -601,8 +618,9 @@ async function pollLive(){
 $("home").addEventListener("click", ()=>pickRoute(null, true));
 /* Info opens below the routes: bring it into view inside the legend */
 $("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIntoView({block:"nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}) });
-/* Legend starts open on larger screens, shut on phones (as on the other map pages) */
-if(matchMedia("(min-width: 760px) and (min-height: 600px)").matches) $("legend").open=true;
+/* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
+if(store.get("legend")!=="0") $("legend").open=true;
+$("legend").addEventListener("toggle", ()=>store.set("legend", $("legend").open ? "1" : "0"));
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
 buildRoutes(); initMap(); render();
 setInterval(render, 5000);
