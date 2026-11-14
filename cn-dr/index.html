@@ -62,10 +62,12 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 
 /* Buttons: eight states */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);padding:0 var(--s4);border-radius:var(--r-md);
-  border:2px solid var(--line-strong);border-bottom-width:calc(2px + var(--edge));background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);
   cursor:pointer;text-decoration:none;transition:transform var(--dur-fast) var(--ease),background-color var(--dur-fast),border-color var(--dur-fast);white-space:normal;text-align:center}
 @media (hover:hover){.btn:hover{background:var(--surface-2)}}
-.btn:active{transform:translateY(2px);border-bottom-width:4px}
+.btn:active{transform:translateY(1px)}
+.btn.primary{border-width:2px;border-bottom-width:calc(2px + var(--edge))}
+.btn.primary:active{transform:translateY(2px);border-bottom-width:4px}
 .btn[aria-disabled="true"],.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn[aria-busy="true"]{cursor:progress;opacity:.75}
 .btn.primary{background:var(--primary);border-color:var(--primary-edge);color:var(--on-primary)}
@@ -95,15 +97,6 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 
 /* Sections */
 .sec{margin-top:var(--s5)}
-.sec-h{margin:0;font-size:inherit;font-weight:inherit;border-bottom:2px solid var(--ink)}
-.sec-btn{display:flex;align-items:center;gap:var(--s3);width:100%;min-height:var(--tap);padding:var(--s2) var(--s1);background:none;border:0;text-align:left;cursor:pointer;color:var(--ink);font:inherit;border-radius:var(--r-sm) var(--r-sm) 0 0}
-@media (hover:hover){.sec-btn:hover{background:var(--surface-2)}}
-.sec-btn:active{background:var(--surface-3)}
-.sec-name{font-family:var(--display);font-weight:400;font-size:var(--fs-h2);line-height:var(--lh-tight)}
-.sec-btn .hint{color:var(--accent);font-size:var(--fs-sm);font-weight:600}
-.sec-btn .chev{margin-left:auto;width:24px;height:24px;flex:none;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
-.sec-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
-.sec-body{padding-top:var(--s2)}
 .sec-note{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s2) 0 var(--s3);max-width:65ch}
 .sub{font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);margin:var(--s5) 0 var(--s1);text-transform:uppercase;letter-spacing:.06em}
 .list{list-style:none;margin:0;padding:0}
@@ -122,41 +115,39 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .ord small{display:block;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:center}
 .more{margin-top:var(--s2);width:100%}
 
-/* Series cards */
-.series{display:grid;gap:var(--s3);margin-top:var(--s3)}
-.scard{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:var(--s4);background:var(--surface);border:1.5px solid var(--line);border-bottom-width:calc(1.5px + var(--edge));border-radius:var(--r-lg);text-align:left;cursor:pointer;width:100%;box-shadow:var(--shadow-card)}
-@media (hover:hover){.scard:hover{border-color:var(--line-strong)}}
-.scard:active{transform:translateY(2px);border-bottom-width:3px}
-.acc{min-width:0}
-.acc[data-open="true"]{grid-column:1/-1}
-.acc.feat .scard{border-color:var(--primary);background:var(--primary-tint)}
-.scard{grid-template-columns:minmax(0,1fr) auto auto}
-.scard .chev{grid-column:3;width:24px;height:24px;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
-.scard[aria-expanded="true"] .chev{transform:rotate(180deg)}
-.acc-panel{padding:var(--s1) var(--s1) var(--s3)}
+/* Section rows: flat list, each row opens its own page */
+.series{display:block;margin-top:var(--s3);border-top:1px solid var(--line)}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:var(--s3);align-items:center;width:100%;min-height:64px;padding:var(--s3) var(--s1);
+  background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+@media (hover:hover){.srow:hover{background:var(--surface-2)}}
+.srow:active{background:var(--surface-3)}
+.srow:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+.srow b{display:block;font-family:var(--display);font-weight:400;font-size:1.0625rem;line-height:1.25}
+.srow .sub2{display:block;font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
+.srow.feat b{color:var(--primary-ink)}
+.srow .cnt{font-size:var(--fs-sm);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.srow .cnt.on{color:var(--done);font-weight:600}
+.srow .chev{width:20px;height:20px;color:var(--ink-3)}
 .page-h{margin:var(--s5) 0 0;color:var(--ink);font-size:1.0625rem;font-family:var(--display);font-weight:400;line-height:1.25}
-.scard b{color:var(--ink);display:block;font-size:1.0625rem;font-family:var(--display);font-weight:400;line-height:1.25}
-.scard span{display:block;font-size:var(--fs-sm);color:var(--ink-2)}
+.back{display:inline-flex;align-items:center;gap:var(--s1);min-height:var(--tap);margin:var(--s3) 0 0 calc(-1 * var(--s2));padding:0 var(--s2);border:0;background:none;color:var(--primary-ink);font:inherit;font-weight:600;font-size:var(--fs-sm);cursor:pointer;border-radius:var(--r-sm)}
+.back svg{width:20px;height:20px}
+@media (hover:hover){.back:hover{background:var(--surface-2)}}
+.back:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
+h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight:400;margin:var(--s2) 0 0;outline:none}
+.pg{margin-top:var(--s3)}
+.pg .tile:first-child{margin-top:0}
 .ring{width:48px;height:48px}
 .ring circle{stroke-width:5}
 .ring .bg{stroke:var(--surface-3)} .ring .fg{stroke:var(--done)}
 .ring text{fill:var(--ink);stroke:none;font-size:13px;font-weight:700;font-family:var(--font)}
 .ring text.sm{font-size:10.5px}
-.acc-panel .series{margin-top:var(--s2)}
-/* Contents of an open card sit beside a red bar, indented, so it is clear which card they belong to */
-.acc[data-open="true"]>.acc-panel{margin:var(--s2) 0 var(--s1) var(--s2);padding:0 0 0 var(--s3);border-left:3px solid var(--accent)}
-.acc-panel .scard b{font-size:1rem}
-/* Double nesting: the outer bar turns grey and the inner bar is a lighter red */
-.acc[data-open="true"]>.acc-panel:has(.acc[data-open="true"]){border-left-color:#a3aba7}
-.acc-panel .acc[data-open="true"]>.acc-panel{border-left-color:#dc8a82}
-.acc-panel .tile:first-child{margin-top:var(--s2)}
 
 /* Drill picker: Drill 1, Drill 2 ... laid out in a row that wraps */
 .dgrid{list-style:none;margin:0;padding:var(--s2) 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:var(--s2)}
 .dtile{display:flex;align-items:center;justify-content:center;gap:var(--s1);width:100%;min-height:var(--tap);padding:0 var(--s2);border-radius:var(--r-md);
-  border:1.5px solid var(--line-strong);border-bottom-width:calc(1.5px + var(--edge));background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
 @media (hover:hover){.dtile:hover{background:var(--surface-2)}}
-.dtile:active{transform:translateY(2px);border-bottom-width:3px}
+.dtile:active{transform:translateY(1px)}
 .dtile svg{width:16px;height:16px;stroke-width:3;display:none}
 .dtile[data-done="true"]{background:var(--done);border-color:var(--primary-edge);color:var(--on-done)}
 .dtile[data-done="true"] svg{display:block}
@@ -241,7 +232,6 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media (min-width:40rem){
   :root{--fs-display:3rem}
-  .series{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sheet{left:50%;right:auto;width:36rem;transform:translateX(-50%);bottom:var(--s4);border-radius:var(--r-lg);animation:none}
 }
 </style>
@@ -293,7 +283,7 @@ const store = {
 };
 let done = store.get('done', {});           // id -> timestamp
 const OLD_TAB = {series:'learn', search:'learn'};
-let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, sec:{}, q:'', phr:false };
+let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', phr:false, stack:[] };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -373,9 +363,15 @@ function card(key, name, sub, items, panel, o={}){
   const n = items.filter(r=>isDone(r.id)).length;
   return acc(key, name, sub, n, o.ring===false ? 0 : items.length, o.feat);
 }
+// Each section is a row that opens its own page. PAGES holds the title and blurb for the page header.
+const PAGES = {};
+const unitOf = key => key.startsWith('drill:') ? 'drills' : 'lessons';
+// Review holds only finished lessons, so it shows a plain count
+function cntText(key, n, total){ return !total ? '' : (n && key!=='pr:review') ? `${n} of ${total}` : `${total} ${total===1 ? unitOf(key).slice(0,-1) : unitOf(key)}`; }
 function acc(key, name, sub, n, total, feat){
-  const open=!!S.acc[key], pid='p-'+key.replace(/[^a-z0-9]/gi,'-');
-  return `<div class="acc${feat?' feat':''}" data-open="${open}"><button class="scard" data-acc="${esc(key)}" aria-expanded="${open}" aria-controls="${pid}" aria-label="${esc(name)}${total>1?`, ${n} of ${total} done`:''}"><span><b>${esc(name)}</b><span>${esc(sub)}</span></span>${total>1?ring(n,total):''}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="acc-panel" id="${pid}"${open?'':' hidden'}>${open?accPanel(key):''}</div></div>`;
+  PAGES[key] = {name, sub};
+  const c = cntText(key, n, total), on = n>0 && key!=='pr:review';
+  return `<button class="srow${feat?' feat':''}" data-push="${esc(key)}" data-total="${total}" aria-label="${esc(name)}${c?`, ${c}${on?' done':''}`:''}"><span><b>${esc(name)}</b><span class="sub2">${esc(sub)}</span></span><span class="cnt${on?' on':''}">${esc(c)}</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
 }
 function scard(sid){
   const s = SER[sid], it = seriesItems(sid), n = it.filter(r=>isDone(r.id)).length;
@@ -385,10 +381,10 @@ function scard(sid){
 const CTX = {};
 function list(key, items, opts={}){
   CTX[key] = items.map(r=>r.id);
-  const open = S.open[key] || items.length <= LIMIT+1;
+  const open = S.open[key] || items.length <= LIMIT+1 || S.stack.length>0;
   const shown = open ? items : items.slice(0, LIMIT);
   let h = `<ul class="list" id="l-${key}">${shown.map(r=>row(r,key,opts)).join('')}</ul>`;
-  if(items.length > LIMIT+1) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  if(items.length > LIMIT+1 && !S.stack.length) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="m6 9 6 6 6-6"/></svg></button>`;
   return h;
 }
 function grouped(key, items, opts={}){
@@ -397,11 +393,6 @@ function grouped(key, items, opts={}){
   const names = Object.keys(groups).sort((a,b)=>(TOPIC_ORDER.indexOf(a)+99)%999-(TOPIC_ORDER.indexOf(b)+99)%999);
   if(names.length===1) return list(key, items, opts);
   return names.map(n => `<h3 class="sub">${esc(n)}${groups[n].length>1?` <span style="font-weight:700">· ${groups[n].length}</span>`:''}</h3>${list(key+':'+n, groups[n], opts)}`).join('');
-}
-// every section is a collapsible block, closed until tapped
-function sec(id, name, body, hint){
-  const open = !!S.sec[id], pid = 'sec-' + id.replace(/[^a-z0-9]/gi,'-');
-  return `<section class="sec"><h2 class="sec-h"><button class="sec-btn" data-sec="${esc(id)}" aria-expanded="${open}" aria-controls="${pid}"><span class="sec-name">${esc(name)}</span>${hint?`<span class="hint">${esc(hint)}</span>`:''}<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></h2><div class="sec-body" id="${pid}"${open?'':' hidden'}>${body}</div></section>`;
 }
 
 /* ---------- views ---------- */
@@ -447,7 +438,8 @@ function viewPractice(){
   return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
     <p class="lede">Open a drill type and pick a drill. Say each answer aloud, then let her confirm it.</p>
     <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
-    ${sec('review','Review what you watched', `<p class="sec-note">Lessons you marked done more than a day ago come back here, oldest first.</p>${watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`}`)}` + foot();
+    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
+      () => watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>` + foot();
 }
 function courseTile(c){
   return `<div class="tile${c.feature?' feature':''}"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><div class="acts"><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></div></div>`;
@@ -529,16 +521,47 @@ function foot(){
   return `<footer class="foot"><p>© Mandarin Insights by Dr. Hanyu Jia.</p></footer>`;
 }
 
+/* ---------- pages ---------- */
+const TAB_NAME = {home:'Home', learn:'Library', practice:'Practice', materials:'About', search:'Search'};
+function tabView(){ return S.tab==='search' ? viewSearch() : S.tab==='home' ? viewHome() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn(); }
+function viewPage(){
+  if(!PAGES[S.stack[0]]) tabView();                                   // registers this tab's rows
+  for(let i=1;i<S.stack.length;i++) if(!PAGES[S.stack[i]]) accPanel(S.stack[i-1]); // nested rows register when the parent page renders
+  const key = S.stack[S.stack.length-1], pg = PAGES[key] || {name:'', sub:''};
+  const parent = S.stack.length>1 ? (PAGES[S.stack[S.stack.length-2]]||{}).name : TAB_NAME[S.tab];
+  return `<button class="back" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(parent)}</button>
+    <h1 class="pg-h" id="pgH" tabindex="-1">${esc(pg.name)}</h1>${pg.sub?`<p class="lede">${esc(pg.sub)}</p>`:''}
+    <div class="pg">${accPanel(key)}</div>` + foot();
+}
+function push(key){
+  try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
+  S.stack = S.stack.concat(key);
+  try{ history.pushState({tab:S.tab, stack:S.stack, y:0}, ''); }catch(e){}
+  window.scrollTo(0,0); render(false); $('#pgH').focus({preventScroll:true});
+}
+function focusRow(k){ const b = k && document.querySelector(`[data-push="${CSS.escape(k)}"]`); if(b) b.focus({preventScroll:true}); }
+function back(){
+  if(history.state && history.state.stack && history.state.stack.length) return history.back();
+  const k = S.stack[S.stack.length-1]; S.stack = S.stack.slice(0,-1); render(false); focusRow(k);
+}
+window.addEventListener('popstate', e => {
+  const st = e.state || {tab:S.tab, stack:[]}, was = S.stack;
+  if($('#sheetWrap').dataset.open==='true') closePlayer();
+  S.tab = st.tab || S.tab; S.stack = st.stack || [];
+  render(false); window.scrollTo(0, st.y||0);
+  if(S.stack.length < was.length) focusRow(was[S.stack.length]); else if(S.stack.length) $('#pgH').focus({preventScroll:true});
+});
+
 /* ---------- render ---------- */
 function render(focusMain){
-  const v = S.tab==='search' ? viewSearch() : S.tab==='home' ? viewHome() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn();
+  const v = S.stack.length ? viewPage() : tabView();
   $('#main').innerHTML = v;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab===S.tab)));
   rove();
   if(S.tab==='search'){ const i=$('#q'); i.focus(); i.setSelectionRange(i.value.length,i.value.length); }
   else if(focusMain){ $('#main').focus({preventScroll:true}); }
 }
-function go(tab){ S.tab=tab; if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
+function go(tab){ S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} if(tab!=='search') store.set('tab',tab); window.scrollTo(0,0); render(true); }
 
 /* ---------- player ---------- */
 let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '', pathMode = false;
@@ -578,10 +601,9 @@ function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
   document.querySelectorAll('.row[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); const r=byId[b.dataset.id]; if(r) b.setAttribute('aria-label', T(r)+(d?', done':'')); });
   document.querySelectorAll('.dtile[data-id]').forEach(b=>{ const d=isDone(b.dataset.id); b.dataset.done=String(d); b.setAttribute('aria-label', b.dataset.label+(d?', done':'')); });
-  document.querySelectorAll('.scard[data-acc]').forEach(c=>{ const rg=c.querySelector('.ring'); if(!rg) return;
-    const k=c.dataset.acc, it=accItems(k), n=it.filter(r=>isDone(r.id)).length;
-    const w=document.createElement('div'); w.innerHTML=ring(n,it.length); rg.replaceWith(w.firstElementChild);
-    c.setAttribute('aria-label', c.getAttribute('aria-label').replace(/, \d+ of \d+ done$/, `, ${n} of ${it.length} done`)); });
+  document.querySelectorAll('.srow[data-push]').forEach(c=>{ const tot=+c.dataset.total; if(!tot) return;
+    const k=c.dataset.push, n=accItems(k).filter(r=>isDone(r.id)).length, t=cntText(k,n,tot), sp=c.querySelector('.cnt');
+    const on = n>0 && k!=='pr:review'; sp.textContent=t; sp.classList.toggle('on', on); c.setAttribute('aria-label', `${PAGES[k].name}, ${t}${on?' done':''}`); });
 }
 const hasNext = () => queue && qi > -1 && qi < queue.length-1;
 const nextName = () => pathMode ? `Day ${byId[queue[qi+1]].ord}` : 'lesson';
@@ -633,13 +655,12 @@ function startDrill(kind){
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
-  if(t.dataset.sec){ const k=t.dataset.sec, open=!S.sec[k]; S.sec[k]=open; t.setAttribute('aria-expanded', String(open)); document.getElementById(t.getAttribute('aria-controls')).hidden=!open; return; }
+  if(t.dataset.push){ return push(t.dataset.push); }
+  if(t.dataset.back!==undefined){ return back(); }
   if(t.matches('.tab')) return go(t.dataset.tab);
   if(t.dataset.tabGo) return go(t.dataset.tabGo);
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
-  if(t.dataset.acc){ const k=t.dataset.acc, open=!S.acc[k]; S.acc[k]=open; const w=t.parentElement, pn=w.querySelector('.acc-panel');
-    if(open && !pn.firstChild) pn.innerHTML=accPanel(k); pn.hidden=!open; w.dataset.open=String(open); t.setAttribute('aria-expanded', String(open)); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
   if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
   if(t.dataset.phr!==undefined){ S.phr=!S.phr; t.setAttribute('aria-expanded', String(S.phr)); $('#phrList').hidden=!S.phr; return; }
@@ -647,7 +668,7 @@ document.addEventListener('click', e => {
     drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
     return openPlayer(t.dataset.id, c); }
 });
-$('#searchBtn').addEventListener('click', () => { S.tab='search'; render(false); });
+$('#searchBtn').addEventListener('click', () => { S.tab='search'; S.stack=[]; render(false); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; const pos=e.target.selectionStart; render(false); const i=$('#q'); i.setSelectionRange(pos,pos); } });
 $('#main').addEventListener('submit', e => { e.preventDefault(); const i=$('#q'); i&&i.blur(); });
 $('#closeBtn').addEventListener('click', closePlayer);
@@ -669,6 +690,7 @@ document.addEventListener('keydown', e => {
     if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); } }
 });
 document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && !sh.hidden && sh.offsetParent!==null && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
+try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
 render(false);
 </script>
 </body>

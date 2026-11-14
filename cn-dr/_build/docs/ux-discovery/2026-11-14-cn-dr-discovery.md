@@ -80,7 +80,7 @@ Opportunity = Importance + (Importance − Satisfaction). The scores are my esti
 |---|---|
 | Home "Start here / Continue" card on the 30-day spine | High |
 | One home for every item; rename Materials and drop the double "Courses" | High |
-| Return visit lands on Continue (same card as Home) | High |
+| Return visit: reopen last tab used; Continue lives on Home | Decided |
 | Search moved into the header | Medium |
 | Visual polish | Low |
 
@@ -138,7 +138,7 @@ Opportunity = Importance + (Importance − Satisfaction). The scores are my esti
    - *Not*: the same card in two tabs.
 3. **Her order beats our classifier.** Use Dr. Jia's own sequence wherever it exists.
    - *Not*: keyword-guessed ordering on the path, except the 9 days Fogfish accepted on 2026-11-14.
-4. **Built for coming back.** Sessions are short and days apart, so every return should land on Continue.
+4. **Built for coming back.** Sessions are short and days apart. The app reopens on the last tab used (Fogfish's call, 2026-11-14), and Continue is one tap away on Home.
 5. **Don't bury the business.** Her paid classes stay one tap away, under About.
 
 ## 7. Assumptions & Risks
@@ -175,5 +175,6 @@ No raw research data was provided. Next steps include a light validation pass.
 - [ ] Ask Dr. Jia: phrases-first or tones-first for the beginner spine?
 - [ ] Pull YouTube Studio audience and traffic-source data (5 minutes) to test the persona
 - [x] Restructure shipped 2026-11-14: Home path card, Library (absorbs Courses tab, drills only in Practice), About Dr. Jia, Classes rename
+- [x] Player, 30-dot progress, Follow icons, and flat section rows that open pages (accordions removed), 2026-11-14
 - [ ] Add GoatCounter with the 4 event types
 - [ ] Launch the link in her bio, then set the North Star baseline after 30 days
