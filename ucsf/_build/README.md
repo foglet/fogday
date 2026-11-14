@@ -1,15 +1,15 @@
 # fogday.com/ucsf: UCSF shuttles on one map
 
-Single-file mobile web app. Edit `template.html`, run `python3 build.py`, commit `../index.html`.
+Single-file mobile web app. Edit `shell.html` (page, styles) and `app_head.js` / `engine.js` / `app_tail.js` (script), run `python3 build.py`, commit `../index.html`. The page has Jekyll front matter (for the maps menu, `_data/maps.yml`), so the script must hold no Liquid; build.py checks.
 
 ## What it shows
-- Every UCSF shuttle route (14 routes, 32 stops) from the official GTFS feed.
-- Shuttles running now. Without a live feed, positions are estimated from the schedule
-  (hollow dots, "Sched"). With the live proxy set, GPS positions replace the estimates
-  route by route (filled dots, "Live").
-- "Show shuttles near me": asks for location, sorts shuttles by distance, lists the 5
-  nearest stops with the next departures (90 minutes ahead, two per route).
-- Tap a route to show only that route; tap again for all. Choice is kept in localStorage (`ucsf:route`).
+Same interface as /treesf/ and /transit/ (dark map, title + maps menu top left, legend bottom left, Mapbox controls bottom right).
+- Shuttle Legend: every route with its color and how many shuttles are running. Tap a route (in the legend or on
+  the map) to highlight it; tap again for all. Kept in localStorage (`ucsf:route`).
+- Routes sharing a street are drawn side by side (offset slots per stretch, computed in the page).
+- Shuttles running now: hollow dots are schedule estimates; filled dots are live GPS once the proxy is set.
+- Location: the Mapbox locate control starts by itself; once allowed, Info lists the 3 nearest stops with departures.
+- Info (inside the legend): near-you departures, how positions are made, data sources.
 
 ## Data
 - Static: `https://ucsf.tripshot.com/v1/gtfs.zip` (Transitland `f-ucsf~shuttle~ca~us`).

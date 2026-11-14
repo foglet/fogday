@@ -1,188 +1,240 @@
+---
+layout: null   # self-contained map page in the Transit Connected / SF Trees interface; built by ucsf/_build/build.py
+title: UCSF Shuttles
+description: Every UCSF shuttle route on one map, with the shuttles running now and the next departures at the stops near you. A map by Fogday Studios.
+---
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>UCSF Shuttles: one live map | Fogday</title>
-<meta name="description" content="Every UCSF shuttle route on one map. Allow location to see the shuttles and stops near you, with next departures.">
-<meta name="theme-color" content="#1f5c4a">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#021724">
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
 <style>
-:root{
-  --felt:#1f5c4a; --felt-dk:#174638; --bone:#fbf8f1; --paper:#f3efe4; --ink:#1d2421; --muted:#55615c; --line:#d9d3c4;
-  --red:#b8352b; --live:#1f7a3c;
-  --display:"Young Serif", Georgia, "Times New Roman", serif;
-  --body:"Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --sheet-h:46vh;
-  color-scheme:light;
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:var(--bone);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;overflow:hidden}
-a{color:var(--felt)}
-:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-[hidden]{display:none!important}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  /* UCSF Shuttles: the SF Trees / Transit Connected map interface. Always dark. */
+  :root {
+    --glass: rgb(98 98 102 / .15); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; overscroll-behavior: none; }
+  [hidden] { display: none !important; }
+  #map { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
+  @supports (height: 100lvh) { #map { height: 100lvh; } }
 
-.app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
-.bar{display:flex;align-items:center;gap:12px;padding:10px 14px calc(10px) 16px;padding-top:max(10px, env(safe-area-inset-top));background:var(--bone);border-bottom:1px solid var(--line);z-index:3}
-.bar h1{font-family:var(--display);font-weight:400;font-size:22px;line-height:1.1;margin:0;color:var(--felt);letter-spacing:.02em}
-.bar .sub{font-size:13px;color:var(--muted);margin:0}
-.bar .grow{flex:1;min-width:0}
-.chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;white-space:nowrap;box-shadow:0 1px 2px rgba(29,36,33,.08)}
-.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
-.chip[data-mode="live"] .dot{background:var(--live);box-shadow:0 0 0 3px rgba(31,122,60,.18)}
-.chip[data-mode="sched"] .dot{background:#c98a1b}
-.chip[data-mode="none"] .dot{background:#9aa39f}
+  /* Title, top left (centered on phones): tap it to see every route */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .title-text { background-image: linear-gradient(to right, #8fd0ff, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .maps-btn {
+    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: #4a90c8;
+  }
+  .maps-btn svg { transition: transform .2s ease; }
+  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
+  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .maps-menu {
+    --surface: #1e2a36; --site-line: #2a3846;
+    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
+    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px; animation: maps-menu-in .16s ease-out;
+  }
+  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
+  .maps-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .12em;
+  }
+  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .maps-menu a:hover { color: #ff5500; }
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: #8fd0ff; }
+  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }
+  .maps-menu .ext {
+    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
+    -webkit-mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
+            mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
+  }
+  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
+  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
+  @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
+  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
 
-.stage{position:relative;min-height:0}
-#map{position:absolute;inset:0;background:#e9e5da}
-.fab{position:absolute;right:12px;z-index:1;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:var(--felt);box-shadow:0 1px 3px rgba(29,36,33,.25),0 2px 8px rgba(29,36,33,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-.fab:hover{background:var(--paper)}
-.fab:active{transform:scale(.96)}
-.fab svg{width:22px;height:22px}
-#fabLocate{top:12px}
-#fabCompass{top:64px}
-.fab[hidden]{display:none}
-@media (pointer:fine) and (min-width:860px){ #fabLocate{top:auto;bottom:24px} #fabCompass{top:auto;bottom:76px} }
-.mapfallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted)}
+  /* The legend, bottom left above the Mapbox logo, as on /treesf/ and /transit/: shut, just its title;
+     open, the routes (tap one to show only it) and Info. Each line sits on its own glass box. */
+  .controls {
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: max-content; min-width: 260px;
+    max-width: min(400px, calc(100% - 24px - var(--sal) - var(--sar)));
+  }
+  .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; }
+  .map-legend > summary, .legend-body > .summary, .legend-body > .key, .routes li, .notes summary, .notes .note, .controls > .status {
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
+    width: fit-content; max-width: 100%; border-radius: 999px; padding: 3px 10px;
+  }
+  .legend-body > .summary, .legend-body > .key, .notes .note { box-shadow: none; }
+  .notes .note { border-radius: var(--glass-r); }
+  .controls { --muted: #c5ced5; }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 6px 14px !important; min-height: 30px; border-radius: 8px;
+                        font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend > summary::after, .notes summary::after {
+    content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 6px; vertical-align: -1px;
+    background: currentColor; transition: transform .2s ease;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  }
+  .map-legend > summary::after { color: var(--muted); }
+  .map-legend[open] > summary::after, .notes[open] summary::after { transform: rotate(180deg); }
+  .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .sky-text { color: #8fd0ff; }
+  /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
+  .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 8px;
+                 max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
+                 overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .key { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+  .key .bus { margin-left: 8px; }
+  .key .bus:first-child { margin-left: 0; }
+  .bus { flex: none; display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #8fd0ff; }
+  .bus.live { background: #8fd0ff; }
+  .routes { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 2px; font-size: .9rem; max-width: 100%; }
+  .routes li { display: flex; align-items: center; padding: 0 4px !important; min-width: 0; }
+  .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; min-height: 24px; cursor: pointer; border-radius: 999px; padding: 2px 6px; }
+  .pick:hover .name { color: var(--accent); }
+  .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .pick[aria-pressed="true"] { background: color-mix(in srgb, var(--ink) 12%, transparent); }
+  .pick[aria-pressed="true"] .name { font-weight: 700; }
+  .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); box-shadow: 0 0 0 1px rgb(255 255 255 / .35); }
+  .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .cnt { margin-left: auto; padding-left: 10px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
+  .status { font-size: .85rem; color: var(--muted); margin: 6px 6px 0; }
+  .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #c98a1b; vertical-align: 1px; }
+  .status[data-mode="live"] .dot { background: #4cd07a; }
+  .status[data-mode="none"] .dot { background: #8fa3b1; }
+  /* Info: a small uppercase toggle that opens the notes, as on /tides/ and /treesf/ */
+  .notes { color: var(--muted); }
+  .notes summary { list-style: none; cursor: pointer; display: block; padding-inline: 12px !important; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; border-radius: 8px; }
+  .notes summary::-webkit-details-marker { display: none; }
+  .notes summary:hover { color: var(--accent); }
+  .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .notes .note { margin-top: 4px; }
+  .notes-body { display: grid; justify-items: start; }
+  .note { font-size: .78rem; color: var(--muted); margin: 0; }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note a { color: var(--ink); }
+  .note a:hover { color: var(--ink); }
 
-.sheet{position:absolute;left:0;right:0;bottom:0;max-height:var(--sheet-h);display:flex;flex-direction:column;background:var(--bone);border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(29,36,33,.12);z-index:2;padding-bottom:env(safe-area-inset-bottom)}
-.sheet[data-open="false"]{max-height:none}
-.sheet[data-open="false"] .body{display:none}
-.handle{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:8px 16px;border:0;background:transparent;font:inherit;color:var(--ink);cursor:pointer;text-align:left;border-radius:16px 16px 0 0}
-.handle:hover{background:var(--paper)}
-.handle .grip{width:36px;height:4px;border-radius:2px;background:var(--line);position:absolute;left:50%;top:6px;transform:translateX(-50%)}
-.handle strong{font-family:var(--display);font-weight:400;font-size:18px;color:var(--felt)}
-.handle .count{color:var(--muted);font-size:14px}
-.handle .chev{margin-left:auto;width:12px;height:12px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s}
-.sheet[data-open="false"] .chev{transform:rotate(-135deg)}
-.body{overflow:auto;padding:0 16px 16px;-webkit-overflow-scrolling:touch}
+  /* Popups: navy cards */
+  .mapboxgl-popup-content { background: var(--panel); color: var(--ink); font: 400 .9rem/1.4 var(--font); border-radius: 10px; padding: 10px 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .35); }
+  .mapboxgl-popup-content h3 { margin: 0 0 2px; font-size: .95rem; font-weight: 700; }
+  .mapboxgl-popup-content p { margin: 0; color: var(--muted); }
+  .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip, .mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip, .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip { border-top-color: var(--panel); }
+  .mapboxgl-popup-anchor-top .mapboxgl-popup-tip, .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip, .mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: var(--panel); }
+  .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: var(--panel); }
+  .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: var(--panel); }
+  .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; width: 32px; height: 32px; }
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--felt);background:#fff;color:var(--felt);font:inherit;font-weight:500;cursor:pointer}
-.btn:hover{background:var(--paper)}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:var(--felt);color:#fff;border-color:var(--felt)}
-.btn.primary:hover{background:var(--felt-dk);box-shadow:0 3px 10px rgba(31,92,74,.28)}
-.btn[disabled]{opacity:.6;cursor:progress}
-.btn .pin{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;position:relative}
-.btn .pin::after{content:"";position:absolute;inset:2px;border-radius:50%;background:currentColor}
-.locrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 0 6px}
-.msg{margin:0;color:var(--muted);font-size:14px}
-.msg.err{color:var(--red)}
-
-h2{font-family:var(--display);font-weight:400;font-size:17px;color:var(--felt);margin:16px 0 6px}
-ul.list{list-style:none;margin:0;padding:0}
-.list > li{border-top:1px solid var(--line)}
-.list > li:first-child{border-top:0}
-.row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 4px;border:0;background:transparent;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:8px}
-.row:hover{background:var(--paper)}
-.row[aria-pressed="true"]{background:#e6efe9}
-.badge{display:inline-flex;align-items:center;justify-content:center;min-width:64px;min-height:26px;padding:2px 8px;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:.01em;border:1px solid rgba(0,0,0,.12)}
-.row .main{min-width:0}
-.row .t1,.row .t2{display:block}
-.row .t1{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .t2{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .right{text-align:right;font-size:14px;white-space:nowrap}
-.row .right b{display:block;font-size:16px}
-.tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-.tag.live{color:var(--live)}
-
-.stop{padding:10px 4px}
-.stop .name{font-weight:500;margin:0}
-.stop .meta{font-size:13px;color:var(--muted);margin:0 0 6px}
-.deps{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
-.deps li{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:3px 8px 3px 3px;border:1px solid var(--line);border-radius:8px;background:#fff}
-.deps .badge{min-width:0;min-height:22px;font-size:12px;padding:1px 6px}
-.empty{color:var(--muted);font-size:14px;margin:6px 0}
-#moreBtn{margin-top:8px}
-
-.routes{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0;padding:0;list-style:none}
-.rbtn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px 6px 8px;border-radius:10px;border:1px solid var(--line);background:#fff;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
-.rbtn:hover{border-color:var(--felt);box-shadow:0 2px 6px rgba(29,36,33,.10)}
-.rbtn .sw{width:18px;height:18px;border-radius:5px;border:1px solid rgba(0,0,0,.15)}
-.rbtn[aria-pressed="true"]{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt);background:#e6efe9}
-.rbtn .n{font-size:12px;color:var(--muted)}
-.foot{font-size:12.5px;color:var(--muted);margin:18px 0 0}
-.foot p{margin:0 0 6px}
-
-.mapboxgl-popup-content{font-family:var(--body);font-size:14px;border-radius:10px;padding:10px 12px;max-width:260px}
-.mapboxgl-popup-content h3{font-family:var(--display);font-weight:400;font-size:15px;color:var(--felt);margin:0 0 4px}
-.mapboxgl-popup-content p{margin:0}
-
-@media (min-width:860px){
-  .sheet{left:12px;top:12px;bottom:12px;right:auto;width:380px;max-height:none;border:1px solid var(--line);border-radius:14px}
-  .sheet[data-open="false"]{bottom:auto}
-  .handle{border-radius:14px 14px 0 0}
-  .handle .grip{display:none}
-  .body{flex:1}
-}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  /* Map controls, bottom right as on /transit/: no panels, icons with a navy halo */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border-color: transparent; box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .mapboxgl-map .mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon, .mapboxgl-map .mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)); }
+  @media (pointer: coarse) {
+    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .mapboxgl-map .mapboxgl-ctrl-group button { width: 44px; height: 44px; }
+  }
+  /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it) */
+  @media (pointer: coarse), (max-width: 759px) {
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; width: 44px; height: 44px; }
+  }
+  .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4; background: color-mix(in srgb, var(--bg) 90%, transparent); }
+  .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
+  .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
+  .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
+  @media (max-width: 759px) {
+    .controls { right: calc(66px + var(--sar)); width: auto; min-width: 0; max-width: none; }
+    .controls:has(.map-legend:not([open])) { right: auto; }
+    .summary, .routes { font-size: 1rem; }
+    .pick { min-height: 30px; }
+    .notes summary { min-height: 32px; display: inline-flex; align-items: center; font-size: .8rem; }
+    .note { font-size: .88rem; line-height: 1.45; }
+  }
+  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg, .map-legend > summary::after, .notes summary::after { transition: none; } }
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="bar">
-    <div class="grow">
-      <h1>UCSF Shuttles</h1>
-      <p class="sub">Every route on one map</p>
-    </div>
-    <span class="chip" id="status" data-mode="sched" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading</span></span>
-  </header>
-  <main class="stage">
-    <div id="map" role="region" aria-label="Map of UCSF shuttle routes, stops and shuttles"></div>
-    <button class="fab" id="fabLocate" type="button" aria-label="Show my location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
-    <button class="fab" id="fabCompass" type="button" aria-label="Turn map to north up" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><g id="needle"><path d="M12 3l4 9h-8z" fill="#b8352b"/><path d="M12 21l-4-9h8z" fill="#9aa39f"/></g></svg></button>
-    <section class="sheet" id="sheet" data-open="true" aria-labelledby="sheetTitle">
-      <button class="handle" id="sheetToggle" aria-expanded="true" aria-controls="sheetBody">
-        <span class="grip" aria-hidden="true"></span>
-        <strong id="sheetTitle">Shuttles</strong>
-        <span class="count" id="sheetCount"></span>
-        <span class="chev" aria-hidden="true"></span>
-      </button>
-      <div class="body" id="sheetBody">
-        <div class="locrow">
-          <button class="btn primary" id="locBtn" type="button"><span class="pin" aria-hidden="true"></span><span id="locLabel">Show shuttles near me</span></button>
-        </div>
-        <p class="msg" id="locMsg" role="status" aria-live="polite">Allow location to sort shuttles and stops by distance.</p>
+<div id="map" role="region" aria-label="UCSF Shuttles map"></div>
 
-        <div id="nearWrap" hidden>
-          <h2 id="nearHead">Stops near you</h2>
-          <ul class="list" id="near" aria-labelledby="nearHead"></ul>
-        </div>
-
-        <h2 id="runHead">Running now</h2>
-        <ul class="list" id="running" aria-labelledby="runHead"></ul>
-        <p class="empty" id="runEmpty" hidden></p>
-        <button class="btn" id="moreBtn" type="button" hidden aria-controls="running"></button>
-
-
-        <h2 id="routeHead">Routes</h2>
-        <p class="msg">Tap a route to show only that route. Tap again to show all.</p>
-        <ul class="routes" id="routes" aria-labelledby="routeHead"></ul>
-
-        <div class="foot">
-          <p id="srcNote">Positions are estimated from the published UCSF schedule.</p>
-          <p>Data: UCSF Transportation, published through TripShot (GTFS, updated <span id="genDate"></span>). Official tracker: <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
-          <p>A map by <a href="https://fogday.com/">Fogday Studios</a>.</p>
-        </div>
-      </div>
-    </section>
-  </main>
+<div class="top">
+  <div class="title-row">
+    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Show every route"><span class="title-text">UCSF Shuttles</span></button></h1>
+    <button type="button" class="maps-btn" id="mapsBtn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>
+      <ul>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% endfor %}
+        <li class="all"><a href="/maps/">All maps →</a></li>
+      </ul>
+    </nav>
+  </div>
 </div>
 
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
+<section class="controls" aria-label="Legend">
+  <details class="map-legend" id="legend">
+    <summary><span class="sky-text">Shuttle Legend</span></summary>
+    <div class="legend-body">
+      <p class="summary" id="summary">Loading the schedule</p>
+      <p class="key"><span class="bus live" aria-hidden="true"></span>Live <span class="bus" aria-hidden="true"></span>Scheduled</p>
+      <ul class="routes" id="routes" aria-label="Routes. Tap one to show only it; tap it again to show all."></ul>
+      <details class="notes" id="info">
+        <summary>Info</summary>
+        <div class="notes-body">
+          <p class="note" id="nearNote" hidden></p>
+          <p class="note" id="srcNote"></p>
+          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you and Info lists the stops nearest you; nothing is kept. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
+          <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
+        </div>
+      </details>
+    </div>
+  </details>
+  <p class="status" id="status" data-mode="sched" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading</span></p>
+</section>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js"></script>
 <script>
 "use strict";
 const D = {"gen":"2026-11-14T16:21:14.024Z","routes":[{"id":"ef9f00fe-567c-42e8-8da1-b1baeca69060","n":"Gold","ln":"Gold","c":"#FFDB29","tc":"#ffffff","u":""},{"id":"85059017-1d79-479f-869b-d3d00dbac8e8","n":"Lilac AM","ln":"Lilac AM","c":"#B18CFE","tc":"#ffffff","u":""},{"id":"Orange (Oakland)","n":"Orange","ln":"Orange (Oakland)","c":"#FF6600","tc":"#ffffff","u":""},{"id":"00a9d018-5ba1-41ff-9734-d65ee28c3f63","n":"Grey","ln":"Grey","c":"#8B8C87","tc":"#ffffff","u":""},{"id":"82b86b07-32e4-4980-89cf-1a301173fced","n":"VA","ln":"VA","c":"#000000","tc":"#ffffff","u":""},{"id":"aa368b21-4ad6-4404-9aae-7818bf03b409","n":"Blue","ln":"Blue","c":"#2E17FF","tc":"#ffffff","u":""},{"id":"50354af3-28cb-47de-988a-0c7307a797a0","n":"Cherry","ln":"Cherry","c":"#D93030","tc":"#ffffff","u":""},{"id":"5db574f3-104b-4a03-8b99-0331b57d7112","n":"Lilac PM","ln":"Lilac PM","c":"#B18CFE","tc":"#ffffff","u":""},{"id":"0f4aeb83-7e63-46fe-bfab-9e1519311309","n":"Bronze","ln":"Bronze","c":"#FF963B","tc":"#ffffff","u":""},{"id":"9623848f-b9c8-48e5-bc8f-ab4193d0166b","n":"Red","ln":"Red","c":"#FF2121","tc":"#ffffff","u":""},{"id":"75d50754-03ab-4ced-b0ae-180cd637566a","n":"Pink AM","ln":"Pink AM","c":"#FF73BE","tc":"#ffffff","u":""},{"id":"af969294-6287-4df9-9aa5-30bf7fc64ed2","n":"Pink PM","ln":"Pink PM","c":"#FF73BE","tc":"#ffffff","u":""},{"id":"Green (Oakland)","n":"Green","ln":"Green (Oakland)","c":"#4CA800","tc":"#ffffff","u":""},{"id":"e02f34ba-1fee-48ef-8366-6490523f0999","n":"Lime","ln":"Lime","c":"#29FF21","tc":"#ffffff","u":""}],"stops":[["VA Hospital",3778182,-12250423],["Parnassus Clinical Sciences (521 Parnassus Ave)",3776311,-12245905],["Parnassus Library (530 Parnassus Ave)",3776323,-12245911],["Mission Bay 4th St East Side",3776825,-12239088],["Mission Bay 4th St West Side",3776829,-12239107],["160 Johnstone",3775775,-12245600],["3221 Geary Blvd",3778158,-12245334],["3360 Geary Blvd (to St Mary's)",3778163,-12245509],["90 Behr Ave",3775779,-12245498],["Aldea Housing (75 Behr Ave)",3775870,-12245420],["BART 16th St Mission North Side",3776513,-12241944],["BART 16th St Mission South Side",3776498,-12242019],["BART Civic Center (7th St & Market St)",3778037,-12241226],["BART Civic Center (Hyde St & Grove St)",3777917,-12241511],["Castro North Side (2390 Market St.)",3776302,-12243485],["Castro South Side (2375 Market St.)",3776293,-12243456],["Colma SamTrans Park and Ride",3768348,-12246861],["Japan Center North Side (1630 Geary Blvd)",3778485,-12243032],["Japan Center South Side (1755 Geary Blvd)",3778438,-12243186],["Mission Center Building",3776736,-12241450],["Mt Zion Medical Center (Sutter & Divisadero)",3778526,-12243941],["Rincon Center (83 Mission Street)",3779276,-12239368],["UC Law (198 McAllister St)",3778081,-12241495],["UC Law (200 McAllister St at Hyde St)",3778093,-12241545],["UCSF Health Hyde Hospital (1199 Bush St)",3778910,-12241680],["UCSF Health Stanyan Hospital (500 Stanyan St East Side)",3777277,-12245417],["UCSF Health Stanyan Hospital (Across 500 Stanyan St West Side)",3777275,-12245439],["Zuckerberg San Francisco General Hospital (23rd St & San Bruno)",3775433,-12240474],["BCH Oakland (52nd st. at OPC 1)",3783740,-12226747],["BCH Oakland Main Hospital",3783699,-12226787],["MacArthur Bart Station",3782894,-12226627],["CHORI South Lot",3784198,-12226872]],"services":[{"d":"1111100","s":"20260706","e":"20270706","a":[],"x":[]},{"d":"1111100","s":"20260706","e":"20270706","a":[],"x":[]},{"d":"1111100","s":"20260706","e":"20270706","a":[],"x":[]},{"d":"1111100","s":"20260706","e":"20270706","a":[],"x":[]},{"d":"1111100","s":"20260720","e":"20270720","a":[],"x":[]},{"d":"1111100","s":"20260217","e":"20270217","a":[],"x":[]},{"d":"1111100","s":"20220222","e":"20270221","a":[],"x":[]},{"d":"1111100","s":"20250414","e":"20270414","a":[],"x":[]},{"d":"1111100","s":"20250414","e":"20270414","a":[],"x":[]},{"d":"1111100","s":"20241007","e":"20271007","a":[],"x":[]},{"d":"1111100","s":"20241007","e":"20271007","a":[],"x":[]},{"d":"1111100","s":"20261019","e":"20271019","a":[],"x":[]},{"d":"1111100","s":"20260904","e":"20270904","a":[],"x":[]},{"d":"1111100","s":"20261019","e":"20271019","a":[],"x":[]}],"shapes":[[3776829,-12239098,-143,14,-25,-432,634,-792,279,-356,527,-654,-71,-528,-41,-346,560,-113,-11,-81,4,-68,-4,-80,-113,-910,-16,-97,-33,-272,-26,-76,-10,-58,187,-37,20,161,-168,34,-6,-36,-29,-88,-89,-671,-12,-223,-90,-723,-7,-103,-112,22,-18,7,-37,31,-23,10,-436,87,-55,5,-315,69,-47,-116,-16,-18,-21,-12,-23,-1,-114,55,-46,3,-31,-6,-24,-19,-6,-14,-109,-357,-14,-28,-37,-48,-39,-72,-15,-373,-10,-25,-369,26,11,227,174,620,38,300,-228,46,-13,8,-56,13,-6,-5,82,1332,-9,22,-52,5,38,197,32,72,24,41,-2,11,50,77,86,110,9,18,19,17,53,877,-322,31,67,1103,-190,19,33,550,-638,62,12,203,-128,12,-11,-189,817,-78,98,-11,22,-9,341,-33,58,971,14,260,-2,34,17,238,39,-57,176,-216,48,-39,12,40,26,417,-139,13],[3779281,-12239375,-27,-35,126,-157,66,85,-4,13,-243,301,38,47,-61,20,-63,41,-153,187,-27,25,-50,25,-94,22,-93,-1,-547,-46,-40,-8,-28,-15,-34,-33,-230,-291,-117,142,-55,40,-856,81,-10,-161,46,-4],[3784194,-12226871,-3,-5,-37,8,0,7,49,386,-413,55,-18,-129,-22,-73,-26,-222,11,-14,62,-38,10,-1,8,-9,78,-33,51,-15,39,-4,10,-6,145,-30,16,126,37,-8,3,5],[3776316,-12245910,-76,-270,-7,-120,-255,18,-36,-50,-16,-6,-34,-2,-31,16,8,25,-3,13,-58,70,-81,33,-54,35,-103,12,-69,-18,-27,10,-24,19,-67,84,-28,97,8,163,10,41,9,16,23,24,83,49,58,22,-5,34,-25,84,16,24,108,69,76,23,40,35,34,51,20,15,29,-24,28,-39,14,-27,2,-26,-59,-34,-58,-64,-32,-97,2,-28,40,34],[3776508,-12241943,-1,-27,322,-31,40,655,-323,31,82,1350,24,437,-2,34,27,411,148,-14],[3776829,-12239098,-143,14,-25,-432,-9,-12,-60,-1033,128,-12,-11,-197,-462,44,-27,-5,-26,2,-765,75,12,203,-128,12,-11,-189,817,-78,98,-11,22,-9,341,-33,-155,-2564,-115,-140,-56,-80,2,-18,-7,-23,-6,-53,-94,-1561,6,5,56,-13,13,-8,228,-46,-38,-300,-174,-620,-11,-227,369,-26,16,406,8,43,1,113,-4,25,-29,95,-4,59,52,393,561,-112,266,-60,55,-5,436,-87,23,-10,37,-31,18,-7,100,-19,6,102,77,596,-5,10,16,125,-4,69,19,145,202,-44,102,804,-182,37,89,673,71,591,3,53,-466,92,105,824,-278,56,-631,787,-3,13,-122,155,174,218,-371,463,41,52,15,78,8,18,30,37,10,32,0,17,-10,16,-34,10,-66,33,13,48,25,409,-139,13],[3776734,-12241444,-33,3,-6,-108,-162,16,-108,-1790,-115,-140,-54,-80,-13,-94,-63,-1016,0,-29,6,-4,227,-44,68,-29,34,-8,-96,-769,-176,-630,-14,-241,369,-26,16,406,8,43,1,113,-4,25,-29,95,-4,59,88,675,-186,37,27,213,-34,8,-56,26,-219,42,-26,9,51,821,-9,17,-52,5,38,197,56,113,-2,11,50,77,86,110,9,18,19,17,78,1276],[3776317,-12245907,102,371,96,769,-34,8,-68,29,-221,42,-49,30,-38,12,-12,-15,-32,-18,-104,-48,-17,-17,-19,-32,-11,-43,-36,-274,-34,-101,-21,-81,-27,-53,-33,-46,-33,-32,-22,-11,-68,-18,-70,-49,-45,-25,-36,-12,-36,-3,-25,-10,-88,-62,-46,-16,-86,-4,-21,-8,-12,-13,-15,-33,-4,-39,7,-39,35,-124,3,-43,-18,-181,-10,-39,-25,-28,-52,45,-84,44,-38,27,-162,162,-17,6,-13,-3,-22,-15,-30,-35,-47,44,6,11,-2,83,-22,132,-45,177,-35,70,-10,32,-9,211,-222,184,-12,0,-28,35,-24,59,-19,184,-18,51,-29,28,-71,15,-25,19,-13,28,-11,66,-11,34,-20,28,-27,22,-24,28,-14,34,-16,66,-12,20,-29,16,-93,-12,-73,22,-30,-2,-22,-16,-65,-103,-17,-18,-26,-9,-15,2,-25,24,-7,22,0,19,32,120,-2,24,-10,38,-10,17,-17,20,-42,26,-10,12,-27,104,-34,88,-112,556,-50,-45,-46,-74,-8,-4,-62,-129,-54,-133,-90,-250,-15,-9,-85,-216,-84,-177,-57,-87,-107,-120,-80,-72,-67,-48,-108,-61,-102,-41,-70,-20,-73,-13,-414,-52,-51,-15,-58,-27,-65,-44,-50,-46,-339,-395,-44,-67,-28,-57,-35,-97,-20,-93,-8,-108,-5,-569,-15,-123,-30,-106,-42,-92,-65,-97,-207,-225,-82,-78,-72,-47,-83,-36,-70,-17,-89,-6,-531,59,-71,19,-133,49,-99,22,-430,7,-16,-14,-115,-25,-216,-81,-9,-8,-2,-16,13,-19,97,-1,1,193,-178,-43,-76,-2,-137,6,-7,-9,-18,0,8,212,-35,1],[3776317,-12245907,97,347,38,300,747,-151,266,-60,12,2,-46,-359,5,-13,-7,-66,-73,-577,-9,-14,-6,-75,-166,-3670,944,-68,11,-1,12,-10,13,-52,25,-51,-25,51,-12,50,-9,10,-171,14,35,-417,8,-29,0,-24,-26,-304,-7,-24,-43,-82,-14,-36,-12,-129,-10,-19,-10,-8,-21,-3,-62,37,-35,44,-51,45,-41,56,-39,27,-41,16,-162,19,-95,-5,-87,4,-268,36,-285,53,-102,4,-82,-7,-118,1,189,4291,-376,27,4,106,8,11,20,430,76,270],[3783699,-12226792,-26,1,-4,-6,55,-48,-4,-25,-105,94,-52,39,-26,15,-46,7,-519,-131,-37,235,-42,-10,54,13,38,-237,550,143,27,-6,21,-13,86,-76,4,6,26,-1],[3776825,-12239097,534,-51,80,-17,13,4,11,-24,169,-202,389,494,52,48,41,20,46,10,548,43,2,-77,-18,-30,494,-616,137,173,-124,154,35,43,-77,34,-44,31,-153,187,-27,25,-50,25,-112,24,-622,-49,-40,-8,-28,-15,-34,-33,-230,-291,-117,142,-55,40,-856,81,-10,-161,46,-4],[3776317,-12245907,102,371,96,769,-34,8,-68,29,-221,42,-49,30,-38,12,-12,-15,-32,-18,-104,-48,-17,-17,-19,-32,-11,-43,-36,-274,-34,-101,-21,-81,-27,-53,-33,-46,-33,-32,-22,-11,-68,-18,-70,-49,-45,-25,-36,-12,-36,-3,-25,-10,-88,-62,-46,-16,-86,-4,-21,-8,-12,-13,-15,-33,-4,-39,7,-39,35,-124,3,-43,-18,-181,-10,-39,-25,-28,-52,45,-84,44,-38,27,-162,162,-17,6,-13,-3,-22,-15,-30,-35,-47,44,6,11,-2,83,-22,132,-45,177,-35,70,-10,32,-9,211,-222,184,-12,0,-28,35,-24,59,-19,184,-18,51,-29,28,-71,15,-25,19,-13,28,-11,66,-11,34,-20,28,-27,22,-24,28,-14,34,-16,66,-12,20,-29,16,-93,-12,-73,22,-30,-2,-22,-16,-65,-103,-17,-18,-26,-9,-15,2,-25,24,-7,22,0,19,32,120,-2,24,-10,38,-10,17,-17,20,-42,26,-10,12,-27,104,-34,88,-112,556,-50,-45,-46,-74,-8,-4,-62,-129,-54,-133,-90,-250,-15,-9,-85,-216,-84,-177,-57,-87,-107,-120,-80,-72,-67,-48,-108,-61,-102,-41,-70,-20,-73,-13,-414,-52,-51,-15,-58,-27,-65,-44,-50,-46,-339,-395,-44,-67,-28,-57,-35,-97,-20,-93,-8,-108,-5,-569,-15,-123,-30,-106,-42,-92,-65,-97,-229,-248,-80,-69,-75,-45,-60,-24,-70,-17,-89,-6,-531,59,-71,19,-133,49,-99,22,-430,7,-16,-14,-115,-25,-216,-81,-9,-8,-2,-16,13,-19,97,-1,1,193,-178,-43,-76,-2,-137,6,-7,-9,-18,0,8,212,-24,1,-81,0,-3,-198,118,0,7,-6,137,-6,76,2,164,38,14,5,14,20,12,5,50,4,172,-4,17,-18,423,-9,78,-16,160,-58,67,-15,314,-12,12,-9,16,-2,242,-9,106,7,320,40,374,-2,145,-16,108,-23,208,-78,87,-24,1302,70,85,17,365,18,14,5,87,95,144,175,75,107,99,107,41,58,34,72,11,-6,89,25,42,23,92,74,67,24,70,9,26,11,8,14,17,1,33,31,286,365,13,18,3,14,23,31,30,25,19,2,21,-8,171,-174,114,-56,32,-26,54,-70,49,-49,61,-76,45,-35,23,-11,49,-7,90,22,729,-51,11,227,76,270],[3775867,-12245417,-43,-27,-58,-64,-32,-97,2,-28,40,34,61,21,11,9,11,15,12,35,11,84,-1,51,-38,61,-33,29,-31,-54,-53,-58,-22,-11,-68,-18,-70,-49,-50,-27,25,-84,5,-34,-58,-22,-83,-49,-23,-24,-9,-16,-10,-41,-8,-163,28,-97,63,-80,28,-23,27,-10,69,18,103,-12,54,-35,81,-33,58,-70,3,-13,-8,-25,31,-16,34,2,16,6,36,50,255,-18,7,120,76,270],[3778480,-12243036,-4,-82,-47,-357,-9,-38,-8,-7,-36,-293,-30,-93,-75,-551,-20,-168,-8,-182,-90,-723,-7,-103,-112,22,-18,7,-37,31,-23,10,-386,75,-25,11,-116,14,-279,61,-47,-116,-16,-18,-21,-12,-23,-1,-87,45,-43,13,-51,-3,-22,-10,-12,-12,-115,-371,-14,-28,-37,-48,-37,-65,-5,-84,-354,25,148,527,38,300,747,-151,225,-51,121,-15,25,-11,386,-75,23,-10,37,-31,18,-7,100,-19,6,102,94,726,10,200,36,296,50,394,32,104,35,264,-4,12,7,78,58,444,9,11,60,497,1,48,-6,30,-14,27,-39,46,-13,40,-1,25,374,-75,86,676],[3776316,-12245910,-76,-270,-7,-120,-255,18,-36,-50,-36,-8,-22,2,-23,14,8,25,-3,13,-58,70,-81,33,-54,35,-103,12,-69,-18,-39,18,-79,95,-9,22,-20,83,9,155,10,41,9,16,23,24,83,49,58,22,-5,34,-25,84,16,24,108,69,76,23,40,35,34,51,20,15,29,-24,28,-39,14,-27,2,-26,-59,-34,-58,-64,-32,-97,2,-28,40,34,61,21,14,12,20,47,11,84,0,46,-9,22,-30,44,-33,29,-31,-54,-53,-58,-22,-11,-68,-18,-70,-49,-50,-27,25,-84,5,-34,-58,-22,-80,-47,-16,-13,-19,-29,-10,-41,-8,-163,28,-97,52,-67,27,-28,39,-18,69,18,94,-8,63,-39,81,-33,58,-70,3,-13,-8,-25,31,-16,34,2,16,6,36,50,255,-18,7,120,76,270],[3776829,-12239098,-143,14,-25,-432,1136,-1426,-298,-375,237,-297,12,-10,1,-12,15,-24,5,-17,-80,-625,-93,21,-190,-1507,-105,-797,-80,-657,-7,-8,-111,-268,-16,-18,-21,-12,-20,-2,-90,46,-43,13,-51,-3,-22,-10,-12,-12,-115,-371,-14,-28,-37,-48,-39,-72,-15,-373,-10,-25,-369,26,11,227,174,620,38,300,651,-133,18,156,7,10,108,876,17,111,19,178,47,338,204,1626,94,-19,40,323,-1,12,-9,18,3,16,-15,21,-716,898,15,175,13,34,18,26,4,13,7,126,-2,43,5,10,-2,10,14,152,123,159,-178,220,41,52,15,78,8,18,30,37,10,32,0,17,-10,16,-34,10,-64,32,46,-22,45,-4,7,2,14,17,5,14,3,71,-13,19,-2,20,22,332,-230,22],[3776825,-12239097,143,-14,-25,-409,-13,-48,-28,21,-35,35,-182,226,-10,4,-14,-234,-9,-12,-4,-64,-141,-2378,322,-31,40,655,-323,31,82,1350,24,437,-2,34,27,411,148,-14],[3776734,-12241444,-33,3,-6,-108,-162,16,-108,-1790,-115,-140,-56,-80,2,-18,-11,-49,-65,-1072,26,-9,219,-42,56,-26,34,-8,-96,-769,-176,-630,-14,-241,369,-26,16,406,8,43,1,113,-4,25,-29,95,-4,59,88,675,-186,37,27,213,-34,8,-56,26,-219,42,-26,9,51,821,-9,17,-52,5,38,197,32,72,24,41,-2,11,50,77,86,110,9,18,19,17,120,1981,226,-21,-5,-104,-4,-6,-26,1],[3779281,-12239375,-27,-35,126,-157,66,85,-4,13,-243,301,35,43,-77,34,-44,31,-173,207,-48,27,-87,23,-34,4,-75,-3,-547,-46,-40,-8,-28,-15,-34,-33,-230,-291,-117,142,-55,40,-856,81,-10,-161,580,-55,80,-17,13,4,11,-24,169,-202,389,494,52,48,41,20,46,10,548,43,2,-77,-18,-30,494,-616,95,120],[3768348,-12246867,-70,0,-3,-198,118,0,7,-6,137,-6,76,2,164,38,14,5,14,20,12,5,50,4,172,-4,17,-18,423,-9,78,-16,160,-58,67,-15,314,-12,12,-9,16,-2,242,-9,106,7,320,40,374,-2,145,-16,108,-23,208,-78,87,-24,1302,70,85,17,365,18,14,5,87,95,144,175,75,107,99,107,41,58,34,72,11,-6,89,25,42,23,92,74,67,24,70,9,26,11,8,14,17,1,33,31,286,365,13,18,3,14,23,31,30,25,19,2,21,-8,171,-174,114,-56,32,-26,54,-70,49,-49,61,-76,45,-35,23,-11,49,-7,90,22,729,-51,11,227,76,270],[3776825,-12239097,534,-51,80,-17,13,4,11,-24,169,-202,389,494,52,48,41,20,46,10,548,43,2,-77,-18,-30,494,-616,95,120],[3768348,-12246867,-70,0,-3,-198,118,0,7,-6,137,-6,76,2,164,38,14,5,14,20,12,5,50,4,172,-4,17,-18,423,-9,78,-16,160,-58,67,-15,314,-12,12,-9,16,-2,242,-9,106,7,320,40,374,-2,145,-16,108,-23,208,-78,87,-24,1302,70,85,17,365,18,14,5,87,95,144,175,75,107,99,107,41,58,34,72,11,-6,89,25,42,23,92,74,67,24,70,9,26,11,8,14,17,1,33,31,286,365,13,18,3,14,23,31,30,25,19,2,21,-8,171,-174,114,-56,32,-26,54,-70,49,-49,61,-76,45,-35,23,-11,49,-7,90,22,729,-51,14,241,176,630,96,769,-34,8,-68,29,-221,42,-78,42,-9,0,-12,-15,-54,-30,-71,-29,-22,-17,-20,-29,-13,-36,-39,-291,-34,-101,-21,-81,-27,-53,-33,-46,-33,-32,-22,-11,-68,-18,-70,-49,-45,-25,-36,-12,-36,-3,-25,-10,-88,-62,-46,-16,-86,-4,-16,-5,-14,-12,-25,-7,40,38,14,5,83,2,31,8,111,69,64,12,59,29,89,59,76,23,40,35,34,51,20,15,-31,-54,-53,-58,-22,-11,-68,-18,-70,-49,-58,-31,-74,-14,-98,-67,-46,-16,-86,-4,-16,-5,-14,-12,-16,-30,-6,-46,7,-39,35,-124,3,-43,-18,-181,-10,-39,-25,-28,-52,45,-84,44,-38,27,-162,162,-17,6,-13,-3,-22,-15,-30,-35,-47,44,6,11,-2,83,-22,132,-45,177,-35,70,-10,32,-9,211,-222,184,-12,0,-28,35,-24,59,-19,184,-18,51,-29,28,-71,15,-25,19,-13,28,-11,66,-11,34,-20,28,-27,22,-24,28,-14,34,-16,66,-12,20,-29,16,-93,-12,-73,22,-30,-2,-22,-16,-65,-103,-17,-18,-16,-7,-21,-1,-26,20,-8,17,-2,29,32,120,-2,24,-10,38,-10,17,-17,20,-42,26,-10,12,-27,104,-34,88,-112,556,-50,-45,-46,-74,-8,-4,-62,-129,-54,-133,-90,-250,-15,-9,-85,-216,-84,-177,-57,-87,-107,-120,-80,-72,-67,-48,-108,-61,-102,-41,-70,-20,-73,-13,-414,-52,-51,-15,-58,-27,-65,-44,-50,-46,-339,-395,-44,-67,-28,-57,-35,-97,-20,-93,-8,-108,-5,-569,-15,-123,-30,-106,-42,-92,-65,-97,-229,-248,-80,-69,-75,-45,-60,-24,-70,-17,-89,-6,-531,59,-71,19,-133,49,-99,22,-430,7,-16,-14,-115,-25,-216,-81,-9,-8,-2,-16,13,-19,97,-1,1,193,-178,-43,-76,-2,-137,6,-7,-9,-18,0,8,212,-35,1]],"trips":[[8,5,12,0,22500],[8,5,14,1,23100],[8,5,14,1,69300],[8,5,3,2,71400],[8,5,14,1,25200],[8,5,14,1,27300],[8,5,14,1,29400],[8,5,14,1,31500],[8,5,14,1,33600],[8,5,14,1,35700],[8,5,14,1,37800],[8,5,14,1,39900],[8,5,14,1,42000],[8,5,14,1,44100],[8,5,14,1,46200],[8,5,14,1,48300],[8,5,14,1,50400],[8,5,14,1,52500],[8,5,14,1,54600],[8,5,14,1,56700],[8,5,14,1,58800],[8,5,14,1,60900],[8,5,14,1,63000],[8,5,14,1,65100],[8,5,14,1,67200],[4,6,8,3,66900],[4,6,8,3,59700],[4,6,8,3,63300],[4,6,8,4,23700],[4,6,8,3,27300],[4,6,8,3,30900],[9,9,16,5,61080],[9,9,16,5,45960],[9,9,4,6,20700],[9,9,4,7,21600],[9,9,16,5,22200],[9,9,16,5,23280],[9,9,16,5,24360],[9,9,16,5,25440],[9,9,16,5,26520],[9,9,16,5,27600],[9,9,16,5,28680],[9,9,16,5,29760],[9,9,16,5,30840],[9,9,16,5,31920],[9,9,16,5,33000],[9,9,16,5,34080],[9,9,16,5,35160],[9,9,16,5,36240],[9,9,16,5,37320],[9,9,16,5,38400],[9,9,16,5,39480],[9,9,16,5,41640],[9,9,16,5,43800],[9,9,16,5,48120],[9,9,16,5,50280],[9,9,16,5,52440],[9,9,16,5,54600],[9,9,16,5,55680],[9,9,16,5,56760],[9,9,16,5,57840],[9,9,16,5,58920],[9,9,16,5,60000],[9,9,16,5,62160],[9,9,16,5,63240],[9,9,16,5,64320],[9,9,16,5,65400],[9,9,16,5,66480],[9,9,16,5,67560],[9,9,16,5,68640],[9,9,16,8,69720],[9,9,16,8,70800],[13,11,6,9,33720],[13,11,17,10,21300],[13,11,17,10,22080],[13,11,17,10,22860],[13,11,17,10,23640],[13,11,17,10,24660],[13,11,17,10,25440],[13,11,17,10,26220],[13,11,17,10,27000],[13,11,17,10,28020],[13,11,17,10,28800],[13,11,17,10,29580],[13,11,17,10,30360],[13,11,17,10,31380],[13,11,6,9,32160],[13,11,17,10,32940],[13,11,17,10,34740],[13,11,17,10,36300],[13,11,17,10,38100],[13,11,17,10,39660],[13,11,17,10,41460],[13,11,17,10,43020],[13,11,17,10,44820],[13,11,17,10,46380],[13,11,17,10,48180],[13,11,17,10,49740],[13,11,17,10,51540],[13,11,17,10,52320],[13,11,17,10,53100],[13,11,17,10,53880],[13,11,17,10,54900],[13,11,17,10,55680],[13,11,17,10,56460],[13,11,17,10,57240],[13,11,17,10,58260],[13,11,17,10,59040],[13,11,17,10,59820],[13,11,17,10,60600],[13,11,17,10,61620],[13,11,17,10,62400],[13,11,17,10,63180],[13,11,17,10,63960],[13,11,6,9,64980],[13,11,6,9,65760],[10,2,21,11,18900],[10,2,21,11,19800],[10,2,21,11,22500],[10,2,21,11,23400],[10,2,21,12,26100],[10,2,21,12,27000],[10,2,19,13,30900],[10,2,19,13,31800],[5,8,0,14,70320],[5,8,0,15,17700],[5,8,0,16,18960],[5,8,0,17,20220],[5,8,0,17,21480],[5,8,0,17,22740],[5,8,0,17,24000],[5,8,0,17,25260],[5,8,0,17,26520],[5,8,0,17,27780],[5,8,0,17,29040],[5,8,0,18,30300],[5,8,0,17,31560],[5,8,0,19,32820],[5,8,0,17,34080],[5,8,0,20,35340],[5,8,0,21,36900],[5,8,0,21,38880],[5,8,0,21,40860],[5,8,0,21,42840],[5,8,0,21,44820],[5,8,0,22,46800],[5,8,0,23,48780],[5,8,0,22,50760],[5,8,0,24,52500],[5,8,0,21,54300],[5,8,0,17,55200],[5,8,0,17,56460],[5,8,0,17,57720],[5,8,0,17,58980],[5,8,0,17,60240],[5,8,0,17,61500],[5,8,0,17,62760],[5,8,0,17,64020],[5,8,0,17,65280],[5,8,0,25,66540],[5,8,0,26,67800],[5,8,0,14,69060],[5,8,0,14,71580],[11,3,7,27,71400],[11,3,11,28,55800],[11,3,11,28,57600],[11,3,11,28,61200],[11,3,11,28,63000],[11,3,11,29,66600],[11,3,11,29,68400],[11,3,7,27,73200],[2,4,9,30,18900],[2,4,9,30,20100],[2,4,9,30,21300],[2,4,9,30,22500],[2,4,9,30,23700],[2,4,9,30,24900],[2,4,9,30,26100],[2,4,9,30,27300],[2,4,9,30,28500],[2,4,9,30,29700],[2,4,9,30,30900],[2,4,9,30,32100],[2,4,9,30,33300],[2,4,9,30,34500],[2,4,9,30,35700],[2,4,9,30,50400],[2,4,9,30,51600],[2,4,9,30,52800],[2,4,9,30,54000],[2,4,9,30,55200],[2,4,9,30,56400],[2,4,9,30,57600],[2,4,9,30,58800],[2,4,9,30,60000],[2,4,9,30,61200],[2,4,9,30,62400],[2,4,9,30,63600],[2,4,9,30,64800],[2,4,9,30,66000],[2,4,9,30,67200],[2,4,9,30,68400],[2,4,9,30,69600],[2,4,9,30,70800],[7,1,10,31,52500],[7,1,10,31,54000],[7,1,10,31,55500],[7,1,10,31,57000],[7,1,10,31,58500],[7,1,10,31,60000],[7,1,10,31,61500],[7,1,10,31,63000],[7,1,10,31,64500],[7,1,20,32,66000],[7,1,20,32,67500],[3,10,15,33,72840],[3,10,15,34,57720],[3,10,15,34,58440],[3,10,15,34,59160],[3,10,15,34,59880],[3,10,15,34,60600],[3,10,15,34,61320],[3,10,15,34,62040],[3,10,15,34,62760],[3,10,15,34,63480],[3,10,15,34,64200],[3,10,15,34,64920],[3,10,15,34,65640],[3,10,15,34,66360],[3,10,15,34,67080],[3,10,15,34,67800],[3,10,15,34,68520],[3,10,15,33,69240],[3,10,15,35,69960],[3,10,15,33,70680],[3,10,15,33,71400],[3,10,15,36,72120],[3,10,15,37,18000],[3,10,15,38,19800],[3,10,15,39,21000],[3,10,15,34,21720],[3,10,15,34,22440],[3,10,15,34,23160],[3,10,15,34,23880],[3,10,15,34,24600],[3,10,15,34,25320],[3,10,15,34,26040],[3,10,15,34,26760],[3,10,15,34,27480],[3,10,15,34,28200],[3,10,15,34,28920],[3,10,15,35,29640],[3,10,15,34,30360],[3,10,15,36,31080],[3,10,15,34,31800],[3,10,15,36,32520],[3,10,15,34,33240],[3,10,15,34,34680],[3,10,15,34,36120],[3,10,15,34,37560],[3,10,15,34,39000],[3,10,15,34,40440],[3,10,15,34,41880],[3,10,15,34,43320],[3,10,15,34,44760],[3,10,15,34,46200],[3,10,15,34,47640],[3,10,15,34,49080],[3,10,15,34,50520],[3,10,15,34,51960],[3,10,15,34,53400],[3,10,15,34,54840],[3,10,15,34,56280],[3,10,15,34,57000],[1,0,1,40,33000],[1,0,18,41,30480],[1,0,18,41,20400],[1,0,18,41,21600],[1,0,18,41,22920],[1,0,18,41,24120],[1,0,18,41,25440],[1,0,18,41,26640],[1,0,18,41,27960],[1,0,18,41,29160],[1,0,1,40,31680],[6,13,13,42,19800],[6,13,13,42,21600],[6,13,13,42,23400],[6,13,13,42,25200],[6,13,13,42,27000],[6,13,13,42,28800],[6,13,13,42,30600],[6,13,13,42,32400],[6,13,13,43,34200],[6,13,13,43,36000],[6,13,13,42,56700],[6,13,13,42,58500],[6,13,13,42,60300],[6,13,13,42,62100],[6,13,13,42,63900],[6,13,13,42,65700],[6,13,13,42,67500],[6,13,13,42,69300],[6,13,13,42,71100],[6,13,13,42,72900],[0,7,5,44,17400],[0,7,5,45,18660],[0,7,5,45,19920],[0,7,5,45,21180],[0,7,5,45,22440],[0,7,5,45,23700],[0,7,5,45,24960],[0,7,5,45,26220],[0,7,5,45,27480],[0,7,5,45,28740],[0,7,5,46,30000],[0,7,5,47,31260],[0,7,5,48,32520],[0,7,5,45,33780],[0,7,5,47,35040],[0,7,5,49,36720],[0,7,5,49,38700],[0,7,5,49,40680],[0,7,5,49,42660],[0,7,5,49,44640],[0,7,5,49,46620],[0,7,5,50,48600],[0,7,5,51,50580],[0,7,5,52,52560],[0,7,5,53,54600],[0,7,5,45,55380],[0,7,5,45,56640],[0,7,5,45,57900],[0,7,5,45,59160],[0,7,5,45,60420],[0,7,5,45,61680],[0,7,5,45,62940],[0,7,5,45,64200],[0,7,5,45,65460],[0,7,5,45,66720],[0,7,5,45,67980],[0,7,5,45,69240],[0,7,5,45,70500],[0,7,5,45,71760],[12,12,2,54,38700],[12,12,2,54,54300],[12,12,2,54,55500],[12,12,2,54,24300],[12,12,2,54,43500],[12,12,2,54,27900],[12,12,2,54,32700],[12,12,2,54,33900],[12,12,2,54,39900],[12,12,2,54,44700],[12,12,2,54,45900],[12,12,2,54,47100],[12,12,2,54,48300],[12,12,2,54,49500],[12,12,2,54,50700],[12,12,2,54,51900],[12,12,2,54,56700],[12,12,2,54,57900],[12,12,2,54,63900],[12,12,2,54,65100],[12,12,2,54,66300],[12,12,2,54,67500],[12,12,2,55,68700],[12,12,2,54,20700],[12,12,2,54,21900],[12,12,2,54,23100],[12,12,2,54,25500],[12,12,2,54,26700],[12,12,2,54,29100],[12,12,2,54,30300],[12,12,2,54,31500],[12,12,2,54,35100],[12,12,2,54,36300],[12,12,2,54,37500],[12,12,2,54,41100],[12,12,2,54,42300],[12,12,2,54,53100],[12,12,2,54,59100],[12,12,2,54,60300],[12,12,2,54,61500],[12,12,2,54,62700],[12,12,2,54,70200]],"patterns":[[[9,0,0],[8,60,123],[5,180,311],[2,600,3116]],[[2,0,0],[1,900,0],[9,1500,2590],[8,1560,2713],[5,1680,2901],[2,2100,5706]],[[2,0,0],[1,900,0],[9,1500,2590],[8,1560,2713],[5,1680,2901]],[[1,0,0],[0,1800,7144],[1,3480,15087]],[[1,0,0],[0,2100,7144],[1,3480,15087]],[[3,0,0],[10,720,3295],[3,2040,6749]],[[10,0,0],[3,1380,3454]],[[10,0,0],[3,1560,3454]],[[3,0,0],[10,720,3295],[3,1620,6749]],[[19,0,0],[10,240,674],[2,1500,4578],[11,2760,9983]],[[19,0,0],[10,240,674],[2,1500,4580],[11,2760,9985],[19,3360,10987]],[[16,0,0],[1,1800,10205],[16,3600,27408]],[[16,0,0],[1,2400,10205],[16,4800,27408]],[[16,0,0],[1,2400,10202]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,5700,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,2400,11166],[15,2940,13726],[27,3900,17601],[4,6180,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4680,17601],[4,6180,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,6180,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,6480,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,5940,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,5400,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1260,5910],[7,1500,7744],[26,1680,8845],[1,2820,11166],[15,3360,13726],[27,4440,17601],[4,5820,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1260,5910],[7,1500,7744],[26,1680,8845],[1,2820,11166],[15,3360,13726],[27,4440,17601],[4,5580,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1260,5910],[7,1500,7744],[26,1680,8845],[1,2820,11166],[15,3360,13726],[27,4440,17601],[4,5400,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1260,5910],[7,1500,7744],[26,1680,8845],[1,2820,11166],[15,3360,13726],[27,4440,17601],[4,6360,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,5820,21642]],[[4,0,0],[12,360,2687],[22,480,2951],[20,1620,5910],[7,1860,7744],[26,2040,8845],[1,3180,11166],[15,3720,13726],[27,4800,17601],[4,5760,21642]],[[1,0,0],[16,2400,15565]],[[1,0,0],[16,2700,15565],[1,5400,25768]],[[1,0,0],[16,2400,15565],[1,4800,25768]],[[29,0,0],[30,600,1270],[29,1200,2376]],[[3,0,0],[21,1500,3403],[3,3000,6907]],[[3,0,0],[21,1500,3403]],[[4,0,0],[1,2100,8866],[4,3900,16901]],[[4,0,0],[1,2100,8866],[4,4200,16901]],[[4,0,0],[1,2100,8866],[4,3840,16901]],[[4,0,0],[1,2100,8866],[4,3780,16901]],[[4,0,0],[1,1800,8866],[4,3600,16901]],[[4,0,0],[1,1500,8866],[4,3240,16901]],[[4,0,0],[1,1800,8866],[4,4200,16901]],[[21,0,0],[3,1200,3984]],[[21,0,0],[3,1200,3978],[21,2520,7381]],[[17,0,0],[2,1500,5041],[18,2100,9718],[24,2700,11571]],[[17,0,0],[2,2400,5041],[18,3000,9718],[24,3600,11571]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4140,15395],[23,4620,18219],[13,4680,18417],[4,5700,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,6180,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,6600,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,5520,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,6060,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,5820,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,5880,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,5940,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,6480,21431]],[[4,0,0],[27,900,3370],[14,1680,7586],[2,2700,10059],[25,3180,12649],[6,3420,13887],[20,4320,15395],[23,4800,18219],[13,4860,18417],[4,5700,21431]],[[31,0,0],[28,600,1157],[31,1080,1890]],[[31,0,0],[28,900,1157],[31,1380,1890]]],"shapeLen":[21711,3996,1894,2920,3462,21500,10016,15613,15129,2384,6922,25840,3136,11603,5741,16958,6768,11022,7399,10226,3410,27488]};
 const CFG = {"token":"pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw","live":""};
 const KEY = "ucsf:";
 const TZ = "America/Los_Angeles";
-
-/* ---------- storage (wrapped: storage can throw) ---------- */
 const store = {
   get(k){ try{ return localStorage.getItem(KEY+k) }catch(e){ return null } },
   set(k,v){ try{ localStorage.setItem(KEY+k, v) }catch(e){} }
@@ -330,239 +382,232 @@ async function fetchLive(){
   return out;
 }
 
+
 /* ---------- state ---------- */
-const state = { showAll:false, user:null, focus:(store.get("route")||null), live:null, liveErr:false, vehicles:[], lastLive:0 };
+const state = { user:null, focus:(store.get("route")||null), live:null, vehicles:[] };
 if(state.focus!=null && !ROUTES[+state.focus]) state.focus=null;
+const $ = id => document.getElementById(id);
+function setText(el, t){ if(el.textContent!==t) el.textContent=t }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const HOME = [[-122.512, 37.745], [-122.385, 37.795]];   // San Francisco campuses
 
 /* ---------- map ---------- */
-let map=null, mapReady=false, userMarker=null;
+let map=null, mapReady=false;
+/* side-by-side spacing: one line width, growing with zoom */
+const OFFSET=["interpolate",["linear"],["zoom"],11,["*",["get","off"],1.7],13,["*",["get","off"],2.8],15,["*",["get","off"],4.8],17,["*",["get","off"],7]];
+/* Routes that share a street are drawn side by side, each in its own color, as on a transit map.
+   Every route is sampled every 12 m; each sample looks for other routes within about 30 m. A stretch of route
+   where the same routes run together gets one slot each (alphabetical, centered on the street). Slots are
+   measured against one compass direction, so two routes running opposite ways on a street keep their sides. */
 function routeFeatures(){
+  const STEP=12, CELL=20, slotOrder={}; byName.forEach((r,k)=>slotOrder[r.i]=k);
+  const cellOf=ll=>[Math.round(ll[0]*KY/CELL), Math.round(ll[1]*KX/CELL)];
+  const grid=new Map(), samples=[];
+  ROUTES.forEach(r => routeShapes[r.i].forEach(si => {
+    const sh=SHAPES[si], pts=[];
+    for(let d=0; d<sh.len; d+=STEP) pts.push(pointAt(sh, d));
+    pts.push(pointAt(sh, sh.len));
+    pts.forEach(ll => { const [a,o]=cellOf(ll), k=a+":"+o; let set=grid.get(k); if(!set) grid.set(k, set=new Set()); set.add(r.i) });
+    samples.push({r:r.i, pts});
+  }));
   const f=[];
-  ROUTES.forEach(r => routeShapes[r.i].forEach(si => f.push({type:"Feature", properties:{r:r.i, color:r.color}, geometry:{type:"LineString", coordinates:SHAPES[si].pts.map(p=>[p[1],p[0]])}})));
+  samples.forEach(({r, pts}) => {
+    const keys=pts.map((ll, k) => {
+      const [a,o]=cellOf(ll), near=new Set();
+      for(let da=-1; da<=1; da++) for(let db=-1; db<=1; db++){ const g=grid.get((a+da)+":"+(o+db)); if(g) g.forEach(x=>near.add(x)) }
+      const set=[...near].sort((x,y)=>slotOrder[x]-slotOrder[y]);
+      const A=pts[Math.max(0,k-1)], B=pts[Math.min(pts.length-1,k+1)];
+      const dx=(B[1]-A[1])*KX, dy=(B[0]-A[0])*KY, flip = dx<-1e-6 || (Math.abs(dx)<=1e-6 && dy<0);
+      const n=set.length, off=n>1 ? (set.indexOf(r)-(n-1)/2)*(flip?-1:1) : 0;
+      return off;
+    });
+    for(let k=1;k<keys.length-1;k++) if(keys[k-1]===keys[k+1] && keys[k]!==keys[k-1]) keys[k]=keys[k-1];   // smooth one-sample flickers
+    let start=0;
+    for(let k=1;k<=pts.length;k++){
+      if(k===pts.length || keys[k]!==keys[start]){
+        const run=pts.slice(start, Math.min(k+1, pts.length));
+        if(run.length>1) f.push({type:"Feature", properties:{r, color:ROUTES[r].color, off:keys[start]}, geometry:{type:"LineString", coordinates:run.map(p=>[p[1],p[0]])}});
+        start=k;
+      }
+    }
+  });
   return {type:"FeatureCollection", features:f};
 }
 function stopFeatures(){
-  return {type:"FeatureCollection", features:STOPS.map((s,i)=>({type:"Feature", id:i, properties:{i, name:s.name}, geometry:{type:"Point", coordinates:[s.ll[1], s.ll[0]]}}))};
+  return {type:"FeatureCollection", features:STOPS.map((s,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[s.ll[1], s.ll[0]]}}))};
 }
 function vehicleFeatures(){
-  return {type:"FeatureCollection", features:state.vehicles.map(v=>({type:"Feature", properties:{r:v.route, color:ROUTES[v.route].color, live:v.live?1:0, hd:v.hd==null?0:v.hd, hasHd:v.hd==null?0:1, name:ROUTES[v.route].name}, geometry:{type:"Point", coordinates:[v.ll[1], v.ll[0]]}}))};
+  return {type:"FeatureCollection", features:state.vehicles.map((v,k)=>({type:"Feature", properties:{k, r:v.route, color:ROUTES[v.route].color, live:v.live?1:0, hd:v.hd==null?0:v.hd, hasHd:v.hd==null?0:1}, geometry:{type:"Point", coordinates:[v.ll[1], v.ll[0]]}}))};
 }
 function arrowImage(){
   const s=48, c=document.createElement("canvas"); c.width=c.height=s; const g=c.getContext("2d");
-  g.fillStyle="#ffffff"; g.strokeStyle="rgba(29,36,33,.55)"; g.lineWidth=2;
+  g.fillStyle="#ffffff"; g.strokeStyle="rgba(2,23,36,.8)"; g.lineWidth=2;
   g.beginPath(); g.moveTo(s/2,3); g.lineTo(s/2+9,17); g.lineTo(s/2-9,17); g.closePath(); g.fill(); g.stroke();
   return {width:s, height:s, data:g.getImageData(0,0,s,s).data};
 }
 function initMap(){
-  const el=document.getElementById("map");
-  if(!window.mapboxgl){ el.innerHTML='<div class="mapfallback">The map could not load. The shuttle lists below still work.</div>'; return }
+  if(!window.mapboxgl) return;
   try{
     mapboxgl.accessToken=CFG.token;
-    map=new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/light-v11", center:[-122.432,37.768], zoom:12.3, attributionControl:true, cooperativeGestures:false});
-  }catch(e){ el.innerHTML='<div class="mapfallback">The map could not load. The shuttle lists below still work.</div>'; return }
-  const touch = matchMedia("(pointer: coarse)").matches || innerWidth < 860;
-  if(!touch) map.addControl(new mapboxgl.NavigationControl({showCompass:false}), "top-right");
-  else map.touchPitch.disable();
-  const comp=document.getElementById("fabCompass"), needle=document.getElementById("needle");
-  map.on("rotate", ()=>{ const b=map.getBearing(); comp.hidden = Math.abs(b)<0.5; needle.setAttribute("transform","rotate("+(-b)+" 12 12)") });
-  comp.addEventListener("click", ()=>{ map.easeTo({bearing:0, pitch:0, duration:400}) });
+    map=new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/dark-v11", bounds:HOME, fitBoundsOptions:{padding:pad()},
+      pitchWithRotate:false, maxPitch:0,
+      customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
+  }catch(e){ map=null; return }
+  /* Bottom right, as on /transit/: the locate button, then the compass (and + and − with a mouse) */
+  const geo=new mapboxgl.GeolocateControl({positionOptions:{enableHighAccuracy:true}, trackUserLocation:true, showUserHeading:true, fitBoundsOptions:{maxZoom:15}});
+  map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
+  map.addControl(geo, "bottom-right");
+  let first=true;
+  geo.on("geolocate", p => {
+    state.user=[p.coords.latitude, p.coords.longitude];
+    const near=Math.min(...STOPS.map(s=>meters(state.user, s.ll)));
+    if(first && near>30000) setTimeout(()=>map.fitBounds(HOME, {padding:pad()}), 50);   // far from UCSF: stay on the routes
+    first=false; render();
+  });
+  geo.on("trackuserlocationend", ()=>{});
   map.on("load", () => {
     map.addImage("arrow", arrowImage(), {pixelRatio:2});
     map.addSource("routes", {type:"geojson", data:routeFeatures()});
     map.addSource("stops", {type:"geojson", data:stopFeatures()});
     map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
-    map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":"#ffffff","line-width":["interpolate",["linear"],["zoom"],11,3,15,8],"line-opacity":0.9}});
-    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":["interpolate",["linear"],["zoom"],11,1.6,15,4.5],"line-opacity":0.85}});
-    map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":"#ffffff","circle-stroke-color":"#1f5c4a","circle-stroke-width":2}});
-    map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,9,15,14],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.25,0.12]}});
-    map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],"#ffffff"],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
+    map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":"#c5ced5","line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":0.35,"line-offset":OFFSET}});
+    map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":["interpolate",["linear"],["zoom"],11,1.6,15,4.5],"line-opacity":0.95,"line-offset":OFFSET}});
+    map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}});   // a finger-wide tap area along each line
+    map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":"#021724","circle-stroke-color":"#e3eaee","circle-stroke-width":1.6}});
+    map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
+    map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],"#021724"],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
     map.addLayer({id:"veh-arrow", type:"symbol", source:"veh", filter:["==",["get","hasHd"],1], layout:{"icon-image":"arrow","icon-rotate":["get","hd"],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.8,15,1.15]}});
-    map.on("click","stop-dot", ev => { const f=ev.features[0]; stopPopup(f.properties.i) });
-    map.on("click","veh-dot", ev => { const f=ev.features[0]; new mapboxgl.Popup({offset:12}).setLngLat(f.geometry.coordinates).setHTML("<h3>"+esc(f.properties.name)+"</h3><p>"+(f.properties.live?"Live position":"Estimated from schedule")+"</p>").addTo(map) });
-    ["stop-dot","veh-dot"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
-    mapReady=true; applyFocus(); paintVehicles();
+    map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
+    map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
+    /* Tap a route line: highlight that route (tap it again for all). Stops and shuttles on top win the tap. */
+    map.on("click","route-hit", ev => {
+      if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
+      const f=state.focus==null ? null : +state.focus;
+      const hits=[...new Set(ev.features.map(x=>x.properties.r))];
+      const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
+      pickRoute(r===f && hits.length===1 ? null : r, false);
+    });
+    ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
+    mapReady=true; applyFocus(false); paintVehicles();
+    geo.trigger();   // with location allowed (or once the visitor allows it), the map finds them
   });
 }
+function pad(){ const s=Math.min(innerWidth, innerHeight); return innerWidth>=760 ? {top:70,bottom:60,left:340,right:70} : {top:70,left:20,right:60,bottom:Math.round(s*0.25)} }
 function stopPopup(i){
-  if(!map) return;
   const now=sfNow(Date.now()); const deps=departures(i, now, 3600).slice(0,5);
   const html="<h3>"+esc(STOPS[i].name)+"</h3>"+(deps.length ? deps.map(d=>"<p>"+esc(ROUTES[d.route].name)+": "+mins(d.at)+"</p>").join("") : "<p>No departures in the next hour.</p>");
-  new mapboxgl.Popup({offset:10}).setLngLat([STOPS[i].ll[1], STOPS[i].ll[0]]).setHTML(html).addTo(map);
+  new mapboxgl.Popup({offset:10, maxWidth:"260px"}).setLngLat([STOPS[i].ll[1], STOPS[i].ll[0]]).setHTML(html).addTo(map);
 }
-function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
+function vehPopup(k){
+  const v=state.vehicles[k]; if(!v) return; const r=ROUTES[v.route];
+  const line = v.next!=null ? "To "+STOPS[v.next].short+", "+mins(v.eta) : (v.label ? "Shuttle "+v.label : "");
+  new mapboxgl.Popup({offset:12, maxWidth:"260px"}).setLngLat([v.ll[1], v.ll[0]]).setHTML("<h3>"+esc(r.long)+"</h3><p>"+esc(line)+"</p><p>"+(v.live?"Live position":"Scheduled position")+"</p>").addTo(map);
+}
 function paintVehicles(){ if(mapReady) map.getSource("veh").setData(vehicleFeatures()) }
-function applyFocus(){
+function applyFocus(fly){
   if(!mapReady) return;
   const f = state.focus==null ? null : +state.focus;
-  const op = f==null ? 0.85 : ["case",["==",["get","r"],f],1,0.12];
-  map.setPaintProperty("route-line","line-opacity", op);
-  map.setPaintProperty("route-casing","line-opacity", f==null ? 0.9 : ["case",["==",["get","r"],f],0.9,0]);
+  map.setPaintProperty("route-line","line-opacity", f==null ? 0.95 : ["case",["==",["get","r"],f],1,0.12]);
+  map.setPaintProperty("route-casing","line-opacity", f==null ? 0.35 : ["case",["==",["get","r"],f],0.6,0]);
+  const on=["==",["get","r"],f==null?-1:f];   // the highlighted route draws wider, on top of the rest
+  map.setPaintProperty("route-line","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,3,1.6],15,["case",on,7.5,4.5]]);
+  map.setPaintProperty("route-casing","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,5,2.6],15,["case",on,11,7]]);
+  map.setLayoutProperty("route-line","line-sort-key", ["case",on,1,0]);
   const vf = f==null ? null : ["==",["get","r"],f];
   map.setFilter("veh-dot", vf); map.setFilter("veh-halo", vf);
   map.setFilter("veh-arrow", vf ? ["all",["==",["get","hasHd"],1], vf] : ["==",["get","hasHd"],1]);
-  if(f!=null){
+  if(fly){
+    if(f==null){ map.fitBounds(HOME, {padding:pad(), duration:600}); return }
     const b=new mapboxgl.LngLatBounds(); routeShapes[f].forEach(si=>SHAPES[si].pts.forEach(p=>b.extend([p[1],p[0]])));
-    if(!b.isEmpty()) map.fitBounds(b, {padding:fitPad(), maxZoom:15, duration:600});
+    if(!b.isEmpty()) map.fitBounds(b, {padding:pad(), maxZoom:15, duration:600});
   }
 }
-function fitPad(){ const wide=innerWidth>=860; return wide ? {top:40,bottom:40,left:420,right:40} : {top:30,left:30,right:30,bottom:Math.round(innerHeight*0.46)+20} }
 
-/* ---------- keyed list updates (update in place so focus survives) ---------- */
-function syncList(ul, items, key, make, update){
-  const have=new Map(); [...ul.children].forEach(li=>have.set(li.dataset.k, li));
-  let prev=null;
-  items.forEach(it => {
-    const k=key(it); let li=have.get(k);
-    if(!li){ li=make(it); li.dataset.k=k } else have.delete(k);
-    update(li, it);
-    const want = prev ? prev.nextSibling : ul.firstChild;
-    if(li!==want) ul.insertBefore(li, want);
-    prev=li;
-  });
-  have.forEach(li=>li.remove());
+/* ---------- legend ---------- */
+function pickRoute(i, fly){
+  state.focus = i==null ? null : String(i);
+  store.set("route", state.focus==null ? "" : state.focus); applyFocus(fly); render();
 }
-function badge(r){ const b=document.createElement("span"); b.className="badge"; b.style.background=r.color; b.style.color=r.text; b.textContent=r.name; return b }
-function setText(el, t){ if(el.textContent!==t) el.textContent=t }
+function buildRoutes(){
+  const ul=$("routes");
+  byName.forEach(r => {
+    const li=document.createElement("li"); const b=document.createElement("button"); b.type="button"; b.className="pick"; b.dataset.r=r.i;
+    b.innerHTML='<span class="line" aria-hidden="true"></span><span class="name"></span><span class="cnt"></span>';
+    b.firstChild.style.setProperty("--c", r.color); b.children[1].textContent=r.long;
+    b.addEventListener("click", ()=>pickRoute(state.focus!=null && +state.focus===r.i ? null : r.i, true));
+    li.append(b); ul.append(li);
+  });
+}
 
-/* ---------- render ---------- */
-const $=id=>document.getElementById(id);
+/* ---------- render (updates text in place, so focus stays put) ---------- */
 function render(){
   const nowMs=Date.now(), now=sfNow(nowMs);
   const sched=scheduledVehicles(now);
   const liveRoutes=new Set((state.live||[]).map(v=>v.route));
-  state.vehicles = (state.live||[]).concat(sched.filter(v=>!liveRoutes.has(v.route)));
+  state.vehicles=(state.live||[]).concat(sched.filter(v=>!liveRoutes.has(v.route)));
   paintVehicles();
 
-  // status chip
-  const chip=$("status"); let mode, txt;
-  if(state.live && state.live.length){ mode="live"; txt="Live"; }
-  else if(sched.length){ mode="sched"; txt="Schedule estimate"; }
-  else { mode="none"; txt="No service now"; }
-  if(chip.dataset.mode!==mode) chip.dataset.mode=mode; setText($("statusText"), txt);
-  setText($("srcNote"), state.live ? "Filled dots are live GPS positions. Hollow dots are estimated from the published schedule." : "Positions are estimated from the published UCSF schedule, not live GPS. Check the official tracker for delays.");
+  const n=state.vehicles.length, st=$("status");
+  let mode, txt;
+  if(state.live && state.live.length){ mode="live"; txt="Live, "+clock.format(new Date(nowMs)) }
+  else if(n){ mode="sched"; txt="Schedule estimate, "+clock.format(new Date(nowMs)) }
+  else { mode="none"; txt="No service now" }
+  if(st.dataset.mode!==mode) st.dataset.mode=mode; setText($("statusText"), txt);
 
-  // running list
-  const u=state.user;
-  const rows=state.vehicles.map(v=>({v, d:u?meters(u, v.ll):null}));
-  rows.sort((a,b)=> u ? a.d-b.d : ROUTES[a.v.route].name.localeCompare(ROUTES[b.v.route].name) || (a.v.eta||0)-(b.v.eta||0));
-  setText($("sheetCount"), rows.length ? rows.length+" running" : "none running");
-  setText($("runHead"), u ? "Shuttles near you" : "Running now");
-  const LIMIT=8, shown = state.showAll ? rows : rows.slice(0, LIMIT);
-  syncList($("running"), shown, r=>r.v.id, makeRun, updateRun);
-  const more=$("moreBtn"); more.hidden = rows.length<=LIMIT;
-  setText(more, state.showAll ? "Show nearest "+LIMIT : "Show all "+rows.length+" running");
-  more.setAttribute("aria-expanded", String(state.showAll));
-  const empty=$("runEmpty");
-  if(rows.length){ empty.hidden=true }
+  if(n) setText($("summary"), n+(n===1?" shuttle":" shuttles")+" running");
   else {
-    const ns=nextService(nowMs); empty.hidden=false;
-    setText(empty, ns ? "No shuttles are scheduled right now. Next service: "+(ns.day===0?"today":ns.day===1?"tomorrow":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][ns.wd])+" at "+hhmm(ns.sec)+" ("+ROUTES[ns.route].name+")." : "No shuttles are scheduled this week.");
+    const ns=nextService(nowMs);
+    setText($("summary"), ns ? "None running. Next: "+(ns.day===0?"today":ns.day===1?"tomorrow":DAYS[ns.wd])+" "+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "None running this week");
   }
-
-  // near stops
-  if(u){
-    $("nearWrap").hidden=false;
-    const near=STOPS.map((s,i)=>({i, d:meters(u, s.ll)})).sort((a,b)=>a.d-b.d).slice(0,5);
-    syncList($("near"), near, n=>"st"+n.i, makeStop, (li,n)=>updateStop(li,n,now));
-  }
-
-  // route buttons
   const counts=ROUTES.map(()=>0); state.vehicles.forEach(v=>counts[v.route]++);
-  syncList($("routes"), byName, r=>"r"+r.i, makeRoute, (li,r)=>{
-    const b=li.firstChild; b.setAttribute("aria-pressed", String(state.focus!=null && +state.focus===r.i));
-    setText(b.querySelector(".n"), counts[r.i] ? counts[r.i]+" running" : "");
+  document.querySelectorAll("#routes .pick").forEach(b => {
+    const i=+b.dataset.r; b.setAttribute("aria-pressed", String(state.focus!=null && +state.focus===i));
+    setText(b.querySelector(".cnt"), counts[i] ? String(counts[i]) : "");
+    b.setAttribute("aria-label", ROUTES[i].long+(counts[i] ? ", "+counts[i]+" running" : ", none running"));
   });
-}
-function makeRun(row){
-  const li=document.createElement("li"); const b=document.createElement("button"); b.type="button"; b.className="row";
-  b.append(badge(ROUTES[row.v.route]));
-  const m=document.createElement("span"); m.className="main"; m.innerHTML='<span class="t1"></span><span class="t2"></span>';
-  const r=document.createElement("span"); r.className="right"; r.innerHTML='<b></b><span class="tag"></span>';
-  b.append(m, r); li.append(b);
-  b.addEventListener("click", ()=>{ const v=state.vehicles.find(x=>x.id===li.dataset.k); if(v && map) map.flyTo({center:[v.ll[1],v.ll[0]], zoom:Math.max(map.getZoom(),14.5), padding:fitPad(), duration:700}) });
-  return li;
-}
-function updateRun(li, row){
-  const v=row.v, r=ROUTES[v.route], b=li.firstChild;
-  const bd=b.firstChild; if(bd.textContent!==r.name){ bd.replaceWith(badge(r)) }
-  const t1=b.querySelector(".t1"), t2=b.querySelector(".t2"), big=b.querySelector(".right b"), tag=b.querySelector(".tag");
-  setText(t1, v.next!=null ? "To "+STOPS[v.next].short : (v.label ? "Shuttle "+v.label : r.long));
-  setText(t2, v.next!=null ? "Arrives in "+mins(v.eta) : "Live GPS");
-  setText(big, row.d!=null ? dist(row.d) : "");
-  setText(tag, v.live ? "Live" : "Sched");
-  tag.className = "tag"+(v.live?" live":"");
-  b.setAttribute("aria-label", r.name+" shuttle, "+(v.live?"live":"scheduled")+", "+t1.textContent+", "+t2.textContent+(row.d!=null?", "+dist(row.d)+" away":"")+". Show on map");
-}
-function makeStop(n){
-  const li=document.createElement("li"); li.className="stop";
-  li.innerHTML='<p class="name"></p><p class="meta"></p><ul class="deps"></ul>';
-  return li;
-}
-function updateStop(li, n, now){
-  setText(li.querySelector(".name"), STOPS[n.i].name);
-  const walk=Math.max(1, Math.round(n.d*1.25/80));
-  setText(li.querySelector(".meta"), dist(n.d)+" away, about "+walk+" min walk");
-  const deps=departures(n.i, now, 5400);
-  const seen={}, list=[];
-  deps.forEach(d=>{ seen[d.route]=(seen[d.route]||0)+1; if(seen[d.route]<=2 && list.length<6) list.push(d) });
-  const ul=li.querySelector(".deps");
-  if(!list.length){ ul.innerHTML=""; const x=document.createElement("li"); x.textContent="No departures in the next 90 min"; ul.append(x); return }
-  syncList(ul, list, d=>d.route+":"+Math.round((now.sec+d.at)/60), d=>{ const x=document.createElement("li"); x.append(badge(ROUTES[d.route]), document.createElement("span")); return x }, (x,d)=>setText(x.lastChild, mins(d.at)));
-}
-function makeRoute(r){
-  const li=document.createElement("li"); const b=document.createElement("button"); b.type="button"; b.className="rbtn";
-  const sw=document.createElement("span"); sw.className="sw"; sw.style.background=r.color; sw.setAttribute("aria-hidden","true");
-  const nm=document.createElement("span"); nm.textContent=r.long;
-  const n=document.createElement("span"); n.className="n";
-  b.append(sw, nm, n); li.append(b);
-  b.addEventListener("click", ()=>{ state.focus = (state.focus!=null && +state.focus===r.i) ? null : String(r.i); store.set("route", state.focus==null?"":state.focus); applyFocus(); render() });
-  return li;
-}
 
-/* ---------- location ---------- */
-function locate(){
-  const btn=$("locBtn"), msg=$("locMsg");
-  if(!("geolocation" in navigator)){ msg.textContent="This browser cannot share location."; msg.classList.add("err"); return }
-  btn.disabled=true; setText($("locLabel"), "Finding you"); msg.classList.remove("err"); msg.textContent="Waiting for location permission.";
-  navigator.geolocation.getCurrentPosition(p => {
-    btn.disabled=false; setText($("locLabel"), "Update my location");
-    state.user=[p.coords.latitude, p.coords.longitude]; store.set("loc","1");
-    const nearest=Math.min(...STOPS.map(s=>meters(state.user, s.ll)));
-    msg.textContent = nearest>8000 ? "You are "+dist(nearest)+" from the nearest UCSF shuttle stop." : "Sorted by distance from you.";
-    if(map){
-      if(!userMarker){ const el=document.createElement("div"); el.setAttribute("aria-hidden","true"); el.style.cssText="width:16px;height:16px;border-radius:50%;background:#2c5b9e;border:3px solid #fff;box-shadow:0 0 0 6px rgba(44,91,158,.25)"; userMarker=new mapboxgl.Marker({element:el}) }
-      userMarker.setLngLat([state.user[1], state.user[0]]).addTo(map);
-      if(nearest<8000) map.flyTo({center:[state.user[1], state.user[0]], zoom:14.6, padding:fitPad(), duration:800});
+  setText($("srcNote"), state.live ? "Filled dots are live GPS; hollow dots are estimated from the timetable, for routes without live data. The arrow shows the direction of travel." : "Shuttles are placed where the timetable says they are now (hollow dots), not by live GPS. The arrow shows the direction of travel.");
+
+  const nn=$("nearNote");
+  if(state.user){
+    const near=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d).slice(0,3);
+    if(near[0].d>8000){ nn.hidden=false; setText(nn, "Nearest UCSF shuttle stop: "+STOPS[near[0].i].short+", "+dist(near[0].d)+" away."); }
+    else {
+      const parts=near.map(s => {
+        const seen={}, list=[];
+        departures(s.i, now, 5400).forEach(d=>{ seen[d.route]=(seen[d.route]||0)+1; if(seen[d.route]<=2 && list.length<4) list.push(ROUTES[d.route].name+" "+mins(d.at)) });
+        return "<b>"+esc(STOPS[s.i].short)+"</b>, "+dist(s.d)+": "+(list.length ? esc(list.join(", ")) : "no departures in the next 90 min");
+      });
+      const html="Near you. "+parts.join(". ")+".";
+      if(nn.innerHTML!==html) nn.innerHTML=html; nn.hidden=false;
     }
-    render();
-  }, err => {
-    btn.disabled=false; setText($("locLabel"), "Show shuttles near me");
-    msg.classList.add("err");
-    msg.textContent = err.code===1 ? "Location is blocked. Allow it in your browser settings, or browse the map." : "Could not get your location. Try again.";
-  }, {enableHighAccuracy:true, timeout:15000, maximumAge:30000});
+  }
 }
 
 /* ---------- loop ---------- */
 async function pollLive(){
-  if(!LIVE) return;
-  try{ state.live=await fetchLive(); state.liveErr=false }
-  catch(e){ state.live=null; state.liveErr=true }
+  try{ state.live=await fetchLive() } catch(e){ state.live=null }
   render();
 }
-function toggleSheet(){
-  const s=$("sheet"), b=$("sheetToggle"), open=s.dataset.open!=="true";
-  s.dataset.open=String(open); b.setAttribute("aria-expanded", String(open)); store.set("sheet", open?"1":"0");
-}
-$("sheetToggle").addEventListener("click", toggleSheet);
-$("locBtn").addEventListener("click", locate);
-$("fabLocate").addEventListener("click", ()=>{ if(state.user && map){ map.flyTo({center:[state.user[1],state.user[0]], zoom:Math.max(map.getZoom(),14.6), padding:fitPad(), duration:700}); locate() } else locate() });
-$("moreBtn").addEventListener("click", ()=>{ state.showAll=!state.showAll; render() });
-if(store.get("sheet")==="0") toggleSheet();
+/* Maps menu, as on /transit/ */
+(function(){
+  const btn=$("mapsBtn"), menu=$("maps-menu");
+  const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
+  btn.addEventListener("click", e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded", String(open)) });
+  document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
+})();
+$("home").addEventListener("click", ()=>pickRoute(null, true));
+/* Info opens below the routes: bring it into view inside the legend */
+$("info").addEventListener("toggle", ()=>{ if($("info").open) $("info").scrollIntoView({block:"nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}) });
+/* Legend starts open on larger screens, shut on phones (as on the other map pages) */
+if(matchMedia("(min-width: 760px) and (min-height: 600px)").matches) $("legend").open=true;
 setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
-initMap(); render();
+buildRoutes(); initMap(); render();
 setInterval(render, 5000);
 if(LIVE){ pollLive(); setInterval(pollLive, 10000) }
-if(store.get("loc")==="1" && navigator.permissions){ navigator.permissions.query({name:"geolocation"}).then(p=>{ if(p.state==="granted") locate() }).catch(()=>{}) }
+
 </script>
 </body>
 </html>

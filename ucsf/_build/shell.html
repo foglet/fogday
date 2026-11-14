@@ -1,0 +1,239 @@
+---
+layout: null   # self-contained map page in the Transit Connected / SF Trees interface; built by ucsf/_build/build.py
+title: UCSF Shuttles
+description: Every UCSF shuttle route on one map, with the shuttles running now and the next departures at the stops near you. A map by Fogday Studios.
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#021724">
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
+<style>
+  /* UCSF Shuttles: the SF Trees / Transit Connected map interface. Always dark. */
+  :root {
+    --glass: rgb(98 98 102 / .15); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; overscroll-behavior: none; }
+  [hidden] { display: none !important; }
+  #map { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
+  @supports (height: 100lvh) { #map { height: 100lvh; } }
+
+  /* Title, top left (centered on phones): tap it to see every route */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .title-text { background-image: linear-gradient(to right, #8fd0ff, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .maps-btn {
+    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: #4a90c8;
+  }
+  .maps-btn svg { transition: transform .2s ease; }
+  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
+  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .maps-menu {
+    --surface: #1e2a36; --site-line: #2a3846;
+    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
+    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px; animation: maps-menu-in .16s ease-out;
+  }
+  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
+  .maps-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .12em;
+  }
+  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .maps-menu a:hover { color: #ff5500; }
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: #8fd0ff; }
+  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }
+  .maps-menu .ext {
+    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
+    -webkit-mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
+            mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
+  }
+  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
+  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
+  @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
+  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
+
+  /* The legend, bottom left above the Mapbox logo, as on /treesf/ and /transit/: shut, just its title;
+     open, the routes (tap one to show only it) and Info. Each line sits on its own glass box. */
+  .controls {
+    position: fixed; z-index: 2; left: calc(12px + var(--sal)); bottom: calc(50px + var(--sab)); width: max-content; min-width: 260px;
+    max-width: min(400px, calc(100% - 24px - var(--sal) - var(--sar)));
+  }
+  .controls:has(.map-legend:not([open])) { width: auto; min-width: 0; }
+  .map-legend > summary, .legend-body > .summary, .legend-body > .key, .routes li, .notes summary, .notes .note, .controls > .status {
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
+    width: fit-content; max-width: 100%; border-radius: 999px; padding: 3px 10px;
+  }
+  .legend-body > .summary, .legend-body > .key, .notes .note { box-shadow: none; }
+  .notes .note { border-radius: var(--glass-r); }
+  .controls { --muted: #c5ced5; }
+  .map-legend summary { list-style: none; cursor: pointer; padding: 6px 14px !important; min-height: 30px; border-radius: 8px;
+                        font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .map-legend summary::-webkit-details-marker { display: none; }
+  .map-legend > summary::after, .notes summary::after {
+    content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 6px; vertical-align: -1px;
+    background: currentColor; transition: transform .2s ease;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  }
+  .map-legend > summary::after { color: var(--muted); }
+  .map-legend[open] > summary::after, .notes[open] summary::after { transform: rotate(180deg); }
+  .map-legend > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .sky-text { color: #8fd0ff; }
+  /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
+  .legend-body { padding: 6px 6px 8px; display: grid; justify-items: start; gap: 8px;
+                 max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
+                 overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .summary { margin: 0; color: var(--ink); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .key { margin: -4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+  .key .bus { margin-left: 8px; }
+  .key .bus:first-child { margin-left: 0; }
+  .bus { flex: none; display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #8fd0ff; }
+  .bus.live { background: #8fd0ff; }
+  .routes { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 2px; font-size: .9rem; max-width: 100%; }
+  .routes li { display: flex; align-items: center; padding: 0 4px !important; min-width: 0; }
+  .pick { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; min-height: 24px; cursor: pointer; border-radius: 999px; padding: 2px 6px; }
+  .pick:hover .name { color: var(--accent); }
+  .pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .pick[aria-pressed="true"] { background: color-mix(in srgb, var(--ink) 12%, transparent); }
+  .pick[aria-pressed="true"] .name { font-weight: 700; }
+  .line { flex: none; width: 28px; height: 4px; border-radius: 2px; background: var(--c); box-shadow: 0 0 0 1px rgb(255 255 255 / .35); }
+  .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+  .cnt { margin-left: auto; padding-left: 10px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85em; }
+  .status { font-size: .85rem; color: var(--muted); margin: 6px 6px 0; }
+  .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #c98a1b; vertical-align: 1px; }
+  .status[data-mode="live"] .dot { background: #4cd07a; }
+  .status[data-mode="none"] .dot { background: #8fa3b1; }
+  /* Info: a small uppercase toggle that opens the notes, as on /tides/ and /treesf/ */
+  .notes { color: var(--muted); }
+  .notes summary { list-style: none; cursor: pointer; display: block; padding-inline: 12px !important; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; border-radius: 8px; }
+  .notes summary::-webkit-details-marker { display: none; }
+  .notes summary:hover { color: var(--accent); }
+  .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .notes .note { margin-top: 4px; }
+  .notes-body { display: grid; justify-items: start; }
+  .note { font-size: .78rem; color: var(--muted); margin: 0; }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note a { color: var(--ink); }
+  .note a:hover { color: var(--ink); }
+
+  /* Popups: navy cards */
+  .mapboxgl-popup-content { background: var(--panel); color: var(--ink); font: 400 .9rem/1.4 var(--font); border-radius: 10px; padding: 10px 14px; box-shadow: 0 8px 24px rgb(0 0 0 / .35); }
+  .mapboxgl-popup-content h3 { margin: 0 0 2px; font-size: .95rem; font-weight: 700; }
+  .mapboxgl-popup-content p { margin: 0; color: var(--muted); }
+  .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip, .mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip, .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip { border-top-color: var(--panel); }
+  .mapboxgl-popup-anchor-top .mapboxgl-popup-tip, .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip, .mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: var(--panel); }
+  .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: var(--panel); }
+  .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: var(--panel); }
+  .mapboxgl-popup-close-button { color: var(--muted); font-size: 18px; width: 32px; height: 32px; }
+
+  /* Map controls, bottom right as on /transit/: no panels, icons with a navy halo */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border-color: transparent; box-shadow: none; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .mapboxgl-map .mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon, .mapboxgl-map .mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)); }
+  @media (pointer: coarse) {
+    .map-legend summary { min-height: 44px; display: flex; align-items: center; gap: .3em; }
+    .mapboxgl-map .mapboxgl-ctrl-group button { width: 44px; height: 44px; }
+  }
+  /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it) */
+  @media (pointer: coarse), (max-width: 759px) {
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; width: 44px; height: 44px; }
+  }
+  .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4; background: color-mix(in srgb, var(--bg) 90%, transparent); }
+  .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
+  .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
+  .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
+  @media (max-width: 759px) {
+    .controls { right: calc(66px + var(--sar)); width: auto; min-width: 0; max-width: none; }
+    .controls:has(.map-legend:not([open])) { right: auto; }
+    .summary, .routes { font-size: 1rem; }
+    .pick { min-height: 30px; }
+    .notes summary { min-height: 32px; display: inline-flex; align-items: center; font-size: .8rem; }
+    .note { font-size: .88rem; line-height: 1.45; }
+  }
+  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg, .map-legend > summary::after, .notes summary::after { transition: none; } }
+</style>
+</head>
+<body>
+<div id="map" role="region" aria-label="UCSF Shuttles map"></div>
+
+<div class="top">
+  <div class="title-row">
+    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Show every route"><span class="title-text">UCSF Shuttles</span></button></h1>
+    <button type="button" class="maps-btn" id="mapsBtn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>
+      <ul>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% endfor %}
+        <li class="all"><a href="/maps/">All maps →</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<section class="controls" aria-label="Legend">
+  <details class="map-legend" id="legend">
+    <summary><span class="sky-text">Shuttle Legend</span></summary>
+    <div class="legend-body">
+      <p class="summary" id="summary">Loading the schedule</p>
+      <p class="key"><span class="bus live" aria-hidden="true"></span>Live <span class="bus" aria-hidden="true"></span>Scheduled</p>
+      <ul class="routes" id="routes" aria-label="Routes. Tap one to show only it; tap it again to show all."></ul>
+      <details class="notes" id="info">
+        <summary>Info</summary>
+        <div class="notes-body">
+          <p class="note" id="nearNote" hidden></p>
+          <p class="note" id="srcNote"></p>
+          <p class="note">Tap a route, in the legend or on the map, to highlight it; tap it again to show all. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you and Info lists the stops nearest you; nothing is kept. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
+          <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>.</p>
+        </div>
+      </details>
+    </div>
+  </details>
+  <p class="status" id="status" data-mode="sched" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading</span></p>
+</section>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js"></script>
+<script>
+"use strict";
+const D = /*DATA*/;
+const CFG = /*CONFIG*/;
+/*APP*/
+</script>
+</body>
+</html>

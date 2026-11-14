@@ -21,5 +21,7 @@
   url: /fog/
 - name: SF Trees
   url: /treesf/
+- name: UCSF Shuttles
+  url: /ucsf/
 - name: A Spy Map
   url: /spy/
