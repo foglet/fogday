@@ -137,7 +137,7 @@ Opportunity = Importance + (Importance − Satisfaction). The scores are my esti
    - *Means*: each lesson appears once in the navigation, though search and Review can still point to it.
    - *Not*: the same card in two tabs.
 3. **Her order beats our classifier.** Use Dr. Jia's own sequence wherever it exists.
-   - *Not*: keyword-guessed ordering on the path without her sign-off.
+   - *Not*: keyword-guessed ordering on the path, except the 9 days Fogfish accepted on 2026-11-14.
 4. **Built for coming back.** Sessions are short and days apart, so every return should land on Continue.
 5. **Don't bury the business.** Her paid classes stay one tap away, under About.
 
