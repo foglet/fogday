@@ -312,11 +312,11 @@ function ring(n, total){
   const C = 2*Math.PI*20, f = total ? n/total : 0, txt = `${n}/${total}`;
   return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle"${txt.length>5?' class="sm"':''}>${txt}</text></svg>`;
 }
-// Drill picker: one tile per drill, labelled Drill 1, Drill 2 ...
-function drillGrid(ctx, items){
+// Numbered picker laid out in a row that wraps: Drill 1, Drill 2 ... / Part 1, Part 2 ... / Day 1, Day 2 ...
+function drillGrid(ctx, items, label='Drill', num=(r,i)=>i+1){
   CTX[ctx] = items.map(r=>r.id);
-  return `<ul class="dgrid">${items.map((r,i)=>{ const base=`Drill ${i+1}: ${T(r)}`;
-    return `<li><button class="dtile" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" data-label="${esc(base)}" aria-label="${esc(base+(isDone(r.id)?', done':''))}">Drill ${i+1}${ICON_CHECK}</button></li>`; }).join('')}</ul>`;
+  return `<ul class="dgrid">${items.map((r,i)=>{ const tag=`${label} ${num(r,i)}`, base=`${tag}: ${T(r)}`;
+    return `<li><button class="dtile" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" data-label="${esc(base)}" aria-label="${esc(base+(isDone(r.id)?', done':''))}">${tag}${ICON_CHECK}</button></li>`; }).join('')}</ul>`;
 }
 // Every card on every tab is an accordion like Practice. ACC holds the items and panel for cards that are not series or drill types.
 const ACC = {};
@@ -326,9 +326,8 @@ function accItems(key){
   return (ACC[key] && ACC[key].items) || [];
 }
 function accPanel(key){
-  if(key.startsWith('ser:')){ const sid=key.slice(4), it=seriesItems(sid), lab=sid==='survival30'?'Day':'Part';
-    CTX[key]=it.map(r=>r.id);
-    return `<ul class="list">${it.map((r,i)=>row(r,key,{ord:sid==='survival30'?r.ord:i+1,ordLabel:lab,nometa:true})).join('')}</ul>`; }
+  if(key.startsWith('ser:')){ const sid=key.slice(4), d=sid==='survival30';
+    return drillGrid(key, seriesItems(sid), d?'Day':'Part', d?(r=>r.ord):undefined); }
   if(key.startsWith('drill:')) return drillGrid(key, drillPool(key.slice(6)));
   return ACC[key] ? ACC[key].panel() : '';
 }
@@ -471,7 +470,7 @@ function openPlayer(id, ctx, keepQueue){
   }
   if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
   $('#sheetTitle').textContent = T(r);
-  $('#sheetMeta').textContent = [r.lab&&r.lab.join(', '), r.k==='long'?`Lesson, ${r.d}`:'Short', r.v&&`${r.v} views`, LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
+  $('#sheetMeta').textContent = [r.lab&&r.lab.join(', '), LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
   const p = $('#player'); p.className = 'player ' + (r.k==='long'?'long':'short');
   p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(T(r))}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
   p.querySelector('iframe').addEventListener('load', () => { const l=p.querySelector('.loading'); if(l) l.remove(); }, {once:true});
