@@ -79,7 +79,7 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* Level switch (segmented) */
-.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s5) 0 var(--s3)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s3) 0 var(--s3)}
 .seg button{min-height:var(--tap);border:0;border-radius:calc(var(--r-md) - 4px);background:transparent;font-weight:600;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer;padding:0 var(--s1);
   transition:background-color var(--dur-fast)}
 @media (hover:hover){.seg button:hover{background:var(--surface-3);color:var(--ink)}}
@@ -134,6 +134,7 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 .scard .chev{grid-column:3;width:24px;height:24px;color:var(--ink-3);transition:transform var(--dur) var(--ease)}
 .scard[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .acc-panel{padding:var(--s1) var(--s1) var(--s3)}
+.page-h{margin:var(--s5) 0 0;color:var(--ink);font-size:1.0625rem;font-family:var(--display);font-weight:400;line-height:1.25}
 .scard b{color:var(--ink);display:block;font-size:1.0625rem;font-family:var(--display);font-weight:400;line-height:1.25}
 .scard span{display:block;font-size:var(--fs-sm);color:var(--ink-2)}
 .ring{width:48px;height:48px}
@@ -376,7 +377,7 @@ function sec(id, name, body, hint){
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<h1 class="vh">${L.name} lessons</h1>`; }
+  return `<h1 class="page-h">Learn</h1>`; }
 function viewLearn(bodyOnly){
   let items = ITEMS.filter(r => r.lv===S.level);
   if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>
