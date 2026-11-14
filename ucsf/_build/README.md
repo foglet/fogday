@@ -9,6 +9,7 @@ Same interface as /treesf/ and /transit/ (dark map, title + maps menu top left, 
 - Routes sharing a street are drawn side by side (offset slots per stretch, computed in the page).
 - Shuttles running now: hollow dots are schedule estimates; filled dots are live GPS once the proxy is set.
 - Location: starts by itself (watchPosition, blue dot); the crosshair above the compass flies back to you (same place as /treesf/). Info lists the 3 nearest stops with departures.
+- Dark mode quiets the Spy style: its lime-to-green lines (paths, tunnels) are muted and faded at load (quietBasemap), and routes use a night palette (NIGHT in engine.js).
 - Light / dark: sun or moon above the crosshair. Shares `fogday-theme` with the site header toggle; with no saved choice it follows the system. Switching reloads the Mapbox style (light-v11 / the Spy map style, fogfish/cilhmh2ah00959gm3fy54zuik) and re-adds the layers.
 - Info (inside the legend): near-you departures, how positions are made, data sources.
 
