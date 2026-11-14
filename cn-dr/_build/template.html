@@ -174,12 +174,24 @@ h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:v
 
 /* Home path card */
 .path{margin-top:var(--s4);background:var(--primary-tint);border:1.5px solid var(--primary);border-radius:var(--r-lg);padding:var(--s4);box-shadow:var(--shadow-card)}
-.path-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);align-items:center}
 .path .day{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-ink);margin:0}
 .path h2{margin:var(--s1) 0 0;font-family:var(--display);font-weight:400;font-size:1.25rem;line-height:1.3}
 .path .btn{width:100%;margin-top:var(--s4)}
 .path .hint{margin:var(--s3) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
 .links{display:grid;gap:var(--s2);margin-top:var(--s4)}
+.dots{list-style:none;margin:var(--s4) 0 0;padding:0;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px}
+.dot{width:100%;min-height:28px;border:0;background:none;padding:0;display:grid;place-items:center;cursor:pointer;border-radius:var(--r-sm)}
+.dot::before,.legend .k{content:"";display:block;box-sizing:border-box;width:12px;height:12px;border-radius:50%;border:1.5px solid var(--ink-3);background:var(--surface)}
+.dot[data-state="done"]::before,.legend .k.done{background:var(--primary);border-color:var(--primary)}
+.dot[data-state="skip"]::before,.legend .k.skip{border:2px dashed var(--accent);background:none}
+.dot[data-state="cur"]::before,.legend .k.cur{width:16px;height:16px;border:3px solid var(--primary);background:var(--surface)}
+@media (hover:hover){.dot:hover::before{transform:scale(1.2)}}
+.dot:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1) var(--s2);margin:var(--s2) 0 0;font-size:var(--fs-cap);color:var(--ink-2)}
+.legend .k{display:inline-block;vertical-align:middle;margin-right:2px}
+.legend .k.cur{width:12px;height:12px;border-width:2.5px}
+.path .phr{display:block;margin-top:var(--s2)}
+.path .list{margin-top:var(--s1)}
 
 /* Search */
 .search{display:flex;gap:var(--s2);align-items:center;margin-top:var(--s4)}
@@ -275,7 +287,7 @@ const store = {
 };
 let done = store.get('done', {});           // id -> timestamp
 const OLD_TAB = {series:'learn', search:'learn'};
-let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, sec:{}, q:'' };
+let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, sec:{}, q:'', phr:false };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
@@ -449,30 +461,38 @@ function viewMaterials(){
     <h2 class="sub">Follow</h2><div style="display:flex;flex-wrap:wrap;gap:var(--s2)">${MAT.follow.map(f=>`<a class="btn" href="${f.url}" target="_blank" rel="noopener">${esc(f.name)}</a>`).join('')}</div>` + foot();
 }
 const PATH = 'survival30';
+// Continue goes to the last day opened if it is not done yet, else the next undone day after it, else the first gap.
 function pathState(){
   const it = seriesItems(PATH), n = it.filter(r=>isDone(r.id)).length;
-  const next = it.find(r=>!isDone(r.id));
-  return {it, n, next};
+  const at = store.get('pathAt', 0), max = store.get('pathMax', 0);
+  const atItem = it.find(r=>r.ord===at);
+  const next = (atItem && !isDone(atItem.id)) ? atItem : (it.find(r=>r.ord>at && !isDone(r.id)) || it.find(r=>!isDone(r.id)) || null);
+  return {it, n, next, max, started: n>0 || max>0};
+}
+function dotState(r, next, max){ return isDone(r.id) ? 'done' : r===next ? 'cur' : r.ord < max ? 'skip' : 'todo'; }
+const DOT_WORD = {done:'done', cur:'up next', skip:'skipped', todo:'not started'};
+function dots(it, next, max){
+  return `<ol class="dots" aria-label="${it.length} days">${it.map(r=>{ const st=dotState(r,next,max);
+    return `<li><button class="dot" data-id="${r.id}" data-ctx="ser:${PATH}" data-state="${st}"${st==='cur'?' aria-current="step"':''} aria-label="${esc(`Day ${r.ord}: ${T(r)}, ${DOT_WORD[st]}`)}"></button></li>`; }).join('')}</ol>
+    <p class="legend" aria-hidden="true"><span class="k done"></span>Done <span class="k skip"></span>Skipped <span class="k cur"></span>Up next</p>`;
+}
+function milestone(n){ return n>=21 ? 'Three weeks of phrases done.' : n>=14 ? 'Two weeks of phrases done.' : n>=7 ? 'One week of phrases done.' : ''; }
+function phrases(it){
+  const got = it.filter(r=>isDone(r.id)); if(!got.length) return '';
+  const open = !!S.phr;
+  return `<button class="linkbtn phr" data-phr aria-expanded="${open}" aria-controls="phrList">Phrases learned: ${got.length}</button>
+    <ul class="list" id="phrList"${open?'':' hidden'}>${got.map(r=>row(r,'ser:'+PATH)).join('')}</ul>`;
 }
 function homeCard(){
-  const {it, n, next} = pathState(), s = SER[PATH];
-  if(!next) return `<div class="path" id="pathCard"><div class="path-top"><div><p class="day" id="pathDay">All ${it.length} days done</p><h2 id="pathTitle">You finished ${esc(s.name)}</h2></div>${ring(n,it.length)}</div>
-    <button class="btn primary" data-goto="learn">Find your next lessons in the Library</button></div>`;
-  const label = n ? 'Continue' : 'Start';
-  return `<div class="path" id="pathCard"><div class="path-top"><div><p class="day" id="pathDay">Day ${next.ord} of ${it.length}</p><h2 id="pathTitle">${esc(T(next))}</h2></div>${ring(n,it.length)}</div>
-    <button class="btn primary" id="pathBtn" data-play="${next.id}" data-ctx="ser:${PATH}"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg><span>${label}: Day ${next.ord}</span></button>
-    <p class="hint">Mark each day done to move ahead.</p></div>`;
+  const {it, n, next, max, started} = pathState(), s = SER[PATH];
+  const ms = milestone(n);
+  if(!next) return `<div class="path" id="pathCard"><p class="day">All ${it.length} days done</p><h2>You finished ${esc(s.name)}</h2>${dots(it,null,max)}
+    <button class="btn primary" data-goto="learn">Find your next lessons in the Library</button>${phrases(it)}</div>`;
+  return `<div class="path" id="pathCard"><p class="day">Day ${next.ord} of ${it.length}</p><h2>${esc(T(next))}</h2>${dots(it,next,max)}
+    <button class="btn primary" id="pathBtn" data-play="${next.id}" data-ctx="ser:${PATH}"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg><span>${started?'Continue':'Start'}: Day ${next.ord}</span></button>
+    ${phrases(it)}<p class="hint">${ms ? `<b>${ms}</b>` : 'Mark each day done to move ahead. Tap a dot to jump to any day.'}</p></div>`;
 }
-function updateHome(){
-  const c = $('#pathCard'); if(!c) return;
-  const {it, n, next} = pathState();
-  const w=document.createElement('div'); w.innerHTML=ring(n,it.length); c.querySelector('.ring').replaceWith(w.firstElementChild);
-  const b = $('#pathBtn');
-  if(!next || !b){ c.outerHTML = homeCard(); return; }
-  $('#pathDay').textContent = `Day ${next.ord} of ${it.length}`;
-  $('#pathTitle').textContent = T(next);
-  b.dataset.play = next.id; b.querySelector('span').textContent = `${n?'Continue':'Start'}: Day ${next.ord}`;
-}
+function updateHome(){ const c = $('#pathCard'); if(c) c.outerHTML = homeCard(); }
 function viewHome(){
   const s = SER[PATH];
   return `<p class="kicker">Start here</p><h1 class="display">${esc(s.name)}</h1>
@@ -518,6 +538,7 @@ function openPlayer(id, ctx, keepQueue){
     if(ctx && CTX[ctx]){ queue = CTX[ctx].slice(); qi = queue.indexOf(id); } else { queue=[id]; qi=0; }
     pathMode = ctx === 'ser:'+PATH;
   }
+  if(pathMode){ store.set('pathAt', r.ord); store.set('pathMax', Math.max(store.get('pathMax',0), r.ord)); }
   if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
   $('#sheetTitle').textContent = T(r);
   const p = $('#player'); p.className = 'player ' + (r.k==='long'?'long':'short');
@@ -534,8 +555,11 @@ function openPlayer(id, ctx, keepQueue){
 }
 function closePlayer(){
   $('#player').innerHTML = ''; $('#sheetWrap').dataset.open = 'false'; document.body.style.overflow = ''; drillName='';
-  refreshProgress(); updateHome(); if(lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
-  else { const b = document.querySelector(`[data-id="${cur&&cur.id}"]`) || document.querySelector('#pathCard .btn'); if(b) b.focus(); }
+  const lf = lastFocus, inCard = lf && lf.closest && lf.closest('#pathCard');
+  const sel = lf ? (lf.id ? '#'+lf.id : (lf.dataset && lf.dataset.id) ? `${inCard?'#pathCard ':''}.${lf.classList[0]}[data-id="${lf.dataset.id}"]` : null) : null;
+  refreshProgress(); updateHome();
+  const t = (lf && document.body.contains(lf)) ? lf : (sel && document.querySelector(sel)) || document.querySelector(`[data-id="${cur&&cur.id}"]`) || document.querySelector('#pathCard .btn');
+  if(t) t.focus();
 }
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
@@ -605,7 +629,8 @@ document.addEventListener('click', e => {
     if(open && !pn.firstChild) pn.innerHTML=accPanel(k); pn.hidden=!open; w.dataset.open=String(open); t.setAttribute('aria-expanded', String(open)); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
   if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
-  if(t.matches('.row, .dtile') && t.dataset.id){ const c=t.dataset.ctx||'';
+  if(t.dataset.phr!==undefined){ S.phr=!S.phr; t.setAttribute('aria-expanded', String(S.phr)); $('#phrList').hidden=!S.phr; return; }
+  if(t.matches('.row, .dtile, .dot') && t.dataset.id){ const c=t.dataset.ctx||'';
     drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
     return openPlayer(t.dataset.id, c); }
 });
