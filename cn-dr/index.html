@@ -188,17 +188,18 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 .tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
 .tile .acts{display:flex;gap:var(--s2);flex-wrap:wrap}
 .tile.feature{border-color:var(--primary);background:var(--primary-tint)}
-.follow{list-style:none;margin:var(--s2) 0 0 -10px;padding:0;display:flex;flex-wrap:wrap;gap:var(--s2)}
-.follow a{display:flex;flex-direction:column;align-items:center;justify-content:center;width:48px;height:48px;border-radius:var(--r-lg);color:var(--ink);text-decoration:none}
-.follow svg{width:28px;height:28px;color:var(--primary)}
+.follow{list-style:none;margin:0 -10px 0 0;padding:0;display:flex;flex:none}
+.follow a{display:flex;align-items:center;justify-content:center;width:var(--tap);height:var(--tap);border-radius:var(--r-md);color:var(--primary);text-decoration:none}
+.follow svg{width:22px;height:22px}
 @media (hover:hover){.follow a:hover{background:var(--surface-3)}}
 .follow a:active{transform:scale(.97)}
 .follow a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .empty{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-2);background:var(--surface);border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);margin-top:var(--s3)}
 .empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
-.foot{position:fixed;left:0;right:0;bottom:0;z-index:15;text-align:center;padding:var(--s3) var(--s4) calc(env(safe-area-inset-bottom) + var(--s3));
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:15;padding:var(--s1) var(--s4) calc(env(safe-area-inset-bottom) + var(--s1));
   background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
-.foot p{margin:0 auto;max-width:65ch}
+.foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.foot p{margin:0;min-width:0}
 
 /* Home path card */
 .path{margin-top:var(--s4);background:var(--primary-tint);border:1.5px solid var(--primary);border-radius:var(--r-lg);padding:var(--s4);box-shadow:var(--shadow-card)}
@@ -287,7 +288,7 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 </header>
 
 <main class="wrap" id="main" tabindex="-1"></main>
-<footer class="foot"><p>© Mandarin Insights by Dr. Hanyu Jia.</p></footer>
+<footer class="foot"><div class="foot-in"><p>© Mandarin Insights by Dr. Hanyu Jia.</p><ul class="follow" id="follow" aria-label="Follow Dr. Jia"></ul></div></footer>
 
 
 <div class="sheet-wrap" id="sheetWrap" data-open="false">
@@ -531,9 +532,9 @@ function viewMaterials(){
   return `<p class="kicker">About</p><h1 class="display">Dr. Jia</h1>
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
-    <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>
-    <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}</a></li>`).join('')}</ul>`;
+    <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>`;
 }
+$('#follow').innerHTML = MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}</a></li>`).join('');
 const PATH = 'survival30';
 // Continue goes to the last day opened if it is not done yet, else the next undone day after it, else the first gap.
 function pathState(){
