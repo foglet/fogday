@@ -151,7 +151,8 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .srow:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 .srow b{display:block;font-family:var(--display);font-weight:400;font-size:1.0625rem;line-height:1.25}
 .srow .sub2{display:block;font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
-.srow.feat b{color:var(--primary-ink)}
+@media (hover:hover){.srow:hover b{color:var(--accent)}}
+.srow:focus-visible b,.srow:active b{color:var(--accent)}
 .srow .cnt{font-size:var(--fs-sm);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .srow .cnt.on{color:var(--done);font-weight:600}
 .srow .chev{width:20px;height:20px;color:var(--ink-3)}
