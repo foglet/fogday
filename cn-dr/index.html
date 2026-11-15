@@ -94,6 +94,7 @@ svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-lin
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
 h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:var(--display);font-weight:400;margin:0;letter-spacing:0;max-width:18ch}
+h1.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-display),calc((100vw - 2 * var(--s4)) / 12.8))} /* Young Serif: title is 12.44em wide */
 .lede{color:var(--ink-2);margin:var(--s2) 0 0;max-width:46ch}
 
 /* Sections */
@@ -565,7 +566,7 @@ function homeCard(){
 function updateHome(){ const c = $('#pathCard'); if(c) c.outerHTML = homeCard(); }
 function viewHome(){
   const s = SER[PATH];
-  return `<p class="kicker">Start here</p><h1 class="display">${esc(s.name)}</h1>
+  return `<p class="kicker">Start here</p><h1 class="display one-line">${esc(s.name)}</h1>
     <p class="lede">New to Mandarin? Watch one short lesson a day, in Dr. Jia's order.</p>
     ${homeCard()}
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
