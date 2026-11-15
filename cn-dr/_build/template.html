@@ -188,9 +188,9 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 .tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
 .tile .acts{display:flex;gap:var(--s2);flex-wrap:wrap}
 .tile.feature{border-color:var(--primary);background:var(--primary-tint)}
-.follow{list-style:none;margin:var(--s3) 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2)}
-.follow a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s1);min-height:72px;padding:var(--s2) var(--s1);border-radius:var(--r-lg);background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-decoration:none;font-size:var(--fs-cap);font-weight:600;text-align:center}
-.follow svg{width:26px;height:26px;color:var(--primary)}
+.follow{list-style:none;margin:var(--s3) 0 0;padding:0;display:flex;flex-wrap:wrap;gap:var(--s3)}
+.follow a{display:flex;flex-direction:column;align-items:center;justify-content:center;width:56px;height:56px;border-radius:var(--r-lg);background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-decoration:none}
+.follow svg{width:28px;height:28px;color:var(--primary)}
 @media (hover:hover){.follow a:hover{border-color:var(--line-strong)}}
 .follow a:active{transform:scale(.97)}
 .follow a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
@@ -529,7 +529,7 @@ function viewMaterials(){
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
     <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>
-    <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}<span>${esc(f.label||f.name)}</span></a></li>`).join('')}</ul>`;
+    <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}</a></li>`).join('')}</ul>`;
 }
 const PATH = 'survival30';
 // Continue goes to the last day opened if it is not done yet, else the next undone day after it, else the first gap.
