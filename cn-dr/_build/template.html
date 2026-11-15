@@ -127,9 +127,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .meter p{margin:var(--s1) 0 0;font-size:var(--fs-sm);color:var(--ink-2);font-weight:400}
 .row .m{font-size:var(--fs-cap);color:var(--ink-3);font-weight:700;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
-/* Done mark: nothing until a lesson is done, then a plain check. The row opens the player, so no empty checkbox-like circle. */
-/* Done mark: the lesson number turns site green, like a playlist's playing track. */
-.row[data-done="true"] .ord{color:var(--primary)}
+/* Done mark: a filled green check at the row's right edge, only on done rows (no empty circle on the rest). */
 .row[data-done="true"] .t{color:var(--ink-2)}
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:#fff;border:1px solid var(--line);box-sizing:border-box;display:grid;place-items:center;font-weight:400;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
@@ -138,6 +136,11 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .row:has(.ord){grid-template-columns:32px minmax(0,1fr)}
 .row .ord{width:32px;height:auto;background:none;border:0;justify-items:end;color:var(--ink-2)}
 .row .ord>span{align-items:flex-end}
+/* Phosphor check-circle (fill). Not mirrored: a mirrored check at 24px reads as a dropdown chevron. */
+.row:has(.ord)[data-done="true"]{grid-template-columns:32px minmax(0,1fr) 24px}
+.row.nolead[data-done="true"]{grid-template-columns:minmax(0,1fr) 24px}
+.row[data-done="true"]::after{content:"";width:24px;height:24px;background:var(--done);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center/contain no-repeat}
+@media (forced-colors:active){.row[data-done="true"]::after{background:CanvasText}}
 .more{margin-top:var(--s2);width:100%}
 
 /* Section rows: flat list, each row opens its own page */
@@ -176,7 +179,7 @@ h1.pg-h{font-size:var(--fs-h2);line-height:1.2;font-family:var(--display);font-w
   border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
 @media (hover:hover){.dtile:hover{background:var(--surface-2)}}
 .dtile:active{transform:translateY(1px)}
-.dtile svg{width:10px;height:10px;overflow:visible;display:none}
+.dtile svg{width:16px;height:16px;flex:none;overflow:visible;display:none}
 .dtile[data-done="true"]{background:var(--done);border-color:var(--primary-edge);color:var(--on-done)}
 .dtile[data-done="true"] svg{display:block}
 
@@ -340,8 +343,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
-// Left-handed check: the standard check mirrored, long stroke rising to the left.
-const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path transform="matrix(-1 0 0 1 256 0)" stroke="currentColor" stroke-width="28" stroke-linejoin="round" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
+// Phosphor check (bold). Not mirrored: mirrored at this size it reads as a dropdown chevron.
+const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
 function meta(r, opts={}){
