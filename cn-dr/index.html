@@ -351,7 +351,7 @@ const T = r => r.t.replace(/\s*\((?:Day\s?)?\d+\/\d+\)/, '');   // "(Day 2/30)" 
 function row(r, ctx, opts={}){
   if(opts.ord==null && r.no) opts = {...opts, ord:r.no, ordLabel:'No.'};   // every lesson shows its permanent number unless a course Day is given
   const lead = opts.ord!=null
-    ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
+    ? `<span class="ord" aria-hidden="true"><span>${opts.ordLabel==='No.' ? '' : `<small>${esc(opts.ordLabel||'Part')}</small>`}${opts.ord}</span></span>`
     : '';   // no thumbnails: they were all the same face and cost one image request per row
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
   const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || (opts.cur?'cur':'skip')}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson · ${esc(r.d)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
