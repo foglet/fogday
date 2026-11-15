@@ -8,7 +8,7 @@
 <title>Mandarin Insights</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* Curly quotes and ellipsis: draw them from a Latin font, never the CJK fallback, which sets them full-width with wide gaps. */
 @font-face{font-family:"Latin Punct";src:local("Helvetica Neue"),local("HelveticaNeue"),local("Roboto"),local("Segoe UI"),local("Arial"),local("ArialMT"),local("Liberation Sans"),local("DejaVu Sans");unicode-range:U+2018-201F,U+2026}
@@ -21,7 +21,7 @@
   /* Colours and fonts from fogday.com/mahjong: felt, bone, paper, ink, tile, red; Young Serif + Rubik. Light only, as there. */
   color-scheme:light;
   --paper:#fbf8f1; --surface:#fffdf7; --surface-2:#f3efe4; --surface-3:#e9e3d4;
-  --ink:#1d2421; --ink-2:#5f6b66; --ink-3:#5f6b66; --line:#d9d3c4; --line-strong:#c9c0aa;
+  --ink:#1d2421; --ink-2:#5f6b66; --line:#d9d3c4; --line-strong:#c9c0aa;
   --primary:#1f5c4a; --primary-hover:#1a4f40; --primary-press:#154236; --primary-edge:#123a2f;
   --on-primary:#fffdf7; --primary-tint:#e6f0ea; --primary-ink:#1f5c4a;
   --accent:#b8352b;
@@ -30,7 +30,7 @@
   --focus:#1f5c4a;
   --display:"Young Serif","Latin Punct Serif","Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",Georgia,"Times New Roman",serif;
   --font:"Rubik","Latin Punct","PingFang SC","Hiragino Sans GB","Heiti SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --fs-cap:.75rem; --fs-sm:.875rem; --fs-body:1rem; --fs-h3:1.25rem; --fs-h2:1.5rem; --fs-display:2.5rem;
+  --fs-cap:.75rem; --fs-sm:.875rem; --fs-body:1rem; --fs-lg:1.125rem; --fs-h3:1.25rem; --fs-h2:1.5rem; --fs-display:2.5rem;
   --lh-tight:1.15; --lh-body:1.5;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
   --r-sm:10px; --r-md:14px; --r-lg:20px; --r-pill:999px;
@@ -89,10 +89,8 @@ svg{fill:currentColor}
   transition:background-color var(--dur-fast)}
 @media (hover:hover){.seg button:hover{background:var(--surface-3);color:var(--ink)}}
 .seg button:active{transform:scale(.98)}
-.seg button{text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
-.seg button[aria-selected="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
-.seg small{display:block;text-transform:none;letter-spacing:0;font-weight:400;font-size:var(--fs-cap);color:var(--ink-3)}
-.seg button[data-level]{font-size:.8em}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
+.seg small{display:block;font-weight:400;font-size:var(--fs-cap);color:var(--ink-2)}
 
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
@@ -107,33 +105,32 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 /* Sections */
 .sec{margin-top:var(--s5)}
 .sec-note{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s2) 0 var(--s3);max-width:65ch}
-.sub{font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);margin:var(--s5) 0 var(--s1);text-transform:uppercase;letter-spacing:.06em}
-.sub.grp{color:var(--accent)} .sub.grp .n{color:var(--ink-3)}   /* situation headers (Greetings & Goodbyes ...) stand out from the rows */
+.sub{font-size:var(--fs-cap);font-weight:700;color:var(--accent);margin:var(--s5) 0 var(--s1);text-transform:uppercase;letter-spacing:.08em}
+.sub .n{color:var(--ink-2)}   /* situation headers (Greetings & Goodbyes ...) stand out from the rows */
 .list{list-style:none;margin:0;padding:0}
 .row{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:center;gap:var(--s3);width:100%;padding:var(--s3) var(--s1);background:none;border:0;text-align:left;cursor:pointer;border-radius:var(--r-sm);min-height:var(--tap)}
 @media (hover:hover){.row:hover{background:var(--surface-2)}}
 .row:active{background:var(--surface-3)}
-.row .t{font-weight:400;font-size:.9375rem;line-height:1.3;overflow-wrap:anywhere}   /* titles wrap in full, never cut off */
+.row .t{font-weight:400;font-size:var(--fs-body);line-height:1.3;overflow-wrap:anywhere}   /* titles wrap in full, never cut off */
 .row.nolead{grid-template-columns:minmax(0,1fr)}
 .row.cur{background:var(--primary-tint)}
-.row .m.tag-cur{color:var(--primary-ink)}
-.row .m.tag-skip{color:var(--accent)}
+.row .m.tag-cur{color:var(--primary-ink);font-weight:600}
+.row .m.tag-skip{color:var(--accent);font-weight:600}
 .row .m.tag-seen{color:var(--ink-2);font-weight:600}
 .seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.seg.two button{text-transform:none;letter-spacing:0;font-size:var(--fs-sm)}
 .seg.two button[aria-pressed="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
-.row .ord{width:44px;height:44px;font-size:.8125rem;font-variant-numeric:tabular-nums}
+.row .ord{width:44px;height:44px;font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
 .pg-start{width:100%;margin-bottom:var(--s3)}
 .meter{margin:0 0 var(--s3)}
 .meter .bar{height:8px;border-radius:var(--r-pill);background:var(--surface-3);overflow:hidden}
 .meter .bar span{display:block;height:100%;background:var(--done);border-radius:inherit}
 .meter p{margin:var(--s1) 0 0;font-size:var(--fs-sm);color:var(--ink-2);font-weight:400}
-.row .m{font-size:var(--fs-cap);color:var(--ink-3);font-weight:700;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
+.row .m{font-size:var(--fs-cap);color:var(--ink-2);font-weight:400;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
 .row[data-done="true"] .t{color:var(--ink-2)}
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:#fff;border:1px solid var(--line);box-sizing:border-box;display:grid;place-items:center;font-weight:400;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
-.ord small{display:block;margin:0;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--ink-3);text-align:center}
+.ord small{display:block;margin:0;font-size:var(--fs-cap);letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--ink-2);text-align:center}
 /* Numbered rows: a plain muted number like a playlist track number. Hover tint and dividers span the full row. */
 .row .ord{height:auto;background:none;border:0;justify-items:end;color:var(--ink-2)}
 .row .ord>span{align-items:flex-end}
@@ -157,7 +154,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 @media (hover:hover){.srow:hover{background:var(--surface-2)}}
 .srow:active{background:var(--surface-3)}
 .srow:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
-.srow b{display:block;font-family:var(--display);font-weight:400;font-size:1.0625rem;line-height:1.25}
+.srow b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-lg);line-height:1.25}
 .srow .sub2{display:block;font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
 @media (hover:hover){.srow:hover b{color:var(--accent)}.srow:hover{padding-left:var(--s2)}}
 .srow{transition:padding-left .15s ease}
@@ -165,9 +162,8 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .srow:focus-visible b,.srow:active b{color:var(--accent)}
 .srow .cnt{font-size:var(--fs-sm);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .srow .cnt.on{color:var(--done);font-weight:600}
-.srow .chev{width:20px;height:20px;color:var(--ink-3)}
-/* Section titles (Library, Practice, About): small caps in red, like a kicker */
-.sec-h{margin:var(--s5) 0 0;font-family:var(--font);font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);line-height:1.3}
+.srow .chev{width:20px;height:20px;color:var(--ink-2)}
+/* Tab titles (Library, Practice, About) */
 .page-h{margin:var(--s5) 0 0;color:var(--ink);font-size:var(--fs-h2);font-family:var(--display);font-weight:400;line-height:1.25}
 .back{display:inline-flex;align-items:center;gap:var(--s1);min-height:var(--tap);margin:var(--s3) 0 0 calc(-1 * var(--s2));padding:0 var(--s2);border:0;background:none;color:var(--primary-ink);font:inherit;font-weight:600;font-size:var(--fs-sm);cursor:pointer;border-radius:var(--r-sm)}
 .back svg{width:20px;height:20px}
@@ -194,12 +190,11 @@ h1.pg-h{font-size:var(--fs-h2);line-height:1.2;font-family:var(--display);font-w
 
 /* Practice + materials */
 .bio{margin-top:var(--s3);max-width:60ch}
-.bio p{margin:0 0 var(--s3);color:var(--ink-2)}
-.bio p:first-child{color:var(--ink);font-size:1.0625rem}
-h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(--s5));padding-top:var(--s5);border-top:1px solid var(--line)}
+.bio p{margin:0 0 var(--s3);color:var(--ink)}
+h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(--s5));padding-top:var(--s5);border-top:1px solid var(--line)}
 .offers{list-style:none;margin:var(--s2) 0 0;padding:0;border-top:1px solid var(--line)}
 .offer{padding:var(--s4) 0;border-bottom:1px solid var(--line)}
-.offer h3{margin:0 0 var(--s1);font-size:1.0625rem;line-height:1.25;font-family:var(--display);font-weight:400}
+.offer h3{margin:0 0 var(--s1);font-size:var(--fs-lg);line-height:1.25;font-family:var(--display);font-weight:400}
 .offer p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .tile{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:var(--s4);margin-top:var(--s3)}
 .tile h3{margin:0 0 var(--s1);font-size:var(--fs-h3);line-height:1.25;font-family:var(--display);font-weight:400}
@@ -215,7 +210,7 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 .empty{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-2);background:var(--surface);border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);margin-top:var(--s3)}
 .empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
 .foot{position:fixed;left:0;right:0;bottom:0;z-index:15;padding:var(--s1) var(--s4) calc(env(safe-area-inset-bottom) + var(--s1));
-  background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
+  background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-2)}
 .foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
 .foot p{margin:0;min-width:0}
 .foot p a{color:var(--ink-2);text-decoration:none;text-underline-offset:2px}
@@ -226,9 +221,9 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 
 /* Search */
 .search{position:relative;display:flex;align-items:center;margin:var(--s3) 0 var(--s4)}
-.search-ic{position:absolute;left:var(--s3);width:20px;height:20px;color:var(--ink-3);pointer-events:none}
+.search-ic{position:absolute;left:var(--s3);width:20px;height:20px;color:var(--ink-2);pointer-events:none}
 .search input{flex:1;min-width:0;min-height:var(--tap);border-radius:var(--r-md);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;padding:0 var(--s3) 0 calc(var(--s3) + 28px)}
-.search input:hover{border-color:var(--ink-3)}
+.search input:hover{border-color:var(--ink-2)}
 .search input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 
 /* Top navigation: icon buttons at the header's top right (Phosphor books, microphone-stage, detective). The logo goes Home. */
@@ -252,7 +247,7 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 @keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 .grab{width:40px;height:5px;border-radius:var(--r-pill);background:var(--line-strong);margin:0 auto var(--s2)}
 .sheet-h{display:flex;align-items:flex-start;gap:var(--s2)}
-.sheet-h h2{flex:1;margin:var(--s2) 0 0;font-size:1.125rem;line-height:1.3;font-family:var(--display);font-weight:400}
+.sheet-h h2{flex:1;margin:var(--s2) 0 0;font-size:var(--fs-lg);line-height:1.3;font-family:var(--display);font-weight:400}
 .player{position:relative;margin:var(--s3) auto;background:#000;border-radius:var(--r-md);overflow:hidden;width:100%}
 .player.short{aspect-ratio:9/16;max-height:62dvh;width:auto;max-width:100%}
 .player.long{aspect-ratio:16/9}
@@ -265,8 +260,8 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 .sheet .acts{display:grid;grid-template-columns:var(--tap) minmax(0,1fr) var(--tap);align-items:center;gap:var(--s1)}
 .sheet .acts .nav{width:var(--tap);padding:0;color:var(--primary-ink)}
 .sheet .acts .nav svg{width:20px;height:20px}
-.sheet .acts .mark{gap:6px;padding:0 var(--s2);font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
-.sheet .acts .mark svg{width:14px;height:14px;color:inherit}   /* grey until done, then green */
+.sheet .acts .mark{gap:6px;padding:0 var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);white-space:nowrap}
+.sheet .acts .mark svg{width:14px;height:14px;color:inherit}   /* check shows only once done */
 .sheet .acts .mark[aria-pressed="true"]{background:transparent;border-color:transparent;color:var(--done)}
 .sheet .acts .btn:disabled{background:transparent}
 .linkbtn{min-height:var(--tap);border:0;background:none;color:var(--ink-2);font:inherit;font-size:var(--fs-sm);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:var(--r-sm)}
@@ -478,7 +473,7 @@ function grouped(key, items, opts={}){
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<h1 class="sec-h">Library</h1>`; }
+  return `<h1 class="page-h">Library</h1>`; }
 function learnMain(){
   if(S.q.trim()) return searchResults();
   return `<div class="seg" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
@@ -515,15 +510,16 @@ function updateLevel(){
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
   const topics = ['Tone ear training','Homophone listening','Listening challenges','HSK quizzes'];
-  const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1 and 2.'};
+  const TITLE = {'Tone ear training':'Tone Ear Training','Homophone listening':'Homophone Listening','Listening challenges':'Listening Challenges','HSK quizzes':'HSK Quizzes'};
+  const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1 to 2.'};
   const watched = Object.entries(done).sort((a,b)=>a[1]-b[1]).map(([id])=>byId[id]).filter(Boolean);
   const dayMs = 864e5, now = Date.now();
   const due = watched.filter(r => now - done[r.id] > dayMs);
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
-  return `<h1 class="sec-h">Practice</h1>
+  return `<h1 class="page-h">Practice</h1>
     <p class="lede">Open a drill and start. Say each answer aloud.</p>
-    <div class="series">${drillCard('all','Mixed drill session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
-    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago.', due.length?due:watched,
+    <div class="series">${drillCard('all','Mixed Drill Session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,TITLE[t],blurbs[t])).join('')}</div>
+    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review What You Watched','Lessons you marked done more than a day ago.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
@@ -536,8 +532,8 @@ function offer(c){
   return `<li class="offer"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></li>`;
 }
 function viewMaterials(){
-  return `<h1 class="sec-h">About</h1>
-    <div class="bio about"><p>Mandarin Insights supports your journey into becoming a fluent, adaptable Mandarin Chinese speaker: someone who doesn't just know the language, but truly lives it. It is for learners who want to engage meaningfully with Chinese-speaking communities, thrive in cross-cultural communications, and navigate rich cultural contexts with confidence and ease. Through one-on-one and group lessons, I help you move beyond memorization, so you can speak naturally, connect deeply, and engage fully in Chinese.</p></div>
+  return `<h1 class="page-h">About</h1>
+    <div class="bio about"><p>Mandarin Insights supports your journey into becoming a fluent, adaptable Mandarin Chinese speaker: someone who doesn't just know the language, but truly lives it. It is for learners who want to engage meaningfully with Chinese-speaking communities, thrive in cross-cultural communications, and navigate rich cultural contexts with confidence and ease. Through one-on-one and group lessons, Dr. Jia helps you move beyond memorization, so you can speak naturally, connect deeply, and engage fully in Chinese.</p></div>
     <h2 class="display jia-h">Dr. Jia</h2>
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
@@ -571,19 +567,20 @@ function viewHome(){
     <p class="kicker">Start here</p>
     <div class="series" id="homeStart">${scard(PATH).replace('data-push=', 'data-lib="'+PATH+'" data-push=')}</div>
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
-      return card('home:tips','How to study','', tips, ()=>list('tips', tips)); })()}</div>
+      return card('home:tips','How to Study','', tips, ()=>list('tips', tips)); })()}</div>
 `;
 }
 function searchField(){
   return `<form class="search" role="search" id="searchForm"><label class="vh" for="q">Search all ${ITEMS.length} lessons</label><svg class="search-ic" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input id="q" type="search" placeholder="Search ${ITEMS.length} lessons: 了, tones, No. 42" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"></form>`;
 }
 function searchResults(){
-  const q = S.q.trim().toLowerCase();
+  const fold = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+  const q = fold(S.q.trim());
   const num = /^(?:#|no\.?\s*)?(\d+)$/.exec(q);
-  const res = num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => r.t.toLowerCase().includes(q) || (r.top||'').toLowerCase().includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
+  const res = num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => fold(r.t).includes(q) || fold(r.top||'').includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
   CTX['search'] = res.map(r=>r.id);
   return `<p class="sec-note" role="status">${res.length} result${res.length===1?'':'s'}, most viewed first</p>
-    ${!res.length ? `<div class="empty"><b>No lessons match "${esc(S.q)}"</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search', r.no ? {ord:r.no, ordLabel:'No.'} : {})).join('')}</ul>`}`;
+    ${!res.length ? `<div class="empty"><b>No lessons match “${esc(S.q)}”</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search', r.no ? {ord:r.no, ordLabel:'No.'} : {})).join('')}</ul>`}`;
 }
 
 /* ---------- pages ---------- */
@@ -687,7 +684,7 @@ function refreshProgress(){
 }
 const hasNext = () => queue && qi > -1 && qi < queue.length-1;
 const nextName = () => pathMode ? `Day ${byId[queue[qi+1]].ord}` : 'lesson';
-// One line of actions: Previous and Next move through the list; Mark Complete toggles done in place.
+// One line of actions: Previous and Next move through the list; Mark done toggles done in place.
 const hasPrev = () => queue && qi > 0;
 function syncActs(){
   const d = isDone(cur.id), unit = drillName ? 'drill' : pathMode ? 'day' : 'lesson';
@@ -695,7 +692,7 @@ function syncActs(){
   pb.disabled = !hasPrev(); nb.disabled = !hasNext();
   pb.setAttribute('aria-label', `Previous ${unit}`); nb.setAttribute('aria-label', `Next ${unit}`);
   pb.title = `Previous ${unit}`; nb.title = `Next ${unit}`;
-  mb.innerHTML = ICON_CHECK + `<span>${d ? 'Completed' : 'To Complete'}</span>`;
+  mb.innerHTML = d ? ICON_CHECK + '<span>Done</span>' : '<span>Mark done</span>';
   mb.setAttribute('aria-pressed', String(d));
 }
 function markDone(v){ if(v) done[cur.id]=Date.now(); else delete done[cur.id]; store.set('done',done); }
@@ -729,9 +726,9 @@ document.addEventListener('click', e => {
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
-  if(t.dataset.play){ const c=t.dataset.ctx||''; drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : ''; return openPlayer(t.dataset.play, c); }
+  if(t.dataset.play){ const c=t.dataset.ctx||''; drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : ''; return openPlayer(t.dataset.play, c); }
   if(t.matches('.row, .dtile') && t.dataset.id){ const c=t.dataset.ctx||'';
-    drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
+    drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
     return openPlayer(t.dataset.id, c); }
 });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; $('#learnMain').innerHTML = learnMain(); rove(); } });
@@ -740,7 +737,7 @@ $('#closeBtn').addEventListener('click', closePlayer);
 $('#scrim').addEventListener('click', closePlayer);
 $('#prevBtn').addEventListener('click', () => step(-1));
 $('#nextBtn').addEventListener('click', () => step(1));
-// Mark Complete toggles done and stays on this video, so the learner can watch it again. Next moves on.
+// Mark done toggles done and stays on this video, so the learner can watch it again. Next moves on.
 $('#markBtn').addEventListener('click', () => { markDone(!isDone(cur.id)); syncActs(); });
 function rove(){ document.querySelectorAll('[role="tablist"]').forEach(l=>{ l.querySelectorAll('[role="tab"]').forEach(t=>t.tabIndex = t.getAttribute('aria-selected')==='true'?0:-1); }); }
 document.addEventListener('keydown', e => {
