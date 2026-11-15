@@ -180,6 +180,7 @@ h1.pg-h{font-size:var(--fs-h2);line-height:1.2;font-family:var(--display);font-w
 .bio{margin-top:var(--s3);max-width:60ch}
 .bio p{margin:0 0 var(--s3);color:var(--ink-2)}
 .bio p:first-child{color:var(--ink);font-size:1.0625rem}
+h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(--s5));padding-top:var(--s5);border-top:1px solid var(--line)}
 .offers{list-style:none;margin:var(--s2) 0 0;padding:0;border-top:1px solid var(--line)}
 .offer{padding:var(--s4) 0;border-bottom:1px solid var(--line)}
 .offer h3{margin:0 0 var(--s1);font-size:1.0625rem;line-height:1.25;font-family:var(--display);font-weight:400}
@@ -513,7 +514,9 @@ function offer(c){
   return `<li class="offer"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></li>`;
 }
 function viewMaterials(){
-  return `<h1 class="display">Dr. Jia</h1>
+  return `<h1 class="display">About</h1>
+    <div class="bio about"><p>Mandarin Insights supports your journey into becoming a fluent, adaptable Mandarin Chinese speaker: someone who doesn't just know the language, but truly lives it. It is for learners who want to engage meaningfully with Chinese-speaking communities, thrive in cross-cultural communications, and navigate rich cultural contexts with confidence and ease. Through one-on-one and group lessons, I help you move beyond memorization, so you can speak naturally, connect deeply, and engage fully in Chinese.</p></div>
+    <h2 class="display jia-h">Dr. Jia</h2>
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
     <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>`;
