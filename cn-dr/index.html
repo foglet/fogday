@@ -366,7 +366,7 @@ function row(r, ctx, opts={}){
     ? `<span class="ord" aria-hidden="true"><span>${opts.ordLabel==='No.' ? '' : `<small>${esc(opts.ordLabel||'Part')}</small>`}${opts.ord}</span></span>`
     : '';   // no thumbnails: they were all the same face and cost one image request per row
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
-  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || 'cur'}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson${r.d ? ' · ' + esc(r.d) : ''}</span>` : '';   // listings show titles, plus Up next on a path
+  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || 'cur'}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson${r.d ? ' · ' + esc(r.d) : ''}</span>` : '';   // listings show titles, plus Watched in Everyday Phrases
   return `<li><button class="row${opts.cur?' cur':''}${opts.ord==null?' nolead':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span></button></li>`;
 }
@@ -401,9 +401,9 @@ function seriesPanel(sid){
   const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${isPath?'day':'lesson'} to watch it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
-    return row(r, key, {ord:num(r), ordLabel:lab, cur, tag: cur ? 'Up next' : ''}); }).join('')}</ul>`;
+    return row(r, key, {ord:num(r), ordLabel:lab, cur}); }).join('')}</ul>`;
 }
-// Drill page: same as a Library series. Start or Continue at the first unfinished drill, then the numbered list with Up next.
+// Drill page: same as a Library series. Start or Continue at the first unfinished drill, then the numbered list; the next drill is highlighted.
 function drillPanel(kind){
   const key = 'drill:'+kind, it = drillPool(kind), n = it.filter(r=>isDone(r.id)).length;
   const ni = it.findIndex(r=>!isDone(r.id)), next = ni>=0 ? it[ni] : null;
@@ -411,7 +411,7 @@ function drillPanel(kind){
   const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n?'Continue':'Start'}: ${noTag(next)}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any drill to do it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
-    return row(r, key, {ord:r.no, ordLabel:'No.', cur, tag: cur ? 'Up next' : ''}); }).join('')}</ul>`;
+    return row(r, key, {ord:r.no, ordLabel:'No.', cur}); }).join('')}</ul>`;
 }
 // Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
 const isSeen = id => !!seen[id] || isDone(id);
@@ -425,7 +425,7 @@ function phrasesPanel(its){
   CTX[key] = all.map(r=>r.id);
   return seg + `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${Math.round(100*w/all.length)}%"></span></div><p>${w} of ${all.length} watched</p></div>
     ${next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${w?'Continue':'Start'}: No. ${next.no}</span></button>` : ''}
-    <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r===next ? 'Up next' : (!isDone(r.id) && seen[r.id]) ? 'Watched' : '', tagCls: r===next ? 'cur' : 'seen'})).join('')}</ul>
+    <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r!==next && !isDone(r.id) && seen[r.id] ? 'Watched' : '', tagCls: 'seen'})).join('')}</ul>
     ${rest.length ? `<h3 class="sub grp">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
 }
 function accPanel(key){
