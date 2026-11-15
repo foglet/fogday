@@ -271,6 +271,14 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .linkbtn:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* Mobile: tighter leading site wide, and header icons packed like the footer's social icons (32px wide, no gap). */
+@media (max-width:39.99rem){
+  :root{--lh-body:1.35;--lh-tight:1.1}
+  .srow b,.page-h,h1.pg-h,.offer h3,.tile h3,.sheet-h h2{line-height:1.15}
+  .icons{gap:0;margin-right:-5px}
+  .tab{width:32px}
+  .icons .ind{width:32px;height:32px;top:6px}
+}
 @media (min-width:40rem){
   :root{--fs-display:3rem}
   .sheet{left:50%;right:auto;width:36rem;transform:translateX(-50%);bottom:var(--s4);border-radius:var(--r-lg);animation:none}
