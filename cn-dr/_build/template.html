@@ -261,7 +261,7 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 .sheet-tt{flex:1;min-width:0}
 .sheet-tt .kicker{margin:var(--s2) 0 0}
 .sheet-tt h2{margin-top:var(--s1)}
-/* Player actions on one line: |< (skip back) | MARK COMPLETE | >| (skip forward). Phosphor skip-back / skip-forward. */
+/* Player actions on one line: |< (skip back) | TO COMPLETE | >| (skip forward). Phosphor skip-back / skip-forward. */
 .sheet .acts{display:grid;grid-template-columns:var(--tap) minmax(0,1fr) var(--tap);align-items:center;gap:var(--s1)}
 .sheet .acts .nav{width:var(--tap);padding:0;color:var(--primary-ink)}
 .sheet .acts .nav svg{width:20px;height:20px}
@@ -695,7 +695,7 @@ function syncActs(){
   pb.disabled = !hasPrev(); nb.disabled = !hasNext();
   pb.setAttribute('aria-label', `Previous ${unit}`); nb.setAttribute('aria-label', `Next ${unit}`);
   pb.title = `Previous ${unit}`; nb.title = `Next ${unit}`;
-  mb.innerHTML = ICON_CHECK + `<span>${d ? 'Completed' : 'Mark Complete'}</span>`;
+  mb.innerHTML = ICON_CHECK + `<span>${d ? 'Completed' : 'To Complete'}</span>`;
   mb.setAttribute('aria-pressed', String(d));
 }
 function markDone(v){ if(v) done[cur.id]=Date.now(); else delete done[cur.id]; store.set('done',done); }
