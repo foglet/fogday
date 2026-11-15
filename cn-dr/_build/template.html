@@ -131,7 +131,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 /* Done mark: nothing until a lesson is done, then a plain check. The row opens the player, so no empty checkbox-like circle. */
 .state{width:24px;height:24px;display:grid;place-items:center;color:var(--done);visibility:hidden}
 .row[data-done="true"] .state{visibility:visible}
-.row[data-done="true"] .state svg{width:20px;height:20px}
+.row[data-done="true"] .state svg{width:10px;height:10px;overflow:visible}
 .row[data-done="true"] .t{color:var(--ink-2)}
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:#fff;border:1px solid var(--line);box-sizing:border-box;display:grid;place-items:center;font-weight:400;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
@@ -151,7 +151,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .srow:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 .srow b{display:block;font-family:var(--display);font-weight:400;font-size:1.0625rem;line-height:1.25}
 .srow .sub2{display:block;font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
-@media (hover:hover){.srow:hover b{color:var(--accent)}.srow:hover{padding-left:var(--s4)}}
+@media (hover:hover){.srow:hover b{color:var(--accent)}.srow:hover{padding-left:var(--s2)}}
 .srow{transition:padding-left .15s ease}
 @media (prefers-reduced-motion:reduce){.srow{transition:none}}
 .srow:focus-visible b,.srow:active b{color:var(--accent)}
@@ -178,7 +178,7 @@ h1.pg-h{font-size:var(--fs-h2);line-height:1.2;font-family:var(--display);font-w
   border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
 @media (hover:hover){.dtile:hover{background:var(--surface-2)}}
 .dtile:active{transform:translateY(1px)}
-.dtile svg{width:16px;height:16px;display:none}
+.dtile svg{width:10px;height:10px;overflow:visible;display:none}
 .dtile[data-done="true"]{background:var(--done);border-color:var(--primary-edge);color:var(--on-done)}
 .dtile[data-done="true"] svg{display:block}
 
@@ -343,7 +343,7 @@ const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `htt
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
 // Left-handed check: the standard check mirrored, long stroke rising to the left.
-const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path transform="matrix(-1 0 0 1 256 0)" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path transform="matrix(-1 0 0 1 256 0)" stroke="currentColor" stroke-width="28" stroke-linejoin="round" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
 function meta(r, opts={}){
