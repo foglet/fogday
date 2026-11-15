@@ -110,7 +110,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .row{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:center;gap:var(--s3);width:100%;padding:var(--s3) var(--s1);background:none;border:0;text-align:left;cursor:pointer;border-radius:var(--r-sm);min-height:var(--tap)}
 @media (hover:hover){.row:hover{background:var(--surface-2)}}
 .row:active{background:var(--surface-3)}
-.row .t{font-weight:400;font-size:.9375rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row .t{font-weight:400;font-size:.9375rem;line-height:1.3;overflow-wrap:anywhere}   /* titles wrap in full, never cut off */
 .row.nolead{grid-template-columns:minmax(0,1fr)}
 .row.cur{background:var(--primary-tint)}
 .row .m.tag-cur{color:var(--primary-ink)}
@@ -133,14 +133,18 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
 .ord small{display:block;margin:0;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--ink-3);text-align:center}
 /* Numbered rows: a plain muted number like a playlist track number. Hover tint and dividers span the full row. */
-.row:has(.ord){grid-template-columns:32px minmax(0,1fr)}
-.row .ord{width:32px;height:auto;background:none;border:0;justify-items:end;color:var(--ink-2)}
+.row .ord{height:auto;background:none;border:0;justify-items:end;color:var(--ink-2)}
 .row .ord>span{align-items:flex-end}
-/* Phosphor check-circle (fill). Not mirrored: a mirrored check at 24px reads as a dropdown chevron. */
-.row:has(.ord)[data-done="true"]{grid-template-columns:32px minmax(0,1fr) 24px}
-.row.nolead[data-done="true"]{grid-template-columns:minmax(0,1fr) 24px}
-.row[data-done="true"]::after{content:"";width:24px;height:24px;background:var(--done);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center/contain no-repeat}
-@media (forced-colors:active){.row[data-done="true"]::after{background:CanvasText}}
+/* Done mark: a small Phosphor check-circle (fill) right after the lesson number. Every numbered row keeps the
+   12px slot so numbers and titles stay aligned. Rows with no number put the check at the right edge. Not mirrored:
+   mirrored at this size it reads as a dropdown chevron. */
+.row:has(.ord){grid-template-columns:48px minmax(0,1fr)}
+.row .ord{width:48px;display:flex;justify-content:flex-end;align-items:flex-end;gap:4px}
+.row .ord::after{content:"";flex:none;width:12px;height:12px;margin-bottom:1px}
+.row[data-done="true"] .ord::after,.row.nolead[data-done="true"]::after{background:var(--done);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center/contain no-repeat}
+.row.nolead[data-done="true"]{grid-template-columns:minmax(0,1fr) 12px}
+.row.nolead[data-done="true"]::after{content:"";width:12px;height:12px}
+@media (forced-colors:active){.row[data-done="true"] .ord::after,.row.nolead[data-done="true"]::after{background:CanvasText}}
 .more{margin-top:var(--s2);width:100%}
 
 /* Section rows: flat list, each row opens its own page */
