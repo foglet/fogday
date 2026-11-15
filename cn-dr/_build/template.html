@@ -380,10 +380,10 @@ function row(r, ctx, opts={}){
   if(opts.ord==null && r.no) opts = {...opts, ord:r.no, ordLabel:'No.'};   // every lesson shows its permanent number unless a course Day is given
   const lead = opts.ord!=null
     ? `<span class="ord" aria-hidden="true"><span>${opts.ordLabel==='No.' ? '' : `<small>${esc(opts.ordLabel||'Part')}</small>`}${opts.ord}</span></span>`
-    : '';   // no thumbnails: they were all the same face and cost one image request per row
+    : `<span class="ord" aria-hidden="true"><span>-</span></span>`;   // full lessons have no number: a hyphen keeps titles aligned   // no thumbnails: they were all the same face and cost one image request per row
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
   const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || 'cur'}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson${r.d ? ' · ' + esc(r.d) : ''}</span>` : '';   // listings show titles, plus Watched in Everyday Phrases
-  return `<li><button class="row${opts.cur?' cur':''}${opts.ord==null?' nolead':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
+  return `<li><button class="row${opts.cur?' cur':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span></button></li>`;
 }
 function ring(n, total){
