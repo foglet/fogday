@@ -59,7 +59,6 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 .seal{flex:none;width:32px;height:32px;border-radius:8px;font-family:var(--display);background:var(--accent);color:var(--on-primary);display:grid;place-items:center;font-weight:700;font-size:1.05rem;line-height:1}
 .brand-txt{min-width:0}
 .brand-txt b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-body);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand-txt span{display:block;font-size:var(--fs-cap);color:var(--ink-3);font-weight:700}
 
 /* Buttons: eight states */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);padding:0 var(--s4);border-radius:var(--r-md);
@@ -278,7 +277,7 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" id="home" href="./" aria-label="Mandarin Insights, Practical Chinese Made Easy. Home"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin Insights</b><span>Practical Chinese Made Easy</span></div></a>
+    <a class="brand" id="home" href="./" aria-label="Mandarin Insights. Home"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin Insights</b></div></a>
   </div>
   <nav class="bar" aria-label="Sections">
   <div class="wrap" role="tablist">
@@ -572,9 +571,8 @@ function homeCard(){
 function updateHome(){ const c = $('#pathCard'); if(c) c.outerHTML = homeCard(); }
 function viewHome(){
   const s = SER[PATH];
-  return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Learn Mandarin you’ll actually use</h1>
-    <p class="lede">Short, practical lessons from Dr. Hanyu Jia, who holds a PhD in applied linguistics and has taught more than 500 students. Each one is built around a real situation, like greeting someone, ordering food or asking for help, so you can use it right away.</p>
-    <p class="lede">This app gathers her ${ITEMS.length} videos into a 30-day starter path, a library by level, and practice drills.</p></section>
+  return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
+    <p class="lede">We present short, practical lessons built around real situations so you can use it right away.</p></section>
     <p class="kicker">Start here</p><h2 class="display one-line">${esc(s.name)}</h2>
     <p class="lede">New to Mandarin? Watch one short lesson a day, in Dr. Jia's order.</p>
     ${homeCard()}
