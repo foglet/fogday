@@ -368,6 +368,7 @@ function ring(n, total){
 }
 // Numbered picker laid out in a row that wraps: Drill 1, Drill 2 ... / Part 1, Part 2 ... / Day 1, Day 2 ...
 // Badges show the lesson's permanent number everywhere except course Days.
+const byNo = (a,b) => (a.no||1e9)-(b.no||1e9);   // lowest number first; full lessons (no number) last
 const noTag = r => r.no ? `No. ${r.no}` : 'Full lesson';
 function drillGrid(ctx, items){
   CTX[ctx] = items.map(r=>r.id);
@@ -383,7 +384,7 @@ function accItems(key){
 }
 // Series page: Continue button, then a numbered list with titles.
 function seriesPanel(sid){
-  const key = 'ser:'+sid, it = seriesItems(sid), isPath = sid===PATH, lab = isPath ? 'Day' : 'No.';
+  const key = 'ser:'+sid, it = sid===PATH ? seriesItems(sid) : seriesItems(sid).slice().sort(byNo), isPath = sid===PATH, lab = isPath ? 'Day' : 'No.';
   const num = r => isPath ? r.ord : r.no, lab2 = r => isPath ? `Day ${r.ord}` : noTag(r);
   let next, max = 0;
   if(isPath){ const ps = pathState(); next = ps.next; max = ps.max; } else next = it.find(r=>!isDone(r.id));
@@ -446,6 +447,7 @@ function scard(sid){
 // context lists drive "Next lesson"
 const CTX = {};
 function list(key, items, opts={}){
+  items = items.slice().sort(byNo);   // every list runs lowest number first
   CTX[key] = items.map(r=>r.id);
   const open = S.open[key] || items.length <= LIMIT+1 || S.stack.length>0;
   const shown = open ? items : items.slice(0, LIMIT);
@@ -508,7 +510,7 @@ function viewPractice(){
   return `<h1 class="display">Practice</h1>
     <p class="lede">Open a drill and start. Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed drill session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
-    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
+    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
@@ -689,7 +691,7 @@ function drillPool(kind){
   let pool = ITEMS.filter(r=>r.sec==='drills');
   if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
   else if(kind!=='all') pool = pool.filter(r=>r.top===kind);
-  pool = pool.slice().sort((a,b)=>(a.no||1e9)-(b.no||1e9));   // oldest first
+  pool = pool.slice().sort(byNo);
   return pool;
 }
 function drillCard(kind, label, blurb, feat){
