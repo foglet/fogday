@@ -115,7 +115,6 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .row.nolead{grid-template-columns:minmax(0,1fr)}
 .row.cur{background:var(--primary-tint)}
 .row .m.tag-cur{color:var(--primary-ink);font-weight:600}
-.row .m.tag-skip{color:var(--accent);font-weight:600}
 .row .m.tag-seen{color:var(--ink-2);font-weight:600}
 .seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .seg.two button[aria-pressed="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
@@ -366,7 +365,7 @@ function row(r, ctx, opts={}){
     ? `<span class="ord" aria-hidden="true"><span>${opts.ordLabel==='No.' ? '' : `<small>${esc(opts.ordLabel||'Part')}</small>`}${opts.ord}</span></span>`
     : '';   // no thumbnails: they were all the same face and cost one image request per row
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
-  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || (opts.cur?'cur':'skip')}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson · ${esc(r.d)}</span>` : '';   // listings show titles, plus Up next or Skipped on a path
+  const m = opts.tag && !isDone(r.id) ? `<span class="m tag-${opts.tagCls || 'cur'}">${esc(opts.tag)}</span>` : r.k==='long' ? `<span class="m">Full lesson · ${esc(r.d)}</span>` : '';   // listings show titles, plus Up next on a path
   return `<li><button class="row${opts.cur?' cur':''}${opts.ord==null?' nolead':''}" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" aria-label="${esc(label)}">${lead}
     <span><span class="t">${esc(T(r))}</span>${m}</span></button></li>`;
 }
@@ -400,8 +399,8 @@ function seriesPanel(sid){
   CTX[key] = it.map(r=>r.id);
   const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${isPath?'day':'lesson'} to watch it again.</p>`;
-  return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next, skip = isPath && !isDone(r.id) && !cur && r.ord < max;
-    return row(r, key, {ord:num(r), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
+  return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
+    return row(r, key, {ord:num(r), ordLabel:lab, cur, tag: cur ? 'Up next' : ''}); }).join('')}</ul>`;
 }
 // Drill page: same as a Library series. Start or Continue at the first unfinished drill, then the numbered list with Up next.
 function drillPanel(kind){
@@ -549,8 +548,8 @@ function pathState(){
   const next = (atItem && !isDone(atItem.id)) ? atItem : (it.find(r=>r.ord>at && !isDone(r.id)) || it.find(r=>!isDone(r.id)) || null);
   return {it, n, next, max, started: n>0 || max>0};
 }
-function dotState(r, next, max){ return isDone(r.id) ? 'done' : r===next ? 'cur' : r.ord < max ? 'skip' : 'todo'; }
-const DOT_WORD = {done:'done', cur:'up next', skip:'skipped', todo:'not started'};
+function dotState(r, next, max){ return isDone(r.id) ? 'done' : r===next ? 'cur' : 'todo'; }
+const DOT_WORD = {done:'done', cur:'up next', todo:'not started'};
 // Home shows the same Library row and opens the same Library page, with Library > Series > course in history so Back retraces it.
 function openInLibrary(sid){
   const lv = seriesLevel(sid);
