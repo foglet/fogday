@@ -224,6 +224,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .search{position:relative;display:flex;align-items:center;margin:var(--s3) 0 var(--s4)}
 .search-ic{position:absolute;left:var(--s3);width:20px;height:20px;color:var(--ink-2);pointer-events:none}
 .search input{flex:1;min-width:0;min-height:var(--tap);border-radius:var(--r-md);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;padding:0 var(--s3) 0 calc(var(--s3) + 28px)}
+.search input::placeholder{font-size:var(--fs-sm)}   /* same size as section descriptions; typed text stays 16px so iOS does not zoom on focus */
 .search input:hover{border-color:var(--ink-2)}
 .search input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 
