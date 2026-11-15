@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* Curly quotes and ellipsis: draw them from a Latin font, never the CJK fallback, which sets them full-width with wide gaps. */
+@font-face{font-family:"Latin Punct";src:local("Helvetica Neue"),local("HelveticaNeue"),local("Roboto"),local("Segoe UI"),local("Arial"),local("ArialMT"),local("Liberation Sans"),local("DejaVu Sans");unicode-range:U+2018-201F,U+2026}
+@font-face{font-family:"Latin Punct Serif";src:local("Georgia"),local("Times New Roman"),local("TimesNewRomanPSMT"),local("Noto Serif"),local("Liberation Serif"),local("DejaVu Serif");unicode-range:U+2018-201F,U+2026}
 /* All UI icons are from Phosphor Icons 2.1 (phosphoricons.com, MIT licence), regular weight; the done check is bold. */
 /* Tokens. Direction: UX/UI Agent Skills "Warm Soft-SaaS" archetype, anchored on the
    library's `lingo` system (Nunito, rounded, tactile 3D button edge), then themed to match
@@ -25,8 +28,8 @@
   --done:#1f7a5c; --done-tint:#e6f0ea; --on-done:#fffdf7;
   --scrim:rgba(29,36,33,.5);
   --focus:#1f5c4a;
-  --display:"Young Serif","Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",Georgia,"Times New Roman",serif;
-  --font:"Rubik","PingFang SC","Hiragino Sans GB","Heiti SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --display:"Young Serif","Latin Punct Serif","Songti SC","STSong","Noto Serif CJK SC","Noto Serif SC","SimSun",Georgia,"Times New Roman",serif;
+  --font:"Rubik","Latin Punct","PingFang SC","Hiragino Sans GB","Heiti SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
   --fs-cap:.75rem; --fs-sm:.875rem; --fs-body:1rem; --fs-h3:1.25rem; --fs-h2:1.5rem; --fs-display:2.5rem;
   --lh-tight:1.15; --lh-body:1.5;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
@@ -226,17 +229,14 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 .search input:hover{border-color:var(--ink-3)}
 .search input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 
-/* Top navigation: a text row under the logo, inside the sticky header, on every screen size */
-.bar{border-top:1px solid var(--line)}
-.bar .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0 var(--s2)}
-.tab{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);border:0;background:none;cursor:pointer;color:var(--ink-2);font:inherit;font-weight:600;font-size:var(--fs-sm);padding:0 var(--s1);border-radius:0}
-.tab::after{content:"";position:absolute;left:var(--s2);right:var(--s2);bottom:0;height:3px;border-radius:3px 3px 0 0;background:transparent}
-@media (hover:hover){.tab:hover{color:var(--ink)}}
-.tab[aria-selected="true"]{color:var(--primary-ink)}
-.tab[aria-selected="true"]::after{background:var(--primary)}
-.tab svg{width:18px;height:18px}
-.tab:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-3px}
-@media (max-width:23.5rem){.tab svg{display:none}}
+/* Top navigation: icon buttons at the header's top right (Phosphor books, microphone-stage, detective). The logo goes Home. */
+.icons{display:flex;align-items:center;gap:2px;flex:none}
+.tab{position:relative;display:grid;place-items:center;width:var(--tap);height:var(--tap);border:0;background:none;cursor:pointer;color:var(--ink-2);padding:0;border-radius:var(--r-sm)}
+.tab svg{width:24px;height:24px}
+@media (hover:hover){.tab:hover{color:var(--ink);background:var(--surface-2)}}
+.tab:active{background:var(--surface-3)}
+.tab[aria-current="page"]{color:var(--primary-ink);background:var(--primary-tint)}
+.tab:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 
 /* Player sheet */
 .sheet-wrap{position:fixed;inset:0;z-index:50;display:none}
@@ -273,15 +273,8 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 <header class="top">
   <div class="wrap">
     <a class="brand" id="home" href="./" aria-label="Mandarin Insights. Home"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin Insights</b></div></a>
+    <nav class="icons" aria-label="Sections"><button class="tab" data-tab="learn" aria-label="Library" title="Library"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></svg></button><button class="tab" data-tab="practice" aria-label="Practice" title="Practice"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M168,16A72.07,72.07,0,0,0,96,88a73.29,73.29,0,0,0,.63,9.42L27.12,192.22A15.93,15.93,0,0,0,28.71,213L43,227.29a15.93,15.93,0,0,0,20.78,1.59l94.81-69.53A73.29,73.29,0,0,0,168,160a72,72,0,1,0,0-144Zm56,72a55.72,55.72,0,0,1-11.16,33.52L134.49,43.16A56,56,0,0,1,224,88ZM54.32,216,40,201.68,102.14,117A72.37,72.37,0,0,0,139,153.86ZM112,88a55.67,55.67,0,0,1,11.16-33.51l78.34,78.34A56,56,0,0,1,112,88Zm-2.35,58.34a8,8,0,0,1,0,11.31l-8,8a8,8,0,1,1-11.31-11.31l8-8A8,8,0,0,1,109.67,146.33Z"/></svg></button><button class="tab" data-tab="materials" aria-label="About Dr. Jia" title="About Dr. Jia"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button></nav>
   </div>
-  <nav class="bar" aria-label="Sections">
-  <div class="wrap" role="tablist">
-    <button class="tab" role="tab" data-tab="home" aria-selected="true"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg>Home</button>
-    <button class="tab" role="tab" data-tab="learn" aria-selected="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z"/></svg>Library</button>
-    <button class="tab" role="tab" data-tab="practice" aria-selected="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M24,128A72.08,72.08,0,0,1,96,56H204.69L194.34,45.66a8,8,0,0,1,11.32-11.32l24,24a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L204.69,72H96a56.06,56.06,0,0,0-56,56,8,8,0,0,1-16,0Zm200-8a8,8,0,0,0-8,8,56.06,56.06,0,0,1-56,56H51.31l10.35-10.34a8,8,0,0,0-11.32-11.32l-24,24a8,8,0,0,0,0,11.32l24,24a8,8,0,0,0,11.32-11.32L51.31,200H160a72.08,72.08,0,0,0,72-72A8,8,0,0,0,224,120Z"/></svg>Practice</button>
-    <button class="tab" role="tab" data-tab="materials" aria-selected="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>About</button>
-  </div>
-</nav>
 </header>
 
 <main class="wrap" id="main" tabindex="-1"></main>
@@ -616,7 +609,7 @@ window.addEventListener('popstate', e => {
 function render(focusMain){
   const v = S.stack.length ? viewPage() : tabView();
   $('#main').innerHTML = v;
-  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab===S.tab)));
+  document.querySelectorAll('.tab').forEach(t => t.dataset.tab===S.tab ? t.setAttribute('aria-current','page') : t.removeAttribute('aria-current'));
   rove();
   if(focusMain){ $('#main').focus({preventScroll:true}); }
 }
