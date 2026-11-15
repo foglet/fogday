@@ -390,7 +390,7 @@ function accItems(key){
   if(key.startsWith('drill:')) return drillPool(key.slice(6));
   return (ACC[key] && ACC[key].items) || [];
 }
-// Series page: Continue button, then a numbered list with titles.
+// Series page: numbered list with titles; the next lesson is highlighted. Only the 30-day path keeps a Continue: Day N button.
 function seriesPanel(sid){
   const key = 'ser:'+sid, it = sid===PATH ? seriesItems(sid) : seriesItems(sid).slice().sort(byNo), isPath = sid===PATH, lab = isPath ? 'Day' : 'No.';
   const num = r => isPath ? r.ord : r.no, lab2 = r => isPath ? `Day ${r.ord}` : noTag(r);
@@ -398,22 +398,22 @@ function seriesPanel(sid){
   if(isPath){ const ps = pathState(); next = ps.next; max = ps.max; } else next = it.find(r=>!isDone(r.id));
   const n = it.filter(r=>isDone(r.id)).length;
   CTX[key] = it.map(r=>r.id);
-  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
+  const btn = next && !isPath ? '' : next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${isPath?'day':'lesson'} to watch it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
     return row(r, key, {ord:num(r), ordLabel:lab, cur}); }).join('')}</ul>`;
 }
-// Drill page: same as a Library series. Start or Continue at the first unfinished drill, then the numbered list; the next drill is highlighted.
+// Drill page: same as a Library series. Numbered list; the next drill is highlighted.
 function drillPanel(kind){
   const key = 'drill:'+kind, it = drillPool(kind), n = it.filter(r=>isDone(r.id)).length;
   const ni = it.findIndex(r=>!isDone(r.id)), next = ni>=0 ? it[ni] : null;
   CTX[key] = it.map(r=>r.id);
-  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n?'Continue':'Start'}: ${noTag(next)}</span></button>`
+  const btn = next ? ''
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any drill to do it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
     return row(r, key, {ord:r.no, ordLabel:'No.', cur}); }).join('')}</ul>`;
 }
-// Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
+// Everyday Phrases: by number (oldest first, with a watched count) or grouped by situation.
 const isSeen = id => !!seen[id] || isDone(id);
 function phrasesPanel(its){
   const lv = S.level, key = 'phr:'+lv, byDate = S.phrSort !== 'topic';
@@ -424,7 +424,6 @@ function phrasesPanel(its){
   const next = nums.find(r=>r.no>at && !isSeen(r.id)) || nums.find(r=>!isSeen(r.id));
   CTX[key] = all.map(r=>r.id);
   return seg + `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${Math.round(100*w/all.length)}%"></span></div><p>${w} of ${all.length} watched</p></div>
-    ${next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${w?'Continue':'Start'}: No. ${next.no}</span></button>` : ''}
     <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r!==next && !isDone(r.id) && seen[r.id] ? 'Watched' : '', tagCls: 'seen'})).join('')}</ul>
     ${rest.length ? `<h3 class="sub grp">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
 }
