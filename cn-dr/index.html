@@ -151,7 +151,9 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .srow:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 .srow b{display:block;font-family:var(--display);font-weight:400;font-size:1.0625rem;line-height:1.25}
 .srow .sub2{display:block;font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px}
-@media (hover:hover){.srow:hover b{color:var(--accent)}}
+@media (hover:hover){.srow:hover b{color:var(--accent)}.srow:hover{padding-left:var(--s4)}}
+.srow{transition:padding-left .15s ease}
+@media (prefers-reduced-motion:reduce){.srow{transition:none}}
 .srow:focus-visible b,.srow:active b{color:var(--accent)}
 .srow .cnt{font-size:var(--fs-sm);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .srow .cnt.on{color:var(--done);font-weight:600}
@@ -340,7 +342,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
-const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
+// Left-handed check: the standard check mirrored, long stroke rising to the left.
+const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path transform="matrix(-1 0 0 1 256 0)" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
 function meta(r, opts={}){
