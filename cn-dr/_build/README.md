@@ -3,13 +3,19 @@
 Source for fogday.com/cn-dr, a mobile lesson library of Dr. Jia's Mandarin Insights videos.
 Jekyll skips this `_build` folder, so none of it is published.
 
-- `data/shorts.txt`: the 406 Shorts crawled from youtube.com/@Mandarin-Insights/shorts (index|id|views|title). The 11 long videos are listed in `classify.py`.
+- `data/shorts.txt`: Shorts from youtube.com/@Mandarin-Insights/shorts (index|id|views|title); 406 from the first crawl, newer ones appended.
+- `data/long.txt`: full-length videos (id|duration|views|title), in the order added.
+- `fetch_new.py`: adds new uploads from the channel's RSS feeds, then reruns `classify.py` and `build.py`.
 - `classify.py`: assigns level, section, topic and series by keyword rules.
 - `data/overrides.txt`: hand corrections (index|level|section|topic).
 - `template.html`: the app. Design follows the UX/UI Agent Skills kit (Warm Soft-SaaS archetype, `lingo` anchor).
 - `build.py`: inlines the data and writes `../index.html`.
 
-To add new videos: append rows to `shorts.txt` with the next index, then
+New videos are added automatically: `.github/workflows/cn-dr-new-videos.yml` runs `fetch_new.py` daily and opens a PR
+(branch `cn-dr/new-videos`) listing each new video and how it was classified. Fix any misfiled ones in
+`data/overrides.txt` on that branch, rebuild, then merge. To run it locally: `python3 fetch_new.py /tmp/summary.md`.
+
+To add videos by hand: append rows to `shorts.txt` with the next index, then
 
     python3 classify.py data/shorts.txt data/overrides.txt data/content.json
     python3 build.py

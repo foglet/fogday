@@ -1,25 +1,18 @@
 """Classify Dr. Jia's 417 videos into level / section / topic / series.
 Rules are keyword-based; OVERRIDES pin anything the rules get wrong."""
-import json, re, sys
+import json, pathlib, re, sys
 
 rows = []
 for line in open(sys.argv[1], encoding="utf-8"):
     i, vid, views, title = line.rstrip("\n").split("|", 3)
     rows.append(dict(i=int(i), id=vid, v=views, t=title, kind="short"))
 
-LONG = [
- ("Nqk-B2uWMV8","4:57","So Many of You Struggled with This: How to Pronounce “chu” vs “qu” Correctly","1.8K"),
- ("Fz_u7EjVvY8","9:29","“You Gained Weight!” Why Chinese People Say Things Americans Never Would (4 Cultural Differences)","339"),
- ("3xztZOegpr4","9:16","Applied Linguist & Chinese Teacher Breaks Down The Big Bang Theory's Chinese","260"),
- ("9GfLt5nhUPI","10:28","8 Useful Phrases (Beginner) for Describing Feeling Sick with Handwriting in ASMR","317"),
- ("MemEjBk0ojY","10:22","The Most CONFUSING Word in Chinese? Master 9 Functions of 要 (yào)","2.5K"),
- ("bIIfrJehjWc","8:06","The Complete Guide to Mid-Autumn Festival: Vocabulary, Greetings, Small Talks & Invitations","139"),
- ("DIZcFgiRSXg","8:44","A Chinese Lesson You Can't Skip | How to Call Emergency Services in China",""),
- ("alWVsizi0vc","7:31","How to Use A-Not-A Questions in Mandarin Chinese: 去不去？好不好？Finally Explained!",""),
- ("peASp0RVuBI","9:51","Ask Questions Correctly in Chinese: Question Particles 吗(ma) 呢(ne) 吧(ba) Made Easy",""),
- ("zNBn3Ho7KpY","10:19","Chinese Grammar & Phrases: 来都来了 + [Verb 都 Verb 了] Explanations, Drills & Everyday Scenarios",""),
- ("d18dKRykJ8c","15:08","Seven Small Talk Topics in Chinese: Sample Questions and Responses",""),
-]
+# Full-length videos (not Shorts): id|duration|views|title, in the order they were added. Index = 1000 + line number.
+LONG = []
+for line in open(pathlib.Path(__file__).parent/"data/long.txt", encoding="utf-8"):
+    if line.strip():
+        vid, d, v, t = line.rstrip("\n").split("|", 3)
+        LONG.append((vid, d, t, v))
 for n,(vid,d,t,v) in enumerate(LONG):
     rows.append(dict(i=1000+n, id=vid, v=v, t=t, kind="long", d=d))
 

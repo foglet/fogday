@@ -1,0 +1,74 @@
+# Checks Dr. Jia's YouTube channel (@Mandarin-Insights) for new Shorts and full-length videos, adds them to the
+# fogday.com/cn-dr data, rebuilds cn-dr/index.html and opens a pull request so the classifier's guesses can be checked
+# before they go live. Merging the PR deploys the site (pages.yml runs on every push to main).
+# Runs daily at 7:23 AM Pacific standard time, when this file or the fetcher changes, and on demand from the Actions tab.
+# The RSS feeds list only the 15 newest videos per feed, so a daily run can't fall behind unless she posts 15+ in a day.
+# PR creation needs repo Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+# Without it the branch is still pushed and the run prints a link to open the PR by hand.
+name: cn-dr new videos
+
+on:
+  schedule:
+    - cron: "23 15 * * *"   # UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/cn-dr-new-videos.yml", "cn-dr/_build/fetch_new.py"]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: cn-dr-new-videos
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BRANCH: cn-dr/new-videos
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Continue an open new-videos PR
+        id: open
+        run: |
+          # An open PR means the last batch hasn't been reviewed. Its branch already holds those videos, so start
+          # from it; new ones get added on top and the PR updates itself.
+          n=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          echo "open=$n" >> "$GITHUB_OUTPUT"
+          if [ "$n" -gt 0 ]; then
+            git fetch origin "$BRANCH" && git checkout -B "$BRANCH" "origin/$BRANCH"
+          fi
+
+      - name: Look for new uploads
+        id: fetch
+        working-directory: cn-dr/_build
+        run: |
+          python3 fetch_new.py "$RUNNER_TEMP/summary.md" | tee "$RUNNER_TEMP/out.txt"
+          grep -o 'added=[0-9]*' "$RUNNER_TEMP/out.txt" | tail -1 >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the pull request
+        if: steps.fetch.outputs.added != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add cn-dr/_build/data cn-dr/index.html
+          git commit -m "cn-dr: add ${{ steps.fetch.outputs.added }} new video(s) from @Mandarin-Insights ($(date -u +%Y-%m-%d))"
+          git push --force origin "$BRANCH"   # bot-only branch; restarts from main after each merge
+          if [ "${{ steps.open.outputs.open }}" -gt 0 ]; then
+            gh pr comment "$BRANCH" --body-file "$RUNNER_TEMP/summary.md"
+          else
+            gh pr create --base main --head "$BRANCH" \
+              --title "cn-dr: new videos from @Mandarin-Insights" --body-file "$RUNNER_TEMP/summary.md" \
+            || echo "::warning::Couldn't open the PR (check the Actions PR setting). Open it by hand: https://github.com/${{ github.repository }}/compare/main...$BRANCH"
+          fi
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
