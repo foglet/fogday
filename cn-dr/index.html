@@ -137,6 +137,16 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:#fff;border:1px solid var(--line);box-sizing:border-box;display:grid;place-items:center;font-weight:400;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
 .ord small{display:block;margin:0;font-size:.625rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--ink-3);text-align:center}
+/* Numbered rows: the number floats in its own column; divider, hover and Up next tint cover the text only (inset-divider pattern). The whole row stays the tap target. */
+.row:has(.ord){grid-template-columns:32px minmax(0,1fr) auto;position:relative;isolation:isolate;--txt:calc(var(--s1) + 32px + var(--s3))}
+.row .ord{width:32px;height:auto;background:none;border:0;justify-items:end;color:var(--ink-2)}
+.row .ord>span{align-items:flex-end}
+.row:has(.ord)::after{content:"";position:absolute;inset:0 0 0 calc(var(--txt) - var(--s2));border-radius:var(--r-sm);z-index:-1}
+@media (hover:hover){.row:has(.ord):hover{background:none}.row:has(.ord):hover::after{background:var(--surface-2)}}
+.row:has(.ord):active{background:none}.row:has(.ord):active::after{background:var(--surface-3)}
+.row.cur:has(.ord){background:none}.row.cur:has(.ord)::after{background:var(--primary-tint)}
+.list li+li:has(.row .ord){border-top:0}
+.list li+li .row:has(.ord)::before{content:"";position:absolute;top:0;left:calc(var(--txt) - var(--s2));right:0;border-top:1px solid var(--line)}
 .more{margin-top:var(--s2);width:100%}
 
 /* Section rows: flat list, each row opens its own page */
