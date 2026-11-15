@@ -108,7 +108,7 @@ def labels(t):
 # ---- series ---------------------------------------------------------------
 DAY_INFERRED = {300:8, 298:10, 296:11, 294:12, 292:14, 290:16, 280:26, 279:27, 277:29}
 SERIES = [
- ("survival30","30-Day Survival Chinese","Her November challenge: one phrase a day, Day 1 to Day 30."),
+ ("survival30","30-Day Survival Chinese","Day 1 to Day 30."),
  ("apartment","Apartment Hunting in China","Four parts, from rooms to contracts."),
  ("tastes","Tastes in Chinese","Four parts on describing flavor."),
  ("help","Asking for Help","Four short parts."),
