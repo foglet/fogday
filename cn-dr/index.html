@@ -446,7 +446,7 @@ function cntText(key, n, total){ return !total ? '' : (n && key!=='pr:review') ?
 function acc(key, name, sub, n, total, feat){
   PAGES[key] = {name, sub};
   const c = cntText(key, n, total), on = n>0 && key!=='pr:review';
-  return `<button class="srow${feat?' feat':''}" data-push="${esc(key)}" data-total="${total}" aria-label="${esc(name)}${c?`, ${c}${on?' done':''}`:''}"><span><b>${esc(name)}</b><span class="sub2">${esc(sub)}</span></span><span class="cnt${on?' on':''}">${esc(c)}</span><svg class="chev" viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>`;
+  return `<button class="srow${feat?' feat':''}" data-push="${esc(key)}" data-total="${total}" aria-label="${esc(name)}${c?`, ${c}${on?' done':''}`:''}"><span><b>${esc(name)}</b>${sub?`<span class="sub2">${esc(sub)}</span>`:''}</span><span class="cnt${on?' on':''}">${esc(c)}</span><svg class="chev" viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>`;
 }
 function scard(sid){
   const s = SER[sid], it = seriesItems(sid), n = it.filter(r=>isDone(r.id)).length;
@@ -515,7 +515,7 @@ function viewPractice(){
   const due = watched.filter(r => now - done[r.id] > dayMs);
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
   return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
-    <p class="lede">Open a drill type and start, or choose a numbered drill. Say each answer aloud, then let her confirm it.</p>
+    <p class="lede">Open a drill and start. Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
@@ -571,13 +571,13 @@ function homeCard(){
 function updateHome(){ const c = $('#pathCard'); if(c) c.outerHTML = homeCard(); }
 function viewHome(){
   const s = SER[PATH];
-  return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
-    <p class="lede">We present short, practical lessons built around real situations so you can use it right away.</p></section>
+  return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH"><em>Practical Chinese Made Easy</em></h1>
+    <p class="lede">Short, practical lessons around real situations.</p></section>
     <p class="kicker">Start here</p><h2 class="display one-line">${esc(s.name)}</h2>
     <p class="lede">Watch one short lesson a day.</p>
     ${homeCard()}
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
-      return card('home:tips','How to study','Short talks from Dr. Jia on why learning stalls and what to do instead.', tips, ()=>list('tips', tips)); })()}</div>
+      return card('home:tips','How to study','', tips, ()=>list('tips', tips)); })()}</div>
     <div class="links">
       <button class="btn" data-goto="learn">Browse all ${ITEMS.length} lessons</button>
       <button class="btn" data-goto="practice">Practice and review</button>
