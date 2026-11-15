@@ -123,9 +123,6 @@ h1.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-dis
 .meter .bar{height:8px;border-radius:var(--r-pill);background:var(--surface-3);overflow:hidden}
 .meter .bar span{display:block;height:100%;background:var(--done);border-radius:inherit}
 .meter p{margin:var(--s1) 0 0;font-size:var(--fs-sm);color:var(--ink-2);font-weight:400}
-.pick{display:flex;align-items:center;gap:var(--s1);margin-top:var(--s1)}
-.pick svg{width:18px;height:18px;transition:transform var(--dur) var(--ease)}
-.pick[aria-expanded="true"] svg{transform:rotate(90deg)}
 .row .m{font-size:var(--fs-cap);color:var(--ink-3);font-weight:700;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
 /* Done mark: nothing until a lesson is done, then a plain check. The row opens the player, so no empty checkbox-like circle. */
@@ -404,15 +401,13 @@ function seriesPanel(sid){
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next, skip = isPath && !isDone(r.id) && !cur && r.ord < max;
     return row(r, key, {ord:num(r,i), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
 }
-// Drill page: progress, one Start button (unfinished first, shuffled), and an optional numbered list.
+// Drill page: progress, one Start button (unfinished first, shuffled), and the full numbered list.
 function drillPanel(kind){
   const key = 'drill:'+kind, pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length, left = pool.length - n;
   CTX[key] = pool.map(r=>r.id);
-  const open = !!S.pick;
   return `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${pool.length?Math.round(100*n/pool.length):0}%"></span></div><p>${n} of ${pool.length} done</p></div>
     <button class="btn primary pg-start" id="pgStart" data-drill="${esc(kind)}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${left ? `Start: ${left} drill${left===1?'':'s'} left` : `Start again: all ${pool.length}, shuffled`}</span></button>
-    <button class="linkbtn pick" data-pick aria-expanded="${open}" aria-controls="pickList">Pick one<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
-    <ul class="list" id="pickList"${open?'':' hidden'}>${pool.map((r,i)=>row(r, key, {ord:i+1, ordLabel:'Drill'})).join('')}</ul>`;
+    <ul class="list" id="pickList">${pool.map((r,i)=>row(r, key, {ord:i+1, ordLabel:'Drill'})).join('')}</ul>`;
 }
 // Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
 const isSeen = id => !!seen[id] || isDone(id);
@@ -459,7 +454,7 @@ function list(key, items, opts={}){
   CTX[key] = items.map(r=>r.id);
   const open = S.open[key] || items.length <= LIMIT+1 || S.stack.length>0;
   const shown = open ? items : items.slice(0, LIMIT);
-  let h = `<ul class="list" id="l-${key}">${shown.map(r=>row(r,key,opts)).join('')}</ul>`;
+  let h = `<ul class="list" id="l-${key}">${shown.map((r,i)=>row(r,key, opts.num ? {...opts, ord:i+1, ordLabel:opts.num} : opts)).join('')}</ul>`;
   if(items.length > LIMIT+1 && !S.stack.length) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 256 256" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>`;
   return h;
 }
@@ -516,10 +511,10 @@ function viewPractice(){
   const due = watched.filter(r => now - done[r.id] > dayMs);
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
   return `<p class="kicker">Repetition training</p><h1 class="display">Practice</h1>
-    <p class="lede">Open a drill type and pick a drill. Say each answer aloud, then let her confirm it.</p>
+    <p class="lede">Open a drill type and start, or choose a numbered drill. Say each answer aloud, then let her confirm it.</p>
     <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
-      () => watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
+      () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
 const FOLLOW_ICON = {
@@ -608,7 +603,7 @@ function viewPage(){
 }
 function push(key){
   try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
-  S.stack = S.stack.concat(key); S.pick = false;
+  S.stack = S.stack.concat(key);
   try{ history.pushState({tab:S.tab, stack:S.stack, y:0}, ''); }catch(e){}
   window.scrollTo(0,0); render(false); $('#pgH').focus({preventScroll:true});
 }
@@ -734,7 +729,6 @@ document.addEventListener('click', e => {
   if(t.dataset.push){ return push(t.dataset.push); }
   if(t.dataset.drill){ return startDrill(t.dataset.drill); }
   if(t.dataset.phrsort){ S.phrSort=t.dataset.phrsort; store.set('phrSort',S.phrSort); $('#main').innerHTML=viewPage(); const b=document.querySelector(`[data-phrsort="${S.phrSort}"]`); b&&b.focus(); return; }
-  if(t.dataset.pick!==undefined){ S.pick=!S.pick; t.setAttribute('aria-expanded', String(S.pick)); $('#pickList').hidden=!S.pick; return; }
   if(t.dataset.back!==undefined){ return back(); }
   if(t.matches('.tab')) return go(t.dataset.tab);
   if(t.dataset.tabGo) return go(t.dataset.tabGo);
