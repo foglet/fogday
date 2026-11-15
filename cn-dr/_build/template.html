@@ -21,7 +21,7 @@
   /* Colours and fonts from fogday.com/mahjong: felt, bone, paper, ink, tile, red; Young Serif + Rubik. Light only, as there. */
   color-scheme:light;
   --paper:#fbf8f1; --surface:#fffdf7; --surface-2:#f3efe4; --surface-3:#e9e3d4;
-  --ink:#1d2421; --ink-2:#5f6b66; --line:#d9d3c4; --line-strong:#c9c0aa;
+  --ink:#1d2421; --ink-2:#5f6b66; --ink-3:#6a7570; --line:#d9d3c4; --line-strong:#c9c0aa;
   --primary:#1f5c4a; --primary-hover:#1a4f40; --primary-press:#154236; --primary-edge:#123a2f;
   --on-primary:#fffdf7; --primary-tint:#e6f0ea; --primary-ink:#1f5c4a;
   --accent:#b8352b;
@@ -109,7 +109,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .sub .n{color:var(--ink-2)}   /* situation headers (Greetings & Goodbyes ...) stand out from the rows */
 .list{list-style:none;margin:0;padding:0}
 .row{display:grid;grid-template-columns:56px minmax(0,1fr);align-items:center;gap:var(--s3);width:100%;padding:var(--s3) var(--s1);background:none;border:0;text-align:left;cursor:pointer;border-radius:var(--r-sm);min-height:var(--tap)}
-@media (hover:hover){.row:hover{background:var(--surface-2)}}
+@media (hover:hover){.row:hover{background:var(--surface-2)}.row:hover .ord{color:var(--ink-2)}}
 .row:active{background:var(--surface-3)}
 .row .t{font-weight:400;font-size:var(--fs-sm);line-height:var(--lh-body);overflow-wrap:anywhere}   /* titles wrap in full, never cut off */
 .row.nolead{grid-template-columns:minmax(0,1fr)}
@@ -131,7 +131,8 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
 .ord small{display:block;margin:0;font-size:var(--fs-cap);letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--ink-2);text-align:center}
 /* Numbered rows: a plain muted number like a playlist track number. Hover tint and dividers span the full row. */
-.row .ord{height:auto;background:none;border:0;justify-items:end;color:var(--ink-2)}
+.row .ord{height:auto;background:none;border:0;justify-items:end;color:var(--ink-3)}   /* video numbers: lighter grey, still 4.5:1 */
+.row.cur .ord{color:var(--ink-2)}   /* the green row tint needs the darker grey to stay readable */
 .row .ord>span{align-items:flex-end}
 .row .ord small{font-size:inherit;font-weight:400;letter-spacing:0;text-transform:none;line-height:1}   /* Day, Part, Lesson label matches the number and title size */
 /* Done mark: a small green left-handed check right after the lesson number (same shape as the drill tiles). Every numbered row keeps the
