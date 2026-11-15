@@ -260,6 +260,8 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 .sheet .acts .btn.primary{width:100%}
 .linkbtn{min-height:var(--tap);border:0;background:none;color:var(--ink-2);font:inherit;font-size:var(--fs-sm);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:var(--r-sm)}
 @media (hover:hover){.linkbtn:hover{color:var(--ink)}}
+.linkbtn:has(svg){display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.linkbtn svg{width:16px;height:16px;flex:none;color:var(--done)}
 .linkbtn:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -671,7 +673,8 @@ function syncActs(){
   else label = (d ? '' : 'Done · ') + (pathMode ? 'Finish' : 'Close');
   b.querySelector('span').textContent = label;
   const off = drillName && !nx; b.disabled = off; b.setAttribute('aria-disabled', String(off));
-  if(drillName) a.textContent = d ? 'Mark not done' : 'Mark done';
+  if(drillName && !d) a.innerHTML = ICON_CHECK + '<span>Complete</span>';   // left-handed check + Complete
+  else if(drillName) a.textContent = 'Mark not done';
   else if(d) a.textContent = 'Mark not done';
   else a.textContent = nx ? `Skip to ${pathMode ? nextName() : 'next lesson'} without marking done` : '';
   a.hidden = !a.textContent;
