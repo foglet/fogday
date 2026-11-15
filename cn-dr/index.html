@@ -362,9 +362,11 @@ function ring(n, total){
   return `<svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-f)}" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle"${txt.length>5?' class="sm"':''}>${txt}</text></svg>`;
 }
 // Numbered picker laid out in a row that wraps: Drill 1, Drill 2 ... / Part 1, Part 2 ... / Day 1, Day 2 ...
-function drillGrid(ctx, items, label='Drill', num=(r,i)=>i+1){
+// Badges show the lesson's permanent number everywhere except course Days.
+const noTag = r => r.no ? `No. ${r.no}` : 'Full lesson';
+function drillGrid(ctx, items){
   CTX[ctx] = items.map(r=>r.id);
-  return `<ul class="dgrid">${items.map((r,i)=>{ const tag=`${label} ${num(r,i)}`, base=`${tag}: ${T(r)}`;
+  return `<ul class="dgrid">${items.map(r=>{ const tag=noTag(r), base=`${tag}: ${T(r)}`;
     return `<li><button class="dtile" data-id="${r.id}" data-ctx="${esc(ctx)}" data-done="${isDone(r.id)}" data-label="${esc(base)}" aria-label="${esc(base+(isDone(r.id)?', done':''))}">${tag}${ICON_CHECK}</button></li>`; }).join('')}</ul>`;
 }
 // Every card on every tab is an accordion like Practice. ACC holds the items and panel for cards that are not series or drill types.
@@ -376,26 +378,26 @@ function accItems(key){
 }
 // Series page: Continue button, then a numbered list with titles.
 function seriesPanel(sid){
-  const key = 'ser:'+sid, it = seriesItems(sid), isPath = sid===PATH, lab = isPath ? 'Day' : 'Part';
-  const num = (r,i) => isPath ? r.ord : i+1;
+  const key = 'ser:'+sid, it = seriesItems(sid), isPath = sid===PATH, lab = isPath ? 'Day' : 'No.';
+  const num = r => isPath ? r.ord : r.no, lab2 = r => isPath ? `Day ${r.ord}` : noTag(r);
   let next, max = 0;
   if(isPath){ const ps = pathState(); next = ps.next; max = ps.max; } else next = it.find(r=>!isDone(r.id));
   const n = it.filter(r=>isDone(r.id)).length;
   CTX[key] = it.map(r=>r.id);
-  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab} ${num(next, it.indexOf(next))}</span></button>`
-    : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${lab.toLowerCase()} to watch it again.</p>`;
+  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
+    : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${isPath?'day':'lesson'} to watch it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next, skip = isPath && !isDone(r.id) && !cur && r.ord < max;
-    return row(r, key, {ord:num(r,i), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
+    return row(r, key, {ord:num(r), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
 }
 // Drill page: same as a Library series. Start or Continue at the first unfinished drill, then the numbered list with Up next.
 function drillPanel(kind){
   const key = 'drill:'+kind, it = drillPool(kind), n = it.filter(r=>isDone(r.id)).length;
   const ni = it.findIndex(r=>!isDone(r.id)), next = ni>=0 ? it[ni] : null;
   CTX[key] = it.map(r=>r.id);
-  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n?'Continue':'Start'}: Drill ${ni+1}</span></button>`
+  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n?'Continue':'Start'}: ${noTag(next)}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any drill to do it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
-    return row(r, key, {ord:i+1, ordLabel:'Drill', cur, tag: cur ? 'Up next' : ''}); }).join('')}</ul>`;
+    return row(r, key, {ord:r.no, ordLabel:'No.', cur, tag: cur ? 'Up next' : ''}); }).join('')}</ul>`;
 }
 // Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
 const isSeen = id => !!seen[id] || isDone(id);
@@ -442,7 +444,7 @@ function list(key, items, opts={}){
   CTX[key] = items.map(r=>r.id);
   const open = S.open[key] || items.length <= LIMIT+1 || S.stack.length>0;
   const shown = open ? items : items.slice(0, LIMIT);
-  let h = `<ul class="list" id="l-${key}">${shown.map((r,i)=>row(r,key, opts.num ? {...opts, ord:i+1, ordLabel:opts.num} : opts)).join('')}</ul>`;
+  let h = `<ul class="list" id="l-${key}">${shown.map((r,i)=>row(r,key, opts.num ? {...opts, ord:r.no, ordLabel:'No.'} : opts)).join('')}</ul>`;
   if(items.length > LIMIT+1 && !S.stack.length) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 256 256" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>`;
   return h;
 }
