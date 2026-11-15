@@ -135,13 +135,13 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .row.cur .ord{color:var(--ink-2)}   /* the green row tint needs the darker grey to stay readable */
 .row .ord>span{align-items:flex-end}
 .row .ord small{font-size:inherit;font-weight:400;letter-spacing:0;text-transform:none;line-height:1}   /* Day, Part, Lesson label matches the number and title size */
-/* Done mark: a small green left-handed check right after the lesson number (same shape as the drill tiles). Every numbered row keeps the
+/* Done mark: a small green left-handed check centred between the lesson number and the title (same shape as the drill tiles). Every numbered row keeps the
    14px slot so numbers and titles stay aligned. Rows with no number put the check at the right edge.
    Left-handed: short stroke on the right, long stroke rising to the left. No circle: at this size a check inside a
    circle reads as a chevron. */
 .row:has(.ord){grid-template-columns:48px minmax(0,1fr)}
-.row .ord{width:48px;display:flex;justify-content:flex-end;align-items:flex-end;gap:4px}
-.row .ord::after{content:"";flex:none;width:14px;height:14px;margin-bottom:1px}
+.row .ord{width:48px;display:flex;justify-content:flex-end;align-items:flex-end;position:relative;padding-right:18px}   /* number keeps its old right edge */
+.row .ord::after{content:"";position:absolute;width:14px;height:14px;top:50%;left:calc(30px + (18px + var(--s3)) / 2 - 7px);transform:translateY(-50%)}   /* centred in the gap between number end (30px) and title start (48px + gap) */
 .row[data-done="true"] .ord::after,.row.nolead[data-done="true"]::after{background:var(--done);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M220,104 L184,204 L36,76' fill='none' stroke='black' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M220,104 L184,204 L36,76' fill='none' stroke='black' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 .row.nolead[data-done="true"]{grid-template-columns:minmax(0,1fr) 14px}
 .row.nolead[data-done="true"]::after{content:"";width:14px;height:14px}
