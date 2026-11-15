@@ -97,6 +97,7 @@ svg{fill:currentColor}
 h1.display,h2.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:var(--display);font-weight:400;margin:0;letter-spacing:0;max-width:18ch}
 h2.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-h3),calc((100vw - 2 * var(--s4)) / 12.8))} /* Young Serif: title is 12.44em wide */
 .lede{color:var(--ink-2);margin:var(--s2) 0 0;max-width:46ch}
+.lede.sm{font-size:var(--fs-sm);margin-top:2px}
 .intro-h{margin-top:var(--s5)}
 h1.display{font-size:var(--fs-h2);max-width:none;margin-top:var(--s5)}
 h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(var(--fs-h2),calc((100vw - 2 * var(--s4)) / 15))}
@@ -481,7 +482,7 @@ function grouped(key, items, opts={}){
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<h1 class="page-h">Library</h1>`; }
+  return `<h1 class="sub">Library</h1>`; }
 function learnMain(){
   if(S.q.trim()) return searchResults();
   return `<div class="seg" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
@@ -524,8 +525,8 @@ function viewPractice(){
   const dayMs = 864e5, now = Date.now();
   const due = watched.filter(r => now - done[r.id] > dayMs);
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
-  return `<h1 class="page-h">Practice</h1>
-    <p class="lede">Open a drill and start. Say each answer aloud.</p>
+  return `<h1 class="sub">Practice</h1>
+    <p class="lede sm">Open a drill and start. Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed Drill Session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,TITLE[t],blurbs[t])).join('')}</div>
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review What You Watched','Lessons you completed more than a day ago.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Tap To Complete in the player and the lesson will come back here tomorrow.</div>`)}</div>`;
