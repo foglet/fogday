@@ -200,7 +200,8 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
   background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
 .foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
 .foot p{margin:0;min-width:0}
-.foot p a{color:var(--ink-2);text-underline-offset:2px}
+.foot p a{color:var(--ink-2);text-decoration:none;text-underline-offset:2px}
+@media (hover:hover){.foot p a:hover{text-decoration:underline}}
 .foot p a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:2px}
 
 /* Home path card */
