@@ -93,9 +93,11 @@ svg{fill:currentColor}
 
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
-h1.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:var(--display);font-weight:400;margin:0;letter-spacing:0;max-width:18ch}
-h1.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-display),calc((100vw - 2 * var(--s4)) / 12.8))} /* Young Serif: title is 12.44em wide */
+h1.display,h2.display{font-size:var(--fs-display);line-height:var(--lh-tight);font-family:var(--display);font-weight:400;margin:0;letter-spacing:0;max-width:18ch}
+h2.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-display),calc((100vw - 2 * var(--s4)) / 12.8))} /* Young Serif: title is 12.44em wide */
 .lede{color:var(--ink-2);margin:var(--s2) 0 0;max-width:46ch}
+.intro-h{margin-top:var(--s5)}
+.intro{padding-bottom:var(--s5);margin-bottom:var(--s2);border-bottom:1px solid var(--line)}
 
 /* Sections */
 .sec{margin-top:var(--s5)}
@@ -569,7 +571,10 @@ function homeCard(){
 function updateHome(){ const c = $('#pathCard'); if(c) c.outerHTML = homeCard(); }
 function viewHome(){
   const s = SER[PATH];
-  return `<p class="kicker">Start here</p><h1 class="display one-line">${esc(s.name)}</h1>
+  return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Learn Mandarin you’ll actually use</h1>
+    <p class="lede">Short, practical lessons from Dr. Hanyu Jia, who holds a PhD in applied linguistics and has taught more than 500 students. Each one is built around a real situation, like greeting someone, ordering food or asking for help, so you can use it right away.</p>
+    <p class="lede">This app gathers her ${ITEMS.length} videos into a 30-day starter path, a library by level, and practice drills.</p></section>
+    <p class="kicker">Start here</p><h2 class="display one-line">${esc(s.name)}</h2>
     <p class="lede">New to Mandarin? Watch one short lesson a day, in Dr. Jia's order.</p>
     ${homeCard()}
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
