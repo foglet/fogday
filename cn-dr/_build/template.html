@@ -684,6 +684,7 @@ function drillPool(kind){
   let pool = ITEMS.filter(r=>r.sec==='drills');
   if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
   else if(kind!=='all') pool = pool.filter(r=>r.top===kind);
+  if(kind!=='all') pool = pool.slice().sort((a,b)=>(a.no||1e9)-(b.no||1e9));   // oldest first; Mixed keeps its own order
   return pool;
 }
 function drillCard(kind, label, blurb, feat){
