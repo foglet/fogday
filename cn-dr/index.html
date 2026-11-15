@@ -349,6 +349,7 @@ function meta(r, opts={}){
 }
 const T = r => r.t.replace(/\s*\((?:Day\s?)?\d+\/\d+\)/, '');   // "(Day 2/30)" and "(1/30)" are dropped from titles
 function row(r, ctx, opts={}){
+  if(opts.ord==null && r.no) opts = {...opts, ord:r.no, ordLabel:'No.'};   // every lesson shows its permanent number unless a course Day is given
   const lead = opts.ord!=null
     ? `<span class="ord" aria-hidden="true"><span><small>${esc(opts.ordLabel||'Part')}</small>${opts.ord}</span></span>`
     : '';   // no thumbnails: they were all the same face and cost one image request per row
@@ -502,7 +503,7 @@ function viewPractice(){
   CTX['review'] = (due.length?due:watched).map(r=>r.id);
   return `<h1 class="display">Practice</h1>
     <p class="lede">Open a drill and start. Say each answer aloud.</p>
-    <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
+    <div class="series">${drillCard('all','Mixed drill session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
 }
@@ -684,7 +685,7 @@ function drillPool(kind){
   let pool = ITEMS.filter(r=>r.sec==='drills');
   if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
   else if(kind!=='all') pool = pool.filter(r=>r.top===kind);
-  if(kind!=='all') pool = pool.slice().sort((a,b)=>(a.no||1e9)-(b.no||1e9));   // oldest first; Mixed keeps its own order
+  pool = pool.slice().sort((a,b)=>(a.no||1e9)-(b.no||1e9));   // oldest first
   return pool;
 }
 function drillCard(kind, label, blurb, feat){
