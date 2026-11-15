@@ -323,8 +323,8 @@ const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
 
 const LEVELS = [
-  {id:'beginner', name:'Beginner', note:'HSK 1 to 2'},
-  {id:'intermediate', name:'Intermediate', note:'HSK 3 to 4'},
+  {id:'beginner', name:'Beginner', note:'HSK 1-2'},
+  {id:'intermediate', name:'Intermediate', note:'HSK 3-4'},
   {id:'advanced', name:'Advanced', note:'HSK 5+'}
 ];
 const SECTIONS = [
@@ -511,7 +511,7 @@ function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
   const topics = ['Tone ear training','Homophone listening','Listening challenges','HSK quizzes'];
   const TITLE = {'Tone ear training':'Tone Ear Training','Homophone listening':'Homophone Listening','Listening challenges':'Listening Challenges','HSK quizzes':'HSK Quizzes'};
-  const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1 to 2.'};
+  const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1-2.'};
   const watched = Object.entries(done).sort((a,b)=>a[1]-b[1]).map(([id])=>byId[id]).filter(Boolean);
   const dayMs = 864e5, now = Date.now();
   const due = watched.filter(r => now - done[r.id] > dayMs);
