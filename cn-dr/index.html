@@ -143,9 +143,9 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .more{margin-top:var(--s2);width:100%}
 
 /* Section rows: flat list, each row opens its own page */
-.series{display:block;margin-top:var(--s3);border-top:1px solid var(--line)}
+.series{display:block;margin-top:var(--s3)}
 .srow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:var(--s3);align-items:center;width:100%;min-height:64px;padding:var(--s3) var(--s1);
-  background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+  background:none;border:0;border-radius:var(--r-sm);color:var(--ink);text-align:left;cursor:pointer;font:inherit}
 @media (hover:hover){.srow:hover{background:var(--surface-2)}}
 .srow:active{background:var(--surface-3)}
 .srow:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
