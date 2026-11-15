@@ -401,13 +401,15 @@ function seriesPanel(sid){
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next, skip = isPath && !isDone(r.id) && !cur && r.ord < max;
     return row(r, key, {ord:num(r,i), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
 }
-// Drill page: progress, one Start button (unfinished first, shuffled), and the full numbered list.
+// Drill page: same as a Library series. Start or Continue at the first unfinished drill, then the numbered list with Up next.
 function drillPanel(kind){
-  const key = 'drill:'+kind, pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length, left = pool.length - n;
-  CTX[key] = pool.map(r=>r.id);
-  return `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${pool.length?Math.round(100*n/pool.length):0}%"></span></div><p>${n} of ${pool.length} done</p></div>
-    <button class="btn primary pg-start" id="pgStart" data-drill="${esc(kind)}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${left ? `Start: ${left} drill${left===1?'':'s'} left` : `Start again: all ${pool.length}, shuffled`}</span></button>
-    <ul class="list" id="pickList">${pool.map((r,i)=>row(r, key, {ord:i+1, ordLabel:'Drill'})).join('')}</ul>`;
+  const key = 'drill:'+kind, it = drillPool(kind), n = it.filter(r=>isDone(r.id)).length;
+  const ni = it.findIndex(r=>!isDone(r.id)), next = ni>=0 ? it[ni] : null;
+  CTX[key] = it.map(r=>r.id);
+  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n?'Continue':'Start'}: Drill ${ni+1}</span></button>`
+    : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any drill to do it again.</p>`;
+  return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
+    return row(r, key, {ord:i+1, ordLabel:'Drill', cur, tag: cur ? 'Up next' : ''}); }).join('')}</ul>`;
 }
 // Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
 const isSeen = id => !!seen[id] || isDone(id);
@@ -713,21 +715,12 @@ function drillCard(kind, label, blurb, feat){
   const pool = drillPool(kind), n = pool.filter(r=>isDone(r.id)).length;
   return acc('drill:'+kind, label, blurb, n, pool.length, feat);
 }
-function startDrill(kind){
-  const shuffle = a => a.map(r=>[Math.random(),r]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
-  const all = drillPool(kind), left = all.filter(r=>!isDone(r.id));
-  const pool = left.length ? shuffle(left).concat(shuffle(all.filter(r=>isDone(r.id)))) : shuffle(all);
-  CTX['drill'] = pool.map(r=>r.id);
-  drillName = kind==='all' ? 'Mixed session' : kind==='level' ? `${LEVELS.find(l=>l.id===S.level).name} drills` : kind;
-  openPlayer(pool[0].id, 'drill');
-}
 
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
   if(t.dataset.push){ return push(t.dataset.push); }
-  if(t.dataset.drill){ return startDrill(t.dataset.drill); }
   if(t.dataset.phrsort){ S.phrSort=t.dataset.phrsort; store.set('phrSort',S.phrSort); $('#main').innerHTML=viewPage(); const b=document.querySelector(`[data-phrsort="${S.phrSort}"]`); b&&b.focus(); return; }
   if(t.dataset.back!==undefined){ return back(); }
   if(t.matches('.tab')) return go(t.dataset.tab);
@@ -735,7 +728,7 @@ document.addEventListener('click', e => {
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
-  if(t.dataset.play){ drillName=''; return openPlayer(t.dataset.play, t.dataset.ctx); }
+  if(t.dataset.play){ const c=t.dataset.ctx||''; drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : ''; return openPlayer(t.dataset.play, c); }
   if(t.dataset.phr!==undefined){ S.phr=!S.phr; t.setAttribute('aria-expanded', String(S.phr)); $('#phrList').hidden=!S.phr; return; }
   if(t.matches('.row, .dtile, .dot') && t.dataset.id){ const c=t.dataset.ctx||'';
     drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
