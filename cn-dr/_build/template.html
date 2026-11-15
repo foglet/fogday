@@ -259,15 +259,14 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
 .sheet-tt{flex:1;min-width:0}
 .sheet-tt .kicker{margin:var(--s2) 0 0}
 .sheet-tt h2{margin-top:var(--s1)}
-/* Player actions on one line: < Previous | [check] Mark Complete | Next > */
-.sheet .acts{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:var(--s1)}
-.sheet .acts .btn{padding:0 var(--s2);font-size:var(--fs-sm);white-space:nowrap}
-.sheet .acts .nav{gap:2px;color:var(--primary-ink)}
-.sheet .acts .nav svg{width:18px;height:18px}
-.sheet .acts .mark{gap:6px}
-.sheet .acts .mark svg{width:16px;height:16px;color:var(--done)}
-.sheet .acts .mark[aria-pressed="true"] svg{color:var(--on-done)}
-@media (max-width:22.5rem){.sheet .acts{gap:2px}.sheet .acts .btn{padding:0 6px}.sheet .acts .mark{gap:4px}.sheet .acts .nav{gap:0}.sheet .acts .nav svg{width:16px;height:16px}}
+/* Player actions on one line: |< (skip back) | MARK COMPLETE | >| (skip forward). Phosphor skip-back / skip-forward. */
+.sheet .acts{display:grid;grid-template-columns:var(--tap) minmax(0,1fr) var(--tap);align-items:center;gap:var(--s1)}
+.sheet .acts .nav{width:var(--tap);padding:0;color:var(--primary-ink)}
+.sheet .acts .nav svg{width:24px;height:24px}
+.sheet .acts .mark{gap:6px;padding:0 var(--s2);font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-ink);white-space:nowrap}
+.sheet .acts .mark svg{width:14px;height:14px;color:var(--done)}
+.sheet .acts .mark[aria-pressed="true"]{background:transparent;border-color:transparent;color:var(--done)}
+.sheet .acts .btn:disabled{background:transparent}
 .linkbtn{min-height:var(--tap);border:0;background:none;color:var(--ink-2);font:inherit;font-size:var(--fs-sm);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:var(--r-sm)}
 @media (hover:hover){.linkbtn:hover{color:var(--ink)}}
 .linkbtn:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
@@ -302,9 +301,9 @@ h2.display.jia-h{font-size:var(--fs-h2);max-width:none;margin-top:var(--s6,var(-
     </div>
     <div class="player" id="player"></div>
     <div class="acts">
-      <button class="btn ghost nav" id="prevBtn"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg><span>Previous</span></button>
-      <button class="btn mark" id="markBtn" aria-pressed="false"></button>
-      <button class="btn ghost nav" id="nextBtn"><span>Next</span><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
+      <button class="btn ghost nav" id="prevBtn"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M199.81,34a16,16,0,0,0-16.24.43L64,109.23V40a8,8,0,0,0-16,0V216a8,8,0,0,0,16,0V146.77l119.57,74.78A15.95,15.95,0,0,0,208,208.12V47.88A15.86,15.86,0,0,0,199.81,34ZM192,208,64.16,128,192,48.07Z"/></svg></button>
+      <button class="btn ghost mark" id="markBtn" aria-pressed="false"></button>
+      <button class="btn ghost nav" id="nextBtn"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M200,32a8,8,0,0,0-8,8v69.23L72.43,34.45A15.95,15.95,0,0,0,48,47.88V208.12a16,16,0,0,0,24.43,13.43L192,146.77V216a8,8,0,0,0,16,0V40A8,8,0,0,0,200,32ZM64,207.93V48.05l127.84,80Z"/></svg></button>
     </div>
   </div>
 </div>
@@ -693,6 +692,7 @@ function syncActs(){
   const pb = $('#prevBtn'), nb = $('#nextBtn'), mb = $('#markBtn');
   pb.disabled = !hasPrev(); nb.disabled = !hasNext();
   pb.setAttribute('aria-label', `Previous ${unit}`); nb.setAttribute('aria-label', `Next ${unit}`);
+  pb.title = `Previous ${unit}`; nb.title = `Next ${unit}`;
   mb.innerHTML = ICON_CHECK + `<span>${d ? 'Completed' : 'Mark Complete'}</span>`;
   mb.setAttribute('aria-pressed', String(d));
 }
