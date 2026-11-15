@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* All UI icons are from Lucide 1.73 (lucide.dev, ISC licence). */
+/* All UI icons are from Phosphor Icons 2.1 (phosphoricons.com, MIT licence), regular weight; the done check is bold. */
 /* Tokens. Direction: UX/UI Agent Skills "Warm Soft-SaaS" archetype, anchored on the
    library's `lingo` system (Nunito, rounded, tactile 3D button edge), then themed to match
    fogday.com/mahjong. */
@@ -79,7 +79,7 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 @media (hover:hover){.btn.ghost:hover{background:var(--surface-2)}}
 .icon-btn{width:var(--tap);padding:0;flex:none}
 .btn svg,.tab svg,.row svg{width:20px;height:20px;flex:none}
-svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg{fill:currentColor}
 
 /* Level switch (segmented) */
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s3) 0 var(--s3)}
@@ -131,7 +131,7 @@ h1.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-dis
 /* Done mark: nothing until a lesson is done, then a plain check. The row opens the player, so no empty checkbox-like circle. */
 .state{width:24px;height:24px;display:grid;place-items:center;color:var(--done);visibility:hidden}
 .row[data-done="true"] .state{visibility:visible}
-.row[data-done="true"] .state svg{width:20px;height:20px;stroke-width:2.75}
+.row[data-done="true"] .state svg{width:20px;height:20px}
 .row[data-done="true"] .t{color:var(--ink-2)}
 .ord{width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:var(--fs-h3);color:var(--ink-2);line-height:1}
 .ord>span{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
@@ -160,7 +160,7 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 .pg{margin-top:var(--s3)}
 .pg .tile:first-child{margin-top:0}
 .ring{width:48px;height:48px}
-.ring circle{stroke-width:5}
+.ring circle{fill:none;stroke-width:5;stroke-linecap:round}
 .ring .bg{stroke:var(--surface-3)} .ring .fg{stroke:var(--done)}
 .ring text{fill:var(--ink);stroke:none;font-size:13px;font-weight:700;font-family:var(--font)}
 .ring text.sm{font-size:10.5px}
@@ -171,7 +171,7 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
   border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-weight:600;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
 @media (hover:hover){.dtile:hover{background:var(--surface-2)}}
 .dtile:active{transform:translateY(1px)}
-.dtile svg{width:16px;height:16px;stroke-width:3;display:none}
+.dtile svg{width:16px;height:16px;display:none}
 .dtile[data-done="true"]{background:var(--done);border-color:var(--primary-edge);color:var(--on-done)}
 .dtile[data-done="true"] svg{display:block}
 
@@ -190,7 +190,7 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 .tile.feature{border-color:var(--primary);background:var(--primary-tint)}
 .follow{list-style:none;margin:var(--s3) 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2)}
 .follow a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s1);min-height:72px;padding:var(--s2) var(--s1);border-radius:var(--r-lg);background:var(--surface);border:1.5px solid var(--line);color:var(--ink);text-decoration:none;font-size:var(--fs-cap);font-weight:600;text-align:center}
-.follow svg{width:26px;height:26px;fill:none;stroke:var(--primary);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.follow svg{width:26px;height:26px;color:var(--primary)}
 @media (hover:hover){.follow a:hover{border-color:var(--line-strong)}}
 .follow a:active{transform:scale(.97)}
 .follow a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
@@ -274,14 +274,14 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 <header class="top">
   <div class="wrap">
     <a class="brand" id="home" href="./" aria-label="Mandarin Insights, Practical Chinese Made Easy. Home"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin Insights</b><span>Practical Chinese Made Easy</span></div></a>
-    <button class="btn ghost icon-btn" id="searchBtn" aria-label="Search lessons"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></button>
+    <button class="btn ghost icon-btn" id="searchBtn" aria-label="Search lessons"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button>
   </div>
   <nav class="bar" aria-label="Sections">
   <div class="wrap" role="tablist">
-    <button class="tab" role="tab" data-tab="home" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</button>
-    <button class="tab" role="tab" data-tab="learn" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></svg>Library</button>
-    <button class="tab" role="tab" data-tab="practice" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>Practice</button>
-    <button class="tab" role="tab" data-tab="materials" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>About</button>
+    <button class="tab" role="tab" data-tab="home" aria-selected="true"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg>Home</button>
+    <button class="tab" role="tab" data-tab="learn" aria-selected="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z"/></svg>Library</button>
+    <button class="tab" role="tab" data-tab="practice" aria-selected="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M24,128A72.08,72.08,0,0,1,96,56H204.69L194.34,45.66a8,8,0,0,1,11.32-11.32l24,24a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L204.69,72H96a56.06,56.06,0,0,0-56,56,8,8,0,0,1-16,0Zm200-8a8,8,0,0,0-8,8,56.06,56.06,0,0,1-56,56H51.31l10.35-10.34a8,8,0,0,0-11.32-11.32l-24,24a8,8,0,0,0,0,11.32l24,24a8,8,0,0,0,11.32-11.32L51.31,200H160a72.08,72.08,0,0,0,72-72A8,8,0,0,0,224,120Z"/></svg>Practice</button>
+    <button class="tab" role="tab" data-tab="materials" aria-selected="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>About</button>
   </div>
 </nav>
 </header>
@@ -296,12 +296,12 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-h">
       <div class="sheet-tt"><p class="kicker" id="sheetKicker"></p><h2 id="sheetTitle"></h2></div>
-      <a class="btn ghost icon-btn" id="ytLink" target="_blank" rel="noopener" aria-label="Watch on YouTube, opens a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
-      <button class="btn ghost icon-btn" id="closeBtn" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      <a class="btn ghost icon-btn" id="ytLink" target="_blank" rel="noopener" aria-label="Watch on YouTube, opens a new tab"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"/></svg></a>
+      <button class="btn ghost icon-btn" id="closeBtn" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
     </div>
     <div class="player" id="player"></div>
     <div class="acts">
-      <button class="btn primary" id="nextBtn"><span>Next lesson</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg></button>
+      <button class="btn primary" id="nextBtn"><span>Next lesson</span><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></button>
       <button class="linkbtn" id="altBtn"></button>
     </div>
   </div>
@@ -349,7 +349,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
-const ICON_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
 function meta(r, opts={}){
@@ -395,7 +395,7 @@ function seriesPanel(sid){
   if(isPath){ const ps = pathState(); next = ps.next; max = ps.max; } else next = it.find(r=>!isDone(r.id));
   const n = it.filter(r=>isDone(r.id)).length;
   CTX[key] = it.map(r=>r.id);
-  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab} ${num(next, it.indexOf(next))}</span></button>`
+  const btn = next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab} ${num(next, it.indexOf(next))}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${lab.toLowerCase()} to watch it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next, skip = isPath && !isDone(r.id) && !cur && r.ord < max;
     return row(r, key, {ord:num(r,i), ordLabel:lab, cur, tag: cur ? 'Up next' : skip ? 'Skipped' : ''}); }).join('')}</ul>`;
@@ -406,8 +406,8 @@ function drillPanel(kind){
   CTX[key] = pool.map(r=>r.id);
   const open = !!S.pick;
   return `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${pool.length?Math.round(100*n/pool.length):0}%"></span></div><p>${n} of ${pool.length} done</p></div>
-    <button class="btn primary pg-start" id="pgStart" data-drill="${esc(kind)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${left ? `Start: ${left} drill${left===1?'':'s'} left` : `Start again: all ${pool.length}, shuffled`}</span></button>
-    <button class="linkbtn pick" data-pick aria-expanded="${open}" aria-controls="pickList">Pick one<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    <button class="btn primary pg-start" id="pgStart" data-drill="${esc(kind)}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${left ? `Start: ${left} drill${left===1?'':'s'} left` : `Start again: all ${pool.length}, shuffled`}</span></button>
+    <button class="linkbtn pick" data-pick aria-expanded="${open}" aria-controls="pickList">Pick one<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
     <ul class="list" id="pickList"${open?'':' hidden'}>${pool.map((r,i)=>row(r, key, {ord:i+1, ordLabel:'Drill'})).join('')}</ul>`;
 }
 // Everyday Phrases: by number (oldest first, with Continue and a watched count) or grouped by situation.
@@ -421,7 +421,7 @@ function phrasesPanel(its){
   const next = nums.find(r=>r.no>at && !isSeen(r.id)) || nums.find(r=>!isSeen(r.id));
   CTX[key] = all.map(r=>r.id);
   return seg + `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${Math.round(100*w/all.length)}%"></span></div><p>${w} of ${all.length} watched</p></div>
-    ${next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${w?'Continue':'Start'}: No. ${next.no}</span></button>` : ''}
+    ${next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${w?'Continue':'Start'}: No. ${next.no}</span></button>` : ''}
     <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r===next ? 'Up next' : (!isDone(r.id) && seen[r.id]) ? 'Watched' : '', tagCls: r===next ? 'cur' : 'seen'})).join('')}</ul>
     ${rest.length ? `<h3 class="sub grp">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
 }
@@ -443,7 +443,7 @@ function cntText(key, n, total){ return !total ? '' : (n && key!=='pr:review') ?
 function acc(key, name, sub, n, total, feat){
   PAGES[key] = {name, sub};
   const c = cntText(key, n, total), on = n>0 && key!=='pr:review';
-  return `<button class="srow${feat?' feat':''}" data-push="${esc(key)}" data-total="${total}" aria-label="${esc(name)}${c?`, ${c}${on?' done':''}`:''}"><span><b>${esc(name)}</b><span class="sub2">${esc(sub)}</span></span><span class="cnt${on?' on':''}">${esc(c)}</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>`;
+  return `<button class="srow${feat?' feat':''}" data-push="${esc(key)}" data-total="${total}" aria-label="${esc(name)}${c?`, ${c}${on?' done':''}`:''}"><span><b>${esc(name)}</b><span class="sub2">${esc(sub)}</span></span><span class="cnt${on?' on':''}">${esc(c)}</span><svg class="chev" viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>`;
 }
 function scard(sid){
   const s = SER[sid], it = seriesItems(sid), n = it.filter(r=>isDone(r.id)).length;
@@ -456,7 +456,7 @@ function list(key, items, opts={}){
   const open = S.open[key] || items.length <= LIMIT+1 || S.stack.length>0;
   const shown = open ? items : items.slice(0, LIMIT);
   let h = `<ul class="list" id="l-${key}">${shown.map(r=>row(r,key,opts)).join('')}</ul>`;
-  if(items.length > LIMIT+1 && !S.stack.length) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  if(items.length > LIMIT+1 && !S.stack.length) h += `<button class="btn more" data-more="${esc(key)}" aria-expanded="${open}" aria-controls="l-${key}">${open?'Show fewer':`Show all ${items.length}`}<svg viewBox="0 0 256 256" aria-hidden="true" style="transform:rotate(${open?180:0}deg)"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>`;
   return h;
 }
 function grouped(key, items, opts={}){
@@ -514,12 +514,12 @@ function viewPractice(){
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
       () => watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
 }
-// Lucide icons (lucide.dev, ISC licence): circle-play for YouTube, camera for Instagram, music for TikTok, globe for her site. Placeholders until brand icons are supplied.
+// Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo, globe for her site.
 const FOLLOW_ICON = {
-  'YouTube':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>',
-  'Instagram':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>',
-  'TikTok':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V3a1 1 0 0 0-1.28-.96l-10 2.917a1 1 0 0 0-.72.96V19"/><circle cx="18" cy="16" r="3"/><circle cx="6" cy="19" r="3"/></svg>',
-  web:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>'
+  'YouTube':'<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M164.44,121.34l-48-32A8,8,0,0,0,104,96v64a8,8,0,0,0,12.44,6.66l48-32a8,8,0,0,0,0-13.32ZM120,145.05V111l25.58,17ZM234.33,69.52a24,24,0,0,0-14.49-16.4C185.56,39.88,131,40,128,40s-57.56-.12-91.84,13.12a24,24,0,0,0-14.49,16.4C19.08,79.5,16,97.74,16,128s3.08,48.5,5.67,58.48a24,24,0,0,0,14.49,16.41C69,215.56,120.4,216,127.34,216h1.32c6.94,0,58.37-.44,91.18-13.11a24,24,0,0,0,14.49-16.41c2.59-10,5.67-28.22,5.67-58.48S236.92,79.5,234.33,69.52Zm-15.49,113a8,8,0,0,1-4.77,5.49c-31.65,12.22-85.48,12-86,12H128c-.54,0-54.33.2-86-12a8,8,0,0,1-4.77-5.49C34.8,173.39,32,156.57,32,128s2.8-45.39,5.16-54.47A8,8,0,0,1,41.93,68c30.52-11.79,81.66-12,85.85-12h.27c.54,0,54.38-.18,86,12a8,8,0,0,1,4.77,5.49C221.2,82.61,224,99.43,224,128S221.2,173.39,218.84,182.47Z"/></svg>',
+  'Instagram':'<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Zm40,152a40,40,0,0,1-40,40H80a40,40,0,0,1-40-40V80A40,40,0,0,1,80,40h96a40,40,0,0,1,40,40ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"/></svg>',
+  'TikTok':'<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,72a48.05,48.05,0,0,1-48-48,8,8,0,0,0-8-8H128a8,8,0,0,0-8,8V156a20,20,0,1,1-28.57-18.08A8,8,0,0,0,96,130.69V88a8,8,0,0,0-9.4-7.88C50.91,86.48,24,119.1,24,156a76,76,0,0,0,152,0V116.29A103.25,103.25,0,0,0,224,128a8,8,0,0,0,8-8V80A8,8,0,0,0,224,72Zm-8,39.64a87.19,87.19,0,0,1-43.33-16.15A8,8,0,0,0,160,102v54a60,60,0,0,1-120,0c0-25.9,16.64-49.13,40-57.6v27.67A36,36,0,1,0,136,156V32h24.5A64.14,64.14,0,0,0,216,87.5Z"/></svg>',
+  web:'<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Zm52.33,0H170.71a135.28,135.28,0,0,0-22.3-45.6A88.29,88.29,0,0,1,206.37,88ZM107.59,42.4A135.28,135.28,0,0,0,85.29,88H49.63A88.29,88.29,0,0,1,107.59,42.4ZM49.63,168H85.29a135.28,135.28,0,0,0,22.3,45.6A88.29,88.29,0,0,1,49.63,168Zm98.78,45.6a135.28,135.28,0,0,0,22.3-45.6h35.66A88.29,88.29,0,0,1,148.41,213.6Z"/></svg>'
 };
 function offer(c){
   return `<li class="offer"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></li>`;
@@ -560,7 +560,7 @@ function homeCard(){
   if(!next) return `<div class="path" id="pathCard"><p class="day">All ${it.length} days done</p><h2>You finished ${esc(s.name)}</h2>${dots(it,null,max)}
     <button class="btn primary" data-goto="learn">Find your next lessons in the Library</button>${phrases(it)}</div>`;
   return `<div class="path" id="pathCard"><p class="day">Day ${next.ord} of ${it.length}</p><h2>${esc(T(next))}</h2>${dots(it,next,max)}
-    <button class="btn primary" id="pathBtn" data-play="${next.id}" data-ctx="ser:${PATH}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg><span>${started?'Continue':'Start'}: Day ${next.ord}</span></button>
+    <button class="btn primary" id="pathBtn" data-play="${next.id}" data-ctx="ser:${PATH}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${started?'Continue':'Start'}: Day ${next.ord}</span></button>
     ${phrases(it)}<p class="hint">${ms ? `<b>${ms}</b>` : 'Mark each day done to move ahead. Tap a dot to jump to any day.'}</p></div>`;
 }
 function updateHome(){ const c = $('#pathCard'); if(c) c.outerHTML = homeCard(); }
@@ -595,7 +595,7 @@ function viewPage(){
   for(let i=1;i<S.stack.length;i++) if(!PAGES[S.stack[i]]) accPanel(S.stack[i-1]); // nested rows register when the parent page renders
   const key = S.stack[S.stack.length-1], pg = PAGES[key] || {name:'', sub:''};
   const parent = S.stack.length>1 ? (PAGES[S.stack[S.stack.length-2]]||{}).name : TAB_NAME[S.tab];
-  return `<button class="back" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(parent)}</button>
+  return `<button class="back" data-back><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>${esc(parent)}</button>
     <h1 class="pg-h" id="pgH" tabindex="-1">${esc(pg.name)}</h1>${pg.sub?`<p class="lede">${esc(pg.sub)}</p>`:''}
     <div class="pg">${accPanel(key)}</div>`;
 }
