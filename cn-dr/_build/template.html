@@ -687,7 +687,7 @@ function refreshProgress(){
 }
 const hasNext = () => queue && qi > -1 && qi < queue.length-1;
 const nextName = () => pathMode ? `Day ${byId[queue[qi+1]].ord}` : 'lesson';
-// One line of actions: Previous and Next move through the list; Mark Complete marks done and advances.
+// One line of actions: Previous and Next move through the list; Mark Complete toggles done in place.
 const hasPrev = () => queue && qi > 0;
 function syncActs(){
   const d = isDone(cur.id), unit = drillName ? 'drill' : pathMode ? 'day' : 'lesson';
@@ -740,13 +740,8 @@ $('#closeBtn').addEventListener('click', closePlayer);
 $('#scrim').addEventListener('click', closePlayer);
 $('#prevBtn').addEventListener('click', () => step(-1));
 $('#nextBtn').addEventListener('click', () => step(1));
-// Mark Complete marks done and moves on to the next video; on the last one it stays and shows Completed.
-// Tapping Completed undoes it without moving.
-$('#markBtn').addEventListener('click', () => {
-  if(isDone(cur.id)){ markDone(false); syncActs(); return; }
-  markDone(true);
-  if(hasNext()){ openPlayer(queue[qi+1], null, true); $('#markBtn').focus(); } else syncActs();
-});
+// Mark Complete toggles done and stays on this video, so the learner can watch it again. Next moves on.
+$('#markBtn').addEventListener('click', () => { markDone(!isDone(cur.id)); syncActs(); });
 function rove(){ document.querySelectorAll('[role="tablist"]').forEach(l=>{ l.querySelectorAll('[role="tab"]').forEach(t=>t.tabIndex = t.getAttribute('aria-selected')==='true'?0:-1); }); }
 document.addEventListener('keydown', e => {
   const tab = e.target.closest && e.target.closest('[role="tab"]');
