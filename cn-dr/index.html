@@ -41,7 +41,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:124px}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:var(--lh-body);
-  padding-bottom:calc(env(safe-area-inset-bottom) + var(--s6))}
+  padding-bottom:calc(env(safe-area-inset-bottom) + var(--s8))}
 img{display:block;max-width:100%}
 button{font:inherit;color:inherit}
 a{color:var(--primary-ink)}
@@ -195,8 +195,9 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 .follow a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .empty{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-2);background:var(--surface);border:1.5px dashed var(--line-strong);border-radius:var(--r-lg);margin-top:var(--s3)}
 .empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
-.foot{margin-top:var(--s8);padding:var(--s5) 0;border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
-.foot p{margin:0 0 var(--s2);max-width:65ch}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:15;text-align:center;padding:var(--s3) var(--s4) calc(env(safe-area-inset-bottom) + var(--s3));
+  background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-3)}
+.foot p{margin:0 auto;max-width:65ch}
 
 /* Home path card */
 .path{margin-top:var(--s4);background:var(--primary-tint);border:1.5px solid var(--primary);border-radius:var(--r-lg);padding:var(--s4);box-shadow:var(--shadow-card)}
@@ -285,6 +286,7 @@ h1.pg-h{font-size:1.75rem;line-height:1.2;font-family:var(--display);font-weight
 </header>
 
 <main class="wrap" id="main" tabindex="-1"></main>
+<footer class="foot"><p>© Mandarin Insights by Dr. Hanyu Jia.</p></footer>
 
 
 <div class="sheet-wrap" id="sheetWrap" data-open="false">
@@ -509,7 +511,7 @@ function viewPractice(){
     <p class="lede">Open a drill type and pick a drill. Say each answer aloud, then let her confirm it.</p>
     <div class="series">${drillCard('all','Mixed drill session','Shuffled across all four types.',true)}${topics.map(t=>drillCard(t,t,blurbs[t])).join('')}</div>
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review what you watched','Lessons you marked done more than a day ago, oldest first.', due.length?due:watched,
-      () => watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>` + foot();
+      () => watched.length ? list('review', due.length?due:watched, {level:true}) : `<div class="empty"><b>Nothing to review yet</b>Mark a lesson done in the player and it will come back here tomorrow.</div>`)}</div>`;
 }
 // Lucide icons (lucide.dev, ISC licence): circle-play for YouTube, camera for Instagram, music for TikTok, globe for her site. Placeholders until brand icons are supplied.
 const FOLLOW_ICON = {
@@ -526,7 +528,7 @@ function viewMaterials(){
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
     <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>
-    <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}<span>${esc(f.label||f.name)}</span></a></li>`).join('')}</ul>` + foot();
+    <h2 class="sub">Follow</h2><ul class="follow">${MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||FOLLOW_ICON.web}<span>${esc(f.label||f.name)}</span></a></li>`).join('')}</ul>`;
 }
 const PATH = 'survival30';
 // Continue goes to the last day opened if it is not done yet, else the next undone day after it, else the first gap.
@@ -571,7 +573,7 @@ function viewHome(){
     <div class="links">
       <button class="btn" data-goto="learn">Browse all ${ITEMS.length} lessons</button>
       <button class="btn" data-goto="practice">Practice and review</button>
-    </div>` + foot();
+    </div>`;
 }
 function viewSearch(){
   const q = S.q.trim().toLowerCase();
@@ -582,9 +584,6 @@ function viewSearch(){
     <form class="search" role="search" id="searchForm"><label class="vh" for="q">Search all ${ITEMS.length} lessons</label><input id="q" type="search" placeholder="Try 了, tones, bill, or No. 42" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"><button class="btn" type="button" data-tab-go="learn">Cancel</button></form>
     <p class="sec-note" aria-live="polite">${q ? `${res.length} result${res.length===1?'':'s'}, most viewed first` : `Searches titles and topics across all ${ITEMS.length} lessons.`}</p>
     ${q && !res.length ? `<div class="empty"><b>No lessons match "${esc(S.q)}"</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search', r.no ? {ord:r.no, ordLabel:'No.'} : {})).join('')}</ul>`}`;
-}
-function foot(){
-  return `<footer class="foot"><p>© Mandarin Insights by Dr. Hanyu Jia.</p></footer>`;
 }
 
 /* ---------- pages ---------- */
@@ -597,7 +596,7 @@ function viewPage(){
   const parent = S.stack.length>1 ? (PAGES[S.stack[S.stack.length-2]]||{}).name : TAB_NAME[S.tab];
   return `<button class="back" data-back><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(parent)}</button>
     <h1 class="pg-h" id="pgH" tabindex="-1">${esc(pg.name)}</h1>${pg.sub?`<p class="lede">${esc(pg.sub)}</p>`:''}
-    <div class="pg">${accPanel(key)}</div>` + foot();
+    <div class="pg">${accPanel(key)}</div>`;
 }
 function push(key){
   try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
