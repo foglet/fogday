@@ -574,7 +574,7 @@ function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
     <p class="lede">We present short, practical lessons built around real situations so you can use it right away.</p></section>
     <p class="kicker">Start here</p><h2 class="display one-line">${esc(s.name)}</h2>
-    <p class="lede">New to Mandarin? Watch one short lesson a day, in Dr. Jia's order.</p>
+    <p class="lede">Watch one short lesson a day.</p>
     ${homeCard()}
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
       return card('home:tips','How to study','Short talks from Dr. Jia on why learning stalls and what to do instead.', tips, ()=>list('tips', tips)); })()}</div>
