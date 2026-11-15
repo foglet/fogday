@@ -46,7 +46,7 @@ MAT = {
    "url":"https://www.mandarininsights.com/private","cta":"Apply for private lessons"},
  ],
  "free": [
-  {"name":"Free Guide: Understand Pinyin Spellings","desc":"Why pinyin is spelled the way it is, and where spelling hides the real sound.",
+  {"name":"Understand Pinyin Spellings","desc":"Why pinyin is spelled the way it is, and where spelling hides the real sound.",
    "url":"https://www.mandarininsights.com/pinyinspellings","cta":"Get the free guide"},
   {"name":"Weekly Practical Tip (Newsletter)","desc":"One practical language tip by email each week. Sign up on her site.",
    "url":"https://www.mandarininsights.com/","cta":"Sign up"},
