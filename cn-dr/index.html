@@ -196,9 +196,13 @@ h1.pg-h{font-size:var(--fs-h2);line-height:1.2;font-family:var(--display);font-w
 .bio p{margin:0 0 var(--s3);color:var(--ink)}
 h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(--s5));padding-top:var(--s5);border-top:1px solid var(--line)}
 .offers{list-style:none;margin:var(--s2) 0 0;padding:0;border-top:1px solid var(--line)}
-.offer{padding:var(--s4) 0;border-bottom:1px solid var(--line)}
+.offer{padding:var(--s4) 0 var(--s2);border-bottom:1px solid var(--line)}
 .offer h3{margin:0 0 var(--s1);font-size:var(--fs-lg);line-height:1.25;font-family:var(--display);font-weight:400}
-.offer p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
+.offer p{margin:0 0 var(--s1);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
+.ext-link{display:inline-flex;align-items:center;gap:4px;min-height:var(--tap);margin-left:calc(-1 * var(--s2));padding:0 var(--s2);border-radius:var(--r-sm);color:var(--primary-ink);font-weight:600;font-size:var(--fs-sm);text-decoration:none}
+.ext-link svg{width:14px;height:14px;fill:currentColor;flex:none}
+@media (hover:hover){.ext-link:hover{background:var(--surface-2);text-decoration:underline}}
+.ext-link:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .tile{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:var(--s4);margin-top:var(--s3)}
 .tile h3{margin:0 0 var(--s1);font-size:var(--fs-h3);line-height:1.25;font-family:var(--display);font-weight:400}
 .tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
@@ -539,8 +543,10 @@ const FOLLOW_ICON = {
   'Instagram':'<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Zm40,152a40,40,0,0,1-40,40H80a40,40,0,0,1-40-40V80A40,40,0,0,1,80,40h96a40,40,0,0,1,40,40ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"/></svg>',
   'TikTok':'<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,72a48.05,48.05,0,0,1-48-48,8,8,0,0,0-8-8H128a8,8,0,0,0-8,8V156a20,20,0,1,1-28.57-18.08A8,8,0,0,0,96,130.69V88a8,8,0,0,0-9.4-7.88C50.91,86.48,24,119.1,24,156a76,76,0,0,0,152,0V116.29A103.25,103.25,0,0,0,224,128a8,8,0,0,0,8-8V80A8,8,0,0,0,224,72Zm-8,39.64a87.19,87.19,0,0,1-43.33-16.15A8,8,0,0,0,160,102v54a60,60,0,0,1-120,0c0-25.9,16.64-49.13,40-57.6v27.67A36,36,0,1,0,136,156V32h24.5A64.14,64.14,0,0,0,216,87.5Z"/></svg>',
 };
+// Phosphor arrow-up-right (bold): marks links that leave the app.
+const EXT_ICON = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M204,64V168a12,12,0,0,1-24,0V93L72.49,200.49a12,12,0,0,1-17-17L163,76H88a12,12,0,0,1,0-24H192A12,12,0,0,1,204,64Z"/></svg>';
 function offer(c){
-  return `<li class="offer"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><a class="btn${c.feature?' primary':''}" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}</a></li>`;
+  return `<li class="offer"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p><a class="ext-link" href="${c.url}" target="_blank" rel="noopener">${esc(c.cta)}<span class="vh">, opens a new tab</span>${EXT_ICON}</a></li>`;
 }
 function viewMaterials(){
   return `<h1 class="sub">About</h1>
