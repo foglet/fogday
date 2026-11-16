@@ -84,6 +84,9 @@ p,li,h1,h2,h3,dd{overflow-wrap:anywhere}
 .btn svg,.tab svg,.row svg{width:20px;height:20px;flex:none}
 svg{fill:currentColor}
 
+/* Traditional Chinese: prefer TC faces so glyph shapes follow Taiwan and Hong Kong forms */
+:root:lang(zh-Hant){--display:"Young Serif","Latin Punct Serif","Songti TC","Noto Serif CJK TC","Noto Serif TC","PMingLiU",Georgia,serif;
+  --font:"Rubik","Latin Punct","PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,-apple-system,"Segoe UI",sans-serif}
 /* Level switch (segmented) */
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s1);padding:var(--s1);background:var(--surface-2);border-radius:var(--r-md);margin:var(--s3) 0 var(--s3)}
 .seg button{min-height:var(--tap);border:0;border-radius:calc(var(--r-md) - 4px);background:transparent;font-weight:600;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer;padding:0 var(--s1);
@@ -252,8 +255,28 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
 .foot{position:fixed;left:0;right:0;bottom:0;z-index:15;padding:var(--s1) var(--s4) calc(env(safe-area-inset-bottom) + var(--s1));
   background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-2)}
-.foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s2)}
 .foot p{margin:0;min-width:0}
+.foot-c{text-align:center;text-wrap:balance}
+.foot .follow{justify-self:end}
+/* Language: EN | ZH at the footer's far left. ZH opens a small menu above it for simplified or traditional. */
+.lang{position:relative;justify-self:start;margin-left:-6px}
+.lang-seg{display:flex}
+.lang-b{display:inline-flex;align-items:center;justify-content:center;min-height:var(--tap);min-width:36px;padding:0 2px;border:0;background:none;cursor:pointer;
+  font:inherit;font-size:var(--fs-cap);font-weight:600;letter-spacing:.04em;color:var(--ink-2);border-radius:var(--r-md)}
+.lang-b>span{display:inline-flex;align-items:center;gap:2px;padding:5px 7px;border-radius:8px}
+.lang-b svg{width:10px;height:10px}
+.lang-b.on>span{background:var(--primary-tint);color:var(--primary-ink)}
+@media (hover:hover){.lang-b:hover{color:var(--ink)}}
+.lang-b:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+.lang-menu{position:absolute;left:0;bottom:calc(100% + 6px);margin:0;padding:4px;list-style:none;min-width:9.5rem;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 6px 24px rgba(29,36,33,.14)}
+.lang-menu button{display:flex;align-items:center;gap:var(--s2);width:100%;min-height:var(--tap);padding:0 var(--s2);border:0;background:none;cursor:pointer;
+  border-radius:calc(var(--r-md) - 4px);font:inherit;font-size:var(--fs-sm);color:var(--ink);text-align:left}
+.lang-menu button svg{width:14px;height:14px;color:var(--primary);visibility:hidden}
+.lang-menu button[aria-checked="true"] svg{visibility:visible}
+@media (hover:hover){.lang-menu button:hover{background:var(--surface-2)}}
+.lang-menu button:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 /* Lesson row + Save toggle */
 .brow{display:flex;align-items:center;gap:var(--s1)}
 .brow .row{flex:1;min-width:0}
@@ -398,7 +421,13 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 </header>
 
 <main class="wrap" id="main" tabindex="-1"></main>
-<footer class="foot"><div class="foot-in"><p>© <a href="https://www.mandarininsights.com/" target="_blank" rel="noopener">Mandarin Insights<span class="vh">, opens a new tab</span></a></p><ul class="follow" id="follow" aria-label="Follow Dr. Jia"></ul></div></footer>
+<footer class="foot"><div class="foot-in"><div class="lang" id="lang" data-notr><div class="lang-seg" role="group" aria-label="Language">
+  <button class="lang-b" id="langEn" lang="en" aria-label="English"><span>EN</span></button>
+  <button class="lang-b" id="langZh" aria-label="中文" aria-haspopup="menu" aria-expanded="false" aria-controls="langMenu"><span>ZH<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"/></svg></span></button></div>
+  <ul class="lang-menu" id="langMenu" role="menu" aria-label="中文" hidden>
+  <li role="none"><button role="menuitemradio" aria-checked="false" data-zh="zh-Hans" lang="zh-Hans"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M220,104 L184,204 L36,76" fill="none" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/></svg>简体中文</button></li>
+  <li role="none"><button role="menuitemradio" aria-checked="false" data-zh="zh-Hant" lang="zh-Hant"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M220,104 L184,204 L36,76" fill="none" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/></svg>繁體中文</button></li></ul></div>
+  <p class="foot-c">© <a href="https://www.mandarininsights.com/" target="_blank" rel="noopener">Mandarin Insights<span class="vh">, opens a new tab</span></a></p><ul class="follow" id="follow" aria-label="Follow Dr. Jia"></ul></div></footer>
 <p class="vh" id="bmStatus" role="status"></p>
 
 
@@ -423,6 +452,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 <script>
 const DATA = /*DATA*/;
 const MAT = /*MATERIALS*/;
+const I18N = /*I18N*/;   // {ui: {English: [simplified, traditional]}, re: [[pattern, simplified, traditional]]}
 
 /* ---------- state ---------- */
 const store = {
@@ -443,7 +473,7 @@ const GIST_FILE = 'cn-dr-sync.json', GH_API = 'https://api.github.com';
 function isSynced(k){ return SYNC_MAPS.includes(k) || SYNC_VALS.includes(k) || k==='tomb' || k.startsWith('phrAt:'); }
 function rawSet(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
 let syncBusy = false, syncAgain = false, syncTimer = 0, syncMsg = '', syncErr = false;
-function localChanged(k){ rawSet('sync:mtime', Date.now()); if(k==='saved') syncSoon(); }   // saving or unsaving a lesson syncs a few seconds later (and carries any other changes); the rest waits for midnight or a tap
+function localChanged(k){ rawSet('sync:mtime', Date.now()); if(k==='saved' || k==='done') syncSoon(); }   // saving/unsaving or completing/uncompleting a lesson syncs a few seconds later (and carries any other changes); the rest waits for midnight or a tap
 function syncSoon(ms){ if(!store.get('sync:tok','')) return; clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, ms==null ? 4000 : ms); }
 function tombstone(map, id){ const t = store.get('tomb', {}); (t[map] = t[map] || {})[id] = Date.now(); store.set('tomb', t); }
 function snapshot(){
@@ -530,17 +560,17 @@ async function syncNow(){
 }
 function syncText(){ return syncMsg; }   // only problems are shown; no last-synced line
 function syncStatus(msg, err){ syncMsg = msg || ''; syncErr = !!err; const el = $('#syncSt'); if(el){ el.textContent = syncText(); el.classList.toggle('err', syncErr); } }
-// Phosphor cloud-check (regular).
-const CLOUD_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Zm0,160H72a48,48,0,0,1,0-96c1.1,0,2.2,0,3.29.11A88,88,0,0,0,72,128a8,8,0,0,0,16,0,72,72,0,1,1,72,72Zm37.66-93.66a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L144,148.69l42.34-42.35A8,8,0,0,1,197.66,106.34Z"/></svg>';
+// Phosphor waveform (regular): the Sync Devices button.
+const SYNC_WAVE = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M56,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM88,24a8,8,0,0,0-8,8V224a8,8,0,0,0,16,0V32A8,8,0,0,0,88,24Zm40,32a8,8,0,0,0-8,8V192a8,8,0,0,0,16,0V64A8,8,0,0,0,128,56Zm40,32a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,168,88Zm40-16a8,8,0,0,0-8,8v96a8,8,0,0,0,16,0V80A8,8,0,0,0,208,72Z"/></svg>';
 function syncSection(){
   const on = !!store.get('sync:tok','');
   const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
   return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="vh" id="syncH">Sync Devices</h2><canvas class="sync-sea" tabindex="0" role="slider" aria-label="Wave speed" aria-valuemin="0.25" aria-valuemax="4" aria-valuenow="${SEA.speed()}" aria-valuetext="${SEA.speed()} times" title="Swipe left or right to change the wave speed"></canvas>
-    <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${CLOUD_CHECK}</button></div></div>
+    <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${SYNC_WAVE}</button></div></div>
     ${on ? st
     : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
       <input id="syncTok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="syncHelp syncSt">
-      <p id="syncHelp" class="sync-help">Give the token only the gist scope. Paste the same token on each device, then tap the cloud.</p>
+      <p id="syncHelp" class="sync-help">Give the token only the gist scope. Paste the same token on each device, then tap the waveform.</p>
       <a class="ext-link" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=cn-dr%20sync" target="_blank" rel="noopener">Make a token on GitHub<span class="vh">, opens a new tab</span>${EXT_ICON}</a>${st}</form>`}</section>`;
 }
 // Daily sync at 12:00 am Pacific (America/Los_Angeles, so PST or PDT). A web page cannot run while closed, so a missed
@@ -703,7 +733,7 @@ function meta(r, opts={}){
   if(opts.level) bits.push(LEVELS.find(l=>l.id===r.lv).name);
   return bits.map(b=>`<span>${b}</span>`).join('');
 }
-const T = r => r.t.replace(/\s*\((?:Day\s?)?\d+\/\d+\)/, '');   // "(Day 2/30)" and "(1/30)" are dropped from titles
+const T = r => ((LANG==='zh-Hant' ? r.zt : LANG==='zh-Hans' ? r.zs : '') || r.t).replace(/\s*\((?:Day\s?)?\d+\/\d+\)/, '');   // "(Day 2/30)" and "(1/30)" are dropped from titles
 function rowBtn(r, ctx, opts={}){
   if(opts.ord==null && r.no) opts = {...opts, ord:r.no, ordLabel:'No.'};   // every lesson shows its permanent number unless a course Day is given
   const lead = opts.ord!=null
@@ -722,7 +752,7 @@ const BM_FILL = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M184,32H
 let saved = store.get('saved', {});          // id -> timestamp saved
 const isSaved = id => !!saved[id];
 function bmBtn(r){ const on = isSaved(r.id);
-  return `<button class="btn ghost icon-btn bm" data-bm="${r.id}" aria-pressed="${on}" aria-label="Save ${esc(T(r))}">${on ? BM_FILL : BM_IC}</button>`; }
+  return `<button class="btn ghost icon-btn bm" data-bm="${r.id}" aria-pressed="${on}" aria-label="${esc(trFull('Save'))} ${esc(T(r))}">${on ? BM_FILL : BM_IC}</button>`; }
 // Toggle in place: every copy of this lesson's button on the page updates, nothing re-renders, focus stays put.
 function toggleSave(id){
   if(saved[id]){ delete saved[id]; tombstone('saved', id); } else saved[id] = Date.now();
@@ -1013,7 +1043,7 @@ function searchField(){
 const fold = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
 function matchQ(raw){
   const q = fold(raw.trim()), num = /^(?:#|no\.?\s*)?(\d+)$/.exec(q);
-  return num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => fold(r.t).includes(q) || fold(r.top||'').includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
+  return num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => fold([r.t, r.zs, r.zt, r.top, ...(I18N.ui[tc(r.top)] || [])].join('\n')).includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
 }
 function searchResults(){
   const res = matchQ(S.q);
@@ -1279,8 +1309,102 @@ document.addEventListener('keydown', e => {
     if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); } }
 });
 document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && $('#sheetWrap').dataset.open==='true' && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
+
+/* ---------- language: English, or Chinese in simplified or traditional characters ----------
+   The app is written in English. In Chinese, every text node and label on the page is looked up in I18N as it appears
+   (whole string, then a pattern such as "12 lessons", then split on " · ", ": " or ", " where every part has a
+   translation). The English source is kept per node so switching back is exact. Lesson titles come from the data
+   (zs, zt) through T(). Anything without a translation stays in English. Kept on this device only. */
+let LANG = store.get('lang', 'en'); if(!['en','zh-Hans','zh-Hant'].includes(LANG)) LANG = 'en';
+const HAN = /[㐀-鿿]/;
+const I18N_RE = I18N.re.map(([p, a, b]) => [new RegExp('^' + p + '$'), a, b]);
+function viewsZh(v){ const n = viewsNum(v); return n >= 1e4 ? (Math.round(n / 1e3) / 10) + (LANG==='zh-Hant' ? '萬' : '万') : String(n); }
+function trOne(s){
+  const z = LANG==='zh-Hant' ? 1 : 0, d = I18N.ui[s]; if(d) return d[z];
+  const v = /^([\d.]+[KM]?) views$/.exec(s); if(v) return `${viewsZh(v[1])} ${z ? '次觀看' : '次观看'}`;
+  for(const [re, a, b] of I18N_RE) if(re.test(s)) return s.replace(re, z ? b : a);
+  return null;
+}
+const PASS = p => !p.trim() || HAN.test(p) || /^[\d\s:.,/#%+-]+$/.test(p) || /^HSK [\d+-]+$/.test(p);
+function trS(s){
+  const o = trOne(s); if(o!=null) return o;
+  for(const [sep, out] of [[' · ', ' · '], [': ', '：'], [', ', '，']]){
+    if(!s.includes(sep)) continue;
+    // Longest known run of parts first, so a name that contains the separator ("Culture, Idioms & Slang") stays whole.
+    const ps = s.split(sep), res = [];
+    for(let i = 0; i < ps.length; ){
+      let hit = null, j = ps.length;
+      for(; j > i; j--){ const c = ps.slice(i, j).join(sep); hit = j - i < ps.length ? (trOne(c) ?? trS(c) ?? (PASS(c) ? c : null)) : null; if(hit!=null) break; }
+      if(hit==null){ res.length = 0; break; }
+      res.push(hit); i = j;
+    }
+    if(res.length) return res.join(out);
+  }
+  return null;
+}
+function trFull(s){
+  if(LANG==='en' || !s || !/[A-Za-z]/.test(s)) return s;
+  const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s), o = trS(m[2]);
+  return o==null ? s : m[1] + o + m[3];
+}
+const I18N_SRC = new WeakMap(), I18N_ATTR = ['aria-label', 'title', 'placeholder', 'aria-valuetext'];
+function trText(n){
+  const cur = n.nodeValue, rec = I18N_SRC.get(n), src = rec && rec.out===cur ? rec.src : cur, out = trFull(src);
+  if(out!==cur) n.nodeValue = out; I18N_SRC.set(n, {src, out});
+}
+function trAttr(el, a){
+  if(!el.hasAttribute(a)) return;
+  const cur = el.getAttribute(a), all = I18N_SRC.get(el) || {}, rec = all[a], src = rec && rec.out===cur ? rec.src : cur, out = trFull(src);
+  if(out!==cur) el.setAttribute(a, out); all[a] = {src, out}; I18N_SRC.set(el, all);
+}
+const skipTr = el => !el || (el.closest && el.closest('[data-notr], script, style'));
+function trTree(root){
+  if(root.nodeType===3){ if(!skipTr(root.parentElement)) trText(root); return; }
+  if(root.nodeType!==1 || skipTr(root)) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {acceptNode: n =>
+    n.nodeType===1 && (n.hasAttribute('data-notr') || /^(SCRIPT|STYLE)$/.test(n.tagName)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+  for(let n = root; n; n = w.nextNode()){ if(n.nodeType===3) trText(n); else I18N_ATTR.forEach(a => trAttr(n, a)); }
+}
+const TITLE_EN = document.title;
+new MutationObserver(ms => ms.forEach(m => {
+  if(m.type==='childList') m.addedNodes.forEach(trTree);
+  else if(m.type==='characterData'){ if(!skipTr(m.target.parentElement)) trText(m.target); }
+  else if(!skipTr(m.target)) trAttr(m.target, m.attributeName);
+})).observe(document.body, {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:I18N_ATTR});
+function langUI(){
+  document.documentElement.lang = LANG; document.title = trFull(TITLE_EN);
+  $('#lang .lang-seg').setAttribute('aria-label', LANG==='en' ? 'Language' : LANG==='zh-Hant' ? '語言' : '语言');
+  $('#langEn').classList.toggle('on', LANG==='en'); $('#langZh').classList.toggle('on', LANG!=='en');
+  $('#langEn').setAttribute('aria-current', String(LANG==='en')); $('#langZh').setAttribute('aria-current', String(LANG!=='en'));
+  document.querySelectorAll('[data-zh]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.zh===LANG)));
+}
+function setLang(l){
+  if(l===LANG) return; LANG = l; store.set('lang', l); langUI();
+  const y = window.scrollY; render(false); window.scrollTo(0, y);               // titles come from T(), so lists are rebuilt
+  trTree(document.body);                                                          // everything else is translated in place
+  if(cur && $('#sheetWrap').dataset.open==='true'){ $('#sheetTitle').textContent = T(cur); }
+  $('#bmStatus').textContent = trFull(l==='en' ? 'English' : l==='zh-Hant' ? 'Traditional Chinese' : 'Simplified Chinese');
+}
+function langMenu(open, focusItem){
+  const m = $('#langMenu'), b = $('#langZh'); m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+  if(open && focusItem){ const it = m.querySelector(`[data-zh="${LANG}"]`) || m.querySelector('[data-zh]'); it.focus(); }
+}
+$('#langEn').addEventListener('click', () => { langMenu(false); setLang('en'); });
+$('#langZh').addEventListener('click', () => langMenu($('#langMenu').hidden, true));
+$('#langZh').addEventListener('keydown', e => { if(e.key==='Escape' && !$('#langMenu').hidden){ e.preventDefault(); langMenu(false); } });
+$('#langMenu').addEventListener('click', e => { const b = e.target.closest('[data-zh]'); if(!b) return; langMenu(false); setLang(b.dataset.zh); $('#langZh').focus(); });
+$('#langMenu').addEventListener('keydown', e => {
+  const its = [...$('#langMenu').querySelectorAll('[data-zh]')], i = its.indexOf(document.activeElement);
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); langMenu(false); $('#langZh').focus(); }
+  else if(['ArrowDown','ArrowUp'].includes(e.key)){ e.preventDefault(); its[(i + (e.key==='ArrowDown' ? 1 : -1) + its.length) % its.length].focus(); }
+  else if(e.key==='Home' || e.key==='End'){ e.preventDefault(); its[e.key==='Home' ? 0 : its.length-1].focus(); }
+  else if(e.key==='Tab') langMenu(false);
+});
+document.addEventListener('pointerdown', e => { if(!$('#langMenu').hidden && !e.target.closest('#lang')) langMenu(false); });
+langUI();
 try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
 render(false, 'fade');
+trTree(document.body);
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-sync]'); if(!b) return;
   if(b.getAttribute('aria-disabled')==='true') return;
   if(b.dataset.sync==='now'){ if(store.get('sync:tok','')) syncNow(); else syncConnect(); }

@@ -1,0 +1,197 @@
+# Chinese interface strings. Columns: English as shown on the page<TAB>simplified<TAB>traditional.
+# The traditional column is filled by zh_trad.py (OpenCC s2twp) when empty; edit it by hand to override.
+# Lines starting with re: are patterns (JavaScript regex, whole string); $1, $2 are the captured parts.
+# Strings joined by " · ", ": " or ", " are split and translated part by part, so parts only need listing once.
+Mandarin Insights	Mandarin Insights	Mandarin Insights
+YouTube	YouTube	YouTube
+Instagram	Instagram	Instagram
+TikTok	TikTok	TikTok
+GitHub	GitHub	GitHub
+Mandarin Insights. Home	Mandarin Insights，首页	Mandarin Insights，首頁
+Sections	栏目	欄目
+Home	首页	首頁
+Library	课程库	課程庫
+Practice	练习	練習
+About	关于	關於
+About Dr. Jia	关于贾博士	關於賈博士
+Follow Dr. Jia	关注贾博士	關注賈博士
+, opens a new tab	，在新标签页中打开	，在新標籤頁中開啟
+opens a new tab	在新标签页中打开	在新標籤頁中開啟
+Watch on YouTube	在 YouTube 上观看	在 YouTube 上觀看
+Close	关闭	關閉
+Favorites	收藏	收藏
+Saved	已收藏	已收藏
+Removed from Saved	已从收藏中移除	已從收藏中移除
+English	英文	英文
+Simplified Chinese	简体中文	簡體中文
+Traditional Chinese	繁体中文	繁體中文
+Practical Chinese Made Easy	实用中文，轻松学	實用中文，輕鬆學
+Short lessons built around real situations, so you don't just know Mandarin, you live it. Speak naturally, connect with Chinese-speaking communities, and move between cultures with confidence.	围绕真实场景的短课，让你不只是懂中文，而是用中文生活。自然开口，融入说中文的社区，自信地穿梭于不同文化之间。	圍繞真實場景的短課，讓你不只是懂中文，而是用中文生活。自然開口，融入說中文的社群，自信地穿梭於不同文化之間。
+Start here	从这里开始	從這裡開始
+Lesson Randomizer	随机选课	隨機選課
+re:Picks another topic and (\d+) lessons in it	换一个主题，并从中选 $1 节课	換一個主題，並從中選 $1 節課
+re:(\d+) new lessons?	$1 节新课	$1 節新課
+re:(\d+) lessons?	$1 节课	$1 節課
+re:(\d+) drills?	$1 个练习	$1 個練習
+re:(\d+) of (\d+) done	已完成 $1/$2	已完成 $1/$2
+re:(\d+) of (\d+)	$1/$2	$1/$2
+re:Show all (\d+)	显示全部 $1 个	顯示全部 $1 個
+Show fewer	收起	收起
+re:No\. (\d+)	$1 号	$1 號
+re:Day (\d+) of (\d+)	第 $1 天，共 $2 天	第 $1 天，共 $2 天
+re:Day (\d+)	第 $1 天	第 $1 天
+re:Part (\d+)	第 $1 部分	第 $1 部分
+re:All (\d+) done\.	全部 $1 个都已完成。	全部 $1 個都已完成。
+re:(\d+) results?, most viewed first	$1 个结果，观看最多的排在前面	$1 個結果，觀看最多的排在前面
+re:No lessons match “(.+)”	没有与“$1”匹配的课程	沒有與「$1」匹配的課程
+Save	收藏	收藏
+re:Delete (.+) from history	从搜索记录中删除“$1”	從搜尋記錄中刪除「$1」
+re:([\d.]+) times	$1 倍	$1 倍
+Day	天	天
+Part	部分	部分
+No.	编号	編號
+done	已完成	已完成
+watched	已看过	已看過
+Watched	已看过	已看過
+Lesson	课程	課程
+Short	短视频	短影片
+Full lesson	完整课程	完整課程
+Full lessons	完整课程	完整課程
+Continue	继续	繼續
+Start	开始	開始
+Tap any day to watch it again.	点任意一天可以再看一遍。	點任意一天可以再看一遍。
+Tap any lesson to watch it again.	点任意一节课可以再看一遍。	點任意一節課可以再看一遍。
+Tap any drill to do it again.	点任意练习可以再做一遍。	點任意練習可以再做一遍。
+Search lessons	搜索课程	搜尋課程
+Search: 了, tones, 28	搜索：了、声调、28	搜尋：了、聲調、28
+Try a shorter word, pinyin, or the English meaning.	试试更短的词、拼音或英文意思。	試試更短的詞、拼音或英文意思。
+Recent searches	最近搜索	最近搜尋
+Clear all	全部清除	全部清除
+Level	级别	級別
+All	全部	全部
+Beginner	初级	初級
+Intermediate	中级	中級
+Advanced	高级	高級
+Beginner + intermediate	初级到中级	初級到中級
+Low-intermediate	中级偏初	中級偏初
+Every level	所有级别	所有級別
+Lesson Series	系列课程	系列課程
+Runs of lessons to watch in order.	按顺序观看的一组课程。	按順序觀看的一組課程。
+Pronunciation	发音	發音
+Tones, tricky sounds and what pinyin spelling hides.	声调、难发的音，以及拼音拼写背后藏着的读音。	聲調、難發的音，以及拼音拼寫背後藏著的讀音。
+Grammar & Patterns	语法与句型	語法與句型
+Sentence patterns, particles and word order.	句型、助词和语序。	句型、助詞和語序。
+Vocabulary & Word Building	词汇与构词	詞彙與構詞
+Word families and how Chinese words are put together.	词族，以及中文词语是怎么组合起来的。	詞族，以及中文詞語是怎麼組合起來的。
+Everyday Phrases	日常用语	日常用語
+Grouped by situation.	按场景分组。	按場景分組。
+Culture, Idioms & Slang	文化、成语与俚语	文化、成語與俚語
+Idioms, slang, etiquette and festivals.	成语、俚语、礼仪和节日。	成語、俚語、禮儀和節日。
+Practice Drills	练习	練習
+How to Study	学习方法	學習方法
+Courses & Events	课程与活动	課程與活動
+Order	排序	排序
+By number	按编号	按編號
+By situation	按场景	按場景
+Greetings & Goodbyes	问候与告别	問候與告別
+Essential Phrases	必备用语	必備用語
+When You Don't Understand	听不懂的时候	聽不懂的時候
+Politeness, Thanks & Apologies	礼貌、感谢与道歉	禮貌、感謝與道歉
+Conversation & Small Talk	聊天与寒暄	聊天與寒暄
+Feelings & Reactions	感受与反应	感受與反應
+Travel & Getting Around	出行与交通	出行與交通
+Eating Out	外出就餐	外出就餐
+Shopping & Money	购物与付钱	購物與付錢
+Home & Daily Life	家居与日常生活	家居與日常生活
+Phone Calls	打电话	打電話
+Emergencies & Help	紧急情况与求助	緊急情況與求助
+Tones	声调	聲調
+Sounds	发音	發音
+Pinyin Spelling Rules	拼音拼写规则	拼音拼寫規則
+Tone Ear Training	声调听辨训练	聲調聽辨訓練
+Homophone Listening	同音词听力	同音詞聽力
+Listening Challenges	听力挑战	聽力挑戰
+HSK Quizzes	HSK 小测验	HSK 小測驗
+Idioms (成语)	成语	成語
+Slang & Internet Speak	俚语与网络用语	俚語與網路用語
+Culture & Etiquette	文化与礼仪	文化與禮儀
+Holidays & Festivals	节假日	節假日
+Study Strategy	学习策略	學習策略
+30-Day Survival Chinese	30 天生存中文	30 天生存中文
+One everyday phrase a day for a month.	一个月，每天一句日常用语。	一個月，每天一句日常用語。
+Apartment Hunting in China	在中国租房	在中國租房
+Four parts, from rooms to contracts.	共四集，从看房到签合同。	共四集，從看房到籤合同。
+Tastes in Chinese	用中文说味道	用中文說味道
+Four parts on describing flavor.	共四集，教你描述味道。	共四集，教你描述味道。
+Asking for Help	求助	求助
+Four short parts.	共四个短集。	共四個短集。
+Family & Kinship Terms	家庭与亲属称谓	家庭與親屬稱謂
+Uncles, aunts, parents, grandparents, siblings.	叔叔阿姨、父母、祖父母、兄弟姐妹。	叔叔阿姨、父母、祖父母、兄弟姐妹。
+Numbers from 1 to Huge	从 1 到超大的数字	從 1 到超大的數字
+Tens, hundreds, thousands, units, then the challenge.	十、百、千、万，最后来个挑战。	十、百、千、萬，最後來個挑戰。
+The 9 Functions of 要 (yào)	“要”（yào）的九种用法	「要」（yào）的九種用法
+Her most-returned-to word, plus the long video.	她最常回头讲的一个字，外加一个长视频。	她最常回頭講的一個字，外加一個長影片。
+Opposites	反义词	反義詞
+Adjective pairs, ending with an HSK 1 quiz.	成对的形容词，最后有一个 HSK 1 小测验。	成對的形容詞，最後有一個 HSK 1 小測驗。
+How Chinese Words Are Built	中文词语是怎么构成的	中文詞語是怎麼構成的
+Literal meanings: 机, 电, animals, food, brands.	字面意思：机、电、动物、食物、品牌。	字面意思：機、電、動物、食物、品牌。
+Small Talk	寒暄	寒暄
+Starters, topics, and why it gets personal.	怎么开口、聊什么，以及为什么会聊到私事。	怎麼開口、聊什麼，以及為什麼會聊到私事。
+Jobs & Introductions	职业与自我介绍	職業與自我介紹
+Names, job titles, introducing your job.	名字、职位，以及怎么介绍你的工作。	名字、職位，以及怎麼介紹你的工作。
+Countries	国家	國家
+Two parts on country names.	共两集，讲国家名称。	共兩集，講國家名稱。
+Say each answer aloud.	每个答案都要大声说出来。	每個答案都要大聲說出來。
+Mixed Drill Session	混合练习	混合練習
+All four types in one list, oldest first.	四种练习放在一起，最早的在前。	四種練習放在一起，最早的在前。
+She says one word. Name the tone before she reveals it.	她说一个词，在她揭晓之前说出是第几声。	她說一個詞，在她揭曉之前說出是第幾聲。
+Same syllables, different tones and meanings. Hear the difference.	音节相同，声调和意思不同。听出差别。	音節相同，聲調和意思不同。聽出差別。
+Real-speed questions. Answer out loud before the reveal.	正常语速的问题。揭晓答案前先大声回答。	正常語速的問題。揭曉答案前先大聲回答。
+Exam-style questions at HSK 1-2.	HSK 1-2 级的考试式题目。	HSK 1-2 級的考試式題目。
+Review	复习	複習
+Watch History	观看记录	觀看記錄
+Watched or completed.	看完或标记完成的课程。	看完或標記完成的課程。
+Nothing to review yet	还没有可以复习的内容	還沒有可以複習的內容
+Watch a lesson to the end, or tap To Complete, and it will show up here.	把一节课看完，或点“标记完成”，它就会出现在这里。	把一節課看完，或點「標記完成」，它就會出現在這裡。
+Loading video	正在加载视频	正在載入影片
+Previous lesson	上一节课	上一節課
+Next lesson	下一节课	下一節課
+Previous drill	上一个练习	上一個練習
+Next drill	下一个练习	下一個練習
+Previous day	前一天	前一天
+Next day	后一天	後一天
+To Complete	标记完成	標記完成
+Completed	已完成	已完成
+Mandarin Insights helps you become a fluent, adaptable Mandarin speaker who doesn't just know the language but lives it. It's for learners who want to connect with Chinese-speaking communities, communicate across cultures, and move through cultural contexts with confidence. Through one-on-one and group lessons, Dr. Jia takes you past memorization so you can speak naturally and engage fully in Chinese.	Mandarin Insights 帮你成为流利、灵活的中文使用者：不只是懂这门语言，而是用它生活。它适合想融入说中文的社区、跨文化交流、自信地在不同文化场合中应对的学习者。通过一对一和小组课程，贾博士带你超越死记硬背，让你能自然地开口，全身心地用中文交流。	Mandarin Insights 幫你成為流利、靈活的中文使用者：不只是懂這門語言，而是用它生活。它適合想融入說中文的社群、跨文化交流、自信地在不同文化場合中應對的學習者。透過一對一和小組課程，賈博士帶你超越死記硬背，讓你能自然地開口，全身心地用中文交流。
+Dr. Hanyu Jia holds a PhD in applied linguistics from the University of Arizona and teaches Mandarin online. More than 500 students have learned with her.	贾博士（Hanyu Jia）拥有亚利桑那大学应用语言学博士学位，在线教授中文。已有 500 多名学生跟她学习。	賈博士（Hanyu Jia）擁有亞利桑那大學應用語言學博士學位，線上教授中文。已有 500 多名學生跟她學習。
+Her lessons are built around real situations, like getting something done in Chinese, and teach pronunciation, tones, grammar, and core vocabulary along the way. Her goal is for you to speak naturally with confidence. Every day.	她的课程围绕真实场景设计，比如用中文把一件事办成，并在过程中教发音、声调、语法和核心词汇。她的目标是让你每天都能自然、自信地说中文。	她的課程圍繞真實場景設計，比如用中文把一件事辦成，並在過程中教發音、聲調、語法和核心詞彙。她的目標是讓你每天都能自然、自信地說中文。
+Classes with Dr. Jia	跟贾博士上课	跟賈博士上課
+Mandarin Foundation: Beginner Course	中文基础：初级课程	中文基礎：初級課程
+Her self-paced, step-by-step beginner course: the Mandarin you need first, in order, instead of scattered resources.	她的自学进度、循序渐进的初级课程：按顺序先学最需要的中文，而不是东拼西凑的资料。	她的自學進度、循序漸進的初級課程：按順序先學最需要的中文，而不是東拼西湊的資料。
+See the Beginner Course	查看初级课程	檢視初級課程
+Precision Mandarin (Small-Group, Live)	精准中文（小班直播课）	精準中文（小班直播課）
+Live online group course for beginner and low-intermediate learners: clearer pronunciation, stronger listening, guided speaking with direct feedback.	面向初级和中级偏初学习者的在线直播小班课：发音更清楚、听力更强，并在指导下开口说，得到直接反馈。	面向初級和中級偏初學習者的線上直播小班課：發音更清楚、聽力更強，並在指導下開口說，得到直接反饋。
+Check Enrollment	查看报名	檢視報名
+Private Lessons (One-on-One)	私人课程（一对一）	私人課程（一對一）
+Personal feedback, after-class support and a roadmap across pronunciation, listening, reading and speaking. Apply through her form.	个人反馈、课后支持，以及涵盖发音、听力、阅读和口语的学习路线图。通过她的表格申请。	個人反饋、課後支援，以及涵蓋發音、聽力、閱讀和口語的學習路線圖。透過她的表格申請。
+Apply For Private Lessons	申请私人课程	申請私人課程
+Free guides	免费指南	免費指南
+Understand Pinyin Spellings	读懂拼音拼写	讀懂拼音拼寫
+Why pinyin is spelled the way it is, and where spelling hides the real sound.	拼音为什么这样拼，以及拼写在哪些地方藏住了真实的读音。	拼音為什麼這樣拼，以及拼寫在哪些地方藏住了真實的讀音。
+Get the Free Guide	获取免费指南	獲取免費指南
+Weekly Practical Tip (Newsletter)	每周实用小贴士（电子报）	每週實用小貼士（電子報）
+One practical language tip by email each week. Sign up on her site.	每周通过电子邮件发送一条实用的语言小贴士。在她的网站上订阅。	每週透過電子郵件傳送一條實用的語言小貼士。在她的網站上訂閱。
+Sign Up	订阅	訂閱
+Sync Devices	同步设备	同步裝置
+Wave speed	波浪速度	波浪速度
+Swipe left or right to change the wave speed	左右滑动可以改变波浪速度	左右滑動可以改變波浪速度
+Connect and sync	连接并同步	連線並同步
+Sync now	立即同步	立即同步
+GitHub token	GitHub 令牌	GitHub 令牌
+Give the token only the gist scope. Paste the same token on each device, then tap the waveform.	令牌只需授予 gist 权限。在每台设备上粘贴同一个令牌，然后点波形图标。	令牌只需授予 gist 權限。在每臺裝置上貼上同一個令牌，然後點波形圖示。
+Make a token on GitHub	在 GitHub 上生成令牌	在 GitHub 上生成令牌
+Paste a token first.	请先粘贴令牌。	請先貼上令牌。
+GitHub did not accept this token. Make a new one with the gist scope, then connect again.	GitHub 不接受这个令牌。请生成一个带 gist 权限的新令牌，然后重新连接。	GitHub 不接受這個令牌。請生成一個帶 gist 權限的新令牌，然後重新連線。
+Offline. Changes will sync when you are back online.	已离线。恢复联网后会自动同步更改。	已離線。恢復聯網後會自動同步更改。
+Could not reach GitHub. Try Sync now.	无法连接 GitHub。请试试“立即同步”。	無法連線 GitHub。請試試「立即同步」。
+Disconnected. This device keeps its data; nothing was deleted from GitHub.	已断开连接。这台设备保留了数据，GitHub 上没有删除任何内容。	已斷開連線。這臺裝置保留了資料，GitHub 上沒有刪除任何內容。

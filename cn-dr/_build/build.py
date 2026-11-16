@@ -21,6 +21,8 @@ def curly(s):
     s = re.sub(r"(^|[\s(\[])'", lambda m: m.group(1) + "\u2018", s)
     return s.replace("'", "\u2019")
 for r in data["items"]: r["t"] = curly(r["t"])
+# Mandarin and Chinese are proper nouns: capitalize them in every title, including new uploads
+for r in data["items"]: r["t"] = re.sub(r"\b(mandarin|chinese)\b", lambda m: m.group(1).capitalize(), r["t"])
 # drop fields the page does not use
 for r in data["items"]:
     r.pop("n", None)
@@ -56,8 +58,23 @@ MAT = {
   {"name":"TikTok","url":"https://www.tiktok.com/@mandarininsights"},
  ],
 }
+# Chinese: interface strings (data/ui_zh.tsv: English, simplified, traditional; "re:" lines are patterns) and lesson
+# titles (data/titles_zh.tsv: id, simplified, traditional). Run zh_trad.py after editing to fill the traditional column.
+def tsv(name):
+    f = root/"data"/name
+    return [l.split("\t") for l in f.read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")] if f.exists() else []
+I18N = {"ui": {}, "re": []}
+for row in tsv("ui_zh.tsv"):
+    en, hans, hant = row[0], row[1], row[2] if len(row) > 2 and row[2] else row[1]
+    if en.startswith("re:"): I18N["re"].append([en[3:], hans, hant])
+    else: I18N["ui"][en] = [hans, hant]
+zt = {row[0]: row[1:] for row in tsv("titles_zh.tsv")}
+for r in data["items"]:
+    if r["id"] in zt:
+        r["zs"] = zt[r["id"]][0]; r["zt"] = zt[r["id"]][1] if len(zt[r["id"]]) > 1 and zt[r["id"]][1] else r["zs"]
 html = (root/"template.html").read_text(encoding="utf-8")
 html = html.replace("/*DATA*/", json.dumps(data, ensure_ascii=False, separators=(",",":")).replace("</", "<\\/"))
+html = html.replace("/*I18N*/", json.dumps(I18N, ensure_ascii=False, separators=(",",":")).replace("</", "<\\/"))
 html = html.replace("/*MATERIALS*/", json.dumps(MAT, ensure_ascii=False, separators=(",",":")).replace("</", "<\\/"))
 out = root.parent/"index.html"
 out.write_text(html, encoding="utf-8")
