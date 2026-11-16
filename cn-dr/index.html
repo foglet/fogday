@@ -21,6 +21,7 @@
   /* Colours and fonts from fogday.com/mahjong: felt, bone, paper, ink, tile, red; Young Serif + Rubik. Light only, as there. */
   color-scheme:light;
   --paper:#fbf8f1; --surface:#fffdf7; --surface-2:#f3efe4; --surface-3:#e9e3d4;
+  --rainbow:linear-gradient(90deg,var(--accent),#e65100,#b28704,#2e7d32,#1565c0,#6a1b9a,var(--accent));   /* sync-in-progress heading only */
   --ink:#1d2421; --ink-2:#5f6b66; --ink-3:#949c98; --line:#d9d3c4; --line-strong:#c9c0aa;
   --primary:#1f5c4a; --primary-hover:#1a4f40; --primary-press:#154236; --primary-edge:#123a2f;
   --on-primary:#fffdf7; --primary-tint:#e6f0ea; --primary-ink:#1f5c4a;
@@ -218,7 +219,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
-#syncH.syncing{background:linear-gradient(90deg,#c62828,#e65100,#b28704,#2e7d32,#1565c0,#6a1b9a,#c62828);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 1.2s linear infinite}
+#syncH.syncing{background:var(--rainbow);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 1.2s linear infinite}
 @keyframes rainbow{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){#syncH.syncing{animation:none}}
 .sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
