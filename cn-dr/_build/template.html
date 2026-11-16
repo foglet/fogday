@@ -371,6 +371,7 @@ const store = {
 };
 let done = store.get('done', {});           // id -> timestamp
 let seen = store.get('seen', {});           // id -> timestamp, set whenever a lesson is opened
+let full = store.get('full', {});           // id -> timestamp, set when a video plays to the end (or 95% through)
 const OLD_TAB = {series:'learn', search:'learn'};
 let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', pick:false, stack:[], phrSort: store.get('phrSort','date') };
 const ITEMS = DATA.items;
@@ -443,6 +444,7 @@ const ACC = {};
 function accItems(key){
   if(key.startsWith('ser:')) return seriesItems(key.slice(4));
   if(key.startsWith('drill:')) return drillPool(key.slice(6));
+  if(key==='pr:review') return reviewItems();
   return (ACC[key] && ACC[key].items) || [];
 }
 // Series page: numbered list with titles; the next lesson is highlighted. Only the 30-day path keeps a Continue: Day N button.
@@ -562,20 +564,27 @@ function updateLevel(){
   $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true); animIn($('#learnBody'), 'a-swap');
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
 }
+// Review: every lesson watched to the end or marked complete, oldest first. Ones finished more than a day ago come first;
+// if none are that old yet, all of them show. Built fresh each time so it never goes stale.
+const finishedAt = id => Math.max(done[id]||0, full[id]||0);
+function reviewItems(){
+  const ids = [...new Set([...Object.keys(done), ...Object.keys(full)])].filter(id => byId[id]);
+  const all = ids.sort((a,b)=>finishedAt(a)-finishedAt(b)).map(id=>byId[id]);
+  const now = Date.now(), due = all.filter(r => now - finishedAt(r.id) > 864e5);
+  const its = due.length ? due : all;
+  CTX['review'] = its.map(r=>r.id);
+  return its;
+}
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
   const topics = ['Tone ear training','Homophone listening','Listening challenges','HSK quizzes'];
   const TITLE = {'Tone ear training':'Tone Ear Training','Homophone listening':'Homophone Listening','Listening challenges':'Listening Challenges','HSK quizzes':'HSK Quizzes'};
   const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1-2.'};
-  const watched = Object.entries(done).sort((a,b)=>a[1]-b[1]).map(([id])=>byId[id]).filter(Boolean);
-  const dayMs = 864e5, now = Date.now();
-  const due = watched.filter(r => now - done[r.id] > dayMs);
-  CTX['review'] = (due.length?due:watched).map(r=>r.id);
   return `<h1 class="sub">Practice</h1>
     <p class="lede sm">Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed Drill Session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,TITLE[t],blurbs[t])).join('')}</div>
-    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review What You Watched','Lessons you completed more than a day ago.', due.length?due:watched,
-      () => watched.length ? list('review', due.length?due:watched, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Tap To Complete in the player and the lesson will come back here tomorrow.</div>`)}</div>`;
+    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review What You Watched','Lessons you watched to the end or completed, more than a day ago.', reviewItems(),
+      () => { const its = reviewItems(); return its.length ? list('review', its, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Watch a lesson to the end, or tap To Complete, and it will come back here tomorrow.</div>`; })}</div>`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
 const FOLLOW_ICON = {
@@ -750,8 +759,8 @@ function openPlayer(id, ctx, keepQueue){
   if($('#sheetWrap').dataset.open!=='true') lastFocus = document.activeElement;
   $('#sheetTitle').textContent = T(r);
   const p = $('#player'); p.className = 'player ' + (r.k==='long'?'long':'short');
-  p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(T(r))}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
-  p.querySelector('iframe').addEventListener('load', () => { const l=p.querySelector('.loading'); if(l) l.remove(); }, {once:true});
+  p.innerHTML = `<div class="loading" role="status">Loading video</div><iframe title="${esc(T(r))}" src="https://www.youtube-nocookie.com/embed/${r.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" data-vid="${r.id}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="eager"></iframe>`;
+  p.querySelector('iframe').addEventListener('load', e => { const l=p.querySelector('.loading'); if(l) l.remove(); listenYT(e.target); }, {once:true});
   $('#ytLink').href = url(r);
   $('#sheetKicker').textContent = drillName ? `${drillName}: ${qi+1} of ${queue.length}`
     : pathMode ? `Day ${r.ord} of ${queue.length}`
@@ -761,6 +770,22 @@ function openPlayer(id, ctx, keepQueue){
   document.body.style.overflow = 'hidden';
   if(!keepQueue) $('#closeBtn').focus();
 }
+/* Watched in full: the embed reports its state over postMessage once asked (enablejsapi=1). A video counts as watched
+   when it ends, or when playback passes 95% (people often close a Short just before the last frame). */
+function listenYT(f){
+  const say = m => { try{ f.contentWindow.postMessage(JSON.stringify(m), '*'); }catch(e){} };
+  say({event:'listening', id:1, channel:'widget'});
+  say({event:'command', func:'addEventListener', args:['onStateChange'], id:1, channel:'widget'});
+}
+function markFull(id){ if(!byId[id] || full[id]) return; full[id] = Date.now(); store.set('full', full); }
+window.addEventListener('message', e => {
+  if(!/^https:\/\/(www\.)?youtube(-nocookie)?\.com$/.test(e.origin)) return;
+  const f = $('#player iframe'); if(!f || e.source !== f.contentWindow) return;   // ignore a video the learner has already moved past
+  let d; try{ d = typeof e.data==='string' ? JSON.parse(e.data) : e.data; }catch(x){ return; }
+  if(!d) return;
+  const i = d.info || {};
+  if((d.event==='onStateChange' && d.info===0) || i.playerState===0 || (i.duration > 0 && i.currentTime >= i.duration * 0.95)) markFull(f.dataset.vid);
+});
 function closePlayer(){
   // The sheet drops away first; the video is cleared once it is out of sight. Focus returns right away.
   const w = $('#sheetWrap'); w.dataset.open = 'closing'; document.body.style.overflow = ''; drillName='';
@@ -769,6 +794,7 @@ function closePlayer(){
   const sel = lf ? (lf.id ? '#'+lf.id : (lf.dataset && lf.dataset.id) ? `.${lf.classList[0]}[data-id="${lf.dataset.id}"]` : null) : null;
   refreshProgress();
   if(S.stack.length){ const y = window.scrollY; $('#main').innerHTML = viewPage(); window.scrollTo(0, y); }
+  else if(S.tab==='practice'){ const y = window.scrollY; $('#main').innerHTML = tabView(); window.scrollTo(0, y); }
   const t = (lf && document.body.contains(lf)) ? lf : (sel && document.querySelector(sel)) || document.querySelector(`[data-id="${cur&&cur.id}"]`);
   if(t) t.focus();
   if(justDone.size) flash([...document.querySelectorAll('.row[data-id], .dtile[data-id]')].filter(b => justDone.has(b.dataset.id) && isDone(b.dataset.id)));
