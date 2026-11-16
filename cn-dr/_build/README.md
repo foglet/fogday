@@ -38,8 +38,10 @@ devices). Saving or completing a lesson syncs a few seconds later; otherwise it 
 time winning (removals leave a tombstone so they sync too); search history, level and progress take the most recently
 changed device. The token stays in that device's localStorage and is never in the page source.
 
-Dragons (home, under the intro): `DRAG` in `template.html` draws three original pixel dragons on a canvas: they walk, jump
-alone or together, sometimes march in step, bump (random direction and colour outcomes) or fly over each other, and the
-third walks down from the distance to cross the others' paths, then back. The 8 sprite frames are inlined as 30x26
-palette-index strings, exported from the `pixel-dragons-multi` skill's sprite. The canvas is decorative (`aria-hidden`),
-pauses when off screen or the tab is hidden, and shows a still frame with reduced motion.
+Dragons (About page, Sync Devices, where the pixel sea was): `DRAG` in `template.html` draws three original pixel dragons
+on a canvas. They walk, jump alone or together, sometimes march in step, bump (random direction and colour outcomes) or
+fly over each other, and the third walks down from the distance to cross the others' paths, then back. Colours are any
+hue with their own strength and brightness; now and then all three match, or one takes a new scheme. Swipe or use the
+arrow keys on them to change their speed (kept per device as `dragSpeed`). A sync starting sets off a group jump. They
+pause off screen or in a hidden tab and hold a still frame with reduced motion. The 8 sprite frames are inlined as 30x26
+palette-index strings, exported from the `pixel-dragons-multi` skill's sprite.

@@ -225,12 +225,9 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
-.sync-sea{flex:1;min-width:0;height:60px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm);
-  -webkit-mask-image:linear-gradient(to right,transparent,#000 18%,#000 82%,transparent),linear-gradient(to bottom,#000 55%,transparent);-webkit-mask-composite:source-in;
-  mask-image:linear-gradient(to right,transparent,#000 18%,#000 82%,transparent),linear-gradient(to bottom,#000 55%,transparent);mask-composite:intersect}   /* soft edges: fades out left, right and below */
-.dragons{display:block;width:100%;height:112px;margin:var(--s3) 0 calc(-1 * var(--s2));image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;
-  -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}   /* dragons walk in and out through soft side edges */
-.sync-sea:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;-webkit-mask-image:none;mask-image:none}
+.dragons{flex:1;min-width:0;height:112px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm);
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent)}   /* dragons walk in and out through soft side edges */
+.dragons:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;-webkit-mask-image:none;mask-image:none}
 .sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .sync-form{display:grid;gap:var(--s2);justify-items:start}
 .sync-form label{font-weight:600}
@@ -560,7 +557,7 @@ const SYNC_WAVE = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M56,96
 function syncSection(){
   const on = !!store.get('sync:tok','');
   const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
-  return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="vh" id="syncH">Sync Devices</h2><canvas class="sync-sea" tabindex="0" role="slider" aria-label="Wave speed" aria-valuemin="0.25" aria-valuemax="4" aria-valuenow="${SEA.speed()}" aria-valuetext="${SEA.speed()} times" title="Swipe left or right to change the wave speed"></canvas>
+  return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="vh" id="syncH">Sync Devices</h2><canvas class="dragons" tabindex="0" role="slider" aria-label="Dragon speed" aria-valuemin="0.25" aria-valuemax="4" aria-valuenow="${DRAG.speed()}" aria-valuetext="${DRAG.speed()} times" title="Swipe left or right to change how fast the dragons go"></canvas>
     <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${SYNC_WAVE}</button></div></div>
     ${on ? st
     : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
@@ -576,92 +573,33 @@ function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
   return now - ((+pt.hour)*3600 + (+pt.minute)*60 + (+pt.second))*1000 - (now % 1000);
 }
 let dailyTimer = 0;
-// While a sync runs, a pixel sea (after fogday.com/waves: the Doom-fire rule, same palette) rolls where the Sync Devices
-// heading was, and the arrows by the page title spin. At rest the sea is a still frame. Both run at least 5 s so a quick
-// sync is still seen. With reduced motion the sea stays still and the arrows do not spin.
-const SEA = (() => {
-  const N = 12, H = 30, stops = [[1,[244,255,251]],[3,[191,238,224]],[5,[111,211,181]],[7,[47,179,154]],[9,[26,143,138]],[11,[13,79,115]],[12,[4,32,61]]];
-  const pal = [null];
-  for(let i=1; i<=N; i++){ let a = stops[0], b = stops[stops.length-1];
-    for(let k=0; k<stops.length-1; k++) if(i>=stops[k][0] && i<=stops[k+1][0]){ a = stops[k]; b = stops[k+1]; break; }
-    const t = b[0]===a[0] ? 0 : (i-a[0])/(b[0]-a[0]); pal.push(a[1].map((v, c) => Math.round(v + (b[1][c]-v)*t))); }
-  let cv = null, ctx, img, W = 0, px, p, ph1 = 0, ph2 = 0, raf = 0, on = false, busy = false, prev = false, prevT = 0, acc = 0;
-  // Speed: swipe right on the sea for faster, left for slower (doubles every 120 px); arrow keys step it. Kept on this device.
-  let SPD = Math.min(4, Math.max(.25, +store.get('seaSpeed', 1) || 1));
-  const fmt = v => String(Math.round(v * 100) / 100);
-  function step(){
-    ph1 += .022; ph2 += .041;
-    for(let x=0; x<W; x++){ const u = x/80;   // a wave keeps its size in pixels, so wider screens show more of them
-      const sv = .75*Math.sin(2*Math.PI*(u*1.3 - ph1)) + .25*Math.sin(2*Math.PI*(u*3.1 - ph2) + 1.3);
-      p[x] = Math.min(1, Math.max(.42, .74 - .3*sv)); px[(H-1)*W + x] = N; }
-    for(let y=1; y<H; y++) for(let x=0; x<W; x++){
-      const v = px[y*W + x], dx = (x + ((Math.random()*3) | 0) - 1 + W) % W;
-      px[(y-1)*W + dx] = v ? v - (Math.random() < p[x] ? 1 : 0) : 0; }
-  }
-  function draw(){
-    const d = img.data;
-    for(let i=0; i<W*H; i++){ const v = px[i], o = i*4;
-      if(!v){ d[o+3] = 0; continue; }
-      const c = pal[v]; d[o] = c[0]; d[o+1] = c[1]; d[o+2] = c[2]; d[o+3] = 255; }
-    ctx.putImageData(img, 0, 0);
-  }
-  function size(){
-    if(!cv) return; const w = Math.max(40, Math.round(cv.getBoundingClientRect().width / 2));
-    if(w===W && img) return;
-    W = w; cv.width = W; cv.height = H; ctx = cv.getContext('2d'); img = ctx.createImageData(W, H);
-    px = new Uint8Array(W*H); p = new Float32Array(W);
-    for(let i=0; i<H*3; i++) step();
-    draw();
-  }
-  function upd(){ on = busy || prev; if(on && !raf && cv && !RM.matches) raf = requestAnimationFrame(loop); }
-  function setSpeed(v){
-    SPD = Math.min(4, Math.max(.25, v)); store.set('seaSpeed', SPD);
-    if(cv){ cv.setAttribute('aria-valuenow', fmt(SPD)); cv.setAttribute('aria-valuetext', fmt(SPD) + ' times'); }
-    clearTimeout(prevT); prev = true; upd(); prevT = setTimeout(() => { prev = false; upd(); }, 5000);   // show the new speed for at least 5 s
-  }
-  function bind(c){
-    let x0 = null, s0 = 1;
-    c.addEventListener('pointerdown', e => { x0 = e.clientX; s0 = SPD; });
-    c.addEventListener('pointermove', e => { if(x0 === null) return; const dx = e.clientX - x0;
-      if(Math.abs(dx) > 6){ try{ c.setPointerCapture(e.pointerId); }catch(_){} setSpeed(s0 * Math.pow(2, dx / 120)); } });
-    const end = () => { x0 = null; };
-    c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
-    c.addEventListener('keydown', e => {
-      const k = e.key, f = ({ArrowRight:1.25, ArrowUp:1.25, ArrowLeft:.8, ArrowDown:.8})[k];
-      if(f){ e.preventDefault(); setSpeed(SPD * f); } else if(k==='Home'){ e.preventDefault(); setSpeed(1); }
-      else if(k==='PageUp'){ e.preventDefault(); setSpeed(4); } else if(k==='PageDown'){ e.preventDefault(); setSpeed(.25); } });
-  }
-  function loop(){ raf = 0; if(!on || !cv || !cv.isConnected) return;
-    acc += .5 * SPD; let n = 0;   // 1x is about 30 steps a second, like the Waves page; speed scales the step rate
-    while(acc >= 1 && n < 8){ acc -= 1; step(); n++; }
-    if(n) draw();
-    raf = requestAnimationFrame(loop); }
-  return {
-    mount(){ const c = document.querySelector('.sync-sea'); if(c===cv) return; cv = c; W = 0; img = null; size(); upd(); if(c) bind(c); },
-    run(v){ busy = v; upd(); },
-    speed: () => fmt(SPD),
-    size
-  };
-})();
-window.addEventListener('resize', () => SEA.size());
-/* ---------- dragons (home): three original pixel dragons walk, jump, march in step, bump and cross depth ---------- */
+/* ---------- dragons (About, Sync Devices): three original pixel dragons walk, jump, march in step, bump and cross depth ---------- */
+// They replace the pixel sea. They walk whenever on screen; a sync starting sets off a group jump, and the arrows by the
+// page title still spin. With reduced motion they hold a still frame.
 const DRAG = (() => {
   const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // 8 frames: step*2 + wing; 30x26 palette indices
   const GW = 30, GH = 26, H = 56, SP = .6, CYCLE = 1300;
-  const START = [[270,170,45],[5,48,200],[215,320,110]], PAPER = [251,248,241];
+  const PAPER = [251,248,241];
   const ZKEY = [[0,0],[230,0],[340,1],[900,1],[1000,0],[1300,0]], MARCH = [[150,300],[960,1110]];
   const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
-  let cv = null, ctx, off, octx, oimg, W = 0, raf = 0, vis = true, t = 0, dg = null, sparks = [], last = 0, nextGroup = 180;
+  let cv = null, ctx, off, octx, oimg, W = 0, raf = 0, vis = true, t = 0, dg = null, sparks = [], last = 0, acc = 0, nextGroup = 180, nextColor = 240;
+  // Speed: swipe right on the dragons for faster, left for slower (doubles every 120 px); arrow keys step it. Kept on this device.
+  let SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1));
+  const fmt = v => String(Math.round(v * 100) / 100);
   const R = Math.random, pick = a => a[(R()*a.length)|0];
   function hsv(h, s, v){ h = ((h%360)+360)%360/60; const i = Math.floor(h), f = h-i, p = v*(1-s), q = v*(1-s*f), u = v*(1-s*(1-f));
     const c = [[v,u,p],[q,v,p],[p,v,u],[p,q,v],[u,p,v],[v,p,q]][i%6]; return c.map(x => Math.round(x*255)); }
-  function palOf(d){ const [b,w,l] = d.h; let p = {2:hsv(b,.62,.86), 3:hsv(b,.7,.6), 4:hsv(l,.32,1), 5:hsv(w,.68,.88), 6:hsv(w,.75,.62)};
+  // Colours: any hue, plus each dragon's own strength (sat) and brightness (val), so some come out pale and some deep.
+  const scheme = () => { const h0 = R()*360; return [h0, h0+60+R()*240, h0+R()*360]; };
+  const tone = () => [.3+R()*.55, .62+R()*.33];
+  function palOf(d){ const [b,w,l] = d.h, [sa,va] = d.sv;
+    let p = {2:hsv(b,sa,va), 3:hsv(b,Math.min(1,sa+.08),va*.7), 4:hsv(l,.3,1), 5:hsv(w,Math.min(1,sa+.06),Math.min(1,va+.02)), 6:hsv(w,Math.min(1,sa+.13),va*.72)};
     const k = .38*(1-d.z); if(k > .01) for(const n in p) p[n] = p[n].map((c,j) => Math.round(c + (PAPER[j]-c)*k));
     return Object.assign(p, FIX); }
   const hl = (a, b, k) => a + ((((b-a+180)%360)+360)%360-180)*k;
   function zf(tt){ for(let i=0; i<ZKEY.length-1; i++){ const [t0,z0] = ZKEY[i], [t1,z1] = ZKEY[i+1];
     if(tt>=t0 && tt<=t1){ let k = (tt-t0)/Math.max(1,t1-t0); k = k*k*(3-2*k); return z0+(z1-z0)*k; } } return 0; }
-  function mk(i, x, dir){ return {i, x, dir, h:[...START[i]], th:[...START[i]], fly:0, hop:0, cool:0, y:0, b:0, z:1, jump:0, jdur:1, jh:0,
+  function mk(i, x, dir){ const sc = scheme(), sv = tone(); return {i, x, dir, h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], fly:0, hop:0, cool:0, y:0, b:0, z:1, jump:0, jdur:1, jh:0,
     nextj:30+(R()*70|0), boost:0, ov:0, ph:[R()*6.28, R()*6.28], step:0, wing:0}; }
   function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; }
   function tick(){
@@ -695,13 +633,17 @@ const DRAG = (() => {
           const mv = pick(['split','split','left','right']), cl = pick(['swap','copyL','copyR','shared','none']);
           if(mv==='split'){ L.dir = -1; Rt.dir = 1; } else if(mv==='left'){ L.dir = Rt.dir = -1; L.boost = 45; } else { L.dir = Rt.dir = 1; Rt.boost = 45; }
           if(cl==='swap'){ const w = L.th[1]; L.th[1] = Rt.th[1]; Rt.th[1] = w; }
-          else if(cl==='copyL') Rt.th = [...L.th]; else if(cl==='copyR') L.th = [...Rt.th];
-          else if(cl==='shared'){ const h0 = R()*360; L.th = [h0,h0+130,h0+230]; Rt.th = [...L.th]; }
+          else if(cl==='copyL'){ Rt.th = [...L.th]; Rt.tsv = [...L.tsv]; } else if(cl==='copyR'){ L.th = [...Rt.th]; L.tsv = [...Rt.tsv]; }
+          else if(cl==='shared'){ L.th = scheme(); Rt.th = [...L.th]; L.tsv = tone(); Rt.tsv = [...L.tsv]; }
           L.hop = Rt.hop = 12; L.cool = Rt.cool = 55; sparks.push([(L.x+Rt.x)/2+GW/2, (L.b+Rt.b)/2-14, 14]);
         } else { const f = pick([L,Rt]); f.th = f.th.map(x => x+120); f.fly = 50; f.cool = 60; (f===L ? Rt : L).cool = 60; }
       }
     }
-    for(const d of dg){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); }
+    if(--nextColor <= 0){   // now and then: all three match, or one takes a brand new colour scheme
+      if(R() < .4){ const sc = scheme(), sv = tone(); for(const d of dg){ d.th = [...sc]; d.tsv = [...sv]; } }
+      else { const d = pick(dg); d.th = scheme(); d.tsv = tone(); }
+      nextColor = 300+(R()*400|0); }
+    for(const d of dg){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a,j) => a+(d.tsv[j]-a)*.06); }
     sparks = sparks.map(([x,y,n]) => [x,y,n-1]).filter(s => s[2] > 0);
   }
   function draw(){
@@ -728,14 +670,31 @@ const DRAG = (() => {
   function upd(){ const go = cv && cv.isConnected && vis && !document.hidden && !RM.matches;
     if(go && !raf){ last = 0; raf = requestAnimationFrame(loop); } }
   function loop(now){ raf = 0; if(!cv || !cv.isConnected || !vis || document.hidden || RM.matches) return;
-    const n = last ? Math.min(6, Math.round((now-last)/33.3)) : 1; if(n){ for(let i=0; i<n; i++) tick(); draw(); last = now; }
+    acc += last ? Math.min(200, now-last)/33.3*SPD : 1; last = now; let n = 0;   // about 30 steps a second at 1x
+    while(acc >= 1 && n < 24){ acc -= 1; tick(); n++; } if(n) draw();
     raf = requestAnimationFrame(loop); }
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { vis = es[0].isIntersecting; upd(); }) : null;
   document.addEventListener('visibilitychange', upd);
+  function setSpeed(v){ SPD = Math.min(4, Math.max(.25, v)); store.set('dragSpeed', SPD);
+    if(cv){ cv.setAttribute('aria-valuenow', fmt(SPD)); cv.setAttribute('aria-valuetext', fmt(SPD) + ' times'); } }
+  function bind(c){
+    let x0 = null, s0 = 1;
+    c.addEventListener('pointerdown', e => { x0 = e.clientX; s0 = SPD; });
+    c.addEventListener('pointermove', e => { if(x0 === null) return; const dx = e.clientX - x0;
+      if(Math.abs(dx) > 6){ try{ c.setPointerCapture(e.pointerId); }catch(_){} setSpeed(s0 * Math.pow(2, dx / 120)); } });
+    const end = () => { x0 = null; };
+    c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+    c.addEventListener('keydown', e => {
+      const k = e.key, f = ({ArrowRight:1.25, ArrowUp:1.25, ArrowLeft:.8, ArrowDown:.8})[k];
+      if(f){ e.preventDefault(); setSpeed(SPD * f); } else if(k==='Home'){ e.preventDefault(); setSpeed(1); }
+      else if(k==='PageUp'){ e.preventDefault(); setSpeed(4); } else if(k==='PageDown'){ e.preventDefault(); setSpeed(.25); } });
+  }
   return {
     mount(){ const c = document.querySelector('.dragons'); if(c===cv) return; if(io) io.disconnect(); cv = c; W = 0; vis = true;
       if(!c) return; off = document.createElement('canvas'); off.width = GW; off.height = GH; octx = off.getContext('2d'); oimg = octx.createImageData(GW, GH);
-      size(); if(io) io.observe(c); upd(); },
+      size(); if(io) io.observe(c); bind(c); upd(); },
+    run(v){ if(v && dg) nextGroup = 0; },   // a sync starting sets off a group jump
+    speed: () => fmt(SPD),
     size
   };
 })();
@@ -743,7 +702,7 @@ window.addEventListener('resize', () => DRAG.size());
 let animAt = 0, animOff = 0;
 function syncAnim(on){
   clearTimeout(animOff);
-  const set = v => { SEA.run(v); document.querySelectorAll('.sync-ic').forEach(n => n.classList.toggle('on', v)); };
+  const set = v => { DRAG.run(v); document.querySelectorAll('.sync-ic').forEach(n => n.classList.toggle('on', v)); };
   if(on){ animAt = Date.now(); set(true); }
   else animOff = setTimeout(() => { if(!syncBusy) set(false); }, Math.max(0, 5000 - (Date.now() - animAt)));
 }
@@ -755,7 +714,7 @@ function syncDaily(){
 }
 function redrawSync(focusSel){
   const sec = document.querySelector('.sync'); if(!sec) return;
-  sec.outerHTML = syncSection(); SEA.mount(); const n = $(focusSel); if(n) n.focus();
+  sec.outerHTML = syncSection(); DRAG.mount(); const n = $(focusSel); if(n) n.focus();
 }
 async function syncConnect(){
   const i = $('#syncTok'), tok = (i && i.value || '').trim();
@@ -1034,7 +993,7 @@ function viewMaterials(){
 const CAT_NAME = {...Object.fromEntries(SECTIONS.map(s=>[s.id, s.name])), drills:'Practice Drills', tips:'How to Study', materials:'Courses & Events'};
 function ttl(name){ const o = !!S.favOpen;
   return `<div class="ttl"><h1 class="sub">${name}</h1><div class="ttl-ic"><span class="sync-ic${syncBusy?' on':''}" aria-hidden="true">${SYNC_IC}</span><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favsList" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div></div>`; }
-// Phosphor arrows-clockwise: spins left of the title bookmark while a sync runs (same timing as the sea in Sync Devices).
+// Phosphor arrows-clockwise: spins left of the title bookmark while a sync runs (at least 5 s, so a quick sync is still seen).
 const SYNC_IC = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>';
 const CHEV_DOWN = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>';   // Phosphor caret-down
 function favsInner(){
@@ -1120,7 +1079,7 @@ function reshuffle(btn){
 }
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
-    <p class="lede">Short lessons built around real situations, so you don't just know Mandarin, you live it. Speak naturally, connect with Chinese-speaking communities, and move between cultures with confidence.</p><canvas class="dragons" aria-hidden="true"></canvas></section>
+    <p class="lede">Short lessons built around real situations, so you don't just know Mandarin, you live it. Speak naturally, connect with Chinese-speaking communities, and move between cultures with confidence.</p></section>
     <p class="kicker">Start here</p>
     <div class="series" id="homeStart">${scard(PATH).replace('data-push=', 'data-lib="'+PATH+'" data-push=')}</div>
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
@@ -1212,7 +1171,6 @@ function render(focusMain, dir){
   moveInd();
   rove();
   if(focusMain){ $('#main').focus({preventScroll:true}); }
-  SEA.mount();
   DRAG.mount();
 }
 // Leaving Library clears the search; the first focus after coming back clears it again in case the browser restored the text.
