@@ -210,7 +210,12 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 @media (hover:hover){.ext-link:hover{background:var(--surface-2);text-decoration:underline}}
 .ext-link:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .sync{margin-top:var(--s5)}
-.sync h2.sub{margin-top:0}
+.sync h2.sub{margin:0}
+.sync-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);margin-bottom:var(--s2)}
+.sync-icons{display:flex;gap:var(--s1);margin-right:calc(-1 * var(--s2))}
+.sync [data-sync]{color:var(--ink-2)}
+.sync [data-sync] svg{width:24px;height:24px}
+.sync [data-sync].on{color:var(--primary)}
 .sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .sync-form{display:grid;gap:var(--s2);justify-items:start}
 .sync-form label{font-weight:600}
@@ -219,7 +224,6 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync input:hover{border-color:var(--ink-2)}
 .sync input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 .sync input[aria-invalid="true"]{border-color:var(--accent)}
-.sync-acts{display:flex;flex-wrap:wrap;gap:var(--s2)}
 .sync .sync-st{color:var(--ink);font-weight:600}
 .sync .sync-st:empty{margin:0}
 .sync .sync-st.err{color:var(--accent)}
@@ -423,7 +427,7 @@ const GIST_FILE = 'cn-dr-sync.json', GH_API = 'https://api.github.com';
 function isSynced(k){ return SYNC_MAPS.includes(k) || SYNC_VALS.includes(k) || k==='tomb' || k.startsWith('phrAt:'); }
 function rawSet(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
 let syncBusy = false, syncAgain = false, syncTimer = 0, syncMsg = '', syncErr = false;
-function localChanged(){ rawSet('sync:mtime', Date.now()); syncSoon(); }
+function localChanged(){ rawSet('sync:mtime', Date.now()); }   // changes wait for the nightly sync or a tap on the cloud
 function syncSoon(ms){ if(!store.get('sync:tok','')) return; clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, ms==null ? 4000 : ms); }
 function tombstone(map, id){ const t = store.get('tomb', {}); (t[map] = t[map] || {})[id] = Date.now(); store.set('tomb', t); }
 function snapshot(){
@@ -512,17 +516,34 @@ function ago(t){ const s = (Date.now() - t) / 1000;
   return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s/60)} min ago` : s < 86400 ? `${Math.round(s/3600)} h ago` : new Date(t).toLocaleDateString(); }
 function syncText(){ if(syncMsg) return syncMsg; const l = store.get('sync:last', 0); return l ? `Last synced ${ago(l)}` : ''; }
 function syncStatus(msg, err){ syncMsg = msg || ''; syncErr = !!err; const el = $('#syncSt'); if(el){ el.textContent = syncText(); el.classList.toggle('err', syncErr); } }
+// Phosphor cloud-check and cloud-slash (regular).
+const CLOUD_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M160,40A88.09,88.09,0,0,0,81.29,88.67,64,64,0,1,0,72,216h88a88,88,0,0,0,0-176Zm0,160H72a48,48,0,0,1,0-96c1.1,0,2.2,0,3.29.11A88,88,0,0,0,72,128a8,8,0,0,0,16,0,72,72,0,1,1,72,72Zm37.66-93.66a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L144,148.69l42.34-42.35A8,8,0,0,1,197.66,106.34Z"/></svg>';
+const CLOUD_SLASH = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M53.92,34.62A8,8,0,1,0,42.08,45.38L81.32,88.55l-.06.12A65,65,0,0,0,72,88a64,64,0,0,0,0,128h88a87.34,87.34,0,0,0,31.8-5.93l10.28,11.31a8,8,0,1,0,11.84-10.76ZM160,200H72a48,48,0,0,1,0-96c1.1,0,2.2,0,3.3.12A88.4,88.4,0,0,0,72,128a8,8,0,0,0,16,0,72.25,72.25,0,0,1,5.06-26.54l87,95.7A71.66,71.66,0,0,1,160,200Zm88-72a87.89,87.89,0,0,1-22.35,58.61A8,8,0,0,1,213.71,176,72,72,0,0,0,117.37,70a8,8,0,0,1-9.48-12.89A88,88,0,0,1,248,128Z"/></svg>';
 function syncSection(){
   const on = !!store.get('sync:tok','');
   const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
-  return `<section class="sync tile" aria-labelledby="syncH"><h2 class="sub" id="syncH">Sync your devices</h2>
-    <p>Keeps saved lessons, completed lessons, progress and recent searches the same on your phone and computer. The data is kept in one private Gist in your GitHub account.</p>
-    ${on ? `${st}<div class="sync-acts"><button class="btn primary" data-sync="now">Sync now</button><button class="btn" data-sync="off">Disconnect this device</button></div>`
+  return `<section class="sync tile" aria-labelledby="syncH"><div class="sync-hd"><h2 class="sub" id="syncH">Sync Devices</h2>
+    <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${CLOUD_CHECK}</button><button class="btn ghost icon-btn" data-sync="off" aria-label="Disconnect" title="Disconnect"${on?'':' aria-disabled="true"'}>${CLOUD_SLASH}</button></div></div>
+    <p>Keeps saved lessons, completed lessons, progress and recent searches the same on your phone and computer, in one private Gist in your GitHub account. Syncs daily at midnight Pacific time; tap the cloud to sync now.</p>
+    ${on ? st
     : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
       <input id="syncTok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="syncHelp syncSt">
-      <p id="syncHelp" class="sync-help">Give the token only the gist scope. Paste the same token on each device.</p>
-      <a class="ext-link" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=cn-dr%20sync" target="_blank" rel="noopener">Make a token on GitHub<span class="vh">, opens a new tab</span>${EXT_ICON}</a>
-      <button class="btn primary" type="submit">Connect</button>${st}</form>`}</section>`;
+      <p id="syncHelp" class="sync-help">Give the token only the gist scope. Paste the same token on each device, then tap the cloud.</p>
+      <a class="ext-link" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=cn-dr%20sync" target="_blank" rel="noopener">Make a token on GitHub<span class="vh">, opens a new tab</span>${EXT_ICON}</a>${st}</form>`}</section>`;
+}
+// Daily sync at 12:00 am Pacific (America/Los_Angeles, so PST or PDT). A web page cannot run while closed, so a missed
+// midnight is caught up the next time the app opens or comes back to the front.
+function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
+  const f = new Intl.DateTimeFormat('en-US', {timeZone:'America/Los_Angeles', hourCycle:'h23', hour:'numeric', minute:'numeric', second:'numeric'});
+  const pt = Object.fromEntries(f.formatToParts(new Date(now)).map(x => [x.type, x.value]));
+  return now - ((+pt.hour)*3600 + (+pt.minute)*60 + (+pt.second))*1000 - (now % 1000);
+}
+let dailyTimer = 0;
+function syncDaily(){
+  clearTimeout(dailyTimer); if(!store.get('sync:tok','')) return;
+  const now = Date.now(), last = ptMidnight(now);
+  if(store.get('sync:last', 0) < last) syncNow();
+  dailyTimer = setTimeout(syncDaily, Math.max(60000, last + 86400000 - now + 1000));
 }
 function redrawSync(focusSel){
   const sec = document.querySelector('.sync'); if(!sec) return;
@@ -533,11 +554,11 @@ async function syncConnect(){
   if(!tok){ syncStatus('Paste a token first.', true); if(i){ i.setAttribute('aria-invalid','true'); i.focus(); } return; }
   store.set('sync:tok', tok); store.del('sync:gist'); store.del('sync:last');
   syncMsg = 'Connecting'; syncErr = false; redrawSync('[data-sync="now"]');
-  const r = await syncNow();
+  const r = await syncNow(); syncDaily();
   if(r==='auth'){ const m = syncMsg; store.del('sync:tok'); redrawSync('#syncTok'); syncStatus(m, true); const n=$('#syncTok'); if(n) n.setAttribute('aria-invalid','true'); }
 }
 function syncDisconnect(){
-  ['sync:tok','sync:gist','sync:last'].forEach(k => store.del(k)); clearTimeout(syncTimer);
+  ['sync:tok','sync:gist','sync:last'].forEach(k => store.del(k)); clearTimeout(syncTimer); clearTimeout(dailyTimer);
   syncMsg = 'Disconnected. This device keeps its data; nothing was deleted from GitHub.'; syncErr = false;
   redrawSync('#syncTok');
 }
@@ -1167,14 +1188,13 @@ document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && $('#shee
 try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
 render(false, 'fade');
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-sync]'); if(!b) return;
-  if(b.dataset.sync==='now') syncNow(); else if(b.dataset.sync==='off') syncDisconnect(); });
+  if(b.getAttribute('aria-disabled')==='true') return;
+  if(b.dataset.sync==='now'){ if(store.get('sync:tok','')) syncNow(); else syncConnect(); }
+  else if(b.dataset.sync==='off') syncDisconnect(); });
 $('#main').addEventListener('input', e => { if(e.target.id==='syncTok' && e.target.getAttribute('aria-invalid')){ e.target.removeAttribute('aria-invalid'); syncStatus(''); } });
-// Pull when the app opens or comes back to the front; push right away when it goes to the background.
-document.addEventListener('visibilitychange', () => { if(!store.get('sync:tok','')) return;
-  if(document.visibilityState==='hidden'){ if(syncTimer) syncNow(); }
-  else if(Date.now() - store.get('sync:last', 0) > 30000) syncNow(); });
-window.addEventListener('online', () => syncSoon(500));
-syncNow();
+document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') syncDaily(); });
+window.addEventListener('online', syncDaily);
+syncDaily();
 </script>
 </body>
 </html>
