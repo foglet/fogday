@@ -92,6 +92,10 @@ svg{fill:currentColor}
 .seg button:active{transform:scale(.98)}
 .seg button[aria-selected="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
 .seg small{display:block;font-weight:400;font-size:var(--fs-cap);color:var(--ink-2)}
+/* Level switch has four: columns size to their labels, spare room shared; labels shrink a little on narrow phones so Intermediate fits */
+.seg.lv{grid-template-columns:repeat(4,auto)}
+.seg.lv button{font-size:clamp(.6875rem,3.5vw,var(--fs-sm));padding:0 6px;white-space:nowrap}
+.seg.lv small{font-size:clamp(.6875rem,3vw,var(--fs-cap))}
 
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
@@ -649,12 +653,15 @@ let done = store.get('done', {});           // id -> timestamp
 let seen = store.get('seen', {});           // id -> timestamp, set whenever a lesson is opened
 let full = store.get('full', {});           // id -> timestamp, set when a video plays to the end (or 95% through)
 const OLD_TAB = {series:'learn', search:'learn'};
-let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','beginner'), sub:'all', open:{}, acc:{}, q:'', pick:false, stack:[], phrSort: store.get('phrSort','date') };
+// One-time switch to the new All level (Nov 2026); after this the learner's own pick is kept.
+if(!store.get('lvAll')){ store.set('lvAll', 1); store.set('level', 'all'); }
+let S = { tab: (t => OLD_TAB[t] || t)(store.get('tab','home')), level: store.get('level','all'), sub:'all', open:{}, acc:{}, q:'', pick:false, stack:[], phrSort: store.get('phrSort','date') };
 const ITEMS = DATA.items;
 const byId = Object.fromEntries(ITEMS.map(r => [r.id, r]));
 const SER = Object.fromEntries(DATA.series.map(s => [s.id, s]));
 
 const LEVELS = [
+  {id:'all', name:'All', note:'HSK 1+'},
   {id:'beginner', name:'Beginner', note:'HSK 1-2'},
   {id:'intermediate', name:'Intermediate', note:'HSK 3-4'},
   {id:'advanced', name:'Advanced', note:'HSK 5+'}
@@ -685,6 +692,7 @@ const SMALL = new Set(['a','an','and','as','at','but','by','for','in','of','on',
 const tc = t => String(t||'').split(' ').map((w,i) => (i && SMALL.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 // Left-handed check: short stroke on the right, long stroke rising to the left (a mirrored Phosphor check reads as a chevron).
 const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M220,104 L184,204 L36,76" fill="none" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const inLv = lv => S.level==='all' || lv===S.level;   // All shows every level
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
 function seriesLevel(sid){ const c={}; seriesItems(sid).forEach(r=>c[r.lv]=(c[r.lv]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
 function meta(r, opts={}){
@@ -830,18 +838,18 @@ function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
 function learnMain(){
   if(S.q.trim()) return searchResults();
   if(S.histOpen && getHist().length) return histPanel();
-  return `<div class="seg" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
+  return `<div class="seg lv" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
     <div id="learnBody">${viewLearn(true)}</div>`;
 }
 function viewLearn(bodyOnly){
-  let items = ITEMS.filter(r => r.lv===S.level);
+  let items = ITEMS.filter(r => inLv(r.lv));
   if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>${searchField()}<div id="learnMain">${learnMain()}</div>${favsSection()}`;
   let h = '';
 
   const cards = [];
   SECTIONS.forEach(def => {
     if(def.id==='series'){
-      const sids = DATA.series.map(x=>x.id).filter(sid => seriesLevel(sid)===S.level);
+      const sids = DATA.series.map(x=>x.id).filter(sid => inLv(seriesLevel(sid)));
       if(!sids.length) return;
       cards.push(card('lv:series', def.name, def.note, sids.flatMap(seriesItems), () => `<div class="series">${sids.map(scard).join('')}</div>`));
       return;
@@ -946,7 +954,7 @@ const DOT_WORD = {done:'done', cur:'up next', todo:'not started'};
 // Home shows the same Library row and opens the same Library page, with Library > Series > course in history so Back retraces it.
 function openInLibrary(sid){
   const lv = seriesLevel(sid);
-  if(S.level!==lv){ S.level=lv; S.sub='all'; store.set('level',lv); }
+  if(!inLv(lv)){ S.level=lv; S.sub='all'; store.set('level',lv); }
   try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
   leaveTab('learn'); S.tab='learn'; store.set('tab','learn');
   [[], ['lv:series'], ['lv:series','ser:'+sid]].forEach(st => { try{ history.pushState({tab:'learn', stack:st, y:0}, ''); }catch(e){} });
@@ -963,7 +971,7 @@ const unfinished = r => !done[r.id] && !full[r.id];
 function shuffled(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function deal(){
   const by = {};
-  ITEMS.forEach(r => { if(r.lv===S.level && unfinished(r) && !RAND_SKIP.includes(r.top)) (by[r.top] = by[r.top] || []).push(r); });
+  ITEMS.forEach(r => { if(inLv(r.lv) && unfinished(r) && !RAND_SKIP.includes(r.top)) (by[r.top] = by[r.top] || []).push(r); });
   let tops = Object.keys(by).filter(t => by[t].length >= RAND_SHOW);                 // topics that can fill all three
   if(!tops.length){ const most = Math.max(0, ...Object.values(by).map(a=>a.length)); tops = Object.keys(by).filter(t => by[t].length===most); }
   if(tops.length > 1 && picks) tops = tops.filter(t => t!==picks.top);                  // a tap always moves to a new topic
@@ -1194,7 +1202,7 @@ function step(dir){
 }
 function drillPool(kind){
   let pool = ITEMS.filter(r=>r.sec==='drills');
-  if(kind==='level') pool = pool.filter(r=>r.lv===S.level);
+  if(kind==='level') pool = pool.filter(r=>inLv(r.lv));
   else if(kind!=='all') pool = pool.filter(r=>r.top===kind);
   pool = pool.slice().sort(byNo);
   return pool;
