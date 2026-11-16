@@ -807,7 +807,7 @@ function favsInner(){
   CTX['favs'] = its.map(r=>r.id);
   const cat = r => [CAT_NAME[r.sec] || tc(r.sec), r.ser && SER[r.ser] ? SER[r.ser].name : tc(r.top)].filter(Boolean).join(' · ');
   return its.length ? `<ul class="list">${its.map(r=>row(r, 'favs', {cat:cat(r)})).join('')}</ul>`
-    : `<div class="empty"><b>No favorites yet</b>Tap the bookmark on any lesson to keep it here.</div>`;
+    : '';
 }
 // Favorites sits below the listings, closed by default. The heading (with its chevron) and the title bookmark both toggle it.
 function favsSection(){ const o = !!S.favOpen;
