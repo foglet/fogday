@@ -595,7 +595,7 @@ const T = r => r.t.replace(/\s*\((?:Day\s?)?\d+\/\d+\)/, '');   // "(Day 2/30)" 
 function rowBtn(r, ctx, opts={}){
   if(opts.ord==null && r.no) opts = {...opts, ord:r.no, ordLabel:'No.'};   // every lesson shows its permanent number unless a course Day is given
   const lead = opts.ord!=null
-    ? `<span class="ord" aria-hidden="true"><span>${opts.ordLabel==='No.' ? '' : `<small>${esc(opts.ordLabel||'Part')}</small>`}${opts.ord}</span></span>`
+    ? `<span class="ord" aria-hidden="true"><span>${opts.ordLabel==='No.' || opts.bare ? '' : `<small>${esc(opts.ordLabel||'Part')}</small>`}${opts.ord}</span></span>`
     : `<span class="ord" aria-hidden="true"><span>-</span></span>`;   // full lessons have no number: a hyphen keeps titles aligned   // no thumbnails: they were all the same face and cost one image request per row
   const label = `${opts.ord!=null?`${opts.ordLabel||'Part'} ${opts.ord}: `:''}${T(r)}${isDone(r.id)?', done':opts.tag?`, ${opts.tag.toLowerCase()}`:''}`;
   const m = opts.cat ? `<span class="m">${esc(opts.cat)}</span>`   // Saved page: level and topic under each title
@@ -652,7 +652,7 @@ function seriesPanel(sid){
   const btn = next && !isPath ? '' : next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${isPath?'day':'lesson'} to watch it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
-    return row(r, key, {ord:num(r), ordLabel:lab, cur}); }).join('')}</ul>`;
+    return row(r, key, {ord:num(r), ordLabel:lab, cur, bare: isPath && i>0}); }).join('')}</ul>`;   // 30-day path: "Day" shows on the first row only; aria-label still says Day N
 }
 // Drill page: same as a Library series. Numbered list; the next drill is highlighted.
 function drillPanel(kind){
