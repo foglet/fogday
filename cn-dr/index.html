@@ -122,10 +122,6 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .seg.two button[aria-pressed="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
 .row .ord{width:44px;height:44px;font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
 .pg-start{width:100%;margin-bottom:var(--s3)}
-.meter{margin:0 0 var(--s3)}
-.meter .bar{height:8px;border-radius:var(--r-pill);background:var(--surface-3);overflow:hidden}
-.meter .bar span{display:block;height:100%;background:var(--done);border-radius:inherit}
-.meter p{margin:var(--s1) 0 0;font-size:var(--fs-sm);color:var(--ink-2);font-weight:400}
 .row .m{font-size:var(--fs-cap);color:var(--ink-2);font-weight:400;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
 .row[data-done="true"] .t{color:var(--ink-2)}
@@ -310,7 +306,6 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 #markBtn.just svg,.dtile.just svg{animation:pop 360ms var(--ease-out)}
 .row.just .ord::after{animation:pop-mark 360ms var(--ease-out)}
 @keyframes pop-mark{0%{transform:translateY(-50%) scale(.4);opacity:0}60%{transform:translateY(-50%) scale(1.18);opacity:1}100%{transform:translateY(-50%) scale(1)}}
-.meter .bar span{transition:width 600ms var(--ease-out)}
 .ring .fg{transition:stroke-dashoffset 600ms var(--ease-out)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 /* Mobile: tighter leading site wide, and header icons packed like the footer's social icons (32px wide, no gap). */
@@ -477,11 +472,10 @@ function phrasesPanel(its){
   const seg = `<div class="seg two" role="group" aria-label="Order">${[['date','By number'],['topic','By situation']].map(([v,l])=>`<button data-phrsort="${v}" aria-pressed="${(v==='date')===byDate}">${l}</button>`).join('')}</div>`;
   if(!byDate) return seg + grouped('lv:phrases', its);
   const nums = its.filter(r=>r.no).sort((a,b)=>a.no-b.no), rest = its.filter(r=>!r.no);   // full lessons have no number
-  const all = nums.concat(rest), w = all.filter(r=>isSeen(r.id)).length, at = store.get('phrAt:'+lv, 0);
+  const all = nums.concat(rest), at = store.get('phrAt:'+lv, 0);
   const next = nums.find(r=>r.no>at && !isSeen(r.id)) || nums.find(r=>!isSeen(r.id));
   CTX[key] = all.map(r=>r.id);
-  return seg + `<div class="meter"><div class="bar" aria-hidden="true"><span style="width:${Math.round(100*w/all.length)}%"></span></div><p>${w} of ${all.length} watched</p></div>
-    <ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r!==next && !isDone(r.id) && seen[r.id] ? 'Watched' : '', tagCls: 'seen'})).join('')}</ul>
+  return seg + `<ul class="list">${nums.map(r=>row(r, key, {ord:r.no, ordLabel:'No.', cur:r===next, tag: r!==next && !isDone(r.id) && seen[r.id] ? 'Watched' : '', tagCls: 'seen'})).join('')}</ul>
     ${rest.length ? `<h3 class="sub grp">Full lessons</h3><ul class="list">${rest.map(r=>row(r, key)).join('')}</ul>` : ''}`;
 }
 function accPanel(key){
@@ -564,16 +558,14 @@ function updateLevel(){
   $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true); animIn($('#learnBody'), 'a-swap');
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
 }
-// Review: every lesson watched to the end or marked complete, oldest first. Ones finished more than a day ago come first;
-// if none are that old yet, all of them show. Built fresh each time so it never goes stale.
+// Review: every lesson watched to the end or marked complete, oldest first, as soon as it is finished.
+// Built fresh each time so it never goes stale.
 const finishedAt = id => Math.max(done[id]||0, full[id]||0);
 function reviewItems(){
   const ids = [...new Set([...Object.keys(done), ...Object.keys(full)])].filter(id => byId[id]);
   const all = ids.sort((a,b)=>finishedAt(a)-finishedAt(b)).map(id=>byId[id]);
-  const now = Date.now(), due = all.filter(r => now - finishedAt(r.id) > 864e5);
-  const its = due.length ? due : all;
-  CTX['review'] = its.map(r=>r.id);
-  return its;
+  CTX['review'] = all.map(r=>r.id);
+  return all;
 }
 function viewPractice(){
   const drills = ITEMS.filter(r=>r.sec==='drills');
@@ -583,8 +575,8 @@ function viewPractice(){
   return `<h1 class="sub">Practice</h1>
     <p class="lede sm">Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed Drill Session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,TITLE[t],blurbs[t])).join('')}</div>
-    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review What You Watched','Lessons you watched to the end or completed, more than a day ago.', reviewItems(),
-      () => { const its = reviewItems(); return its.length ? list('review', its, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Watch a lesson to the end, or tap To Complete, and it will come back here tomorrow.</div>`; })}</div>`;
+    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review What You Watched','Lessons you watched to the end or completed.', reviewItems(),
+      () => { const its = reviewItems(); return its.length ? list('review', its, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Watch a lesson to the end, or tap To Complete, and it will show up here.</div>`; })}</div>`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
 const FOLLOW_ICON = {
