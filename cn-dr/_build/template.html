@@ -573,7 +573,7 @@ function openInLibrary(sid){
   const lv = seriesLevel(sid);
   if(S.level!==lv){ S.level=lv; S.sub='all'; store.set('level',lv); }
   try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
-  S.tab='learn'; store.set('tab','learn');
+  leaveTab('learn'); S.tab='learn'; store.set('tab','learn');
   [[], ['lv:series'], ['lv:series','ser:'+sid]].forEach(st => { try{ history.pushState({tab:'learn', stack:st, y:0}, ''); }catch(e){} });
   tabView(); accPanel('lv:series');                                     // registers the Series and course pages
   S.stack=['lv:series','ser:'+sid]; window.scrollTo(0,0); render(false); $('#pgH').focus({preventScroll:true});
@@ -626,7 +626,7 @@ function back(){
 window.addEventListener('popstate', e => {
   const st = e.state || {tab:S.tab, stack:[]}, was = S.stack;
   if($('#sheetWrap').dataset.open==='true') closePlayer();
-  S.tab = st.tab || S.tab; S.stack = st.stack || [];
+  leaveTab(st.tab || S.tab); S.tab = st.tab || S.tab; S.stack = st.stack || [];
   render(false); window.scrollTo(0, st.y||0);
   if(S.stack.length < was.length) focusRow(was[S.stack.length]); else if(S.stack.length) $('#pgH').focus({preventScroll:true});
 });
@@ -652,7 +652,9 @@ function render(focusMain){
   rove();
   if(focusMain){ $('#main').focus({preventScroll:true}); }
 }
-function go(tab){ S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} store.set('tab',tab); window.scrollTo(0,0); render(true); }
+// Leaving Library clears the search; the first focus after coming back clears it again in case the browser restored the text.
+function leaveTab(tab){ if(tab!==S.tab){ S.q=''; S.qFresh=true; } }
+function go(tab){ leaveTab(tab); S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} store.set('tab',tab); window.scrollTo(0,0); render(true); }
 
 /* ---------- player ---------- */
 let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '', pathMode = false;
@@ -748,6 +750,7 @@ document.addEventListener('click', e => {
     drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
     return openPlayer(t.dataset.id, c); }
 });
+$('#main').addEventListener('focusin', e => { if(e.target.id==='q' && S.qFresh){ S.qFresh=false; if(e.target.value){ e.target.value=''; S.q=''; $('#learnMain').innerHTML = learnMain(); rove(); } } });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; $('#learnMain').innerHTML = learnMain(); rove(); } });
 $('#main').addEventListener('submit', e => { e.preventDefault(); const i=$('#q'); i&&i.blur(); });
 $('#closeBtn').addEventListener('click', closePlayer);
