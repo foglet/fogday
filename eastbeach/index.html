@@ -14,8 +14,8 @@ zoom: 12.04
 <title>{{ page.title }} · Fogday Studios</title>
 <meta name="description" content="{{ page.description }}">
 <meta name="robots" content="index,follow">
-<meta name="theme-color" content="#021724">
-<script>try{var t=localStorage.getItem('fogday-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
+<meta name="theme-color" content="#edf1f2">
+<script>document.documentElement.dataset.theme='light'</script>   <!-- light only: no dark mode on this page (the saved site choice is left alone) -->
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
 <script src="{{ '/assets/js/theme.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +24,7 @@ zoom: 12.04
 <style>
   /* East Beach: the SF Trees / Transit Connected / UCSF Shuttles map interface (fogday.com/ucsf). */
   :root {
-    --glass: rgb(2 23 36 / .78);   /* dark: navy glass, not /ucsf/'s faint grey, since the East Beach map stays light in both modes */ --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
+    --glass: rgb(2 23 36 / .78); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
     --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
     color-scheme: dark;
@@ -175,7 +175,7 @@ zoom: 12.04
   .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
   :root[data-theme="light"] .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
-  /* Location and light/dark: icon buttons in the bottom-right stack, as /treesf/'s "here" */
+  /* Location: icon button in the bottom-right stack, as /treesf/'s "here" */
   .mapboxgl-ctrl.oa-here { position: relative; }
   .oa-pin { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 4px;
             background: transparent; color: var(--muted); cursor: pointer; }
@@ -184,10 +184,8 @@ zoom: 12.04
   @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
   .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
   @keyframes here-pulse { 50% { opacity: .35; } }
-  /* Top right: the light / dark toggle and the bento, formatted as in the site header (fogday.css, as on /fog/):
-     no panel, 40px tap targets, a 16px moon / sun and an 18px bento grid. theme.js (the site's) drifts the sun
-     between yellow and orange and fills the bento with a random gradient on hover or tap. Over the map each icon
-     gets a soft navy halo so it reads on streets and routes. */
+  /* Top right: the bento, formatted as in the site header (fogday.css): 40px tap target, 18px grid.
+     theme.js (the site's) fills it with a random gradient on hover or tap. */
   .corner { position: fixed; z-index: 3; top: calc(9px + var(--sat)); right: calc(8px + var(--sar)); display: flex; align-items: center; gap: 0; }
   .corner svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
   :root { --fade-in: .6s; --fade-out: 1.2s; --blend: .8s; }
@@ -201,17 +199,7 @@ zoom: 12.04
   .bento:hover stop, .bento.lit stop { transition: stop-color var(--fade-in) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
   .bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
   .bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
-  :root[data-theme="dark"] .bento { color: var(--ink); }
-  .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; margin: 0; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 4px; transition: color .15s ease; }
-  .theme-toggle:hover { color: var(--muted); }
-  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .theme-toggle svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .theme-toggle .icon-sun { display: none; transition: color 1.5s ease; }
-  .theme-toggle:hover .icon-moon path { fill: currentColor; }
-  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
-  :root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
-  :root[data-theme="dark"] .theme-toggle:hover { color: #ffe680; }
-  @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .theme-toggle, .bento { width: 44px; height: 44px; } .theme-toggle { padding: 14px; } .bento { padding: 13px; } }   /* centered on the title row */
+  @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .bento { width: 44px; height: 44px; } .bento { padding: 13px; } }   /* centered on the title row */
   .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
                  width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
                  background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
@@ -252,12 +240,8 @@ zoom: 12.04
   </button>
 </div>
 
-<!-- Top right, as in the site header: light / dark, then the bento (all projects) -->
+<!-- Top right, as in the site header: the bento (all projects). No light / dark toggle: this page is light only -->
 <nav class="corner" aria-label="Site">
-  <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
-    <svg class="icon-moon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    <svg class="icon-sun" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
-  </button>
   <a href="/works/" class="bento" aria-label="Projects" title="Projects">
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg>
   </a>
@@ -296,12 +280,8 @@ zoom: 12.04
 const $ = id => document.getElementById(id);
 const store = { get(k){ try{ return localStorage.getItem("eastbeach:"+k) }catch(e){ return null } }, set(k,v){ try{ localStorage.setItem("eastbeach:"+k, v) }catch(e){} } };
 const HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
-const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the East Beach style, in light and dark: the toggle changes the page around it */
+const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the East Beach style */
 let map=null, here=null, user=null, watching=false;
-const isDark = () => document.documentElement.dataset.theme !== "light";
-function themeColor(){ document.querySelector('meta[name="theme-color"]').content = isDark() ? "#021724" : "#edf1f2" }
-new MutationObserver(themeColor).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
-themeColor();
 /* A control from a page element, in the bottom-right stack (as on /ucsf/ and /treesf/) */
 function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
 function initMap(){
