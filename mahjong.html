@@ -50,7 +50,7 @@ header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between
 /* Bento box nav (fogday.com/works/), as in the site header: 18px icon in a 40px tap target, top right, centered on the title line */
 .bento{position:absolute;right:-11px;top:calc(var(--h1) * 1.05 / 2 - 20px);display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:11px;color:var(--felt);border-radius:8px;transition:color .15s}
 .bento svg{display:block;width:100%;height:100%}
-.bento:hover{color:var(--red)}
+.bento,.bento:hover,.bento:visited{color:var(--felt)}   /* always the title green, also on hover / tap */
 .bento:focus-visible{outline:2px solid var(--sel);outline-offset:0}
 h1{font-family:var(--display);font-weight:400;font-size:var(--h1);line-height:1.05;margin:0;white-space:nowrap;color:var(--felt);letter-spacing:.03em}  /* BAY AREA MAHJONG is 11.35em (+ tracking) in Young Serif: one line down to small phones */
 .subtitle{font-family:var(--body);font-size:15px;line-height:1.5;color:var(--muted);margin:4px 0 0}   /* same as "Confirm with venue." */
