@@ -675,7 +675,8 @@ const X_IC = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194
 function histPanel(){ const h = getHist();
   return `<section id="hist" aria-labelledby="histH"><div class="hist-head"><h2 class="sub" id="histH">Recent searches</h2><button class="btn ghost hist-clear" data-hclear>Clear all</button></div>
     <ul class="list">${h.map(({q, id}) => { const r = byId[id];
-      const main = r ? `<button class="row nolead" data-hopen="${r.id}" aria-label="${esc((r.no?'No. '+r.no+': ':'')+T(r))}, searched ${esc(q)}"><span><span class="t">${esc(T(r))}</span><span class="m">${r.no?'No. '+r.no+' · ':''}Searched ${esc(q)}</span></span></button>`
+      // a known lesson shows exactly as it did in the results list; it opens the lesson instead of the generic row handler
+      const main = r ? row(r, 'hist').replace(/^<li>|<\/li>$/g, '').replace(' data-id="', ' data-hopen="')
                      : `<button class="row nolead" data-hq="${esc(q)}"><span class="t">${esc(q)}</span></button>`;
       return `<li class="hrow">${main}<button class="btn ghost icon-btn hdel" data-hdel="${esc(q)}" aria-label="Delete ${esc(q)} from history">${X_IC}</button></li>`; }).join('')}</ul></section>`; }
 function refreshLearn(){ const m = $('#learnMain'); if(m){ m.innerHTML = learnMain(); rove(); } }
