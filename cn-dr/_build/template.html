@@ -225,8 +225,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
-.ttl .sync-btn,.fav-tg,.sync [data-sync]{background:transparent!important;border-color:transparent!important;-webkit-tap-highlight-color:transparent}   /* bare icons: no fill or border on hover, tap or open */
-.ttl .sync-btn{color:var(--ink-2)} .ttl .sync-btn svg{width:20px;height:20px} .ttl .sync-btn.on{color:var(--primary)}   /* title waveform, same look as the About one */
+.fav-tg,.sync [data-sync]{background:transparent!important;border-color:transparent!important;-webkit-tap-highlight-color:transparent}   /* bare icons: no fill or border on hover, tap or open */
 .dragons{flex:1;min-width:0;height:112px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm)}
 /* No CSS mask here: WebKit can stop repainting a masked canvas. The soft side edges are drawn into the pixels instead. */
 .dragons:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
@@ -290,7 +289,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .ttl-ic{display:flex;align-items:center;justify-content:flex-end;flex:1;min-width:0;gap:var(--s1)}
 .dragons-t{flex:1;min-width:0;height:var(--tap);display:block;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;visibility:hidden}
 .dragons-t.on{visibility:visible}   /* title strip: shows only while a sync runs and the dragons walk */
-.fav-tg{margin-right:calc(-1 * var(--s3))}
+.fav-tg{margin-right:0}   /* bookmark icon lines up with the About tab icon above it (desktop: 44px tabs) */
 .fav-tg svg{width:20px;height:20px;color:var(--primary)}
 .favs{margin-top:var(--s5)}
 .favs h2{margin-bottom:0}
@@ -397,6 +396,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
   .icons{gap:0;margin-right:-5px}
   .tab{width:32px}
   .icons .ind{width:32px;height:32px;top:6px}
+  .fav-tg{margin-right:-11px}   /* mobile: matches the packed 32px About tab */
 }
 @media (min-width:40rem){
   :root{--fs-display:3rem}
@@ -1006,11 +1006,8 @@ function viewMaterials(){
 // page's listings, newest saved first, with category and topic under each title. Unsaving inside the list only
 // empties the bookmark, so the row stays put and focus is kept.
 const CAT_NAME = {...Object.fromEntries(SECTIONS.map(s=>[s.id, s.name])), drills:'Practice Drills', tips:'How to Study', materials:'Courses & Events'};
-// Waveform: forces a sync. Not connected yet: opens About at the token field instead.
-function syncBtn(key){ const on = !!store.get('sync:tok','');
-  return `<button class="btn ghost icon-btn sync-btn${on?' on':''}" data-sync="${key}" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${SYNC_WAVE}</button>`; }
 function ttl(name){ const o = !!S.favOpen;
-  return `<div class="ttl"><h1 class="sub">${name}</h1><div class="ttl-ic"><canvas class="dragons-t" aria-hidden="true"></canvas>${syncBtn('title')}<button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favsList" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div></div>`; }
+  return `<div class="ttl"><h1 class="sub">${name}</h1><div class="ttl-ic"><canvas class="dragons-t" aria-hidden="true"></canvas><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favsList" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div></div>`; }
 // While a sync runs, small pixel dragons walk left of the title bookmark (DRAGT), in place of the old spinning arrows.
 const CHEV_DOWN = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>';   // Phosphor caret-down
 function favsInner(){
@@ -1466,8 +1463,6 @@ trTree(document.body);
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-sync]'); if(!b) return;
   if(b.getAttribute('aria-disabled')==='true') return;
   if(b.dataset.sync==='now'){ if(store.get('sync:tok','')) syncNow(); else syncConnect(); }
-  if(b.dataset.sync==='title'){ if(store.get('sync:tok','')) syncNow();
-    else { go('materials'); requestAnimationFrame(() => { const i = $('#syncTok'); if(i){ i.scrollIntoView({block:'center'}); i.focus({preventScroll:true}); } }); } }
   });
 $('#main').addEventListener('input', e => { if(e.target.id==='syncTok' && e.target.getAttribute('aria-invalid')){ e.target.removeAttribute('aria-invalid'); syncStatus(''); } });
 document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') syncDaily(); });
