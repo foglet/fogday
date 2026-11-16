@@ -575,7 +575,7 @@ function viewPractice(){
   return `<h1 class="sub">Practice</h1>
     <p class="lede sm">Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed Drill Session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,TITLE[t],blurbs[t])).join('')}</div>
-    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Review','Watched or completed.', reviewItems(),
+    <h2 class="sub">Review</h2><div class="series">${card('pr:review','Watch History','Watched or completed.', reviewItems(),
       () => { const its = reviewItems(); return its.length ? list('review', its, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Watch a lesson to the end, or tap To Complete, and it will show up here.</div>`; })}</div>`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
