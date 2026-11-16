@@ -269,8 +269,8 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .lang-b{display:grid;place-items:center;min-height:var(--tap);min-width:28px;padding:0;border:0;background:none;cursor:pointer;
   font:inherit;font-size:var(--fs-cap);font-weight:600;letter-spacing:.04em;color:var(--ink-2);border-radius:var(--r-md);position:relative;z-index:0}
 .lang-b::before{content:"";position:absolute;inset:8px 1px;border-radius:8px;z-index:-1}
-.lang-b[aria-pressed="true"]{color:var(--primary-ink)}
-.lang-b[aria-pressed="true"]::before{background:var(--primary-tint)}
+.lang-b[aria-current="true"]{color:var(--primary-ink)}
+.lang-b[aria-current="true"]::before{background:var(--primary-tint)}
 @media (hover:hover){.lang-b:hover{color:var(--ink)}}
 .lang-b:active{transform:scale(.97)}
 .lang-b:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
@@ -1368,7 +1368,7 @@ function langUI(){
   document.documentElement.lang = LANG; document.title = trFull(TITLE_EN);
   const zh = LANG!=='en';
   document.querySelectorAll('#lang [data-lang]').forEach(b => { const l = b.dataset.lang;
-    b.setAttribute('aria-pressed', String(l===LANG || (l==='zh' && zh))); });
+    b.setAttribute('aria-current', String(l===LANG || (l==='zh' && zh))); });   // a choice, not an on/off switch
   $('#langScript').hidden = !zh;
   $('#langMain').setAttribute('aria-label', LANG==='zh-Hant' ? '語言' : zh ? '语言' : 'Language');
 }
