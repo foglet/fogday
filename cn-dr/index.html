@@ -283,6 +283,35 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 @media (hover:hover){.linkbtn:hover{color:var(--ink)}}
 .linkbtn:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 
+/* Motion. Pages slide in the direction of travel (deeper from the right, Back from the left), tabs rise and fade,
+   rows ease in one after another. Everything is short (under 300ms per element) and off under reduced motion. */
+:root{--ease-out:cubic-bezier(.16,1,.3,1); --ease-in:cubic-bezier(.4,0,1,1); --dur-page:280ms; --stagger:28ms}
+@keyframes pg-fwd{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes pg-back{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes pg-fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+#main.a-fwd{animation:pg-fwd var(--dur-page) var(--ease-out)}
+#main.a-back{animation:pg-back var(--dur-page) var(--ease-out)}
+#main.a-fade{animation:pg-fade var(--dur-page) var(--ease-out)}
+#main.a-fwd [style*="--i"],#main.a-back [style*="--i"],#main.a-fade [style*="--i"]{animation:rise 320ms var(--ease-out) both;animation-delay:calc(var(--i) * var(--stagger) + 60ms)}
+.a-swap{animation:fade 220ms var(--ease-out)}
+.a-swap [style*="--i"]{animation:rise 300ms var(--ease-out) both;animation-delay:calc(var(--i) * var(--stagger))}
+/* Player: sheet rises over a fading scrim, and drops away on close */
+@keyframes scrim-in{from{opacity:0}to{opacity:1}}
+@keyframes down{from{transform:none;opacity:1}to{transform:translateY(40px);opacity:0}}
+.sheet-wrap[data-open="true"] .scrim{animation:scrim-in var(--dur-page) var(--ease-out)}
+.sheet{animation:up 320ms var(--ease-out)}
+.sheet-wrap[data-open="closing"]{display:block;pointer-events:none}
+.sheet-wrap[data-open="closing"] .scrim{animation:scrim-in 200ms var(--ease-in) reverse both}
+.sheet-wrap[data-open="closing"] .sheet{animation:down 200ms var(--ease-in) both}
+/* Done marks pop in when a lesson is completed */
+@keyframes pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+#markBtn.just svg,.dtile.just svg{animation:pop 360ms var(--ease-out)}
+.row.just .ord::after{animation:pop-mark 360ms var(--ease-out)}
+@keyframes pop-mark{0%{transform:translateY(-50%) scale(.4);opacity:0}60%{transform:translateY(-50%) scale(1.18);opacity:1}100%{transform:translateY(-50%) scale(1)}}
+.meter .bar span{transition:width 600ms var(--ease-out)}
+.ring .fg{transition:stroke-dashoffset 600ms var(--ease-out)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 /* Mobile: tighter leading site wide, and header icons packed like the footer's social icons (32px wide, no gap). */
 @media (max-width:39.99rem){
@@ -294,7 +323,10 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 }
 @media (min-width:40rem){
   :root{--fs-display:3rem}
-  .sheet{left:50%;right:auto;width:36rem;transform:translateX(-50%);bottom:var(--s4);border-radius:var(--r-lg);animation:none}
+  .sheet{left:50%;right:auto;width:36rem;transform:translateX(-50%);bottom:var(--s4);border-radius:var(--r-lg);animation:up-c 320ms var(--ease-out)}
+  .sheet-wrap[data-open="closing"] .sheet{animation:down-c 200ms var(--ease-in) both}
+  @keyframes up-c{from{transform:translate(-50%,24px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+  @keyframes down-c{from{transform:translateX(-50%);opacity:1}to{transform:translate(-50%,40px);opacity:0}}
 }
 </style>
 </head>
@@ -527,7 +559,7 @@ function viewLearn(bodyOnly){
   return h + `<div class="series">${cards.join('')}</div>`;
 }
 function updateLevel(){
-  $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true);
+  $('#learnHead').innerHTML = learnHead(); $('#learnBody').innerHTML = viewLearn(true); animIn($('#learnBody'), 'a-swap');
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.level===S.level))); rove();
 }
 function viewPractice(){
@@ -583,7 +615,7 @@ function openInLibrary(sid){
   leaveTab('learn'); S.tab='learn'; store.set('tab','learn');
   [[], ['lv:series'], ['lv:series','ser:'+sid]].forEach(st => { try{ history.pushState({tab:'learn', stack:st, y:0}, ''); }catch(e){} });
   tabView(); accPanel('lv:series');                                     // registers the Series and course pages
-  S.stack=['lv:series','ser:'+sid]; window.scrollTo(0,0); render(false); $('#pgH').focus({preventScroll:true});
+  S.stack=['lv:series','ser:'+sid]; window.scrollTo(0,0); render(false, 'fwd'); $('#pgH').focus({preventScroll:true});
 }
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
@@ -625,20 +657,37 @@ function push(key){
   try{ history.replaceState(Object.assign({}, history.state, {y: window.scrollY}), ''); }catch(e){}
   S.stack = S.stack.concat(key);
   try{ history.pushState({tab:S.tab, stack:S.stack, y:0}, ''); }catch(e){}
-  window.scrollTo(0,0); render(false); $('#pgH').focus({preventScroll:true});
+  window.scrollTo(0,0); render(false, 'fwd'); $('#pgH').focus({preventScroll:true});
 }
 function focusRow(k){ const b = k && document.querySelector(`[data-push="${CSS.escape(k)}"]`); if(b) b.focus({preventScroll:true}); }
 function back(){
   if(history.state && history.state.stack && history.state.stack.length) return history.back();
-  const k = S.stack[S.stack.length-1]; S.stack = S.stack.slice(0,-1); render(false); focusRow(k);
+  const k = S.stack[S.stack.length-1]; S.stack = S.stack.slice(0,-1); render(false, 'back'); focusRow(k);
 }
 window.addEventListener('popstate', e => {
-  const st = e.state || {tab:S.tab, stack:[]}, was = S.stack;
+  const st = e.state || {tab:S.tab, stack:[]}, was = S.stack, wasTab = S.tab;
   if($('#sheetWrap').dataset.open==='true') closePlayer();
   leaveTab(st.tab || S.tab); S.tab = st.tab || S.tab; S.stack = st.stack || [];
-  render(false); window.scrollTo(0, st.y||0);
+  render(false, S.tab!==wasTab ? 'fade' : S.stack.length < was.length ? 'back' : S.stack.length > was.length ? 'fwd' : 'fade'); window.scrollTo(0, st.y||0);
   if(S.stack.length < was.length) focusRow(was[S.stack.length]); else if(S.stack.length) $('#pgH').focus({preventScroll:true});
 });
+
+/* ---------- motion ---------- */
+const RM = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : {matches:false};
+const STAGGER_MAX = 14;   // only the first screenful of rows eases in one by one; the rest are below the fold
+// Restart an entrance animation on el: cls is a-fwd, a-back, a-fade (whole page) or a-swap (part of a page).
+function animIn(el, cls){
+  if(!el || RM.matches) return;
+  el.classList.remove('a-fwd','a-back','a-fade','a-swap');
+  el.querySelectorAll('.srow, .list > li, .dgrid > li, .offers > li').forEach((n, i) => { if(i < STAGGER_MAX) n.style.setProperty('--i', i); });
+  void el.offsetWidth;
+  el.classList.add(cls);
+  const end = e => { if(e.target!==el) return; el.classList.remove(cls); el.removeEventListener('animationend', end); };
+  el.addEventListener('animationend', end);
+}
+// Briefly mark elements so their done check pops in.
+function flash(nodes){ nodes.forEach(n => { n.classList.remove('just'); void n.offsetWidth; n.classList.add('just'); setTimeout(() => n.classList.remove('just'), 500); }); }
+let justDone = new Set();   // lessons completed while the player was open; their checks pop when it closes
 
 /* ---------- render ---------- */
 // Slide the section highlight under the current icon; it fades out on Home, which has no icon.
@@ -653,9 +702,10 @@ function moveInd(){
   ind.classList.toggle('on', !!t);
   if(!nav.classList.contains('ready')) requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.add('ready')));   // no slide on first paint
 }
-function render(focusMain){
+function render(focusMain, dir){
   const v = S.stack.length ? viewPage() : tabView();
   $('#main').innerHTML = v;
+  if(dir) animIn($('#main'), 'a-'+dir);
   document.querySelectorAll('.tab').forEach(t => t.dataset.tab===S.tab ? t.setAttribute('aria-current','page') : t.removeAttribute('aria-current'));
   moveInd();
   rove();
@@ -681,7 +731,7 @@ function histPanel(){ const h = getHist();
       return `<li class="hrow">${main}<button class="btn ghost icon-btn hdel" data-hdel="${esc(q)}" aria-label="Delete ${esc(q)} from history">${X_IC}</button></li>`; }).join('')}</ul></section>`; }
 function refreshLearn(){ const m = $('#learnMain'); if(m){ m.innerHTML = learnMain(); rove(); } }
 function closeHist(){ if(!S.histOpen) return; S.histOpen=false; if(!S.q.trim()) refreshLearn(); }
-function go(tab){ leaveTab(tab); S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} store.set('tab',tab); window.scrollTo(0,0); render(true); }
+function go(tab){ leaveTab(tab); S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} store.set('tab',tab); window.scrollTo(0,0); render(true, 'fade'); }
 
 /* ---------- player ---------- */
 let cur = null, queue = null, qi = 0, lastFocus = null, drillName = '', pathMode = false;
@@ -712,13 +762,17 @@ function openPlayer(id, ctx, keepQueue){
   if(!keepQueue) $('#closeBtn').focus();
 }
 function closePlayer(){
-  $('#player').innerHTML = ''; $('#sheetWrap').dataset.open = 'false'; document.body.style.overflow = ''; drillName='';
+  // The sheet drops away first; the video is cleared once it is out of sight. Focus returns right away.
+  const w = $('#sheetWrap'); w.dataset.open = 'closing'; document.body.style.overflow = ''; drillName='';
+  setTimeout(() => { if(w.dataset.open!=='closing') return; w.dataset.open = 'false'; $('#player').innerHTML = ''; }, RM.matches ? 0 : 200);
   const lf = lastFocus;
   const sel = lf ? (lf.id ? '#'+lf.id : (lf.dataset && lf.dataset.id) ? `.${lf.classList[0]}[data-id="${lf.dataset.id}"]` : null) : null;
   refreshProgress();
   if(S.stack.length){ const y = window.scrollY; $('#main').innerHTML = viewPage(); window.scrollTo(0, y); }
   const t = (lf && document.body.contains(lf)) ? lf : (sel && document.querySelector(sel)) || document.querySelector(`[data-id="${cur&&cur.id}"]`);
   if(t) t.focus();
+  if(justDone.size) flash([...document.querySelectorAll('.row[data-id], .dtile[data-id]')].filter(b => justDone.has(b.dataset.id) && isDone(b.dataset.id)));
+  justDone = new Set();
 }
 function refreshProgress(){
   // update done marks without rebuilding the page, so focus can return to the trigger
@@ -806,7 +860,7 @@ $('#scrim').addEventListener('click', closePlayer);
 $('#prevBtn').addEventListener('click', () => step(-1));
 $('#nextBtn').addEventListener('click', () => step(1));
 // To Complete toggles Completed and stays on this video, so the learner can watch it again. Next moves on.
-$('#markBtn').addEventListener('click', () => { markDone(!isDone(cur.id)); syncActs(); });
+$('#markBtn').addEventListener('click', () => { const v = !isDone(cur.id); markDone(v); syncActs(); if(v){ justDone.add(cur.id); flash([$('#markBtn')]); } });
 function rove(){ document.querySelectorAll('[role="tablist"]').forEach(l=>{ l.querySelectorAll('[role="tab"]').forEach(t=>t.tabIndex = t.getAttribute('aria-selected')==='true'?0:-1); }); }
 document.addEventListener('keydown', e => {
   if(e.key==='Escape' && S.histOpen && inSearch(e.target)){ closeHist(); $('#q').focus(); return; }
@@ -822,9 +876,9 @@ document.addEventListener('keydown', e => {
   if(e.key==='Tab'){ const f=[...$('#sheet').querySelectorAll('button:not([disabled]):not([hidden]),a[href],iframe')]; const a=f[0], z=f[f.length-1];
     if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); } }
 });
-document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && !sh.hidden && sh.offsetParent!==null && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
+document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && $('#sheetWrap').dataset.open==='true' && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
 try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
-render(false);
+render(false, 'fade');
 </script>
 </body>
 </html>
