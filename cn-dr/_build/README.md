@@ -47,3 +47,8 @@ about 15 s of on-screen time, land, and hold still; a sync starting (or a speed 
 group jump, and they keep going while the sync runs. They
 pause off screen or in a hidden tab and hold a still frame with reduced motion. The 8 sprite frames are inlined as 30x26
 palette-index strings, exported from the `pixel-dragons-multi` skill's sprite.
+
+Title dragons (Library and Practice): during a sync, a second, smaller strip of the same dragons walks left of the title
+bookmark, in place of the old spinning arrows. `DRAGT = makeDragons('.dragons-t', false)`; the canvas fills the space
+between title and bookmark (up to 240 px wide, 44 px tall, art scaled to fit). Hidden at rest; shown when a sync starts,
+walks 15 s (or until the sync ends, if later), lands, then hides. Uses the same `dragSpeed`.

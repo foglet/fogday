@@ -285,13 +285,9 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 /* Page title with the Favorites toggle opposite it */
 .ttl{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
 .ttl h1{margin:0}
-.ttl-ic{display:flex;align-items:center}
-.sync-ic{display:grid;place-items:center;width:32px;height:var(--tap);color:var(--primary);visibility:hidden}
-.sync-ic.on{visibility:visible}
-.sync-ic svg{width:20px;height:20px}
-.sync-ic.on svg{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.sync-ic.on svg{animation:none}}
+.ttl-ic{display:flex;align-items:center;justify-content:flex-end;flex:1;min-width:0;gap:var(--s1)}
+.dragons-t{flex:1;min-width:0;max-width:240px;height:var(--tap);display:block;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;visibility:hidden}
+.dragons-t.on{visibility:visible}   /* title strip: shows only while a sync runs and the dragons walk */
 .fav-tg{margin-right:calc(-1 * var(--s3))}
 .fav-tg svg{width:20px;height:20px;color:var(--primary)}
 .favs{margin-top:var(--s5)}
@@ -577,13 +573,16 @@ let dailyTimer = 0;
 // They replace the pixel sea. Each time the About page opens they walk for about 15 s of time on screen, finish any jump
 // in the air, then hold still. A sync starting (or a speed change) wakes them for another 15 s, with a group jump, and
 // they keep going while the sync runs. With reduced motion they hold a still frame.
-const DRAG = (() => {
+// makeDragons(SEL, OPEN): one dragon canvas. OPEN = the About strip (walks 15 s when the page opens, swipe for speed).
+// Without OPEN it is the title strip on Library and Practice: hidden until a sync starts, then shown and walking until it
+// rests. Either way the canvas is scaled to fit its box (art is 56 px tall; About is 2 CSS px per art px).
+function makeDragons(SEL, OPEN){
   const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // 8 frames: step*2 + wing; 30x26 palette indices
   const GW = 30, GH = 26, H = 56, SP = .6, CYCLE = 1300;
   const PAPER = [251,248,241];
   const ZKEY = [[0,0],[230,0],[340,1],[900,1],[1000,0],[1300,0]], MARCH = [[150,300],[960,1110]];
   const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
-  const RUN = 15000; let left = RUN, busy = false;
+  const RUN = 15000; let left = OPEN ? RUN : 0, busy = false;
   let cv = null, ctx, img, W = 0, raf = 0, t = 0, dg = null, sparks = [], last = 0, acc = 0, nextGroup = 180, nextColor = 240;
   // Speed: swipe right on the dragons for faster, left for slower (doubles every 120 px); arrow keys step it. Kept on this device.
   let SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1));
@@ -667,7 +666,7 @@ const DRAG = (() => {
     ctx.putImageData(img, 0, 0);
   }
   function size(){
-    if(!cv) return; const w = Math.round(cv.getBoundingClientRect().width / 2);
+    if(!cv) return; const r = cv.getBoundingClientRect(); if(!r.height) return; const w = Math.round(r.width * H / r.height);
     if(w < 40 || w===W) return;   // hidden (zero width): wait until it is shown
     const was = W; W = w; cv.width = W; cv.height = H; ctx = cv.getContext('2d'); img = ctx.createImageData(W, H);
     if(!dg || !was) reset(); else for(const d of dg) d.x = d.x/was*W;
@@ -675,11 +674,12 @@ const DRAG = (() => {
   }
   // On screen = has size and overlaps the viewport. Checked directly each frame instead of trusting IntersectionObserver.
   function onScreen(){ const r = cv.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < (window.innerHeight || document.documentElement.clientHeight); }
-  function upd(){ if(cv && cv.isConnected && !document.hidden && !RM.matches && !raf && (left > 0 || busy)){ last = 0; raf = requestAnimationFrame(loop); } }
-  function loop(now){ raf = 0; if(!cv || !cv.isConnected || document.hidden || RM.matches) return;
+  function show(){ if(!OPEN && cv) cv.classList.toggle('on', !!(busy || raf)); }
+  function upd(){ if(cv && cv.isConnected && !document.hidden && !RM.matches && !raf && (left > 0 || busy)){ last = 0; raf = requestAnimationFrame(loop); } show(); }
+  function loop(now){ raf = 0; if(!cv || !cv.isConnected || document.hidden || RM.matches) return show();
     if(!W) size(); if(!W || !onScreen()){ last = 0; raf = requestAnimationFrame(loop); return; }   // only time on screen counts
     const dt = last ? Math.min(200, now-last) : 0; last = now; left -= dt;   // counts during a sync too, so it ends 15 s after the sync starts (or when the sync ends, if later)
-    if(left <= 0 && !busy && !dg.some(d => d.jump || d.fly || d.hop)) return;   // time is up and everyone has landed: hold still
+    if(left <= 0 && !busy && !dg.some(d => d.jump || d.fly || d.hop)) return show();   // time is up and everyone has landed: hold still
     raf = requestAnimationFrame(loop);
     acc += dt ? dt/33.3*SPD : 1; let n = 0;   // about 30 steps a second at 1x, any refresh rate
     while(acc >= 1 && n < 24){ acc -= 1; tick(); n++; } if(n) draw(); }
@@ -701,20 +701,21 @@ const DRAG = (() => {
       else if(k==='PageUp'){ e.preventDefault(); setSpeed(4); } else if(k==='PageDown'){ e.preventDefault(); setSpeed(.25); } });
   }
   return {
-    mount(){ const c = document.querySelector('.dragons'); if(c===cv) return; if(ro) ro.disconnect(); cv = c; W = 0; left = RUN;
-      if(!c) return; size(); if(ro) ro.observe(c); bind(c);
+    mount(){ const c = document.querySelector(SEL); if(c===cv) return; if(ro) ro.disconnect(); cv = c; W = 0; if(OPEN) left = RUN;
+      if(!c) return; size(); if(ro) ro.observe(c); if(OPEN) bind(c); show();
       if(!rmOn){ rmOn = true; if(RM.addEventListener) RM.addEventListener('change', upd); else if(RM.addListener) RM.addListener(upd); }
       upd(); },
-    run(v){ busy = v; if(v){ left = RUN; if(dg) nextGroup = 0; } upd(); },   // a sync wakes them for 15 s more, with a group jump
+    run(v){ busy = v; if(v){ left = RUN; SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1)); if(dg) nextGroup = 0; } upd(); },   // a sync wakes them for 15 s more, with a group jump
     speed: () => fmt(SPD),
     size
   };
-})();
-window.addEventListener('resize', () => DRAG.size());
+}
+const DRAG = makeDragons('.dragons', true), DRAGT = makeDragons('.dragons-t', false);
+window.addEventListener('resize', () => { DRAG.size(); DRAGT.size(); });
 let animAt = 0, animOff = 0;
 function syncAnim(on){
   clearTimeout(animOff);
-  const set = v => { DRAG.run(v); document.querySelectorAll('.sync-ic').forEach(n => n.classList.toggle('on', v)); };
+  const set = v => { DRAG.run(v); DRAGT.run(v); };
   if(on){ animAt = Date.now(); set(true); }
   else animOff = setTimeout(() => { if(!syncBusy) set(false); }, Math.max(0, 5000 - (Date.now() - animAt)));
 }
@@ -1004,9 +1005,8 @@ function viewMaterials(){
 // empties the bookmark, so the row stays put and focus is kept.
 const CAT_NAME = {...Object.fromEntries(SECTIONS.map(s=>[s.id, s.name])), drills:'Practice Drills', tips:'How to Study', materials:'Courses & Events'};
 function ttl(name){ const o = !!S.favOpen;
-  return `<div class="ttl"><h1 class="sub">${name}</h1><div class="ttl-ic"><span class="sync-ic${syncBusy?' on':''}" aria-hidden="true">${SYNC_IC}</span><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favsList" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div></div>`; }
-// Phosphor arrows-clockwise: spins left of the title bookmark while a sync runs (at least 5 s, so a quick sync is still seen).
-const SYNC_IC = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>';
+  return `<div class="ttl"><h1 class="sub">${name}</h1><div class="ttl-ic"><canvas class="dragons-t" aria-hidden="true"></canvas><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favsList" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div></div>`; }
+// While a sync runs, small pixel dragons walk left of the title bookmark (DRAGT), in place of the old spinning arrows.
 const CHEV_DOWN = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>';   // Phosphor caret-down
 function favsInner(){
   const its = Object.keys(saved).filter(id=>byId[id]).sort((a,b)=>saved[b]-saved[a]).map(id=>byId[id]);
@@ -1183,7 +1183,7 @@ function render(focusMain, dir){
   moveInd();
   rove();
   if(focusMain){ $('#main').focus({preventScroll:true}); }
-  DRAG.mount();
+  DRAG.mount(); DRAGT.mount();
 }
 // Leaving Library clears the search; the first focus after coming back clears it again in case the browser restored the text.
 function leaveTab(tab){ if(tab!==S.tab){ saveQ(S.q); S.q=''; S.qFresh=true; S.histOpen=false; } }
