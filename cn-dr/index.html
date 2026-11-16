@@ -243,7 +243,9 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 /* Lesson row + Save toggle */
 .brow{display:flex;align-items:center;gap:var(--s1)}
 .brow .row{flex:1;min-width:0}
-.bm{color:var(--ink-2)}
+.bm{color:#c5cac7}   /* unsaved: very light grey, quieter than the lesson number (--ink-3); about 1.6:1, below the 3:1 icon guideline by request */
+@media (hover:hover){.bm:hover{color:var(--ink-2)}}
+.bm:focus-visible{color:var(--ink-2)}
 .bm svg{width:20px;height:20px}
 .bm[aria-pressed="true"]{color:var(--primary)}
 /* Page title with the Favorites toggle opposite it */
