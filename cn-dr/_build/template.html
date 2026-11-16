@@ -224,22 +224,22 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .empty b{display:block;color:var(--ink);font-size:var(--fs-body)}
 .foot{position:fixed;left:0;right:0;bottom:0;z-index:15;padding:var(--s1) var(--s4) calc(env(safe-area-inset-bottom) + var(--s1));
   background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);font-size:var(--fs-cap);color:var(--ink-2)}
-/* Footer: social icons left, name centred, Saved far right. Equal side columns keep the name truly centred. */
-.foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s3)}
-.foot .follow{margin:0 0 0 -6px;justify-self:start}
-.foot p{margin:0;min-width:0;text-align:center}
-.foot-bm{justify-self:end;display:grid;place-items:center;width:var(--tap);height:var(--tap);border:0;background:none;padding:0;cursor:pointer;color:var(--primary);border-radius:var(--r-md)}
-.foot-bm svg{width:20px;height:20px}
-@media (hover:hover){.foot-bm:hover{background:var(--surface-3)}}
-.foot-bm[aria-current="page"]{background:var(--primary-tint)}
-.foot-bm:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
+.foot-in{max-width:calc(40rem - 2 * var(--s4));margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.foot p{margin:0;min-width:0}
 /* Lesson row + Save toggle */
 .brow{display:flex;align-items:center;gap:var(--s1)}
 .brow .row{flex:1;min-width:0}
 .bm{color:var(--ink-2)}
 .bm svg{width:20px;height:20px}
 .bm[aria-pressed="true"]{color:var(--primary)}
-.saved-cat{display:flex;align-items:baseline;gap:var(--s2)}
+/* Page title with the Favorites toggle opposite it */
+.ttl{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.ttl h1{margin:0}
+.fav-tg{margin-right:calc(-1 * var(--s3))}
+.fav-tg svg{width:20px;height:20px;color:var(--primary)}
+.fav-tg[aria-expanded="true"]{background:var(--primary-tint)}
+.favs{margin-top:var(--s5)}
+.favs h2:focus,.favs h2:focus-visible{outline:none}   /* focus lands here so screen readers announce the list, like page titles */
 .foot p a{color:var(--ink-2);text-decoration:none;text-underline-offset:2px}
 @media (hover:hover){.foot p a:hover{text-decoration:underline}}
 .foot p a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:2px}
@@ -357,7 +357,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 </header>
 
 <main class="wrap" id="main" tabindex="-1"></main>
-<footer class="foot"><div class="foot-in"><ul class="follow" id="follow" aria-label="Follow Dr. Jia"></ul><p>© <a href="https://www.mandarininsights.com/" target="_blank" rel="noopener">Mandarin Insights<span class="vh">, opens a new tab</span></a></p><button class="foot-bm" id="footBm" aria-label="Saved lessons" title="Saved"></button></div></footer>
+<footer class="foot"><div class="foot-in"><p>© <a href="https://www.mandarininsights.com/" target="_blank" rel="noopener">Mandarin Insights<span class="vh">, opens a new tab</span></a></p><ul class="follow" id="follow" aria-label="Follow Dr. Jia"></ul></div></footer>
 <p class="vh" id="bmStatus" role="status"></p>
 
 
@@ -464,7 +464,7 @@ function toggleSave(id){
   store.set('saved', saved);
   const on = isSaved(id);
   document.querySelectorAll(`[data-bm="${CSS.escape(id)}"]`).forEach(b => { b.setAttribute('aria-pressed', String(on)); b.innerHTML = on ? BM_FILL : BM_IC; });
-  syncFootBm();
+  if(S.favOpen && !(document.activeElement && document.activeElement.closest('#favs'))) fillFavs();   // keep an open list current; rows inside it stay put
   $('#bmStatus').textContent = on ? 'Saved' : 'Removed from Saved';
 }
 function ring(n, total){
@@ -569,7 +569,7 @@ function grouped(key, items, opts={}){
 
 /* ---------- views ---------- */
 function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
-  return `<h1 class="sub">Library</h1>`; }
+  return ttl('Library'); }
 function learnMain(){
   if(S.q.trim()) return searchResults();
   if(S.histOpen && getHist().length) return histPanel();
@@ -578,7 +578,7 @@ function learnMain(){
 }
 function viewLearn(bodyOnly){
   let items = ITEMS.filter(r => r.lv===S.level);
-  if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>${searchField()}<div id="learnMain">${learnMain()}</div>`;
+  if(!bodyOnly) return `<div id="learnHead">${learnHead()}</div>${searchField()}<div id="learnMain">${learnMain()}</div>${favsSection()}`;
   let h = '';
 
   const cards = [];
@@ -618,11 +618,11 @@ function viewPractice(){
   const topics = ['Tone ear training','Homophone listening','Listening challenges','HSK quizzes'];
   const TITLE = {'Tone ear training':'Tone Ear Training','Homophone listening':'Homophone Listening','Listening challenges':'Listening Challenges','HSK quizzes':'HSK Quizzes'};
   const blurbs = {'Tone ear training':'She says one word. Name the tone before she reveals it.','Homophone listening':'Same syllables, different tones and meanings. Hear the difference.','Listening challenges':'Real-speed questions. Answer out loud before the reveal.','HSK quizzes':'Exam-style questions at HSK 1-2.'};
-  return `<h1 class="sub">Practice</h1>
+  return `${ttl('Practice')}
     <p class="lede sm">Say each answer aloud.</p>
     <div class="series">${drillCard('all','Mixed Drill Session','All four types in one list, oldest first.',true)}${topics.map(t=>drillCard(t,TITLE[t],blurbs[t])).join('')}</div>
     <h2 class="sub">Review</h2><div class="series">${card('pr:review','Watch History','Watched or completed.', reviewItems(),
-      () => { const its = reviewItems(); return its.length ? list('review', its, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Watch a lesson to the end, or tap To Complete, and it will show up here.</div>`; })}</div>`;
+      () => { const its = reviewItems(); return its.length ? list('review', its, {level:true, num:'Lesson'}) : `<div class="empty"><b>Nothing to review yet</b>Watch a lesson to the end, or tap To Complete, and it will show up here.</div>`; })}</div>${favsSection()}`;
 }
 // Phosphor brand icons (phosphoricons.com, MIT licence): youtube-logo, instagram-logo, tiktok-logo.
 const FOLLOW_ICON = {
@@ -642,25 +642,30 @@ function viewMaterials(){
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
     <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>`;
 }
-// Saved: every bookmarked lesson, grouped by category in Library order; newest saved first within each.
-// The list is built when the page opens. Unsaving here only empties the bookmark, so the row stays put and focus is kept.
+// Favorites: Library and Practice have a bookmark opposite the page title. It opens every saved lesson below the
+// page's listings, newest saved first, with category and topic under each title. Unsaving inside the list only
+// empties the bookmark, so the row stays put and focus is kept.
 const CAT_NAME = {...Object.fromEntries(SECTIONS.map(s=>[s.id, s.name])), drills:'Practice Drills', tips:'How to Study', materials:'Courses & Events'};
-const CAT_ORDER = ['phrases','pron','grammar','vocab','culture','drills','tips','materials'];
-function viewSaved(){
+function ttl(name){ const o = !!S.favOpen;
+  return `<div class="ttl"><h1 class="sub">${name}</h1><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favs" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div>`; }
+function favsInner(){
   const its = Object.keys(saved).filter(id=>byId[id]).sort((a,b)=>saved[b]-saved[a]).map(id=>byId[id]);
-  const head = `<h1 class="sub">Saved</h1>`;
-  if(!its.length){ CTX['saved'] = []; return head + `<div class="empty"><b>Nothing saved yet</b>Tap the bookmark on any lesson to keep it here.</div>`; }
-  const g = {};
-  its.forEach(r => (g[r.sec] = g[r.sec] || []).push(r));
-  const cats = Object.keys(g).sort((a,b)=>(CAT_ORDER.indexOf(a)+99)%999-(CAT_ORDER.indexOf(b)+99)%999);
-  CTX['saved'] = cats.flatMap(c => g[c].map(r=>r.id));
-  const lvName = r => (LEVELS.find(l=>l.id===r.lv)||{}).name;
-  return head + `<p class="lede sm">${its.length} lesson${its.length===1?'':'s'}</p>` + cats.map(c =>
-    `<h2 class="sub grp saved-cat">${esc(CAT_NAME[c]||tc(c))} <span class="n">· ${g[c].length}</span></h2>
-    <ul class="list">${g[c].map(r=>row(r, 'saved', {cat:[lvName(r), r.ser && SER[r.ser] ? SER[r.ser].name : tc(r.top)].filter(Boolean).join(' · ')})).join('')}</ul>`).join('');
+  CTX['favs'] = its.map(r=>r.id);
+  const cat = r => [CAT_NAME[r.sec] || tc(r.sec), r.ser && SER[r.ser] ? SER[r.ser].name : tc(r.top)].filter(Boolean).join(' · ');
+  return `<h2 class="sub" id="favsH" tabindex="-1">Favorites</h2>` + (its.length
+    ? `<ul class="list">${its.map(r=>row(r, 'favs', {cat:cat(r)})).join('')}</ul>`
+    : `<div class="empty"><b>No favorites yet</b>Tap the bookmark on any lesson to keep it here.</div>`);
 }
-function syncFootBm(){ const n = Object.keys(saved).filter(id=>byId[id]).length, b = $('#footBm');
-  b.innerHTML = n ? BM_FILL : BM_IC; b.setAttribute('aria-label', `Saved lessons, ${n}`); }
+function favsSection(){ return `<section class="favs" id="favs" aria-labelledby="favsH"${S.favOpen?'':' hidden'}>${S.favOpen ? favsInner() : ''}</section>`; }
+function fillFavs(){ const f = $('#favs'); if(f) f.innerHTML = favsInner(); }
+function toggleFavs(btn){
+  S.favOpen = !S.favOpen;
+  document.querySelectorAll('[data-favs]').forEach(b => { b.setAttribute('aria-expanded', String(S.favOpen)); b.innerHTML = S.favOpen ? BM_FILL : BM_IC; });
+  const f = $('#favs'); if(!f) return;
+  f.hidden = !S.favOpen;
+  if(S.favOpen){ fillFavs(); animIn(f, 'a-swap'); $('#favsH').focus({preventScroll:true}); f.scrollIntoView({behavior: RM.matches ? 'auto' : 'smooth', block:'start'}); }
+  else f.innerHTML = '';
+}
 $('#follow').innerHTML =MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||''}</a></li>`).join('');
 const PATH = 'survival30';
 // Continue goes to the last day opened if it is not done yet, else the next undone day after it, else the first gap.
@@ -745,8 +750,8 @@ function searchResults(){
 }
 
 /* ---------- pages ---------- */
-const TAB_NAME = {home:'Home', learn:'Library', practice:'Practice', materials:'About', saved:'Saved'};
-function tabView(){ return S.tab==='home' ? viewHome() : S.tab==='saved' ? viewSaved() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn(); }
+const TAB_NAME = {home:'Home', learn:'Library', practice:'Practice', materials:'About'};
+function tabView(){ return S.tab==='home' ? viewHome() : S.tab==='practice' ? viewPractice() : S.tab==='materials' ? viewMaterials() : viewLearn(); }
 function viewPage(){
   if(!PAGES[S.stack[0]]) tabView();                                   // registers this tab's rows
   for(let i=1;i<S.stack.length;i++) if(!PAGES[S.stack[i]]) accPanel(S.stack[i-1]); // nested rows register when the parent page renders
@@ -810,7 +815,6 @@ function render(focusMain, dir){
   $('#main').innerHTML = v;
   if(dir) animIn($('#main'), 'a-'+dir);
   document.querySelectorAll('.tab').forEach(t => t.dataset.tab===S.tab ? t.setAttribute('aria-current','page') : t.removeAttribute('aria-current'));
-  S.tab==='saved' && !S.stack.length ? $('#footBm').setAttribute('aria-current','page') : $('#footBm').removeAttribute('aria-current');
   moveInd();
   rove();
   if(focusMain){ $('#main').focus({preventScroll:true}); }
@@ -947,7 +951,7 @@ document.addEventListener('click', e => {
     return; }
   if(t.dataset.hclear!==undefined){ store.set('qhist', []); S.histOpen=false; refreshLearn(); if(kb) $('#q').focus(); return; }
   if(t.dataset.bm){ return toggleSave(t.dataset.bm); }
-  if(t.id==='footBm'){ return go('saved'); }
+  if(t.dataset.favs!==undefined){ return toggleFavs(t); }
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
   if(t.dataset.lib){ return openInLibrary(t.dataset.lib); }
   if(t.dataset.push){ return push(t.dataset.push); }
@@ -1002,7 +1006,6 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && $('#sheetWrap').dataset.open==='true' && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
 try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
-syncFootBm();
 render(false, 'fade');
 </script>
 </body>
