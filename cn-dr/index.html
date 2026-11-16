@@ -106,6 +106,7 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .shuf{display:inline-flex;align-items:center;gap:6px;min-height:var(--tap);margin:0 0 0 calc(-1 * var(--s2));padding:0 var(--s2);border:0;background:none;border-radius:var(--r-pill);
   color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer}
 .shuf svg{width:16px;height:16px}
+.rand-top{margin:0 0 var(--s1)}
 @media (hover:hover){.shuf:hover{background:var(--surface-2)}}
 .shuf:active{background:var(--surface-3)}
 @keyframes shuf{from{transform:rotate(0)}to{transform:rotate(360deg)}}
@@ -626,38 +627,42 @@ function openInLibrary(sid){
   tabView(); accPanel('lv:series');                                     // registers the Series and course pages
   S.stack=['lv:series','ser:'+sid]; window.scrollTo(0,0); render(false, 'fwd'); $('#pgH').focus({preventScroll:true});
 }
-// Lesson Randomizer: Home shows three lessons and keeps the same three, across reloads, until the learner taps the title,
-// so they can think it over. Each page load draws 30 random lessons at the learner's level that they have not watched to
-// the end or completed; a tap deals three new ones from those 30, in place, with no reload. A finished one stays and
-// shows its check until the next tap. Each level keeps its own three.
-const RAND_POOL = 30, RAND_SHOW = 3;
-let pool30 = null, picks = null;
+// Lesson Randomizer: picks a random situation or category (a lesson topic such as Eating out, Tones or Idioms) at the
+// learner's level, then three random lessons in it that they have not watched to the end or completed. The same three
+// stay, across reloads, until the learner taps the title, so they can think it over. A tap picks a different topic.
+// A finished lesson stays and shows its check until the next tap. Each level keeps its own pick.
+const RAND_SHOW = 3, RAND_SKIP = ['Courses & events', 'Study strategy'];   // promos, and How to Study already has its own row
+let picks = null;
 const unfinished = r => !done[r.id] && !full[r.id];
 function shuffled(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-function deal(avoid){
-  if(!pool30 || pool30.lv!==S.level) pool30 = {lv:S.level, ids: shuffled(ITEMS.filter(r => r.lv===S.level && unfinished(r))).slice(0, RAND_POOL).map(r=>r.id)};
-  const open = pool30.ids.filter(id => unfinished(byId[id]));
-  const fresh = shuffled(open.filter(id => !avoid.includes(id)));                     // five not on screen now, when there are enough
-  const ids = fresh.concat(shuffled(open.filter(id => avoid.includes(id)))).slice(0, RAND_SHOW);
-  picks = {lv:S.level, ids};
-  const kept = store.get('rand', {}); kept[S.level] = ids; store.set('rand', kept);
+function deal(){
+  const by = {};
+  ITEMS.forEach(r => { if(r.lv===S.level && unfinished(r) && !RAND_SKIP.includes(r.top)) (by[r.top] = by[r.top] || []).push(r); });
+  let tops = Object.keys(by).filter(t => by[t].length >= RAND_SHOW);                 // topics that can fill all three
+  if(!tops.length){ const most = Math.max(0, ...Object.values(by).map(a=>a.length)); tops = Object.keys(by).filter(t => by[t].length===most); }
+  if(tops.length > 1 && picks) tops = tops.filter(t => t!==picks.top);                  // a tap always moves to a new topic
+  const top = shuffled(tops)[0];
+  picks = {lv:S.level, top: top || '', ids: top ? shuffled(by[top]).slice(0, RAND_SHOW).map(r=>r.id) : []};
+  const kept = store.get('rand', {}); kept[S.level] = {top: picks.top, ids: picks.ids}; store.set('rand', kept);
 }
 function todayPicks(){
   if(!picks || picks.lv!==S.level){
-    const kept = (store.get('rand', {}) || {})[S.level];
-    if(Array.isArray(kept) && kept.length && kept.every(id=>byId[id])) picks = {lv:S.level, ids:kept};
-    else deal([]);
+    const k = (store.get('rand', {}) || {})[S.level];
+    if(k && k.top && Array.isArray(k.ids) && k.ids.length && k.ids.every(id=>byId[id])) picks = {lv:S.level, top:k.top, ids:k.ids};
+    else { picks = null; deal(); }
   }
   const its = picks.ids.map(id=>byId[id]);
   CTX['today'] = its.map(r=>r.id);
   return its;
 }
+const capFirst = t => t.charAt(0).toUpperCase() + t.slice(1);
 const SHUFFLE_ICON = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg>';   // Phosphor shuffle, regular
 function reshuffle(btn){
-  deal(picks ? picks.ids : []);
+  deal();
+  $('#randTop').textContent = capFirst(picks.top);
   const ul = $('#randList'); ul.innerHTML = todayPicks().map(r=>row(r,'today')).join('');
-  animIn(ul, 'a-swap'); flash([btn]);
-  $('#randStatus').textContent = `${picks.ids.length} new lesson${picks.ids.length===1?'':'s'}`;
+  animIn(ul, 'a-swap'); animIn($('#randTop'), 'a-swap'); flash([btn]);
+  $('#randStatus').textContent = `${capFirst(picks.top)}: ${picks.ids.length} new lesson${picks.ids.length===1?'':'s'}`;
 }
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
@@ -666,7 +671,7 @@ function viewHome(){
     <div class="series" id="homeStart">${scard(PATH).replace('data-push=', 'data-lib="'+PATH+'" data-push=')}</div>
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
       return card('home:tips','How to Study','', tips, ()=>list('tips', tips)); })()}</div>
-    ${(()=>{ const its = todayPicks(); return its.length ? `<h2 class="kicker today-k"><button class="shuf" data-shuffle aria-describedby="randHint">Lesson Randomizer${SHUFFLE_ICON}</button></h2><p class="vh" id="randHint">Shows ${RAND_SHOW} other lessons</p><p class="vh" role="status" id="randStatus"></p><ul class="list" id="randList">${its.map(r=>row(r,'today')).join('')}</ul>` : ''; })()}
+    ${(()=>{ const its = todayPicks(); return its.length ? `<h2 class="kicker today-k"><button class="shuf" data-shuffle aria-describedby="randHint">Lesson Randomizer${SHUFFLE_ICON}</button></h2><p class="vh" id="randHint">Picks another topic and ${RAND_SHOW} lessons in it</p><p class="lede sm rand-top" id="randTop">${esc(capFirst(picks.top))}</p><p class="vh" role="status" id="randStatus"></p><ul class="list" id="randList">${its.map(r=>row(r,'today')).join('')}</ul>` : ''; })()}
 `;
 }
 function searchField(){
