@@ -521,7 +521,7 @@ const CLOUD_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M160
 function syncSection(){
   const on = !!store.get('sync:tok','');
   const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
-  return `<section class="sync tile" aria-labelledby="syncH"><div class="sync-hd"><h2 class="sub" id="syncH">Sync Devices</h2>
+  return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="sub" id="syncH">Sync Devices</h2>
     <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${CLOUD_CHECK}</button></div></div>
     ${on ? st
     : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
