@@ -1,8 +1,353 @@
 ---
-layout: map
+layout: null   # self-contained map page in the /ucsf/ (Transit Connected / SF Trees) interface
 title: East Beach
 description: San Francisco in a style named for East Beach at Crissy Field. A map by Fogday Studios.
 mapbox_style: cil4fhjr700719rm8ss6jtr22
 center: [-122.44374714633216, 37.77545262113381]
 zoom: 12.04
 ---
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ page.title }} · Fogday Studios</title>
+<meta name="description" content="{{ page.description }}">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#021724">
+<script>try{var t=localStorage.getItem('fogday-theme');document.documentElement.dataset.theme=(t==='dark'||t==='light')?t:(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){document.documentElement.dataset.theme='dark'}</script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.css">
+<script src="{{ '/assets/js/theme.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
+<style>
+  /* East Beach: the SF Trees / Transit Connected / UCSF Shuttles map interface (fogday.com/ucsf). */
+  :root {
+    --glass: rgb(98 98 102 / .15); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
+    --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
+    color-scheme: dark;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  }
+  /* Light: fogday.com's morning fog (assets/css/fogday.css), with white glass */
+  :root[data-theme="light"] {
+    --glass: rgb(255 255 255 / .72); --glass-edge: rgb(28 40 48 / .14);
+    --bg: #edf1f2; --panel: #f8fafa; --ink: #1c2830; --muted: #4f5e66; --line: #cfd8dc; --accent: #1f5f6b;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 400 1rem/1.4 var(--font); }
+  body { overflow: hidden; overscroll-behavior: none; }
+  [hidden] { display: none !important; }
+  /* The map runs under Safari's toolbars (large viewport), so tiles show through the translucent bars;
+     --bar is how much of it they cover, to keep Mapbox's bottom controls and logo in view (as on /treesf/) */
+  :root { --bar: 0px; }
+  @supports (height: 100lvh) { :root { --bar: calc(100lvh - 100svh); } }
+  #map { position: absolute; top: 0; left: 0; right: 0; height: 100%; }
+  @supports (height: 100lvh) { #map { height: 100lvh; } }
+  /* Mapbox corners clear the home indicator, the notch and Safari's bottom bar, level with the legend */
+  .mapboxgl-ctrl-bottom-left  { left: var(--sal); bottom: calc(var(--sab) + var(--bar)); }
+  .mapboxgl-ctrl-bottom-right { right: var(--sar); bottom: calc(var(--sab) + var(--bar)); }
+
+  /* Title, top left (centered on phones): tap it to see every route */
+  .top { position: fixed; z-index: 3; top: calc(12px + var(--sat)); left: var(--sal); right: var(--sar); pointer-events: none; }
+  .title-row { position: relative; pointer-events: auto; display: inline-flex; align-items: stretch; gap: 6px; margin-left: 12px; }
+  .title {
+    pointer-events: auto; display: inline-block; margin: 0; padding: 8px 14px; border-radius: 8px; cursor: pointer; border: 0;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  }
+  .title-text { background-image: linear-gradient(to right, #8fd0ff, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title:hover .title-text { background-image: none; color: var(--accent); }
+  .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .maps-btn {
+    display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    color: #4a90c8;
+  }
+  .maps-btn svg { transition: transform .2s ease; }
+  .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .maps-btn:hover, .maps-btn[aria-expanded="true"] { color: var(--accent); }
+  .maps-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .maps-menu {
+    --surface: #1e2a36; --site-line: #2a3846;
+    --font-ui: "Fira Sans", Seravek, Calibri, "Segoe UI", Ubuntu, "DejaVu Sans", Arial, sans-serif;
+    position: absolute; z-index: 4; top: calc(100% + 14px); left: -8px; text-align: left;
+    min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 120px); overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--site-line); border-radius: 10px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / .28); padding: 6px; animation: maps-menu-in .16s ease-out;
+  }
+  @keyframes maps-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+  .maps-menu ul { list-style: none; margin: 0; padding: 0; }
+  .maps-menu a {
+    display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 6px;
+    font: 500 1rem/1.2 var(--font-ui); color: var(--ink); text-decoration: none; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .12em;
+  }
+  .maps-menu a:hover, .maps-menu a:focus-visible { background: color-mix(in srgb, var(--ink) 8%, transparent); outline: none; }
+  .maps-menu a:hover { color: #ff5500; }
+  .maps-menu a[aria-current="page"] { font-weight: 700; color: #8fd0ff; }
+  .maps-menu a[aria-current="page"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-left: -2px; margin-right: 2px; }
+  .maps-menu .ext {
+    flex: none; width: .62em; height: .62em; margin-left: 2px; background: var(--muted);
+    -webkit-mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
+            mask: url("/assets/icons/Aiga_forwardandrightarrow.svg") center / contain no-repeat;
+  }
+  .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
+  .maps-menu .all a { color: var(--muted); font-size: .9rem; }
+  @media (pointer: coarse) { .maps-btn { width: 44px; } }
+  /* The maps chevron sits right after the name, in one pill with it: the title's box ends at the text,
+     the chevron's box carries on, flush, with the rounded end */
+  .title-row { gap: 0; }
+  .title-row .title { border-radius: 8px 0 0 8px; padding-right: 6px; }
+  .maps-btn { border-radius: 0 8px 8px 0; width: 30px; justify-content: flex-start; padding-left: 2px; }
+  @media (pointer: coarse) { .maps-btn { width: 40px; } }
+  @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
+  @media (max-width: 759px) { .title-row { margin-left: 12px; } .maps-menu { left: 0; } }
+
+  /* The legend, bottom left above the Mapbox logo, as on /treesf/ and /transit/: shut, just its title;
+     open, the routes (tap one to show only it) and Info. Each line sits on its own glass box. */
+  .controls {
+    position: fixed; z-index: 2; left: calc(10px + var(--sal)); bottom: calc(36px + var(--sab)); width: 380px;
+    max-width: calc(100% - 24px - var(--sal) - var(--sar));
+  }
+  .controls { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .controls[data-open="false"] .legend-body { display: none; }
+  .legend-toggle, .legend-body .note {
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge);
+    width: fit-content; max-width: 100%; border-radius: 999px; padding: 3px 10px;
+  }
+  .legend-body .note { box-shadow: none; border-radius: var(--glass-r); }
+  .controls { --muted: #c5ced5; }
+  :root[data-theme="light"] .controls { --muted: #44535b; }
+  .legend-toggle { all: unset; box-sizing: border-box; cursor: pointer; padding: 3px 10px !important; min-height: 26px; border-radius: 8px !important;
+                   display: inline-flex; align-items: center; font: 700 .8rem/1.2 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+  .legend-toggle::after, .notes summary::after {
+    content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 6px; vertical-align: -1px;
+    background: currentColor; transition: transform .2s ease;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  }
+  .legend-toggle::after { color: var(--muted); transform: rotate(180deg); }
+  .legend-toggle[aria-expanded="true"]::after { transform: none; }
+  .notes[open] summary::after { transform: rotate(180deg); }
+  .legend-toggle { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  .legend-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .legend-toggle:hover .sky-text { color: var(--accent); }
+  /* open: the toggle is lit, like a pressed route pill */
+  .legend-toggle[aria-expanded="true"] { background: linear-gradient(color-mix(in srgb, var(--ink) 12%, transparent), color-mix(in srgb, var(--ink) 12%, transparent)), var(--glass); }
+  .sky-text { color: #8fd0ff; }
+  :root[data-theme="light"] .sky-text { color: #1d5f96; }
+  :root[data-theme="light"] .title-text { background-image: linear-gradient(to right, #1d5f96, #1f5f6b); }
+  :root[data-theme="light"] .maps-btn { color: #1d5f96; }
+  :root[data-theme="light"] .maps-menu { --surface: #f8fafa; --site-line: #cfd8dc; }
+  :root[data-theme="light"] .maps-menu a[aria-current="page"] { color: #1d5f96; }
+  /* The open legend stays below the title: past that, it scrolls inside itself and the map shows around it */
+  .legend-body { padding: 0; display: grid; justify-items: start; gap: 6px; width: 100%;
+                 max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
+                 overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  /* Routes: compact pills that wrap, several to a row, so the whole legend fits on one screen */
+  /* Your location, beside the service at the stop nearest you: the map's blue "here" dot, small */
+                background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 3px rgb(61 139 255 / .3); }
+  /* Info: a small uppercase toggle that opens the notes, as on /tides/ and /treesf/ */
+  .notes { color: var(--muted); }
+  .notes summary { list-style: none; cursor: pointer; display: block; padding-inline: 12px !important; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; border-radius: 8px; }
+  .notes summary::-webkit-details-marker { display: none; }
+  .notes summary:hover { color: var(--accent); }
+  .notes summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .legend-body .note + .note { margin-top: 4px; }
+  .notes > summary { display: inline-flex; align-items: center; min-height: 28px; }
+  .notes-body { display: grid; justify-items: start; max-height: min(26vh, 26dvh, 240px); overflow-y: auto; overscroll-behavior: contain; }
+  .note { font-size: .78rem; color: var(--muted); margin: 0; }
+  .note b { color: var(--ink); font-weight: 600; }
+  .note a { color: var(--ink); }
+  .note a:hover { color: var(--ink); }
+
+  /* Popups: navy cards */
+
+  /* Map controls, bottom right as on /transit/: no panels, icons with a navy halo */
+  .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border: 0; box-shadow: none; }
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl { margin: 0 10px 6px 0; }
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib { margin: 0; }
+  .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  :root[data-theme="light"] .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  /* Location and light/dark: icon buttons in the bottom-right stack, as /treesf/'s "here" */
+  .mapboxgl-ctrl.oa-here { position: relative; }
+  .oa-pin { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 4px;
+            background: transparent; color: var(--muted); cursor: pointer; }
+  .oa-pin svg { width: 20px; height: 20px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
+  .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
+  @keyframes here-pulse { 50% { opacity: .35; } }
+  /* Top right: the light / dark toggle and the bento, formatted as in the site header (fogday.css, as on /fog/):
+     no panel, 40px tap targets, a 16px moon / sun and an 18px bento grid. theme.js (the site's) drifts the sun
+     between yellow and orange and fills the bento with a random gradient on hover or tap. Over the map each icon
+     gets a soft navy halo so it reads on streets and routes. */
+  .corner { position: fixed; z-index: 3; top: calc(9px + var(--sat)); right: calc(8px + var(--sar)); display: flex; align-items: center; gap: 0; }
+  .corner svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  :root { --fade-in: .6s; --fade-out: 1.2s; --blend: .8s; }
+  @media (prefers-reduced-motion: reduce) { :root { --fade-in: .01s; --fade-out: .01s; --blend: .01s; } }
+  @property --g1 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+  @property --g2 { syntax: '<color>'; inherits: true; initial-value: #4a90c8; }
+  .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 11px; margin-left: -6px; color: var(--muted); transition: color .15s ease; }
+  .bento svg { display: block; width: 100%; height: 100%; }
+  .bento:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .bento stop { stop-color: currentColor; transition: stop-color var(--fade-out) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
+  .bento:hover stop, .bento.lit stop { transition: stop-color var(--fade-in) ease, --g1 var(--blend) ease, --g2 var(--blend) ease; }
+  .bento:hover .g1, .bento.lit .g1 { stop-color: var(--g1); }
+  .bento:hover .g2, .bento.lit .g2 { stop-color: var(--g2); }
+  :root[data-theme="dark"] .bento { color: var(--ink); }
+  .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 12px; margin: 0; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 4px; transition: color .15s ease; }
+  .theme-toggle:hover { color: var(--muted); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .theme-toggle svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .theme-toggle .icon-sun { display: none; transition: color 1.5s ease; }
+  .theme-toggle:hover .icon-moon path { fill: currentColor; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+  :root[data-theme="dark"] .theme-toggle:hover { color: #ffe680; }
+  @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .theme-toggle, .bento { width: 44px; height: 44px; } .theme-toggle { padding: 14px; } .bento { padding: 13px; } }   /* centered on the title row */
+  .oa-here-msg { position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); margin: 0;
+                 width: max-content; max-width: 60vw; padding: 3px 10px; border-radius: var(--glass-r); font: 400 .85rem/1.4 var(--font); color: var(--ink);
+                 background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  /* You are here: a blue dot with a white ring and a soft halo */
+  .here-dot { width: 14px; height: 14px; border-radius: 50%; background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 6px rgb(61 139 255 / .25); pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { .oa-here .oa-pin[aria-busy="true"] svg { animation: none; } }
+  @media (pointer: coarse) {
+    .legend-toggle { min-height: 32px; }
+    .mapboxgl-map .mapboxgl-ctrl-group button { width: 44px; height: 44px; }
+    .oa-pin { width: 44px; height: 44px; }
+  }
+  /* Phones pinch to zoom, so + and − go; the compass stays (shows north, tap resets it) */
+  @media (pointer: coarse), (max-width: 759px) {
+    .oa-pin { width: 44px; height: 44px; }
+    .oa-pin svg { width: 22px; height: 22px; }
+    .mapboxgl-map .mapboxgl-ctrl-zoom-in, .mapboxgl-map .mapboxgl-ctrl-zoom-out { display: none; }
+    .mapboxgl-map .mapboxgl-ctrl-group button.mapboxgl-ctrl-compass { border-top: 0; width: 44px; height: 44px; }
+  }
+  .mapboxgl-ctrl.mapboxgl-ctrl-attrib { font-size: 10px; line-height: 1.4; background: color-mix(in srgb, var(--bg) 90%, transparent); }
+  .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-attrib a { color: var(--muted); }
+  .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
+  .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
+  @media (max-width: 759px) {
+    .controls { right: calc(66px + var(--sar)); width: auto; min-width: 0; max-width: none; }
+    .notes summary { min-height: 32px; display: inline-flex; align-items: center; font-size: .8rem; }
+    .note { font-size: .88rem; line-height: 1.45; }
+  }
+  @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg, .legend-toggle::after, .notes summary::after { transition: none; } }
+</style>
+</head>
+<body>
+<div id="map" role="region" aria-label="East Beach map"></div>
+
+<!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
+<div class="oa-here" id="here" hidden>
+  <button type="button" class="oa-pin" id="hereBtn" aria-label="Show where I am" title="Where I am">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
+  </button>
+</div>
+
+<!-- Top right, as in the site header: light / dark, then the bento (all projects) -->
+<nav class="corner" aria-label="Site">
+  <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+  </button>
+  <a href="/works/" class="bento" aria-label="Projects" title="Projects">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg>
+  </a>
+
+<div class="top">
+  <div class="title-row">
+    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Back to the whole city"><span class="title-text">East Beach</span></button></h1>
+    <button type="button" class="maps-btn" id="mapsBtn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
+      <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <nav class="maps-menu" id="maps-menu" aria-label="Maps" hidden>
+      <ul>
+        {% for m in site.data.maps %}<li><a href="{{ m.url | relative_url }}"{% if m.url == page.url %} aria-current="page"{% endif %}>{{ m.name }}{% if m.external %}<span class="ext" role="img" aria-label="(another site)"></span>{% endif %}</a></li>
+        {% endfor %}
+        <li class="all"><a href="/maps/">All maps →</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<section class="controls" aria-label="Info">
+  <!-- Bottom up: the Info toggle and (open) the notes above it -->
+  <div class="legend-body" id="legendBody">
+    <div class="notes-body">
+      <p class="note">San Francisco in a map style named for <b>East Beach</b> at Crissy Field, by Fogday Studios.</p>
+      <p class="note">Tap the title to see the whole city again. The crosshair shows where you are.</p>
+      <p class="note">Map data © <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>.</p>
+    </div>
+  </div>
+  <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
+</section>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const store = { get(k){ try{ return localStorage.getItem("eastbeach:"+k) }catch(e){ return null } }, set(k,v){ try{ localStorage.setItem("eastbeach:"+k, v) }catch(e){} } };
+const HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
+const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the East Beach style, in light and dark: the toggle changes the page around it */
+let map=null, here=null, user=null, watching=false;
+const isDark = () => document.documentElement.dataset.theme !== "light";
+function themeColor(){ document.querySelector('meta[name="theme-color"]').content = isDark() ? "#021724" : "#edf1f2" }
+new MutationObserver(themeColor).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+themeColor();
+/* A control from a page element, in the bottom-right stack (as on /ucsf/ and /treesf/) */
+function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
+function initMap(){
+  if(!window.mapboxgl) return;
+  try{
+    mapboxgl.accessToken = "pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw";
+    map = new mapboxgl.Map({container:"map", style:STYLE, center:HOME.center, zoom:HOME.zoom, bearing:0, pitchWithRotate:false, maxPitch:0,
+      customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
+  }catch(e){ map=null; return }
+  map.touchPitch && map.touchPitch.disable();
+  /* Bottom-right stack, top to bottom: location, then + − and compass (added bottom first) */
+  map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
+  asControl($("here"));
+}
+/* Location: only when asked (the crosshair); then a blue dot that follows you */
+function showMe(fly){
+  if(!map || !user) return;
+  if(!here){ const d=document.createElement("div"); d.className="here-dot"; here=new mapboxgl.Marker({element:d}).setLngLat(user).addTo(map) }
+  else here.setLngLat(user);
+  if(fly) map.flyTo({center:user, zoom:Math.max(map.getZoom(),15.5), duration:700});
+}
+$("hereBtn").addEventListener("click", ()=>{
+  if(user){ showMe(true); return }
+  if(!navigator.geolocation || watching) return;
+  watching=true; $("hereBtn").setAttribute("aria-busy","true");
+  let first=true;
+  navigator.geolocation.watchPosition(p=>{
+    $("hereBtn").removeAttribute("aria-busy");
+    user=[p.coords.longitude, p.coords.latitude]; showMe(first); first=false;
+  }, ()=>{ $("hereBtn").removeAttribute("aria-busy"); watching=false }, {enableHighAccuracy:true, maximumAge:15000});
+});
+/* The title: back to the opening view */
+$("home").addEventListener("click", ()=>{ if(map) map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700}) });
+/* Maps menu, as on /ucsf/ and /transit/ */
+(function(){
+  const btn=$("mapsBtn"), menu=$("maps-menu");
+  const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
+  btn.addEventListener("click", e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded", String(open)) });
+  document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
+})();
+/* Info: starts shut; remembers open or shut */
+function setInfo(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
+$("legendBtn").addEventListener("click", ()=>setInfo($("legendBtn").getAttribute("aria-expanded")!=="true"));
+setInfo(store.get("info")==="1");
+initMap();
+</script>
+</body>
+</html>
