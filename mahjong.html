@@ -45,8 +45,14 @@ body{overflow-x:clip;background:var(--bone);color:var(--ink);font-family:var(--b
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(40px,env(safe-area-inset-bottom,0px))}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
-h1{font-family:var(--display);font-weight:400;font-size:min(42px,calc((100vw - 34px) / 12.2));line-height:1.05;margin:0;white-space:nowrap;color:var(--felt);letter-spacing:.03em}  /* BAY AREA MAHJONG is 11.35em (+ tracking) in Young Serif: one line down to small phones */
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px;position:relative;
+  --h1:min(42px,calc((100vw - 34px - 16px) / 12.2))}   /* title size; on phones it shrinks a little (16px) so it clears the bento icon */
+/* Bento box nav (fogday.com/works/), as in the site header: 18px icon in a 40px tap target, top right, centered on the title line */
+.bento{position:absolute;right:-11px;top:calc(var(--h1) * 1.05 / 2 - 20px);display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:11px;color:var(--felt);border-radius:8px;transition:color .15s}
+.bento svg{display:block;width:100%;height:100%}
+.bento:hover{color:var(--red)}
+.bento:focus-visible{outline:2px solid var(--sel);outline-offset:0}
+h1{font-family:var(--display);font-weight:400;font-size:var(--h1);line-height:1.05;margin:0;white-space:nowrap;color:var(--felt);letter-spacing:.03em}  /* BAY AREA MAHJONG is 11.35em (+ tracking) in Young Serif: one line down to small phones */
 .subtitle{font-family:var(--body);font-size:15px;line-height:1.5;color:var(--muted);margin:4px 0 0}   /* same as "Confirm with venue." */
 .subtitle .sub{font-family:var(--body);font-size:15px;margin:0 0 0 8px;white-space:nowrap}   /* same small grey text as the line below, beside the subtitle */
 h1 span{color:var(--felt)}
@@ -174,6 +180,13 @@ footer a:hover{color:var(--felt)}
       <p class="subtitle" data-i18n="subtitle">Weekly Recurring Games. Confirm with venue.</p>
       <p class="sub play"><span data-i18n="play">Come and play.</span> <span class="zimo"><span lang="zh-Hant">自摸</span></span></p>
     </div>
+    <a class="bento" href="https://fogday.com/works/" aria-label="Projects" title="Projects">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="currentColor">
+        <rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/>
+        <rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/>
+        <rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/>
+      </g></svg>
+    </a>
     <div class="legend" aria-label="Style key" data-i18n-aria="styleKey">
       <span><i class="lt red" aria-hidden="true">中</i><span data-i18n="hk">Hong Kong</span></span>
       <span><i class="lt white" aria-hidden="true"></i><span data-i18n="am">American</span></span>
