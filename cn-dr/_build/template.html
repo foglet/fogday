@@ -597,11 +597,13 @@ function viewHome(){
 function searchField(){
   return `<form class="search" role="search" id="searchForm"><label class="vh" for="q">Search lessons</label><svg class="search-ic" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input id="q" type="search" placeholder="Search: 了, tones, 28" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"></form>`;
 }
+const fold = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+function matchQ(raw){
+  const q = fold(raw.trim()), num = /^(?:#|no\.?\s*)?(\d+)$/.exec(q);
+  return num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => fold(r.t).includes(q) || fold(r.top||'').includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
+}
 function searchResults(){
-  const fold = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
-  const q = fold(S.q.trim());
-  const num = /^(?:#|no\.?\s*)?(\d+)$/.exec(q);
-  const res = num ? ITEMS.filter(r => r.no === +num[1]) : ITEMS.filter(r => fold(r.t).includes(q) || fold(r.top||'').includes(q)).sort((a,b)=>viewsNum(b.v)-viewsNum(a.v));
+  const res = matchQ(S.q);
   CTX['search'] = res.map(r=>r.id);
   return `<p class="sec-note" role="status">${res.length} result${res.length===1?'':'s'}, most viewed first</p>
     ${!res.length ? `<div class="empty"><b>No lessons match “${esc(S.q)}”</b>Try a shorter word, pinyin, or the English meaning.</div>` : `<ul class="list">${res.map(r=>row(r,'search', r.no ? {ord:r.no, ordLabel:'No.'} : {})).join('')}</ul>`}`;
@@ -663,13 +665,19 @@ function render(focusMain){
 function leaveTab(tab){ if(tab!==S.tab){ saveQ(S.q); S.q=''; S.qFresh=true; S.histOpen=false; } }
 /* ---------- search history: newest first, 20 max, kept on this device ---------- */
 const HIST_MAX = 20;
-const getHist = () => { const h = store.get('qhist', []); return Array.isArray(h) ? h : []; };
-function saveQ(q){ q = (q||'').trim().replace(/\s+/g,' '); if(!q) return;
-  const h = getHist().filter(x => x.toLowerCase()!==q.toLowerCase()); h.unshift(q); store.set('qhist', h.slice(0, HIST_MAX)); }
+// Each entry is {q, id}: id is the lesson the search led to, when known (opened from the results, or the only match).
+const getHist = () => { const h = store.get('qhist', []); return Array.isArray(h) ? h.map(x => typeof x==='string' ? {q:x} : x).filter(x => x && x.q) : []; };
+function saveQ(q, id){ q = (q||'').trim().replace(/\s+/g,' '); if(!q) return;
+  const all = getHist(), old = all.find(x => x.q.toLowerCase()===q.toLowerCase());
+  if(!id){ const m = matchQ(q); id = m.length===1 ? m[0].id : old && old.id; }
+  const h = all.filter(x => x!==old); h.unshift(byId[id] ? {q, id} : {q}); store.set('qhist', h.slice(0, HIST_MAX)); }
 const X_IC = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>';
 function histPanel(){ const h = getHist();
   return `<section id="hist" aria-labelledby="histH"><div class="hist-head"><h2 class="sub" id="histH">Recent searches</h2><button class="btn ghost hist-clear" data-hclear>Clear all</button></div>
-    <ul class="list">${h.map(q => `<li class="hrow"><button class="row nolead" data-hq="${esc(q)}"><span class="t">${esc(q)}</span></button><button class="btn ghost icon-btn hdel" data-hdel="${esc(q)}" aria-label="Delete ${esc(q)} from history">${X_IC}</button></li>`).join('')}</ul></section>`; }
+    <ul class="list">${h.map(({q, id}) => { const r = byId[id];
+      const main = r ? `<button class="row nolead" data-hopen="${r.id}" aria-label="${esc((r.no?'No. '+r.no+': ':'')+T(r))}, searched ${esc(q)}"><span><span class="t">${esc(T(r))}</span><span class="m">${r.no?'No. '+r.no+' · ':''}Searched ${esc(q)}</span></span></button>`
+                     : `<button class="row nolead" data-hq="${esc(q)}"><span class="t">${esc(q)}</span></button>`;
+      return `<li class="hrow">${main}<button class="btn ghost icon-btn hdel" data-hdel="${esc(q)}" aria-label="Delete ${esc(q)} from history">${X_IC}</button></li>`; }).join('')}</ul></section>`; }
 function refreshLearn(){ const m = $('#learnMain'); if(m){ m.innerHTML = learnMain(); rove(); } }
 function closeHist(){ if(!S.histOpen) return; S.histOpen=false; if(!S.q.trim()) refreshLearn(); }
 function go(tab){ leaveTab(tab); S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} store.set('tab',tab); window.scrollTo(0,0); render(true); }
@@ -755,7 +763,8 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
   const kb = e.detail===0;   // keyboard activation: keep focus in the search area
   if(t.dataset.hq!==undefined){ const q=t.dataset.hq, i=$('#q'); S.q=q; S.histOpen=false; i.value=q; saveQ(q); refreshLearn(); if(kb) i.focus(); else i.blur(); return; }
-  if(t.dataset.hdel!==undefined){ const q=t.dataset.hdel; store.set('qhist', getHist().filter(x=>x!==q));
+  if(t.dataset.hopen){ const i=$('#q'); closeHist(); if(i && !kb) i.blur(); drillName=''; return openPlayer(t.dataset.hopen, ''); }
+  if(t.dataset.hdel!==undefined){ const q=t.dataset.hdel; store.set('qhist', getHist().filter(x=>x.q!==q));
     const li=t.closest('li'), nx=(li.nextElementSibling||li.previousElementSibling); li.remove();
     if(!getHist().length){ S.histOpen=false; refreshLearn(); if(kb) $('#q').focus(); }
     else if(nx && kb) nx.querySelector('.hdel').focus();
@@ -773,6 +782,7 @@ document.addEventListener('click', e => {
   if(t.dataset.goto) return go(t.dataset.goto);
   if(t.dataset.play){ const c=t.dataset.ctx||''; drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : ''; return openPlayer(t.dataset.play, c); }
   if(t.matches('.row, .dtile') && t.dataset.id){ const c=t.dataset.ctx||'';
+    if(c==='search') saveQ(S.q, t.dataset.id);   // history remembers which lesson this search led to
     drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
     return openPlayer(t.dataset.id, c); }
 });
