@@ -37,3 +37,9 @@ everything in one private Gist named `cn-dr-sync.json` (created on first connect
 devices). Saving or completing a lesson syncs a few seconds later; otherwise it syncs at midnight Pacific or on a tap. Each sync reads the Gist, merges, and writes back: saved/done/seen/full lessons merge by id with the newest
 time winning (removals leave a tombstone so they sync too); search history, level and progress take the most recently
 changed device. The token stays in that device's localStorage and is never in the page source.
+
+Dragons (home, under the intro): `DRAG` in `template.html` draws three original pixel dragons on a canvas: they walk, jump
+alone or together, sometimes march in step, bump (random direction and colour outcomes) or fly over each other, and the
+third walks down from the distance to cross the others' paths, then back. The 8 sprite frames are inlined as 30x26
+palette-index strings, exported from the `pixel-dragons-multi` skill's sprite. The canvas is decorative (`aria-hidden`),
+pauses when off screen or the tab is hidden, and shows a still frame with reduced motion.

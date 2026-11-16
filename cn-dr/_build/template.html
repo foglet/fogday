@@ -228,6 +228,8 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync-sea{flex:1;min-width:0;height:60px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm);
   -webkit-mask-image:linear-gradient(to right,transparent,#000 18%,#000 82%,transparent),linear-gradient(to bottom,#000 55%,transparent);-webkit-mask-composite:source-in;
   mask-image:linear-gradient(to right,transparent,#000 18%,#000 82%,transparent),linear-gradient(to bottom,#000 55%,transparent);mask-composite:intersect}   /* soft edges: fades out left, right and below */
+.dragons{display:block;width:100%;height:112px;margin:var(--s3) 0 calc(-1 * var(--s2));image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent)}   /* dragons walk in and out through soft side edges */
 .sync-sea:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;-webkit-mask-image:none;mask-image:none}
 .sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .sync-form{display:grid;gap:var(--s2);justify-items:start}
@@ -642,6 +644,102 @@ const SEA = (() => {
   };
 })();
 window.addEventListener('resize', () => SEA.size());
+/* ---------- dragons (home): three original pixel dragons walk, jump, march in step, bump and cross depth ---------- */
+const DRAG = (() => {
+  const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // 8 frames: step*2 + wing; 30x26 palette indices
+  const GW = 30, GH = 26, H = 56, SP = .6, CYCLE = 1300;
+  const START = [[270,170,45],[5,48,200],[215,320,110]], PAPER = [251,248,241];
+  const ZKEY = [[0,0],[230,0],[340,1],[900,1],[1000,0],[1300,0]], MARCH = [[150,300],[960,1110]];
+  const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
+  let cv = null, ctx, off, octx, oimg, W = 0, raf = 0, vis = true, t = 0, dg = null, sparks = [], last = 0, nextGroup = 180;
+  const R = Math.random, pick = a => a[(R()*a.length)|0];
+  function hsv(h, s, v){ h = ((h%360)+360)%360/60; const i = Math.floor(h), f = h-i, p = v*(1-s), q = v*(1-s*f), u = v*(1-s*(1-f));
+    const c = [[v,u,p],[q,v,p],[p,v,u],[p,q,v],[u,p,v],[v,p,q]][i%6]; return c.map(x => Math.round(x*255)); }
+  function palOf(d){ const [b,w,l] = d.h; let p = {2:hsv(b,.62,.86), 3:hsv(b,.7,.6), 4:hsv(l,.32,1), 5:hsv(w,.68,.88), 6:hsv(w,.75,.62)};
+    const k = .38*(1-d.z); if(k > .01) for(const n in p) p[n] = p[n].map((c,j) => Math.round(c + (PAPER[j]-c)*k));
+    return Object.assign(p, FIX); }
+  const hl = (a, b, k) => a + ((((b-a+180)%360)+360)%360-180)*k;
+  function zf(tt){ for(let i=0; i<ZKEY.length-1; i++){ const [t0,z0] = ZKEY[i], [t1,z1] = ZKEY[i+1];
+    if(tt>=t0 && tt<=t1){ let k = (tt-t0)/Math.max(1,t1-t0); k = k*k*(3-2*k); return z0+(z1-z0)*k; } } return 0; }
+  function mk(i, x, dir){ return {i, x, dir, h:[...START[i]], th:[...START[i]], fly:0, hop:0, cool:0, y:0, b:0, z:1, jump:0, jdur:1, jh:0,
+    nextj:30+(R()*70|0), boost:0, ov:0, ph:[R()*6.28, R()*6.28], step:0, wing:0}; }
+  function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; }
+  function tick(){
+    t++; const tt = t % CYCLE, march = MARCH.some(([a,b]) => tt>=a && tt<b);
+    for(const d of dg){
+      const lane = d.i===0 ? [H-5,2.5] : [H-8,2.5];
+      if(d.i===2){ d.z = zf(tt); d.b = 31 + (H-3-31)*d.z + 2*Math.sin(t*.011+d.ph[0]) + Math.sin(t*.029+d.ph[1]); }
+      else d.b = lane[0] + lane[1]*Math.sin(t*.011+d.ph[0]) + lane[1]*.5*Math.sin(t*.029+d.ph[1]);
+      d.step = march ? (t/7|0)%4 : ((t/7|0)+d.i*2)%4; d.wing = march ? (t/18|0)%2 : (((t+d.i*7)/18)|0)%2; d.y = 0;
+      if(d.cool) d.cool--;
+      if(d.fly){ d.jump = 0; const k = 50-d.fly; d.y = -Math.sin(Math.PI*k/50)*24; d.fly--; d.wing = (t/4|0)%2; d.step = 0; }
+      if(d.hop){ d.y = -[0,2,4,5,5,4,2,1,0,0,0,0][12-d.hop]; d.hop--; }
+      if(d.jump){ const k = d.jdur-d.jump; d.y -= Math.sin(Math.PI*k/d.jdur)*d.jh; d.jump--; d.wing = (t/Math.max(3,d.jdur/6|0)|0)%2; d.step = 1; }
+      else if(!(d.fly || d.hop || march) && --d.nextj <= 0){ d.jdur = pick([12,16,22,30,40]); d.jh = d.jdur*.38 + R()*3-1; d.jump = d.jdur; d.nextj = 45+(R()*95|0); }
+      d.x += d.dir*SP*(.6+.4*d.z)*(d.boost ? 1.9 : 1); if(d.boost) d.boost--;
+      if((d.x > W-GW+4 && d.dir > 0) || (d.x < -4 && d.dir < 0)) d.dir *= -1;
+    }
+    if(--nextGroup <= 0 && !dg.some(d => d.fly || d.hop || d.jump)){   // jump together: all at once or as a wave
+      const dur = pick([16,24,34]), wave = pick([0,7]);
+      [...dg].sort((a,b) => a.x-b.x).forEach((d,n) => { d.nextj = n*wave+1; d.ov = dur; });
+      nextGroup = 200+(R()*120|0); }
+    for(const d of dg) if(d.ov && d.nextj===1 && !d.jump){ d.jdur = d.ov; d.jh = d.jdur*.38; d.jump = d.jdur; d.nextj = 90+(R()*130|0); d.ov = 0; }
+    for(let a=0; a<3; a++) for(let b=a+1; b<3; b++){
+      const P = dg[a], Q = dg[b];
+      if(P.fly || Q.fly || P.cool || Q.cool || ((a===2 || b===2) && dg[2].z < .9) || Math.abs(P.b-Q.b) > 9) continue;
+      const [L, Rt] = P.x < Q.x ? [P,Q] : [Q,P], gap = Math.abs(P.x-Q.x);
+      if(gap < GW-6 && L.dir===Rt.dir && L.x > 0 && L.x < W-GW){   // catching up: the one behind flies over
+        const rear = L.dir > 0 ? L : Rt; rear.th = rear.th.map(x => x+120); rear.fly = 50; rear.cool = 60; (rear===L ? Rt : L).cool = 60; continue; }
+      if(gap < GW-8 && L.dir > 0 && Rt.dir < 0){
+        if(R() < .8){   // bump: mixed direction and colour outcomes
+          const mv = pick(['split','split','left','right']), cl = pick(['swap','copyL','copyR','shared','none']);
+          if(mv==='split'){ L.dir = -1; Rt.dir = 1; } else if(mv==='left'){ L.dir = Rt.dir = -1; L.boost = 45; } else { L.dir = Rt.dir = 1; Rt.boost = 45; }
+          if(cl==='swap'){ const w = L.th[1]; L.th[1] = Rt.th[1]; Rt.th[1] = w; }
+          else if(cl==='copyL') Rt.th = [...L.th]; else if(cl==='copyR') L.th = [...Rt.th];
+          else if(cl==='shared'){ const h0 = R()*360; L.th = [h0,h0+130,h0+230]; Rt.th = [...L.th]; }
+          L.hop = Rt.hop = 12; L.cool = Rt.cool = 55; sparks.push([(L.x+Rt.x)/2+GW/2, (L.b+Rt.b)/2-14, 14]);
+        } else { const f = pick([L,Rt]); f.th = f.th.map(x => x+120); f.fly = 50; f.cool = 60; (f===L ? Rt : L).cool = 60; }
+      }
+    }
+    for(const d of dg){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); }
+    sparks = sparks.map(([x,y,n]) => [x,y,n-1]).filter(s => s[2] > 0);
+  }
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    for(const d of [...dg].sort((a,b) => (a.fly>0)-(b.fly>0) || a.b-b.b)){
+      const pal = palOf(d), s = SPR[d.step*2 + d.wing], o = oimg.data;
+      for(let y=0; y<GH; y++) for(let x=0; x<GW; x++){
+        const v = s[y*GW + (d.dir < 0 ? GW-1-x : x)], k = (y*GW + x)*4;
+        if(!v){ o[k+3] = 0; continue; } const c = pal[v]; o[k] = c[0]; o[k+1] = c[1]; o[k+2] = c[2]; o[k+3] = 255; }
+      octx.putImageData(oimg, 0, 0);
+      const sc = (2+d.z)/3;
+      ctx.drawImage(off, Math.round(d.x), Math.round(d.b + d.y*sc - 22*sc), Math.round(GW*sc), Math.round(GH*sc));
+    }
+    ctx.fillStyle = '#d99a1e';
+    for(const [sx,sy,n] of sparks){ const r = 16-n; for(let a=0; a<8; a++) ctx.fillRect(Math.round(sx+Math.cos(a*Math.PI/4)*r), Math.round(sy+Math.sin(a*Math.PI/4)*r*.7), 1, 1); }
+  }
+  function size(){
+    if(!cv) return; const w = Math.max(80, Math.round(cv.getBoundingClientRect().width / 2));
+    if(w===W) return;
+    const was = W; W = w; cv.width = W; cv.height = H; ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    if(!dg || !was) reset(); else for(const d of dg) d.x = d.x/was*W;
+    tick(); draw();
+  }
+  function upd(){ const go = cv && cv.isConnected && vis && !document.hidden && !RM.matches;
+    if(go && !raf){ last = 0; raf = requestAnimationFrame(loop); } }
+  function loop(now){ raf = 0; if(!cv || !cv.isConnected || !vis || document.hidden || RM.matches) return;
+    const n = last ? Math.min(6, Math.round((now-last)/33.3)) : 1; if(n){ for(let i=0; i<n; i++) tick(); draw(); last = now; }
+    raf = requestAnimationFrame(loop); }
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { vis = es[0].isIntersecting; upd(); }) : null;
+  document.addEventListener('visibilitychange', upd);
+  return {
+    mount(){ const c = document.querySelector('.dragons'); if(c===cv) return; if(io) io.disconnect(); cv = c; W = 0; vis = true;
+      if(!c) return; off = document.createElement('canvas'); off.width = GW; off.height = GH; octx = off.getContext('2d'); oimg = octx.createImageData(GW, GH);
+      size(); if(io) io.observe(c); upd(); },
+    size
+  };
+})();
+window.addEventListener('resize', () => DRAG.size());
 let animAt = 0, animOff = 0;
 function syncAnim(on){
   clearTimeout(animOff);
@@ -1022,7 +1120,7 @@ function reshuffle(btn){
 }
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
-    <p class="lede">Short lessons built around real situations, so you don't just know Mandarin, you live it. Speak naturally, connect with Chinese-speaking communities, and move between cultures with confidence.</p></section>
+    <p class="lede">Short lessons built around real situations, so you don't just know Mandarin, you live it. Speak naturally, connect with Chinese-speaking communities, and move between cultures with confidence.</p><canvas class="dragons" aria-hidden="true"></canvas></section>
     <p class="kicker">Start here</p>
     <div class="series" id="homeStart">${scard(PATH).replace('data-push=', 'data-lib="'+PATH+'" data-push=')}</div>
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
@@ -1115,6 +1213,7 @@ function render(focusMain, dir){
   rove();
   if(focusMain){ $('#main').focus({preventScroll:true}); }
   SEA.mount();
+  DRAG.mount();
 }
 // Leaving Library clears the search; the first focus after coming back clears it again in case the browser restored the text.
 function leaveTab(tab){ if(tab!==S.tab){ saveQ(S.q); S.q=''; S.qFresh=true; S.histOpen=false; } }
