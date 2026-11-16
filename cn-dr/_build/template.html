@@ -102,6 +102,7 @@ h2.display.one-line{max-width:none;white-space:nowrap;font-size:min(var(--fs-h3)
 .intro-h{margin-top:var(--s5)}
 h1.display{font-size:var(--fs-h2);max-width:none;margin-top:var(--s5)}
 h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(var(--fs-h2),calc((100vw - 2 * var(--s4)) / 15))}
+.today-k{margin-top:var(--s6)}
 .intro{padding-bottom:var(--s5);margin-bottom:var(--s2);border-bottom:1px solid var(--line)}
 
 /* Sections */
@@ -618,6 +619,20 @@ function openInLibrary(sid){
   tabView(); accPanel('lv:series');                                     // registers the Series and course pages
   S.stack=['lv:series','ser:'+sid]; window.scrollTo(0,0); render(false, 'fwd'); $('#pgH').focus({preventScroll:true});
 }
+// Today's Lesson: three random lessons at the learner's level that they have not watched to the end or completed.
+// Picked once a day and kept, so the list doesn't reshuffle every time Home opens; a finished one stays and shows its check.
+function todayPicks(){
+  const d = new Date().toLocaleDateString('en-CA');
+  let t = store.get('today', null);
+  if(!t || t.d!==d || t.lv!==S.level || !t.ids.every(id=>byId[id])){
+    const pool = ITEMS.filter(r => r.lv===S.level && !done[r.id] && !full[r.id]);
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    t = {d, lv:S.level, ids: pool.slice(0,3).map(r=>r.id)}; store.set('today', t);
+  }
+  const its = t.ids.map(id=>byId[id]);
+  CTX['today'] = its.map(r=>r.id);
+  return its;
+}
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
     <p class="lede">Short, practical lessons around real situations.</p>
@@ -626,6 +641,7 @@ function viewHome(){
     <div class="series" id="homeStart">${scard(PATH).replace('data-push=', 'data-lib="'+PATH+'" data-push=')}</div>
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
       return card('home:tips','How to Study','', tips, ()=>list('tips', tips)); })()}</div>
+    ${(()=>{ const its = todayPicks(); return its.length ? `<p class="kicker today-k">Today’s Random Lessons</p><ul class="list">${its.map(r=>row(r,'today')).join('')}</ul>` : ''; })()}
 `;
 }
 function searchField(){
