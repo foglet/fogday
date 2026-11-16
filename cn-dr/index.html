@@ -218,6 +218,9 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
+#syncH.syncing{background:linear-gradient(90deg,#c62828,#e65100,#b28704,#2e7d32,#1565c0,#6a1b9a,#c62828);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 1.2s linear infinite}
+@keyframes rainbow{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){#syncH.syncing{animation:none}}
 .sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .sync-form{display:grid;gap:var(--s2);justify-items:start}
 .sync-form label{font-weight:600}
@@ -487,7 +490,7 @@ async function findGist(){
 async function syncNow(){
   if(!store.get('sync:tok','')) return 'off';
   if(syncBusy){ syncAgain = true; return 'busy'; }
-  clearTimeout(syncTimer); syncBusy = true;
+  clearTimeout(syncTimer); syncBusy = true; rainbow(true);
   let res = 'ok';
   try{
     let id = store.get('sync:gist','') || await findGist();
@@ -510,7 +513,7 @@ async function syncNow(){
     else if(e.message==='auth'){ res = 'auth'; syncStatus('GitHub did not accept this token. Make a new one with the gist scope, then connect again.', true); }
     else { res = 'net'; syncStatus(navigator.onLine===false ? 'Offline. Changes will sync when you are back online.' : 'Could not reach GitHub. Try Sync now.', true); }
   }finally{
-    syncBusy = false; if(syncAgain){ syncAgain = false; syncSoon(500); }
+    syncBusy = false; rainbow(false); if(syncAgain){ syncAgain = false; syncSoon(500); }
   }
   return res;
 }
@@ -521,7 +524,7 @@ const CLOUD_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M160
 function syncSection(){
   const on = !!store.get('sync:tok','');
   const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
-  return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="sub" id="syncH">Sync Devices</h2>
+  return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="sub${syncBusy?' syncing':''}" id="syncH">Sync Devices</h2>
     <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${CLOUD_CHECK}</button></div></div>
     ${on ? st
     : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
@@ -537,6 +540,14 @@ function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
   return now - ((+pt.hour)*3600 + (+pt.minute)*60 + (+pt.second))*1000 - (now % 1000);
 }
 let dailyTimer = 0;
+// While a sync runs, a rainbow moves across the Sync Devices heading. It stays at least 1.2 s so a quick sync is still seen.
+let rainbowAt = 0, rainbowOff = 0;
+function rainbow(on){
+  clearTimeout(rainbowOff);
+  const set = v => { const h = $('#syncH'); if(h) h.classList.toggle('syncing', v); };
+  if(on){ rainbowAt = Date.now(); set(true); }
+  else rainbowOff = setTimeout(() => { if(!syncBusy) set(false); }, Math.max(0, 1200 - (Date.now() - rainbowAt)));
+}
 function syncDaily(){
   clearTimeout(dailyTimer); if(!store.get('sync:tok','')) return;
   const now = Date.now(), last = ptMidnight(now);
