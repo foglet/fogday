@@ -42,6 +42,8 @@ Dragons (About page, Sync Devices, where the pixel sea was): `DRAG` in `template
 on a canvas. They walk, jump alone or together, sometimes march in step, bump (random direction and colour outcomes) or
 fly over each other, and the third walks down from the distance to cross the others' paths, then back. Colours are any
 hue with their own strength and brightness; now and then all three match, or one takes a new scheme. Swipe or use the
-arrow keys on them to change their speed (kept per device as `dragSpeed`). A sync starting sets off a group jump. They
+arrow keys on them to change their speed (kept per device as `dragSpeed`). Each time the About page opens they walk for
+about 15 s of on-screen time, land, and hold still; a sync starting (or a speed change) wakes them for another 15 s with a
+group jump, and they keep going while the sync runs. They
 pause off screen or in a hidden tab and hold a still frame with reduced motion. The 8 sprite frames are inlined as 30x26
 palette-index strings, exported from the `pixel-dragons-multi` skill's sprite.
