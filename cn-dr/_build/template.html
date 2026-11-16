@@ -626,10 +626,11 @@ function openInLibrary(sid){
   tabView(); accPanel('lv:series');                                     // registers the Series and course pages
   S.stack=['lv:series','ser:'+sid]; window.scrollTo(0,0); render(false, 'fwd'); $('#pgH').focus({preventScroll:true});
 }
-// Lesson Randomizer: each page load draws 30 random lessons at the learner's level that they have not watched to the end
-// or completed. Home shows five of them; tapping the title deals five more from the same 30, in place, with no reload.
-// Moving between tabs keeps the current five; a level change draws a new 30.
-const RAND_POOL = 30, RAND_SHOW = 5;
+// Lesson Randomizer: Home shows three lessons and keeps the same three, across reloads, until the learner taps the title,
+// so they can think it over. Each page load draws 30 random lessons at the learner's level that they have not watched to
+// the end or completed; a tap deals three new ones from those 30, in place, with no reload. A finished one stays and
+// shows its check until the next tap. Each level keeps its own three.
+const RAND_POOL = 30, RAND_SHOW = 3;
 let pool30 = null, picks = null;
 const unfinished = r => !done[r.id] && !full[r.id];
 function shuffled(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
@@ -639,9 +640,14 @@ function deal(avoid){
   const fresh = shuffled(open.filter(id => !avoid.includes(id)));                     // five not on screen now, when there are enough
   const ids = fresh.concat(shuffled(open.filter(id => avoid.includes(id)))).slice(0, RAND_SHOW);
   picks = {lv:S.level, ids};
+  const kept = store.get('rand', {}); kept[S.level] = ids; store.set('rand', kept);
 }
 function todayPicks(){
-  if(!picks || picks.lv!==S.level) deal([]);
+  if(!picks || picks.lv!==S.level){
+    const kept = (store.get('rand', {}) || {})[S.level];
+    if(Array.isArray(kept) && kept.length && kept.every(id=>byId[id])) picks = {lv:S.level, ids:kept};
+    else deal([]);
+  }
   const its = picks.ids.map(id=>byId[id]);
   CTX['today'] = its.map(r=>r.id);
   return its;
@@ -651,7 +657,7 @@ function reshuffle(btn){
   deal(picks ? picks.ids : []);
   const ul = $('#randList'); ul.innerHTML = todayPicks().map(r=>row(r,'today')).join('');
   animIn(ul, 'a-swap'); flash([btn]);
-  $('#randStatus').textContent = `${picks.ids.length} new lessons`;
+  $('#randStatus').textContent = `${picks.ids.length} new lesson${picks.ids.length===1?'':'s'}`;
 }
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
