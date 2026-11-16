@@ -459,6 +459,15 @@ zoom: 11.8
   @media (max-width: 393px), (max-height: 393px) {
     .map-legend .species, .map-legend .sortby, .legend-body .rule { display: none; }
   }
+  /* Top right: the bento (all projects, fogday.com/works/), as in the site header and on /ucsf/: no panel, 40px tap
+     target (44px on touch), an 18px grid in the page ink with a soft navy halo so it reads over the map */
+  .corner { position: fixed; z-index: 3; top: calc(9px + var(--sat)); right: calc(8px + var(--sar)); display: flex; align-items: center; }
+  .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 11px; color: var(--ink); transition: color .15s ease; }
+  .bento svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .bento:hover { color: var(--accent); }
+  .bento:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  @media (min-width: 760px) { .corner { top: calc(13px + var(--sat)); } }
+  @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .bento { width: 44px; height: 44px; padding: 13px; } }
   @media (prefers-reduced-motion: reduce) { .maps-menu { animation: none; } .maps-btn svg { transition: none; } }
 </style>
 </head>
@@ -527,6 +536,17 @@ zoom: 11.8
     </nav>
   </div>
 </div>
+
+<!-- Top right, as in the site header: the bento (all projects) -->
+<nav class="corner" aria-label="Site">
+  <a href="/works/" class="bento" aria-label="Projects" title="Projects">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="currentColor">
+      <rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/>
+      <rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/>
+      <rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/>
+    </g></svg>
+  </a>
+</nav>
 
 <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
 
