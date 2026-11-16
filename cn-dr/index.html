@@ -231,6 +231,12 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .search{position:relative;display:flex;align-items:center;margin:var(--s3) 0 var(--s4)}
 .search-ic{position:absolute;left:var(--s3);width:20px;height:20px;color:var(--ink-2);pointer-events:none}
 .search input{flex:1;min-width:0;min-height:var(--tap);border-radius:var(--r-md);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;padding:0 var(--s3) 0 calc(var(--s3) + 28px)}
+.hist-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin-top:var(--s2)}
+.hist-head .sub{margin:0}
+.hist-clear{color:var(--accent)}
+.hrow{display:flex;align-items:center;gap:var(--s1);border-bottom:1px solid var(--line)}
+.hrow .row{flex:1;min-width:0}
+.hdel svg{width:18px;height:18px;color:var(--ink-2)}
 .search input::placeholder{font-size:var(--fs-sm)}   /* same size as section descriptions; typed text stays 16px so iOS does not zoom on focus */
 .search input:hover{border-color:var(--ink-2)}
 .search input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
@@ -492,6 +498,7 @@ function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
   return `<h1 class="sub">Library</h1>`; }
 function learnMain(){
   if(S.q.trim()) return searchResults();
+  if(S.histOpen && getHist().length) return histPanel();
   return `<div class="seg" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
     <div id="learnBody">${viewLearn(true)}</div>`;
 }
@@ -653,7 +660,18 @@ function render(focusMain){
   if(focusMain){ $('#main').focus({preventScroll:true}); }
 }
 // Leaving Library clears the search; the first focus after coming back clears it again in case the browser restored the text.
-function leaveTab(tab){ if(tab!==S.tab){ S.q=''; S.qFresh=true; } }
+function leaveTab(tab){ if(tab!==S.tab){ saveQ(S.q); S.q=''; S.qFresh=true; S.histOpen=false; } }
+/* ---------- search history: newest first, 20 max, kept on this device ---------- */
+const HIST_MAX = 20;
+const getHist = () => { const h = store.get('qhist', []); return Array.isArray(h) ? h : []; };
+function saveQ(q){ q = (q||'').trim().replace(/\s+/g,' '); if(!q) return;
+  const h = getHist().filter(x => x.toLowerCase()!==q.toLowerCase()); h.unshift(q); store.set('qhist', h.slice(0, HIST_MAX)); }
+const X_IC = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>';
+function histPanel(){ const h = getHist();
+  return `<section id="hist" aria-labelledby="histH"><div class="hist-head"><h2 class="sub" id="histH">Recent searches</h2><button class="btn ghost hist-clear" data-hclear>Clear all</button></div>
+    <ul class="list">${h.map(q => `<li class="hrow"><button class="row nolead" data-hq="${esc(q)}"><span class="t">${esc(q)}</span></button><button class="btn ghost icon-btn hdel" data-hdel="${esc(q)}" aria-label="Delete ${esc(q)} from history">${X_IC}</button></li>`).join('')}</ul></section>`; }
+function refreshLearn(){ const m = $('#learnMain'); if(m){ m.innerHTML = learnMain(); rove(); } }
+function closeHist(){ if(!S.histOpen) return; S.histOpen=false; if(!S.q.trim()) refreshLearn(); }
 function go(tab){ leaveTab(tab); S.tab=tab; S.stack=[]; try{ history.replaceState({tab, stack:[], y:0}, ''); }catch(e){} store.set('tab',tab); window.scrollTo(0,0); render(true); }
 
 /* ---------- player ---------- */
@@ -735,6 +753,14 @@ function drillCard(kind, label, blurb, feat){
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
+  const kb = e.detail===0;   // keyboard activation: keep focus in the search area
+  if(t.dataset.hq!==undefined){ const q=t.dataset.hq, i=$('#q'); S.q=q; S.histOpen=false; i.value=q; saveQ(q); refreshLearn(); if(kb) i.focus(); return; }
+  if(t.dataset.hdel!==undefined){ const q=t.dataset.hdel; store.set('qhist', getHist().filter(x=>x!==q));
+    const li=t.closest('li'), nx=(li.nextElementSibling||li.previousElementSibling); li.remove();
+    if(!getHist().length){ S.histOpen=false; refreshLearn(); if(kb) $('#q').focus(); }
+    else if(nx) nx.querySelector('.hdel').focus();
+    return; }
+  if(t.dataset.hclear!==undefined){ store.set('qhist', []); S.histOpen=false; refreshLearn(); if(kb) $('#q').focus(); return; }
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
   if(t.dataset.lib){ return openInLibrary(t.dataset.lib); }
   if(t.dataset.push){ return push(t.dataset.push); }
@@ -750,9 +776,17 @@ document.addEventListener('click', e => {
     drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
     return openPlayer(t.dataset.id, c); }
 });
-$('#main').addEventListener('focusin', e => { if(e.target.id==='q' && S.qFresh){ S.qFresh=false; if(e.target.value){ e.target.value=''; S.q=''; $('#learnMain').innerHTML = learnMain(); rove(); } } });
+$('#main').addEventListener('focusin', e => { if(e.target.id!=='q') return;
+  if(S.qFresh){ S.qFresh=false; if(e.target.value){ e.target.value=''; S.q=''; } }
+  if(!S.histOpen){ S.histOpen=true; if(!S.q.trim()) refreshLearn(); } });
+$('#main').addEventListener('click', e => { if(e.target.id==='q' && !S.histOpen){ S.histOpen=true; if(!S.q.trim()) refreshLearn(); } });   // tap on an already focused field reopens the list
+$('#main').addEventListener('focusout', e => { if(e.target.id==='q') saveQ(S.q); });
+// History closes when focus or a tap lands outside the search field and the list.
+const inSearch = n => n && n.closest && n.closest('#searchForm, #hist');
+document.addEventListener('focusin', e => { if(S.histOpen && !inSearch(e.target)) closeHist(); });
+document.addEventListener('pointerdown', e => { if(S.histOpen && !inSearch(e.target)) closeHist(); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; $('#learnMain').innerHTML = learnMain(); rove(); } });
-$('#main').addEventListener('submit', e => { e.preventDefault(); const i=$('#q'); i&&i.blur(); });
+$('#main').addEventListener('submit', e => { e.preventDefault(); saveQ(S.q); const i=$('#q'); i&&i.blur(); });
 $('#closeBtn').addEventListener('click', closePlayer);
 $('#scrim').addEventListener('click', closePlayer);
 $('#prevBtn').addEventListener('click', () => step(-1));
@@ -761,6 +795,7 @@ $('#nextBtn').addEventListener('click', () => step(1));
 $('#markBtn').addEventListener('click', () => { markDone(!isDone(cur.id)); syncActs(); });
 function rove(){ document.querySelectorAll('[role="tablist"]').forEach(l=>{ l.querySelectorAll('[role="tab"]').forEach(t=>t.tabIndex = t.getAttribute('aria-selected')==='true'?0:-1); }); }
 document.addEventListener('keydown', e => {
+  if(e.key==='Escape' && S.histOpen && inSearch(e.target)){ closeHist(); $('#q').focus(); return; }
   const tab = e.target.closest && e.target.closest('[role="tab"]');
   if(tab && ['ArrowRight','ArrowLeft','ArrowDown','ArrowUp','Home','End'].includes(e.key)){
     const tabs=[...tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')]; let i=tabs.indexOf(tab);
