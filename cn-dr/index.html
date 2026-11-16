@@ -209,6 +209,20 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .ext-link svg{width:14px;height:14px;fill:currentColor;flex:none}
 @media (hover:hover){.ext-link:hover{background:var(--surface-2);text-decoration:underline}}
 .ext-link:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
+.sync{margin-top:var(--s5)}
+.sync h2.sub{margin-top:0}
+.sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
+.sync-form{display:grid;gap:var(--s2);justify-items:start}
+.sync-form label{font-weight:600}
+.sync-form p{margin:0}
+.sync input{width:100%;max-width:28rem;min-height:var(--tap);border-radius:var(--r-md);border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;padding:0 var(--s3)}
+.sync input:hover{border-color:var(--ink-2)}
+.sync input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+.sync input[aria-invalid="true"]{border-color:var(--accent)}
+.sync-acts{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.sync .sync-st{color:var(--ink);font-weight:600}
+.sync .sync-st:empty{margin:0}
+.sync .sync-st.err{color:var(--accent)}
 .tile{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:var(--s4);margin-top:var(--s3)}
 .tile h3{margin:0 0 var(--s1);font-size:var(--fs-h3);line-height:1.25;font-family:var(--display);font-weight:400}
 .tile p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:65ch}
@@ -391,8 +405,140 @@ const MAT = {"bio":["Dr. Hanyu Jia holds a PhD in applied linguistics from the U
 /* ---------- state ---------- */
 const store = {
   get(k, d){ try{ const v = localStorage.getItem('cn-dr:'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
-  set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
+  set(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} if(isSynced(k)) localChanged(); },
+  del(k){ try{ localStorage.removeItem('cn-dr:'+k); }catch(e){} }
 };
+
+/* ---------- sync across devices ----------
+   One private GitHub Gist (file cn-dr-sync.json) holds the learner's data. Each device keeps a GitHub token
+   (gist scope only) in localStorage; it never goes in the page source. Every sync reads the Gist, merges it with
+   this device, writes the result back, so two devices never overwrite each other:
+   - done, seen, full, saved: id -> time. Union, newest time wins. Removing a lesson leaves a tombstone (tomb[map][id])
+     so the removal syncs too; whichever is newer, the add or the removal, wins.
+   - everything else (qhist, pathAt, phrAt:*, level): the side changed most recently wins, key by key. pathMax keeps the max. */
+const SYNC_MAPS = ['done','seen','full','saved'], SYNC_VALS = ['qhist','pathAt','pathMax','level'];
+const GIST_FILE = 'cn-dr-sync.json', GH_API = 'https://api.github.com';
+function isSynced(k){ return SYNC_MAPS.includes(k) || SYNC_VALS.includes(k) || k==='tomb' || k.startsWith('phrAt:'); }
+function rawSet(k, v){ try{ localStorage.setItem('cn-dr:'+k, JSON.stringify(v)); }catch(e){} }
+let syncBusy = false, syncAgain = false, syncTimer = 0, syncMsg = '', syncErr = false;
+function localChanged(){ rawSet('sync:mtime', Date.now()); syncSoon(); }
+function syncSoon(ms){ if(!store.get('sync:tok','')) return; clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, ms==null ? 4000 : ms); }
+function tombstone(map, id){ const t = store.get('tomb', {}); (t[map] = t[map] || {})[id] = Date.now(); store.set('tomb', t); }
+function snapshot(){
+  const s = {v:1, t: store.get('sync:mtime', 0), maps:{}, tomb: store.get('tomb', {}), vals:{}};
+  SYNC_MAPS.forEach(m => s.maps[m] = store.get(m, {}));
+  try{ for(let i=0; i<localStorage.length; i++){ const raw = localStorage.key(i) || ''; if(!raw.startsWith('cn-dr:')) continue;
+    const k = raw.slice(6); if(SYNC_VALS.includes(k) || k.startsWith('phrAt:')) s.vals[k] = store.get(k); } }catch(e){}
+  return s;
+}
+function mergeSnap(a, b){
+  if(!b || b.v!==1) return a;
+  const mx = (x, y) => Math.max(x||0, y||0), bNewer = (b.t||0) > (a.t||0), bv = b.vals || {};
+  const out = {v:1, t: mx(a.t, b.t), maps:{}, tomb:{}, vals:{}};
+  SYNC_MAPS.forEach(m => {
+    const ta = (a.tomb||{})[m] || {}, tb = (b.tomb||{})[m] || {}, tm = {};
+    Object.keys(Object.assign({}, ta, tb)).forEach(id => tm[id] = mx(ta[id], tb[id]));
+    const ma = a.maps[m] || {}, mb = (b.maps||{})[m] || {}, mm = {};
+    Object.keys(Object.assign({}, ma, mb)).forEach(id => { const t = mx(ma[id], mb[id]); if(t > (tm[id]||0)) mm[id] = t; });
+    out.maps[m] = mm; if(Object.keys(tm).length) out.tomb[m] = tm;
+  });
+  out.vals = bNewer ? Object.assign({}, a.vals, bv) : Object.assign({}, bv, a.vals);
+  if(a.vals.pathMax!=null || bv.pathMax!=null) out.vals.pathMax = mx(a.vals.pathMax, bv.pathMax);
+  return out;
+}
+// Key order differs between devices, so compare a sorted copy.
+const canon = o => JSON.stringify(o, (k, v) => v && typeof v==='object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((r, x) => (r[x] = v[x], r), {}) : v);
+const sameSnap = (a, b) => !!a && !!b && canon([a.maps, a.tomb, a.vals]) === canon([b.maps, b.tomb||{}, b.vals||{}]);
+function applySnap(o){
+  SYNC_MAPS.forEach(m => rawSet(m, o.maps[m]));
+  rawSet('tomb', o.tomb); rawSet('sync:mtime', o.t);
+  Object.keys(o.vals).forEach(k => rawSet(k, o.vals[k]));
+  done = o.maps.done; seen = o.maps.seen; full = o.maps.full; saved = o.maps.saved;
+  if(o.vals.level && o.vals.level!==S.level){ S.level = o.vals.level; S.sub = 'all'; }
+  // Show the new data, unless the learner is typing or watching: then it appears on the next page change.
+  const a = document.activeElement;
+  if($('#sheetWrap').dataset.open==='true' || (a && /^(INPUT|TEXTAREA)$/.test(a.tagName))) return;
+  const keep = a && (a.id || (a.dataset && a.dataset.sync)), y = window.scrollY;
+  render(false); window.scrollTo(0, y);
+  const n = keep && (document.getElementById(keep) || document.querySelector(`[data-sync="${keep}"]`)); if(n) n.focus({preventScroll:true});
+}
+async function gh(path, opt){
+  opt = opt || {};
+  const r = await fetch(GH_API + path, Object.assign({}, opt, {cache:'no-store', headers: Object.assign({Authorization: 'Bearer ' + store.get('sync:tok',''), Accept: 'application/vnd.github+json'}, opt.body ? {'Content-Type':'application/json'} : {})}));
+  if(r.status===401 || r.status===403) throw new Error('auth');
+  if(r.status===404) throw new Error('gone');
+  if(!r.ok) throw new Error('http');
+  return r.json();
+}
+async function findGist(){
+  for(let p=1; p<=10; p++){ const l = await gh(`/gists?per_page=100&page=${p}`);
+    const g = l.find(g => g.files && g.files[GIST_FILE]); if(g) return g.id; if(l.length < 100) break; }
+  return '';
+}
+// Returns 'ok', 'auth' (token refused) or 'net'.
+async function syncNow(){
+  if(!store.get('sync:tok','')) return 'off';
+  if(syncBusy){ syncAgain = true; return 'busy'; }
+  clearTimeout(syncTimer); syncBusy = true; syncStatus('Syncing');
+  let res = 'ok';
+  try{
+    let id = store.get('sync:gist','') || await findGist();
+    const local = snapshot();
+    if(!id){
+      const g = await gh('/gists', {method:'POST', body: JSON.stringify({description:'cn-dr sync (fogday.com/cn-dr)', public:false, files:{[GIST_FILE]:{content: JSON.stringify(local)}}})});
+      store.set('sync:gist', g.id);
+    } else {
+      store.set('sync:gist', id);
+      const g = await gh('/gists/' + id), f = g.files && g.files[GIST_FILE];
+      let remote = null;
+      if(f){ let txt = f.content; if(f.truncated) txt = await (await fetch(f.raw_url, {cache:'no-store'})).text(); try{ remote = JSON.parse(txt); }catch(e){} }
+      const out = mergeSnap(local, remote);
+      if(!sameSnap(out, local)) applySnap(out);
+      if(!sameSnap(out, remote)) await gh('/gists/' + id, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(out)}}})});
+    }
+    store.set('sync:last', Date.now()); syncStatus('');
+  }catch(e){
+    if(e.message==='gone'){ store.set('sync:gist',''); syncAgain = true; res = 'net'; }
+    else if(e.message==='auth'){ res = 'auth'; syncStatus('GitHub did not accept this token. Make a new one with the gist scope, then connect again.', true); }
+    else { res = 'net'; syncStatus(navigator.onLine===false ? 'Offline. Changes will sync when you are back online.' : 'Could not reach GitHub. Try Sync now.', true); }
+  }finally{
+    syncBusy = false; if(syncAgain){ syncAgain = false; syncSoon(500); }
+  }
+  return res;
+}
+function ago(t){ const s = (Date.now() - t) / 1000;
+  return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s/60)} min ago` : s < 86400 ? `${Math.round(s/3600)} h ago` : new Date(t).toLocaleDateString(); }
+function syncText(){ if(syncMsg) return syncMsg; const l = store.get('sync:last', 0); return l ? `Last synced ${ago(l)}` : ''; }
+function syncStatus(msg, err){ syncMsg = msg || ''; syncErr = !!err; const el = $('#syncSt'); if(el){ el.textContent = syncText(); el.classList.toggle('err', syncErr); } }
+function syncSection(){
+  const on = !!store.get('sync:tok','');
+  const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
+  return `<section class="sync tile" aria-labelledby="syncH"><h2 class="sub" id="syncH">Sync your devices</h2>
+    <p>Keeps saved lessons, completed lessons, progress and recent searches the same on your phone and computer. The data is kept in one private Gist in your GitHub account.</p>
+    ${on ? `${st}<div class="sync-acts"><button class="btn primary" data-sync="now">Sync now</button><button class="btn" data-sync="off">Disconnect this device</button></div>`
+    : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
+      <input id="syncTok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="syncHelp syncSt">
+      <p id="syncHelp" class="sync-help">Give the token only the gist scope. Paste the same token on each device.</p>
+      <a class="ext-link" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=cn-dr%20sync" target="_blank" rel="noopener">Make a token on GitHub<span class="vh">, opens a new tab</span>${EXT_ICON}</a>
+      <button class="btn primary" type="submit">Connect</button>${st}</form>`}</section>`;
+}
+function redrawSync(focusSel){
+  const sec = document.querySelector('.sync'); if(!sec) return;
+  sec.outerHTML = syncSection(); const n = $(focusSel); if(n) n.focus();
+}
+async function syncConnect(){
+  const i = $('#syncTok'), tok = (i && i.value || '').trim();
+  if(!tok){ syncStatus('Paste a token first.', true); if(i){ i.setAttribute('aria-invalid','true'); i.focus(); } return; }
+  store.set('sync:tok', tok); store.del('sync:gist'); store.del('sync:last');
+  syncMsg = 'Connecting'; syncErr = false; redrawSync('[data-sync="now"]');
+  const r = await syncNow();
+  if(r==='auth'){ const m = syncMsg; store.del('sync:tok'); redrawSync('#syncTok'); syncStatus(m, true); const n=$('#syncTok'); if(n) n.setAttribute('aria-invalid','true'); }
+}
+function syncDisconnect(){
+  ['sync:tok','sync:gist','sync:last'].forEach(k => store.del(k)); clearTimeout(syncTimer);
+  syncMsg = 'Disconnected. This device keeps its data; nothing was deleted from GitHub.'; syncErr = false;
+  redrawSync('#syncTok');
+}
 let done = store.get('done', {});           // id -> timestamp
 let seen = store.get('seen', {});           // id -> timestamp, set whenever a lesson is opened
 let full = store.get('full', {});           // id -> timestamp, set when a video plays to the end (or 95% through)
@@ -465,7 +611,7 @@ function bmBtn(r){ const on = isSaved(r.id);
   return `<button class="btn ghost icon-btn bm" data-bm="${r.id}" aria-pressed="${on}" aria-label="Save ${esc(T(r))}">${on ? BM_FILL : BM_IC}</button>`; }
 // Toggle in place: every copy of this lesson's button on the page updates, nothing re-renders, focus stays put.
 function toggleSave(id){
-  if(saved[id]) delete saved[id]; else saved[id] = Date.now();
+  if(saved[id]){ delete saved[id]; tombstone('saved', id); } else saved[id] = Date.now();
   store.set('saved', saved);
   const on = isSaved(id);
   document.querySelectorAll(`[data-bm="${CSS.escape(id)}"]`).forEach(b => { b.setAttribute('aria-pressed', String(on)); b.innerHTML = on ? BM_FILL : BM_IC; });
@@ -645,7 +791,7 @@ function viewMaterials(){
     <div class="bio about"><p>Mandarin Insights helps you become a fluent, adaptable Mandarin speaker who doesn't just know the language but lives it. It's for learners who want to connect with Chinese-speaking communities, communicate across cultures, and move through cultural contexts with confidence. Through one-on-one and group lessons, Dr. Jia takes you past memorization so you can speak naturally and engage fully in Chinese.</p></div>
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
-    <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>`;
+    <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>${syncSection()}`;
 }
 // Favorites: Library and Practice have a bookmark opposite the page title. It opens every saved lesson below the
 // page's listings, newest saved first, with category and topic under each title. Unsaving inside the list only
@@ -931,7 +1077,7 @@ function syncActs(){
   mb.innerHTML = d ? ICON_CHECK + '<span>Completed</span>' : '<span>To Complete</span>';
   mb.setAttribute('aria-pressed', String(d));
 }
-function markDone(v){ if(v) done[cur.id]=Date.now(); else delete done[cur.id]; store.set('done',done); }
+function markDone(v){ if(v) done[cur.id]=Date.now(); else { delete done[cur.id]; tombstone('done', cur.id); } store.set('done',done); }
 function step(dir){
   const k = qi + dir; if(!queue || k < 0 || k >= queue.length) return;
   openPlayer(queue[k], null, true);
@@ -993,7 +1139,7 @@ document.addEventListener('focusin', e => { if(S.histOpen && !inSearch(e.target)
 document.addEventListener('mousedown', e => { if(S.histOpen && e.target.closest && e.target.closest('#hist')) e.preventDefault(); });
 document.addEventListener('pointerdown', e => { if(S.histOpen && !inSearch(e.target)) closeHist(); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; $('#learnMain').innerHTML = learnMain(); rove(); } });
-$('#main').addEventListener('submit', e => { e.preventDefault(); saveQ(S.q); const i=$('#q'); i&&i.blur(); });
+$('#main').addEventListener('submit', e => { e.preventDefault(); if(e.target.id==='syncForm') return syncConnect(); saveQ(S.q); const i=$('#q'); i&&i.blur(); });
 $('#closeBtn').addEventListener('click', closePlayer);
 $('#scrim').addEventListener('click', closePlayer);
 $('#prevBtn').addEventListener('click', () => step(-1));
@@ -1018,6 +1164,15 @@ document.addEventListener('keydown', e => {
 document.addEventListener('focusin',e=>{ const sh=$('#sheet'); if(sh && $('#sheetWrap').dataset.open==='true' && !sh.contains(e.target)){ const f=sh.querySelector('button:not([disabled]),a[href]'); if(f) f.focus(); } });
 try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
 render(false, 'fade');
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-sync]'); if(!b) return;
+  if(b.dataset.sync==='now') syncNow(); else if(b.dataset.sync==='off') syncDisconnect(); });
+$('#main').addEventListener('input', e => { if(e.target.id==='syncTok' && e.target.getAttribute('aria-invalid')){ e.target.removeAttribute('aria-invalid'); syncStatus(''); } });
+// Pull when the app opens or comes back to the front; push right away when it goes to the background.
+document.addEventListener('visibilitychange', () => { if(!store.get('sync:tok','')) return;
+  if(document.visibilityState==='hidden'){ if(syncTimer) syncNow(); }
+  else if(Date.now() - store.get('sync:last', 0) > 30000) syncNow(); });
+window.addEventListener('online', () => syncSoon(500));
+syncNow();
 </script>
 </body>
 </html>

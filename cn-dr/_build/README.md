@@ -23,3 +23,9 @@ To add videos by hand: append rows to `shorts.txt` with the next index, then
 30-Day Survival Chinese: 21 days come from "Day N" in the title; the other 9 (Days 8, 10, 11, 12, 14, 16, 26, 27, 29) are set in `classify.py` `DAY_INFERRED`. The inferred order was accepted on 2026-11-14 without confirmation from Dr. Jia.
 
 Lesson numbers: every Short has a stable number, oldest first (No. 1 is her first Short). They are frozen in `data/numbers.txt`; `build.py` gives new Shorts the next number and never renumbers. Full-length lessons have no number. Search accepts "42", "#42" or "No. 42".
+
+Sync across devices (About page, bottom): paste a GitHub token with only the `gist` scope on each device. The app keeps
+everything in one private Gist named `cn-dr-sync.json` (created on first connect, found again by file name on other
+devices). Each sync reads the Gist, merges, and writes back: saved/done/seen/full lessons merge by id with the newest
+time winning (removals leave a tombstone so they sync too); search history, level and progress take the most recently
+changed device. The token stays in that device's localStorage and is never in the page source.
