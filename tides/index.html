@@ -360,10 +360,8 @@ title: Tides of San Francisco
     .tides .moontimes > div { column-gap: 3px; }
   }
   @media (max-width: 340px) { .tides .moonrow { grid-template-columns: 1fr; } .tides .moontimes { justify-self: start; margin-top: 10px; } }
-  /* Footer is not pinned: it sits at the end of the page and scrolls with it. main drops the 64px it kept clear for
-     the fixed footer. In dark mode the footer has no fill (every look), so the page gradient / NEAT canvas shows through. */
-  footer { position: static; }
-  main { padding-bottom: 28px; }
+  /* The footer scrolls with the page (fogday.css). In dark mode it has no fill (every look), so the page gradient /
+     NEAT canvas shows through instead of a band of one color. */
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) footer { background: transparent !important; } }
   :root[data-theme="dark"] footer { background: transparent !important; }
   </style>

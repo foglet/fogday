@@ -98,12 +98,15 @@ p { margin: 0; max-width: 62ch; }
 
 a.text { color: var(--accent); text-underline-offset: 3px; }
 
+/* Footer is not pinned: it sits at the end of the page and scrolls with it. On a page shorter than the window,
+   body is a full-height column and the footer's auto top margin drops it to the bottom of the window. */
+body { min-height: 100vh; min-height: 100svh; box-sizing: border-box; display: flex; flex-direction: column; }
 footer {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  margin-top: auto;
   background: var(--bg); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-main { padding-bottom: 64px; } /* room for the fixed footer */
+main { padding-bottom: 28px; }
 footer .wrap { padding-block: 14px; font-family: var(--font-wordmark); font-weight: 400; letter-spacing: .02em; font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: center; text-align: center; }
 
 .logo { font-size: 1.2rem; letter-spacing: 0.04em; text-box: trim-both cap alphabetic; margin-bottom: 13px; } /* smaller than page titles (1.75rem); trimmed to the caps and lifted 13px so its bottom lines up with the bottom of the visible icons */
@@ -178,7 +181,7 @@ body { padding-top: 8px; }
 body::before {
   content: "";
   position: fixed; top: 0; left: 0; right: 0; height: 8px;
-  z-index: 20; /* above the header and the fixed footer (z-index 10) */
+  z-index: 20; /* above the header */
   pointer-events: none;
   background: var(--bar-random, var(--bar-page, linear-gradient(to right, var(--title-1), var(--title-2))));
 }
