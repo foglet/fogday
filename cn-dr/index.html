@@ -595,7 +595,7 @@ function viewHome(){
 `;
 }
 function searchField(){
-  return `<form class="search" role="search" id="searchForm"><label class="vh" for="q">Search lessons</label><svg class="search-ic" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input id="q" type="search" placeholder="Search: 了, tones, No. 42" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"></form>`;
+  return `<form class="search" role="search" id="searchForm"><label class="vh" for="q">Search lessons</label><svg class="search-ic" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input id="q" type="search" placeholder="Search: 了, tones, 28" value="${esc(S.q)}" autocomplete="off" enterkeyhint="search"></form>`;
 }
 function searchResults(){
   const fold = s => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
@@ -754,11 +754,11 @@ function drillCard(kind, label, blurb, feat){
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
   const kb = e.detail===0;   // keyboard activation: keep focus in the search area
-  if(t.dataset.hq!==undefined){ const q=t.dataset.hq, i=$('#q'); S.q=q; S.histOpen=false; i.value=q; saveQ(q); refreshLearn(); if(kb) i.focus(); return; }
+  if(t.dataset.hq!==undefined){ const q=t.dataset.hq, i=$('#q'); S.q=q; S.histOpen=false; i.value=q; saveQ(q); refreshLearn(); if(kb) i.focus(); else i.blur(); return; }
   if(t.dataset.hdel!==undefined){ const q=t.dataset.hdel; store.set('qhist', getHist().filter(x=>x!==q));
     const li=t.closest('li'), nx=(li.nextElementSibling||li.previousElementSibling); li.remove();
     if(!getHist().length){ S.histOpen=false; refreshLearn(); if(kb) $('#q').focus(); }
-    else if(nx) nx.querySelector('.hdel').focus();
+    else if(nx && kb) nx.querySelector('.hdel').focus();
     return; }
   if(t.dataset.hclear!==undefined){ store.set('qhist', []); S.histOpen=false; refreshLearn(); if(kb) $('#q').focus(); return; }
   if(t.id==='home'){ e.preventDefault(); return go('home'); }
@@ -784,6 +784,9 @@ $('#main').addEventListener('focusout', e => { if(e.target.id==='q') saveQ(S.q);
 // History closes when focus or a tap lands outside the search field and the list.
 const inSearch = n => n && n.closest && n.closest('#searchForm, #hist');
 document.addEventListener('focusin', e => { if(S.histOpen && !inSearch(e.target)) closeHist(); });
+// iPhone: a tap in the list would blur the field, drop the keyboard and shift the page before the click lands, so the X missed.
+// Keeping focus in the field holds the layout still.
+document.addEventListener('mousedown', e => { if(S.histOpen && e.target.closest && e.target.closest('#hist')) e.preventDefault(); });
 document.addEventListener('pointerdown', e => { if(S.histOpen && !inSearch(e.target)) closeHist(); });
 $('#main').addEventListener('input', e => { if(e.target.id==='q'){ S.q = e.target.value; $('#learnMain').innerHTML = learnMain(); rove(); } });
 $('#main').addEventListener('submit', e => { e.preventDefault(); saveQ(S.q); const i=$('#q'); i&&i.blur(); });
