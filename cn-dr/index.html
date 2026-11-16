@@ -137,7 +137,6 @@ h1.intro-h{margin-top:var(--s5);max-width:none;white-space:nowrap;font-size:min(
 .seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .seg.two button[aria-pressed="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
 .row .ord{width:44px;height:44px;font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
-.pg-start{width:100%;margin-bottom:var(--s3)}
 .row .m{font-size:var(--fs-cap);color:var(--ink-2);font-weight:400;margin-top:2px;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
 .tag{color:var(--accent);font-weight:700}
 .row[data-done="true"] .t{color:var(--ink-2)}
@@ -226,6 +225,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
+.ttl .sync-btn,.fav-tg,.sync [data-sync]{background:transparent!important;border-color:transparent!important;-webkit-tap-highlight-color:transparent}   /* bare icons: no fill or border on hover, tap or open */
 .ttl .sync-btn{color:var(--ink-2)} .ttl .sync-btn svg{width:20px;height:20px} .ttl .sync-btn.on{color:var(--primary)}   /* title waveform, same look as the About one */
 .dragons{flex:1;min-width:0;height:112px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm)}
 /* No CSS mask here: WebKit can stop repainting a masked canvas. The soft side edges are drawn into the pixels instead. */
@@ -848,7 +848,7 @@ function accItems(key){
   if(key==='pr:review') return reviewItems();
   return (ACC[key] && ACC[key].items) || [];
 }
-// Series page: numbered list with titles; the next lesson is highlighted. Only the 30-day path keeps a Continue: Day N button.
+// Series page: numbered list with titles; the next lesson is highlighted. No Continue button (the 30-day path's was removed).
 function seriesPanel(sid){
   const key = 'ser:'+sid, it = sid===PATH ? seriesItems(sid) : seriesItems(sid).slice().sort(byNo), isPath = sid===PATH, lab = isPath ? 'Day' : 'No.';
   const num = r => isPath ? r.ord : r.no, lab2 = r => isPath ? `Day ${r.ord}` : noTag(r);
@@ -856,7 +856,7 @@ function seriesPanel(sid){
   if(isPath){ const ps = pathState(); next = ps.next; max = ps.max; } else next = it.find(r=>!isDone(r.id));
   const n = it.filter(r=>isDone(r.id)).length;
   CTX[key] = it.map(r=>r.id);
-  const btn = next && !isPath ? '' : next ? `<button class="btn primary pg-start" id="pgStart" data-play="${next.id}" data-ctx="${key}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>${n||(isPath&&max)?'Continue':'Start'}: ${lab2(next)}</span></button>`
+  const btn = next ? ''
     : `<p class="sec-note"><b>All ${it.length} done.</b> Tap any ${isPath?'day':'lesson'} to watch it again.</p>`;
   return btn + `<ul class="list">${it.map((r,i)=>{ const cur = r===next;
     return row(r, key, {ord:num(r), ordLabel:lab, cur, bare: isPath && i>0}); }).join('')}</ul>`;   // 30-day path: "Day" shows on the first row only; aria-label still says Day N
