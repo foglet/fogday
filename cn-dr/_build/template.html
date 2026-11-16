@@ -558,7 +558,7 @@ function offer(c){
 }
 function viewMaterials(){
   return `<h1 class="sub">About</h1>
-    <div class="bio about"><p>Mandarin Insights supports your journey into becoming a fluent, adaptable Mandarin Chinese speaker: someone who doesn't just know the language, but truly lives it. It is for learners who want to engage meaningfully with Chinese-speaking communities, thrive in cross-cultural communications, and navigate rich cultural contexts with confidence and ease. Through one-on-one and group lessons, Dr. Jia helps you move beyond memorization, so you can speak naturally, connect deeply, and engage fully in Chinese.</p></div>
+    <div class="bio about"><p>Mandarin Insights helps you become a fluent, adaptable Mandarin speaker who doesn't just know the language but lives it. It's for learners who want to connect with Chinese-speaking communities, communicate across cultures, and move through cultural contexts with confidence. Through one-on-one and group lessons, Dr. Jia takes you past memorization so you can speak naturally and engage fully in Chinese.</p></div>
     <div class="bio">${MAT.bio.map(t=>`<p>${esc(t)}</p>`).join('')}</div>
     <h2 class="sub">Classes with Dr. Jia</h2><ul class="offers">${MAT.courses.map(offer).join('')}</ul>
     <h2 class="sub">Free guides</h2><ul class="offers">${MAT.free.map(offer).join('')}</ul>`;
