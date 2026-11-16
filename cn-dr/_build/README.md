@@ -50,5 +50,5 @@ palette-index strings, exported from the `pixel-dragons-multi` skill's sprite.
 
 Title dragons (Library and Practice): during a sync, a second, smaller strip of the same dragons walks left of the title
 bookmark, in place of the old spinning arrows. `DRAGT = makeDragons('.dragons-t', false)`; the canvas fills the space
-between title and bookmark (up to 240 px wide, 44 px tall, art scaled to fit). Hidden at rest; shown when a sync starts,
+between title and bookmark (from the title to the bookmark, 44 px tall, art scaled to fit). Hidden at rest; shown when a sync starts,
 walks 15 s (or until the sync ends, if later), lands, then hides. Uses the same `dragSpeed`.
