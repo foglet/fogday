@@ -239,7 +239,12 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .fav-tg svg{width:20px;height:20px;color:var(--primary)}
 .fav-tg[aria-expanded="true"]{background:var(--primary-tint)}
 .favs{margin-top:var(--s5)}
-.favs h2:focus,.favs h2:focus-visible{outline:none}   /* focus lands here so screen readers announce the list, like page titles */
+.favs h2{margin-bottom:0}
+.fav-hb{display:inline-flex;align-items:center;gap:var(--s1);min-height:var(--tap);margin-left:calc(-1 * var(--s2));padding:0 var(--s2);border:0;background:none;cursor:pointer;border-radius:var(--r-sm);font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit}
+.fav-hb svg{width:16px;height:16px;fill:currentColor;transition:transform .2s var(--ease-out)}
+.fav-hb[aria-expanded="true"] svg{transform:rotate(180deg)}
+@media (hover:hover){.fav-hb:hover{background:var(--surface-2)}}
+.fav-hb:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .foot p a{color:var(--ink-2);text-decoration:none;text-underline-offset:2px}
 @media (hover:hover){.foot p a:hover{text-decoration:underline}}
 .foot p a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:2px}
@@ -647,24 +652,30 @@ function viewMaterials(){
 // empties the bookmark, so the row stays put and focus is kept.
 const CAT_NAME = {...Object.fromEntries(SECTIONS.map(s=>[s.id, s.name])), drills:'Practice Drills', tips:'How to Study', materials:'Courses & Events'};
 function ttl(name){ const o = !!S.favOpen;
-  return `<div class="ttl"><h1 class="sub">${name}</h1><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favs" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div>`; }
+  return `<div class="ttl"><h1 class="sub">${name}</h1><button class="btn ghost icon-btn fav-tg" data-favs aria-expanded="${o}" aria-controls="favsList" aria-label="Favorites" title="Favorites">${o ? BM_FILL : BM_IC}</button></div>`; }
+const CHEV_DOWN = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg>';   // Phosphor caret-down
 function favsInner(){
   const its = Object.keys(saved).filter(id=>byId[id]).sort((a,b)=>saved[b]-saved[a]).map(id=>byId[id]);
   CTX['favs'] = its.map(r=>r.id);
   const cat = r => [CAT_NAME[r.sec] || tc(r.sec), r.ser && SER[r.ser] ? SER[r.ser].name : tc(r.top)].filter(Boolean).join(' · ');
-  return `<h2 class="sub" id="favsH" tabindex="-1">Favorites</h2>` + (its.length
-    ? `<ul class="list">${its.map(r=>row(r, 'favs', {cat:cat(r)})).join('')}</ul>`
-    : `<div class="empty"><b>No favorites yet</b>Tap the bookmark on any lesson to keep it here.</div>`);
+  return its.length ? `<ul class="list">${its.map(r=>row(r, 'favs', {cat:cat(r)})).join('')}</ul>`
+    : `<div class="empty"><b>No favorites yet</b>Tap the bookmark on any lesson to keep it here.</div>`;
 }
-function favsSection(){ return `<section class="favs" id="favs" aria-labelledby="favsH"${S.favOpen?'':' hidden'}>${S.favOpen ? favsInner() : ''}</section>`; }
-function fillFavs(){ const f = $('#favs'); if(f) f.innerHTML = favsInner(); }
+// Favorites sits below the listings, closed by default. The heading (with its chevron) and the title bookmark both toggle it.
+function favsSection(){ const o = !!S.favOpen;
+  return `<section class="favs" id="favs" aria-labelledby="favsH"><h2 class="sub" id="favsH"><button class="fav-hb" id="favsHb" data-favs aria-expanded="${o}" aria-controls="favsList">Favorites${CHEV_DOWN}</button></h2>
+    <div id="favsList"${o?'':' hidden'}>${o ? favsInner() : ''}</div></section>`; }
+function fillFavs(){ const f = $('#favsList'); if(f) f.innerHTML = favsInner(); }
 function toggleFavs(btn){
   S.favOpen = !S.favOpen;
-  document.querySelectorAll('[data-favs]').forEach(b => { b.setAttribute('aria-expanded', String(S.favOpen)); b.innerHTML = S.favOpen ? BM_FILL : BM_IC; });
-  const f = $('#favs'); if(!f) return;
+  document.querySelectorAll('[data-favs]').forEach(b => b.setAttribute('aria-expanded', String(S.favOpen)));
+  document.querySelectorAll('.fav-tg').forEach(b => b.innerHTML = S.favOpen ? BM_FILL : BM_IC);
+  const f = $('#favsList'); if(!f) return;
   f.hidden = !S.favOpen;
-  if(S.favOpen){ fillFavs(); animIn(f, 'a-swap'); $('#favsH').focus({preventScroll:true}); f.scrollIntoView({behavior: RM.matches ? 'auto' : 'smooth', block:'start'}); }
+  if(S.favOpen){ fillFavs(); animIn(f, 'a-swap'); }
   else f.innerHTML = '';
+  if(S.favOpen && btn.classList.contains('fav-tg')){   // opened from the title: bring the section into view and move focus to its heading toggle
+    $('#favsHb').focus({preventScroll:true}); $('#favs').scrollIntoView({behavior: RM.matches ? 'auto' : 'smooth', block:'start'}); }
 }
 $('#follow').innerHTML =MAT.follow.map(f=>`<li><a href="${f.url}" target="_blank" rel="noopener" aria-label="${esc(f.label ? `${f.label}, ${f.name}` : f.name)}, opens a new tab">${FOLLOW_ICON[f.name]||''}</a></li>`).join('');
 const PATH = 'survival30';
