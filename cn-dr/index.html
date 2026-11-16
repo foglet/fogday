@@ -407,6 +407,10 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const url = r => r.k==='long' ? `https://www.youtube.com/watch?v=${r.id}` : `https://www.youtube.com/shorts/${r.id}`;
 const viewsNum = v => { if(!v) return 0; const m = /([\d.]+)\s*([KM]?)/.exec(v); return m ? parseFloat(m[1])*(m[2]==='K'?1e3:m[2]==='M'?1e6:1) : 0; };
 const isDone = id => !!done[id];
+// Topic names are stored in sentence case (they key the data); show them in title case: "Slang & internet speak" ->
+// "Slang & Internet Speak". Small words stay lower case unless first; acronyms and Chinese are left alone.
+const SMALL = new Set(['a','an','and','as','at','but','by','for','in','of','on','or','the','to','vs']);
+const tc = t => String(t||'').split(' ').map((w,i) => (i && SMALL.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 // Left-handed check: short stroke on the right, long stroke rising to the left (a mirrored Phosphor check reads as a chevron).
 const ICON_CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M220,104 L184,204 L36,76" fill="none" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function seriesItems(sid){ return ITEMS.filter(r => r.ser===sid).sort((a,b)=>a.ord-b.ord); }
@@ -527,7 +531,7 @@ function grouped(key, items, opts={}){
   items.forEach(r => (groups[r.top] = groups[r.top] || []).push(r));
   const names = Object.keys(groups).sort((a,b)=>(TOPIC_ORDER.indexOf(a)+99)%999-(TOPIC_ORDER.indexOf(b)+99)%999);
   if(names.length===1) return list(key, items, opts);
-  return names.map(n => `<h3 class="sub grp">${esc(n)}${groups[n].length>1?` <span class="n">· ${groups[n].length}</span>`:''}</h3>${list(key+':'+n, groups[n], opts)}`).join('');
+  return names.map(n => `<h3 class="sub grp">${esc(tc(n))}${groups[n].length>1?` <span class="n">· ${groups[n].length}</span>`:''}</h3>${list(key+':'+n, groups[n], opts)}`).join('');
 }
 
 /* ---------- views ---------- */
@@ -556,7 +560,7 @@ function viewLearn(bodyOnly){
     if(!its.length) return;
     let panel;
     if(def.id==='drills') panel = () => { const g={}; its.forEach(r=>(g[r.top]=g[r.top]||[]).push(r));
-      return Object.keys(g).sort((a,b)=>TOPIC_ORDER.indexOf(a)-TOPIC_ORDER.indexOf(b)).map(n=>`<h3 class="sub">${esc(n)}</h3>${drillGrid('lvdrill:'+n, g[n])}`).join(''); };
+      return Object.keys(g).sort((a,b)=>TOPIC_ORDER.indexOf(a)-TOPIC_ORDER.indexOf(b)).map(n=>`<h3 class="sub">${esc(tc(n))}</h3>${drillGrid('lvdrill:'+n, g[n])}`).join(''); };
     else if(def.id==='phrases') panel = () => phrasesPanel(its);
     else panel = () => ['pron','culture'].includes(def.id) ? grouped(`lv:${def.id}`, its) : list(`lv:${def.id}`, its);
     cards.push(card('lv:'+def.id, def.name, def.note || `${its.length} lessons`, its, panel));
@@ -655,14 +659,13 @@ function todayPicks(){
   CTX['today'] = its.map(r=>r.id);
   return its;
 }
-const capFirst = t => t.charAt(0).toUpperCase() + t.slice(1);
 const SHUFFLE_ICON = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg>';   // Phosphor shuffle, regular
 function reshuffle(btn){
   deal();
-  $('#randTop').textContent = capFirst(picks.top);
+  $('#randTop').textContent = tc(picks.top);
   const ul = $('#randList'); ul.innerHTML = todayPicks().map(r=>row(r,'today')).join('');
   animIn(ul, 'a-swap'); animIn($('#randTop'), 'a-swap'); flash([btn]);
-  $('#randStatus').textContent = `${capFirst(picks.top)}: ${picks.ids.length} new lesson${picks.ids.length===1?'':'s'}`;
+  $('#randStatus').textContent = `${tc(picks.top)}: ${picks.ids.length} new lesson${picks.ids.length===1?'':'s'}`;
 }
 function viewHome(){
   return `<section class="intro" aria-labelledby="introH"><h1 class="display intro-h" id="introH">Practical Chinese Made Easy</h1>
@@ -671,7 +674,7 @@ function viewHome(){
     <div class="series" id="homeStart">${scard(PATH).replace('data-push=', 'data-lib="'+PATH+'" data-push=')}</div>
     <div class="series">${(()=>{ const tips = ITEMS.filter(r=>r.sec==='tips');
       return card('home:tips','How to Study','', tips, ()=>list('tips', tips)); })()}</div>
-    ${(()=>{ const its = todayPicks(); return its.length ? `<h2 class="kicker today-k"><button class="shuf" data-shuffle aria-describedby="randHint">Lesson Randomizer${SHUFFLE_ICON}</button></h2><p class="vh" id="randHint">Picks another topic and ${RAND_SHOW} lessons in it</p><p class="lede sm rand-top" id="randTop">${esc(capFirst(picks.top))}</p><p class="vh" role="status" id="randStatus"></p><ul class="list" id="randList">${its.map(r=>row(r,'today')).join('')}</ul>` : ''; })()}
+    ${(()=>{ const its = todayPicks(); return its.length ? `<h2 class="kicker today-k"><button class="shuf" data-shuffle aria-describedby="randHint">Lesson Randomizer${SHUFFLE_ICON}</button></h2><p class="vh" id="randHint">Picks another topic and ${RAND_SHOW} lessons in it</p><p class="lede sm rand-top" id="randTop">${esc(tc(picks.top))}</p><p class="vh" role="status" id="randStatus"></p><ul class="list" id="randList">${its.map(r=>row(r,'today')).join('')}</ul>` : ''; })()}
 `;
 }
 function searchField(){
@@ -803,7 +806,7 @@ function openPlayer(id, ctx, keepQueue){
   $('#ytLink').href = url(r);
   $('#sheetKicker').textContent = drillName ? `${drillName}: ${qi+1} of ${queue.length}`
     : pathMode ? `Day ${r.ord} of ${queue.length}`
-    : [r.lab&&r.lab.join(', '), LEVELS.find(l=>l.id===r.lv).name, r.top].filter(Boolean).join(' · ');
+    : [r.lab&&r.lab.join(', '), LEVELS.find(l=>l.id===r.lv).name, r.top && tc(r.top)].filter(Boolean).join(' · ');
   syncActs();
   $('#sheetWrap').dataset.open = 'true';
   document.body.style.overflow = 'hidden';
@@ -901,10 +904,10 @@ document.addEventListener('click', e => {
   if(t.dataset.level){ S.level=t.dataset.level; S.sub='all'; store.set('level',S.level); updateLevel(); t.focus(); return; }
   if(t.dataset.more){ const k=t.dataset.more; S.open[k]=!S.open[k]; render(false); const b=document.querySelector(`[data-more="${CSS.escape(k)}"]`); b&&b.focus(); return; }
   if(t.dataset.goto) return go(t.dataset.goto);
-  if(t.dataset.play){ const c=t.dataset.ctx||''; drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : ''; return openPlayer(t.dataset.play, c); }
+  if(t.dataset.play){ const c=t.dataset.ctx||''; drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':tc(c.slice(6))) : ''; return openPlayer(t.dataset.play, c); }
   if(t.matches('.row, .dtile') && t.dataset.id){ const c=t.dataset.ctx||'';
     if(c==='search') saveQ(S.q, t.dataset.id);   // history remembers which lesson this search led to
-    drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':c.slice(6)) : c.startsWith('lvdrill:') ? c.slice(8) : '';
+    drillName = c.startsWith('drill:') ? (c==='drill:all'?'Mixed Drill Session':tc(c.slice(6))) : c.startsWith('lvdrill:') ? tc(c.slice(8)) : '';
     return openPlayer(t.dataset.id, c); }
 });
 $('#main').addEventListener('focusin', e => { if(e.target.id!=='q') return;
