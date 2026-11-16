@@ -548,7 +548,7 @@ function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
 }
 let dailyTimer = 0;
 // While a sync runs, a pixel sea (after fogday.com/waves: the Doom-fire rule, same palette) rolls where the Sync Devices
-// heading was, and the arrows by the page title spin. At rest the sea is a still frame. Both run at least 2 s so a quick
+// heading was, and the arrows by the page title spin. At rest the sea is a still frame. Both run at least 5 s so a quick
 // sync is still seen. With reduced motion the sea stays still and the arrows do not spin.
 const SEA = (() => {
   const N = 12, H = 30, stops = [[1,[244,255,251]],[3,[191,238,224]],[5,[111,211,181]],[7,[47,179,154]],[9,[26,143,138]],[11,[13,79,115]],[12,[4,32,61]]];
@@ -588,7 +588,7 @@ const SEA = (() => {
   function setSpeed(v){
     SPD = Math.min(4, Math.max(.25, v)); store.set('seaSpeed', SPD);
     if(cv){ cv.setAttribute('aria-valuenow', fmt(SPD)); cv.setAttribute('aria-valuetext', fmt(SPD) + ' times'); }
-    clearTimeout(prevT); prev = true; upd(); prevT = setTimeout(() => { prev = false; upd(); }, 1500);   // show the new speed for a moment
+    clearTimeout(prevT); prev = true; upd(); prevT = setTimeout(() => { prev = false; upd(); }, 5000);   // show the new speed for at least 5 s
   }
   function bind(c){
     let x0 = null, s0 = 1;
@@ -620,7 +620,7 @@ function syncAnim(on){
   clearTimeout(animOff);
   const set = v => { SEA.run(v); document.querySelectorAll('.sync-ic').forEach(n => n.classList.toggle('on', v)); };
   if(on){ animAt = Date.now(); set(true); }
-  else animOff = setTimeout(() => { if(!syncBusy) set(false); }, Math.max(0, 2000 - (Date.now() - animAt)));
+  else animOff = setTimeout(() => { if(!syncBusy) set(false); }, Math.max(0, 5000 - (Date.now() - animAt)));
 }
 function syncDaily(){
   clearTimeout(dailyTimer); if(!store.get('sync:tok','')) return;
