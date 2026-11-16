@@ -225,9 +225,9 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
-.dragons{flex:1;min-width:0;height:112px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm);
-  -webkit-mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent)}   /* dragons walk in and out through soft side edges */
-.dragons:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;-webkit-mask-image:none;mask-image:none}
+.dragons{flex:1;min-width:0;height:112px;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:pan-y;cursor:ew-resize;border-radius:var(--r-sm)}
+/* No CSS mask here: WebKit can stop repainting a masked canvas. The soft side edges are drawn into the pixels instead. */
+.dragons:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px}
 .sync p{margin:0 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm);max-width:60ch}
 .sync-form{display:grid;gap:var(--s2);justify-items:start}
 .sync-form label{font-weight:600}
@@ -582,7 +582,7 @@ const DRAG = (() => {
   const PAPER = [251,248,241];
   const ZKEY = [[0,0],[230,0],[340,1],[900,1],[1000,0],[1300,0]], MARCH = [[150,300],[960,1110]];
   const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
-  let cv = null, ctx, off, octx, oimg, W = 0, raf = 0, vis = true, t = 0, dg = null, sparks = [], last = 0, acc = 0, nextGroup = 180, nextColor = 240;
+  let cv = null, ctx, img, W = 0, raf = 0, t = 0, dg = null, sparks = [], last = 0, acc = 0, nextGroup = 180, nextColor = 240;
   // Speed: swipe right on the dragons for faster, left for slower (doubles every 120 px); arrow keys step it. Kept on this device.
   let SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1));
   const fmt = v => String(Math.round(v * 100) / 100);
@@ -646,35 +646,42 @@ const DRAG = (() => {
     for(const d of dg){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a,j) => a+(d.tsv[j]-a)*.06); }
     sparks = sparks.map(([x,y,n]) => [x,y,n-1]).filter(s => s[2] > 0);
   }
+  // Whole frame is built in one ImageData at art-pixel size and written with a single putImageData (the same path the
+  // old sea used). No offscreen canvas, no drawImage, no CSS mask: those were the WebKit-fragile parts on iPhone.
+  const SPK = [217,154,30];
   function draw(){
-    ctx.clearRect(0, 0, W, H);
+    const o = img.data; o.fill(0);
+    const put = (x, y, c) => { if(x < 0 || x >= W || y < 0 || y >= H) return; const k = (y*W + x)*4; o[k] = c[0]; o[k+1] = c[1]; o[k+2] = c[2]; o[k+3] = 255; };
     for(const d of [...dg].sort((a,b) => (a.fly>0)-(b.fly>0) || a.b-b.b)){
-      const pal = palOf(d), s = SPR[d.step*2 + d.wing], o = oimg.data;
-      for(let y=0; y<GH; y++) for(let x=0; x<GW; x++){
-        const v = s[y*GW + (d.dir < 0 ? GW-1-x : x)], k = (y*GW + x)*4;
-        if(!v){ o[k+3] = 0; continue; } const c = pal[v]; o[k] = c[0]; o[k+1] = c[1]; o[k+2] = c[2]; o[k+3] = 255; }
-      octx.putImageData(oimg, 0, 0);
-      const sc = (2+d.z)/3;
-      ctx.drawImage(off, Math.round(d.x), Math.round(d.b + d.y*sc - 22*sc), Math.round(GW*sc), Math.round(GH*sc));
+      const pal = palOf(d), s = SPR[d.step*2 + d.wing], sc = (2+d.z)/3;
+      const dw = Math.round(GW*sc), dh = Math.round(GH*sc), ox = Math.round(d.x), oy = Math.round(d.b + d.y*sc - 22*sc);
+      for(let y=0; y<dh; y++){ const sy = (y*GH/dh)|0;
+        for(let x=0; x<dw; x++){ const sx = (x*GW/dw)|0, v = s[sy*GW + (d.dir < 0 ? GW-1-sx : sx)]; if(v) put(ox+x, oy+y, pal[v]); } }
     }
-    ctx.fillStyle = '#d99a1e';
-    for(const [sx,sy,n] of sparks){ const r = 16-n; for(let a=0; a<8; a++) ctx.fillRect(Math.round(sx+Math.cos(a*Math.PI/4)*r), Math.round(sy+Math.sin(a*Math.PI/4)*r*.7), 1, 1); }
+    for(const [sx,sy,n] of sparks){ const r = 16-n; for(let a=0; a<8; a++) put(Math.round(sx+Math.cos(a*Math.PI/4)*r), Math.round(sy+Math.sin(a*Math.PI/4)*r*.7), SPK); }
+    const e = Math.max(1, Math.round(W*.1));   // soft side edges: dragons walk in and out
+    for(let x=0; x<e; x++){ const f = x/e;
+      for(let y=0; y<H; y++){ const l = (y*W + x)*4 + 3, r = (y*W + W-1-x)*4 + 3; o[l] = o[l]*f; o[r] = o[r]*f; } }
+    ctx.putImageData(img, 0, 0);
   }
   function size(){
-    if(!cv) return; const w = Math.max(80, Math.round(cv.getBoundingClientRect().width / 2));
-    if(w===W) return;
-    const was = W; W = w; cv.width = W; cv.height = H; ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    if(!cv) return; const w = Math.round(cv.getBoundingClientRect().width / 2);
+    if(w < 40 || w===W) return;   // hidden (zero width): wait until it is shown
+    const was = W; W = w; cv.width = W; cv.height = H; ctx = cv.getContext('2d'); img = ctx.createImageData(W, H);
     if(!dg || !was) reset(); else for(const d of dg) d.x = d.x/was*W;
     tick(); draw();
   }
-  function upd(){ const go = cv && cv.isConnected && vis && !document.hidden && !RM.matches;
-    if(go && !raf){ last = 0; raf = requestAnimationFrame(loop); } }
-  function loop(now){ raf = 0; if(!cv || !cv.isConnected || !vis || document.hidden || RM.matches) return;
-    acc += last ? Math.min(200, now-last)/33.3*SPD : 1; last = now; let n = 0;   // about 30 steps a second at 1x
-    while(acc >= 1 && n < 24){ acc -= 1; tick(); n++; } if(n) draw();
-    raf = requestAnimationFrame(loop); }
-  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { vis = es[0].isIntersecting; upd(); }) : null;
+  // On screen = has size and overlaps the viewport. Checked directly each frame instead of trusting IntersectionObserver.
+  function onScreen(){ const r = cv.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < (window.innerHeight || document.documentElement.clientHeight); }
+  function upd(){ if(cv && cv.isConnected && !document.hidden && !RM.matches && !raf){ last = 0; raf = requestAnimationFrame(loop); } }
+  function loop(now){ raf = 0; if(!cv || !cv.isConnected || document.hidden || RM.matches) return;
+    raf = requestAnimationFrame(loop);
+    if(!W) size(); if(!W || !onScreen()){ last = 0; return; }
+    acc += last ? Math.min(200, now-last)/33.3*SPD : 1; last = now; let n = 0;   // about 30 steps a second at 1x, any refresh rate
+    while(acc >= 1 && n < 24){ acc -= 1; tick(); n++; } if(n) draw(); }
+  const ro = 'ResizeObserver' in window ? new ResizeObserver(() => size()) : null;   // first frame as soon as it has a width, even with reduced motion
   document.addEventListener('visibilitychange', upd);
+  let rmOn = false;
   function setSpeed(v){ SPD = Math.min(4, Math.max(.25, v)); store.set('dragSpeed', SPD);
     if(cv){ cv.setAttribute('aria-valuenow', fmt(SPD)); cv.setAttribute('aria-valuetext', fmt(SPD) + ' times'); } }
   function bind(c){
@@ -690,9 +697,10 @@ const DRAG = (() => {
       else if(k==='PageUp'){ e.preventDefault(); setSpeed(4); } else if(k==='PageDown'){ e.preventDefault(); setSpeed(.25); } });
   }
   return {
-    mount(){ const c = document.querySelector('.dragons'); if(c===cv) return; if(io) io.disconnect(); cv = c; W = 0; vis = true;
-      if(!c) return; off = document.createElement('canvas'); off.width = GW; off.height = GH; octx = off.getContext('2d'); oimg = octx.createImageData(GW, GH);
-      size(); if(io) io.observe(c); bind(c); upd(); },
+    mount(){ const c = document.querySelector('.dragons'); if(c===cv) return; if(ro) ro.disconnect(); cv = c; W = 0;
+      if(!c) return; size(); if(ro) ro.observe(c); bind(c);
+      if(!rmOn){ rmOn = true; if(RM.addEventListener) RM.addEventListener('change', upd); else if(RM.addListener) RM.addListener(upd); }
+      upd(); },
     run(v){ if(v && dg) nextGroup = 0; },   // a sync starting sets off a group jump
     speed: () => fmt(SPD),
     size
