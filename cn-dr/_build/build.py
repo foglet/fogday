@@ -31,7 +31,7 @@ MAT = {
  # Paraphrased from mandarininsights.com (home page), 2026-11-14.
  "bio": [
   "Dr. Hanyu Jia holds a PhD in applied linguistics from the University of Arizona and teaches Mandarin online. More than 500 students have learned with her.",
-  "Her lessons are built around real situations, like getting something done in Chinese, and teach pronunciation, tones, grammar, and core vocabulary along the way. Her goal is for you to speak confidently in everyday life, not just pass a test.",
+  "Her lessons are built around real situations, like getting something done in Chinese, and teach pronunciation, tones, grammar, and core vocabulary along the way. Her goal is for you to speak naturally with confidence. Every day.",
  ],
  "courses": [
   {"name":"Mandarin Foundation: Beginner Course","levels":["beginner"],"feature":True,
