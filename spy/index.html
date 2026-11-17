@@ -131,8 +131,8 @@ zoom: 13.02
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
   }
-  .legend-toggle::after { color: var(--muted); transform: rotate(180deg); }
-  .legend-toggle[aria-expanded="true"]::after { transform: none; }
+  .legend-toggle::after { color: var(--muted); }
+  .legend-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
   .notes[open] summary::after { transform: rotate(180deg); }
   .legend-toggle { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
   .legend-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -164,6 +164,18 @@ zoom: 13.02
   .note a { color: var(--ink); }
   .note a:hover { color: var(--ink); }
 
+  /* Language for the place details: a code in the bottom-right stack (as the zoom readout); tap it for the codes,
+     bare text with a navy halo, opening to its left like /transit/'s Cities menu */
+  .oa-lang { position: relative; }
+  .oa-lang[hidden], .oa-lang-pop[hidden] { display: none; }
+  .oa-lang-pop { position: absolute; right: calc(100% + 4px); top: 50%; transform: translateY(-50%); display: flex; gap: 0; }
+  .oa-lang-pop button { all: unset; box-sizing: border-box; cursor: pointer; min-width: 32px; height: 32px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center;
+    font: 700 .72rem/1 var(--font); letter-spacing: .04em; color: var(--ink); text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
+  .mapboxgl-ctrl .oa-lang-pop button:not(:disabled):hover { background-color: transparent; }
+  .oa-lang-pop button:hover, .oa-lang-pop button[aria-checked="true"] { color: var(--accent); }
+  .oa-lang-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
+  .oa-lang .oa-zoomread[aria-expanded="true"] { color: var(--accent); }
+  @media (pointer: coarse) { .oa-lang-pop button { min-width: 40px; height: 44px; font-size: .85rem; } }
   /* Tapped spot, above Info (as on /transit/, above Transport mode): place, coordinates, local time.
      No panel: each line gets its own frosted background, only as wide as its text; flush left with "Info". */
   .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 2px; max-width: calc(100% - 2px); font-size: .9rem; line-height: 1.35; color: var(--ink); }
@@ -309,6 +321,12 @@ zoom: 13.02
 </svg>
 
 <!-- Zoom readout, moved into the bottom-right stack above + − by the script (as on /transit/) -->
+<div class="oa-lang" id="lang" hidden>
+  <button type="button" class="oa-zoomread" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-controls="langPop" title="Language of the place details">EN</button>
+  <div class="oa-lang-pop" id="langPop" role="radiogroup" aria-label="Language of the place details" hidden>
+    <button type="button" role="radio" data-lang="en" lang="en" title="English">EN</button><button type="button" role="radio" data-lang="de" lang="de" title="Deutsch">DE</button><button type="button" role="radio" data-lang="es" lang="es" title="Español">ES</button><button type="button" role="radio" data-lang="fr" lang="fr" title="Français">FR</button><button type="button" role="radio" data-lang="ru" lang="ru" title="Русский">RU</button><button type="button" role="radio" data-lang="zh" lang="zh" title="中文">ZH</button>
+  </div>
+</div>
 <button type="button" class="oa-zoomread" id="zoomRead" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
 
 <!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
@@ -352,14 +370,15 @@ zoom: 13.02
 </div>
 
 <section class="controls" aria-label="Info">
-  <!-- Bottom up: the Info toggle, (open) the notes above it, and the tapped spot on top (moves up when Info opens) -->
+  <!-- Top down, anchored at the bottom: the tapped spot, the Info toggle, and (open) the notes below it,
+       so opening Info lifts the toggle and the spot, as Transport mode on /transit/ -->
   <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>
+  <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
   <div class="legend-body" id="legendBody">
     <div class="notes-body">
       <p class="note">Dark maps rule. Tunnels, footpaths, bridges, transit, building outlines. This is the James Bond spy map served up by Q.</p>
     </div>
   </div>
-  <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
 </section>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.33.0/mapbox-gl.js"></script>
@@ -381,9 +400,10 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, location, language, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("zoomRead"));
+  asControl($("lang"));
   asControl($("here"));
   /* Zoom readout: live, to one decimal; tap it to ease back to the opening zoom, staying where the map is */
   const zr=$("zoomRead");
@@ -514,6 +534,14 @@ const loadAirports=(function(){
      3:18 AM GMT+0   (time larger, ticking)
    Place names: Mapbox reverse geocoding (English). Time zone: tz-lookup (@photostructure/tz-lookup, CC0), loaded on the
    first tap. The orange dot fades over 15s; the card stays. A new tap replaces it; the title or Escape clears it. */
+/* Language of the place details: EN DE ES FR RU ZH. Place names come from Mapbox in that language and the clock
+   is in that locale's format; airport names (OurAirports) and "MI6 HQ" stay as they are. Remembered in this browser. */
+const LANGS={en:"en-US", de:"de-DE", es:"es-ES", fr:"fr-FR", ru:"ru-RU", zh:"zh-CN"};
+const WORDS={
+  en:["Open water","Place name unavailable","Time zone unavailable"], de:["Offenes Wasser","Ortsname nicht verfügbar","Zeitzone nicht verfügbar"],
+  es:["Aguas abiertas","Nombre del lugar no disponible","Zona horaria no disponible"], fr:["En pleine eau","Nom du lieu indisponible","Fuseau horaire indisponible"],
+  ru:["Открытая вода","Название места недоступно","Часовой пояс недоступен"], zh:["开阔水域","地名不可用","时区不可用"] };
+let LANG=LANGS[store.get("lang")] ? store.get("lang") : "en", lastSpot=null;
 const calm=matchMedia("(prefers-reduced-motion: reduce)");
 const spotCard=$("oa-detail-panel");
 let spotTurn=0, spotTimer=0, spotZone=null, spotAnim=null, spotMarker=null, spotLife=0, spotFade=null, tzReady=null;
@@ -538,8 +566,8 @@ function loadTz(){
     sc.onload=()=>ok(window.tzlookup||null); sc.onerror=()=>{ tzReady=null; ok(null) }; document.head.appendChild(sc);
   }));
 }
-function placeName(lng, lat, cityName){
-  const url="https://api.mapbox.com/search/geocode/v6/reverse?longitude="+lng+"&latitude="+lat+"&language=en&access_token="+mapboxgl.accessToken;
+function placeName(lng, lat, cityName, lang){
+  const url="https://api.mapbox.com/search/geocode/v6/reverse?longitude="+lng+"&latitude="+lat+"&language="+lang+"&access_token="+mapboxgl.accessToken;
   return fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json() }).then(j=>{
     const c={};
     (j.features||[]).forEach(f=>{ const p=f.properties||{};
@@ -548,9 +576,9 @@ function placeName(lng, lat, cityName){
     const city=c.place||c.locality||c.district, region=c.region, country=c.country;
     const rc=region && region.region_code;
     const st=region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
-    const parts=[cityName||(city&&city.name), st, country&&country.name].filter(Boolean).filter((n,i,a)=>a.indexOf(n)===i);
-    return parts.length ? parts.join(", ") : "Open water";
-  }).catch(()=>"Place name unavailable");
+    const parts=[(lang==="en" && cityName)||(city&&city.name), st, country&&country.name].filter(Boolean).filter((n,i,a)=>a.indexOf(n)===i);
+    return parts.length ? parts.join(lang==="zh" ? "，" : ", ") : WORDS[lang][0];
+  }).catch(()=>WORDS[lang][1]);
 }
 function offsetText(zone){
   try{ const o=new Intl.DateTimeFormat("en-US",{timeZone:zone, timeZoneName:"shortOffset"}).formatToParts(new Date()).filter(p=>p.type==="timeZoneName")[0].value;
@@ -559,7 +587,7 @@ function offsetText(zone){
 function setTime(el, zone){
   el.textContent="";
   try{
-    const parts=new Intl.DateTimeFormat("en-US",{timeZone:zone, hour:"numeric", minute:"2-digit", hour12:true}).formatToParts(new Date());
+    const parts=new Intl.DateTimeFormat(LANGS[LANG],{timeZone:zone, hour:"numeric", minute:"2-digit"}).formatToParts(new Date());
     const digits=parts.filter(p=>p.type!=="dayPeriod").map(p=>p.value).join("").trim(), period=parts.filter(p=>p.type==="dayPeriod").map(p=>p.value).join("");
     el.appendChild(document.createTextNode(digits));
     if(period){ const ap=document.createElement("span"); ap.className="oa-detail-ampm"; ap.textContent=period; el.append(" ", ap) }
@@ -579,10 +607,11 @@ function dms(v, pos, neg){
 function line(cls, text){ const d=document.createElement("div"); d.className=cls; d.textContent=text; return d }
 function showSpot(lngLat, airport){
   if(!map) return;
-  const mine=++spotTurn, ll=lngLat.wrap(), lat=ll.lat.toFixed(6), lng=ll.lng.toFixed(6);
+  lastSpot=[lngLat, airport];
+  const lang=LANG, mine=++spotTurn, ll=lngLat.wrap(), lat=ll.lat.toFixed(6), lng=ll.lng.toFixed(6);
   if(!spotMarker) spotMarker=new mapboxgl.Marker({element:spotWrap});
   spotMarker.setLngLat(ll).addTo(map); spotStart();
-  Promise.all([placeName(lng, lat, airport && airport.city), loadTz()]).then(([name, tz])=>{
+  Promise.all([placeName(lng, lat, airport && airport.city, lang), loadTz()]).then(([name, tz])=>{
     if(mine!==spotTurn) return;
     let zone=null; try{ zone=tz ? tz(+lat, +lng) : null }catch(e){}
     spotZone=zone;
@@ -598,7 +627,7 @@ function showSpot(lngLat, airport){
       const clock=document.createElement("div"), tm=document.createElement("span"), off=document.createElement("span");
       clock.className="oa-detail-clock"; tm.className="oa-detail-time"; off.className="oa-detail-offset";
       setTime(tm, zone); off.textContent=offsetText(zone); clock.append(tm, " ", off); spotCard.appendChild(clock);
-    } else spotCard.appendChild(line("oa-detail-offset", "Time zone unavailable"));
+    } else spotCard.appendChild(line("oa-detail-offset", WORDS[lang][2]));
     spotCard.hidden=false;
     if(!calm.matches && spotCard.animate) slideLines(spotCard.children);
     tick();
@@ -613,10 +642,25 @@ function clearSpot(){
 }
 /* A tap that only shuts a menu (Maps, an open search) doesn't also drop a spot. Captured before the menus shut. */
 let menuWasOpen=false;
-document.addEventListener("pointerdown", ()=>{ menuWasOpen=!$("maps-menu").hidden || !$("search").classList.contains("oa-collapsed") }, true);
+document.addEventListener("pointerdown", ()=>{ menuWasOpen=!$("maps-menu").hidden || !$("langPop").hidden || !$("search").classList.contains("oa-collapsed") }, true);
 document.addEventListener("keydown", e=>{
-  if(e.key==="Escape" && !spotCard.hidden && $("maps-menu").hidden && $("search").classList.contains("oa-collapsed")) clearSpot();
+  if(e.key==="Escape" && !spotCard.hidden && $("maps-menu").hidden && $("langPop").hidden && $("search").classList.contains("oa-collapsed")) clearSpot();
 }, true);
+/* Language picker: tap the code for the six; pick one and the card (if shown) is redone in it */
+(function(){
+  const btn=$("langBtn"), pop=$("langPop"), opts=[...pop.querySelectorAll("button")];
+  function mark(){ btn.textContent=LANG.toUpperCase(); btn.setAttribute("aria-label","Language of the place details: "+LANG.toUpperCase());
+                   opts.forEach(b=>b.setAttribute("aria-checked", String(b.dataset.lang===LANG))) }
+  function setOpen(open){ pop.hidden=!open; btn.setAttribute("aria-expanded", String(open)) }
+  btn.addEventListener("click", ()=>setOpen(pop.hidden));
+  opts.forEach(b=>b.addEventListener("click", ()=>{
+    LANG=b.dataset.lang; store.set("lang", LANG); mark(); setOpen(false); btn.focus();
+    if(!spotCard.hidden && lastSpot) showSpot(lastSpot[0], lastSpot[1]);
+  }));
+  document.addEventListener("pointerdown", e=>{ if(!pop.hidden && !$("lang").contains(e.target)) setOpen(false) }, true);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !pop.hidden){ setOpen(false); btn.focus() } });
+  mark();
+})();
 initMap();
 /* Tapping an airport names it, as on /transit/: its code label (zoom 11+) names it directly; a runway or taxiway goes to
    the nearest airport in airports.json within 8 km (heliports, seaplane bases and stations skipped).
