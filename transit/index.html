@@ -689,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Tap the map: above the legend, show where that is —
        San Francisco, CA, United States
-       37°46′30″N 122°25′10″W
+       37°46′30″N, 122°25′10″W
        GMT-7
        3:18 PM   (larger)
      Place names: Mapbox reverse geocoding (English). Time zone: worked out in the browser from the
@@ -769,7 +769,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTime(t, spotZone); o.textContent = offsetText(spotZone);
     spotTimer = setTimeout(tick, 60000 - Date.now() % 60000 + 50);
   }
-  /* 46°51′48″N 03°09′48″E — degrees, minutes, seconds (rounded to the second), as on Wikipedia */
+  /* 46°51′48″N, 03°09′48″E — degrees, minutes, seconds (rounded to the second), as on Wikipedia */
   function dms(v, pos, neg) {
     var t = Math.round(Math.abs(v) * 3600), d = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
     function two(n) { return (n < 10 ? '0' : '') + n; }
@@ -793,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function () {
         spotCard.appendChild(head);
         spotCard.appendChild(line('oa-detail-place', r[0]));
       } else spotCard.appendChild(line('oa-detail-name', r[0]));
-      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ' ' + dms(+lng, 'E', 'W')));
+      spotCard.appendChild(line('oa-detail-coords', dms(+lat, 'N', 'S') + ', ' + dms(+lng, 'E', 'W')));
       if (zone) {
         var clock = document.createElement('div'), tm = document.createElement('span'), off = document.createElement('span');
         clock.className = 'oa-detail-clock'; tm.className = 'oa-detail-time'; off.className = 'oa-detail-offset';
