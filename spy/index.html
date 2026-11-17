@@ -372,7 +372,7 @@ zoom: 13.02
   <div class="info-row">   <!-- the language code, left of Info -->
     <div class="oa-lang" id="lang">
       <button type="button" class="legend-toggle lang-toggle" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-controls="langPop" title="Language of the place details">EN</button>
-      <div class="oa-lang-pop" id="langPop" role="radiogroup" aria-label="Language of the place details" hidden>
+      <div class="oa-lang-pop" id="langPop" role="radiogroup" aria-label="Language of the place details and labels" hidden>
         <button type="button" role="radio" data-lang="en" lang="en" title="English">EN</button><button type="button" role="radio" data-lang="de" lang="de" title="Deutsch">DE</button><button type="button" role="radio" data-lang="es" lang="es" title="Español">ES</button><button type="button" role="radio" data-lang="fr" lang="fr" title="Français">FR</button><button type="button" role="radio" data-lang="ru" lang="ru" title="Русский">RU</button><button type="button" role="radio" data-lang="zh" lang="zh" title="中文">ZH</button>
       </div>
     </div>
@@ -396,6 +396,27 @@ const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the Spy st
 let map=null, here=null, user=null, watching=false;
 /* A control from a page element, in the bottom-right stack (as on /ucsf/ and /treesf/) */
 function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
+/* Parks and landmarks: the Spy style hides Mapbox's POI labels, so these two layers bring them back, from the
+   same Streets v7 poi_label tiles. Parks in green italics (big ones from zoom 12); landmarks in pale type from 14
+   (the lesser ones from 16), embassies picked out in the accent yellow. Names follow the language picker. */
+const PARKS=["park","garden","zoo","cemetery","golf"];
+const LANDMARKS=["attraction","monument","museum","art-gallery","theatre","embassy","town-hall","police","prison","castle","stadium","aquarium"];
+const nameIn=lang=>["coalesce", ["get","name_"+(lang==="zh" ? "zh-Hans" : lang)], ["get","name_en"], ["get","name"]];
+function addLabels(){
+  if(!map.getSource("composite") || map.getLayer("spy-parks")) return;
+  const halo={"text-halo-color":"#000", "text-halo-width":1.3, "text-halo-blur":0.5};
+  map.addLayer({id:"spy-parks", type:"symbol", source:"composite", "source-layer":"poi_label", minzoom:12,
+    filter:["all", ["in", ["get","maki"], ["literal", PARKS]], ["any", [">=", ["zoom"], 14], ["<=", ["get","scalerank"], 2]]],
+    layout:{"text-field":nameIn(LANG), "text-font":["Open Sans Semibold Italic","Arial Unicode MS Regular"],
+            "text-size":["interpolate",["linear"],["zoom"],12,11,17,14], "text-max-width":8, "text-padding":4},
+    paint:Object.assign({"text-color":"#7cc47f"}, halo)});
+  map.addLayer({id:"spy-landmarks", type:"symbol", source:"composite", "source-layer":"poi_label", minzoom:14,
+    filter:["all", ["in", ["get","maki"], ["literal", LANDMARKS]], ["any", [">=", ["zoom"], 16], ["<=", ["get","scalerank"], 3]]],
+    layout:{"text-field":nameIn(LANG), "text-font":["Open Sans Semibold","Arial Unicode MS Regular"],
+            "text-size":["interpolate",["linear"],["zoom"],14,11,18,14], "text-max-width":8, "text-padding":4},
+    paint:Object.assign({"text-color":["case", ["==", ["get","maki"], "embassy"], "#d6d63a", "rgba(237,239,245,0.88)"]}, halo)});
+}
+function labelLang(){ if(map) ["spy-parks","spy-landmarks"].forEach(id=>{ if(map.getLayer(id)) map.setLayoutProperty(id, "text-field", nameIn(LANG)) }) }
 function initMap(){
   if(!window.mapboxgl) return;
   try{
@@ -404,6 +425,7 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
+  map.on("load", addLabels);
   /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("zoomRead"));
@@ -657,7 +679,7 @@ document.addEventListener("keydown", e=>{
   function setOpen(open){ pop.hidden=!open; btn.setAttribute("aria-expanded", String(open)) }
   btn.addEventListener("click", ()=>setOpen(pop.hidden));
   opts.forEach(b=>b.addEventListener("click", ()=>{
-    LANG=b.dataset.lang; store.set("lang", LANG); mark(); setOpen(false); btn.focus();
+    LANG=b.dataset.lang; store.set("lang", LANG); mark(); setOpen(false); btn.focus(); labelLang();
     if(!spotCard.hidden && lastSpot) showSpot(lastSpot[0], lastSpot[1]);
   }));
   document.addEventListener("pointerdown", e=>{ if(!pop.hidden && !$("lang").contains(e.target)) setOpen(false) }, true);
