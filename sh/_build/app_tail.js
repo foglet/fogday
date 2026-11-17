@@ -323,20 +323,27 @@ async function pollLive(){
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
 })();
 $("home").addEventListener("click", ()=>pickRoute(null, true));
-/* Mission Bay | UCSF: whose shuttles, lines and stops show (not remembered; a reload is Mission Bay again) */
-document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
-  AG=b.dataset.ag;
-  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
-  state.focus=null;   // a switch shows all of that operator's routes, zoomed to fit
+/* Shuttle system: tap the name for the next one, as the beach name on /tides/ (not remembered; a reload is Mission Bay again) */
+const OPS=[["mbtma","Mission Bay"],["ucsf","UCSF"],["presidio","Presidio"],["ggp","Golden Gate Park"],["oyster","Oyster Point"],["ssf","South City"]];
+function showOp(){
+  const i=OPS.findIndex(o=>o[0]===AG), nx=OPS[(i+1)%OPS.length][1];
+  setText($("opName"), OPS[i][1]);
+  $("opBtn").setAttribute("aria-label", OPS[i][1]+" shuttles, "+(i+1)+" of "+OPS.length+". Tap for "+nx+".");
+  $("opBtn").title="Next: "+nx;
+}
+$("opBtn").addEventListener("click", () => {
+  AG=OPS[(OPS.findIndex(o=>o[0]===AG)+1)%OPS.length][0];
+  showOp();
+  state.focus=null;   // a new system shows all its routes, zoomed to fit
   applyFocus(true); render();
-}));   // the title clears the selection: all routes, the whole map
+});
+showOp();   // the title clears the selection: all routes, the whole map
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));
 /* Info opens below the routes: bring it into view inside the legend */
 /* Legend starts open on every screen: it is compact enough to leave the map in view; tap its title to shut it */
 setLegend(store.get("info")==="1");   // Info starts shut
-setText($("genDate"), new Date(D.gen).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}));
 document.querySelector('meta[name="theme-color"]').content = THEME.get()==="dark" ? "#021724" : "#edf1f2";
 initMap(); render();
 if(!window.mapboxgl) startLocation();

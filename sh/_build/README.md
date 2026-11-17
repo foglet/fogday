@@ -46,6 +46,18 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
 - Switch order: Mission Bay | UCSF | Presidio | GG Park (`data-ag` mbtma, ucsf, presidio, ggp). Weekend line
   "No weekend service" shows only for an operator with no trips that day.
 
+- Oyster Point BART (Commute.org): Trillium GTFS `https://data.trilliumtransit.com/gtfs/commute-ca-us/commute-ca-us.zip`
+  (Transitland `f-9q9j-commute~ca~us`), route 76230 only, compacted in the browser pane with `/home/claude/tools/gtfs_compact.js`
+  (copy in this README's history). `data/opb-compact.json`, `ag: "oyster"`. Thanksgiving 2026-11-26/27 added to the
+  exceptions (commute.org lists them; the feed does not). The feed also has Oyster Point Caltrain (76231) and Ferry (76232).
+- Free South City Shuttle (City of South San Francisco): no GTFS. `data/ssf_build.py` builds `data/ssf-compact.json`
+  (`ag: "ssf"`) from `data/ssf-timetable.json` (every time in the city's 2025-2027 schedule PDF, read from the PDF's
+  text in the browser pane) and `data/ssf-ips.json` (stops and route lines from the city's live tracker, IPS Sentry
+  site 19, `/MobileSentryAPI/Settings`). Blue clockwise, Green counterclockwise, Orange western; weekdays, city holidays off
+  (2027 observed dates are my reading of the city's holiday list). Tracker lines are coarse, so lines cut some corners.
+- Picker (replaced the switch): the system's name in the tides blue, 2em; tap for the next. Order: Mission Bay (default),
+  UCSF, Presidio, Golden Gate Park, Oyster Point, South City (`OPS` in app_tail.js).
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout

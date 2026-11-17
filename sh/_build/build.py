@@ -19,7 +19,9 @@ def merge(base, add):
 # Other operators, in switch order after UCSF; see README.md for each source
 for f in ("mbtma-compact.json",       # Mission Bay TMA (Trillium GTFS, Transitland f-9q8yy-missionbaytma~ca~us)
           "presidigo-compact.json",   # PresidiGo (presidiobus.com/gtfs, Transitland f-presidigo~ca~us)
-          "ggp-compact.json"):        # Golden Gate Park Shuttle (sfrecpark.org GTFS; calendar end extended, see README)
+          "ggp-compact.json",         # Golden Gate Park Shuttle (sfrecpark.org GTFS; calendar end extended, see README)
+          "opb-compact.json",         # Oyster Point BART (Commute.org, Trillium GTFS commute-ca-us, route 76230)
+          "ssf-compact.json"):        # Free South City Shuttle (built by data/ssf_build.py from the city's PDF and tracker)
     merge(data, json.loads((root / "data" / f).read_text(encoding="utf-8")))
 # tidy stop names: stray ids ("31796-Caulfield Cut") and spaces
 for s in data["stops"]: s[0] = re.sub(r"^\d+-", "", s[0].strip())
