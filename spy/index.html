@@ -187,7 +187,7 @@ zoom: 13.02
   .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: #8fa3b1; }
-  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: #ff3b30; }   /* the local time, big and red */
   .oa-detail-ampm { font-size: .667em; }
   .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
   /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
@@ -567,7 +567,7 @@ function loadTz(){
   }));
 }
 function placeName(lng, lat, cityName, lang){
-  const url="https://api.mapbox.com/search/geocode/v6/reverse?longitude="+lng+"&latitude="+lat+"&language="+lang+"&access_token="+mapboxgl.accessToken;
+  const url="https://api.mapbox.com/search/geocode/v6/reverse?longitude="+lng+"&latitude="+lat+"&language="+(lang==="zh" ? "zh-Hans" : lang)+"&access_token="+mapboxgl.accessToken;
   return fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json() }).then(j=>{
     const c={};
     (j.features||[]).forEach(f=>{ const p=f.properties||{};
