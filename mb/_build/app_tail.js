@@ -307,24 +307,6 @@ function render(){
     setText(b.querySelector(".cnt"), counts[i] ? String(counts[i]) : "");
     b.setAttribute("aria-label", ROUTES[i].long+(counts[i] ? ", "+counts[i]+" running" : ", none running"));
   });
-
-  setText($("srcNote"), state.live ? "Filled dots are live GPS; hollow dots are estimated from the timetable, for routes without live data. The arrow shows the direction of travel." : "Shuttles are placed where the timetable says they are now (hollow dots), not by live GPS. The arrow shows the direction of travel.");
-
-  const nn=$("nearNote");
-  if(weekend) nn.hidden=true;
-  else if(state.user){
-    const near=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).filter(s=>stopOk(s.i)).sort((a,b)=>a.d-b.d).slice(0,3);
-    if(near[0].d>8000){ nn.hidden=false; setText(nn, "Nearest UCSF shuttle stop: "+STOPS[near[0].i].short+", "+dist(near[0].d)+" away."); }
-    else {
-      const parts=near.map(s => {
-        const seen={}, list=[];
-        departures(s.i, now, 5400).forEach(d=>{ seen[d.route]=(seen[d.route]||0)+1; if(seen[d.route]<=2 && list.length<4) list.push(ROUTES[d.route].name+" "+mins(d.at)) });
-        return "<b>"+esc(STOPS[s.i].short)+"</b>, "+dist(s.d)+": "+(list.length ? esc(list.join(", ")) : "no departures in the next 90 min");
-      });
-      const html="Near you. "+parts.join(". ")+".";
-      if(nn.innerHTML!==html) nn.innerHTML=html; nn.hidden=false;
-    }
-  }
 }
 
 /* ---------- loop ---------- */

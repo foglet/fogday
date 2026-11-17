@@ -35,6 +35,8 @@ html = (root / "shell.html").read_text(encoding="utf-8")
 html = html.replace("/*APP*/", app).replace("/*DATA*/", js(data)).replace("/*CONFIG*/", js(config))
 # the page goes through Jekyll (front matter, for the maps menu): the script must hold no Liquid
 for chunk in (app, js(data)): assert "{{" not in chunk and "{%" not in chunk
+# Jekyll silently drops bad front matter (the page then ships raw), so parse it here
+import yaml; fm = yaml.safe_load(html.split("---")[1]); assert fm["title"] and fm["description"]
 out = root.parent / "index.html"
 out.write_text(html, encoding="utf-8")
 print(out, len(html.encode()))
