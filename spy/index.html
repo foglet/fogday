@@ -416,7 +416,28 @@ function addLabels(){
             "text-size":["interpolate",["linear"],["zoom"],14,11,18,14], "text-max-width":8, "text-padding":4},
     paint:Object.assign({"text-color":["case", ["==", ["get","maki"], "embassy"], "#d6d63a", "rgba(237,239,245,0.88)"]}, halo)});
 }
-function labelLang(){ if(map) ["spy-parks","spy-landmarks"].forEach(id=>{ if(map.getLayer(id)) map.setLayoutProperty(id, "text-field", nameIn(LANG)) }) }
+/* The style's own labels (cities, neighborhoods, streets, stations, rivers, countries) follow the picker too:
+   in EN they're as the style has them; otherwise each "{name_en}" or "{name}" becomes the picked language's name,
+   falling back to the local name where Mapbox has no translation. Kept zoom steps (stations from 14) are kept. */
+let baseFields=null;
+function localize(v, lang){
+  if(typeof v==="string") return /^\{name(_en)?\}$/.test(v) ? nameIn(lang).slice(0,2).concat([["get","name"]]) : null;
+  if(v && Array.isArray(v.stops)){
+    const parts=v.stops.map(([z,x])=>[z, typeof x==="string" ? (/^\{name(_en)?\}$/.test(x) ? localize(x, lang) : x) : null]);
+    if(parts.some(([,x])=>x===null) || !parts.some(([,x])=>Array.isArray(x))) return null;
+    const out=["step", ["zoom"], parts[0][1]]; parts.slice(1).forEach(([z,x])=>out.push(z, x)); return out;
+  }
+  return null;
+}
+function labelLang(){
+  if(!map || !map.isStyleLoaded()) return;
+  if(!baseFields){ baseFields={}; map.getStyle().layers.forEach(l=>{ if(l.type==="symbol" && l.layout && l.layout["text-field"] && !/^spy-/.test(l.id)) baseFields[l.id]=l.layout["text-field"] }) }
+  Object.keys(baseFields).forEach(id=>{
+    const v = LANG==="en" ? baseFields[id] : localize(baseFields[id], LANG);
+    if(v) map.setLayoutProperty(id, "text-field", v);
+  });
+  ["spy-parks","spy-landmarks"].forEach(id=>{ if(map.getLayer(id)) map.setLayoutProperty(id, "text-field", nameIn(LANG)) });
+}
 function initMap(){
   if(!window.mapboxgl) return;
   try{
@@ -425,7 +446,7 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  map.on("load", addLabels);
+  map.on("load", ()=>{ addLabels(); labelLang() });
   /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("zoomRead"));
