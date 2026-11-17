@@ -164,7 +164,24 @@ zoom: 13.02
   .note a { color: var(--ink); }
   .note a:hover { color: var(--ink); }
 
-  /* Popups: navy cards */
+  /* Tapped spot, above Info (as on /transit/, above Transport mode): place, coordinates, local time.
+     No panel: each line gets its own frosted background, only as wide as its text; flush left with "Info". */
+  .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 2px; max-width: calc(100% - 2px); font-size: .9rem; line-height: 1.35; color: var(--ink); }
+  .oa-detail-panel[hidden] { display: none; }
+  .oa-detail-panel > div { width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .oa-detail-name { font-weight: 700; }
+  .oa-detail-code { color: #7cc4f0; letter-spacing: .04em; }
+  .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
+  .oa-detail-coords, .oa-detail-offset, .oa-detail-time { font-variant-numeric: tabular-nums; }
+  .oa-detail-offset { color: #8fa3b1; }
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+  .oa-detail-ampm { font-size: .667em; }
+  .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
+  /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
+  .tc-spot-wrap { pointer-events: none; }
+  .tc-spot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FF5500; background: #B33C00; pointer-events: none; }
+
 
   /* Map controls, bottom right as on /transit/: no panels, icons with a navy halo */
   .mapboxgl-map .mapboxgl-ctrl-group { background: transparent; border: 0; box-shadow: none; }
@@ -335,7 +352,8 @@ zoom: 13.02
 </div>
 
 <section class="controls" aria-label="Info">
-  <!-- Bottom up: the Info toggle and (open) the notes above it -->
+  <!-- Bottom up: the Info toggle, (open) the notes above it, and the tapped spot on top (moves up when Info opens) -->
+  <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>
   <div class="legend-body" id="legendBody">
     <div class="notes-body">
       <p class="note">Dark maps rule. Tunnels, footpaths, bridges, transit, building outlines. This is the James Bond spy map served up by Q.</p>
@@ -391,7 +409,7 @@ $("hereBtn").addEventListener("click", ()=>{
   }, ()=>{ $("hereBtn").removeAttribute("aria-busy"); watching=false }, {enableHighAccuracy:true, maximumAge:15000});
 });
 /* The title: back to the opening view */
-$("home").addEventListener("click", ()=>{ if(map) map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700}) });
+$("home").addEventListener("click", ()=>{ clearSpot(); if(map) map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700}) });
 /* Maps menu, as on /ucsf/ and /transit/ */
 (function(){
   const btn=$("mapsBtn"), menu=$("maps-menu");
@@ -436,7 +454,7 @@ setInfo(store.get("info")==="1");
   function airportHit(q){
     if(!/^[a-z]{3}$/i.test(q)) return Promise.resolve(null);
     return loadAirports().then(all=>{ const a=all[q.toUpperCase()];
-      return a ? {name:q.toUpperCase()+" · "+a[0], where:[a[1],a[2]].filter(Boolean).join(", "), center:[a[3],a[4]], zoom:12} : null });
+      return a ? {name:q.toUpperCase()+" · "+a[0], where:[a[1],a[2]].filter(Boolean).join(", "), center:[a[3],a[4]], zoom:12, airport:{code:q.toUpperCase(), name:a[0], city:a[1]}} : null });
   }
   function lookup(){
     const q=input.value.trim(), mine=++turn;
@@ -455,6 +473,8 @@ setInfo(store.get("info")==="1");
   }
   function pick(i, byKeyboard){
     const f=shown[i]; if(!f || !map) return;
+    clearSpot(); const t=spotTurn;   // the found place's details appear on landing, as on /transit/, unless a tap came first
+    map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(f.center), f.airport) });
     map.flyTo({center:f.center, zoom:f.zoom, bearing:0, duration:1600}); minimize(byKeyboard);
   }
   field.addEventListener("click", ()=>{ if(document.activeElement!==input) input.focus() });
@@ -482,7 +502,117 @@ setInfo(store.get("info")==="1");
   if(vv){ vv.addEventListener("resize", lift); vv.addEventListener("scroll", lift) }
   document.addEventListener("focusin", lift); document.addEventListener("focusout", ()=>setTimeout(lift, 50));
 })();
+/* Tap the map: above Info, show where that is, as on /transit/ —
+     London, England, United Kingdom
+     51°30′24″N 00°07′48″W
+     3:18 AM GMT+0   (time larger, ticking)
+   Place names: Mapbox reverse geocoding (English). Time zone: tz-lookup (@photostructure/tz-lookup, CC0), loaded on the
+   first tap. The orange dot fades over 15s; the card stays. A new tap replaces it; the title or Escape clears it. */
+const calm=matchMedia("(prefers-reduced-motion: reduce)");
+const spotCard=$("oa-detail-panel");
+let spotTurn=0, spotTimer=0, spotZone=null, spotAnim=null, spotMarker=null, spotLife=0, spotFade=null, tzReady=null;
+const spotWrap=document.createElement("div"), spotDot=document.createElement("div");
+spotWrap.className="tc-spot-wrap"; spotDot.className="tc-spot"; spotWrap.appendChild(spotDot);
+const SPOT_LIFE=15000;
+const LINE_IN=[{opacity:0, transform:"translateY(18px)", easing:"cubic-bezier(.2,.7,.35,1)"},
+               {opacity:1, transform:"translateY(-2px)", offset:.78, easing:"ease-in-out"}, {opacity:1, transform:"none"}];
+function slideLines(els){
+  els=[...els]; const gap=els.length>1 ? Math.min(60, 380/(els.length-1)) : 0; let at=0;
+  return els.map((el,i)=>{ if(i) at+=gap+(Math.random()*2-1)*Math.min(15, gap/3); return el.animate(LINE_IN, {duration:420, delay:Math.max(0,at), fill:"backwards"}) });
+}
+function spotStop(){ clearTimeout(spotLife); if(spotFade){ spotFade.cancel(); spotFade=null } }
+function spotStart(){
+  spotStop();
+  if(!calm.matches && spotDot.animate) spotFade=spotDot.animate([{opacity:1},{opacity:0}], {duration:SPOT_LIFE, easing:"linear", fill:"forwards"});
+  spotLife=setTimeout(()=>{ spotStop(); spotMarker && spotMarker.remove() }, SPOT_LIFE);
+}
+function loadTz(){
+  return tzReady || (tzReady=new Promise(ok=>{
+    const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/@photostructure/tz-lookup@11.7.0/tz.js";
+    sc.onload=()=>ok(window.tzlookup||null); sc.onerror=()=>{ tzReady=null; ok(null) }; document.head.appendChild(sc);
+  }));
+}
+function placeName(lng, lat, cityName){
+  const url="https://api.mapbox.com/search/geocode/v6/reverse?longitude="+lng+"&latitude="+lat+"&language=en&access_token="+mapboxgl.accessToken;
+  return fetch(url).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json() }).then(j=>{
+    const c={};
+    (j.features||[]).forEach(f=>{ const p=f.properties||{};
+      Object.keys(p.context||{}).forEach(k=>{ if(!c[k]) c[k]=p.context[k] });
+      if(p.feature_type && !c[p.feature_type]) c[p.feature_type]={name:p.name}; });
+    const city=c.place||c.locality||c.district, region=c.region, country=c.country;
+    const rc=region && region.region_code;
+    const st=region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
+    const parts=[cityName||(city&&city.name), st, country&&country.name].filter(Boolean).filter((n,i,a)=>a.indexOf(n)===i);
+    return parts.length ? parts.join(", ") : "Open water";
+  }).catch(()=>"Place name unavailable");
+}
+function offsetText(zone){
+  try{ const o=new Intl.DateTimeFormat("en-US",{timeZone:zone, timeZoneName:"shortOffset"}).formatToParts(new Date()).filter(p=>p.type==="timeZoneName")[0].value;
+       return o==="GMT" ? "GMT+0" : o }catch(e){ return zone }
+}
+function setTime(el, zone){
+  el.textContent="";
+  try{
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:zone, hour:"numeric", minute:"2-digit", hour12:true}).formatToParts(new Date());
+    const digits=parts.filter(p=>p.type!=="dayPeriod").map(p=>p.value).join("").trim(), period=parts.filter(p=>p.type==="dayPeriod").map(p=>p.value).join("");
+    el.appendChild(document.createTextNode(digits));
+    if(period){ const ap=document.createElement("span"); ap.className="oa-detail-ampm"; ap.textContent=period; el.append(" ", ap) }
+  }catch(e){}
+}
+function tick(){
+  clearTimeout(spotTimer);
+  const t=spotCard.querySelector(".oa-detail-time"), o=spotCard.querySelector(".oa-detail-offset");
+  if(!t || !spotZone) return;
+  setTime(t, spotZone); o.textContent=offsetText(spotZone);
+  spotTimer=setTimeout(tick, 60000-Date.now()%60000+50);
+}
+function dms(v, pos, neg){
+  const t=Math.round(Math.abs(v)*3600), d=Math.floor(t/3600), m=Math.floor(t%3600/60), sec=t%60, two=n=>(n<10?"0":"")+n;
+  return two(d)+"°"+two(m)+"′"+two(sec)+"″"+(v<0?neg:pos);
+}
+function line(cls, text){ const d=document.createElement("div"); d.className=cls; d.textContent=text; return d }
+function showSpot(lngLat, airport){
+  if(!map) return;
+  const mine=++spotTurn, ll=lngLat.wrap(), lat=ll.lat.toFixed(6), lng=ll.lng.toFixed(6);
+  if(!spotMarker) spotMarker=new mapboxgl.Marker({element:spotWrap});
+  spotMarker.setLngLat(ll).addTo(map); spotStart();
+  Promise.all([placeName(lng, lat, airport && airport.city), loadTz()]).then(([name, tz])=>{
+    if(mine!==spotTurn) return;
+    let zone=null; try{ zone=tz ? tz(+lat, +lng) : null }catch(e){}
+    spotZone=zone;
+    if(spotAnim){ spotAnim.cancel(); spotAnim=null }
+    spotCard.textContent="";
+    if(airport){
+      const head=line("oa-detail-name", (airport.code?" ":"")+airport.name), code=document.createElement("span");
+      code.className="oa-detail-code"; code.textContent=airport.code; if(airport.code) head.prepend(code);
+      spotCard.append(head, line("oa-detail-place", name));
+    } else spotCard.appendChild(line("oa-detail-name", name));
+    spotCard.appendChild(line("oa-detail-coords", dms(+lat,"N","S")+" "+dms(+lng,"E","W")));
+    if(zone){
+      const clock=document.createElement("div"), tm=document.createElement("span"), off=document.createElement("span");
+      clock.className="oa-detail-clock"; tm.className="oa-detail-time"; off.className="oa-detail-offset";
+      setTime(tm, zone); off.textContent=offsetText(zone); clock.append(tm, " ", off); spotCard.appendChild(clock);
+    } else spotCard.appendChild(line("oa-detail-offset", "Time zone unavailable"));
+    spotCard.hidden=false;
+    if(!calm.matches && spotCard.animate) slideLines(spotCard.children);
+    tick();
+  });
+}
+function clearSpot(){
+  spotTurn++; spotZone=null; clearTimeout(spotTimer); spotStop(); spotMarker && spotMarker.remove();
+  if(spotCard.hidden || spotAnim) return;
+  if(calm.matches || !spotCard.animate){ spotCard.hidden=true; return }
+  spotAnim=spotCard.animate([{opacity:1, transform:"none"},{opacity:0, transform:"translateY(16px)"}], {duration:180, easing:"cubic-bezier(.4,0,1,1)", fill:"forwards"});
+  spotAnim.onfinish=()=>{ const a=spotAnim; spotAnim=null; spotCard.hidden=true; spotCard.textContent=""; a.cancel() };
+}
+/* A tap that only shuts a menu (Maps, an open search) doesn't also drop a spot. Captured before the menus shut. */
+let menuWasOpen=false;
+document.addEventListener("pointerdown", ()=>{ menuWasOpen=!$("maps-menu").hidden || !$("search").classList.contains("oa-collapsed") }, true);
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape" && !spotCard.hidden && $("maps-menu").hidden && $("search").classList.contains("oa-collapsed")) clearSpot();
+}, true);
 initMap();
+if(map) map.on("click", e=>{ if(!menuWasOpen) showSpot(e.lngLat) });
 </script>
 </body>
 </html>
