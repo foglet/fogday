@@ -430,8 +430,7 @@ function localize(v, lang){
   return null;
 }
 function labelLang(){
-  if(!map || !map.isStyleLoaded()) return;
-  if(!baseFields){ baseFields={}; map.getStyle().layers.forEach(l=>{ if(l.type==="symbol" && l.layout && l.layout["text-field"] && !/^spy-/.test(l.id)) baseFields[l.id]=l.layout["text-field"] }) }
+  if(!map || !baseFields) return;   // baseFields is read once the style has loaded (map "load")
   Object.keys(baseFields).forEach(id=>{
     const v = LANG==="en" ? baseFields[id] : localize(baseFields[id], LANG);
     if(v) map.setLayoutProperty(id, "text-field", v);
@@ -446,7 +445,10 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  map.on("load", ()=>{ addLabels(); labelLang() });
+  map.on("load", ()=>{
+    baseFields={}; map.getStyle().layers.forEach(l=>{ if(l.type==="symbol" && l.layout && l.layout["text-field"]) baseFields[l.id]=l.layout["text-field"] });
+    addLabels(); labelLang();
+  });
   /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("zoomRead"));
