@@ -91,11 +91,11 @@ function departures(stopIdx, now, horizon){
   });
   return out.sort((a,b)=>a.at-b.at);
 }
-function nextService(nowMs){
+function nextService(nowMs, only){   // only: a route index, to ask about one line
   for(let day=0; day<8; day++){
     const n=sfNow(nowMs+day*86400000); let best=null;
     D.trips.forEach(t => {
-    if(!agOk(t[0])) return;
+    if(!agOk(t[0]) || (only!=null && t[0]!==only)) return;
       if(!runsOn(t[1], n.ymd, n.wd)) return;
       if(day===0 && t[4]<=n.sec) return;
       if(!best || t[4]<best[4]) best=t;

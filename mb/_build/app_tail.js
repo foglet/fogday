@@ -247,11 +247,11 @@ function buildRoutes(){
 }
 
 /* Next departure from a stop: today first, then the days after (up to a week) */
-function nextAtStop(stopIdx, nowMs){
+function nextAtStop(stopIdx, nowMs, only){
   for(let day=0; day<8; day++){
     const n=sfNow(nowMs+day*86400000); let best=null;
     D.trips.forEach(t => {
-      if(!agOk(t[0])) return;
+      if(!agOk(t[0]) || (only!=null && t[0]!==only)) return;
       if(!runsOn(t[1], n.ymd, n.wd)) return;
       const p=D.patterns[t[3]];
       for(let k=0;k<p.length-1;k++){
@@ -274,25 +274,29 @@ function render(){
   state.vehicles=(state.live||[]).filter(v=>agOk(v.route)).concat(sched.filter(v=>!liveRoutes.has(v.route)));
   paintVehicles();
 
-  const n=state.vehicles.length, st=$("status");
+  /* A selected line narrows the service lines to that line: its shuttles running, or No Service Now and when it next runs */
+  const only = state.focus==null ? null : +state.focus;
+  const shown = only==null ? state.vehicles : state.vehicles.filter(v=>v.route===only);
+  const n=shown.length, st=$("status"), who = only==null ? "" : ROUTES[only].name+": ";
   const mode = state.live && state.live.length ? "live" : n ? "sched" : "none";
   if(st.dataset.mode!==mode) st.dataset.mode=mode;
   /* Service, one message per line: what is running now, then when the next shuttle comes
      (at the stop nearest you once location is allowed, else the next service anywhere) */
-  /* Weekends (no UCSF service): that one line only, nothing else */
-  const weekend = !n && now.wd>=5;
-  setText($("statusText"), n ? n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : weekend ? "No weekend service" : "No service now");
+  /* Weekends (no service at all): that one line only, nothing else */
+  const weekend = !state.vehicles.length && now.wd>=5;
+  setText($("statusText"), n ? who+n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : weekend ? "No weekend service" : who+"No Service Now");
   const nl=$("nextLine"); let next=null, here=false;
-  const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).filter(s=>stopOk(s.i)).sort((a,b)=>a.d-b.d)[0] : null;
+  const servesOnly = si => only==null || D.trips.some(t=>t[0]===only && D.patterns[t[3]].some(p=>p[0]===si));
+  const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).filter(s=>stopOk(s.i) && servesOnly(s.i)).sort((a,b)=>a.d-b.d)[0] : null;
   if(st0 && st0.d<=8000){
-    const nx=nextAtStop(st0.i, nowMs);
+    const nx=nextAtStop(st0.i, nowMs, only);
     if(nx){ next="Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx); here=true }
   } else if(st0){
     next="Nearest stop: "+STOPS[st0.i].short+", "+dist(st0.d)+" away";
   }
   if(!next && !n){
-    const ns=nextService(nowMs);
-    next = ns ? "Next service: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : "No service this week";
+    const ns=nextService(nowMs, only);
+    next = ns ? "Next service: "+(ns.day===0?"today ":ns.day===1?"tomorrow ":DAYS[ns.wd]+" ")+hhmm(ns.sec)+", "+ROUTES[ns.route].name : (only==null ? "No service this week" : "Not running this week");
   }
   if(weekend) next=null;
   nl.hidden=!next; if(next) setText($("nextText"), next);
