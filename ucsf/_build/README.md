@@ -28,6 +28,12 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   `https://campuslifeservices.ucsf.edu/nexus/api/shuttle/tripshot/v1/getRouteGroups.php` and
   `getFullGroupFeed.php?routeGroupId=` (used by liveshuttle.ucsf.edu). All CORS-restricted.
 
+- Mission Bay TMA: `https://data.trilliumtransit.com/gtfs/missionbaytma-ca-us/missionbaytma-ca-us.zip` (Transitland
+  `f-9q8yy-missionbaytma~ca~us`, version 6de76c21, service 2026-09-25 to 2027-02-12). 4 routes (East, Transbay-Caltrain,
+  CCA/Adobe, West), 19 stops, weekdays, holiday exceptions and a reduced Christmas-week schedule. Compacted to
+  `data/mbtma-compact.json` (same layout, route ids prefixed `mbtma:`, `ag: "mbtma"`); build.py merges it into the UCSF
+  data, shifting its indices. Fetched through a browser (the sandbox can't reach Trillium); frequencies.txt is empty.
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout

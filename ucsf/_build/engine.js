@@ -23,7 +23,8 @@ function lum(hex){ const n=parseInt(hex.slice(1),16); const c=[n>>16&255,n>>8&25
 /* Dark mode (the Spy map): night versions of UCSF's colors, same hue so each route keeps its name,
    neons softened and dark ones lifted so they glow evenly on dark streets; black VA becomes silver */
 const NIGHT = {"Gold":"#f2d15c","Lilac AM":"#b79cff","Lilac PM":"#b79cff","Orange (Oakland)":"#ff8a3d","Grey":"#a7b0b6","VA":"#e4e8eb",
-  "Blue":"#6e8bff","Cherry":"#e0607e","Bronze":"#d9a26a","Red":"#ff5a4f","Pink AM":"#ff8fc8","Pink PM":"#ff8fc8","Green (Oakland)":"#7fcf4a","Lime":"#c6f25a"};
+  "Blue":"#6e8bff","Cherry":"#e0607e","Bronze":"#d9a26a","Red":"#ff5a4f","Pink AM":"#ff8fc8","Pink PM":"#ff8fc8","Green (Oakland)":"#7fcf4a","Lime":"#c6f25a",
+  "Mission Bay TMA East":"#5cb8ff","Mission Bay TMA Transbay-Caltrain":"#ff7a52","Mission Bay TMA CCA/Adobe":"#d58f6f","Mission Bay TMA West":"#76c95e"};
 const ROUTES = D.routes.map((r, i) => ({i, id:r.id, name:r.n, long:r.ln, day:r.c.toUpperCase(), night:NIGHT[r.ln]||r.c,
   get color(){ return document.documentElement.dataset.theme==="light" ? this.day : this.night }, text: lum(r.c) > .35 ? "#1d2421" : "#ffffff"}));
 const byName = ROUTES.slice().sort((a,b)=>a.name.localeCompare(b.name));

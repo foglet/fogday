@@ -6,6 +6,18 @@ Transitland f-ucsf~shuttle~ca~us). See README.md for how to refresh it.
 import json, pathlib
 root = pathlib.Path(__file__).parent
 data = json.loads((root / "data/gtfs-compact.json").read_text(encoding="utf-8"))
+for r in data["routes"]: r.setdefault("ag", "ucsf")
+
+def merge(base, add):
+    """Append another agency's compact feed: every index in it moves past what is already there."""
+    R, S, V, H, P = (len(base[k]) for k in ("routes", "stops", "services", "shapes", "patterns"))
+    base["routes"] += add["routes"]; base["stops"] += add["stops"]; base["services"] += add["services"]
+    base["shapes"] += add["shapes"]; base["shapeLen"] += add["shapeLen"]
+    base["patterns"] += [[[s + S, t, d] for s, t, d in p] for p in add["patterns"]]
+    base["trips"] += [[r + R, v + V, h + H if h >= 0 else -1, p + P, t0] for r, v, h, p, t0 in add["trips"]]
+
+# Mission Bay TMA (Trillium GTFS, Transitland f-9q8yy-missionbaytma~ca~us); see README.md
+merge(data, json.loads((root / "data/mbtma-compact.json").read_text(encoding="utf-8")))
 config = {
     # public Mapbox token already used on fogday.com/transit and /treesf
     "token": "pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw",
