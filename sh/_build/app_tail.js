@@ -164,7 +164,7 @@ function onFix(p){
 }
 function onFixErr(err){
   $("hereBtn").removeAttribute("aria-busy");
-  if(err.code===1){ hereSay("Location is off. Info says how to turn it on.", 6000) }
+  if(err.code===1){ hereSay("Location is off. Turn it on in your browser settings to see stops near you.", 6000) }
   else if(!state.user) hereSay("Couldn't find your location.");
 }
 let watching=false;

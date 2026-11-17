@@ -55,7 +55,7 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   text in the browser pane) and `data/ssf-ips.json` (stops and route lines from the city's live tracker, IPS Sentry
   site 19, `/MobileSentryAPI/Settings`). Blue clockwise, Green counterclockwise, Orange western; weekdays, city holidays off
   (2027 observed dates are my reading of the city's holiday list). Tracker lines are coarse, so lines cut some corners.
-- Picker (replaced the switch): the system's name in the tides blue, 2em; tap for the next. Order: Mission Bay (default),
+- Picker (replaced the switch): the system's name in the tides blue, bold slab serif (Roboto Slab), 1.5em; tap for the next. Order: Mission Bay (default),
   UCSF, Presidio, Golden Gate Park, Oyster Point, South City (`OPS` in app_tail.js).
 
 ## Refresh the schedule
