@@ -1,4 +1,4 @@
-# fogday.com/mb: UCSF and Mission Bay TMA shuttles on one map (was /ucsf/, which now redirects here)
+# fogday.com/sh: San Francisco Shuttles (Mission Bay TMA, UCSF, PresidiGo, Golden Gate Park) on one map (was /mb/ and /ucsf/, which now redirect here)
 
 Single-file mobile web app. Edit `shell.html` (page, styles) and `app_head.js` / `engine.js` / `app_tail.js` (script), run `python3 build.py`, commit `../index.html`. The page has Jekyll front matter (for the maps menu, `_data/maps.yml`), so the script must hold no Liquid; build.py checks.
 

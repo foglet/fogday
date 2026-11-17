@@ -459,7 +459,7 @@ const HQ = { code:"MI6", name:"HQ", city:null };   /* tapped or flown to: "MI6 H
 const HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
 const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the Spy style */
 let map=null, here=null, user=null, watching=false;
-/* A control from a page element, in the bottom-right stack (as on /mb/ and /treesf/) */
+/* A control from a page element, in the bottom-right stack (as on /sh/ and /treesf/) */
 function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
 /* Parks and landmarks: the Spy style hides Mapbox's POI labels, so these two layers bring them back, from the
    same Streets v7 poi_label tiles. Parks in green italics, landmarks in pale type, both from zoom 16;
@@ -555,7 +555,7 @@ $("home").addEventListener("click", ()=>{
   const t=spotTurn; map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(HOME.center), HQ, true) });   // HQ's card on arrival
   map.flyTo({center:HOME.center, bearing:0, duration:700});   // keeps the current zoom, as /transit/'s flights do
 });
-/* Maps menu, as on /mb/ and /transit/ */
+/* Maps menu, as on /sh/ and /transit/ */
 (function(){
   const btn=$("mapsBtn"), menu=$("maps-menu");
   const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };

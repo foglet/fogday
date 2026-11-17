@@ -4,7 +4,7 @@
 //
 // Deploy: Cloudflare dashboard > Workers > Create > paste this file > Deploy.
 // Then put the worker URL (for example https://ucsf-live.<you>.workers.dev) in
-// build.py as config["live"] and rebuild. Test first with fogday.com/mb/?live=<url>.
+// build.py as config["live"] and rebuild. Test first with fogday.com/sh/?live=<url>.
 
 const REGION = "CA558DDC-D7F2-4B48-9CAC-DEEA1134F820";
 const BASE = "https://ucsf.tripshot.com/v1/gtfs/realtime/";
@@ -30,7 +30,7 @@ export default {
     const key = new Request("https://cache.local/" + feed);
     let res = await cache.match(key);
     if (!res) {
-      const up = await fetch(BASE + feed + "?regionId=" + REGION, { headers: { "User-Agent": "fogday.com/mb" } });
+      const up = await fetch(BASE + feed + "?regionId=" + REGION, { headers: { "User-Agent": "fogday.com/sh" } });
       if (!up.ok) return new Response("Upstream " + up.status, { status: 502, headers: cors });
       res = new Response(await up.arrayBuffer(), {
         headers: { "Content-Type": "application/x-protobuf", "Cache-Control": "public, max-age=10" },

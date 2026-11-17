@@ -1,5 +1,5 @@
 ---
-layout: null   # self-contained map page in the /mb/ (Transit Connected / SF Trees) interface
+layout: null   # self-contained map page in the /sh/ (Transit Connected / SF Trees) interface
 title: East Beach
 description: San Francisco in a style named for East Beach at Crissy Field. A map by Fogday Studios.
 mapbox_style: cil4fhjr700719rm8ss6jtr22
@@ -22,7 +22,7 @@ zoom: 12.04
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
 <style>
-  /* East Beach: the SF Trees / Transit Connected / UCSF Shuttles map interface (fogday.com/mb). */
+  /* East Beach: the SF Trees / Transit Connected / UCSF Shuttles map interface (fogday.com/sh). */
   :root {
     --glass: rgb(2 23 36 / .78); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
@@ -282,7 +282,7 @@ const store = { get(k){ try{ return localStorage.getItem("eastbeach:"+k) }catch(
 const HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
 const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the East Beach style */
 let map=null, here=null, user=null, watching=false;
-/* A control from a page element, in the bottom-right stack (as on /mb/ and /treesf/) */
+/* A control from a page element, in the bottom-right stack (as on /sh/ and /treesf/) */
 function asControl(el){ map.addControl({onAdd(){ el.classList.add("mapboxgl-ctrl"); el.hidden=false; return el }, onRemove(){ el.remove() }}, "bottom-right") }
 function initMap(){
   if(!window.mapboxgl) return;
@@ -315,7 +315,7 @@ $("hereBtn").addEventListener("click", ()=>{
 });
 /* The title: back to the opening view */
 $("home").addEventListener("click", ()=>{ if(map) map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700}) });
-/* Maps menu, as on /mb/ and /transit/ */
+/* Maps menu, as on /sh/ and /transit/ */
 (function(){
   const btn=$("mapsBtn"), menu=$("maps-menu");
   const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
