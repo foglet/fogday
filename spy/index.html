@@ -26,6 +26,7 @@ zoom: 13.02
   :root {
     --glass: rgb(98 98 102 / .15); --glass-blur: blur(28px) saturate(140%); --glass-edge: rgb(255 255 255 / .12); --glass-r: 12px;
     --bg: #021724; --panel: #0b2233; --ink: #e3eaee; --muted: #8fa3b1; --line: #23394a; --accent: #b2b200;
+    --sky-1: #2368a8; --sky-2: #2f7fc1;   /* darker blue (title, chevron, bento, Info) */
     --font: "Source Sans 3", "Source Sans Pro", Seravek, Calibri, "Segoe UI", Ubuntu, Arial, sans-serif;
     color-scheme: dark;
     --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
@@ -59,13 +60,13 @@ zoom: 13.02
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     font: 700 1.12rem/1 var(--font); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
   }
-  .title-text { background-image: linear-gradient(to right, #2f7fc1, #4a90c8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .title-text { background-image: linear-gradient(to right, var(--sky-1), var(--sky-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .title:hover .title-text { background-image: none; color: var(--accent); }
   .title:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .maps-btn {
     display: flex; align-items: center; justify-content: center; width: 34px; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    color: #4a90c8;
+    color: var(--sky-2);
   }
   .maps-btn svg { transition: transform .2s ease; }
   .maps-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -138,7 +139,7 @@ zoom: 13.02
   .legend-toggle:hover .sky-text { color: var(--accent); }
   /* open: the toggle is lit, like a pressed route pill */
   .legend-toggle[aria-expanded="true"] { background: linear-gradient(color-mix(in srgb, var(--ink) 12%, transparent), color-mix(in srgb, var(--ink) 12%, transparent)), var(--glass); }
-  .sky-text { color: #8fd0ff; }
+  .sky-text { color: var(--sky-2); }
   :root[data-theme="light"] .sky-text { color: #1d5f96; }
   :root[data-theme="light"] .title-text { background-image: linear-gradient(to right, #1d5f96, #1f5f6b); }
   :root[data-theme="light"] .maps-btn { color: #1d5f96; }
@@ -149,8 +150,6 @@ zoom: 13.02
                  max-height: calc(100vh - 170px - var(--sat) - var(--sab)); max-height: calc(100dvh - 170px - var(--sat) - var(--sab));
                  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   /* Routes: compact pills that wrap, several to a row, so the whole legend fits on one screen */
-  /* Your location, beside the service at the stop nearest you: the map's blue "here" dot, small */
-                background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 3px rgb(61 139 255 / .3); }
   /* Info: a small uppercase toggle that opens the notes, as on /tides/ and /treesf/ */
   .notes { color: var(--muted); }
   .notes summary { list-style: none; cursor: pointer; display: block; padding-inline: 12px !important; font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding: 4px 0; border-radius: 8px; }
@@ -173,8 +172,25 @@ zoom: 13.02
   .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib { margin: 0; }
   .mapboxgl-map .mapboxgl-ctrl-group button + button { border-top-color: transparent; }
   .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { background-color: transparent; }
-  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: invert(.85) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
-  :root[data-theme="light"] .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .mapboxgl-map .mapboxgl-ctrl-group button { width: 30px; }
+  .mapboxgl-map .mapboxgl-ctrl-group .mapboxgl-ctrl-icon { filter: url(#oa-ctrl-tint) drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); background-size: 20px 20px; }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 4v16M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 12h16'/%3E%3C/svg%3E"); }
+  .mapboxgl-map .mapboxgl-ctrl button.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M7.5 10L12 2L16.5 10Z' fill='%23333' stroke='%23333'/%3E%3Cpath d='M7.5 14L12 22L16.5 14Z' stroke='%23333'/%3E%3C/svg%3E"); }
+  @media (hover: hover) { .mapboxgl-map .mapboxgl-ctrl-group button:not(:disabled):hover { color: var(--accent); } }
+  /* Zoom readout, as on /transit/: the current zoom, live, above + − and the compass. Tap it to go back to the opening zoom. */
+  .oa-zoomread[hidden] { display: none; }
+  .oa-zoomread { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; cursor: pointer;
+    background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--muted);
+    font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+    text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
+  .mapboxgl-ctrl button.oa-zoomread:not(:disabled):hover { background-color: transparent; }
+  .oa-zoomread:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .oa-zoomread:hover { color: var(--accent); } }
+  @media (pointer: coarse) { .oa-zoomread { width: 44px; height: 44px; font-size: .85rem; } }
   /* Location: icon button in the bottom-right stack, as /treesf/'s "here" */
   .mapboxgl-ctrl.oa-here { position: relative; }
   .oa-pin { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 4px;
@@ -189,7 +205,7 @@ zoom: 13.02
   .corner svg { filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
   .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 11px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
   /* As on /transit/: the 3x3 grid is a mask over the title's sky-blue gradient; solid accent on hover */
-  .bento-grid { display: block; width: 100%; height: 100%; background-image: linear-gradient(to right, #2f7fc1, #4a90c8);
+  .bento-grid { display: block; width: 100%; height: 100%; background-image: linear-gradient(to right, var(--sky-1), var(--sky-2));
     -webkit-mask: var(--grid) center / contain no-repeat; mask: var(--grid) center / contain no-repeat;
     --grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg%3E%3Crect x='2' y='2' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='2' width='5' height='5' rx='1'/%3E%3Crect x='17' y='2' width='5' height='5' rx='1'/%3E%3Crect x='2' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='17' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='2' y='17' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='17' width='5' height='5' rx='1'/%3E%3Crect x='17' y='17' width='5' height='5' rx='1'/%3E%3C/g%3E%3C/svg%3E"); }
   .bento:hover .bento-grid { background-image: none; background-color: var(--accent); }
@@ -268,6 +284,15 @@ zoom: 13.02
 </head>
 <body>
 <div id="map" role="region" aria-label="A Spy Map"></div>
+<!-- Recolors Mapbox's zoom/compass icons to the muted icon color (as on /transit/) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="oa-ctrl-tint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="-0.6017 0 0 0 0.6813  -0.6817 0 0 0 0.7753  -0.7400 0 0 0 0.8420  0 0 0 1 0"/>
+  </filter>
+</svg>
+
+<!-- Zoom readout, moved into the bottom-right stack above + − by the script (as on /transit/) -->
+<button type="button" class="oa-zoomread" id="zoomRead" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
 
 <!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
 <div class="oa-here" id="here" hidden>
@@ -291,6 +316,7 @@ zoom: 13.02
 <!-- Top right, as in the site header: the bento (all projects). No light / dark toggle: this page is dark only -->
 <nav class="corner" aria-label="Site">
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><span class="bento-grid" aria-hidden="true"></span></a>
+</nav>
 
 <div class="top">
   <div class="title-row">
@@ -338,9 +364,15 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, top to bottom: location, then + − and compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
+  asControl($("zoomRead"));
   asControl($("here"));
+  /* Zoom readout: live, to one decimal; tap it to ease back to the opening zoom, staying where the map is */
+  const zr=$("zoomRead");
+  const showZoom=()=>{ const t=(Math.round(map.getZoom()*10)/10).toFixed(1); zr.textContent=t; zr.setAttribute("aria-label","Zoom level "+t+". Reset to "+HOME.zoom) };
+  zr.addEventListener("click", ()=>{ if(matchMedia("(prefers-reduced-motion: reduce)").matches) map.jumpTo({zoom:HOME.zoom}); else map.easeTo({zoom:HOME.zoom, duration:600}) });
+  map.on("zoom", showZoom); showZoom();
   asControl($("search"));   // the search glass sits on top of the stack
 }
 /* Location: only when asked (the crosshair); then a blue dot that follows you */
