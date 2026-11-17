@@ -164,18 +164,20 @@ zoom: 13.02
   .note a { color: var(--ink); }
   .note a:hover { color: var(--ink); }
 
-  /* Language for the place details: a code in the bottom-right stack (as the zoom readout); tap it for the codes,
-     bare text with a navy halo, opening to its left like /transit/'s Cities menu */
+  /* Language for the place details: a code pill left of Info, in Info's look (no chevron). Tap it and the six codes
+     rise above it, bare text with a navy halo, as /transit/'s Cities menu. */
+  .info-row { display: flex; align-items: center; gap: 6px; }
   .oa-lang { position: relative; }
-  .oa-lang[hidden], .oa-lang-pop[hidden] { display: none; }
-  .oa-lang-pop { position: absolute; right: calc(100% + 4px); top: 50%; transform: translateY(-50%); display: flex; gap: 0; }
-  .oa-lang-pop button { all: unset; box-sizing: border-box; cursor: pointer; min-width: 32px; height: 32px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center;
-    font: 700 .72rem/1 var(--font); letter-spacing: .04em; color: var(--ink); text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
-  .mapboxgl-ctrl .oa-lang-pop button:not(:disabled):hover { background-color: transparent; }
+  .lang-toggle { color: var(--sky-2) !important; }
+  .lang-toggle::after { display: none; }
+  .lang-toggle:hover { color: var(--accent) !important; }
+  .oa-lang-pop[hidden] { display: none; }
+  .oa-lang-pop { position: absolute; z-index: 3; left: 0; bottom: calc(100% + 6px); display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+  .oa-lang-pop button { all: unset; box-sizing: border-box; cursor: pointer; min-width: 32px; height: 28px; padding: 0 10px; display: inline-flex; align-items: center;
+    font: 700 .8rem/1 var(--font); letter-spacing: .08em; color: var(--ink); text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
   .oa-lang-pop button:hover, .oa-lang-pop button[aria-checked="true"] { color: var(--accent); }
   .oa-lang-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
-  .oa-lang .oa-zoomread[aria-expanded="true"] { color: var(--accent); }
-  @media (pointer: coarse) { .oa-lang-pop button { min-width: 40px; height: 44px; font-size: .85rem; } }
+  @media (pointer: coarse) { .oa-lang-pop button { height: 44px; font-size: .9rem; } }
   /* Tapped spot, above Info (as on /transit/, above Transport mode): place, coordinates, local time.
      No panel: each line gets its own frosted background, only as wide as its text; flush left with "Info". */
   .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 2px; max-width: calc(100% - 2px); font-size: .9rem; line-height: 1.35; color: var(--ink); }
@@ -187,7 +189,7 @@ zoom: 13.02
   .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { font-variant-numeric: tabular-nums; }
   .oa-detail-offset { color: #8fa3b1; }
-  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: #ff3b30; }   /* the local time, big and red */
+  .oa-detail-time { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: hsl(0, 67%, 54%); }   /* the local time, big, in the map's red rail routes (style layer "tunnel_major-minor rail rx") */
   .oa-detail-ampm { font-size: .667em; }
   .oa-detail-clock { margin-top: 2px; line-height: 1.2; }
   /* The tapped point: a 12px dot, orange ring (#FF5500) around a dark orange center (#B33C00). Taps pass through it. */
@@ -321,12 +323,6 @@ zoom: 13.02
 </svg>
 
 <!-- Zoom readout, moved into the bottom-right stack above + − by the script (as on /transit/) -->
-<div class="oa-lang" id="lang" hidden>
-  <button type="button" class="oa-zoomread" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-controls="langPop" title="Language of the place details">EN</button>
-  <div class="oa-lang-pop" id="langPop" role="radiogroup" aria-label="Language of the place details" hidden>
-    <button type="button" role="radio" data-lang="en" lang="en" title="English">EN</button><button type="button" role="radio" data-lang="de" lang="de" title="Deutsch">DE</button><button type="button" role="radio" data-lang="es" lang="es" title="Español">ES</button><button type="button" role="radio" data-lang="fr" lang="fr" title="Français">FR</button><button type="button" role="radio" data-lang="ru" lang="ru" title="Русский">RU</button><button type="button" role="radio" data-lang="zh" lang="zh" title="中文">ZH</button>
-  </div>
-</div>
 <button type="button" class="oa-zoomread" id="zoomRead" aria-label="Zoom level" title="Zoom level · tap to reset" hidden></button>
 
 <!-- Moved into the map's bottom-right stack by the script, above + − and the compass (as on /treesf/) -->
@@ -373,7 +369,15 @@ zoom: 13.02
   <!-- Top down, anchored at the bottom: the tapped spot, the Info toggle, and (open) the notes below it,
        so opening Info lifts the toggle and the spot, as Transport mode on /transit/ -->
   <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>
-  <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
+  <div class="info-row">   <!-- the language code, left of Info -->
+    <div class="oa-lang" id="lang">
+      <button type="button" class="legend-toggle lang-toggle" id="langBtn" aria-haspopup="true" aria-expanded="false" aria-controls="langPop" title="Language of the place details">EN</button>
+      <div class="oa-lang-pop" id="langPop" role="radiogroup" aria-label="Language of the place details" hidden>
+        <button type="button" role="radio" data-lang="en" lang="en" title="English">EN</button><button type="button" role="radio" data-lang="de" lang="de" title="Deutsch">DE</button><button type="button" role="radio" data-lang="es" lang="es" title="Español">ES</button><button type="button" role="radio" data-lang="fr" lang="fr" title="Français">FR</button><button type="button" role="radio" data-lang="ru" lang="ru" title="Русский">RU</button><button type="button" role="radio" data-lang="zh" lang="zh" title="中文">ZH</button>
+      </div>
+    </div>
+    <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
+  </div>
   <div class="legend-body" id="legendBody">
     <div class="notes-body">
       <p class="note">Dark maps rule. Tunnels, footpaths, bridges, transit, building outlines. This is the James Bond spy map served up by Q.</p>
@@ -400,10 +404,9 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, top to bottom: search, location, language, zoom readout, then + − and compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("zoomRead"));
-  asControl($("lang"));
   asControl($("here"));
   /* Zoom readout: live, to one decimal; tap it to ease back to the opening zoom, staying where the map is */
   const zr=$("zoomRead");
@@ -587,7 +590,7 @@ function offsetText(zone){
 function setTime(el, zone){
   el.textContent="";
   try{
-    const parts=new Intl.DateTimeFormat(LANGS[LANG],{timeZone:zone, hour:"numeric", minute:"2-digit"}).formatToParts(new Date());
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:zone, hour:"numeric", minute:"2-digit", hour12:true}).formatToParts(new Date());   // always 3:18 AM/PM
     const digits=parts.filter(p=>p.type!=="dayPeriod").map(p=>p.value).join("").trim(), period=parts.filter(p=>p.type==="dayPeriod").map(p=>p.value).join("");
     el.appendChild(document.createTextNode(digits));
     if(period){ const ap=document.createElement("span"); ap.className="oa-detail-ampm"; ap.textContent=period; el.append(" ", ap) }
