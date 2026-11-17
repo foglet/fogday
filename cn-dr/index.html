@@ -290,7 +290,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .ttl-ic{display:flex;align-items:center;justify-content:flex-end;flex:1;min-width:0;gap:var(--s1)}
 .dragons-t{flex:1;min-width:0;height:var(--tap);display:block;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none;visibility:hidden}
 .dragons-t.on{visibility:visible}
-.dragon-sky{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:30}   /* dragons flying off across the page */   /* title strip: shows only while a sync runs and the dragons walk */
+.dragon-sky{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:30}   /* dragons flying round the page */   /* title strip: shows only while a sync runs and the dragons walk */
 .fav-tg{margin-right:0}   /* bookmark icon lines up with the About tab icon above it (desktop: 44px tabs) */
 .fav-tg svg{width:20px;height:20px;color:var(--primary)}
 .favs{margin-top:var(--s5)}
@@ -575,37 +575,62 @@ function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
 let dailyTimer = 0;
 /* ---------- dragons (About, Sync Devices): three original pixel dragons walk, jump, march in step, bump and cross depth ---------- */
 // They replace the pixel sea. Each time the About page opens they walk for about 30 s of time on screen, finish any jump
-// in the air, then fly off across the page or fade out. A sync starting (or a speed change) wakes them for another 30 s, with a group jump, and
+// in the air, then for the last 10 s fly around the page before flying off or fading out. A sync starting (or a speed change) wakes them for another 30 s, with a group jump, and
 // they keep going while the sync runs. With reduced motion they hold a still frame.
 // makeDragons(SEL, OPEN): one dragon canvas. OPEN = the About strip (walks 30 s when the page opens, swipe for speed).
 // Without OPEN it is the title strip on Library and Practice: hidden until a sync starts, then shown and walking until it
 // rests. Either way the canvas is scaled to fit its box (art is 56 px tall; About is 2 CSS px per art px).
-// Page sky: a dragon that times out by flying leaves its canvas and flies across the whole page on one fixed,
-// click-through overlay (fillRect only, no drawImage), dipping into the page, then rising off screen.
+// Page sky: for the last ROAM ms of their run the dragons leave their canvas and fly around the whole page on one
+// fixed, click-through overlay (fillRect only, no drawImage), wandering between random points. When their time is up
+// each one flies off screen or fades out in the air. Woken early (a sync, a swipe, a key), they fly home and land.
 const SKY = (() => {
-  let cv = null, ctx = null, raf = 0, last = 0; const fl = [];
+  let cv = null, ctx = null, raf = 0, last = 0; const fl = [], R = Math.random;
+  function wp(f){ const vw = innerWidth, vh = innerHeight, w = f.GW*f.sT, h = f.GH*f.sT;
+    f.wx = 12 + R()*Math.max(1, vw-w-24); f.wy = 12 + R()*Math.max(1, vh-h-24); f.wk = 60 + R()*90; }
   function add(f){ if(RM.matches){ f.alive = false; return; }
     if(!cv || !cv.isConnected){ cv = document.createElement('canvas'); cv.className = 'dragon-sky'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); }
-    const vw = innerWidth, vh = innerHeight, R = Math.random;
-    Object.assign(f, {k:0, alive:true, T:120+R()*50, dive:vh*(.15+R()*.3), rise:vh*1.2}); f.vx = vw*(.8+R()*.5)/f.T;
+    Object.assign(f, {k:0, alive:true, landed:false, mode:'roam', a:1, s:f.ps, sT:1.6+R()*1.6, sp:3+R()*2, vx:f.dir*3, vy:-2.5}); wp(f);
     fl.push(f); if(!raf){ last = 0; raf = requestAnimationFrame(loop); } }
-  function pos(f){ const u = f.k/f.T; return [f.x0 + f.dir*f.vx*f.k, f.y0 + f.dive*Math.sin(Math.PI*Math.min(u,1)) - f.rise*u*u, f.ps*(1+Math.min(u,1)*.8)]; }
+  function home(f){ if(f.alive){ f.mode = 'home'; f.fk = 0; } }
+  function step(f, n, ms){   // n = ticks (speed-scaled), ms = real time
+    const vw = innerWidth, vh = innerHeight; f.k += n;
+    if(f.mode === 'home'){
+      const t = f.home(); if(!t){ f.mode = 'off'; return; }
+      const e = Math.min(1, .1*n); f.x += (t.x-f.x)*e; f.y += (t.y-f.y)*e; f.s += (t.s-f.s)*e; f.a = Math.min(1, f.a + n/20);
+      if(Math.abs(t.x-f.x) > 3) f.dir = t.x > f.x ? 1 : -1;
+      if(Math.hypot(t.x-f.x, t.y-f.y) < 1.5 && Math.abs(t.s-f.s) < .05){ f.alive = false; f.landed = true; }
+      return; }
+    if(f.mode === 'roam' || f.mode === 'fade'){
+      const cx = f.x + f.GW*f.s/2, cy = f.y + f.GH*f.s/2, tx = f.wx + f.GW*f.s/2, ty = f.wy + f.GH*f.s/2, d = Math.hypot(tx-cx, ty-cy) || 1;
+      const k = Math.min(1, .05*n); f.vx += ((tx-cx)/d*f.sp - f.vx)*k; f.vy += ((ty-cy)/d*f.sp - f.vy)*k;
+      if(d < 30 || (f.wk -= n) <= 0){ f.sT = 1.6+R()*1.6; f.sp = 3+R()*2; wp(f); }
+      f.s += (f.sT-f.s)*Math.min(1, .02*n);
+      if(f.mode === 'roam' && (f.life -= ms) <= 0) f.mode = f.exit;
+      if(f.mode === 'fade'){ f.a -= n/40; if(f.a <= 0){ f.alive = false; return; } }
+    } else {   // 'off': speed up and climb out past the nearer side
+      const out = f.x + f.GW*f.s/2 < vw/2 ? -1 : 1; f.sp = Math.min(16, f.sp*Math.pow(1.05, n));
+      f.vx += (out*f.sp - f.vx)*Math.min(1, .08*n); f.vy += (-f.sp*.6 - f.vy)*Math.min(1, .08*n);
+      if(f.x > vw+40 || f.x + f.GW*f.s < -40 || f.y + f.GH*f.s < -40 || f.y > vh+40 || f.k > 3000){ f.alive = false; return; } }
+    f.x += f.vx*n; f.y += f.vy*n; if(Math.abs(f.vx) > .4) f.dir = f.vx > 0 ? 1 : -1;
+  }
   function loop(now){ raf = 0;
     const dpr = window.devicePixelRatio || 1, vw = innerWidth, vh = innerHeight;
     if(cv.width !== Math.round(vw*dpr) || cv.height !== Math.round(vh*dpr)){ cv.width = Math.round(vw*dpr); cv.height = Math.round(vh*dpr); }
     ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, vw, vh);
     const dt = last ? Math.min(200, now-last) : 0; last = now;
-    for(const f of fl){ if(RM.matches){ f.alive = false; continue; }
-      f.k += dt/33.3*f.spd; const [x, y, s] = pos(f), w = f.GW*s, h = f.GH*s;
-      if(x > vw+40 || x+w < -40 || y+h < -40 || y > vh+40 || f.k > f.T*3){ f.alive = false; continue; }
-      const spr = f.SPR[((f.k/4)|0)%2];   // walk step 0, fast wing beat
+    for(const f of fl.sort((p, q) => p.s - q.s)){   // smaller (farther) first
+      if(RM.matches){ f.alive = false; continue; }
+      step(f, dt/33.3*f.spd, dt); if(!f.alive) continue;
+      const x = f.x, y = f.y, s = f.s, spr = f.SPR[((f.k/(f.mode === 'roam' ? 6 : 4))|0)%2];
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.a));
       for(let r=0; r<f.GH; r++){ const y0 = Math.round(y + r*s), y1 = Math.round(y + (r+1)*s); if(y1 <= y0) continue;
         for(let c=0; c<f.GW; c++){ const v = spr[r*f.GW + (f.dir < 0 ? f.GW-1-c : c)]; if(!v) continue;
           const x0 = Math.round(x + c*s), x1 = Math.round(x + (c+1)*s); if(x1 <= x0) continue;
           const p = f.pal[v]; ctx.fillStyle = `rgb(${p[0]},${p[1]},${p[2]})`; ctx.fillRect(x0, y0, x1-x0, y1-y0); } } }
+    ctx.globalAlpha = 1;
     for(let i=fl.length-1; i>=0; i--) if(!fl[i].alive) fl.splice(i, 1);
     if(fl.length) raf = requestAnimationFrame(loop); else { cv.remove(); cv = null; } }
-  return {add};
+  return {add, home};
 })();
 function makeDragons(SEL, OPEN){
   const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // 8 frames: step*2 + wing; 30x26 palette indices
@@ -634,27 +659,32 @@ function makeDragons(SEL, OPEN){
   function mk(i, x, dir){ const sc = scheme(), sv = tone(); return {i, x, dir, h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], fly:0, hop:0, cool:0, y:0, b:0, z:1, jump:0, jdur:1, jh:0,
     nextj:30+(R()*70|0), boost:0, ov:0, a:1, ex:0, od:0, fk:0, mode:'', gone:'', back:false, rin:0, side:1, flier:null, ph:[R()*6.28, R()*6.28], step:0, wing:0}; }
   function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; exiting = false; }
-  // Time-out exit: each dragon flies off across the page (SKY) or fades out, after its own short delay.
-  // Waking them (a sync, a swipe, a key) reverses it: faders fade back in, fliers glide back in from the top.
-  let exiting = false;
+  // Last ROAM ms of the run: after their own short delays the dragons take off and fly around the page (SKY), then
+  // fly off screen or fade out. Waking them (a sync, a swipe, a key) brings fliers home to land where they took off.
+  let exiting = false; const ROAM = 10000;
   function startExit(){ exiting = true; const same = R() < .3, m0 = pick(['fly','fade']);
     for(const d of dg){ if(d.gone) { d.back = false; continue; } d.ex = 1; d.od = R()*20|0; d.mode = same ? m0 : pick(['fly','fade']); } }
-  function wake(){ exiting = false; for(const d of dg){ d.ex = 0; if(d.gone) d.back = true; } }
+  function wake(){ exiting = false; for(const d of dg){ d.ex = 0; if(d.gone){ d.back = true; if(d.flier) SKY.home(d.flier); } } }
+  function spot(d){   // where this dragon stands in the canvas, in page (viewport) pixels
+    if(!cv || !cv.isConnected) return null; const r = cv.getBoundingClientRect(); if(!r.height) return null;
+    const ps = r.height/H, sc = (2+d.z)/3;
+    return {x: r.left + Math.round(d.x)*ps, y: r.top + Math.round(d.b + d.y*sc - 22*sc)*ps, s: ps*sc}; }
   function launch(d){
-    const r = cv && cv.getBoundingClientRect();
-    if(!r || !r.height || RM.matches || !onScreen()){ d.ex = 2; d.fk = 0; return; }   // can't fly here: fade instead
-    const ps = r.height/H, sc = (2+d.z)/3, ox = Math.round(d.x), oy = Math.round(d.b + d.y*sc - 22*sc);
-    const cx = r.left + (ox + GW*sc/2)*ps; d.side = cx < innerWidth/2 ? 1 : -1;   // head for the wider side of the page
-    const f = {SPR:[SPR[0], SPR[1]], GW, GH, pal:palOf(Object.assign({}, d, {z:1})), dir:d.side, x0:r.left + ox*ps, y0:r.top + oy*ps, ps:ps*sc, spd:SPD};   // step 0, wings up / down; full colour, no far haze
+    const p = spot(d);
+    if(!p || RM.matches || !onScreen()){ d.ex = 2; d.fk = 0; return; }   // can't fly here: fade in place instead
+    const f = {SPR:[SPR[0], SPR[1]], GW, GH, pal:palOf(Object.assign({}, d, {z:1})), dir:d.dir, x:p.x, y:p.y, ps:p.s, spd:SPD,
+      life: Math.max(3000, left), exit: d.mode === 'fade' ? 'fade' : 'off', home: () => { d.y = 0; return spot(d); }};   // step 0, wings up / down; full colour
     SKY.add(f); d.flier = f; d.gone = 'fly'; d.ex = 0; }
   function comeBack(d){ d.back = false;
-    if(d.gone === 'fly'){ d.a = 1; d.rin = 40; d.x = d.side > 0 ? W-GW-2 : 2; d.dir = -d.side; d.jump = d.fly = d.hop = 0; }
-    d.gone = ''; }
+    if(d.gone === 'fly'){ d.a = 1; d.jump = d.fly = d.hop = 0;
+      if(d.flier && d.flier.landed) d.dir = d.flier.dir;   // landed home
+      else { d.rin = 40; d.x = R() < .5 ? W-GW-2 : 2; d.dir = d.x > W/2 ? -1 : 1; } }   // its flight ended elsewhere: glide in from the top
+    d.gone = ''; d.flier = null; }
   function tick(){
     t++; const tt = t % CYCLE, march = MARCH.some(([a,b]) => tt>=a && tt<b);
     for(const d of dg){
       if(d.gone){ if(d.back && !(d.gone === 'fly' && d.flier && d.flier.alive)) comeBack(d); else continue; }
-      if(d.ex === 1 && --d.od <= 0){ if(d.mode === 'fade'){ d.ex = 2; d.fk = 0; } else { launch(d); if(d.gone) continue; } }
+      if(d.ex === 1 && --d.od <= 0){ launch(d); if(d.gone) continue; }   // take off (d.mode = how it leaves the page later)
       if(d.ex === 2){ const u = Math.min(1, ++d.fk/40); d.a = 1 - u*u*(3-2*u); if(u >= 1){ d.gone = 'fade'; d.ex = 0; continue; } }
       else if(!exiting && d.a < 1) d.a = Math.min(1, d.a + 1/20);
       const lane = d.i===0 ? [H-5,2.5] : [H-8,2.5];
@@ -733,7 +763,7 @@ function makeDragons(SEL, OPEN){
   function loop(now){ raf = 0; if(!cv || !cv.isConnected || document.hidden || RM.matches) return show();
     if(!W) size(); if(!W || !onScreen()){ last = 0; raf = requestAnimationFrame(loop); return; }   // only time on screen counts
     const dt = last ? Math.min(200, now-last) : 0; last = now; left -= dt;   // counts during a sync too, so it ends 30 s after the sync starts (or when the sync ends, if later)
-    if(left <= 0 && !busy){   // time is up: once everyone has landed they fly off or fade, then the loop stops
+    if(left <= ROAM && !busy){   // last 10 s: once everyone has landed they take off round the page; the loop stops when all are up
       if(!exiting && !dg.some(d => d.jump || d.fly || d.hop || d.rin)) startExit();
       if(exiting && dg.every(d => d.gone)){ draw(); return show(); }
     } else if(exiting || dg.some(d => d.gone && !d.back)) wake();
