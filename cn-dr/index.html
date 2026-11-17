@@ -575,62 +575,94 @@ function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
 let dailyTimer = 0;
 /* ---------- dragons (About, Sync Devices): three original pixel dragons walk, jump, march in step, bump and cross depth ---------- */
 // They replace the pixel sea. Each time the About page opens they walk for about 30 s of time on screen, finish any jump
-// in the air, then for the last 10 s fly around the page before flying off or fading out. A sync starting (or a speed change) wakes them for another 30 s, with a group jump, and
+// in the air, then fly off the screen or fade out. During the run each one wanders off its canvas now and then to fly,
+// land and walk anywhere on the page. A sync starting (or a speed change) wakes them for another 30 s, with a group jump, and
 // they keep going while the sync runs. With reduced motion they hold a still frame.
 // makeDragons(SEL, OPEN): one dragon canvas. OPEN = the About strip (walks 30 s when the page opens, swipe for speed).
 // Without OPEN it is the title strip on Library and Practice: hidden until a sync starts, then shown and walking until it
 // rests. Either way the canvas is scaled to fit its box (art is 56 px tall; About is 2 CSS px per art px).
-// Page sky: for the last ROAM ms of their run the dragons leave their canvas and fly around the whole page on one
-// fixed, click-through overlay (fillRect only, no drawImage), wandering between random points. When their time is up
-// each one flies off screen or fades out in the air. Woken early (a sync, a swipe, a key), they fly home and land.
+// Page sky: dragons that leave their canvas live here, on one fixed, click-through overlay (fillRect only, no
+// drawImage). Each one flies around the page between random points, lands on the top edge of a heading, paragraph,
+// button or picture (or the bottom of the screen), walks along it, takes off again, and now and then flies home to
+// its canvas. leave() makes it fly off screen or fade out in the air; resume() cancels that.
 const SKY = (() => {
-  let cv = null, ctx = null, raf = 0, last = 0; const fl = [], R = Math.random;
+  let cv = null, ctx = null, raf = 0, last = 0; const fl = [], R = Math.random, WS = 2;   // WS: CSS px per art px when walking
+  const LEDGE = 'main h1, main h2, main h3, main h4, main p, main li, main button, main input, main textarea, main img, main label, main summary, main canvas.dragons, footer .foot-in';
   function wp(f){ const vw = innerWidth, vh = innerHeight, w = f.GW*f.sT, h = f.GH*f.sT;
     f.wx = 12 + R()*Math.max(1, vw-w-24); f.wy = 12 + R()*Math.max(1, vh-h-24); f.wk = 60 + R()*90; }
+  function topY(){ const t = document.querySelector('.top'); return t ? t.getBoundingClientRect().bottom : 0; }
+  // A ledge is an element (or the screen bottom) whose top edge is on screen, below the sticky header, and wide enough.
+  function ledgeRect(L){ if(L === 'floor') return {left:0, right:innerWidth, top:innerHeight-2};
+    if(!L.isConnected) return null; const r = L.getBoundingClientRect(), vh = innerHeight;
+    if(!r.width || !r.height || r.width < (GWs()+6) || r.top < topY() + 22*WS + 4 || r.top > vh - 6) return null; return r; }
+  const GWs = () => 30*WS;
+  function pickLedge(){ const all = [...document.querySelectorAll(LEDGE)].filter(ledgeRect); all.push('floor'); return all[(R()*all.length)|0]; }
+  function fly(f){ f.pt = null; f.mode = 'roam'; f.vy = -3; f.ft = 60 + R()*120; f.sT = 1.6+R()*1.6; wp(f); }   // take off for 2 to 6 s
   function add(f){ if(RM.matches){ f.alive = false; return; }
     if(!cv || !cv.isConnected){ cv = document.createElement('canvas'); cv.className = 'dragon-sky'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); }
-    Object.assign(f, {k:0, alive:true, landed:false, mode:'roam', a:1, s:f.ps, sT:1.6+R()*1.6, sp:3+R()*2, vx:f.dir*3, vy:-2.5}); wp(f);
+    Object.assign(f, {k:0, alive:true, landed:false, a:1, s:f.ps, sp:3+R()*2, vx:f.dir*3, vy:-2.5, out:'', lv:-1, fading:false}); fly(f);
     fl.push(f); if(!raf){ last = 0; raf = requestAnimationFrame(loop); } }
-  function home(f){ if(f.alive){ f.mode = 'home'; f.fk = 0; } }
+  const count = () => fl.filter(f => f.alive).length;
+  function leave(f, how, delay){ if(f.alive){ f.out = how; f.lv = delay; } }
+  function resume(f){ if(!f.alive) return; f.out = ''; f.lv = -1; f.fading = false; if(f.mode === 'off') fly(f); }
+  function next(f){   // after a flight: land somewhere (70%), go home (15%), or keep flying (15%)
+    f.pt = null; const r = R(); if(r < .7){ f.ledge = pickLedge(); f.mode = 'land'; } else if(r < .85) f.mode = f.home ? 'home' : 'off'; else fly(f); }   // visitors have no home: they fly away
   function step(f, n, ms){   // n = ticks (speed-scaled), ms = real time
     const vw = innerWidth, vh = innerHeight; f.k += n;
-    if(f.mode === 'home'){
-      const t = f.home(); if(!t){ f.mode = 'off'; return; }
-      const e = Math.min(1, .1*n); f.x += (t.x-f.x)*e; f.y += (t.y-f.y)*e; f.s += (t.s-f.s)*e; f.a = Math.min(1, f.a + n/20);
-      if(Math.abs(t.x-f.x) > 3) f.dir = t.x > f.x ? 1 : -1;
-      if(Math.hypot(t.x-f.x, t.y-f.y) < 1.5 && Math.abs(t.s-f.s) < .05){ f.alive = false; f.landed = true; }
+    if(!f.out && f.orphan()){ f.out = 'off'; f.lv = R()*20; }   // its canvas went away (page changed): leave
+    if(f.lv >= 0 && (f.lv -= n) < 0){ if(f.out === 'fade') f.fading = true; else { f.mode = 'off'; } }
+    if(f.fading){ f.a -= n/40; if(f.a <= 0){ f.alive = false; return; } } else if(f.a < 1) f.a = Math.min(1, f.a + n/20);
+    if(f.mode === 'home' || f.mode === 'land'){
+      let t;
+      if(f.mode === 'home'){ t = f.home(); if(!t){ fly(f); return; } }
+      else { const r = ledgeRect(f.ledge); if(!r){ fly(f); return; }
+        if(f.lx == null || f.lfor !== f.ledge) { f.lfor = f.ledge; f.lx = R(); }
+        t = {x: r.left + f.lx*Math.max(0, r.right - r.left - GWs()), y: r.top - 22*WS, s: WS}; }
+      if(f.pt){ f.x += t.x-f.pt.x; f.y += t.y-f.pt.y; } f.pt = t;   // ride along when the page scrolls
+      const dx = t.x-f.x, dy = t.y-f.y, d = Math.hypot(dx, dy);
+      if(d > 60){ const sp = Math.max(f.sp, 4), k = Math.min(1, .08*n); f.vx += (dx/d*sp - f.vx)*k; f.vy += (dy/d*sp - f.vy)*k; f.x += f.vx*n; f.y += f.vy*n; }
+      else { const e = Math.min(1, .12*n); f.x += dx*e; f.y += dy*e; f.vx = f.vy = 0; }
+      f.s += (t.s-f.s)*Math.min(1, .08*n); if(Math.abs(dx) > 3) f.dir = dx > 0 ? 1 : -1;
+      if(d < 3 && Math.abs(t.s-f.s) < .08){ f.x = t.x; f.y = t.y; f.s = t.s; f.pt = null;
+        if(f.mode === 'home'){ f.alive = false; f.landed = true; }
+        else { f.mode = 'walk'; f.wt = 90 + R()*150; f.s = WS; f.lx = null; } }
       return; }
-    if(f.mode === 'roam' || f.mode === 'fade'){
+    if(f.mode === 'walk'){
+      const r = ledgeRect(f.ledge); if(!r){ fly(f); return; }   // scrolled away, re-rendered or under the header: take off
+      f.y = r.top - 22*WS; f.x += f.dir*.6*WS*n;
+      if(f.x > r.right - GWs()){ f.x = r.right - GWs(); f.dir = -1; } if(f.x < r.left){ f.x = r.left; f.dir = 1; }
+      if((f.wt -= n) <= 0) fly(f); return; }
+    if(f.mode === 'roam'){
       const cx = f.x + f.GW*f.s/2, cy = f.y + f.GH*f.s/2, tx = f.wx + f.GW*f.s/2, ty = f.wy + f.GH*f.s/2, d = Math.hypot(tx-cx, ty-cy) || 1;
       const k = Math.min(1, .05*n); f.vx += ((tx-cx)/d*f.sp - f.vx)*k; f.vy += ((ty-cy)/d*f.sp - f.vy)*k;
       if(d < 30 || (f.wk -= n) <= 0){ f.sT = 1.6+R()*1.6; f.sp = 3+R()*2; wp(f); }
       f.s += (f.sT-f.s)*Math.min(1, .02*n);
-      if(f.mode === 'roam' && (f.life -= ms) <= 0) f.mode = f.exit;
-      if(f.mode === 'fade'){ f.a -= n/40; if(f.a <= 0){ f.alive = false; return; } }
+      if((f.ft -= n) <= 0 && !f.out) next(f);
     } else {   // 'off': speed up and climb out past the nearer side
       const out = f.x + f.GW*f.s/2 < vw/2 ? -1 : 1; f.sp = Math.min(16, f.sp*Math.pow(1.05, n));
       f.vx += (out*f.sp - f.vx)*Math.min(1, .08*n); f.vy += (-f.sp*.6 - f.vy)*Math.min(1, .08*n);
-      if(f.x > vw+40 || f.x + f.GW*f.s < -40 || f.y + f.GH*f.s < -40 || f.y > vh+40 || f.k > 3000){ f.alive = false; return; } }
+      if(f.x > vw+40 || f.x + f.GW*f.s < -40 || f.y + f.GH*f.s < -40 || f.y > vh+40 || f.k > 9000){ f.alive = false; return; } }
     f.x += f.vx*n; f.y += f.vy*n; if(Math.abs(f.vx) > .4) f.dir = f.vx > 0 ? 1 : -1;
   }
   function loop(now){ raf = 0;
     const dpr = window.devicePixelRatio || 1, vw = innerWidth, vh = innerHeight;
     if(cv.width !== Math.round(vw*dpr) || cv.height !== Math.round(vh*dpr)){ cv.width = Math.round(vw*dpr); cv.height = Math.round(vh*dpr); }
     ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, vw, vh);
-    const dt = last ? Math.min(200, now-last) : 0; last = now;
+    const dt = document.hidden ? 0 : last ? Math.min(200, now-last) : 0; last = now;
     for(const f of fl.sort((p, q) => p.s - q.s)){   // smaller (farther) first
       if(RM.matches){ f.alive = false; continue; }
-      step(f, dt/33.3*f.spd, dt); if(!f.alive) continue;
-      const x = f.x, y = f.y, s = f.s, spr = f.SPR[((f.k/(f.mode === 'roam' ? 6 : 4))|0)%2];
+      step(f, dt/33.3*f.spd(), dt); if(!f.alive) continue;
+      const x = f.x, y = f.y, s = f.s, pal = f.pal(),
+        spr = f.mode === 'walk' ? f.SPR[(((f.k/7)|0)%4)*2 + (((f.k/18)|0)%2)] : f.SPR[((f.k/(f.mode === 'roam' ? 6 : 4))|0)%2];
       ctx.globalAlpha = Math.max(0, Math.min(1, f.a));
       for(let r=0; r<f.GH; r++){ const y0 = Math.round(y + r*s), y1 = Math.round(y + (r+1)*s); if(y1 <= y0) continue;
         for(let c=0; c<f.GW; c++){ const v = spr[r*f.GW + (f.dir < 0 ? f.GW-1-c : c)]; if(!v) continue;
           const x0 = Math.round(x + c*s), x1 = Math.round(x + (c+1)*s); if(x1 <= x0) continue;
-          const p = f.pal[v]; ctx.fillStyle = `rgb(${p[0]},${p[1]},${p[2]})`; ctx.fillRect(x0, y0, x1-x0, y1-y0); } } }
+          const p = pal[v]; ctx.fillStyle = `rgb(${p[0]},${p[1]},${p[2]})`; ctx.fillRect(x0, y0, x1-x0, y1-y0); } } }
     ctx.globalAlpha = 1;
     for(let i=fl.length-1; i>=0; i--) if(!fl[i].alive) fl.splice(i, 1);
     if(fl.length) raf = requestAnimationFrame(loop); else { cv.remove(); cv = null; } }
-  return {add, home};
+  return {add, leave, resume, count};
 })();
 function makeDragons(SEL, OPEN){
   const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // 8 frames: step*2 + wing; 30x26 palette indices
@@ -657,34 +689,47 @@ function makeDragons(SEL, OPEN){
   function zf(tt){ for(let i=0; i<ZKEY.length-1; i++){ const [t0,z0] = ZKEY[i], [t1,z1] = ZKEY[i+1];
     if(tt>=t0 && tt<=t1){ let k = (tt-t0)/Math.max(1,t1-t0); k = k*k*(3-2*k); return z0+(z1-z0)*k; } } return 0; }
   function mk(i, x, dir){ const sc = scheme(), sv = tone(); return {i, x, dir, h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], fly:0, hop:0, cool:0, y:0, b:0, z:1, jump:0, jdur:1, jh:0,
-    nextj:30+(R()*70|0), boost:0, ov:0, a:1, ex:0, od:0, fk:0, mode:'', gone:'', back:false, rin:0, side:1, flier:null, ph:[R()*6.28, R()*6.28], step:0, wing:0}; }
-  function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; exiting = false; }
-  // Last ROAM ms of the run: after their own short delays the dragons take off and fly around the page (SKY), then
-  // fly off screen or fade out. Waking them (a sync, a swipe, a key) brings fliers home to land where they took off.
-  let exiting = false; const ROAM = 10000;
+    nextj:30+(R()*70|0), boost:0, ov:0, tk:60+(R()*240|0), a:1, ex:0, od:0, fk:0, mode:'', gone:'', back:false, rin:0, side:1, flier:null, ph:[R()*6.28, R()*6.28], step:0, wing:0}; }
+  function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; exiting = false; vis = []; spawnT = 150; }
+  // Free range: during the run each dragon now and then takes off from its canvas and lives on the page (SKY), flying,
+  // landing and walking on things, and sometimes flying home. When the run is up (and no sync is running) they all
+  // leave, one after another: fly off screen or fade out in the air. Waking them early cancels that.
+  let exiting = false, vis = [], spawnT = 150; const MAXD = 7;   // visitors: extra dragons from off screen, up to 7 dragons on screen in all
+  function visit(){ if(RM.matches) return; const sc = scheme(), sv = tone(), v = {h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], z:1};
+    const side = R() < .5 ? -1 : 1, ps = 2;
+    const f = {SPR, GW, GH, pal: () => palOf(v), dir: -side, x: side < 0 ? -GW*ps - 10 : innerWidth + 10, y: innerHeight*(.2 + R()*.5), ps, spd: () => SPD,
+      home: null, orphan: () => !cv || !cv.isConnected};
+    SKY.add(f); if(f.alive){ v.f = f; vis.push(v); } }
   function startExit(){ exiting = true; const same = R() < .3, m0 = pick(['fly','fade']);
-    for(const d of dg){ if(d.gone) { d.back = false; continue; } d.ex = 1; d.od = R()*20|0; d.mode = same ? m0 : pick(['fly','fade']); } }
-  function wake(){ exiting = false; for(const d of dg){ d.ex = 0; if(d.gone){ d.back = true; if(d.flier) SKY.home(d.flier); } } }
+    for(const d of dg){ d.mode = same ? m0 : pick(['fly','fade']); const how = d.mode === 'fade' ? 'fade' : 'off', wait = R()*20;
+      if(d.gone === 'fly' && d.flier && d.flier.alive){ SKY.leave(d.flier, how, wait); continue; }
+      if(d.gone) { d.back = false; continue; } d.ex = 1; d.od = wait|0; }
+    for(const v of vis) SKY.leave(v.f, same ? (m0 === 'fade' ? 'fade' : 'off') : pick(['fade','off']), R()*20); }
+  function wake(){ exiting = false; for(const d of dg){ d.ex = 0; if(!d.gone) continue;
+    if(d.flier && d.flier.alive) SKY.resume(d.flier); else d.back = true; }
+    for(const v of vis) SKY.resume(v.f); }
   function spot(d){   // where this dragon stands in the canvas, in page (viewport) pixels
     if(!cv || !cv.isConnected) return null; const r = cv.getBoundingClientRect(); if(!r.height) return null;
     const ps = r.height/H, sc = (2+d.z)/3;
     return {x: r.left + Math.round(d.x)*ps, y: r.top + Math.round(d.b + d.y*sc - 22*sc)*ps, s: ps*sc}; }
   function launch(d){
     const p = spot(d);
-    if(!p || RM.matches || !onScreen()){ d.ex = 2; d.fk = 0; return; }   // can't fly here: fade in place instead
-    const f = {SPR:[SPR[0], SPR[1]], GW, GH, pal:palOf(Object.assign({}, d, {z:1})), dir:d.dir, x:p.x, y:p.y, ps:p.s, spd:SPD,
-      life: Math.max(3000, left), exit: d.mode === 'fade' ? 'fade' : 'off', home: () => { d.y = 0; return spot(d); }};   // step 0, wings up / down; full colour
-    SKY.add(f); d.flier = f; d.gone = 'fly'; d.ex = 0; }
+    if(!p || RM.matches || !onScreen()){ if(exiting){ d.ex = 2; d.fk = 0; } return false; }   // can't fly from here: at the end, fade in place
+    const f = {SPR, GW, GH, pal: () => palOf(Object.assign({}, d, {z:1})), dir:d.dir, x:p.x, y:p.y, ps:p.s, spd: () => SPD,
+      home: () => { d.y = 0; return spot(d); }, orphan: () => !cv || !cv.isConnected};   // full colour that keeps drifting with the dragon's hues
+    SKY.add(f); if(!f.alive) return false; d.flier = f; d.gone = 'fly'; d.ex = 0; d.jump = d.fly = d.hop = 0;
+    if(exiting) SKY.leave(f, d.mode === 'fade' ? 'fade' : 'off', 0); return true; }
   function comeBack(d){ d.back = false;
     if(d.gone === 'fly'){ d.a = 1; d.jump = d.fly = d.hop = 0;
-      if(d.flier && d.flier.landed) d.dir = d.flier.dir;   // landed home
+      if(d.flier && d.flier.landed) d.dir = d.flier.dir;   // flew home and landed
       else { d.rin = 40; d.x = R() < .5 ? W-GW-2 : 2; d.dir = d.x > W/2 ? -1 : 1; } }   // its flight ended elsewhere: glide in from the top
-    d.gone = ''; d.flier = null; }
+    d.gone = ''; d.flier = null; d.tk = 90 + (R()*240|0); }
   function tick(){
     t++; const tt = t % CYCLE, march = MARCH.some(([a,b]) => tt>=a && tt<b);
     for(const d of dg){
-      if(d.gone){ if(d.back && !(d.gone === 'fly' && d.flier && d.flier.alive)) comeBack(d); else continue; }
-      if(d.ex === 1 && --d.od <= 0){ launch(d); if(d.gone) continue; }   // take off (d.mode = how it leaves the page later)
+      if(d.gone){ if((d.gone === 'fly' && d.flier && d.flier.landed) || (d.back && !(d.flier && d.flier.alive))) comeBack(d); else continue; }
+      if(d.ex === 1 && --d.od <= 0){ launch(d); if(d.gone) continue; }   // run is up: take off and leave
+      if(!exiting && !d.rin && !d.jump && !d.fly && !d.hop && --d.tk <= 0){ d.tk = 60 + (R()*120|0); if(launch(d)) continue; }   // off to explore the page
       if(d.ex === 2){ const u = Math.min(1, ++d.fk/40); d.a = 1 - u*u*(3-2*u); if(u >= 1){ d.gone = 'fade'; d.ex = 0; continue; } }
       else if(!exiting && d.a < 1) d.a = Math.min(1, d.a + 1/20);
       const lane = d.i===0 ? [H-5,2.5] : [H-8,2.5];
@@ -726,7 +771,9 @@ function makeDragons(SEL, OPEN){
       if(R() < .4){ const sc = scheme(), sv = tone(); for(const d of dg){ d.th = [...sc]; d.tsv = [...sv]; } }
       else { const d = pick(dg); d.th = scheme(); d.tsv = tone(); }
       nextColor = 300+(R()*400|0); }
-    for(const d of dg){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a,j) => a+(d.tsv[j]-a)*.06); }
+    vis = vis.filter(v => v.f.alive);
+    if(!exiting && --spawnT <= 0){ spawnT = 90 + (R()*180|0); if(dg.filter(d => !d.gone).length + SKY.count() < MAXD) visit(); }
+    for(const d of [...dg, ...vis]){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a,j) => a+(d.tsv[j]-a)*.06); }
     sparks = sparks.map(([x,y,n]) => [x,y,n-1]).filter(s => s[2] > 0);
   }
   // Whole frame is built in one ImageData at art-pixel size and written with a single putImageData (the same path the
@@ -761,10 +808,10 @@ function makeDragons(SEL, OPEN){
   function show(){ if(!OPEN && cv) cv.classList.toggle('on', !!(busy || raf)); }
   function upd(){ if(cv && cv.isConnected && !document.hidden && !RM.matches && !raf && (left > 0 || busy)){ last = 0; raf = requestAnimationFrame(loop); } show(); }
   function loop(now){ raf = 0; if(!cv || !cv.isConnected || document.hidden || RM.matches) return show();
-    if(!W) size(); if(!W || !onScreen()){ last = 0; raf = requestAnimationFrame(loop); return; }   // only time on screen counts
+    if(!W) size(); if(!W || (!onScreen() && !dg.some(d => d.gone) && !vis.length)){ last = 0; raf = requestAnimationFrame(loop); return; }   // time counts while they are in view: on their canvas or out on the page
     const dt = last ? Math.min(200, now-last) : 0; last = now; left -= dt;   // counts during a sync too, so it ends 30 s after the sync starts (or when the sync ends, if later)
-    if(left <= ROAM && !busy){   // last 10 s: once everyone has landed they take off round the page; the loop stops when all are up
-      if(!exiting && !dg.some(d => d.jump || d.fly || d.hop || d.rin)) startExit();
+    if(left <= 0 && !busy){   // run is up: once everyone on the canvas has landed they all leave; the loop stops when all are gone
+      if(!exiting && !dg.some(d => !d.gone && (d.jump || d.fly || d.hop || d.rin))) startExit();
       if(exiting && dg.every(d => d.gone)){ draw(); return show(); }
     } else if(exiting || dg.some(d => d.gone && !d.back)) wake();
     raf = requestAnimationFrame(loop);
