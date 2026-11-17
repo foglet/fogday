@@ -478,7 +478,7 @@ $("hereBtn").addEventListener("click", ()=>{
 /* The title: back to the opening view */
 $("home").addEventListener("click", ()=>{
   clearSpot(); if(!map) return;
-  const t=spotTurn; map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(HOME.center), HQ) });   // HQ's card on arrival
+  const t=spotTurn; map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(HOME.center), HQ, true) });   // HQ's card on arrival
   map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700});
 });
 /* Maps menu, as on /ucsf/ and /transit/ */
@@ -545,7 +545,7 @@ const loadAirports=(function(){
   function pick(i, byKeyboard){
     const f=shown[i]; if(!f || !map) return;
     clearSpot(); const t=spotTurn;   // the found place's details appear on landing, as on /transit/, unless a tap came first
-    map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(f.center), f.airport) });
+    map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(f.center), f.airport, true) });
     map.flyTo({center:f.center, zoom:f.zoom, bearing:0, duration:1600}); minimize(byKeyboard);
   }
   field.addEventListener("click", ()=>{ if(document.activeElement!==input) input.focus() });
@@ -587,7 +587,12 @@ const WORDS={
   en:["Open water","Place name unavailable","Time zone unavailable"], de:["Offenes Wasser","Ortsname nicht verfügbar","Zeitzone nicht verfügbar"],
   es:["Aguas abiertas","Nombre del lugar no disponible","Zona horaria no disponible"], fr:["En pleine eau","Nom du lieu indisponible","Fuseau horaire indisponible"],
   ru:["Открытая вода","Название места недоступно","Часовой пояс недоступен"], zh:["开阔水域","地名不可用","时区不可用"] };
-let LANG=LANGS[store.get("lang")] ? store.get("lang") : "en", lastSpot=null;
+let LANG=LANGS[store.get("lang")] ? store.get("lang") : "en", lastSpot=null, markLang=()=>{};
+/* Flying somewhere (a search pick, or the title back to HQ) whose country speaks one of the six switches to it on
+   landing: Barcelona → ES, Paris → FR, Moscow → RU … Elsewhere the picked language stays. */
+const COUNTRY_LANG={};
+[["en","us gb ie au nz ca"], ["de","de at li"], ["es","es mx ar co cl pe ve ec bo py uy cr pa cu do gt hn sv ni pr gq"],
+ ["fr","fr mc"], ["ru","ru by"], ["zh","cn tw hk mo"]].forEach(([l,cs])=>cs.split(" ").forEach(c=>COUNTRY_LANG[c]=l));
 const calm=matchMedia("(prefers-reduced-motion: reduce)");
 const spotCard=$("oa-detail-panel");
 let spotTurn=0, spotTimer=0, spotZone=null, spotAnim=null, spotMarker=null, spotLife=0, spotFade=null, tzReady=null;
@@ -623,8 +628,8 @@ function placeName(lng, lat, cityName, lang){
     const rc=region && region.region_code;
     const st=region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
     const parts=[(lang==="en" && cityName)||(city&&city.name), st, country&&country.name].filter(Boolean).filter((n,i,a)=>a.indexOf(n)===i);
-    return parts.length ? parts.join(lang==="zh" ? "，" : ", ") : WORDS[lang][0];
-  }).catch(()=>WORDS[lang][1]);
+    return {name: parts.length ? parts.join(lang==="zh" ? "，" : ", ") : WORDS[lang][0], cc: country && (country.country_code||"").toLowerCase()};
+  }).catch(()=>({name: WORDS[lang][1], cc: null}));
 }
 function offsetText(zone){
   try{ const o=new Intl.DateTimeFormat("en-US",{timeZone:zone, timeZoneName:"shortOffset"}).formatToParts(new Date()).filter(p=>p.type==="timeZoneName")[0].value;
@@ -651,14 +656,17 @@ function dms(v, pos, neg){
   return two(d)+"°"+two(m)+"′"+two(sec)+"″"+(v<0?neg:pos);
 }
 function line(cls, text){ const d=document.createElement("div"); d.className=cls; d.textContent=text; return d }
-function showSpot(lngLat, airport){
+function showSpot(lngLat, airport, flown){   // flown: landed by a flight, so the language may follow the country
   if(!map) return;
   lastSpot=[lngLat, airport];
   const lang=LANG, mine=++spotTurn, ll=lngLat.wrap(), lat=ll.lat.toFixed(6), lng=ll.lng.toFixed(6);
   if(!spotMarker) spotMarker=new mapboxgl.Marker({element:spotWrap});
   spotMarker.setLngLat(ll).addTo(map); spotStart();
-  Promise.all([placeName(lng, lat, airport && airport.city, lang), loadTz()]).then(([name, tz])=>{
+  Promise.all([placeName(lng, lat, airport && airport.city, lang), loadTz()]).then(([place, tz])=>{
     if(mine!==spotTurn) return;
+    const want=flown && COUNTRY_LANG[place.cc];
+    if(want && want!==LANG){ LANG=want; store.set("lang", LANG); markLang(); labelLang(); showSpot(lngLat, airport); return }
+    const name=place.name;
     let zone=null; try{ zone=tz ? tz(+lat, +lng) : null }catch(e){}
     spotZone=zone;
     if(spotAnim){ spotAnim.cancel(); spotAnim=null }
@@ -695,6 +703,7 @@ document.addEventListener("keydown", e=>{
 /* Language picker: tap the code for the six; pick one and the card (if shown) is redone in it */
 (function(){
   const btn=$("langBtn"), pop=$("langPop"), opts=[...pop.querySelectorAll("button")];
+  markLang=()=>mark();
   function mark(){ btn.textContent=LANG.toUpperCase(); btn.setAttribute("aria-label","Language of the place details: "+LANG.toUpperCase());
                    opts.forEach(b=>b.setAttribute("aria-checked", String(b.dataset.lang===LANG))) }
   function setOpen(open){ pop.hidden=!open; btn.setAttribute("aria-expanded", String(open)) }
