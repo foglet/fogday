@@ -113,13 +113,13 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .maps-menu .all { border-top: 1px solid var(--site-line); margin-top: 6px; padding-top: 6px; }
   .maps-menu .all a { color: var(--muted); font-size: .9rem; }
   @media (pointer: coarse) { .maps-btn { width: 44px; } }
-  /* The maps chevron sits right after the name, in one pill with it (as on /ucsf/ and /treesf/) */
+  /* The maps chevron sits right after the name, in one pill with it (as on /mb/ and /treesf/) */
   .title-row { gap: 0; }
   .title-row .title { border-radius: 8px 0 0 8px; padding-right: 6px; }
   .maps-btn { border-radius: 0 8px 8px 0; width: 30px; justify-content: flex-start; padding-left: 2px; }
   @media (pointer: coarse) { .maps-btn { width: 40px; } }
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
-  @media (max-width: 759px) { .title-row { margin-left: 12px; } .maps-menu { left: 0; } }   /* title top left on phones too, as on /ucsf/ and /eastbeach/ */
+  @media (max-width: 759px) { .title-row { margin-left: 12px; } .maps-menu { left: 0; } }   /* title top left on phones too, as on /mb/ and /eastbeach/ */
   @media (max-width: 360px) { .title { letter-spacing: .08em; } }   /* smallest phones: tighter tracking keeps the title clear of the bento */
 
   /* Bottom left, above the Mapbox logo: the legend */
@@ -301,7 +301,7 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
   /* Phones fold the credits into an (i) button; its icon is dark, so lighten it to show on the navy */
   .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
-  /* Top right: the bento (all projects, fogday.com/works/), as on /treesf/ and /ucsf/: no panel, 40px tap target
+  /* Top right: the bento (all projects, fogday.com/works/), as on /treesf/ and /mb/: no panel, 40px tap target
      (44px on touch), its 3x3 grid a mask over the title's sky-blue gradient, with a soft navy halo over the map */
   .corner { position: fixed; z-index: 3; top: calc(9px + var(--sat)); right: calc(8px + var(--sar)); display: flex; align-items: center; }
   .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 11px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
