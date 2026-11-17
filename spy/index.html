@@ -185,6 +185,7 @@ zoom: 13.02
   .oa-detail-panel > div { width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 4px;
     background: color-mix(in srgb, var(--bg) 80%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
   .oa-detail-name { font-weight: 700; }
+  .oa-detail-city { color: hsl(0, 67%, 54%); }   /* the city, in the same rail red as the time; state and country as before */
   .oa-detail-code { color: #7cc4f0; letter-spacing: .04em; }
   .oa-detail-place, .oa-detail-coords, .oa-detail-offset, .oa-detail-time { margin-top: 2px; }
   .oa-detail-coords, .oa-detail-offset, .oa-detail-time { font-variant-numeric: tabular-nums; }
@@ -635,8 +636,10 @@ function placeName(lng, lat, cityName, lang){
     const city=c.place||c.locality||c.district, region=c.region, country=c.country;
     const rc=region && region.region_code;
     const st=region && (rc && /^[A-Za-z]{1,3}$/.test(rc) ? rc.toUpperCase() : region.name);
-    const parts=[(lang==="en" && cityName)||(city&&city.name), st, country&&country.name].filter(Boolean).filter((n,i,a)=>a.indexOf(n)===i);
-    return {name: parts.length ? parts.join(lang==="zh" ? "，" : ", ") : WORDS[lang][0], cc: country && (country.country_code||"").toLowerCase()};
+    const cityTxt=(lang==="en" && cityName)||(city&&city.name);
+    const parts=[cityTxt, st, country&&country.name].filter(Boolean).filter((n,i,a)=>a.indexOf(n)===i);
+    return {name: parts.length ? parts.join(lang==="zh" ? "，" : ", ") : WORDS[lang][0], city: cityTxt||null, sep: lang==="zh" ? "，" : ", ",
+            cc: country && (country.country_code||"").toLowerCase()};
   }).catch(()=>({name: WORDS[lang][1], cc: null}));
 }
 function offsetText(zone){
@@ -674,7 +677,11 @@ function showSpot(lngLat, airport, flown){   // flown: landed by a flight, so th
     if(mine!==spotTurn) return;
     const want=flown && COUNTRY_LANG[place.cc];
     if(want && want!==LANG){ LANG=want; store.set("lang", LANG); markLang(); labelLang(); showSpot(lngLat, airport); return }
-    const name=place.name;
+    /* The place line: the city (first) in red, then state and country as before */
+    const placeLine=cls=>{ const d=line(cls, place.name);
+      if(place.city && place.name.indexOf(place.city)===0){ const c=document.createElement("span"); c.className="oa-detail-city"; c.textContent=place.city;
+        d.textContent=place.name.slice(place.city.length); d.prepend(c) }
+      return d };
     let zone=null; try{ zone=tz ? tz(+lat, +lng) : null }catch(e){}
     spotZone=zone;
     if(spotAnim){ spotAnim.cancel(); spotAnim=null }
@@ -682,8 +689,8 @@ function showSpot(lngLat, airport, flown){   // flown: landed by a flight, so th
     if(airport){
       const head=line("oa-detail-name", (airport.code?" ":"")+airport.name), code=document.createElement("span");
       code.className="oa-detail-code"; code.textContent=airport.code; if(airport.code) head.prepend(code);
-      spotCard.append(head, line("oa-detail-place", name));
-    } else spotCard.appendChild(line("oa-detail-name", name));
+      spotCard.append(head, placeLine("oa-detail-place"));
+    } else spotCard.appendChild(placeLine("oa-detail-name"));
     spotCard.appendChild(line("oa-detail-coords", dms(+lat,"N","S")+", "+dms(+lng,"E","W")));
     if(zone){
       const clock=document.createElement("div"), tm=document.createElement("span"), off=document.createElement("span");
