@@ -416,7 +416,7 @@ $("home").addEventListener("click", ()=>{
   map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700});
 });
 /* Maps menu, as on /ucsf/ and /transit/ */
-const loadAirports=(function(){
+(function(){
   const btn=$("mapsBtn"), menu=$("maps-menu");
   const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
   btn.addEventListener("click", e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded", String(open)) });
@@ -430,7 +430,7 @@ setInfo(store.get("info")==="1");
 /* Search, as on /transit/: any city in the world via Mapbox geocoding, or a 3-letter airport code
    (/transit/airports.json, OurAirports, public domain: code -> [name, city, country, lon, lat], fetched the first time
    search opens). Picking a result flies there and minimizes the bar; a tap elsewhere or Escape minimizes it. */
-(function(){
+const loadAirports=(function(){
   const card=$("search"), input=$("oa-search-input"), list=$("oa-search-results"), status=$("oa-search-status"), field=card.querySelector(".oa-field");
   const HINT="Type a city or a 3-letter airport code";
   let shown=[], active=-1, timer=0, turn=0, airports=null;
