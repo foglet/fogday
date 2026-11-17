@@ -195,3 +195,6 @@ GitHub did not accept this token. Make a new one with the gist scope, then conne
 Offline. Changes will sync when you are back online.	已离线。恢复联网后会自动同步更改。	已離線。恢復聯網後會自動同步更改。
 Could not reach GitHub. Try Sync now.	无法连接 GitHub。请试试“立即同步”。	無法連線 GitHub。請試試「立即同步」。
 Disconnected. This device keeps its data; nothing was deleted from GitHub.	已断开连接。这台设备保留了数据，GitHub 上没有删除任何内容。	已斷開連線。這臺裝置保留了資料，GitHub 上沒有刪除任何內容。
+Pitch & roll	俯仰与滚转	俯仰與滾轉
+Tilt the phone to pitch and roll the dragons	倾斜手机，让龙俯仰和滚转	傾斜手機，讓龍俯仰和滾轉
+Motion access is off. Allow it in Settings for this site	动作与方向访问已关闭。请在设置中允许此网站使用。	動作與方向存取已關閉。請在設定中允許此網站使用。

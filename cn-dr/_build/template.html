@@ -223,6 +223,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .sync-form{margin-top:var(--s3)}
 .sync > .sync-st:not(:empty){margin:var(--s2) 0 0}
 .sync-icons{display:flex;gap:var(--s1);margin-right:calc(-1 * var(--s2))}
+.tilt-btn{min-width:var(--tap);padding:0 var(--s3)}
 .sync [data-sync]{color:var(--ink-2)}
 .sync [data-sync] svg{width:20px;height:20px}   /* same as the footer follow icons */
 .sync [data-sync].on{color:var(--primary)}
@@ -558,7 +559,7 @@ function syncSection(){
   const on = !!store.get('sync:tok','');
   const st = `<p class="sync-st${syncErr?' err':''}" id="syncSt" role="status">${esc(syncText())}</p>`;
   return `<section class="sync" aria-labelledby="syncH"><div class="sync-hd"><h2 class="vh" id="syncH">Sync Devices</h2><canvas class="dragons" tabindex="0" role="slider" aria-label="Dragon speed" aria-valuemin="0.25" aria-valuemax="4" aria-valuenow="${DRAG.speed()}" aria-valuetext="${DRAG.speed()} times" title="Swipe left or right to change how fast the dragons go"></canvas>
-    <div class="sync-icons"><button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${SYNC_WAVE}</button></div></div>
+    <div class="sync-icons">${TILT_OK() ? `<button class="btn ghost tilt-btn" data-tilt aria-pressed="${SKY.tiltOn()}" title="Tilt the phone to pitch and roll the dragons">Pitch &amp; roll</button>` : ''}<button class="btn ghost icon-btn${on?' on':''}" data-sync="now" aria-label="${on?'Sync now':'Connect and sync'}" title="${on?'Sync now':'Connect and sync'}">${SYNC_WAVE}</button></div></div>
     ${on ? st
     : `<form id="syncForm" class="sync-form" novalidate><label for="syncTok">GitHub token</label>
       <input id="syncTok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="syncHelp syncSt">
@@ -585,6 +586,7 @@ let dailyTimer = 0;
 // drawImage). Each one flies around the page between random points, lands on the top edge of a heading, paragraph,
 // button or picture (or the bottom of the screen), walks along it, takes off again, and now and then flies home to
 // its canvas. leave() makes it fly off screen or fade out in the air; resume() cancels that.
+const TILT_OK = () => typeof DeviceOrientationEvent !== 'undefined' && !!window.matchMedia && matchMedia('(pointer: coarse)').matches && !RM.matches;   // phones only
 const SKY = (() => {
   let cv = null, ctx = null, raf = 0, last = 0; const fl = [], R = Math.random, WS = 2;   // WS: CSS px per art px when walking
   // Ledges are only things you can see: a line of text (feet on the tops of the letters, walking its length), or a
@@ -637,6 +639,32 @@ const SKY = (() => {
   addEventListener('pointermove', poke, {passive:true}); addEventListener('pointerdown', poke, {passive:true});
   addEventListener('pointerout', e => { if(!e.relatedTarget) P.t = -1e9; }, {passive:true});   // mouse left the window
   const following = () => performance.now() - P.t < 2000;
+  // Tilt and shake (phones, behind the Tilt switch on About): the low side of the screen pulls fliers and walkers
+  // downhill; tip it far and walkers lose their footing; a shake scatters everyone and calls the dragons back.
+  // iPhone needs a tap to allow Motion & Orientation Access, so it only starts from the switch.
+  const G = {x:0, y:0, on:false, base:null}, shakers = []; let shakeT = 0;
+  const needsAsk = () => [window.DeviceOrientationEvent, window.DeviceMotionEvent].filter(c => c && typeof c.requestPermission === 'function');
+  function orient(e){ if(e.beta == null) return;
+    if(G.base == null) G.base = e.beta; G.base += (e.beta - G.base)*.003;   // front-back: the way it is held slowly becomes level
+    const tx = Math.max(-1, Math.min(1, (e.gamma || 0)/40)), ty = Math.max(-1, Math.min(1, (e.beta - G.base)/40));
+    const a = ((screen.orientation && screen.orientation.angle) || window.orientation || 0)*Math.PI/180;   // turn into screen axes
+    G.x = tx*Math.cos(a) + ty*Math.sin(a); G.y = ty*Math.cos(a) - tx*Math.sin(a); }
+  function motion(e){ const a = e.acceleration; if(!a || a.x == null || RM.matches) return; const now = performance.now();
+    if(Math.hypot(a.x, a.y, a.z || 0) > 18 && now - shakeT > 1200){ shakeT = now;
+      for(const f of fl) if(f.alive && !f.out){ fly(f); f.vx = (R()-.5)*20; f.vy = -6 - R()*6; }
+      shakers.forEach(fn => fn()); } }
+  const mark = v => document.querySelectorAll('[data-tilt]').forEach(b => b.setAttribute('aria-pressed', String(v)));
+  function tiltOn(){ if(G.on) return; G.on = true; G.base = null; addEventListener('deviceorientation', orient); addEventListener('devicemotion', motion); mark(true); }
+  function tiltOff(){ G.on = false; G.x = G.y = 0; mark(false); removeEventListener('deviceorientation', orient); removeEventListener('devicemotion', motion); }
+  function toggleTilt(btn){
+    if(G.on){ tiltOff(); store.set('dragTilt', 0); btn.setAttribute('aria-pressed', 'false'); return; }
+    Promise.all(needsAsk().map(c => c.requestPermission()))   // asked together, inside the tap
+      .then(r => { if(r.some(x => x !== 'granted')) throw 0; tiltOn(); store.set('dragTilt', 1); btn.setAttribute('aria-pressed', 'true'); })
+      .catch(() => { btn.setAttribute('aria-pressed', 'false'); btn.title = trFull('Motion access is off. Allow it in Settings for this site'); }); }
+  if(+store.get('dragTilt', 0) && typeof DeviceOrientationEvent !== 'undefined')   // was on: back on where no prompt is needed (iPhone needs the tap again)
+    Promise.all(needsAsk().map(c => c.requestPermission())).then(r => { if(r.every(x => x === 'granted')) tiltOn(); }).catch(() => {});
+  if(+store.get('dragTilt', 0) && navigator.permissions) navigator.permissions.query({name:'accelerometer'}).then(st => { if(st.state === 'granted') tiltOn(); }).catch(() => {});   // Chrome: sensor access already granted
+  const lean = () => G.on ? G.x : 0;
   function next(f){   // after a flight: land somewhere (70%), go home (15%), or keep flying (15%)
     f.pt = null; if(following()){ fly(f); return; } const r = R(); if(r < .15) toward(f, false); else if(r < .7){ f.ledge = pickLedge(); if(f.ledge) f.mode = 'land'; else fly(f); } else if(r < .85) f.mode = f.home ? 'home' : 'off'; else fly(f); }   // visitors have no home: they fly away
   function step(f, n, ms){   // n = ticks (speed-scaled), ms = real time
@@ -671,7 +699,9 @@ const SKY = (() => {
       return; }
     if(f.mode === 'walk'){
       const r = ledgeRect(f.ledge); if(!r){ fly(f); return; }   // scrolled away, re-rendered or under the header: take off
-      f.y = r.top - 22*WS; f.x += f.dir*.6*WS*n;
+      const ln = lean(); if(Math.abs(ln) > .75 && !f.out && air() < MAXAIR){ fly(f); f.vx = ln*8; f.vy = -2; return; }   // too steep: loses its footing
+      if(ln*f.dir < -.3 && R() < .02*n) f.dir *= -1;   // walking uphill on a slope: now and then turns round
+      f.y = r.top - 22*WS; f.x += f.dir*.6*WS*n*Math.max(.15, 1 + f.dir*ln*1.5);
       if(f.x > r.right - GWs()){ f.x = r.right - GWs(); f.dir = -1; } if(f.x < r.left){ f.x = r.left; f.dir = 1; }
       if(following() && !f.out && air() < MAXAIR){ fly(f); return; }   // join the others at the pointer
       if((f.wt -= n) <= 0){ if(air() < MAXAIR) fly(f); else f.wt = 30; } return; }   // no more than 3 in the air: wait a moment
@@ -683,6 +713,7 @@ const SKY = (() => {
       const k = Math.min(1, .05*n); f.vx += ((tx-cx)/d*f.sp - f.vx)*k; f.vy += ((ty-cy)/d*f.sp - f.vy)*k;
       if(!following() && (d < 30 || (f.wk -= n) <= 0)){ f.sT = 1.6+R()*1.6; f.sp = 3+R()*2; wp(f); }
       f.s += (f.sT-f.s)*Math.min(1, .02*n);
+      if(G.on){ f.vx += G.x*.35*n; f.vy += G.y*.35*n; }   // tilt: pulled toward the low side
       if((f.ft -= n) <= 0 && !f.out) next(f);
     } else {   // 'off': speed up and climb out past the nearer side
       const out = f.x + f.GW*f.s/2 < vw/2 ? -1 : 1; f.sp = Math.min(16, f.sp*Math.pow(1.05, n));
@@ -709,7 +740,7 @@ const SKY = (() => {
     ctx.globalAlpha = 1;
     for(let i=fl.length-1; i>=0; i--) if(!fl[i].alive) fl.splice(i, 1);
     if(fl.length) raf = requestAnimationFrame(loop); else { cv.remove(); cv = null; } }
-  return {add, leave, resume, count, air, MAXAIR, following};
+  return {add, leave, resume, count, air, MAXAIR, following, lean, toggleTilt, tiltOn: () => G.on, onShake: fn => shakers.push(fn)};
 })();
 function makeDragons(SEL, OPEN){
   const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', '000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222444444100000000000000000000132242241000000000000000001111331112210000000000000000017733111221100000000000000000001111177110000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', '000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222444444100000000000000000000132242241000000000000000001111331112210000000000000000017733111221100000000000000000001111177110000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // frames 0-7 walk (step*2 + wing), 8-9 flying with legs tucked   // 8 frames: step*2 + wing; 30x26 palette indices
@@ -789,7 +820,7 @@ function makeDragons(SEL, OPEN){
       if(d.jump){ const k = d.jdur-d.jump; d.y -= Math.sin(Math.PI*k/d.jdur)*d.jh; d.jump--; d.wing = (t/Math.max(3,d.jdur/6|0)|0)%2; d.step = 1; }
       else if(!(d.fly || d.hop || march || d.rin || exiting) && --d.nextj <= 0){ d.jdur = pick([12,16,22,30,40]); d.jh = d.jdur*.38 + R()*3-1; d.jump = d.jdur; d.nextj = 45+(R()*95|0); }
       if(d.rin){ const k = d.rin/40; d.y -= (H+GH)*k*k; d.wing = (t/4|0)%2; d.step = 0; d.rin--; }   // gliding back in from the top
-      d.x += d.dir*SP*(.6+.4*d.z)*(d.boost ? 1.9 : 1); if(d.boost) d.boost--;
+      d.x += d.dir*SP*(.6+.4*d.z)*(d.boost ? 1.9 : 1)*Math.max(.15, 1 + d.dir*SKY.lean()*1.5); if(d.boost) d.boost--;   // tilt: faster downhill
       if((d.x > W-GW+4 && d.dir > 0) || (d.x < -4 && d.dir < 0)) d.dir *= -1;
     }
     if(--nextGroup <= 0 && !exiting && !dg.some(d => d.fly || d.hop || d.jump || d.gone || d.rin)){   // jump together: all at once or as a wave
@@ -869,6 +900,8 @@ function makeDragons(SEL, OPEN){
   const ro = 'ResizeObserver' in window ? new ResizeObserver(() => size()) : null;   // first frame as soon as it has a width, even with reduced motion
   document.addEventListener('visibilitychange', upd);
   let rmOn = false;
+  SKY.onShake(() => { if(RM.matches || !cv || !cv.isConnected) return; setSpeed(SPD);
+    if(W) for(const d of dg) if(!d.gone && !d.rin) launch(d); });   // a shake: everyone up (the air limit doesn't apply), and gone ones come back
   function setSpeed(v){ SPD = Math.min(4, Math.max(.25, v)); store.set('dragSpeed', SPD); left = RUN; upd();
     if(cv){ cv.setAttribute('aria-valuenow', fmt(SPD)); cv.setAttribute('aria-valuetext', fmt(SPD) + ' times'); } }
   function bind(c){
@@ -1490,6 +1523,7 @@ function drillCard(kind, label, blurb, feat){
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const t = e.target.closest('button, a'); if(!t) return;
+  if(t.dataset.tilt !== undefined){ SKY.toggleTilt(t); return; }
   const kb = e.detail===0;   // keyboard activation: keep focus in the search area
   if(t.dataset.hq!==undefined){ const q=t.dataset.hq, i=$('#q'); S.q=q; S.histOpen=false; i.value=q; saveQ(q); refreshLearn(); if(kb) i.focus(); else i.blur(); return; }
   if(t.dataset.hopen){ const i=$('#q'); closeHist(); if(i && !kb) i.blur(); drillName=''; return openPlayer(t.dataset.hopen, ''); }
