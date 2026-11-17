@@ -223,6 +223,12 @@ places:   # the Cities menu (folded-map button), as on /transit/: Bond's cities 
   .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
   .oa-regions-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (pointer: coarse) { .oa-regions-pop li button span { padding-top: 10px; padding-bottom: 10px; line-height: 24px; } }
+  /* Mouse: no box behind the stack's icons on hover, click or focus (Mapbox paints a light gray one); the yellow icon
+     on hover stays. Keyboard focus keeps its yellow outline (:focus-visible). */
+  .mapboxgl-ctrl button.oa-pin, .mapboxgl-ctrl button.oa-pin:not(:disabled):hover, .mapboxgl-ctrl button.oa-pin:focus, .mapboxgl-ctrl button.oa-pin:active,
+  .mapboxgl-ctrl-group button:focus, .mapboxgl-ctrl-group button:active, .mapboxgl-ctrl button.oa-zoomread:focus, .mapboxgl-ctrl button.oa-zoomread:active,
+  .oa-search.oa-collapsed .oa-field:hover { background-color: transparent !important; box-shadow: none !important; }
+  .mapboxgl-ctrl button:focus:not(:focus-visible) { box-shadow: none !important; outline: none; }
   /* Tapped spot, above Info (as on /transit/, above Transport mode): place, coordinates, local time.
      No panel: each line gets its own frosted background, only as wide as its text; flush left with "Info". */
   .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 2px; max-width: calc(100% - 2px); font-size: .9rem; line-height: 1.35; color: var(--ink); }
