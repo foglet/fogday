@@ -5,6 +5,29 @@ description: London after dark — tunnels, footpaths, bridges, transit and buil
 mapbox_style: cilhmh2ah00959gm3fy54zuik
 center: [-0.12425, 51.48717]   # MI6 HQ: the SIS Building, 85 Albert Embankment, Vauxhall Cross
 zoom: 13.02
+places:   # the Cities menu (folded-map button), as on /transit/: Bond's cities in the films, A–Z
+  - { name: Bangkok,        center: [100.5018, 13.7563] }
+  - { name: Berlin,         center: [13.3904, 52.5075] }
+  - { name: Cairo,          center: [31.2357, 30.0444] }
+  - { name: Havana,         center: [-82.3666, 23.1136] }
+  - { name: Hong Kong,      center: [114.1694, 22.293] }
+  - { name: Istanbul,       center: [28.9784, 41.0082] }
+  - { name: Kingston,       center: [-76.7936, 17.9714] }
+  - { name: Las Vegas,      center: [-115.1728, 36.1147] }
+  - { name: London,         center: [-0.1276, 51.5072] }
+  - { name: Macau,          center: [113.5439, 22.1987] }
+  - { name: Mexico City,    center: [-99.1332, 19.4326] }
+  - { name: Miami,          center: [-80.1918, 25.7617] }
+  - { name: Nassau,         center: [-77.3431, 25.0443] }
+  - { name: Paris,          center: [2.3522, 48.8566] }
+  - { name: Rio de Janeiro, center: [-43.1729, -22.9068] }
+  - { name: Rome,           center: [12.4964, 41.9028] }
+  - { name: Shanghai,       center: [121.4737, 31.2304] }
+  - { name: St Petersburg,  center: [30.3351, 59.9343] }
+  - { name: Tangier,        center: [-5.834, 35.7595] }
+  - { name: Tokyo,          center: [139.6917, 35.6895] }
+  - { name: Venice,         center: [12.3155, 45.4408] }
+  - { name: Vienna,         center: [16.3738, 48.2082] }
 ---
 <!doctype html>
 <html lang="en" dir="ltr">
@@ -178,6 +201,28 @@ zoom: 13.02
   .oa-lang-pop button:hover, .oa-lang-pop button[aria-checked="true"] { color: var(--accent); }
   .oa-lang-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
   @media (pointer: coarse) { .oa-lang-pop button { height: 44px; font-size: .9rem; } }
+  /* Cities menu, as on /transit/: the folded-map button in the bottom-right stack, under search; its list opens to the
+     left, no panel, each line bare text with a navy halo. Opening, the lines run up into place one by one. */
+  .oa-regions[hidden], .oa-regions-pop[hidden] { display: none; }
+  .mapboxgl-ctrl.oa-regions { position: relative; }
+  .oa-pin[aria-expanded="true"] { color: var(--accent); }
+  .oa-regions-pop {
+    position: absolute; right: calc(100% + 8px); bottom: 0; padding: 0;
+    max-height: calc(100vh - 160px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+    color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left;
+  }
+  .oa-regions-title, .oa-regions-pop li button span {
+    display: block; width: fit-content; box-sizing: border-box; padding: 2px 8px; border-radius: 4px;
+    text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
+  }
+  .oa-regions-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .oa-regions-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 0; font-size: .9rem; }
+  .oa-regions-pop li button { all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap; }
+  .oa-regions-pop li button:hover, .oa-regions-pop li button[aria-current="true"] { color: var(--accent); }
+  .mapboxgl-ctrl .oa-regions-pop li button:not(:disabled):hover { background-color: transparent; }
+  .oa-regions-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (pointer: coarse) { .oa-regions-pop li button span { padding-top: 10px; padding-bottom: 10px; line-height: 24px; } }
   /* Tapped spot, above Info (as on /transit/, above Transport mode): place, coordinates, local time.
      No panel: each line gets its own frosted background, only as wide as its text; flush left with "Info". */
   .oa-detail-panel { flex: none; align-self: flex-start; margin-left: 2px; max-width: calc(100% - 2px); font-size: .9rem; line-height: 1.35; color: var(--ink); }
@@ -332,6 +377,20 @@ zoom: 13.02
   </button>
 </div>
 
+<!-- Cities, moved into the bottom-right stack under search by the script (icon and placement as on /transit/) -->
+<div class="oa-regions" id="cities" hidden>
+  <button type="button" class="oa-pin" id="citiesBtn" aria-expanded="false" aria-controls="citiesPop" aria-label="Cities" title="Cities">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+  </button>
+  <div class="oa-regions-pop" id="citiesPop" hidden>
+    <p class="oa-regions-title"><span class="sky-text">Cities</span></p>
+    <ul aria-label="Fly to a city">
+      {% for p in page.places %}<li><button type="button" data-name="{{ p.name }}" data-center="{{ p.center | jsonify }}"><span>{{ p.name }}</span></button></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
 <!-- Search, moved to the top of the map's bottom-right stack by the script (as on /transit/) -->
 <div class="oa-search oa-collapsed" id="search" role="search" hidden>
   <div class="oa-field" title="Search cities">
@@ -455,10 +514,11 @@ function initMap(){
       map.setLayerZoomRange(l.id, Math.max(16, l.minzoom||0), l.maxzoom!=null ? Math.max(l.maxzoom, 16.01) : 24);
     });
   });
-  /* Bottom-right stack, top to bottom: search, location, zoom readout, then + − and compass (added bottom first) */
+  /* Bottom-right stack, top to bottom: search, Cities, location, zoom readout, then + − and compass (added bottom first) */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("zoomRead"));
   asControl($("here"));
+  asControl($("cities"));
   /* Zoom readout: live, to one decimal; tap it to ease back to the opening zoom, staying where the map is */
   const zr=$("zoomRead");
   const showZoom=()=>{ const t=(Math.round(map.getZoom()*10)/10).toFixed(1); zr.textContent=t; zr.setAttribute("aria-label","Zoom level "+t+". Reset to "+HOME.zoom) };
@@ -510,7 +570,7 @@ const loadAirports=(function(){
   let shown=[], active=-1, timer=0, turn=0, airports=null;
   const setStatus=t=>{ status.textContent=t };
   function minimize(keepFocus){ card.classList.add("oa-collapsed"); input.setAttribute("aria-expanded","false"); if(!keepFocus && document.activeElement===input) input.blur() }
-  function expand(){ card.classList.remove("oa-collapsed"); if(shown.length) input.setAttribute("aria-expanded","true"); loadAirports() }
+  function expand(){ setCities(false); card.classList.remove("oa-collapsed"); if(shown.length) input.setAttribute("aria-expanded","true"); loadAirports() }
   function setActive(i){
     active=i;
     [...list.children].forEach((li,k)=>li.setAttribute("aria-selected", k===i ? "true" : "false"));
@@ -704,9 +764,9 @@ function clearSpot(){
 }
 /* A tap that only shuts a menu (Maps, an open search) doesn't also drop a spot. Captured before the menus shut. */
 let menuWasOpen=false;
-document.addEventListener("pointerdown", ()=>{ menuWasOpen=!$("maps-menu").hidden || !$("langPop").hidden || !$("search").classList.contains("oa-collapsed") }, true);
+document.addEventListener("pointerdown", ()=>{ menuWasOpen=!$("maps-menu").hidden || !$("langPop").hidden || !$("citiesPop").hidden || !$("search").classList.contains("oa-collapsed") }, true);
 document.addEventListener("keydown", e=>{
-  if(e.key==="Escape" && !spotCard.hidden && $("maps-menu").hidden && $("langPop").hidden && $("search").classList.contains("oa-collapsed")) clearSpot();
+  if(e.key==="Escape" && !spotCard.hidden && $("maps-menu").hidden && $("langPop").hidden && $("citiesPop").hidden && $("search").classList.contains("oa-collapsed")) clearSpot();
 }, true);
 /* Language picker: tap the code for the six; pick one and the card (if shown) is redone in it */
 (function(){
@@ -724,7 +784,34 @@ document.addEventListener("keydown", e=>{
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !pop.hidden){ setOpen(false); btn.focus() } });
   mark();
 })();
+/* Cities: pick one to fly there at the current zoom; on landing its details show (and the language follows the country).
+   Opening, the title and each city run up into place; shutting, the menu eases out. Search and Cities are either/or. */
+const citiesBtn=$("citiesBtn"), citiesPop=$("citiesPop"), cityBtns=[...citiesPop.querySelectorAll("li button")];
+let citiesAnims=[];
+function setCities(open){
+  if(open===(citiesBtn.getAttribute("aria-expanded")==="true")) return;
+  citiesBtn.setAttribute("aria-expanded", String(open));
+  if(open){ $("search").classList.add("oa-collapsed"); $("oa-search-input").blur() }
+  citiesAnims.forEach(a=>a.cancel()); citiesAnims=[]; citiesPop.hidden=false;
+  if(calm.matches || !citiesPop.animate){ citiesPop.hidden=!open; return }
+  if(open) citiesAnims=slideLines([citiesPop.querySelector(".oa-regions-title"), ...citiesPop.querySelectorAll("li")]);
+  else { const a=citiesPop.animate([{opacity:1, transform:"none"},{opacity:0, transform:"translateY(10px)"}], {duration:240, easing:"cubic-bezier(0,0,.2,1)", fill:"forwards"});
+         citiesAnims=[a]; a.onfinish=()=>{ citiesAnims=[]; citiesPop.hidden=true; a.cancel() } }
+}
+citiesBtn.addEventListener("click", ()=>setCities(citiesBtn.getAttribute("aria-expanded")!=="true"));
+cityBtns.forEach(b=>b.addEventListener("click", ()=>{
+  if(!map) return;
+  cityBtns.forEach(x=>x.toggleAttribute("aria-current", x===b)); if(b.hasAttribute("aria-current")) b.setAttribute("aria-current","true");
+  const center=JSON.parse(b.dataset.center);
+  clearSpot(); const t=spotTurn;
+  map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(center), undefined, true) });
+  if(calm.matches) map.jumpTo({center, bearing:0}); else map.flyTo({center, bearing:0, speed:2.7, curve:1});   // keeps the current zoom
+  setCities(false);
+}));
+document.addEventListener("pointerdown", e=>{ if(citiesBtn.getAttribute("aria-expanded")==="true" && !$("cities").contains(e.target)) setCities(false) }, true);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && citiesBtn.getAttribute("aria-expanded")==="true"){ setCities(false); citiesBtn.focus() } });
 initMap();
+if(map) map.on("movestart", e=>{ if(e.originalEvent) cityBtns.forEach(x=>x.removeAttribute("aria-current")) });   // a drag leaves the bold mark behind
 /* Tapping an airport names it, as on /transit/: its code label (zoom 11+) names it directly; a runway or taxiway goes to
    the nearest airport in airports.json within 8 km (heliports, seaplane bases and stations skipped).
    And tapping the SIS Building, within ~80 m, names MI6 HQ. */
