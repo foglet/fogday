@@ -3,7 +3,7 @@ layout: null   # self-contained map page with the /transit/ nav (title + all-map
 title: A Spy Map
 description: London after dark — tunnels, footpaths, bridges, transit and building outlines. A map by Fogday Studios.
 mapbox_style: cilhmh2ah00959gm3fy54zuik
-center: [-0.1298269463707129, 51.50652123538177]
+center: [-0.12425, 51.48717]   # MI6 HQ: the SIS Building, 85 Albert Embankment, Vauxhall Cross
 zoom: 13.02
 ---
 <!doctype html>
@@ -337,7 +337,7 @@ zoom: 13.02
 
 <div class="top">
   <div class="title-row">
-    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Back to the whole city"><span class="title-text">A Spy Map</span></button></h1>
+    <h1 style="margin:0;display:flex"><button type="button" class="title" id="home" title="Back to MI6 HQ"><span class="title-text">A Spy Map</span></button></h1>
     <button type="button" class="maps-btn" id="mapsBtn" aria-expanded="false" aria-controls="maps-menu" aria-label="All maps" title="All maps">
       <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -367,6 +367,7 @@ zoom: 13.02
 "use strict";
 const $ = id => document.getElementById(id);
 const store = { get(k){ try{ return localStorage.getItem("spy:"+k) }catch(e){ return null } }, set(k,v){ try{ localStorage.setItem("spy:"+k, v) }catch(e){} } };
+const HQ = { code:"MI6", name:"HQ", city:null };   /* tapped or flown to: "MI6 HQ", MI6 in the code blue */
 const HOME = { center: {{ page.center | jsonify }}, zoom: {{ page.zoom }}, bearing: 0 };   /* opening view, from the front matter */
 const STYLE = "mapbox://styles/fogfish/{{ page.mapbox_style }}";   /* the Spy style */
 let map=null, here=null, user=null, watching=false;
@@ -409,9 +410,13 @@ $("hereBtn").addEventListener("click", ()=>{
   }, ()=>{ $("hereBtn").removeAttribute("aria-busy"); watching=false }, {enableHighAccuracy:true, maximumAge:15000});
 });
 /* The title: back to the opening view */
-$("home").addEventListener("click", ()=>{ clearSpot(); if(map) map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700}) });
+$("home").addEventListener("click", ()=>{
+  clearSpot(); if(!map) return;
+  const t=spotTurn; map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(HOME.center), HQ) });   // HQ's card on arrival
+  map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700});
+});
 /* Maps menu, as on /ucsf/ and /transit/ */
-(function(){
+const loadAirports=(function(){
   const btn=$("mapsBtn"), menu=$("maps-menu");
   const shut=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false") };
   btn.addEventListener("click", e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded", String(open)) });
@@ -501,6 +506,7 @@ setInfo(store.get("info")==="1");
   }
   if(vv){ vv.addEventListener("resize", lift); vv.addEventListener("scroll", lift) }
   document.addEventListener("focusin", lift); document.addEventListener("focusout", ()=>setTimeout(lift, 50));
+  return loadAirports;   // also used by a tap on an airport
 })();
 /* Tap the map: above Info, show where that is, as on /transit/ —
      London, England, United Kingdom
@@ -612,7 +618,33 @@ document.addEventListener("keydown", e=>{
   if(e.key==="Escape" && !spotCard.hidden && $("maps-menu").hidden && $("search").classList.contains("oa-collapsed")) clearSpot();
 }, true);
 initMap();
-if(map) map.on("click", e=>{ if(!menuWasOpen) showSpot(e.lngLat) });
+/* Tapping an airport names it, as on /transit/: its code label (zoom 11+) names it directly; a runway or taxiway goes to
+   the nearest airport in airports.json within 8 km (heliports, seaplane bases and stations skipped).
+   And tapping the SIS Building, within ~80 m, names MI6 HQ. */
+const AIR_LABEL="airport_label", AIR_LAYERS=[AIR_LABEL, "airport_runway", "airport_taxiway"], AIR_REACH=8000, HQ_REACH=80;
+const NOT_AIRFIELD=/heliport|seaplane|railway|train station|rail station|bus station|ferry/i;
+function metres(ll, lng, lat){ const k=Math.PI/180, x=(lng-ll.lng)*k*Math.cos((lat+ll.lat)/2*k), y=(lat-ll.lat)*k; return Math.sqrt(x*x+y*y)*6371000 }
+function tapAirport(e){
+  const r=matchMedia("(pointer: coarse)").matches ? 16 : 8, p=e.point;
+  const layers=AIR_LAYERS.filter(id=>map.getLayer(id));
+  const hits=layers.length ? map.queryRenderedFeatures([[p.x-r,p.y-r],[p.x+r,p.y+r]], {layers}) : [];
+  if(!hits.length) return Promise.resolve(null);
+  const label=hits.filter(f=>f.layer.id===AIR_LABEL)[0], ll=e.lngLat.wrap();
+  return loadAirports().then(all=>{
+    const ref=label ? String(label.properties.ref||"").toUpperCase() : "", a=ref && all[ref];
+    if(a) return {code:ref, name:a[0], city:a[1]};
+    if(label && label.properties.name) return {code:/^[A-Z]{3}$/.test(ref) ? ref : "", name:label.properties.name, city:null};
+    let best=null, bd=AIR_REACH;
+    Object.keys(all).forEach(c=>{ const v=all[c]; if(NOT_AIRFIELD.test(v[0])) return; const d=metres(ll, v[3], v[4]); if(d<bd){ bd=d; best=c } });
+    return best ? {code:best, name:all[best][0], city:all[best][1]} : null;
+  });
+}
+if(map) map.on("click", e=>{
+  if(menuWasOpen) return;
+  if(metres(e.lngLat.wrap(), HOME.center[0], HOME.center[1])<HQ_REACH){ showSpot(mapboxgl.LngLat.convert(HOME.center), HQ); return }
+  const mine=spotTurn;
+  tapAirport(e).catch(()=>null).then(a=>{ if(mine===spotTurn) showSpot(e.lngLat, a||undefined) });
+});
 </script>
 </body>
 </html>
