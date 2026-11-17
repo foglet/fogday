@@ -300,6 +300,18 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .mapboxgl-ctrl-attrib a:hover, .mapboxgl-ctrl-attrib a:focus-visible { color: var(--ink); }
   /* Phones fold the credits into an (i) button; its icon is dark, so lighten it to show on the navy */
   .mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(.75); background-color: transparent; }
+  /* Top right: the bento (all projects, fogday.com/works/), as on /treesf/ and /ucsf/: no panel, 40px tap target
+     (44px on touch), its 3x3 grid a mask over the title's sky-blue gradient, with a soft navy halo over the map */
+  .corner { position: fixed; z-index: 3; top: calc(9px + var(--sat)); right: calc(8px + var(--sar)); display: flex; align-items: center; }
+  .bento { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 11px; filter: drop-shadow(0 0 1.5px var(--bg)) drop-shadow(0 0 1.5px var(--bg)); }
+  .bento-grid { display: block; width: 100%; height: 100%; background-image: linear-gradient(to right, #2f7fc1, #4a90c8);
+    -webkit-mask: var(--grid) center / contain no-repeat; mask: var(--grid) center / contain no-repeat;
+    --grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg%3E%3Crect x='2' y='2' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='2' width='5' height='5' rx='1'/%3E%3Crect x='17' y='2' width='5' height='5' rx='1'/%3E%3Crect x='2' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='17' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='2' y='17' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='17' width='5' height='5' rx='1'/%3E%3Crect x='17' y='17' width='5' height='5' rx='1'/%3E%3C/g%3E%3C/svg%3E"); }
+  .bento:hover .bento-grid { background-image: none; background-color: var(--accent); }   /* as the title: solid accent on hover */
+  .bento:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  @media (min-width: 760px) { .corner { top: calc(13px + var(--sat)); } }
+  @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .bento { width: 44px; height: 44px; padding: 13px; } }
+  @media (max-width: 420px) { .top { padding-right: 48px; } }   /* small phones: the centered title shifts left, clear of the bento */
 </style>
 </head>
 <body>
@@ -327,6 +339,11 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
     </nav>
   </div>
 </div>
+
+<!-- Top right, as in the site header: the bento (all projects) -->
+<nav class="corner" aria-label="Site">
+  <a href="/works/" class="bento" aria-label="Projects" title="Projects"><span class="bento-grid" aria-hidden="true"></span></a>
+</nav>
 
 <div class="map-bottom-left">
 <div id="oa-detail-panel" class="oa-detail-panel" aria-live="polite" hidden></div>  <!-- the tapped spot; filled by the script -->
