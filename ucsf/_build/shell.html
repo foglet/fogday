@@ -130,6 +130,16 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4.5 6 8.5 10 4.5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
   }
   .legend-toggle::after { color: var(--muted); transform: rotate(180deg); }
+  /* Operator switch above Info: a segmented control as on /treesf/ (Mission Bay | UCSF, one lit, Mission Bay the default) */
+  .seg { display: inline-flex; padding: 2px; border-radius: 999px; width: fit-content; max-width: 100%;
+         background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  .seg button { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; padding: 4px 11px; border-radius: 999px;
+                font-size: .82rem; color: var(--muted); white-space: nowrap; }
+  .seg button:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: rgb(74 144 200 / .3); color: var(--ink); font-weight: 600; }
+  :root[data-theme="light"] .seg button[aria-pressed="true"] { background: rgb(29 95 150 / .18); }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (pointer: coarse) { .seg button { min-height: 32px; padding-inline: 14px; font-size: .92rem; } }
   .legend-toggle[aria-expanded="true"]::after { transform: none; }
   .notes[open] summary::after { transform: rotate(180deg); }
   .legend-toggle { background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
@@ -321,7 +331,7 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     <div class="notes-body">
           <p class="note" id="nearNote" hidden></p>
           <p class="note" id="srcNote"></p>
-          <p class="note">Tap a route line on the map to select it; it stays selected (tap another line to switch). Tap the title (or reload) to see all routes again. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon at the top right switches light and dark, for all of fogday.com; the grid opens all projects. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
+          <p class="note">Mission Bay or UCSF (above Info) picks whose shuttles show. Tap a route line on the map to select it; it stays selected (tap another line to switch). Tap the title (or reload) to see all routes again. Tap a shuttle for its next stop, or a stop for its next departures. With location allowed, the map finds you (blue dot) and Info lists the stops nearest you; the crosshair flies back to you; nothing is kept. The sun or moon at the top right switches light and dark, for all of fogday.com; the grid opens all projects. On iPhone: Settings › Privacy &amp; Security › Location Services, on, with Safari Websites set to While Using.</p>
           <p class="note">Weekday service only. Schedule positions don't know about delays, detours or cancelled runs; the official tracker is <a href="https://liveshuttle.ucsf.edu/">liveshuttle.ucsf.edu</a>. Not affiliated with UCSF.</p>
           <p class="note">Data: UCSF Transportation schedule, published by <a href="https://ucsf.tripshot.com/">TripShot</a> as GTFS (<a href="https://www.transit.land/data/feeds/f-ucsf~shuttle~ca~us">Transitland</a>), copied <span id="genDate"></span>. Mission Bay TMA shuttles (free, open to the public): <a href="https://www.missionbaytma.org/">missionbaytma.org</a>, schedule published by Trillium as GTFS (<a href="https://www.transit.land/data/feeds/f-9q8yy-missionbaytma~ca~us">Transitland</a>), copied Nov 17, 2026.</p>
         </div>
@@ -330,6 +340,9 @@ description: Every UCSF shuttle route on one map, with the shuttles running now 
     <p class="status" id="status" data-mode="sched"><span class="dot" aria-hidden="true"></span><span id="statusText">Loading the schedule</span></p>
     <p class="status next" id="nextLine" hidden><span class="me" id="nextMe" aria-label="At your location" role="img" hidden></span><span id="nextText"></span></p>
     <p class="status next" id="hereMsg" hidden></p>
+  </div>
+  <div class="seg" role="group" aria-label="Which shuttles to show">
+    <button type="button" data-ag="mbtma" aria-pressed="true">Mission Bay</button><button type="button" data-ag="ucsf" aria-pressed="false">UCSF</button>
   </div>
   <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
 </section>

@@ -26,10 +26,16 @@ const NIGHT = {"Gold":"#f2d15c","Lilac AM":"#b79cff","Lilac PM":"#b79cff","Orang
   "Blue":"#6e8bff","Cherry":"#e0607e","Bronze":"#d9a26a","Red":"#ff5a4f","Pink AM":"#ff8fc8","Pink PM":"#ff8fc8","Green (Oakland)":"#7fcf4a","Lime":"#c6f25a",
   "Mission Bay TMA East":"#5cb8ff","Mission Bay TMA Transbay-Caltrain":"#ff7a52","Mission Bay TMA CCA/Adobe":"#d58f6f","Mission Bay TMA West":"#76c95e"};
 const ROUTES = D.routes.map((r, i) => ({i, id:r.id, name:r.n, long:r.ln, day:r.c.toUpperCase(), night:NIGHT[r.ln]||r.c,
-  get color(){ return document.documentElement.dataset.theme==="light" ? this.day : this.night }, text: lum(r.c) > .35 ? "#1d2421" : "#ffffff"}));
+  ag:r.ag||"ucsf", get color(){ return document.documentElement.dataset.theme==="light" ? this.day : this.night }, text: lum(r.c) > .35 ? "#1d2421" : "#ffffff"}));
+/* Operator switch (Mission Bay | UCSF): AG is "mbtma" or "ucsf"; the schedule only looks at trips it lets through */
+let AG = "mbtma";   // Mission Bay first, and the default
+const agOk = ri => AG==="all" || ROUTES[ri].ag===AG;
 const byName = ROUTES.slice().sort((a,b)=>a.name.localeCompare(b.name));
 const routeShapes = ROUTES.map(()=>new Set());
 D.trips.forEach(t => { if(t[2] >= 0) routeShapes[t[0]].add(t[2]) });
+const stopAgs = STOPS.map(()=>new Set());
+D.trips.forEach(t => D.patterns[t[3]].forEach(p => stopAgs[p[0]].add(ROUTES[t[0]].ag)));
+const stopOk = si => AG==="all" || stopAgs[si].has(AG);
 
 /* ---------- time in San Francisco ---------- */
 const fmtParts = new Intl.DateTimeFormat("en-US",{timeZone:TZ, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23", weekday:"short"});
@@ -53,6 +59,7 @@ function dist(m){ const mi=m/1609.34; return mi<0.1 ? Math.round(m*3.281/10)*10+
 function scheduledVehicles(now){
   const out=[];
   D.trips.forEach((t, ti) => {
+    if(!agOk(t[0])) return;
     if(!runsOn(t[1], now.ymd, now.wd)) return;
     const p=D.patterns[t[3]], t0=t[4], e=now.sec-t0;
     if(e<0 || e>p[p.length-1][1]) return;
@@ -73,6 +80,7 @@ function scheduledVehicles(now){
 function departures(stopIdx, now, horizon){
   const out=[];
   D.trips.forEach(t => {
+    if(!agOk(t[0])) return;
     if(!runsOn(t[1], now.ymd, now.wd)) return;
     const p=D.patterns[t[3]];
     for(let k=0;k<p.length-1;k++){
@@ -87,6 +95,7 @@ function nextService(nowMs){
   for(let day=0; day<8; day++){
     const n=sfNow(nowMs+day*86400000); let best=null;
     D.trips.forEach(t => {
+    if(!agOk(t[0])) return;
       if(!runsOn(t[1], n.ymd, n.wd)) return;
       if(day===0 && t[4]<=n.sec) return;
       if(!best || t[4]<best[4]) best=t;

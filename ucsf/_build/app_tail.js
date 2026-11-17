@@ -4,7 +4,13 @@ const $ = id => document.getElementById(id);
 function setText(el, t){ if(el.textContent!==t) el.textContent=t }
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
 const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-const HOME = [[-122.512, 37.745], [-122.385, 37.795]];   // San Francisco campuses
+/* The whole-map view: the routes of the operator that is on (Mission Bay, or UCSF's San Francisco campuses) */
+function home(){
+  if(AG==="ucsf") return [[-122.512, 37.745], [-122.385, 37.795]];
+  let w=180, s=90, e=-180, n=-90;
+  ROUTES.filter(r=>agOk(r.i)).forEach(r=>routeShapes[r.i].forEach(si=>SHAPES[si].pts.forEach(p=>{ w=Math.min(w,p[1]); e=Math.max(e,p[1]); s=Math.min(s,p[0]); n=Math.max(n,p[0]) })));
+  return [[w,s],[e,n]];
+}
 
 /* ---------- map ---------- */
 let map=null, mapReady=false;
@@ -116,7 +122,7 @@ function initMap(){
   if(!window.mapboxgl) return;
   try{
     mapboxgl.accessToken=CFG.token;
-    map=new mapboxgl.Map({container:"map", style:THEME.style(), bounds:HOME, fitBoundsOptions:{padding:pad()},
+    map=new mapboxgl.Map({container:"map", style:THEME.style(), bounds:home(), fitBoundsOptions:{padding:pad()},
       pitchWithRotate:false, maxPitch:0,
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
@@ -209,11 +215,15 @@ function applyFocus(fly){
   map.setPaintProperty("route-line","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,3.5,2],13,["case",on,5,3],15,["case",on,7,4.5],17,["case",on,9,6.5]]);
   map.setPaintProperty("route-casing","line-width", ["interpolate",["linear"],["zoom"],11,["case",on,5,2.6],15,["case",on,11,7]]);
   map.setLayoutProperty("route-line","line-sort-key", ["case",on,1,0]);
+  const okR=ROUTES.filter(r=>agOk(r.i)).map(r=>r.i), okS=STOPS.map((s,i)=>i).filter(stopOk);
+  const rf = ["in",["get","r"],["literal",okR]];
+  ["route-casing","route-line","route-hit"].forEach(l=>map.setFilter(l, rf));
+  map.setFilter("stop-dot", ["in",["get","i"],["literal",okS]]);
   const vf = f==null ? null : ["==",["get","r"],f];
   map.setFilter("veh-dot", vf); map.setFilter("veh-halo", vf);
   map.setFilter("veh-arrow", vf ? ["all",["==",["get","hasHd"],1], vf] : ["==",["get","hasHd"],1]);
   if(fly){
-    if(f==null){ map.fitBounds(HOME, {padding:pad(), duration:600}); return }
+    if(f==null){ map.fitBounds(home(), {padding:pad(), duration:600}); return }
     const b=new mapboxgl.LngLatBounds(); routeShapes[f].forEach(si=>SHAPES[si].pts.forEach(p=>b.extend([p[1],p[0]])));
     if(!b.isEmpty()) map.fitBounds(b, {padding:pad(), maxZoom:15, duration:600});
   }
@@ -241,6 +251,7 @@ function nextAtStop(stopIdx, nowMs){
   for(let day=0; day<8; day++){
     const n=sfNow(nowMs+day*86400000); let best=null;
     D.trips.forEach(t => {
+      if(!agOk(t[0])) return;
       if(!runsOn(t[1], n.ymd, n.wd)) return;
       const p=D.patterns[t[3]];
       for(let k=0;k<p.length-1;k++){
@@ -260,7 +271,7 @@ function render(){
   const nowMs=Date.now(), now=sfNow(nowMs);
   const sched=scheduledVehicles(now);
   const liveRoutes=new Set((state.live||[]).map(v=>v.route));
-  state.vehicles=(state.live||[]).concat(sched.filter(v=>!liveRoutes.has(v.route)));
+  state.vehicles=(state.live||[]).filter(v=>agOk(v.route)).concat(sched.filter(v=>!liveRoutes.has(v.route)));
   paintVehicles();
 
   const n=state.vehicles.length, st=$("status");
@@ -272,7 +283,7 @@ function render(){
   const weekend = !n && now.wd>=5;
   setText($("statusText"), n ? n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : weekend ? "No weekend service" : "No service now");
   const nl=$("nextLine"); let next=null, here=false;
-  const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d)[0] : null;
+  const st0 = state.user ? STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).filter(s=>stopOk(s.i)).sort((a,b)=>a.d-b.d)[0] : null;
   if(st0 && st0.d<=8000){
     const nx=nextAtStop(st0.i, nowMs);
     if(nx){ next="Next at "+STOPS[st0.i].short+" ("+dist(st0.d)+"): "+ROUTES[nx.route].name+" "+when(nx); here=true }
@@ -298,7 +309,7 @@ function render(){
   const nn=$("nearNote");
   if(weekend) nn.hidden=true;
   else if(state.user){
-    const near=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).sort((a,b)=>a.d-b.d).slice(0,3);
+    const near=STOPS.map((s,i)=>({i, d:meters(state.user, s.ll)})).filter(s=>stopOk(s.i)).sort((a,b)=>a.d-b.d).slice(0,3);
     if(near[0].d>8000){ nn.hidden=false; setText(nn, "Nearest UCSF shuttle stop: "+STOPS[near[0].i].short+", "+dist(near[0].d)+" away."); }
     else {
       const parts=near.map(s => {
@@ -325,7 +336,14 @@ async function pollLive(){
   document.addEventListener("click", e=>{ if(!menu.hidden && !menu.contains(e.target)) shut() });
   document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !menu.hidden){ shut(); btn.focus() } });
 })();
-$("home").addEventListener("click", ()=>pickRoute(null, true));   // the title clears the selection: all routes, the whole map
+$("home").addEventListener("click", ()=>pickRoute(null, true));
+/* Mission Bay | UCSF: whose shuttles, lines and stops show (not remembered; a reload is Mission Bay again) */
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  AG=b.dataset.ag;
+  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+  state.focus=null;   // a switch shows all of that operator's routes, zoomed to fit
+  applyFocus(true); render();
+}));   // the title clears the selection: all routes, the whole map
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
 $("legendBtn").addEventListener("click", ()=>setLegend($("legendBtn").getAttribute("aria-expanded")!=="true"));

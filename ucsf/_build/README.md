@@ -4,6 +4,7 @@ Single-file mobile web app. Edit `shell.html` (page, styles) and `app_head.js` /
 
 ## What it shows
 Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu top left; light/dark toggle and bento (to /works/) top right, as in the site header; legend bottom left; Mapbox controls bottom right.
+- Mission Bay | UCSF switch (segmented control as on /treesf/) above Info: shows one operator (lines, stops, shuttles, service lines, next departures) and zooms to its routes. Mission Bay is the default; not remembered.
 - No color legend. Tap a route line to select it; it stays selected (another line switches). The title, or a reload, brings back all routes (the selection is not remembered).
 - Bottom left, bottom up: the Info toggle (starts shut, `ucsf:info`), the service lines, and (open) the notes.
 - Weekends: one line only, "No weekend service"; no next-departure line and no near-you departures in Info.
