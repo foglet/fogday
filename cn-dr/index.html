@@ -574,10 +574,10 @@ function ptMidnight(now){   // the most recent 12:00 am Pacific, as a timestamp
 }
 let dailyTimer = 0;
 /* ---------- dragons (About, Sync Devices): three original pixel dragons walk, jump, march in step, bump and cross depth ---------- */
-// They replace the pixel sea. Each time the About page opens they walk for about 15 s of time on screen, finish any jump
-// in the air, then hold still. A sync starting (or a speed change) wakes them for another 15 s, with a group jump, and
+// They replace the pixel sea. Each time the About page opens they walk for about 30 s of time on screen, finish any jump
+// in the air, then fly off across the page or fade out. A sync starting (or a speed change) wakes them for another 30 s, with a group jump, and
 // they keep going while the sync runs. With reduced motion they hold a still frame.
-// makeDragons(SEL, OPEN): one dragon canvas. OPEN = the About strip (walks 15 s when the page opens, swipe for speed).
+// makeDragons(SEL, OPEN): one dragon canvas. OPEN = the About strip (walks 30 s when the page opens, swipe for speed).
 // Without OPEN it is the title strip on Library and Practice: hidden until a sync starts, then shown and walking until it
 // rests. Either way the canvas is scaled to fit its box (art is 56 px tall; About is 2 CSS px per art px).
 // Page sky: a dragon that times out by flying leaves its canvas and flies across the whole page on one fixed,
@@ -613,7 +613,7 @@ function makeDragons(SEL, OPEN){
   const PAPER = [251,248,241];
   const ZKEY = [[0,0],[230,0],[340,1],[900,1],[1000,0],[1300,0]], MARCH = [[150,300],[960,1110]];
   const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
-  const RUN = 15000; let left = OPEN ? RUN : 0, busy = false;
+  const RUN = 30000; let left = OPEN ? RUN : 0, busy = false;
   let cv = null, ctx, img, W = 0, raf = 0, t = 0, dg = null, sparks = [], last = 0, acc = 0, nextGroup = 180, nextColor = 240;
   // Speed: swipe right on the dragons for faster, left for slower (doubles every 120 px); arrow keys step it. Kept on this device.
   let SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1));
@@ -732,7 +732,7 @@ function makeDragons(SEL, OPEN){
   function upd(){ if(cv && cv.isConnected && !document.hidden && !RM.matches && !raf && (left > 0 || busy)){ last = 0; raf = requestAnimationFrame(loop); } show(); }
   function loop(now){ raf = 0; if(!cv || !cv.isConnected || document.hidden || RM.matches) return show();
     if(!W) size(); if(!W || !onScreen()){ last = 0; raf = requestAnimationFrame(loop); return; }   // only time on screen counts
-    const dt = last ? Math.min(200, now-last) : 0; last = now; left -= dt;   // counts during a sync too, so it ends 15 s after the sync starts (or when the sync ends, if later)
+    const dt = last ? Math.min(200, now-last) : 0; last = now; left -= dt;   // counts during a sync too, so it ends 30 s after the sync starts (or when the sync ends, if later)
     if(left <= 0 && !busy){   // time is up: once everyone has landed they fly off or fade, then the loop stops
       if(!exiting && !dg.some(d => d.jump || d.fly || d.hop || d.rin)) startExit();
       if(exiting && dg.every(d => d.gone)){ draw(); return show(); }
@@ -762,7 +762,7 @@ function makeDragons(SEL, OPEN){
       if(!c) return; size(); if(ro) ro.observe(c); if(OPEN) bind(c); show();
       if(!rmOn){ rmOn = true; if(RM.addEventListener) RM.addEventListener('change', upd); else if(RM.addListener) RM.addListener(upd); }
       upd(); },
-    run(v){ busy = v; if(v){ left = RUN; SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1)); if(dg) nextGroup = 0; } upd(); },   // a sync wakes them for 15 s more, with a group jump
+    run(v){ busy = v; if(v){ left = RUN; SPD = Math.min(4, Math.max(.25, +store.get('dragSpeed', 1) || 1)); if(dg) nextGroup = 0; } upd(); },   // a sync wakes them for 30 s more, with a group jump
     speed: () => fmt(SPD),
     size
   };
