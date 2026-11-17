@@ -25,6 +25,8 @@ for f in ("mbtma-compact.json",       # Mission Bay TMA (Trillium GTFS, Transitl
     merge(data, json.loads((root / "data" / f).read_text(encoding="utf-8")))
 # tidy stop names: stray ids ("31796-Caulfield Cut") and spaces
 for s in data["stops"]: s[0] = re.sub(r"^\d+-", "", s[0].strip())
+# San Francisco Public Library: Main and the 27 branches (DataSF fhhu-wqa7), drawn on every view
+data["libs"] = json.loads((root / "data" / "sfpl-libraries.json").read_text(encoding="utf-8"))["libs"]
 config = {
     # public Mapbox token already used on fogday.com/transit and /treesf
     "token": "pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw",

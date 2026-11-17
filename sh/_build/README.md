@@ -58,6 +58,10 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
 - Picker (replaced the switch): the system's name in the tides blue, bold slab serif (Roboto Slab), 1.5em; tap for the next. Order: Mission Bay (default),
   UCSF, Presidio, Golden Gate Park, Oyster Point, South City (`OPS` in app_tail.js).
 
+- Libraries: San Francisco Public Library, Main and 27 branches, from DataSF `fhhu-wqa7` (City Facilities, Public Library
+  jurisdiction or lease; copied in the browser pane 2026-11-17). Offices and leased sites (750 Brannan, Brooks Hall,
+  Library Support Services) left out. `data/sfpl-libraries.json`, `D.libs`; layer `lib`, Phosphor book-open-text icon.
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout

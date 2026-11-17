@@ -99,9 +99,11 @@ function addLayers(){
   try{ quietBasemap() }catch(e){}
   const k=THEME.ink();
   if(!map.hasImage("arrow")) map.addImage("arrow", arrowImage(), {pixelRatio:2});
+  const libImg="lib-"+THEME.get(); if(!map.hasImage(libImg)) map.addImage(libImg, libImage(), {pixelRatio:2});
   map.addSource("routes", {type:"geojson", data:ROUTE_FC || (ROUTE_FC=routeFeatures())});
   map.addSource("stops", {type:"geojson", data:stopFeatures()});
   map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
+  map.addSource("libs", {type:"geojson", data:libFeatures()});
   /* Routes go under the basemap's first label layer, so place and street names read on top of them;
      stops and shuttles stay above everything */
   const firstLabel=(map.getStyle().layers||[]).find(l=>l.type==="symbol");
@@ -110,6 +112,7 @@ function addLayers(){
   map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}}, under);   // a finger-wide tap area along each line
   map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":k.stopFill,"circle-stroke-color":k.stopLine,"circle-stroke-width":1.6}});
+  map.addLayer({id:"lib", type:"symbol", source:"libs", layout:{"icon-image":libImg,"icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.7,15,1]}});   // libraries: above stops, under shuttles
   map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
   map.addLayer({id:"veh-dot", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,6,15,9],"circle-color":["case",["==",["get","live"],1],["get","color"],k.hollow],"circle-stroke-color":["get","color"],"circle-stroke-width":["case",["==",["get","live"],1],2,3]}});
   map.addLayer({id:"veh-arrow", type:"symbol", source:"veh", filter:["==",["get","hasHd"],1], layout:{"icon-image":"arrow","icon-rotate":["get","hd"],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.8,15,1.15]}});
@@ -134,16 +137,17 @@ function initMap(){
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
+  map.on("click","lib", ev => { if(map.queryRenderedFeatures(ev.point,{layers:["veh-dot"]}).length) return; libPopup(ev.features[0].properties.i) });
   /* Tap a route line: that route is selected, and stays selected. Another line's tap picks that one instead;
      a tap elsewhere or on the same line changes nothing. The title (or a reload) brings back all routes. */
   map.on("click","route-hit", ev => {
-    if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot"]}).length) return;
+    if(map.queryRenderedFeatures(ev.point, {layers:["stop-dot","veh-dot","lib"]}).length) return;
     const f=state.focus==null ? null : +state.focus;
     const hits=[...new Set(ev.features.map(x=>x.properties.r))];
     const r = hits.includes(f) && hits.length>1 ? hits[(hits.indexOf(f)+1)%hits.length] : hits[0];   // shared street: each tap steps to the next route
     if(r!==f) pickRoute(r, false);
   });
-  ["stop-dot","veh-dot","route-hit"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
+  ["stop-dot","veh-dot","route-hit","lib"].forEach(l => { map.on("mouseenter",l,()=>map.getCanvas().style.cursor="pointer"); map.on("mouseleave",l,()=>map.getCanvas().style.cursor="") });
   map.on("load", startLocation);
 }
 
@@ -194,6 +198,20 @@ function pad(){
   const lg=document.querySelector(".controls").getBoundingClientRect(), open=$("legendBtn").getAttribute("aria-expanded")==="true";
   if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
   return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
+}
+/* ---------- San Francisco Public Library: Phosphor "book-open-text" (regular, MIT) on a disc ---------- */
+const BOOK_OPEN_TEXT="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64ZM160,88h40a8,8,0,0,1,0,16H160a8,8,0,0,1,0-16Zm48,40a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,128Zm0,32a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,160Z";
+function libImage(){
+  const light=THEME.get()==="light", S=56, c=document.createElement("canvas"); c.width=c.height=S; const g=c.getContext("2d");
+  g.beginPath(); g.arc(S/2,S/2,S/2-3,0,Math.PI*2); g.fillStyle=light?"#ffffff":"#021724"; g.fill();
+  g.lineWidth=3; g.strokeStyle=light?"#2f7fc1":"#7cc4f0"; g.stroke();
+  g.save(); g.translate(S/2-15,S/2-15); g.scale(30/256,30/256); g.fillStyle=light?"#2f7fc1":"#7cc4f0"; g.fill(new Path2D(BOOK_OPEN_TEXT)); g.restore();
+  return g.getImageData(0,0,S,S);
+}
+function libFeatures(){ return {type:"FeatureCollection", features:(D.libs||[]).map((l,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[l[3]/1e5, l[2]/1e5]}}))} }
+function libPopup(i){
+  const l=D.libs[i];
+  new mapboxgl.Popup({offset:14, maxWidth:"260px"}).setLngLat([l[3]/1e5, l[2]/1e5]).setHTML("<h3>"+esc(l[0])+"</h3><p>"+esc(l[1])+"</p><p>San Francisco Public Library</p>").addTo(map);
 }
 function stopPopup(i){
   const now=sfNow(Date.now()); const deps=departures(i, now, 3600).slice(0,5);
