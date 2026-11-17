@@ -17,7 +17,7 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
 <script src="{{ '/assets/js/theme.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Sans:wght@500&family=Roboto+Slab:wght@700&display=swap">
 <style>
   /* San Francisco Shuttles: the SF Trees / Transit Connected map interface. Always dark. */
   :root {
@@ -141,7 +141,7 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
   :root { --title-1: #7cc4f0; --title-2: #bfe6fb; }
   :root[data-theme="light"] { --title-1: #2f7fc1; --title-2: #4a90c8; }
   .opbtn { all: unset; box-sizing: border-box; cursor: pointer; max-width: 100%; min-height: 44px; display: inline-flex; align-items: center;
-           font: 600 2em/1.15 var(--font-ui, inherit); -webkit-tap-highlight-color: transparent; }
+           font: 700 2em/1.15 "Roboto Slab", Rockwell, "Patua One", Georgia, serif;   /* bold slab serif */ -webkit-tap-highlight-color: transparent; }
   .opbtn #opName { background-image: linear-gradient(to right, var(--title-1), var(--title-2)); -webkit-background-clip: text; background-clip: text; color: transparent;
                    padding: .1em .05em; margin: -.1em -.05em; filter: drop-shadow(0 0 3px rgba(4,14,22,.75)); }
   :root[data-theme="light"] .opbtn #opName { filter: drop-shadow(0 0 3px rgba(255,255,255,.95)); }
