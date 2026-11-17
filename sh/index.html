@@ -852,9 +852,18 @@ const OPS=[["mbtma","Mission Bay"],["ucsf","UCSF"],["presidio","Presidio"],["ggp
 function showOp(){
   const i=OPS.findIndex(o=>o[0]===AG), nx=OPS[(i+1)%OPS.length][1];
   setText($("opName"), OPS[i][1]);
+  inkAlign();
   $("opBtn").setAttribute("aria-label", OPS[i][1]+" shuttles, "+(i+1)+" of "+OPS.length+". Tap for "+nx+".");
   $("opBtn").title="Next: "+nx;
 }
+/* Left-align the name's ink (not its letter box) with the edges of Info and the service pills: each first letter
+   (M, U, P, G, O, S) has its own side bearing, so measure it and pull the button left by that much */
+const inkCtx=document.createElement("canvas").getContext("2d");
+function inkAlign(){
+  const b=$("opBtn"), cs=getComputedStyle(b); inkCtx.font=cs.fontWeight+" "+cs.fontSize+" "+cs.fontFamily;
+  const m=inkCtx.measureText($("opName").textContent); b.style.marginLeft=(m.actualBoundingBoxLeft||0).toFixed(1)+"px";
+}
+if(document.fonts) document.fonts.ready.then(inkAlign);
 $("opBtn").addEventListener("click", () => {
   AG=OPS[(OPS.findIndex(o=>o[0]===AG)+1)%OPS.length][0];
   showOp();
