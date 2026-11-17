@@ -487,7 +487,7 @@ $("hereBtn").addEventListener("click", ()=>{
 $("home").addEventListener("click", ()=>{
   clearSpot(); if(!map) return;
   const t=spotTurn; map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(HOME.center), HQ, true) });   // HQ's card on arrival
-  map.flyTo({center:HOME.center, zoom:HOME.zoom, bearing:0, duration:700});
+  map.flyTo({center:HOME.center, bearing:0, duration:700});   // keeps the current zoom, as /transit/'s flights do
 });
 /* Maps menu, as on /ucsf/ and /transit/ */
 (function(){
@@ -554,7 +554,7 @@ const loadAirports=(function(){
     const f=shown[i]; if(!f || !map) return;
     clearSpot(); const t=spotTurn;   // the found place's details appear on landing, as on /transit/, unless a tap came first
     map.once("moveend", ()=>{ if(t===spotTurn) showSpot(mapboxgl.LngLat.convert(f.center), f.airport, true) });
-    map.flyTo({center:f.center, zoom:f.zoom, bearing:0, duration:1600}); minimize(byKeyboard);
+    map.flyTo({center:f.center, bearing:0, duration:1600}); minimize(byKeyboard);   // the new place opens at the zoom you had
   }
   field.addEventListener("click", ()=>{ if(document.activeElement!==input) input.focus() });
   input.addEventListener("focus", expand);
