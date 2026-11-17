@@ -587,30 +587,56 @@ let dailyTimer = 0;
 // its canvas. leave() makes it fly off screen or fade out in the air; resume() cancels that.
 const SKY = (() => {
   let cv = null, ctx = null, raf = 0, last = 0; const fl = [], R = Math.random, WS = 2;   // WS: CSS px per art px when walking
-  const LEDGE = 'main h1, main h2, main h3, main h4, main p, main li, main button, main input, main textarea, main img, main label, main summary, main canvas.dragons, footer .foot-in';
+  // Ledges are only things you can see: a line of text (feet on the tops of the letters, walking its length), or a
+  // visible horizontal edge: a border line, the top of a box, field or button with its own fill, or a picture's top.
   function wp(f){ const vw = innerWidth, vh = innerHeight, w = f.GW*f.sT, h = f.GH*f.sT;
     f.wx = 12 + R()*Math.max(1, vw-w-24); f.wy = 12 + R()*Math.max(1, vh-h-24); f.wk = 60 + R()*90; }
-  function topY(){ const t = document.querySelector('.top'); return t ? t.getBoundingClientRect().bottom : 0; }
-  // A ledge is an element (or the screen bottom) whose top edge is on screen, below the sticky header, and wide enough.
-  function ledgeRect(L){ if(L === 'floor') return {left:0, right:innerWidth, top:innerHeight-2};
-    if(!L.isConnected) return null; const r = L.getBoundingClientRect(), vh = innerHeight;
-    if(!r.width || !r.height || r.width < (GWs()+6) || r.top < topY() + 22*WS + 4 || r.top > vh - 6) return null; return r; }
+  const mc = document.createElement('canvas').getContext('2d'), capC = {};
+  function capTop(el, r){   // top of the capital letters on this line, from the font's own metrics
+    const cs = getComputedStyle(el), fs = parseFloat(cs.fontSize) || 16, font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    let m = capC[font]; if(!m){ mc.font = font; const t = mc.measureText('H'); m = capC[font] = [t.fontBoundingBoxAscent || fs*.9, t.fontBoundingBoxDescent || fs*.25, t.actualBoundingBoxAscent || fs*.7]; }
+    const [fa, fd, ca] = m; return r.top + (r.height - fa - fd)/2 + fa - ca; }
+  const vis = c => c && c !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(c);
   const GWs = () => 30*WS;
-  function pickLedge(){ const all = [...document.querySelectorAll(LEDGE)].filter(ledgeRect); all.push('floor'); return all[(R()*all.length)|0]; }
+  function topY(){ const t = document.querySelector('.top'); return t ? t.getBoundingClientRect().bottom : 0; }
+  function rawRect(L){
+    if(L.n){ if(!L.n.isConnected) return null; const rg = document.createRange(); rg.selectNodeContents(L.n); const r = rg.getClientRects()[L.i];
+      return r && {left: r.left, right: r.right, top: capTop(L.n.parentElement, r)}; }
+    if(!L.el.isConnected) return null; const r = L.el.getBoundingClientRect(); if(!r.width || !r.height) return null;
+    return {left: r.left, right: r.right, top: L.edge === 'bottom' ? r.bottom : r.top}; }
+  function ledgeRect(L){ const r = rawRect(L);   // on screen, below the sticky header, wide enough to walk
+    if(!r || r.right - r.left < GWs()+6 || r.top < topY() + 22*WS + 4 || r.top > innerHeight - 6) return null; return r; }
+  function ledges(){ const out = [], root = document.querySelector('main'); if(!root) return out;
+    const hidden = el => el.closest('[aria-hidden="true"], .vh, [hidden]');
+    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for(let n; (n = tw.nextNode()) && out.length < 600;){ if(!n.data.trim() || !n.parentElement || hidden(n.parentElement)) continue;
+      const rg = document.createRange(); rg.selectNodeContents(n); const k = rg.getClientRects().length;
+      for(let i=0; i<k; i++) out.push({n, i}); }
+    for(const el of [...root.querySelectorAll('*'), ...document.querySelectorAll('footer, footer *')]){ if(hidden(el)) continue;
+      const cs = getComputedStyle(el), tag = el.tagName;
+      const bt = cs.borderTopStyle !== 'none' && parseFloat(cs.borderTopWidth) > 0 && vis(cs.borderTopColor);
+      const bb = cs.borderBottomStyle !== 'none' && parseFloat(cs.borderBottomWidth) > 0 && vis(cs.borderBottomColor);
+      const box = /^(IMG|VIDEO|HR|INPUT|TEXTAREA|SELECT)$/.test(tag) || ((tag === 'BUTTON' || tag === 'A') && vis(cs.backgroundColor));
+      if(bt || box) out.push({el, edge:'top'}); if(bb) out.push({el, edge:'bottom'}); }
+    return out.filter(ledgeRect); }
+  function pickLedge(){ const all = ledges(); return all.length ? all[(R()*all.length)|0] : null; }
+  function toward(f, past){   // fly at the viewer: grow big near the middle of the screen, then pull back (or, leaving, fly past and fade)
+    f.mode = past ? 'past' : 'toward'; f.tk = 0; f.tT = past ? 50 + R()*20 : 70 + R()*40; f.s0 = f.s; f.sMax = past ? 16 : 7 + R()*4;
+    f.c0 = [f.x + f.GW*f.s/2, f.y + f.GH*f.s/2]; f.cT = [innerWidth*(.35 + R()*.3), innerHeight*(.35 + R()*.3)]; }
   function fly(f){ f.pt = null; f.mode = 'roam'; f.vy = -3; f.ft = 60 + R()*120; f.sT = 1.6+R()*1.6; wp(f); }   // take off for 2 to 6 s
   function add(f){ if(RM.matches){ f.alive = false; return; }
     if(!cv || !cv.isConnected){ cv = document.createElement('canvas'); cv.className = 'dragon-sky'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv); }
     Object.assign(f, {k:0, alive:true, landed:false, a:1, s:f.ps, sp:3+R()*2, vx:f.dir*3, vy:-2.5, out:'', lv:-1, fading:false}); fly(f);
     fl.push(f); if(!raf){ last = 0; raf = requestAnimationFrame(loop); } }
-  const count = () => fl.filter(f => f.alive).length;
+  const count = () => fl.filter(f => f.alive).length, air = () => fl.filter(f => f.alive && f.mode !== 'walk').length, MAXAIR = 3;
   function leave(f, how, delay){ if(f.alive){ f.out = how; f.lv = delay; } }
   function resume(f){ if(!f.alive) return; f.out = ''; f.lv = -1; f.fading = false; if(f.mode === 'off') fly(f); }
   function next(f){   // after a flight: land somewhere (70%), go home (15%), or keep flying (15%)
-    f.pt = null; const r = R(); if(r < .7){ f.ledge = pickLedge(); f.mode = 'land'; } else if(r < .85) f.mode = f.home ? 'home' : 'off'; else fly(f); }   // visitors have no home: they fly away
+    f.pt = null; const r = R(); if(r < .15) toward(f, false); else if(r < .7){ f.ledge = pickLedge(); if(f.ledge) f.mode = 'land'; else fly(f); } else if(r < .85) f.mode = f.home ? 'home' : 'off'; else fly(f); }   // visitors have no home: they fly away
   function step(f, n, ms){   // n = ticks (speed-scaled), ms = real time
     const vw = innerWidth, vh = innerHeight; f.k += n;
     if(!f.out && f.orphan()){ f.out = 'off'; f.lv = R()*20; }   // its canvas went away (page changed): leave
-    if(f.lv >= 0 && (f.lv -= n) < 0){ if(f.out === 'fade') f.fading = true; else { f.mode = 'off'; } }
+    if(f.lv >= 0 && (f.lv -= n) < 0){ if(f.out === 'fade') f.fading = true; else if(R() < .5) toward(f, true); else f.mode = 'off'; }   // leaving: past the viewer or off the side
     if(f.fading){ f.a -= n/40; if(f.a <= 0){ f.alive = false; return; } } else if(f.a < 1) f.a = Math.min(1, f.a + n/20);
     if(f.mode === 'home' || f.mode === 'land'){
       let t;
@@ -627,11 +653,20 @@ const SKY = (() => {
         if(f.mode === 'home'){ f.alive = false; f.landed = true; }
         else { f.mode = 'walk'; f.wt = 90 + R()*150; f.s = WS; f.lx = null; } }
       return; }
+    if(f.mode === 'toward' || f.mode === 'past'){
+      const u = Math.min(1, (f.tk += n)/f.tT), e = u*u*(3-2*u);
+      const g = f.mode === 'past' ? u*u : Math.sin(Math.PI*u);   // past: keeps growing; toward: grows, then shrinks back
+      f.s = f.s0*Math.pow(f.sMax/f.s0, g); const k = f.mode === 'past' ? e : Math.min(1, e*2);
+      const cx = f.c0[0] + (f.cT[0]-f.c0[0])*k, cy = f.c0[1] + (f.cT[1]-f.c0[1])*k + Math.sin(f.k*.15)*4;
+      f.x = cx - f.GW*f.s/2; f.y = cy - f.GH*f.s/2;
+      if(f.mode === 'past' && u > .55) f.a = Math.min(f.a, 1 - (u-.55)/.45);
+      if(u >= 1){ if(f.mode === 'past'){ f.alive = false; return; } f.vx = f.dir*3; f.vy = 0; fly(f); f.ft = 40 + R()*60; }
+      return; }
     if(f.mode === 'walk'){
       const r = ledgeRect(f.ledge); if(!r){ fly(f); return; }   // scrolled away, re-rendered or under the header: take off
       f.y = r.top - 22*WS; f.x += f.dir*.6*WS*n;
       if(f.x > r.right - GWs()){ f.x = r.right - GWs(); f.dir = -1; } if(f.x < r.left){ f.x = r.left; f.dir = 1; }
-      if((f.wt -= n) <= 0) fly(f); return; }
+      if((f.wt -= n) <= 0){ if(air() < MAXAIR) fly(f); else f.wt = 30; } return; }   // no more than 3 in the air: wait a moment
     if(f.mode === 'roam'){
       const cx = f.x + f.GW*f.s/2, cy = f.y + f.GH*f.s/2, tx = f.wx + f.GW*f.s/2, ty = f.wy + f.GH*f.s/2, d = Math.hypot(tx-cx, ty-cy) || 1;
       const k = Math.min(1, .05*n); f.vx += ((tx-cx)/d*f.sp - f.vx)*k; f.vy += ((ty-cy)/d*f.sp - f.vy)*k;
@@ -663,7 +698,7 @@ const SKY = (() => {
     ctx.globalAlpha = 1;
     for(let i=fl.length-1; i>=0; i--) if(!fl[i].alive) fl.splice(i, 1);
     if(fl.length) raf = requestAnimationFrame(loop); else { cv.remove(); cv = null; } }
-  return {add, leave, resume, count};
+  return {add, leave, resume, count, air, MAXAIR};
 })();
 function makeDragons(SEL, OPEN){
   const SPR = ['000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000013222444422100000000000000000013312244422100000000000000000013311111122100000000000000000013310000122100000000000000000017771000177710000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000177712210000000000000000000000011117771000000000000000000000000001110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222224444100000000000000000000112224441000000000000000000000001221110000000000000000000000001221000000000000000000000000001777100000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000','000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222442244100000000000000000000132242241000000000000000000000133112210000000000000000000000133117771000000000000000000000177711110000000000000000000000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', '000000001000010017100100000000000000016100161001711710000000000000001611565101172710000000000000001655565115222221000000000000000165565552222892111000000000000165565552222222223100000000000016556555222222222100001111000016556552222444442100012222100115656552222211111000125222211512222522222100000000152222221222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222444444100000000000000000000132242241000000000000000001111331112210000000000000000017733111221100000000000000000001111177110000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', '000000000000000017100100000000000000000000000001711710000000000000000000000000172710000000000000000000000001222221000000000110000000000012222892111000001661100000000012222222223100000156611000000015222222222100001115566111010012222444442100012222555665151152222211111000125222255552222122222100000000152222226222222222221000000000122112222222222222221000000000011012222222244442210000000000000012222222444443211000000000000012222224444444337100000000000001222224444444411000000000000000122224444444410000000000000000011222444444100000000000000000000132242241000000000000000001111331112210000000000000000017733111221100000000000000000001111177110000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));   // frames 0-7 walk (step*2 + wing), 8-9 flying with legs tucked   // 8 frames: step*2 + wing; 30x26 palette indices
@@ -730,7 +765,7 @@ function makeDragons(SEL, OPEN){
     for(const d of dg){
       if(d.gone){ if((d.gone === 'fly' && d.flier && d.flier.landed) || (d.back && !(d.flier && d.flier.alive))) comeBack(d); else continue; }
       if(d.ex === 1 && --d.od <= 0){ launch(d); if(d.gone) continue; }   // run is up: take off and leave
-      if(!exiting && !d.rin && !d.jump && !d.fly && !d.hop && --d.tk <= 0){ d.tk = 60 + (R()*120|0); if(launch(d)) continue; }   // off to explore the page
+      if(!exiting && !d.rin && !d.jump && !d.fly && !d.hop && --d.tk <= 0){ d.tk = 60 + (R()*120|0); if(SKY.air() < SKY.MAXAIR && launch(d)) continue; }   // off to explore the page
       if(d.ex === 2){ const u = Math.min(1, ++d.fk/40); d.a = 1 - u*u*(3-2*u); if(u >= 1){ d.gone = 'fade'; d.ex = 0; continue; } }
       else if(!exiting && d.a < 1) d.a = Math.min(1, d.a + 1/20);
       const lane = d.i===0 ? [H-5,2.5] : [H-8,2.5];
@@ -773,7 +808,7 @@ function makeDragons(SEL, OPEN){
       else { const d = pick(dg); d.th = scheme(); d.tsv = tone(); }
       nextColor = 300+(R()*400|0); }
     vis = vis.filter(v => v.f.alive);
-    if(!exiting && --spawnT <= 0){ spawnT = 90 + (R()*180|0); if(dg.filter(d => !d.gone).length + SKY.count() < MAXD) visit(); }
+    if(!exiting && --spawnT <= 0){ spawnT = 90 + (R()*180|0); if(dg.filter(d => !d.gone).length + SKY.count() < MAXD && SKY.air() < SKY.MAXAIR) visit(); }
     for(const d of [...dg, ...vis]){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a,j) => a+(d.tsv[j]-a)*.06); }
     sparks = sparks.map(([x,y,n]) => [x,y,n-1]).filter(s => s[2] > 0);
   }
