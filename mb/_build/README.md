@@ -35,6 +35,17 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   `data/mbtma-compact.json` (same layout, route ids prefixed `mbtma:`, `ag: "mbtma"`); build.py merges it into the UCSF
   data, shifting its indices. Fetched through a browser (the sandbox can't reach Trillium); frequencies.txt is empty.
 
+- PresidiGo: `https://presidiobus.com/gtfs` (GMV Syncromatics; Transitland `f-presidigo~ca~us`, version 42b15793,
+  service from 2026-06-27). Routes Downtown (express to Embarcadero BART) and South Hills; weekdays and weekends.
+  `data/presidigo-compact.json`, `ag: "presidio"`. Transitland also lists GTFS-realtime for it (`f-presidigo~ca~us~rt`).
+- Golden Gate Park Free Shuttle: GTFS linked from https://sfrecpark.org/1617/Golden-Gate-Park-Free-Shuttle
+  (`/DocumentCenter/View/25114/gtfs-1`, SHA1 7899384a). Its calendar ended 2025-12-31; the page still describes the same
+  service (weekends and holidays 9 to 6 every 15 min, weekdays noon to 6 every 25 min), so `data/ggp-compact.json`
+  extends the end date to 2027-12-31 and Info says so. Holidays are not in the file (they run as weekdays here).
+  `ag: "ggp"`. Replace the file when Rec and Park publishes a current one.
+- Switch order: Mission Bay | UCSF | Presidio | GG Park (`data-ag` mbtma, ucsf, presidio, ggp). Weekend line
+  "No weekend service" shows only for an operator with no trips that day.
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout

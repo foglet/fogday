@@ -283,7 +283,7 @@ function render(){
   /* Service, one message per line: what is running now, then when the next shuttle comes
      (at the stop nearest you once location is allowed, else the next service anywhere) */
   /* Weekends (no service at all): that one line only, nothing else */
-  const weekend = !state.vehicles.length && now.wd>=5;
+  const weekend = !state.vehicles.length && now.wd>=5 && !D.trips.some(t=>agOk(t[0]) && runsOn(t[1], now.ymd, now.wd));   // this operator has no service today at all
   setText($("statusText"), n ? who+n+(n===1?" shuttle":" shuttles")+" running"+(mode==="live" ? ", live" : "") : weekend ? "No weekend service" : who+"No Service Now");
   const nl=$("nextLine"); let next=null, here=false;
   const servesOnly = si => only==null || D.trips.some(t=>t[0]===only && D.patterns[t[3]].some(p=>p[0]===si));

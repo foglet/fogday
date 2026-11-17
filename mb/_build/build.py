@@ -3,7 +3,7 @@
 The data file is a compact form of the UCSF GTFS feed (https://ucsf.tripshot.com/v1/gtfs.zip,
 Transitland f-ucsf~shuttle~ca~us). See README.md for how to refresh it.
 """
-import json, pathlib
+import json, pathlib, re
 root = pathlib.Path(__file__).parent
 data = json.loads((root / "data/gtfs-compact.json").read_text(encoding="utf-8"))
 for r in data["routes"]: r.setdefault("ag", "ucsf")
@@ -16,8 +16,13 @@ def merge(base, add):
     base["patterns"] += [[[s + S, t, d] for s, t, d in p] for p in add["patterns"]]
     base["trips"] += [[r + R, v + V, h + H if h >= 0 else -1, p + P, t0] for r, v, h, p, t0 in add["trips"]]
 
-# Mission Bay TMA (Trillium GTFS, Transitland f-9q8yy-missionbaytma~ca~us); see README.md
-merge(data, json.loads((root / "data/mbtma-compact.json").read_text(encoding="utf-8")))
+# Other operators, in switch order after UCSF; see README.md for each source
+for f in ("mbtma-compact.json",       # Mission Bay TMA (Trillium GTFS, Transitland f-9q8yy-missionbaytma~ca~us)
+          "presidigo-compact.json",   # PresidiGo (presidiobus.com/gtfs, Transitland f-presidigo~ca~us)
+          "ggp-compact.json"):        # Golden Gate Park Shuttle (sfrecpark.org GTFS; calendar end extended, see README)
+    merge(data, json.loads((root / "data" / f).read_text(encoding="utf-8")))
+# tidy stop names: stray ids ("31796-Caulfield Cut") and spaces
+for s in data["stops"]: s[0] = re.sub(r"^\d+-", "", s[0].strip())
 config = {
     # public Mapbox token already used on fogday.com/transit and /treesf
     "token": "pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw",
