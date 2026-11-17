@@ -119,7 +119,8 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .maps-btn { border-radius: 0 8px 8px 0; width: 30px; justify-content: flex-start; padding-left: 2px; }
   @media (pointer: coarse) { .maps-btn { width: 40px; } }
   @media (min-width: 760px) { .top { top: calc(16px + var(--sat)); } .title-row { margin-left: 16px; } }
-  @media (max-width: 759px) { .top { text-align: center; } .title-row { margin-left: 0; } .maps-menu { left: 50%; translate: -50% 0; } }
+  @media (max-width: 759px) { .title-row { margin-left: 12px; } .maps-menu { left: 0; } }   /* title top left on phones too, as on /ucsf/ and /eastbeach/ */
+  @media (max-width: 360px) { .title { letter-spacing: .08em; } }   /* smallest phones: tighter tracking keeps the title clear of the bento */
 
   /* Bottom left, above the Mapbox logo: the legend */
   .map-bottom-left {
@@ -311,7 +312,6 @@ places:   # the Cities menu (folded-map button). Optional per city: zoom (defaul
   .bento:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
   @media (min-width: 760px) { .corner { top: calc(13px + var(--sat)); } }
   @media (pointer: coarse) { .corner { top: calc(7px + var(--sat)); } .bento { width: 44px; height: 44px; padding: 13px; } }
-  @media (max-width: 420px) { .top { padding-right: 48px; } }   /* small phones: the centered title shifts left, clear of the bento */
 </style>
 </head>
 <body>
