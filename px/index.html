@@ -162,8 +162,8 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)');
 
 /* ---------- settings (baseline = everything on, as in the dragon skill) ---------- */
 const BASE = {n:3, act:'mix', pat:'mix', follow:true, dizzy:true, color:'any', hue:'#3f9e6e', wings:'mix', kids:'some', nk:2,
-  breath:'mix', body:'mix', tail:'mix', spd:2, bg:'scene', sky:'day', clouds:'few', mtn:true, ground:'grass', rocks:true};
-const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x
+  breath:'mix', body:'mix', tail:'mix', spd:1, bg:'scene', sky:'day', clouds:'few', mtn:true, ground:'grass', rocks:true};
+const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x; the default (BASE.spd = 1) is 0.5x
 const KEY = 'px:settings';
 let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
