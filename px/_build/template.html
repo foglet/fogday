@@ -109,6 +109,8 @@ canvas{position:absolute;left:0;top:0;display:block}
     <div class="row"><label for="n">Number of dragons</label><input id="n" type="range" min="1" max="12" step="1"><output for="n" id="nOut"></output></div>
     <div class="row"><label for="act">What they do</label><select id="act">
       <option value="mix">A bit of everything</option><option value="walk">Walk</option><option value="hop">Hop and jump</option><option value="march">March in step</option><option value="fly">Fly</option></select></div>
+    <div class="row"><label for="pat">Flight pattern</label><select id="pat">
+      <option value="mix">Any</option><option value="roam">Roam</option><option value="loops">Loop-the-loops</option><option value="circles">Circles</option><option value="swoop">Swoop at you</option><option value="zigzag">Zigzag</option></select></div>
     <div class="row"><span class="lab" id="lFol">Follow my finger</span><span class="sw"><input id="follow" type="checkbox" aria-labelledby="lFol"><span></span></span></div>
     <div class="row"><span class="lab" id="lDiz">Dizzy spells</span><span class="sw"><input id="dizzy" type="checkbox" aria-labelledby="lDiz"><span></span></span></div>
     <div class="row"><label for="color">Colors</label><select id="color">
@@ -165,7 +167,7 @@ const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x
 const KEY = 'px:settings';
 let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
-Object.assign(cfg, {pat:'mix', wings:'mix', body:'mix', tail:'mix', kids:'some'}); cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
+Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some'}); cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };
 let seed = (R()*1e9)|0;
 
@@ -545,11 +547,12 @@ ctlBtn.addEventListener('click', () => setOpen(sheet.hidden));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !sheet.hidden){ setOpen(false); ctlBtn.focus(); } });
 function setPlay(on){ playing = on; $('playT').textContent = on ? 'Pause' : 'Play'; playBtn.setAttribute('aria-pressed', String(on)); if(on) start(); }
 playBtn.addEventListener('click', () => setPlay(!playing));
-const IDS = ['n','act','follow','dizzy','color','hue','breath','spd','bg','sky','clouds','mtn','ground','rocks'];
+const IDS = ['n','act','pat','follow','dizzy','color','hue','breath','spd','bg','sky','clouds','mtn','ground','rocks'];
 function show(){ for(const id of IDS){ const el = $(id); if(el.type === 'checkbox') el.checked = !!cfg[id]; else el.value = cfg[id]; }
   $('nOut').textContent = cfg.n; $('spdOut').textContent = SPEEDS[cfg.spd] + 'x';
   $('spd').setAttribute('aria-valuetext', SPEEDS[cfg.spd] + ' times');
   $('hueRow').hidden = cfg.color !== 'pick';
+  $('pat').disabled = !canFly(); $('pat').closest('.row').classList.toggle('off', !canFly());
   for(const r of document.querySelectorAll('.row.sc')){ const off = cfg.bg !== 'scene'; r.classList.toggle('off', off); r.querySelector('select,input').disabled = off; } }
 const SCENE = new Set(['bg','sky','clouds','mtn','ground','rocks']);
 function apply(id){
