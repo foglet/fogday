@@ -32,6 +32,9 @@ for r in data["routes"]:
 for s in data["stops"]: s[0] = re.sub(r"^\d+-", "", s[0].strip())
 # San Francisco Public Library: Main and the 27 branches (DataSF fhhu-wqa7), drawn on every view
 data["libs"] = json.loads((root / "data" / "sfpl-libraries.json").read_text(encoding="utf-8"))["libs"]
+# BART: track and the 50 stations (bart.gov GTFS, Transitland f-9q9-bart), drawn under every view; no times
+bart = json.loads((root / "data" / "bart.json").read_text(encoding="utf-8"))
+data["bart"] = {"st": bart["stations"], "tr": [t for t in bart["track"] if len(t) > 2]}
 config = {
     # public Mapbox token already used on fogday.com/transit and /treesf
     "token": "pk.eyJ1IjoiZm9nZmlzaCIsImEiOiJjaWw2ZHJlcngwMmFhdGxsemZvajd0OHNoIn0.cZDgXl4g7YZhwNF0ITahmw",

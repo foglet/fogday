@@ -71,7 +71,7 @@ function arrowImage(){
 const THEME = {
   get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
   style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/fogfish/cilhmh2ah00959gm3fy54zuik" },   // dark: the Spy map style (/spy/)
-  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35} }
+  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, bart:"#8e9aa4", bartRing:"#0099d8"} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, bart:"#5f6e7b", bartRing:"#4fb8ea"} }
 };
 /* The Spy map draws some of its own lines (paths, tunnels) in lime green, which pull the eye from the shuttles.
    In dark mode, any basemap line in the lime-to-green range is muted (less saturated) and faded. */
@@ -104,13 +104,19 @@ function addLayers(){
   map.addSource("stops", {type:"geojson", data:stopFeatures()});
   map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
   map.addSource("libs", {type:"geojson", data:libFeatures()});
+  map.addSource("bart", {type:"geojson", data:bartTrack()});
+  map.addSource("bart-st", {type:"geojson", data:bartStations()});
   /* Routes go under the basemap's first label layer, so place and street names read on top of them;
      stops and shuttles stay above everything */
   const firstLabel=(map.getStyle().layers||[]).find(l=>l.type==="symbol");
   const under=firstLabel ? firstLabel.id : undefined;
+  /* BART, on every view and in every state (not tied to the system or a selected route), not clickable:
+     quiet grey track and small stations ringed in BART blue, below the shuttles */
+  map.addLayer({id:"bart-line", type:"line", source:"bart", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.bart,"line-width":["interpolate",["linear"],["zoom"],9,1.5,13,2.5,16,4],"line-opacity":0.85}}, under);
   map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.casing,"line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":k.casingOp,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}}, under);   // a finger-wide tap area along each line
+  map.addLayer({id:"bart-st", type:"circle", source:"bart-st", paint:{"circle-radius":["interpolate",["linear"],["zoom"],9,2.5,13,4.5,16,7],"circle-color":k.stopFill,"circle-stroke-color":k.bartRing,"circle-stroke-width":["interpolate",["linear"],["zoom"],9,1.5,14,2.5]}});
   map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,2.5,15,6],"circle-color":k.stopFill,"circle-stroke-color":k.stopLine,"circle-stroke-width":1.6}});
   map.addLayer({id:"lib", type:"symbol", source:"libs", layout:{"icon-image":libImg,"icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.7,15,1]}});   // libraries: above stops, under shuttles
   map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
@@ -209,6 +215,12 @@ function libImage(){
   return g.getImageData(0,0,S,S);
 }
 function libFeatures(){ return {type:"FeatureCollection", features:(D.libs||[]).map((l,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[l[3]/1e5, l[2]/1e5]}}))} }
+/* ---------- BART (bart.gov GTFS): track and stations, no times ---------- */
+function bartTrack(){
+  const lines=((D.bart||{}).tr||[]).map(f=>{ const c=[]; let a=0, o=0; for(let k=0;k<f.length;k+=2){ a+=f[k]; o+=f[k+1]; c.push([o/1e5, a/1e5]) } return c });
+  return {type:"FeatureCollection", features:[{type:"Feature", properties:{}, geometry:{type:"MultiLineString", coordinates:lines}}]};
+}
+function bartStations(){ return {type:"FeatureCollection", features:((D.bart||{}).st||[]).map((s,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[s[2]/1e5, s[1]/1e5]}}))} }
 function libPopup(i){
   const l=D.libs[i];
   new mapboxgl.Popup({offset:14, maxWidth:"260px"}).setLngLat([l[3]/1e5, l[2]/1e5]).setHTML("<h3>"+esc(l[0])+"</h3><p>"+esc(l[1])+"</p><p>San Francisco Public Library</p>").addTo(map);

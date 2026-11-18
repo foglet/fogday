@@ -69,6 +69,11 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   Daly City Bayshore is run by SamTrans (agency 4968 in the feed). Checked against the SamTrans timetable linked from
   commute.org (`samtrans.com/media/23748`, eff. 2022-02-01): 20 of 23 trips match; westbound 5:30p (timetable 5:34p) and
   eastbound 4:00p and 5:09p (stops in between 1-2 min off) follow the timetable. Christmas and New Year's Day added too.
+- BART: track and the 50 stations from `https://www.bart.gov/dev/schedules/google_transit.zip` (Transitland `f-9q9-bart`,
+  version d4185c0d, fetched in the browser pane 2026-11-17). `data/bart.json`: stop-to-stop pieces of the GTFS shapes
+  (simplified to 6 m, delta encoded like the shuttle shapes) and each station with the lines that stop there; `D.bart`.
+  Drawn under every view (layers `bart-line`, `bart-st`): grey track, stations ringed in BART blue; always on, not clickable.
+  No train times. The 511 regional feed (`f-sf~bay~area~rg`) carries BART too but needs an API key.
 
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
