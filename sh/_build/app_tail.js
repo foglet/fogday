@@ -136,10 +136,15 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, as on /treesf/, top to bottom: location (here), then + − and compass.
+  /* Bottom-right stack, as on /treesf/, top to bottom: folded map (Systems), zoom readout, location (here), then + − and compass.
      Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("here"));
+  asControl($("zoomRead"));
+  asControl($("systems"));
+  /* Zoom readout, live, to one decimal (as on /treesf/) */
+  const showZoom=()=>{ const t=(Math.round(map.getZoom()*10)/10).toFixed(1); setText($("zoomRead"), t); $("zoomRead").setAttribute("aria-label","Zoom level "+t) };
+  map.on("zoom", showZoom); showZoom();
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
@@ -370,12 +375,26 @@ function inkAlign(){
   const m=inkCtx.measureText($("opName").textContent); b.style.marginLeft=(m.actualBoundingBoxLeft||0).toFixed(1)+"px";
 }
 if(document.fonts) document.fonts.ready.then(inkAlign);
-$("opBtn").addEventListener("click", () => {
-  AG=OPS[(OPS.findIndex(o=>o[0]===AG)+1)%OPS.length][0];
-  showOp();
+function setOp(ag){
+  AG=ag; showOp(); markSys();
   state.focus=null;   // a new system shows all its routes, zoomed to fit
   applyFocus(true); render();
+}
+$("opBtn").addEventListener("click", () => setOp(OPS[(OPS.findIndex(o=>o[0]===AG)+1)%OPS.length][0]));
+/* Systems menu: the folded-map button (as /treesf/'s Neighborhoods) lists every system; a tap shows that one.
+   The same choice as tapping the name, all at once. */
+const sysPin=$("sysBtn"), sysPop=$("sys-pop"), sysList=sysPop.querySelector("ul");
+function setSys(open){ sysPin.setAttribute("aria-expanded", String(open)); sysPop.hidden=!open }
+function markSys(){ sysList.querySelectorAll("button").forEach(b=>{ if(b.dataset.ag===AG) b.setAttribute("aria-current","true"); else b.removeAttribute("aria-current") }) }
+OPS.forEach(([ag,name])=>{
+  const li=document.createElement("li"), b=document.createElement("button"), sp=document.createElement("span");
+  b.type="button"; b.dataset.ag=ag; sp.textContent=name; b.appendChild(sp); li.appendChild(b); sysList.appendChild(li);
+  b.addEventListener("click", ()=>{ setSys(false); if(ag!==AG) setOp(ag) });
 });
+markSys();
+sysPin.addEventListener("click", e=>{ e.stopPropagation(); setSys(sysPin.getAttribute("aria-expanded")!=="true") });
+document.addEventListener("click", e=>{ if(!sysPop.hidden && !$("systems").contains(e.target)) setSys(false) });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !sysPop.hidden){ setSys(false); sysPin.focus() } });
 showOp();   // the title clears the selection: all routes, the whole map
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }

@@ -236,6 +236,34 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
   .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
   .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
+  /* Zoom readout (as /treesf/): the current zoom, live; display only, taps pass through to the map */
+  .oa-zoomread { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; pointer-events: none;
+                 color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+                 text-shadow: 0 0 2px var(--bg), 0 0 2px var(--bg), 0 0 3px var(--bg); }
+  .oa-zoomread[hidden], .oa-systems[hidden] { display: none; }
+  /* Systems: the folded-map button opens the list to its left (as /treesf/'s Neighborhoods); each line on its own glass */
+  .mapboxgl-ctrl.oa-systems { position: relative; }
+  .oa-pin[aria-expanded="true"] { color: var(--accent); }
+  .oa-sys-pop { position: absolute; right: calc(100% + 8px); top: 0; display: flex; flex-direction: column; align-items: flex-start;
+                color: var(--ink); font: 400 1rem/1.4 var(--font); text-align: left; --muted: #c5ced5; }
+  :root[data-theme="light"] .oa-sys-pop { --muted: #44535b; }
+  .oa-sys-pop[hidden] { display: none; }
+  .oa-sys-title, .oa-sys-pop li button span {
+    display: block; width: fit-content; box-sizing: border-box; padding: 2px 10px; border-radius: 999px;
+    background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+  .oa-sys-title { margin: 0; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .oa-sys-pop ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: 0; font-size: .9rem; }
+  .oa-sys-pop li { margin: 0; padding: 0; }
+  .oa-sys-pop li button { all: unset; box-sizing: border-box; display: flex; align-items: center; cursor: pointer; color: var(--ink); white-space: nowrap; }
+  .oa-sys-pop li button span { line-height: 20px; border-radius: 0; }
+  .oa-sys-pop li:first-child button span { border-top-right-radius: var(--glass-r); }
+  .oa-sys-pop li:last-child button span { border-bottom-left-radius: var(--glass-r); border-bottom-right-radius: var(--glass-r); }
+  .oa-sys-pop li button[aria-current="true"] { font-weight: 700; }   /* the system on view */
+  .oa-sys-pop li button:hover { color: var(--accent); }
+  .oa-sys-pop li button:focus-visible span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .oa-sys-pop:not([hidden]) > * { animation: sys-in .32s cubic-bezier(0,0,.2,1) both; }
+  @keyframes sys-in { from { opacity: 0; transform: translateY(8px); } }
+  @media (prefers-reduced-motion: reduce) { .oa-sys-pop:not([hidden]) > * { animation: none; } }
   @keyframes here-pulse { 50% { opacity: .35; } }
   /* Top right: the light / dark toggle and the bento, formatted as in the site header (fogday.css, as on /fog/):
      no panel, 40px tap targets, a 16px moon / sun and an 18px bento grid. theme.js (the site's) drifts the sun
@@ -272,6 +300,8 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
   .here-dot { width: 14px; height: 14px; border-radius: 50%; background: #3d8bff; border: 2px solid #fff; box-shadow: 0 0 0 6px rgb(61 139 255 / .25); pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { .oa-here .oa-pin[aria-busy="true"] svg { animation: none; } }
   @media (pointer: coarse) {
+    .oa-zoomread { width: 44px; height: 44px; font-size: .85rem; }
+    .oa-sys-pop li button span { padding-top: 10px; padding-bottom: 10px; line-height: 24px; }   /* 44px rows */
     .legend-toggle { min-height: 32px; }
     .mapboxgl-map .mapboxgl-ctrl-group button { width: 44px; height: 44px; }
     .oa-pin { width: 44px; height: 44px; }
@@ -306,6 +336,17 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
   </button>
 </div>
+
+<div class="oa-systems" id="systems" hidden>  <!-- folded-map button, top of the stack: tap it for every system (as /treesf/'s Neighborhoods) -->
+  <button type="button" class="oa-pin" id="sysBtn" aria-expanded="false" aria-controls="sys-pop" aria-label="Shuttle systems" title="Shuttle systems">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>
+  </button>
+  <div class="oa-sys-pop" id="sys-pop" hidden>
+    <p class="oa-sys-title">Shuttles</p>
+    <ul aria-label="Show a shuttle system"></ul>
+  </div>
+</div>
+<div class="oa-zoomread" id="zoomRead" role="img" aria-label="Zoom level" title="Zoom level" hidden></div>  <!-- live zoom, above here and + − -->
 
 <!-- Top right, as in the site header: light / dark, then the bento (all projects) -->
 <nav class="corner" aria-label="Site">
@@ -662,10 +703,15 @@ function initMap(){
       customAttribution:'<a href="https://fogday.com/">© Fogday Studios</a> | <a href="https://www.instagram.com/fogfish/">@fogfish</a>'});
   }catch(e){ map=null; return }
   map.touchPitch && map.touchPitch.disable();
-  /* Bottom-right stack, as on /treesf/, top to bottom: location (here), then + − and compass.
+  /* Bottom-right stack, as on /treesf/, top to bottom: folded map (Systems), zoom readout, location (here), then + − and compass.
      Mapbox stacks bottom-corner controls upward in the order added, so they're added bottom first. */
   map.addControl(new mapboxgl.NavigationControl({visualizePitch:false}), "bottom-right");
   asControl($("here"));
+  asControl($("zoomRead"));
+  asControl($("systems"));
+  /* Zoom readout, live, to one decimal (as on /treesf/) */
+  const showZoom=()=>{ const t=(Math.round(map.getZoom()*10)/10).toFixed(1); setText($("zoomRead"), t); $("zoomRead").setAttribute("aria-label","Zoom level "+t) };
+  map.on("zoom", showZoom); showZoom();
   map.on("style.load", addLayers);
   map.on("click","stop-dot", ev => stopPopup(ev.features[0].properties.i));
   map.on("click","veh-dot", ev => vehPopup(ev.features[0].properties.k));
@@ -896,12 +942,26 @@ function inkAlign(){
   const m=inkCtx.measureText($("opName").textContent); b.style.marginLeft=(m.actualBoundingBoxLeft||0).toFixed(1)+"px";
 }
 if(document.fonts) document.fonts.ready.then(inkAlign);
-$("opBtn").addEventListener("click", () => {
-  AG=OPS[(OPS.findIndex(o=>o[0]===AG)+1)%OPS.length][0];
-  showOp();
+function setOp(ag){
+  AG=ag; showOp(); markSys();
   state.focus=null;   // a new system shows all its routes, zoomed to fit
   applyFocus(true); render();
+}
+$("opBtn").addEventListener("click", () => setOp(OPS[(OPS.findIndex(o=>o[0]===AG)+1)%OPS.length][0]));
+/* Systems menu: the folded-map button (as /treesf/'s Neighborhoods) lists every system; a tap shows that one.
+   The same choice as tapping the name, all at once. */
+const sysPin=$("sysBtn"), sysPop=$("sys-pop"), sysList=sysPop.querySelector("ul");
+function setSys(open){ sysPin.setAttribute("aria-expanded", String(open)); sysPop.hidden=!open }
+function markSys(){ sysList.querySelectorAll("button").forEach(b=>{ if(b.dataset.ag===AG) b.setAttribute("aria-current","true"); else b.removeAttribute("aria-current") }) }
+OPS.forEach(([ag,name])=>{
+  const li=document.createElement("li"), b=document.createElement("button"), sp=document.createElement("span");
+  b.type="button"; b.dataset.ag=ag; sp.textContent=name; b.appendChild(sp); li.appendChild(b); sysList.appendChild(li);
+  b.addEventListener("click", ()=>{ setSys(false); if(ag!==AG) setOp(ag) });
 });
+markSys();
+sysPin.addEventListener("click", e=>{ e.stopPropagation(); setSys(sysPin.getAttribute("aria-expanded")!=="true") });
+document.addEventListener("click", e=>{ if(!sysPop.hidden && !$("systems").contains(e.target)) setSys(false) });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !sysPop.hidden){ setSys(false); sysPin.focus() } });
 showOp();   // the title clears the selection: all routes, the whole map
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }

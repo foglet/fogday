@@ -74,6 +74,8 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   (simplified to 6 m, delta encoded like the shuttle shapes) and each station with the lines that stop there; `D.bart`.
   Drawn under every view (layers `bart-line`, `bart-st`): grey track, stations as 5 px dots in the same grey; always on, not clickable.
   No train times. The 511 regional feed (`f-sf~bay~area~rg`) carries BART too but needs an API key.
+- Bottom-right stack, top to bottom (as /treesf/): folded-map button (Systems: lists every system, bold = on view; tap one
+  to show it, the same as tapping the name), zoom readout (live, one decimal, display only), location, + − and compass.
 
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
