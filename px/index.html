@@ -22,7 +22,8 @@ canvas{position:absolute;left:0;top:0;display:block}
 @supports (height:100lvh){#lvh{height:100lvh}}
 :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
 #scene{image-rendering:pixelated;image-rendering:crisp-edges}
-#fg{pointer-events:none}
+#fg,#sea,#fg2{pointer-events:none}
+#sea{image-rendering:pixelated;image-rendering:crisp-edges}   /* layers: scene, fliers, sea (so dragons sink into the waves), walkers and effects */
 .top{position:fixed;left:var(--sal);top:0;display:flex;align-items:center;padding:calc(var(--sat) + 10px) 12px 0;pointer-events:none;z-index:5}
 .top h1{margin:0;padding:6px 4px;font:700 16px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase;pointer-events:auto}
 /* Pixel type with a hard dark outline (the dragons' own outline colour), as the place names on /transitMine/. The fill is
@@ -94,7 +95,8 @@ canvas{position:absolute;left:0;top:0;display:block}
 </head>
 <body>
 <div class="stage"><canvas id="scene" aria-hidden="true"></canvas>
-<canvas id="fg" role="img" aria-label="Pixel dragons walking, jumping and flying over a pixel landscape"></canvas></div>
+<canvas id="fg" role="img" aria-label="Pixel dragons walking, jumping and flying over a pixel landscape"></canvas>
+<canvas id="sea" aria-hidden="true"></canvas><canvas id="fg2" aria-hidden="true"></canvas></div>
 <div id="lvh" aria-hidden="true"></div>
 <header class="top"><h1 class="px-out"><span class="px-ink">Pixel Dragons</span></h1></header>
 <nav class="corner" aria-label="Site">
@@ -196,7 +198,8 @@ let bits = [], sparks = [];
 
 /* ---------- stage geometry ---------- */
 const scv = document.getElementById('scene'), sctx = scv.getContext('2d');
-const fcv = document.getElementById('fg'), ctx = fcv.getContext('2d');
+const fcv = document.getElementById('fg'), ctxA = fcv.getContext('2d'), fcv2 = document.getElementById('fg2'), ctxB = fcv2.getContext('2d');
+const qcv = document.getElementById('sea'), qctx = qcv.getContext('2d'); let qframe = null, ctx = ctxA;
 let W = 0, H = 0, VH = 0, DPR = 1, P = 3, gw = 0, gh = 0, gTopA = 0, K = 1, sNear = 3, sFar = 2;
 function band(){   // where walkers' feet can be, in CSS px
   if(SEA) return [BEACH_A*P + 4, VH - 10];   // sea scene: the strip of beach at the bottom
@@ -359,11 +362,14 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
         const col = sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
   for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
-  if(SEA){ const S = SEA, F = .4, dim = sk.dim, tint = sk.tint;   // the sea, thicker white caps as on /waves
+  sctx.putImageData(frame, 0, 0);
+  if(!qframe || qframe.width !== gw || qframe.height !== gh) qframe = qctx.createImageData(gw, gh);
+  const d2 = qframe.data; d2.fill(0);
+  if(SEA){ const d = d2, S = SEA, F = .4, dim = sk.dim, tint = sk.tint;   // the sea, thicker white caps as on /waves, over the fliers
     for(let y=0; y<S.H; y++){ const row = S.top + y; if(row < 0 || row >= gh) continue;
       for(let x=0; x<gw; x++){ const v = S.px[y*gw + x]; if(!v) continue; const idx = Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2))), c = SEA_PAL[idx], i = (row*gw + x)*4;
-        d[i] = clamp(c[0]*dim + tint[0], 0, 255); d[i+1] = clamp(c[1]*dim + tint[1], 0, 255); d[i+2] = clamp(c[2]*dim + tint[2], 0, 255); } } }
-  sctx.putImageData(frame, 0, 0); }
+        d[i] = clamp(c[0]*dim + tint[0], 0, 255); d[i+1] = clamp(c[1]*dim + tint[1], 0, 255); d[i+2] = clamp(c[2]*dim + tint[2], 0, 255); d[i+3] = 255; } } }
+  qctx.putImageData(qframe, 0, 0); }
 
 /* ---------- dragons ---------- */
 let dg = [], T = 0, nextGroup = 200, nextColor = 300, P0 = {x:0, y:0, t:-1e9};
@@ -488,10 +494,11 @@ function tick(){ T++;
       walkStep(d, marching); }
     else { if(!canFly() && d.mode !== 'land' && d.mode !== 'dizzy') land(d);
       if(!SEA && (d.mode === 'dive' || d.mode === 'under')) plan(d);   // the scene changed under it
-      if(d.mode === 'dive'){ steer(d, d.dvx, seaY(d.dvx) + 12*K, 7*K, .12);
-        if(d.cy + GH*d.s*.15 >= seaY(d.cx)){ seaSplash(d.cx, d.s); d.mode = 'under'; d.ut = ri(40, 120); d.vx = d.dir*1.2*K; d.vy = 0; } }
+      if(d.mode === 'dive'){ steer(d, d.dvx, seaY(d.dvx) + GH*d.s, 7*K, .12);   // into the waves: the sea layer covers it as it goes in
+        if(!d.splash && d.cy + GH*d.s*.2 >= seaY(d.cx)){ seaSplash(d.cx, d.s); d.splash = true; }
+        if(d.cy - GH*d.s*.5 > seaY(d.cx) + 2*P){ d.splash = false; d.mode = 'under'; d.ut = ri(40, 120); d.vx = d.dir*1.2*K; d.vy = 0; } }
       else if(d.mode === 'under'){ d.cy = seaY(d.cx) + GH*d.s; if((d.cx < 30 && d.vx < 0) || (d.cx > W - 30 && d.vx > 0)){ d.vx *= -1; d.dir *= -1; }
-        if(--d.ut <= 0){ d.cy = seaY(d.cx) - 2; seaSplash(d.cx, d.s); plan(d); d.vy = -8*K; d.vx = d.dir*2*K; } }   // bursts back out
+        if(--d.ut <= 0){ d.cy = seaY(d.cx) + GH*d.s*.45; seaSplash(d.cx, d.s); plan(d); d.vy = -8*K; d.vx = d.dir*2*K; } }   // rises up out of the waves
       else if(d.mode === 'leave'){ if(following()) plan(d), d.entering = true; else { steer(d, d.ex, d.ey, d.spd, .08); if(offScreen(d)){ d.mode = 'off'; d.offT = ri(40, 240); d.vx = d.vy = 0; } } }
       else if(d.mode === 'off'){ d.vx = d.vy = 0; if(--d.offT <= 0 || following()) reenter(d); }
       if(d.mode === 'fly') flyStep(d); else if(d.mode === 'land') landStep(d); else if(d.mode === 'dizzy') dizzyStep(d); else if(d.mode === 'toward') towardStep(d);
@@ -697,16 +704,20 @@ function drawWeather(){ const w = WIND();
     for(const q of PREC) for(let k=0; k<4; k++) ctx.fillRect(Math.round((q.x - w*.8*K*k)/sz)*sz, Math.round((q.y - k*2*sz)/sz)*sz, sz, sz*2); }   // slanted, block-snapped streaks
   else if(cfg.wx === 'snow'){ ctx.fillStyle = 'rgba(255,255,255,.92)';
     for(const q of PREC){ const z = Math.round((q.v > 1 ? 3 : 2)*K); ctx.fillRect(Math.round(q.x), Math.round(q.y), z, z); } } }
-function draw(){ ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+function draw(){ for(const c of [ctxA, ctxB]){ c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, W, H); } ctx = ctxA;
 
   const key = d => d.mom ? (d.air ? 1e4 + d.s : d.fy + .01) : (d.mode === 'walk' ? d.fy : 1e4 + d.s);
   const order = dg.slice().sort((a, b) => key(a) - key(b));
   const wxSave = cfg.wx; cfg.wx = 'clear'; drawWeather(); cfg.wx = wxSave;   // the twister, behind the dragons
-  for(const d of order) if(d.mode !== 'off' && d.mode !== 'under' && !d.hid && !offScreen(d)) drawDragon(d);
+  const grounded = d => d.mom ? !d.air : d.mode === 'walk';
+  for(const d of order) if(!grounded(d) && d.mode !== 'off' && d.mode !== 'under' && !d.hid && !offScreen(d)) drawDragon(d);   // fliers: under the sea layer
+  ctx = ctxB;
+  for(const d of order) if(grounded(d) && !d.hid && !offScreen(d)) drawDragon(d);   // walkers on the beach or ground: in front
   for(const e of bits){ const [c, sz, a] = lookBit(e); if(a <= 0) continue; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = 'rgb(' + c.join(',') + ')'; const z = sz*e.sc; ctx.fillRect(e.x - z/2, e.y - z/2, z, z); }
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgb(255,226,80)';
   for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } }
-  if(cfg.wx !== 'clear'){ const t = TW; TW = null; drawWeather(); TW = t; } }   // rain and snow, in front
+  if(cfg.wx !== 'clear'){ const t = TW; TW = null; drawWeather(); TW = t; }   // rain and snow, in front
+  ctx = ctxA; }
 
 /* ---------- loop, resize, pointer ---------- */
 let playing = !RM.matches, raf = 0, last = 0, acc = 0, sceneDirty = 0;
@@ -722,7 +733,8 @@ function start(){ if(!raf && playing && !document.hidden){ last = 0; raf = reque
 function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = innerWidth; VH = innerHeight; H = Math.max(VH, document.getElementById('lvh').offsetHeight || 0); DPR = Math.min(3, devicePixelRatio || 1);
   P = W > 900 ? 4 : 3; gw = Math.ceil(W/P); gh = Math.ceil(H/P);
   scv.width = gw; scv.height = gh; scv.style.width = gw*P + 'px'; scv.style.height = gh*P + 'px';
-  fcv.width = Math.round(W*DPR); fcv.height = Math.round(H*DPR); fcv.style.width = W + 'px'; fcv.style.height = H + 'px';
+  qcv.width = gw; qcv.height = gh; qcv.style.width = gw*P + 'px'; qcv.style.height = gh*P + 'px'; qframe = null;
+  for(const c of [fcv, fcv2]){ c.width = Math.round(W*DPR); c.height = Math.round(H*DPR); c.style.width = W + 'px'; c.style.height = H + 'px'; }
   sNear = clamp(Math.min(W/120, H/150), 2.6, Math.min(6, MAXS)); sFar = sNear*.62; K = sNear/3;
   buildScene();
   for(const d of dg){ d.cx *= W/oW; d.cy *= VH/oH; if(d.mode === 'walk'){ const [a, b] = band(); d.fy = d.fyT = clamp(d.fy*VH/oH, a, b); } d.trail = []; d.lx = d.cx; d.ly = d.cy; }
