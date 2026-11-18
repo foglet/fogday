@@ -73,7 +73,15 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 /* The title block follows the chosen calligraphy: the seal, the Chinese subtitle, and the title itself in Chinese. */
 .brand small{font-family:var(--cy);font-weight:var(--cyw);font-size:1.0625rem}
 html[lang^="zh"] .brand b{font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;letter-spacing:.04em}
-.acts{display:flex;gap:10px;margin-right:-11px}   /* 32px between the search and translate glyphs (22px icons in 44px buttons); translate glyph aligns with the page edge */
+/* Section icons, as on fogday.com/cn-dr: books (meaning and search), then detective (info) at the far right.
+   The detective glyph aligns with the page edge. The current section's icon sits on a tinted pill. */
+.acts{display:flex;gap:4px;margin-right:-11px}
+.ibtn.tab svg{position:relative;z-index:1}
+.tab::before{content:"";position:absolute;inset:5px;border-radius:10px;background:var(--primary-tint);opacity:0;transform:scale(.8);
+  transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
+.ibtn.tab:hover,.ibtn.tab:active{background:transparent}
+.ibtn.tab[aria-current="page"]{color:var(--primary)}
+.tab[aria-current="page"]::before{opacity:1;transform:none}
 .ibtn{position:relative;width:var(--tap);height:var(--tap);display:grid;place-items:center;border:0;border-radius:var(--r-md);background:transparent;cursor:pointer;color:var(--ink)}
 .ibtn:hover{background:var(--surface-2)}
 .ibtn:active{background:var(--surface-3)}
@@ -84,9 +92,22 @@ html[lang^="zh"] .brand b{font-family:var(--cy);font-weight:var(--cyw);font-size
 main{flex:1;display:flex;flex-direction:column}
 main>.wrap{flex:1;display:flex;flex-direction:column}
 .stage{flex:1}
-/* With MEANING or INFO open the characters are no longer locked: the page flows from the top. */
-body.unpinned .stage{flex:none;min-height:0;padding-top:var(--s4)!important}
-body.unpinned .actions{margin-top:var(--s2)}
+/* Views: home (the card), books (meaning and search), info. One shows at a time. */
+.view{flex:1;display:flex;flex-direction:column}
+.view[hidden]{display:none}
+.view.in{animation:vin 240ms var(--ease)}
+@keyframes vin{from{opacity:0;transform:translateY(6px)}}
+#vBooks,#vInfo{padding:var(--s2) 0 calc(var(--s5) + env(safe-area-inset-bottom))}
+.pane{background:var(--surface);border-radius:var(--r-lg);padding:var(--s3) var(--s4) var(--s4)}
+.pane+.pane{margin-top:var(--s3)}
+.ph2{margin:0 0 var(--s2);font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+/* Meaning opens with the chengyu it belongs to; tapping it goes back to the card. */
+.mhead{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 var(--s3);width:100%;min-height:var(--tap);margin:0 0 var(--s3);padding:0;border:0;background:none;cursor:pointer;text-align:left}
+.mhead b{font-family:var(--cyt);font-weight:500;font-size:1.75rem;line-height:1.2}
+.mhead span{color:var(--primary);font-size:var(--fs-lg)}
+.info p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
+.info p:last-child{margin:0}
+@media (prefers-reduced-motion:reduce){.view.in{animation:none}.tab::before{transition:none}}
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
 .stage{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:var(--s2) 0}
 
@@ -125,9 +146,11 @@ body.unpinned .actions{margin-top:var(--s2)}
 
 
 /* More */
-/* Play (left) and star (right) sit just above MEANING. */
-.actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:0}
-.actions .note{flex:1;margin:0;text-align:center}
+/* Bottom row: translate, 36, play, copy, star, spread edge to edge (translate and star glyphs align with the page edges).
+   Status messages float just above the row. */
+.actions{position:relative;display:flex;align-items:center;justify-content:space-between;margin:auto -11px 0;
+  padding:var(--s2) 0 calc(var(--s2) + env(safe-area-inset-bottom))}
+.actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
 /* 36: Thirty-Six Stratagems switch, right of play. Red when on. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
   font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}
@@ -138,19 +161,11 @@ body.unpinned .actions{margin-top:var(--s2)}
 body.m36 .def{margin-bottom:var(--s2);min-height:0}   /* chapter line sits right under the definition */
 /* Copy (Phosphor clipboard-text, MIT): plain icon just left of the star. */
 .ph{fill:currentColor;stroke:none}
-.copy{color:var(--ink-2);margin-left:auto;margin-right:-8px}   /* 32px of space between the copy and star icons */
+.copy{color:var(--ink-2)}
 .copy:hover,.copy:active{background:transparent;color:var(--ink)}
-/* Star: just the icon, centred over the MEANING chevron (chevron centre = 16px padding + 11px half icon from the right). */
-.star{width:var(--tap);height:var(--tap);margin-right:5px;padding:0;background:transparent}
+.star{width:var(--tap);height:var(--tap);padding:0;background:transparent}
 .star:hover{background:transparent;color:var(--ink)}
 .star:active{background:transparent}
-.more{margin-top:var(--s2);background:var(--surface);border-radius:var(--r-lg)}
-.more>h2{margin:0;font-size:inherit}
-.tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:36px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
-  font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-lg);text-align:left}
-.tog svg{transition:transform var(--dur) var(--ease)}
-.tog[aria-expanded="true"] svg{transform:rotate(180deg)}
-.morebody{padding:0 var(--s4) var(--s4)}
 dl{margin:0}
 dt{margin-top:var(--s4);font-size:var(--fs-cap);font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
 dt:first-child{margin-top:0}
@@ -165,16 +180,12 @@ span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 .tag.pos{background:var(--primary-tint);color:var(--primary)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
 
-footer{padding:0 0 calc(var(--s2) + env(safe-area-inset-bottom))}
-footer .info{margin-top:var(--s2)}
-/* Language switch (Phosphor translate) under INFO, at the left. */
+/* Language switch (Phosphor translate): bottom left. */
 .lang{color:var(--ink)}
 .lang:hover,.lang:active{background:transparent;color:var(--ink)}
 html[lang^="zh"] .brand .sub{display:none}
 /* Traditional: Traditional Chinese system fonts, then Noto TC. Caoshu and xingshu fonts have no traditional forms. */
 html[lang="zh-Hant"]{--song:"Songti TC","Noto Serif TC","Noto Serif CJK TC","PMingLiU",serif;--hei:"PingFang TC","Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;--kai:"Kaiti TC","BiauKai","DFKai-SB","zhcy kai",serif}
-footer .morebody p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
-footer .morebody p:last-child{margin:0}
 
 /* Sheets (native modal dialogs: focus stays inside, Escape closes) */
 dialog{width:100%;max-width:34rem;max-height:min(88vh,44rem);margin:auto auto 0;padding:0;border:0;border-radius:var(--r-lg) var(--r-lg) 0 0;
@@ -185,7 +196,7 @@ dialog::backdrop{background:var(--scrim)}
 .sh{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4)}
 .sh h2{flex:1;margin:0;font-family:var(--display);font-weight:600;font-size:var(--fs-lg)}
 /* SEARCH heading and FAVORITES label: red capitals. */
-#dSearchH,.count.fav{color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+.count.fav{color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
 .count.fav{font-weight:600}
 .sb{overflow:auto;padding:var(--s4);padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom))}
 label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s1)}
@@ -219,7 +230,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 .st.err{color:#8f2820}
 .ext{display:inline-flex;align-items:center;min-height:var(--tap)}
 .lnk{min-height:var(--tap);padding:0;border:0;background:none;color:var(--primary);text-decoration:underline;cursor:pointer;font-size:inherit}
-@media (prefers-reduced-motion:reduce){.tog svg{transition:none}}
 </style>
 </head>
 <body>
@@ -227,17 +237,19 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   <div class="wrap bar">
     <a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home"><span class="seal" id="seal" aria-hidden="true">成</span>
       <span class="ttl"><b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small></span></a>
-    <div class="acts">
-      <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search" data-ta="search">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
-      <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
-      <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
-    </div>
+    <nav class="acts" aria-label="Sections">
+      <button class="ibtn tab" id="bBooks" type="button" data-view="books" aria-controls="vBooks" aria-label="Meaning and search" data-ta="books">
+        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></svg></button>
+      <button class="ibtn tab" id="bInfo" type="button" data-view="info" aria-controls="vInfo" aria-label="Info" data-ta="info">
+        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button>
+
+    </nav>
   </div>
 </header>
 
 <main id="main">
   <div class="wrap">
+  <div class="view" id="vHome">
     <div class="stage">
     <h1 class="vh" id="when" tabindex="-1">Chengyu</h1>
 
@@ -255,48 +267,46 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     </div>
 
     <div class="actions">
+      <p class="note" id="note" role="status"></p>
+      <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
+      <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
+      <button class="n36" id="b36" type="button" aria-pressed="false" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
       <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
-      <button class="n36" id="b36" type="button" aria-pressed="false" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
-      <p class="note" id="note" role="status"></p>
       <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu" data-ta="copy">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></svg></button>
       <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
     </div>
-    <section class="more">
-      <h2><button class="tog" id="tog" type="button" aria-expanded="false" aria-controls="moreBody"><span data-t="meaning">Meaning</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
-      <div class="morebody" id="moreBody" hidden><dl id="dl"></dl></div>
+  </div>
+
+  <div class="view" id="vBooks" hidden>
+    <section class="pane" aria-labelledby="mH">
+      <h2 class="ph2" id="mH" data-t="meaning">Meaning</h2>
+      <button class="mhead" id="mHead" type="button" data-ta="backCard"></button>
+      <dl id="dl"></dl>
+    </section>
+    <section class="pane" aria-labelledby="dSearchH">
+      <h2 class="ph2" id="dSearchH" data-t="search">Search</h2>
+      <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English" data-tp="ph" data-ta="qlabel">
+      <p class="count" id="qCount" role="status"></p>
+      <ul class="list" id="qList"></ul>
     </section>
   </div>
-</main>
 
-<footer>
-  <div class="wrap">
-    <section class="more info">
-      <h2><button class="tog" id="infoTog" type="button" aria-expanded="false" aria-controls="infoBody"><span data-t="info">Info</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
-      <div class="morebody" id="infoBody" hidden>
+  <div class="view" id="vInfo" hidden>
+    <section class="pane info" aria-labelledby="iH">
+      <h2 class="ph2" id="iH" data-t="info">Info</h2>
         <p data-t="count" id="infoA">This dataset holds 1,015 chengyu.</p>
         <p data-th="data" id="infoB">Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
         <p data-th="fonts">Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).</p>
         <p><button class="lnk" id="bSync" type="button" aria-haspopup="dialog" data-t="syncLink">Sync stars across devices</button></p>
         <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
-      </div>
     </section>
   </div>
-</footer>
-
-<dialog id="dSearch" aria-labelledby="dSearchH">
-  <div class="sh"><h2 id="dSearchH" data-t="search">Search</h2><button class="ibtn" type="button" data-close aria-label="Close" data-ta="close">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-  <div class="sb">
-    <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English" data-tp="ph" data-ta="qlabel">
-    <p class="count" id="qCount" role="status"></p>
-    <ul class="list" id="qList"></ul>
   </div>
-</dialog>
+</main>
+
 
 
 <dialog id="dSync" aria-labelledby="dSyncH">
@@ -331,7 +341,7 @@ let MODE = 'cy', LIST = D, cyCur = 0;
 const NF = N.toLocaleString('en-US');
 const T = {
   en: {seal:'成', seal36:'计', sub:'每日成语', sub36:'三十六计', fn:{cao:'caoshu (cursive script)', xing:'xingshu (running script)', ou:'Ouyang Xun style regular script', kai:'Kaiti', song:'Songti', hei:'modern sans'},
-    home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
+    home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', books:'Meaning and search', backCard:w => `${w}. Back to the card`, play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
     ph:'画蛇, hua she, snake', qlabel:'Search by characters, pinyin or English', count:`This dataset holds ${NF} chengyu.`,
     data:'Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.',
     fonts:'Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).',
@@ -355,7 +365,7 @@ const T = {
     info36A:'The Thirty-Six Stratagems (三十六计): 36 proverbs on strategy and deception, in six chapters of six.',
     info36B:'Names, readings and chapter titles follow <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">Wikipedia</a> and <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies (China Strategies, PDF)</a>. The short explanations are written for this page.'},
   /*ZH*/zh: {seal:'成', seal36:'计', sub:'每日成语', sub36:'三十六计', fn:{cao:'草书', xing:'行书', ou:'欧体', kai:'楷体', song:'宋体', hei:'黑体'},
-    home:'每日成语，首页', brand:'每日成语', search:'搜索', play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
+    home:'每日成语，首页', brand:'每日成语', search:'搜索', books:'释义与搜索', backCard:w => `${w}。返回卡片`, play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
     ph:'画蛇、hua she、snake', qlabel:'按汉字、拼音或英文搜索', count:`本数据集共收录成语 ${NF} 条。`,
     data:'数据：Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>。采用 <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> 许可。释义来自汉典（Zdic），英文来自 Pleco 与 Jiao 等，均由该数据集汇编。',
     fonts:'字体：刘建毛草、志莽行书（Google Fonts，OFL）；霞鹜文楷（<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>）；文鼎PL中楷（<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>）。楷体与欧体使用后两者的子集。图标：<a href="https://phosphoricons.com">Phosphor</a>（MIT）。',
@@ -379,7 +389,7 @@ const T = {
     info36A:'三十六计：关于谋略与计策的三十六条成语，共六套，每套六计。',
     info36B:'计名、读音与各套名称参考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">维基百科</a> 与 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。简短释义为本页所写。'}/*ZHEND*/,
   zht: {seal:'成', seal36:'計', sub:'每日成語', sub36:'三十六計', fn:{cao:'草書', xing:'行書', ou:'歐體', kai:'楷體', song:'宋體', hei:'黑體'},
-    home:'每日成語，首頁', brand:'每日成語', search:'搜索', play:'播放讀音', copy:'複製成語', meaning:'釋義', info:'說明', close:'關閉',
+    home:'每日成語，首頁', brand:'每日成語', search:'搜索', books:'釋義與搜索', backCard:w => `${w}。返回卡片`, play:'播放讀音', copy:'複製成語', meaning:'釋義', info:'說明', close:'關閉',
     ph:'畫蛇、hua she、snake', qlabel:'按漢字、拼音或英文搜索', count:`本數據集共收錄成語 ${NF} 條。`,
     data:'數據：Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>。採用 <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> 許可。釋義來自漢典（Zdic），英文來自 Pleco 與 Jiao 等，均由該數據集彙編。',
     fonts:'字體：劉建毛草、志莽行書（Google Fonts，OFL）；霞鶩文楷（<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>）；文鼎PL中楷（<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>）。楷體與歐體使用後兩者的子集。圖標：<a href="https://phosphoricons.com">Phosphor</a>（MIT）。',
@@ -427,7 +437,7 @@ function applyLang(){
   document.getElementById('chars').lang = LT(); document.getElementById('sub').lang = LT();
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
   document.querySelectorAll('[data-th]').forEach(el => el.innerHTML = t(el.dataset.th));   // our own strings only
-  document.querySelectorAll('[data-ta]').forEach(el => el.setAttribute('aria-label', t(el.dataset.ta)));
+  document.querySelectorAll('[data-ta]').forEach(el => { if(el.id !== 'mHead') el.setAttribute('aria-label', t(el.dataset.ta)); });
   document.querySelectorAll('[data-tp]').forEach(el => el.setAttribute('placeholder', t(el.dataset.tp)));
   paintMode();
   const lb = document.getElementById('lang');
@@ -528,6 +538,9 @@ function chipList(s, shown){
     : `<span class="chip" lang="${LT()}">${esc(sh[k] || w)}</span>`).join('') + '</div>';
 }
 function paintMore(r){
+  const w = plain(tr(r, 'e')), mh = $('#mHead');
+  mh.innerHTML = `<b lang="${LT()}">${esc(w)}</b><span lang="zh-Latn-pinyin">${esc(r.p)}</span>`;
+  mh.setAttribute('aria-label', t('backCard', w));
   let h = '';
   if(r.s36){
     // Stratagem: chapter, explanations, then anything the chengyu dataset adds for the same words.
@@ -550,7 +563,8 @@ function paintMore(r){
   if(TONE) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${TONE[0]}" lang="${LT()}">${TONE[1]}</span></dd>`;
   $('#dl').innerHTML = h;
 }
-$('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(!b) return; if(MODE !== 'cy') setMode('cy', +b.dataset.go); else show(+b.dataset.go, 0, true); });
+$('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(!b) return; setView('home'); if(MODE !== 'cy') setMode('cy', +b.dataset.go); else show(+b.dataset.go, 0, true); });
+$('#mHead').addEventListener('click', () => setView('home', true));
 
 const face = $('#face');
 let booted = false;
@@ -637,6 +651,8 @@ function show(i, dir, focus){
 }
 document.addEventListener('keydown', ev => {
   if(document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if(ev.key === 'Escape' && VIEW !== 'home'){ ev.preventDefault(); setView('home', true); return; }
+  if(VIEW !== 'home') return;
   if(ev.key === 'ArrowLeft'){ ev.preventDefault(); show(cur - 1, -1); }
   else if(ev.key === 'ArrowRight'){ ev.preventDefault(); show(cur + 1, 1); }
 });
@@ -666,19 +682,26 @@ document.addEventListener('keydown', ev => {
   });
 })();
 
-/* more toggle */
-// MEANING and INFO start closed on every load, so the characters always open locked in place.
-function pinState(btn){
-  const open = ['#tog', '#infoTog'].some(id => $(id).getAttribute('aria-expanded') === 'true');
-  document.body.classList.toggle('unpinned', open);
-  if(!open) centerStage();
-  if(btn) btn.scrollIntoView({block:'nearest'});
+/* ---------- views ----------
+   Home is the card. Books (meaning and search) and detective (info) each open a page in its place, as on fogday.com/cn-dr.
+   Tapping the current icon, the logo, or Escape returns to the card. */
+let VIEW = 'home';
+function setView(v, focus){
+  if(v === VIEW) v = 'home';
+  VIEW = v;
+  [['home', '#vHome'], ['books', '#vBooks'], ['info', '#vInfo']].forEach(([k, id]) => {
+    const el = $(id), on = k === v; el.hidden = !on;
+    el.classList.remove('in'); if(on && v !== 'home'){ void el.offsetWidth; el.classList.add('in'); }
+  });
+  document.querySelectorAll('.tab').forEach(b => b.dataset.view === v ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  if(v === 'books') runSearch();
+  if(v !== 'home') stopSpeech();
+  window.scrollTo(0, 0);
+  if(v === 'home'){ centerStage(); if(focus) $('#when').focus({preventScroll:true}); }
 }
-[['#tog', '#moreBody'], ['#infoTog', '#infoBody']].forEach(([t, body]) => $(t).addEventListener('click', () => {
-  const b = $(t), open = b.getAttribute('aria-expanded') !== 'true';
-  b.setAttribute('aria-expanded', open ? 'true' : 'false'); $(body).hidden = !open;
-  pinState(b);
-}));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+// The logo returns to the card from another page; on the card it reloads today, as before.
+$('.brand').addEventListener('click', ev => { if(VIEW !== 'home'){ ev.preventDefault(); setView('home', true); } });
 
 /* ---------- pronunciation (the device's Mandarin voice) ---------- */
 const SS = window.speechSynthesis;
@@ -714,7 +737,7 @@ document.querySelectorAll('dialog').forEach(d => {
   d.querySelector('[data-close]').addEventListener('click', () => d.close());
 });
 // Picking a result: close, then show it and move focus to the card heading.
-function pick(i, d, s36){ opener = null; d.close(); if(s36) setMode('s36', i); else if(MODE !== 'cy') setMode('cy', i); else show(i, 0, true); $('#when').focus({preventScroll:false}); }
+function pick(i, s36){ $('#q').blur(); setView('home'); if(s36) setMode('s36', i); else if(MODE !== 'cy') setMode('cy', i); else show(i, 0, true); $('#when').focus({preventScroll:true}); }
 
 /* search */
 function search(q){
@@ -757,15 +780,14 @@ function runSearch(){
   $('#qCount').textContent = hits.length ? t('matches', hits.length, MAX) : t('none');
 }
 $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
-$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, $('#dSearch'), !!b.dataset.s36); } });
+$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, !!b.dataset.s36); } });
 $('#qList').addEventListener('click', ev => {
   const st = ev.target.closest('[data-star]');
   if(st){ toggleStar((st.dataset.s36 ? S : D)[+st.dataset.star].e); return; }   // the row stays, so focus stays on this star
-  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dSearch'), !!b.dataset.s36);
+  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, !!b.dataset.s36);
 });
 // Star buttons in the list follow the stored state, updated in place.
 function paintListStars(){ document.querySelectorAll('[data-star]').forEach(b => b.setAttribute('aria-pressed', isStar((b.dataset.s36 ? S : D)[+b.dataset.star].e) ? 'true' : 'false')); }
-$('#bSearch').addEventListener('click', ev => { if(MODE !== 'cy') setMode('cy'); runSearch(); openDlg($('#dSearch'), ev.currentTarget); $('#q').focus(); $('#q').select(); });
 
 
 /* ---------- sync ----------
@@ -858,7 +880,7 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
     const r = LIST[cur]; $('#chars').innerHTML = charsHtml(tr(r, 'e')); from($('#chars'), 'none', `opacity 450ms ${EASE}`);
     paintDef(r); paintMore(r); paintStar(); setFont(font); fitStage(); fontFor(effFont(font), plain(tr(r, 'e')));
     paintHead(r);
-    if($('#dSearch').open) runSearch();
+    if(VIEW === 'books') runSearch();
   });
   store.del('font');   // older saved choice; caoshu is now the default
   font = store.get('font2', 'cao'); setFont(font);
