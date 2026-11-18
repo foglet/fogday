@@ -81,9 +81,9 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .stage{flex:1}
 /* With MEANING or INFO open the characters are no longer locked: the page flows from the top. */
 body.unpinned .stage{flex:none;min-height:0;padding-top:var(--s4)!important}
-body.unpinned .more{margin-top:var(--s5)}
+body.unpinned .actions{margin-top:var(--s2)}
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
-.stage{min-height:calc(100vh - 60px);min-height:calc(100svh - 60px - env(safe-area-inset-top));display:flex;flex-direction:column;padding:var(--s4) 0}
+.stage{min-height:calc(100vh - 148px);min-height:calc(100svh - 148px - env(safe-area-inset-top));display:flex;flex-direction:column;padding:var(--s4) 0}
 
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
 .card{position:relative;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:var(--shadow-card);
@@ -96,7 +96,6 @@ body.unpinned .more{margin-top:var(--s5)}
 .face.pre{opacity:0;transition:none}
 /* A font change eases in the characters only; pinyin and definition do not move. */
 @media (prefers-reduced-motion:reduce){.face{transition:opacity 300ms ease}.ibtn.spin svg{animation:none}}
-.starrow{display:flex;justify-content:center;margin-top:var(--s2)}
 .star{color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--gold)}
 .star[aria-pressed="true"] svg{fill:currentColor}
@@ -108,19 +107,24 @@ body.unpinned .more{margin-top:var(--s5)}
 .chars .brk{flex-basis:100%;height:0;width:0}
 .chars:active{background:var(--surface-2)}
 .pin{margin:var(--s3) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
-/* The definition reserves four lines, so the play button floats below it and moves only for the few longer ones. */
-.def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:6em;color:var(--ink);user-select:text;-webkit-user-select:text}
-.play{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;margin:var(--s5) 0 0;padding:0;
+/* The definition reserves three lines so most cards are the same height. */
+.def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
+.play{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;margin:0;padding:0;flex:none;
   border:0;border-radius:50%;background:var(--primary-tint);color:var(--primary);font-weight:600;cursor:pointer}
 .play:hover{background:#d6e7dd}
 .play:active{background:#c8ddd0;transform:scale(.96)}
 .play[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 .play svg{width:24px;height:24px}
-.note{min-height:1.25em;margin:var(--s2) 0 0;font-size:var(--fs-cap);color:var(--ink-2)}
+.note{min-height:1.25em;font-size:var(--fs-cap);color:var(--ink-2)}
 
 
 /* More */
-.more{margin-top:auto;background:var(--surface);border-radius:var(--r-lg)}
+/* Play (left) and star (right) sit just above MEANING. */
+.actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s4)}
+.actions .note{flex:1;margin:0;text-align:center}
+.star{width:56px;height:56px;border-radius:50%;background:var(--surface-2)}
+.star:hover{background:var(--surface-3)}
+.more{margin-top:var(--s3);background:var(--surface);border-radius:var(--r-lg)}
 .more>h2{margin:0;font-size:inherit}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:52px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
   font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-lg);text-align:left}
@@ -212,17 +216,17 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
           <p class="def" id="def"></p>
         </div>
       </div>
+    </article>
+
+    </div>
+
+    <div class="actions">
       <button class="play" id="play" type="button" aria-label="Play pronunciation">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
       <p class="note" id="note" role="status"></p>
-    </article>
-    <div class="starrow">
       <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
     </div>
-
-    </div>
-
     <section class="more">
       <h2><button class="tog" id="tog" type="button" aria-expanded="false" aria-controls="moreBody">Meaning
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
