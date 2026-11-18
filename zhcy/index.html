@@ -123,7 +123,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
 /* No card surface for now: the chengyu floats on the page. */
 .card{position:relative;background:transparent;border:0;border-radius:var(--r-lg);box-shadow:none;
-  padding:0 var(--s4);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  padding:0;text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 /* A new chengyu eases in: it starts transparent (and a little to the side when browsing), then transitions into place.
    On first load it waits for its fonts, so nothing swaps or jumps. */
 /* First load: the card content fades in once its fonts are ready. Browsing: the characters slide, the pinyin and
@@ -137,7 +137,10 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .star[aria-pressed="true"] svg{fill:currentColor}
 .chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:0;padding:var(--s2) 0 var(--s5);
   border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
-  font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
+  font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:var(--cyfs);line-height:1.2;color:var(--ink)}
+/* Characters as large as the screen allows: four across fill the page width between the 16px margins (4 em + 3 gaps = 4.18 em).
+   Capped by the 34rem column on wide screens and by height on landscape phones. Longer chengyu wrap four to a row. */
+:root{--cyfs:max(3rem,min(calc((100vw - 2rem) / 4.2),calc(32rem / 4.2),24vh))}
 .chars span{display:inline-block;width:1em;text-align:center}
 .chars .opt{color:var(--ink-2)}
 .chars .brk{flex-basis:100%;height:0;width:0}
