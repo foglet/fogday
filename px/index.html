@@ -8,11 +8,11 @@
 <meta name="description" content="Original pixel dragons that walk, jump, fly, breathe fire or water and raise their babies, with controls for the dragons and their world.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap">
 <style>
-:root{--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8}
+:root{--pixel:"Silkscreen","Pixelify Sans",monospace;--font:"Pixelify Sans",system-ui,sans-serif;--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:16px/1.4 Rubik,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:16px/1.4 var(--font);overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 /* Full screen as on /treesf/: the canvases run under Safari's toolbars (large viewport). Absolute, not fixed: Safari 26
    paints page content under its floating toolbar but clips fixed layers at its edge. */
 canvas{position:absolute;left:0;top:0;display:block}
@@ -24,7 +24,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 #scene{image-rendering:pixelated;image-rendering:crisp-edges}
 #fg{pointer-events:none}
 .top{position:fixed;left:var(--sal);top:0;display:flex;align-items:center;padding:calc(var(--sat) + 10px) 12px 0;pointer-events:none;z-index:5}
-.top h1{margin:0;font:400 1.2rem/1.1 "Young Serif",Georgia,serif;color:var(--ink);background:rgba(251,248,241,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:7px 12px;border-radius:8px;pointer-events:auto}
+.top h1{margin:0;font:700 16px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:rgba(251,248,241,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:7px 12px;border-radius:8px;pointer-events:auto}
 /* Top right: the bento (all projects, fogday.com/works/), as on /treesf/ and the site header: no panel, 40px tap target
    (44px on touch), an 18px grid in felt green with a paper halo so it reads over any sky */
 .corner{position:fixed;z-index:5;top:calc(9px + var(--sat));right:calc(8px + var(--sar));display:flex;align-items:center}
@@ -36,7 +36,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 @media (min-width:760px){.corner{top:calc(13px + var(--sat))}}
 @media (pointer:coarse){.corner{top:calc(7px + var(--sat))}.bento{width:44px;height:44px;padding:13px}}
 .dock{position:fixed;left:calc(12px + var(--sal));bottom:calc(12px + var(--sab));display:flex;gap:8px;z-index:6}
-.btn{min-height:44px;min-width:44px;padding:0 16px;border-radius:22px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:500 1rem Rubik,system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+.btn{min-height:44px;min-width:44px;padding:0 16px;border-radius:22px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 16px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation}
 .btn.primary{background:var(--felt);color:#fff}
 .btn:hover{background:#eef5f1}.btn.primary:hover{background:var(--felt-d)}
 .btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
@@ -49,12 +49,12 @@ canvas{position:absolute;left:0;top:0;display:block}
 @media (max-width:759px){.sheet{max-height:min(33vh,33dvh)}}
 @keyframes sheet-in{from{opacity:0;transform:translateY(6px)}}
 .sheet[hidden]{display:none}
-.sheet h2{font:400 1.05rem "Young Serif",Georgia,serif;margin:8px 0 2px;color:var(--felt)}
+.sheet h2{font:700 16px/1.2 var(--pixel);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 2px;color:var(--felt)}
 .sheet section+section{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
 .row[hidden]{display:none}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px}
-.row label,.row .lab{flex:1 1 auto;font-size:.95rem}
-.row select{min-height:44px;min-width:9.5rem;max-width:58%;font:inherit;font-size:.95rem;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);padding:0 8px}
+.row label,.row .lab{flex:1 1 auto;font-size:1rem}
+.row select{min-height:44px;min-width:9.5rem;max-width:58%;font:inherit;font-size:1rem;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);padding:0 8px}
 .row input[type=range]{width:9.5rem;min-height:44px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--felt);border:0;accent-color:var(--felt)}
 .row input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#6f675b}
 .row input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#6f675b}
@@ -62,7 +62,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 .row input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--felt);border:3px solid #fff;box-shadow:0 0 0 1px var(--felt)}
 .row input[type=range]:disabled{cursor:default}
 .row input[type=color]{width:56px;height:44px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:3px}
-.row output{min-width:2.6rem;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.row output{min-width:2.6rem;text-align:right;font:400 16px/1 var(--pixel);color:var(--muted)}
 .sw{position:relative;width:52px;height:32px;flex:none}
 .sw input{position:absolute;inset:-6px;width:64px;height:44px;margin:0;opacity:0;cursor:pointer}
 .sw span{position:absolute;inset:0;border-radius:16px;background:#c9c2b3;transition:background .15s;pointer-events:none}
@@ -514,6 +514,7 @@ function idle(){ clearTimeout(idleT); if(!sheet.hidden) idleT = setTimeout(() =>
 function setOpen(open){ sheet.hidden = !open; ctlBtn.setAttribute('aria-expanded', String(open)); idle(); }
 for(const ev of ['pointerdown','pointermove','keydown','input','change','scroll','focusin','wheel','touchstart']) sheet.addEventListener(ev, idle, {passive: true});
 ctlBtn.addEventListener('pointermove', idle, {passive: true});
+addEventListener('pointerdown', e => { if(!sheet.hidden && !(e.target.closest && e.target.closest('.sheet,.dock'))) setOpen(false); }, {passive: true});   // a tap anywhere else closes it
 ctlBtn.addEventListener('click', () => setOpen(sheet.hidden));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !sheet.hidden){ setOpen(false); ctlBtn.focus(); } });
 function setPlay(on){ playing = on; playBtn.textContent = on ? 'Pause' : 'Play'; playBtn.setAttribute('aria-label', on ? 'Pause the dragons' : 'Play the dragons'); if(on) start(); }
