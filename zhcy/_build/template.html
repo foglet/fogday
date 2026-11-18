@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chengyu of the day | fogday</title>
+<meta name="description" content="One Chinese idiom (chengyu) a day: characters, pinyin, meaning and pronunciation. Search, star and sync across devices.">
+<meta name="theme-color" content="#fbf8f1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Colours and fonts follow fogday.com/mahjong (Young Serif + Rubik; paper, felt green, red). Light only. */
+:root{
+  color-scheme:light;
+  --paper:#fbf8f1; --surface:#fffdf7; --surface-2:#f3efe4; --surface-3:#e9e3d4;
+  --ink:#1d2421; --ink-2:#5f6b66; --line:#d9d3c4; --line-strong:#c9c0aa;
+  --primary:#1f5c4a; --primary-hover:#1a4f40; --primary-press:#154236; --primary-edge:#123a2f;
+  --on-primary:#fffdf7; --primary-tint:#e6f0ea;
+  --accent:#b8352b; --accent-tint:#f7e4e1;
+  --scrim:rgba(29,36,33,.5); --focus:#1f5c4a;
+  --display:"Young Serif","Songti SC","STSong","Noto Serif SC",Georgia,serif;
+  --font:"Rubik","PingFang SC","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* Character fonts: Songti (default) and a modern sans. Apple devices use the system font; others load Noto. */
+  --song:"Songti SC","STSong","Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
+  --hei:"PingFang SC","Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --fs-cap:.8125rem; --fs-sm:.875rem; --fs-body:1rem; --fs-lg:1.125rem; --fs-h2:1.375rem;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-pill:999px;
+  --edge:3px; --tap:44px; --ring-w:3px;
+  --dur:200ms; --ease:cubic-bezier(.2,.8,.2,1);
+  --shadow-card:0 1px 2px rgba(42,36,32,.06),0 8px 24px rgba(42,36,32,.06);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:1.5;
+  display:flex;flex-direction:column;min-height:100vh;min-height:100svh}
+button,input{font:inherit;color:inherit}
+a{color:var(--primary)}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.wrap{width:100%;max-width:34rem;margin:0 auto;padding:0 var(--s4)}
+p,li,dd{overflow-wrap:anywhere}
+svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Header */
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.bar{display:flex;align-items:center;gap:var(--s3);min-height:60px}
+.brand{display:flex;align-items:center;gap:var(--s2);flex:1;min-width:0;text-decoration:none;color:var(--ink)}
+.seal{flex:none;width:34px;height:34px;border-radius:8px;background:var(--accent);color:var(--on-primary);display:grid;place-items:center;
+  font-family:var(--song);font-weight:500;font-size:1.15rem;line-height:1}
+.brand b{display:block;font-family:var(--display);font-weight:400;font-size:var(--fs-lg);line-height:1.1}
+.brand small{display:block;color:var(--ink-2);font-size:var(--fs-cap);line-height:1.2}
+.acts{display:flex;gap:var(--s1)}
+.ibtn{position:relative;width:var(--tap);height:var(--tap);display:grid;place-items:center;border:0;border-radius:var(--r-md);background:transparent;cursor:pointer;color:var(--ink)}
+.ibtn:hover{background:var(--surface-2)}
+.ibtn:active{background:var(--surface-3)}
+.badge{position:absolute;top:4px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:var(--r-pill);background:var(--accent);color:var(--on-primary);
+  font-size:.6875rem;font-weight:600;line-height:18px;text-align:center}
+.badge:empty{display:none}
+.ibtn.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Day line */
+main{flex:1;padding-bottom:var(--s6)}
+.when{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin:var(--s5) 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm)}
+.when h1{margin:0;font-family:var(--display);font-weight:400;font-size:var(--fs-h2);color:var(--ink);line-height:1.2;outline:none}
+
+/* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-card);
+  padding:var(--s6) var(--s4) var(--s5);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.card.go-l{animation:inL var(--dur) var(--ease)}
+.card.go-r{animation:inR var(--dur) var(--ease)}
+@keyframes inL{from{opacity:.2;transform:translateX(28px)}}
+@keyframes inR{from{opacity:.2;transform:translateX(-28px)}}
+@media (prefers-reduced-motion:reduce){.card.go-l,.card.go-r{animation:none}.ibtn.spin svg{animation:none}}
+.fontmark{position:absolute;top:var(--s3);left:var(--s3);font-size:var(--fs-cap);color:var(--ink-2);padding:2px 8px;border:1px solid var(--line);border-radius:var(--r-pill);
+  font-family:var(--song)}
+body.hei .fontmark{font-family:var(--hei)}
+.star{position:absolute;top:var(--s1);right:var(--s1);color:var(--ink-2)}
+.star[aria-pressed="true"]{color:var(--accent)}
+.star[aria-pressed="true"] svg{fill:currentColor}
+.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:var(--s2) 0;
+  border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
+  font-family:var(--song);font-weight:500;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
+body.hei .chars{font-family:var(--hei)}
+.chars span{display:inline-block;width:1em;text-align:center}
+.chars .opt{color:var(--ink-2)}
+.chars .brk{flex-basis:100%;height:0;width:0}
+.chars:active{background:var(--surface-2)}
+.pin{margin:var(--s3) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
+.def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);color:var(--ink);user-select:text;-webkit-user-select:text}
+.play{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);min-width:9rem;margin:var(--s5) 0 0;padding:0 var(--s5);
+  border:0;border-bottom:var(--edge) solid var(--primary-edge);border-radius:var(--r-pill);background:var(--primary);color:var(--on-primary);font-weight:600;cursor:pointer}
+.play:hover{background:var(--primary-hover)}
+.play:active{background:var(--primary-press);transform:translateY(1px);border-bottom-width:2px}
+.play[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.play svg{width:20px;height:20px}
+.note{min-height:1.25em;margin:var(--s2) 0 0;font-size:var(--fs-cap);color:var(--ink-2)}
+
+/* Pager */
+.pager{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2);margin-top:var(--s4)}
+.pbtn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s1);min-width:0;min-height:var(--tap);padding:var(--s1) var(--s2);text-align:center;line-height:1.2;border:1px solid var(--line-strong);
+  border-bottom-width:var(--edge);border-radius:var(--r-pill);background:var(--surface);cursor:pointer;font-weight:600;font-size:var(--fs-sm)}
+.pbtn:hover{background:var(--surface-2)}
+.pbtn:active{transform:translateY(1px);border-bottom-width:2px}
+.pbtn.today{color:var(--primary)}
+.pbtn.today[hidden]{display:inline-flex;visibility:hidden}
+.hint{margin:var(--s2) 0 0;text-align:center;font-size:var(--fs-cap);color:var(--ink-2)}
+
+/* More */
+.more{margin-top:var(--s5);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
+.more>h2{margin:0;font-size:inherit}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:52px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
+  font-family:var(--display);font-weight:400;font-size:var(--fs-lg);border-radius:var(--r-lg);text-align:left}
+.tog svg{transition:transform var(--dur) var(--ease)}
+.tog[aria-expanded="true"] svg{transform:rotate(180deg)}
+.morebody{padding:0 var(--s4) var(--s4)}
+dl{margin:0}
+dt{margin-top:var(--s4);font-size:var(--fs-cap);font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+dt:first-child{margin-top:0}
+dd{margin:var(--s1) 0 0}
+dd.zh{font-family:var(--song);font-size:1.0625rem;line-height:1.7}
+body.hei dd.zh{font-family:var(--hei)}
+.chips{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2)}
+.chip{display:inline-flex;align-items:center;min-height:var(--tap);padding:0 var(--s3);border:1px solid var(--line-strong);border-radius:var(--r-pill);background:var(--surface);
+  font-family:var(--song);font-size:1.0625rem;cursor:pointer;color:var(--primary)}
+body.hei .chip{font-family:var(--hei)}
+.chip:hover{background:var(--primary-tint)}
+span.chip{cursor:default;color:var(--ink);border-style:dashed}
+.tag{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);background:var(--surface-2);font-size:var(--fs-sm)}
+.tag.pos{background:var(--primary-tint);color:var(--primary)}
+.tag.neg{background:var(--accent-tint);color:#8f2820}
+
+footer{border-top:1px solid var(--line);padding:var(--s5) 0 calc(var(--s5) + env(safe-area-inset-bottom));font-size:var(--fs-cap);color:var(--ink-2)}
+footer p{margin:0 0 var(--s2)}
+
+/* Sheets (native modal dialogs: focus stays inside, Escape closes) */
+dialog{width:100%;max-width:34rem;max-height:min(88vh,44rem);margin:auto auto 0;padding:0;border:0;border-radius:var(--r-lg) var(--r-lg) 0 0;
+  background:var(--paper);color:var(--ink);box-shadow:0 -8px 32px rgba(42,36,32,.18);display:none;flex-direction:column}
+dialog[open]{display:flex}
+@media (min-width:600px){dialog{margin:auto;border-radius:var(--r-lg)}}
+dialog::backdrop{background:var(--scrim)}
+.sh{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4);border-bottom:1px solid var(--line)}
+.sh h2{flex:1;margin:0;font-family:var(--display);font-weight:400;font-size:var(--fs-lg)}
+.sb{overflow:auto;padding:var(--s4);padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom))}
+label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s1)}
+.field{width:100%;min-height:48px;padding:0 var(--s3);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);font-size:1rem}
+.field:focus-visible{outline-offset:0}
+.help{margin:var(--s2) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
+.count{margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
+.list{list-style:none;margin:0;padding:0}
+.list li+li{border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:auto 1fr;gap:2px var(--s3);align-items:baseline;width:100%;min-height:56px;padding:var(--s2) var(--s1);border:0;background:transparent;
+  text-align:left;cursor:pointer;border-radius:var(--r-sm)}
+.row:hover{background:var(--surface-2)}
+.row b{font-family:var(--song);font-weight:500;font-size:1.375rem;line-height:1.3;grid-row:span 2}
+body.hei .row b{font-family:var(--hei)}
+.row .p{color:var(--primary);font-size:var(--fs-sm)}
+.row .d{color:var(--ink-2);font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s3) 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);padding:0 var(--s4);border-radius:var(--r-pill);cursor:pointer;font-weight:600;
+  border:1px solid var(--line-strong);border-bottom-width:var(--edge);background:var(--surface)}
+.btn.pri{background:var(--primary);color:var(--on-primary);border-color:var(--primary-edge)}
+.btn.pri:hover{background:var(--primary-hover)}
+.btns{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)}
+.st{min-height:1.5em;margin:var(--s3) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
+.st.err{color:#8f2820}
+.ext{display:inline-flex;align-items:center;min-height:var(--tap)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="./" aria-label="Chengyu of the day, home"><span class="seal" aria-hidden="true">成</span>
+      <span><b>Chengyu</b><small lang="zh-Hans">每日成语</small></span></a>
+    <div class="acts">
+      <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
+      <button class="ibtn" id="bStars" type="button" aria-haspopup="dialog" aria-label="Starred">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg><span class="badge" id="nStars" aria-hidden="true"></span></button>
+      <button class="ibtn" id="bSync" type="button" aria-haspopup="dialog" aria-label="Sync devices">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <div class="when"><h1 id="when" tabindex="-1">Today</h1><span id="pos"></span></div>
+
+    <article class="card" id="card" aria-labelledby="when">
+      <span class="fontmark" id="fontmark" aria-hidden="true">宋体</span>
+      <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
+      <button class="chars" id="chars" type="button" lang="zh-Hans"></button>
+      <p class="pin" id="pin" lang="zh-Latn-pinyin"></p>
+      <p class="def" id="def"></p>
+      <button class="play" id="play" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <span>Play</span></button>
+      <p class="note" id="note" role="status"></p>
+    </article>
+
+    <nav class="pager" aria-label="Browse chengyu">
+      <button class="pbtn" id="prev" type="button" aria-label="Previous chengyu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Previous</button>
+      <button class="pbtn today" id="today" type="button" hidden>Today</button>
+      <button class="pbtn" id="next" type="button" aria-label="Next chengyu">Next
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </nav>
+    <p class="hint">Swipe the card to browse. Tap the characters to change the font.</p>
+
+    <section class="more">
+      <h2><button class="tog" id="tog" type="button" aria-expanded="false" aria-controls="moreBody">Meaning and origin
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
+      <div class="morebody" id="moreBody" hidden><dl id="dl"></dl></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
+    <p><a href="/">fogday.com</a></p>
+  </div>
+</footer>
+
+<dialog id="dSearch" aria-labelledby="dSearchH">
+  <div class="sh"><h2 id="dSearchH">Search</h2><button class="ibtn" type="button" data-close aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sb">
+    <label for="q">Characters, pinyin or English</label>
+    <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-describedby="qHelp">
+    <p class="help" id="qHelp">Tones are optional: ma, mǎ and ma3 all match.</p>
+    <p class="count" id="qCount" role="status"></p>
+    <ul class="list" id="qList"></ul>
+  </div>
+</dialog>
+
+<dialog id="dStars" aria-labelledby="dStarsH">
+  <div class="sh"><h2 id="dStarsH">Starred</h2><button class="ibtn" type="button" data-close aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sb"><p class="empty" id="sEmpty">Nothing starred yet. Tap the star on a card to keep it here.</p><ul class="list" id="sList"></ul></div>
+</dialog>
+
+<dialog id="dSync" aria-labelledby="dSyncH">
+  <div class="sh"><h2 id="dSyncH">Sync devices</h2><button class="ibtn" type="button" data-close aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sb">
+    <p class="help" style="margin-top:0">Stars sync through a private GitHub Gist. Your token works as the sync password: paste the same one on each device. It stays on this device and is sent only to GitHub.</p>
+    <form id="syncOff">
+      <label for="tok">GitHub token (gist scope only)</label>
+      <input class="field" id="tok" type="password" autocomplete="off" spellcheck="false" required>
+      <div class="btns"><button class="btn pri" type="submit">Connect</button></div>
+      <a class="ext" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=zhcy%20sync" target="_blank" rel="noopener">Make a token on GitHub<span class="vh">, opens a new tab</span></a>
+    </form>
+    <div id="syncOn" hidden>
+      <p>Connected. Stars sync when you change them and when you open the page.</p>
+      <div class="btns"><button class="btn pri" id="syncGo" type="button">Sync now</button><button class="btn" id="syncDis" type="button">Disconnect</button></div>
+    </div>
+    <p class="st" id="syncSt" role="status"></p>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+const D = /*DATA*/[];
+const N = D.length, APP = 'zhcy:';
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(APP + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(APP + k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(APP + k); }catch(e){} }
+};
+const byExpr = new Map(D.map((r, i) => [r.e, i]));
+
+/* ---------- day ---------- */
+// Day 0 is 2026-11-18. The list was shuffled once at build time, so each day gets the next entry.
+function todayIdx(){
+  const t = new Date(), d = Math.round((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Date.UTC(2026, 10, 18)) / 864e5);
+  return ((d % N) + N) % N;
+}
+let today = todayIdx(), cur = today;
+
+/* ---------- text helpers ---------- */
+// "螳螂捕蝉 (黄雀在后)": the part in brackets is the optional second half.
+function parts(e){ const m = e.match(/^(.*?)\s*\((.*)\)\s*$/); return m ? [m[1], m[2]] : [e, '']; }
+const plain = e => e.replace(/[\s()]/g, '');
+function fold(s){
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ü|v/g, 'u').replace(/[^a-z㐀-鿿]/g, '');
+}
+const IDX = D.map(r => ({c: plain(r.e), p: fold(r.p), en: ' ' + (r.en + ' ' + (r.en2 || '')).toLowerCase() + ' '}));
+
+/* ---------- font ---------- */
+function setFont(hei){
+  document.body.classList.toggle('hei', hei);
+  $('#fontmark').textContent = hei ? '黑体' : '宋体';
+  $('#chars').setAttribute('aria-label', `${plain(D[cur].e)}. Font: ${hei ? 'modern sans' : 'Songti'}. Tap to switch.`);
+}
+$('#chars').addEventListener('click', () => { const h = !document.body.classList.contains('hei'); store.set('font', h ? 'hei' : 'song'); setFont(h); note(h ? 'Modern font' : 'Songti font'); });
+
+/* ---------- stars ---------- */
+let stars = store.get('stars', {}), tomb = store.get('tomb', {});
+const isStar = e => !!stars[e];
+function toggleStar(e){
+  const now = Date.now();
+  if(stars[e]){ delete stars[e]; tomb[e] = now; } else { stars[e] = now; delete tomb[e]; }
+  store.set('stars', stars); store.set('tomb', tomb); store.set('mtime', now);
+  paintStar(); paintCount(); syncSoon();
+}
+function paintStar(){
+  const on = isStar(D[cur].e), b = $('#star');
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.setAttribute('aria-label', on ? 'Starred. Tap to remove the star' : 'Star this chengyu');
+}
+function paintCount(){ const n = Object.keys(stars).length; $('#nStars').textContent = n ? String(n) : ''; $('#bStars').setAttribute('aria-label', n ? `Starred, ${n}` : 'Starred'); }
+$('#star').addEventListener('click', () => toggleStar(D[cur].e));
+
+/* ---------- card ---------- */
+let noteTimer = 0;
+function note(msg){ const n = $('#note'); n.textContent = msg; clearTimeout(noteTimer); if(msg) noteTimer = setTimeout(() => n.textContent = '', 2500); }
+function charsHtml(e){
+  const [a, b] = parts(e), sp = (s, c) => [...s].map(ch => `<span${c ? ' class="opt"' : ''}>${ch}</span>`).join('');
+  return sp(a) + (b ? '<i class="brk" aria-hidden="true"></i>' + sp(b, 1) : '');
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function chipList(s){
+  return '<div class="chips">' + s.split('、').map(w => byExpr.has(w)
+    ? `<button class="chip" type="button" lang="zh-Hans" data-go="${byExpr.get(w)}">${esc(w)}</button>`
+    : `<span class="chip" lang="zh-Hans">${esc(w)}</span>`).join('') + '</div>';
+}
+function paintMore(r){
+  const S = {'褒': ['pos', '褒义 Positive'], '贬': ['neg', '贬义 Negative'], '中': ['', '中性 Neutral']}[r.s];
+  let h = '';
+  if(r.zh) h += `<dt>释义 Explanation</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
+  if(r.en2) h += `<dt>Another translation</dt><dd>${esc(r.en2)}</dd>`;
+  if(r.o) h += `<dt>出处 Origin</dt><dd class="zh" lang="zh-Hans">${esc(r.o)}</dd>`;
+  if(r.syn) h += `<dt>近义 Similar</dt><dd>${chipList(r.syn)}</dd>`;
+  if(r.ant) h += `<dt>反义 Opposite</dt><dd>${chipList(r.ant)}</dd>`;
+  if(S) h += `<dt>感情色彩 Tone</dt><dd><span class="tag ${S[0]}" lang="zh-Hans">${S[1]}</span></dd>`;
+  $('#dl').innerHTML = h;
+}
+$('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(b) show(+b.dataset.go, 0, true); });
+
+function show(i, dir, focus){
+  stopSpeech();
+  cur = ((i % N) + N) % N;
+  const r = D[cur];
+  $('#chars').innerHTML = charsHtml(r.e);
+  $('#pin').textContent = `(${r.p})`;
+  $('#def').textContent = r.en || '';
+  $('#when').textContent = cur === today ? 'Today' : (cur === (today + 1) % N ? 'Tomorrow' : cur === (today - 1 + N) % N ? 'Yesterday' : 'Chengyu');
+  $('#pos').textContent = `${cur + 1} of ${N}`;
+  $('#today').hidden = cur === today;
+  document.title = `${plain(r.e)} | Chengyu of the day`;
+  setFont(document.body.classList.contains('hei'));
+  paintStar(); paintMore(r); note('');
+  const c = $('#card'); c.classList.remove('go-l', 'go-r');
+  if(dir){ void c.offsetWidth; c.classList.add(dir > 0 ? 'go-l' : 'go-r'); }
+  try{ history.replaceState(null, '', cur === today ? location.pathname : '#' + encodeURIComponent(plain(r.e))); }catch(e){}
+  if(focus) $('#when').focus({preventScroll:false});
+}
+$('#prev').addEventListener('click', () => show(cur - 1, -1));
+$('#next').addEventListener('click', () => show(cur + 1, 1));
+$('#today').addEventListener('click', () => { show(today, cur > today ? -1 : 1); $('#next').focus(); });
+document.addEventListener('keydown', ev => {
+  if(document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if(ev.key === 'ArrowLeft'){ ev.preventDefault(); show(cur - 1, -1); }
+  else if(ev.key === 'ArrowRight'){ ev.preventDefault(); show(cur + 1, 1); }
+});
+
+/* swipe */
+(() => {
+  let x0 = null, y0 = 0, t0 = 0;
+  const card = $('#card');
+  card.addEventListener('touchstart', ev => { if(ev.touches.length !== 1) return; x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY; t0 = Date.now(); }, {passive:true});
+  card.addEventListener('touchend', ev => {
+    if(x0 == null) return;
+    const t = ev.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if(Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 800){
+      ev.preventDefault();   // no click on the characters after a swipe
+      show(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    }
+  });
+})();
+
+/* more toggle */
+$('#tog').addEventListener('click', () => {
+  const b = $('#tog'), open = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', open ? 'true' : 'false'); $('#moreBody').hidden = !open; store.set('more', open);
+});
+if(store.get('more', false)){ $('#tog').setAttribute('aria-expanded', 'true'); $('#moreBody').hidden = false; }
+
+/* ---------- pronunciation (the device's Mandarin voice) ---------- */
+const SS = window.speechSynthesis;
+let voice = null;
+function pickVoice(){
+  if(!SS) return;
+  const v = SS.getVoices(), z = x => (x.lang || '').replace('_', '-').toLowerCase();
+  voice = v.find(x => z(x) === 'zh-cn' && /tingting|ting-ting|xiaoxiao|yaoyao|huihui/i.test(x.name))
+    || v.find(x => z(x) === 'zh-cn') || v.find(x => /^cmn/.test(z(x))) || v.find(x => z(x).startsWith('zh') && !/hk|yue|tw/.test(z(x))) || null;
+}
+if(SS){ pickVoice(); SS.addEventListener && SS.addEventListener('voiceschanged', pickVoice); }
+function stopSpeech(){ if(SS && (SS.speaking || SS.pending)) SS.cancel(); }
+$('#play').addEventListener('click', () => {
+  if(!SS){ note('This browser cannot speak. Try Safari or Chrome.'); return; }
+  stopSpeech();
+  const u = new SpeechSynthesisUtterance(plain(D[cur].e));
+  u.lang = 'zh-CN'; u.rate = .8; if(voice) u.voice = voice;
+  u.onerror = e => { if(e.error !== 'interrupted' && e.error !== 'canceled') note('Could not play. Add a Chinese (China) voice in your device settings.'); };
+  SS.speak(u);
+  if(!voice && SS.getVoices().length) note('No Mandarin voice found; using the default voice.');
+});
+
+/* ---------- dialogs ---------- */
+let opener = null;
+function openDlg(d, from){
+  opener = from || document.activeElement;
+  d.showModal();
+}
+document.querySelectorAll('dialog').forEach(d => {
+  d.addEventListener('close', () => { const o = opener; opener = null; if(o && document.contains(o)) o.focus(); });
+  d.addEventListener('click', ev => { if(ev.target === d) d.close(); });   // tap on the backdrop
+  d.addEventListener('keydown', ev => { if(ev.key === 'Escape'){ ev.preventDefault(); d.close(); } });   // one Escape closes, even from a filled search field
+  d.querySelector('[data-close]').addEventListener('click', () => d.close());
+});
+// Picking a result: close, then show it and move focus to the card heading.
+function pick(i, d){ opener = null; d.close(); show(i, 0, true); }
+
+/* search */
+function search(q){
+  const f = fold(q), lq = q.trim().toLowerCase(), cjk = /[㐀-鿿]/.test(q);
+  if(!f && !lq) return [];
+  const hits = [];
+  for(let i = 0; i < N; i++){
+    const x = IDX[i]; let s = 0;
+    if(cjk){ const c = q.replace(/[^㐀-鿿]/g, ''); if(x.c === c) s = 100; else if(x.c.startsWith(c)) s = 80; else if(x.c.includes(c)) s = 60; }
+    else {
+      if(f && x.p === f) s = 95; else if(f && x.p.startsWith(f)) s = 75; else if(f.length > 1 && x.p.includes(f)) s = 45;
+      const w = lq.replace(/[^a-z' -]/g, '').trim();
+      if(w.length > 1){ if(x.en.includes(' ' + w + ' ') || x.en.includes(' ' + w + ',') || x.en.includes(' ' + w + ';')) s = Math.max(s, 70); else if(x.en.includes(' ' + w)) s = Math.max(s, 50); else if(w.length > 3 && x.en.includes(w)) s = Math.max(s, 30); }
+    }
+    if(s) hits.push([s, i]);
+  }
+  return hits.sort((a, b) => b[0] - a[0] || a[1] - b[1]).map(h => h[1]);
+}
+function rowHtml(i){
+  const r = D[i];
+  return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${esc(plain(r.e))}</b><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span><span class="d">${esc(r.en || '')}</span></button></li>`;
+}
+let qTimer = 0;
+function runSearch(){
+  const q = $('#q').value, hits = search(q), MAX = 60;
+  $('#qList').innerHTML = hits.slice(0, MAX).map(rowHtml).join('');
+  $('#qCount').textContent = !q.trim() ? `${N} chengyu` : hits.length ? (hits.length > MAX ? `${hits.length} matches, showing ${MAX}` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`) : 'No matches';
+}
+$('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
+$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList button'); if(b) pick(+b.dataset.i, $('#dSearch')); } });
+$('#qList').addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dSearch')); });
+$('#bSearch').addEventListener('click', ev => { runSearch(); openDlg($('#dSearch'), ev.currentTarget); $('#q').focus(); $('#q').select(); });
+
+/* starred */
+function paintStars(){
+  const list = Object.entries(stars).filter(([e]) => byExpr.has(e)).sort((a, b) => b[1] - a[1]).map(([e]) => byExpr.get(e));
+  $('#sEmpty').hidden = list.length > 0;
+  $('#sList').innerHTML = list.map(rowHtml).join('');
+}
+$('#sList').addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dStars')); });
+$('#bStars').addEventListener('click', ev => { paintStars(); openDlg($('#dStars'), ev.currentTarget); });
+
+/* ---------- sync ----------
+   One private Gist (file zhcy-sync.json) holds {v:1, stars:{expr:time}, tomb:{expr:time}}.
+   Each sync reads it, merges with this device (newest time wins, so an unstar also syncs), and writes back. */
+const GIST_FILE = 'zhcy-sync.json', GH = 'https://api.github.com';
+let syncBusy = false, syncAgain = false, syncTimer = 0;
+function syncSoon(ms){ if(!store.get('tok', '')) return; clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, ms == null ? 3000 : ms); }
+function merge(a, b){
+  if(!b || b.v !== 1) return a;
+  const out = {v:1, stars:{}, tomb:{}}, mx = (x, y) => Math.max(x || 0, y || 0);
+  const keys = new Set([...Object.keys(a.stars), ...Object.keys(a.tomb), ...Object.keys(b.stars || {}), ...Object.keys(b.tomb || {})]);
+  keys.forEach(k => {
+    const s = mx(a.stars[k], (b.stars || {})[k]), t = mx(a.tomb[k], (b.tomb || {})[k]);
+    if(s > t) out.stars[k] = s; else if(t) out.tomb[k] = t;
+  });
+  return out;
+}
+// Key order differs between devices, so compare sorted copies.
+const canon = o => JSON.stringify(Object.keys(o || {}).sort().map(k => [k, o[k]]));
+const same = (a, b) => !!a && !!b && canon(a.stars) === canon(b.stars) && canon(a.tomb) === canon(b.tomb);
+async function gh(path, opt){
+  opt = opt || {};
+  const r = await fetch(GH + path, Object.assign({}, opt, {cache:'no-store', headers: Object.assign({Authorization: 'Bearer ' + store.get('tok', ''), Accept: 'application/vnd.github+json'}, opt.body ? {'Content-Type': 'application/json'} : {})}));
+  if(r.status === 401 || r.status === 403) throw new Error('auth');
+  if(r.status === 404) throw new Error('gone');
+  if(!r.ok) throw new Error('http');
+  return r.json();
+}
+async function findGist(){
+  for(let p = 1; p <= 10; p++){
+    const l = await gh(`/gists?per_page=100&page=${p}`), g = l.find(g => g.files && g.files[GIST_FILE]);
+    if(g) return g.id; if(l.length < 100) break;
+  }
+  return '';
+}
+function syncSt(msg, err){ const el = $('#syncSt'); el.textContent = msg || ''; el.classList.toggle('err', !!err); }
+async function syncNow(){
+  if(!store.get('tok', '')) return 'off';
+  if(syncBusy){ syncAgain = true; return 'busy'; }
+  clearTimeout(syncTimer); syncBusy = true; $('#bSync').classList.add('spin');
+  let res = 'ok';
+  try{
+    const local = {v:1, stars, tomb};
+    let id = store.get('gist', '') || await findGist();
+    if(!id){
+      const g = await gh('/gists', {method:'POST', body: JSON.stringify({description:'zhcy stars (fogday.com/zhcy)', public:false, files:{[GIST_FILE]:{content: JSON.stringify(local)}}})});
+      store.set('gist', g.id);
+    } else {
+      store.set('gist', id);
+      const g = await gh('/gists/' + id), f = g.files && g.files[GIST_FILE];
+      let remote = null;
+      if(f){ let txt = f.content; if(f.truncated) txt = await (await fetch(f.raw_url, {cache:'no-store'})).text(); try{ remote = JSON.parse(txt); }catch(e){} }
+      const out = merge(local, remote);
+      if(!same(out, local)){ stars = out.stars; tomb = out.tomb; store.set('stars', stars); store.set('tomb', tomb); paintStar(); paintCount(); if($('#dStars').open) paintStars(); }
+      if(!same(out, remote)) await gh('/gists/' + id, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(out)}}})});
+    }
+    syncSt('Synced.');
+  }catch(e){
+    if(e.message === 'gone'){ store.del('gist'); syncAgain = true; res = 'net'; }
+    else if(e.message === 'auth'){ res = 'auth'; syncSt('GitHub did not accept this token. Make a new one with the gist scope, then connect again.', true); }
+    else { res = 'net'; syncSt(navigator.onLine === false ? 'Offline. Stars will sync when you are back online.' : 'Could not reach GitHub. Try Sync now.', true); }
+  }finally{
+    syncBusy = false; $('#bSync').classList.remove('spin');
+    if(syncAgain){ syncAgain = false; syncSoon(500); }
+  }
+  return res;
+}
+function paintSync(){ const on = !!store.get('tok', ''); $('#syncOff').hidden = on; $('#syncOn').hidden = !on; }
+$('#bSync').addEventListener('click', ev => { paintSync(); openDlg($('#dSync'), ev.currentTarget); });
+$('#syncOff').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const t = $('#tok').value.trim(); if(!t) return;
+  store.set('tok', t); store.del('gist'); $('#tok').value = '';
+  syncSt('Connecting...');
+  const r = await syncNow();
+  if(r === 'auth'){ store.del('tok'); paintSync(); $('#tok').focus(); }
+  else { paintSync(); $('#syncGo').focus(); }
+});
+$('#syncGo').addEventListener('click', () => { syncSt('Syncing...'); syncNow(); });
+$('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.del); clearTimeout(syncTimer); syncSt('Disconnected. Stars stay on this device.'); paintSync(); $('#tok').focus(); });
+
+/* ---------- start ---------- */
+(() => {
+  setFont(store.get('font', 'song') === 'hei');
+  const fromHash = () => { let h = ''; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} const i = h ? IDX.findIndex(x => x.c === h) : -1; return i; };
+  const i0 = fromHash(); show(i0 >= 0 ? i0 : today, 0);
+  window.addEventListener('hashchange', () => { const i = fromHash(); if(i >= 0 && i !== cur) show(i, 0); });
+  paintCount();
+  syncSoon(800);
+  // A new day while the page is open: move to the new chengyu if the reader was on today's.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'visible') return;
+    const t = todayIdx(); if(t !== today){ const was = cur === today; today = t; if(was) show(today, 0); else $('#today').hidden = cur === today; }
+    syncSoon(500);
+  });
+})();
+</script>
+</body>
+</html>
