@@ -85,14 +85,6 @@ canvas{position:absolute;left:0;top:0;display:block}
 .sw input:checked+span{background:var(--felt)}
 .sw input:checked+span::after{transform:translateX(20px)}
 .sw input:focus-visible+span{outline:3px solid var(--red);outline-offset:2px}
-.row.chips{flex-wrap:wrap;gap:6px 12px;padding:6px 0}
-.row.chips .lab{flex:1 0 100%}
-.chipset{display:flex;flex-wrap:wrap;gap:6px}
-.chip{min-height:40px;min-width:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:400 15px/1 var(--pixel);cursor:pointer;touch-action:manipulation}
-.chip[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
-.chip:hover{border-color:var(--felt)}
-.chip:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.chip:disabled{cursor:default}
 .hint{font-size:.85rem;color:var(--muted);margin:2px 0 6px}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .row.off{opacity:.45}
@@ -117,12 +109,6 @@ canvas{position:absolute;left:0;top:0;display:block}
     <div class="row"><label for="spd">Speed</label><input id="spd" type="range" min="0" max="5" step="1"><output for="spd" id="spdOut"></output></div>
     <div class="row"><label for="n">Number of dragons</label><input id="n" type="range" min="1" max="12" step="1"><output for="n" id="nOut"></output></div>
     <div class="row"><span class="lab" id="lFol">Follow my finger</span><span class="sw"><input id="follow" type="checkbox" aria-labelledby="lFol"><span></span></span></div>
-    <div class="row chips" id="actRow"><span class="lab" id="l_act">What they do</span><div class="chipset" id="act" role="group" aria-labelledby="l_act"><button type="button" class="chip" data-v="walk" aria-pressed="false">Walk</button><button type="button" class="chip" data-v="hop" aria-pressed="false">Hop</button><button type="button" class="chip" data-v="march" aria-pressed="false">March</button><button type="button" class="chip" data-v="fly" aria-pressed="false">Fly</button></div></div>
-    <div class="row chips" id="patRow"><span class="lab" id="l_pat">Flight pattern</span><div class="chipset" id="pat" role="group" aria-labelledby="l_pat"><button type="button" class="chip" data-v="roam" aria-pressed="false">Roam</button><button type="button" class="chip" data-v="loops" aria-pressed="false">Loops</button><button type="button" class="chip" data-v="circles" aria-pressed="false">Circles</button><button type="button" class="chip" data-v="swoop" aria-pressed="false">Swoop</button><button type="button" class="chip" data-v="zigzag" aria-pressed="false">Zigzag</button></div></div>
-    <div class="row"><span class="lab" id="lDiz">Dizzy spells</span><span class="sw"><input id="dizzy" type="checkbox" aria-labelledby="lDiz"><span></span></span></div>
-    <div class="row chips" id="colorRow"><span class="lab" id="l_color">Colors</span><div class="chipset" id="color" role="group" aria-labelledby="l_color"><button type="button" class="chip" data-v="match" aria-pressed="false">Matching</button><button type="button" class="chip" data-v="pick" aria-pressed="false">Pick</button></div></div>
-    <div class="row" id="hueRow"><label for="hue">Body color</label><input id="hue" type="color"></div>
-    <div class="row chips" id="breathRow"><span class="lab" id="l_breath">Breath</span><div class="chipset" id="breath" role="group" aria-labelledby="l_breath"><button type="button" class="chip" data-v="fire" aria-pressed="false">Fire</button><button type="button" class="chip" data-v="water" aria-pressed="false">Water</button><button type="button" class="chip" data-v="none" aria-pressed="false">None</button></div></div>
   </section>
   <div class="acts">
     <button class="btn" type="button" id="hatch">New dragons</button>
@@ -157,7 +143,7 @@ const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x; the default (BASE.s
 const KEY = 'px:settings';
 let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
-Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene'}); cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
+Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene', act:'mix', pat:'mix', color:'any', breath:'mix', dizzy:true});   // not choices: they just happen cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };
 let seed = (R()*1e9)|0;
 
@@ -646,14 +632,10 @@ ctlBtn.addEventListener('click', () => setOpen(sheet.hidden));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !sheet.hidden){ setOpen(false); ctlBtn.focus(); } });
 function setPlay(on){ playing = on; $('playT').textContent = on ? 'Pause' : 'Play'; playBtn.setAttribute('aria-pressed', String(on)); if(on) start(); }
 playBtn.addEventListener('click', () => setPlay(!playing));
-const IDS = ['n','follow','dizzy','hue','spd'];
-const MIX = {act:'mix', pat:'mix', color:'any', breath:'mix'};   // nothing pressed: a bit of everything, any pattern, shifting colours, fire and water   // the scene is not a choice: Random rolls a new one
+const IDS = ['n','follow','spd'];   // the scene is not a choice: Random rolls a new one
 function show(){ for(const id of IDS){ const el = $(id); if(el.type === 'checkbox') el.checked = !!cfg[id]; else el.value = cfg[id]; }
-  for(const id in MIX) for(const b of $(id).querySelectorAll('.chip')) b.setAttribute('aria-pressed', String(cfg[id] === b.dataset.v));
   $('nOut').textContent = cfg.n; $('spdOut').textContent = SPEEDS[cfg.spd] + 'x';
   $('spd').setAttribute('aria-valuetext', SPEEDS[cfg.spd] + ' times');
-  $('hueRow').hidden = cfg.color !== 'pick';
-  for(const b of $('pat').querySelectorAll('.chip')) b.disabled = !canFly(); $('patRow').classList.toggle('off', !canFly());
 }
 const SCENE = new Set(['bg','sky','clouds','mtn','ground','rocks']);
 function apply(id){
@@ -671,8 +653,6 @@ function apply(id){
   } }
 for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' || el.type === 'color' ? 'input' : 'change', () => {
   cfg[id] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; save(); apply(id); show(); if(!playing) { draw(); drawScene(); } }); }
-for(const id in MIX) $(id).addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b || b.disabled) return;
-  cfg[id] = cfg[id] === b.dataset.v ? MIX[id] : b.dataset.v; save(); apply(id); show(); if(!playing){ draw(); drawScene(); } });
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
 $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, clouds, mountains, ground, rocks); the dragons and their settings stay
   const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks].join();
