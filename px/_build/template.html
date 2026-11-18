@@ -106,6 +106,7 @@ canvas{position:absolute;left:0;top:0;display:block}
   <h2 class="vh" id="ctlH">Controls</h2>
   <section aria-labelledby="hD">
     <h2 id="hD">Dragons</h2>
+    <div class="row"><label for="spd">Speed</label><input id="spd" type="range" min="0" max="5" step="1"><output for="spd" id="spdOut"></output></div>
     <div class="row"><label for="n">Number of dragons</label><input id="n" type="range" min="1" max="12" step="1"><output for="n" id="nOut"></output></div>
     <div class="row"><label for="act">What they do</label><select id="act">
       <option value="mix">A bit of everything</option><option value="walk">Walk</option><option value="hop">Hop and jump</option><option value="march">March in step</option><option value="fly">Fly</option></select></div>
@@ -118,7 +119,6 @@ canvas{position:absolute;left:0;top:0;display:block}
     <div class="row" id="hueRow"><label for="hue">Body color</label><input id="hue" type="color"></div>
     <div class="row"><label for="breath">Breath</label><select id="breath">
       <option value="mix">Fire and water</option><option value="fire">Fire</option><option value="water">Water</option><option value="none">None</option></select></div>
-    <div class="row"><label for="spd">Speed</label><input id="spd" type="range" min="0" max="5" step="1"><output for="spd" id="spdOut"></output></div>
   </section>
   <section aria-labelledby="hS">
     <h2 id="hS">Scene</h2>
