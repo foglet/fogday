@@ -88,7 +88,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 body.unpinned .stage{flex:none;min-height:0;padding-top:var(--s4)!important}
 body.unpinned .actions{margin-top:var(--s2)}
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
-.stage{min-height:0;display:flex;flex-direction:column;padding:var(--s2) 0}
+.stage{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:var(--s2) 0}
 
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
 /* No card surface for now: the chengyu floats on the page. */
@@ -105,7 +105,7 @@ body.unpinned .actions{margin-top:var(--s2)}
 .star{color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--gold)}
 .star[aria-pressed="true"] svg{fill:currentColor}
-.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:0;padding:var(--s2) 0;
+.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:0;padding:var(--s2) 0 var(--s5);
   border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
   font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
 .chars span{display:inline-block;width:1em;text-align:center}
@@ -113,8 +113,8 @@ body.unpinned .actions{margin-top:var(--s2)}
 .chars .brk{flex-basis:100%;height:0;width:0}
 .chars:active{background:var(--surface-2)}
 .pin{margin:var(--s1) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
-/* The definition reserves three lines so most cards are the same height. */
-.def{margin:var(--s1) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
+/* The definition takes only the lines it needs, so the card is centred on what is shown. */
+.def{margin:var(--s1) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;color:var(--ink);user-select:text;-webkit-user-select:text}
 /* Play: the green circle hugs the icon with 2px of padding; the button around it stays a 44px tap target. */
 .play{display:inline-flex;align-items:center;justify-content:center;width:var(--tap);height:var(--tap);margin:0;padding:0;flex:none;
   border:0;border-radius:50%;background:transparent;color:var(--primary);cursor:pointer}
@@ -594,27 +594,10 @@ function fontFor(f, text){
   if(!document.fonts || !fam) return Promise.resolve();
   return Promise.race([document.fonts.load(`${f === "song" || f === "hei" ? 500 : 400} 80px ${fam}`, text).catch(() => {}), wait(1800)]);
 }
-// Lock the first line of characters at the vertical centre of the screen (50%). Measured once (and on
-// rotation), not per chengyu, so the characters never move while a longer or shorter definition pushes what is below.
-function centerStage(){
-  const st = document.querySelector('.stage'), first = $('#chars span');
-  if(!first || document.body.classList.contains('unpinned')) return;
-  st.style.paddingTop = '0px';
-  const mid = first.getBoundingClientRect(), stTop = st.getBoundingClientRect().top;
-  const off = mid.top + mid.height / 2 - stTop, want = window.innerHeight * 0.5 - (stTop + scrollY);
-  basePad = Math.max(16, Math.round(want - off));
-  fitStage();
-}
-// Never make the first screen scroll: if this chengyu (a long one, or a short screen) would overflow, raise the
-// characters by the overflow. Otherwise they stay at the pinned spot.
-let basePad = null;
-function fitStage(){
-  const st = document.querySelector('.stage');
-  if(basePad === null || document.body.classList.contains('unpinned')) return;
-  st.style.paddingTop = basePad + 'px';
-  const over = document.documentElement.scrollHeight - window.innerHeight;
-  if(over > 0) st.style.paddingTop = Math.max(16, basePad - over) + 'px';
-}
+// The card (characters, pinyin, definition) is centred in CSS between the header and the play row, so there is
+// no large gap above the characters.
+function centerStage(){ document.querySelector('.stage').style.paddingTop = ''; }
+function fitStage(){}
 // The definition line: English, or the Chinese explanation when the site is in Chinese.
 function paintDef(r){
   const zhText = r.s36 ? tr(r, 'zx') : tr(r, 'zh'), zh = isZh() && zhText, d = $('#def');
