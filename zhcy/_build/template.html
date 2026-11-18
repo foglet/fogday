@@ -175,12 +175,14 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 .sstar[aria-pressed="true"],.star[aria-pressed="true"]{color:var(--gold)}
 .sstar[aria-pressed="true"] svg{fill:currentColor}
 .count{font-weight:400}
-.row{display:grid;grid-template-columns:auto 1fr;gap:2px var(--s3);align-items:baseline;width:100%;min-height:56px;padding:var(--s2) var(--s1);border:0;background:transparent;
-  text-align:left;cursor:pointer;border-radius:var(--r-sm)}
+/* Search rows: one line, one size. Characters in a fixed column so rows line up; the definition follows the pinyin. */
+.row{display:grid;grid-template-columns:4.5em minmax(0,1fr);column-gap:var(--s3);align-items:center;width:100%;min-height:var(--tap);padding:var(--s2) var(--s1);
+  border:0;background:transparent;text-align:left;cursor:pointer;border-radius:var(--r-sm);font-size:var(--fs-body);line-height:1.4}
 .row:hover{background:var(--surface-2)}
-.row b{font-family:var(--cyt);font-weight:500;font-size:1.375rem;line-height:1.3;grid-row:span 2}
-.row .p{color:var(--primary);font-size:var(--fs-sm)}
-.row .d{color:var(--ink-2);font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row b{font-family:var(--cyt);font-weight:500;font-size:inherit;word-break:break-all}   /* 6 and 8 character chengyu wrap in their column */
+.row .pd{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .p{color:var(--primary)}
+.row .d{color:var(--ink-2)}
 .empty{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s3) 0}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);padding:0 var(--s4);border-radius:var(--r-pill);cursor:pointer;font-weight:600;
   border:0;background:var(--surface-2)}
@@ -543,7 +545,7 @@ function search(q){
 function rowHtml(i){
   const r = D[i];
   const on = isStar(r.e), w = esc(plain(r.e));
-  return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${w}</b><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span><span class="d">${esc(r.en || '')}</span></button>`
+  return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
     + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="Star ${w}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
 }
 let qTimer = 0;
