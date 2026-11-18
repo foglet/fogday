@@ -82,6 +82,8 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   only (no buses), stops with the same name within 150 m merged. Both built in the browser pane 2026-11-17.
   Cable cars (Powell-Hyde, Powell-Mason, California; route_type 5, same SFMTA file) orange #d95520 as on /transit/:
   `data/muni-cable.json`.
+  Rail marker (railroad symbol): from zoom 12 a dashed core in the page color (`rail-dash`) inside each rail line,
+  so fixed rail reads apart from the solid shuttle routes.
 - Bottom-right stack, top to bottom (as /treesf/): folded-map button (Systems: lists every system, bold = on view; tap one
   to show it, the same as tapping the name), zoom readout (live, one decimal, display only), location, + − and compass.
 
