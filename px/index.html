@@ -200,6 +200,10 @@ const puff = (k, x, y, ang, sc, vx0 = 0, vy0 = 0) => { const a = ang + (R()-.5)*
   return {k, x: x - vx, y: y - vy + (R()-.5)*1.2*sc, vx, vy, sc, n:0, L: k === 'fire' ? 10 + R()*9 : k === 'drop' ? 14 + R()*10 : 24 + R()*18}; };
 function moveBits(list){ const out = [];
   for(const e of list){ if(e.n >= e.L) continue; e.n++; e.x += e.vx; e.y += e.vy;
+    if(e.shot){ if(e.n >= e.L){ const ang = -Math.PI/2;   // a shot reaches the tapped spot and bursts there
+        if(e.k === 'fire') for(let i=0; i<2; i++) out.push(puff('fire', e.x, e.y, R()*2*Math.PI, e.sc*.8));
+        else { out.push(puff('drop', e.x, e.y, R()*2*Math.PI, e.sc*.6)); if(R() < .5) out.push(puff('steam', e.x, e.y, ang, e.sc)); } }
+      continue; }
     if(e.k === 'fire'){ e.vx *= .93; e.vy -= .03*e.sc; }
     else if(e.k === 'drop'){ e.vx *= .985; e.vy += .12*e.sc; if(R() < .05) out.push(puff('steam', e.x, e.y, -Math.PI/2, e.sc*.8)); }
     else { e.vx *= .95; e.vy = e.vy*.95 - .025*e.sc; } }
@@ -207,7 +211,7 @@ function moveBits(list){ const out = [];
   for(const f of fires) for(const d of drops){ if(f.n >= f.L || d.n >= d.L) continue; const r = 3*Math.max(f.sc, d.sc);
     if(Math.abs(f.x-d.x) < r && Math.abs(f.y-d.y) < r){ f.n = f.L; d.n = d.L; for(let i=0; i<3; i++) out.push(puff('steam', (f.x+d.x)/2, (f.y+d.y)/2, -Math.PI/2, Math.max(f.sc, d.sc)*1.3)); } }
   const keep = list.filter(e => e.n < e.L).concat(out); return keep.length > 900 ? keep.slice(-900) : keep; }
-const lookBit = e => { const u = Math.min(.999, e.n/e.L);
+const lookBit = e => { const u = e.shot ? Math.min(.999, e.n/e.L)*.45 : Math.min(.999, e.n/e.L);   // shots stay bright until they burst
   if(e.k === 'fire') return [FIRE[Math.min(4, (u*5)|0)], u < .65 ? 2 : 1, u > .8 ? (1-u)*5 : 1];
   if(e.k === 'drop') return [WATER[Math.min(3, (u*4)|0)], u < .3 ? 2 : 1, u > .85 ? (1-u)/.15 : 1];
   return [STEAM[Math.min(2, (u*3)|0)], 1 + Math.min(2, (u*3)|0), .55*(1-u)]; };
@@ -467,7 +471,13 @@ function tick(){ T++;
     if(cfg.color !== 'pick') d.th = d.th.map(x => x + .08);
     d.h = d.h.map((a, j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a, j) => a + (d.tsv[j] - a)*.06); }
   // breath
-  if(cfg.breath !== 'none') for(const d of dg){ if(d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
+  for(const d of dg){ const a = d.aim; if(!a) continue;   // a tap: shoot at the spot (fire, or water for the one that decides so)
+    if(a.wait > 0){ a.wait--; continue; } if(d.mode === 'off' || d.mode === 'dizzy' || d.up || --a.n < 0){ d.aim = null; continue; }
+    if(d.mode === 'walk' || Math.abs(a.tx - d.cx) > GW*d.s*.3) d.dir = a.tx > d.cx ? 1 : -1;
+    const [mx, my] = mouth(d), dx = a.tx - mx, dy = a.ty - my, D = Math.hypot(dx, dy) || 1, sp = Math.min(40, 14*K/SPEEDS[cfg.spd]);   // about 550 px a second whatever the speed setting
+    for(let i=0; i<3; i++){ const ang = Math.atan2(dy, dx) + (R()-.5)*.08, L = Math.max(2, D/sp*(0.92 + R()*.12));
+      bits.push({k: a.water ? 'drop' : 'fire', shot: true, x: mx, y: my, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, sc: Math.max(2, d.s*.8), n: 0, L}); } }
+  if(cfg.breath !== 'none') for(const d of dg){ if(d.aim || d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
     if(d.breath > 0){ d.breath--; const [mx, my] = mouth(d), ang = (d.dir > 0 ? 0 : Math.PI) + d.rot;
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
@@ -592,8 +602,24 @@ function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = inner
 addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
 document.addEventListener('visibilitychange', () => { if(!document.hidden) start(); });
 const inUI = e => e.target && e.target.closest && e.target.closest('.sheet,.dock,.top h1');
-const onPt = e => { if(inUI(e)) return; P0 = {x: e.clientX, y: e.clientY, t: performance.now()}; };
-addEventListener('pointermove', onPt, {passive: true}); addEventListener('pointerdown', onPt, {passive: true});
+/* A quick tap: the nearest one to three dragons shoot fire at the spot; now and then one of them quietly sends water
+   instead (no sign which). A press held for 250 ms, or dragged, steers them as before; a mouse just moving steers too. */
+let press = null, holdT = 0;
+const steerTo = e => { P0 = {x: e.clientX, y: e.clientY, t: performance.now()}; };
+function hold(){ if(press){ press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()}; } }
+function shoot(tx, ty){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'dizzy' && !d.up && !offScreen(d))
+    .sort((a, b) => Math.hypot(a.cx - tx, a.cy - ty) - Math.hypot(b.cx - tx, b.cy - ty)).slice(0, Math.min(3, ri(1, 3) + 1));
+  const wet = R() < .35 ? pick(who) : null;
+  who.forEach((d, i) => { d.aim = {tx, ty, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
+addEventListener('pointerdown', e => { if(inUI(e)) return; press = {x: e.clientX, y: e.clientY, t: performance.now(), held: false, wasOpen: !sheet.hidden};
+  clearTimeout(holdT); holdT = setTimeout(hold, 250); }, {passive: true});
+addEventListener('pointermove', e => { if(inUI(e)) return;
+  if(press){ if(!press.held && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) press.held = true; if(press.held){ press.x = e.clientX; press.y = e.clientY; steerTo(e); } }
+  else if(e.pointerType === 'mouse') steerTo(e); }, {passive: true});
+const lift = e => { clearTimeout(holdT); const p = press; press = null;
+  if(p && !p.held && !p.wasOpen && e.type === 'pointerup' && performance.now() - p.t < 250) shoot(p.x, p.y); };
+addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
+setInterval(() => { if(press && press.held) P0.t = performance.now(); }, 200);   // holding still keeps them coming
 addEventListener('pointerout', e => { if(!e.relatedTarget) P0.t = -1e9; });
 
 /* ---------- controls ---------- */
