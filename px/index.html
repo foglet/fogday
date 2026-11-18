@@ -137,7 +137,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const RM = matchMedia('(prefers-reduced-motion: reduce)');
 
 /* ---------- settings (baseline = everything on, as in the dragon skill) ---------- */
-const BASE = {n:3, act:'mix', pat:'mix', follow:true, dizzy:true, color:'any', hue:'#3f9e6e', wings:'mix', kids:'some', nk:2,
+const BASE = {wx:'clear', windv:0, n:3, act:'mix', pat:'mix', follow:true, dizzy:true, color:'any', hue:'#3f9e6e', wings:'mix', kids:'some', nk:2,
   breath:'mix', body:'mix', tail:'mix', spd:1, bg:'scene', sky:'day', clouds:'few', mtn:true, ground:'grass', rocks:true};
 const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x; the default (BASE.spd = 1) is 0.5x
 const KEY = 'px:settings';
@@ -199,6 +199,7 @@ const scv = document.getElementById('scene'), sctx = scv.getContext('2d');
 const fcv = document.getElementById('fg'), ctx = fcv.getContext('2d');
 let W = 0, H = 0, VH = 0, DPR = 1, P = 3, gw = 0, gh = 0, gTopA = 0, K = 1, sNear = 3, sFar = 2;
 function band(){   // where walkers' feet can be, in CSS px
+  if(SEA) return [BEACH_A*P + 4, VH - 10];   // sea scene: the strip of beach at the bottom
   if(cfg.bg === 'scene' && cfg.ground !== 'none') return [gTopA*P + 6, VH - 10];
   return [VH*.86, VH - 10]; }
 const depthS = fy => { const [a, b] = band(); return sFar + (sNear - sFar)*clamp((fy - a)/Math.max(1, b - a), 0, 1); };
@@ -211,16 +212,76 @@ const SKIES = {
   day:   {stops:[[0,[92,152,218]],[.7,[168,206,240]],[1,[214,234,246]]], cloud:[[255,255,255],[214,226,240]], far:[150,168,204], cap:[240,244,250], near:[104,136,128], dim:1, tint:[0,0,0]},
   sunset:{stops:[[0,[56,58,124]],[.45,[176,96,150]],[.8,[240,140,100]],[1,[255,200,130]]], cloud:[[255,206,190],[214,130,140]], far:[122,92,138], cap:[236,190,196], near:[80,70,104], dim:.8, tint:[30,8,0]},
   night: {stops:[[0,[10,12,36]],[.7,[26,34,78]],[1,[46,56,104]]], cloud:[[78,86,128],[56,62,100]], far:[44,52,92], cap:[150,160,196], near:[30,38,64], dim:.45, tint:[0,0,14]}};
-const GROUNDS = {grass:{top:[70,132,72], body:[[96,162,84],[110,176,92],[120,184,98]], dots:[[78,146,70],[146,198,112],[66,124,62]]},
+const GROUNDS = {desert:{top:[192,142,92], body:[[224,180,120],[230,188,128],[236,196,138]], dots:[[206,158,100],[244,212,160],[186,134,84]]},
+  grass:{top:[70,132,72], body:[[96,162,84],[110,176,92],[120,184,98]], dots:[[78,146,70],[146,198,112],[66,124,62]]},
   sand:{top:[204,174,118], body:[[228,200,146],[234,208,154],[238,214,162]], dots:[[212,182,126],[246,226,182],[196,166,112]]},
   snow:{top:[196,210,228], body:[[232,238,246],[238,242,248],[244,247,251]], dots:[[212,222,236],[255,255,255],[200,212,230]]}};
 function lerpC(stops, u){ for(let i=0; i<stops.length-1; i++){ const [u0,c0] = stops[i], [u1,c1] = stops[i+1];
   if(u <= u1){ const k = (u-u0)/Math.max(1e-6, u1-u0); return c0.map((c,j) => c + (c1[j]-c)*k); } } return stops[stops.length-1][1]; }
 const themeMeta = document.querySelector('meta[name="theme-color"]');
+const DESERT_MTN = {day:{far:[204,150,130], near:[176,110,84]}, sunset:{far:[156,94,106], near:[122,70,72]}, night:{far:[64,52,76], near:[46,38,54]}};
+
+/* ---------- sea: Fogfish's Pixel Waves (fogday.com/waves), the PSX Doom-fire sea ----------
+   Same 36-shade palette, swell and wind-wave trains, churned foam and spray; fixed calm-to-moderate conditions, no tide.
+   Value 0 is empty (the sky and mountains show), 1 is foam, 36 the deep. It steps 30 times a second on its own clock. */
+let SEA = null, BEACH_A = 0, seaAcc = 0;
+const SEA_STOPS = [[1,[244,255,251]],[5,[191,238,224]],[10,[111,211,181]],[15,[47,179,154]],[20,[26,143,138]],[25,[20,109,134]],[30,[13,79,115]],[33,[8,52,90]],[36,[4,32,61]]];
+const SEA_PAL = [[0,0,0]]; for(let i=1; i<=36; i++){ for(let k=0; k<SEA_STOPS.length-1; k++){ const [a, ca] = SEA_STOPS[k], [b, cb] = SEA_STOPS[k+1];
+  if(i >= a && i <= b){ const t = (i - a)/(b - a); SEA_PAL.push(ca.map((v, j) => Math.round(v + (cb[j] - v)*t))); break; } } }
+function seaMake(top, bot){ const H = bot - top, W = gw, S = {top, H, px: new Uint8Array(W*H), p: new Float32Array(W), tip: new Int16Array(W), streak: new Float32Array(W), ph1: 0, ph2: 0, off: 0};
+  const raw = Array.from({length: W}, () => R()); for(let x=0; x<W; x++){ let a = 0; for(let k=-4; k<=4; k++) a += raw[(x + k + W) % W]; S.streak[x] = a/9; }
+  const lo = Math.min(...S.streak), hi = Math.max(...S.streak); for(let x=0; x<W; x++) S.streak[x] = (S.streak[x] - lo)/(hi - lo || 1);
+  SEA = S; for(let i=0; i<H + 40; i++) seaStep(); return S; }
+function seaStep(){ const S = SEA, W = gw, H = S.H, px = S.px, N = 36, base = clamp(36/(.42*H), .3, .95), amp = .3*base, wind = .6, F = .4;   // calm to moderate
+  S.ph1 += 1/30*3/13; S.ph2 += 1/30*3/6;
+  const KW = W/160, k1 = 2.2*KW, k2 = 2.2*Math.pow(13/6, 2)*KW*.45;
+  for(let x=0; x<W; x++){ const u = x/W;
+    const s1 = .78*Math.sin(2*Math.PI*(u*k1 - S.ph1)) + .22*Math.sin(2*Math.PI*(u*k1*2.3 - S.ph1*1.5) + 1.3);
+    const s2 = .7*Math.sin(2*Math.PI*(u*k2 - S.ph2)) + .3*Math.sin(2*Math.PI*(u*k2*1.7 - S.ph2*1.3) + 2.1);
+    S.p[x] = clamp(base - amp*(.75*s1 + .25*s2), .34, 1); }
+  S.off += .3;
+  for(let x=0; x<W; x++){ const q = x - S.off, i0 = Math.floor(q), f = q - i0, a = S.streak[((i0 % W) + W) % W], b = S.streak[(((i0 + 1) % W) + W) % W];
+    px[(H - 1)*W + x] = N - Math.round(4*(a + (b - a)*f)); }
+  for(let x=0; x<W; x++) for(let y=1; y<H; y++){ const src = y*W + x, v = px[src], depth = v/N;
+    const drift = .25*depth*depth + wind*(1 + .6*R())*(1 - depth)*(1 - depth);
+    let dx = x + ((R()*3)|0) - 1 + Math.floor(drift + R()); dx = ((dx % W) + W) % W;
+    const dst = (y - 1)*W + dx; if(v === 0){ px[dst] = 0; continue; } px[dst] = v - (R() < S.p[x] ? 1 : 0); }
+  for(let x=0; x<W; x++){ let t = 0; while(t < H - 1 && px[t*W + x] === 0) t++; S.tip[x] = t;   // foam: churned in the crests, spray above them
+    const c = clamp((base - S.p[x])/(amp + .02), 0, 1), colH = H - t;
+    if(R() < F*(.08 + .5*c)){ const n = 1 + (R()*3*F)|0; for(let k=0; k<n; k++){ const y = t + ((R()*R()*colH*.45)|0); if(y < H - 1){ const i = y*W + x; px[i] = Math.min(px[i], 2 + (R()*6)|0); } } }
+    if(R() < F*c*c*(.18 + wind*.25)){ const h = 1 + (R()*(2 + 4*F))|0; for(let k=1; k<=h; k++){ const y = t - k, xx = ((x + Math.round(wind*k*.5)) % W + W) % W; if(y >= 0){ const i = y*W + xx; px[i] = Math.max(px[i], 1 + (R()*3)|0); } } } } }
+const seaY = cx => { const x = clamp(Math.round(cx/P), 0, gw - 1); return (SEA.top + SEA.tip[x])*P; };   // the water's surface under a CSS x
+function seaSplash(cx, s){ if(!SEA) return; const xa = Math.round(cx/P), W = gw;
+  for(let dx=-3; dx<=3; dx++){ const x = ((xa + dx) % W + W) % W, t = SEA.tip[x], h = 4 + (R()*8)|0;
+    for(let k=1; k<=h; k++){ const y = t - k; if(y >= 0 && R() < .8) SEA.px[y*W + x] = 1 + (R()*3)|0; }
+    for(let k=0; k<4; k++){ const y = t + k; if(y < SEA.H) SEA.px[y*W + x] = Math.min(SEA.px[y*W + x], 2 + k); } }
+  const y = seaY(cx); for(let i=0; i<12; i++) bits.push(puff('drop', cx, y, -Math.PI/2 + (R() - .5)*1.6, s*.8)); }
+
+/* Desert plants, drawn into the scene: Joshua trees (shaggy trunk, arms forking upward, spiky leaf clusters at the tips)
+   and small barrel cacti. Size follows depth (u: 0 far, 1 near). */
+function joshua(put, x, by, u, rand, sh){ const H0 = 18 + u*26, th = Math.round(H0*.4), tw = u > .55 ? 3 : 2;
+  const BARK = [92,70,50], BARKL = [136,106,74], BARKD = [62,46,34], LEAF = [98,128,62], LEAFL = [150,172,88], LEAFD = [58,84,42];
+  for(let y=0; y<=th; y++) for(let k=0; k<tw; k++){ const shag = (y + k*2) % 3 === 0; put(x + k, by - y, sh(k === tw - 1 ? BARKD : shag ? BARKL : BARK)); }   // shaggy trunk
+  const rosette = (px, py, sz) => { for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) put(px + dx, py + dy, sh(LEAFD));
+    for(let a=0; a<14; a++){ const ang = -Math.PI*1.05 + a*Math.PI*2.1/13 + (rand() - .5)*.25, L = 2 + (rand()*(1.5 + sz))|0;
+      for(let k=1; k<=L; k++) put(px + Math.cos(ang)*(k + .8), py + Math.sin(ang)*(k + .8)*.85, sh(k === L ? LEAFL : k === 1 ? LEAFD : LEAF)); } };
+  const arm = (x0, y0, ang, len, depth) => { let xx = x0, yy = y0;
+    for(let k=0; k<len; k+=.6){ xx += Math.cos(ang)*.6; yy += Math.sin(ang)*.6; put(xx, yy, sh(BARK)); put(xx + 1, yy, sh(k % 2 < 1 ? BARKL : BARKD)); }
+    if(depth < 1 && rand() < .6){ arm(xx, yy, ang - .45 - rand()*.2, len*.6, depth + 1); arm(xx, yy, ang + .35 + rand()*.2, len*.5, depth + 1); }
+    else rosette(xx, yy, 1 + u*2); };
+  const nb = 2 + (rand()*3)|0;
+  for(let i=0; i<nb; i++){ const ang = -Math.PI/2 + (i/(nb - 1) - .5)*1.6 + (rand() - .5)*.35; arm(x + tw/2 - .5, by - th, ang, H0*(.32 + rand()*.22), 0); } }
+function barrel(put, x, by, u, rand, sh){ const w = 1.5 + u*2, h = 2.5 + u*3, G = [86,132,76], GL = [124,168,96], OUT = [44,70,42];
+  for(let y=-Math.ceil(h*2); y<=0; y++) for(let xx=-Math.ceil(w); xx<=Math.ceil(w); xx++){ const d = Math.hypot(xx/w, (y + h)/h); if(d > 1) continue;
+    put(x + xx, by + y, sh(d > .8 ? OUT : (xx + 9) % 2 ? GL : G)); }
+  if(rand() < .4) put(x, by - Math.ceil(h*2), sh([236,110,150])); }   // now and then a pink flower
+
 function buildScene(){
   const rand = rng(seed), on = cfg.bg === 'scene', sk = SKIES[cfg.sky];
   if(themeMeta) themeMeta.content = on ? 'rgb(' + sk.stops[0][1].join(',') + ')' : '#fbf8f1';
-  gTopA = on && cfg.ground !== 'none' ? Math.round(VH/P*.7) : gh;
+  const sea = on && cfg.ground === 'sea', desert = on && cfg.ground === 'desert', visA = Math.round(VH/P);
+  if(sea){ const top = Math.round(visA*.5); BEACH_A = Math.round(visA*.9); seaMake(top, BEACH_A); gTopA = top + Math.round(SEA.H*.55); }   // mountains end behind the water
+  else { SEA = null; gTopA = on && cfg.ground !== 'none' ? Math.round(VH/P*.7) : gh; }
   skyBuf = new Uint8ClampedArray(gw*gh*4); fgBuf = new Uint8ClampedArray(gw*gh*4); frame = sctx.createImageData(gw, gh);
   const put = (buf, x, y, c, a = 255) => { x |= 0; y |= 0; if(x < 0 || y < 0 || x >= gw || y >= gh) return; const i = (y*gw + x)*4; buf[i] = c[0]; buf[i+1] = c[1]; buf[i+2] = c[2]; buf[i+3] = a; };
   if(!on){ for(let i=0; i<gw*gh; i++){ skyBuf[i*4] = 251; skyBuf[i*4+1] = 248; skyBuf[i*4+2] = 241; skyBuf[i*4+3] = 255; } clouds = []; stars = []; return; }
@@ -238,19 +299,22 @@ function buildScene(){
   stars = []; if(cfg.sky === 'night'){ const n = (gw*skyH/140)|0; for(let i=0; i<n; i++) stars.push([(rand()*gw)|0, (rand()*skyH*.8)|0, rand() < .25, (rand()*60)|0]); }   // stars: half as many as at first (gw*skyH/140)
   // mountains (into fgBuf, which is drawn over the clouds)
   const mBase = gTopA;
-  if(cfg.mtn){ for(const [layer, col, hgt] of [[0, sk.far, .42], [1, sk.near, .26]]){
+  const MT = desert ? DESERT_MTN[cfg.sky] : sk;   // desert: rust and purple ranges, no snow
+  if(cfg.mtn){ for(const [layer, col, hgt] of [[0, MT.far, .42], [1, MT.near, .26]]){
       const ph = [rand()*6.28, rand()*6.28, rand()*6.28], f = [1.3 + rand(), 2.8 + rand()*2, 6 + rand()*4];
       let j = 0;
       for(let x=0; x<gw; x++){ const u = x/gw; j += (rand()-.5)*1.2; j *= .9;
         const top = mBase - skyH*hgt*(.55 + .25*Math.sin(u*f[0]*6.28 + ph[0]) + .12*Math.sin(u*f[1]*6.28 + ph[1]) + .06*Math.abs(Math.sin(u*f[2]*6.28 + ph[2]))) + j;
         const capY = mBase - skyH*hgt*.78;
         for(let y=Math.max(0, Math.round(top)); y<mBase; y++){
-          let c = col; if(layer === 0 && y < capY + ((x*7)%3)) c = sk.cap;
+          let c = col; if(layer === 0 && !desert && y < capY + ((x*7)%3)) c = sk.cap;
           else if(layer === 1 && ((x + y) % 5 === 0) && y > top + 2) c = col.map(v => v*.9);
           if(y === Math.round(top)) c = c.map(v => v*.86);
           put(fgBuf, x, y, c.map(Math.round)); } } } }
   // ground
-  if(cfg.ground !== 'none'){ const G = GROUNDS[cfg.ground], dim = sk.dim;
+  if(sea){ const G = GROUNDS.sand, sh = c => c.map((v, j) => Math.round(clamp(v*sk.dim + sk.tint[j], 0, 255)));   // the beach strip, wet at the waterline
+    for(let y=BEACH_A; y<gh; y++) for(let x=0; x<gw; x++){ let c = y < BEACH_A + 2 ? [188,166,118] : G.body[Math.min(2, ((y - BEACH_A)/3)|0)]; if(rand() < .06) c = G.dots[(rand()*3)|0]; put(fgBuf, x, y, sh(c)); } }
+  else if(cfg.ground !== 'none'){ const G = GROUNDS[cfg.ground], dim = sk.dim;
     const sh = c => c.map((v, j) => Math.round(clamp(v*dim + sk.tint[j], 0, 255)));
     for(let y=gTopA; y<gh; y++){ const u = (y - gTopA)/Math.max(1, gh - gTopA), bi = Math.min(2, (u*3)|0);
       for(let x=0; x<gw; x++){ let c = y === gTopA ? G.top : G.body[bi];
@@ -258,7 +322,7 @@ function buildScene(){
         put(fgBuf, x, y, sh(c)); }
       if(cfg.ground === 'grass' && y > gTopA + 1) for(let x=0; x<gw; x++) if(rand() < .025) { put(fgBuf, x, y-1, sh(G.dots[2])); put(fgBuf, x, y-2, sh(G.dots[0])); } } }
   // rocks
-  if(cfg.rocks){ const n = Math.max(3, (gw/12)|0), top = cfg.ground === 'none' ? gh - 2 : gTopA + 2;
+  if(cfg.rocks){ const n = Math.max(3, ((sea ? .4 : 1)*gw/12)|0), top = sea ? BEACH_A + 2 : cfg.ground === 'none' ? gh - 2 : gTopA + 2;
     const rs = []; for(let i=0; i<n; i++){ const u = cfg.ground === 'none' ? 1 : rand(); rs.push([rand()*gw, top + u*(gh - top - 2), u]); }
     rs.sort((a, b) => a[1] - b[1]);
     const dim = sk.dim, tint = sk.tint, sh = c => c.map((v, j) => Math.round(clamp(v*dim + tint[j], 0, 255)));
@@ -269,6 +333,11 @@ function buildScene(){
         const d = Math.hypot(rx, ry); if(d > edge) continue;
         let c = base; if(d > edge - .22) c = [60,56,58]; else if(rx < -.15 && ry < -.35) c = base.map(v => v + 40); else if(rx > .2 || ry > -.15) c = base.map(v => v*.76);
         put(fgBuf, cx + x, by + y, sh(c)); } } }
+  if(desert){ const sh = c => c.map((v, j) => Math.round(clamp(v*sk.dim + sk.tint[j], 0, 255))), pl = [];
+    for(let i=0, n = Math.max(3, (gw/34)|0); i<n; i++) pl.push(['j', 10 + rand()*(gw - 20), rand()]);
+    for(let i=0, n = Math.max(2, (gw/30)|0); i<n; i++) pl.push(['b', 4 + rand()*(gw - 8), rand()]);
+    pl.sort((a, b) => a[2] - b[2]);
+    for(const [k, x, u] of pl){ const by = Math.round(gTopA + 3 + u*(gh - gTopA - 6)); (k === 'j' ? joshua : barrel)((xx, yy, c) => put(fgBuf, xx, yy, c), Math.round(x), by, u, rand, sh); } }
   // clouds: soft pixel blobs that drift
   const nc = cfg.clouds === 'none' ? 0 : cfg.clouds === 'many' ? Math.max(6, (gw/16)|0) : Math.max(3, (gw/40)|0);
   clouds = []; for(let i=0; i<nc; i++) clouds.push(mkCloud(rand, rand()*gw));
@@ -289,6 +358,10 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
         const col = sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
   for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
+  if(SEA){ const S = SEA, F = .4, dim = sk.dim, tint = sk.tint;   // the sea, thicker white caps as on /waves
+    for(let y=0; y<S.H; y++){ const row = S.top + y; if(row < 0 || row >= gh) continue;
+      for(let x=0; x<gw; x++){ const v = S.px[y*gw + x]; if(!v) continue; const idx = Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2))), c = SEA_PAL[idx], i = (row*gw + x)*4;
+        d[i] = clamp(c[0]*dim + tint[0], 0, 255); d[i+1] = clamp(c[1]*dim + tint[1], 0, 255); d[i+2] = clamp(c[2]*dim + tint[2], 0, 255); } } }
   sctx.putImageData(frame, 0, 0); }
 
 /* ---------- dragons ---------- */
@@ -352,6 +425,7 @@ function reenter(d){ const [x, y] = edgePoint(d, 4), tx = rr(W*.2, W*.8), ty = r
   d.trail = []; for(let i=160; i>=1; i--) d.trail.push({cx: x - d.vx/5/K*i*4, cy: y - d.vy/5/K*i*4, s: d.s, fy: d.fy, air: true, dir: d.dir, rot: 0, up: false}); }   // babies come in behind her
 function land(d){ if(offScreen(d)) d.entering = true; const [a, b] = band(); d.mode = 'land'; d.tfy = rr(a, b); d.tx = rr(GW*sNear*.6, W - GW*sNear*.6); }
 function next(d){ if(!following() && R() < .2){ leave(d); return; }
+  if(SEA && !following() && R() < .25){ d.mode = 'dive'; d.dvx = clamp(d.cx + d.dir*rr(60, 200), 30, W - 30); return; }   // over the sea: dive in now and then
   if(cfg.dizzy && R() < .1){ d.mode = 'dizzy'; d.dz = 0; d.dz1 = ri(25, 40); d.dz2 = d.dz1 + ri(70, 120); return; }
   if(cfg.act === 'fly' || following() || R() < .3) plan(d);
   else land(d); }
@@ -397,7 +471,8 @@ function walkStep(d, marching){
   else { d.jy = 0;
     if(d.gj && --d.nextj <= 0){ d.jdur = d.gj; d.jh = d.jdur*.38; d.jump = d.jdur; d.gj = 0; d.nextj = ri(90, 220); }
     else if(!marching && !d.gj && --d.nextj <= 0){ d.jdur = pick([12,16,22,30,40]); d.jh = d.jdur*.38 + rr(-1, 2); d.jump = d.jdur; d.nextj = cfg.act === 'hop' ? ri(8, 40) : ri(45, 140); } }
-  d.cx += d.dir*.6*d.s*(d.boost ? 1.9 : 1); if(d.boost) d.boost--; if(d.cool) d.cool--;
+  const wv = WIND(); d.cx += d.dir*.6*d.s*(d.boost ? 1.9 : 1)*Math.max(.25, 1 + d.dir*wv*.18); if(d.boost) d.boost--; if(d.cool) d.cool--;   // into the wind: slower; with it: faster
+  if(Math.abs(wv) > 2.2 && !d.jump && R() < .004){ d.jdur = 16; d.jh = 5; d.jump = 16; d.dir = wv > 0 ? 1 : -1; }   // a strong gust bumps it up
   const hw = GW*d.s/2; if((d.cx > W - hw - 4 && d.dir > 0) || (d.cx < hw + 4 && d.dir < 0)) d.dir *= -1;
   d.cy = d.fy - FOOT*d.s + GH*d.s/2 + d.jy; d.vx = d.vy = 0;
   if(canFly() && !d.jump && !d.over && !d.hop){ if(following()) d.tk = Math.min(d.tk, 15);
@@ -406,14 +481,22 @@ function walkStep(d, marching){
 function tick(){ T++;
   const marching = cfg.act === 'march' || (cfg.act === 'mix' && (T % 1300 >= 150 && T % 1300 < 300));
   for(const d of dg){ if(d.mom) continue;
+    caughtByTwister(d);
     if(d.mode === 'walk'){
       d.step = marching ? ((T/7)|0)%4 : (((T/7)|0) + d.ph*2)%4; d.wing = marching ? ((T/18)|0)%2 : (((T + d.ph*7)/18)|0)%2;
       walkStep(d, marching); }
     else { if(!canFly() && d.mode !== 'land' && d.mode !== 'dizzy') land(d);
-      if(d.mode === 'leave'){ if(following()) plan(d), d.entering = true; else { steer(d, d.ex, d.ey, d.spd, .08); if(offScreen(d)){ d.mode = 'off'; d.offT = ri(40, 240); d.vx = d.vy = 0; } } }
+      if(!SEA && (d.mode === 'dive' || d.mode === 'under')) plan(d);   // the scene changed under it
+      if(d.mode === 'dive'){ steer(d, d.dvx, seaY(d.dvx) + 12*K, 7*K, .12);
+        if(d.cy + GH*d.s*.15 >= seaY(d.cx)){ seaSplash(d.cx, d.s); d.mode = 'under'; d.ut = ri(40, 120); d.vx = d.dir*1.2*K; d.vy = 0; } }
+      else if(d.mode === 'under'){ d.cy = seaY(d.cx) + GH*d.s; if((d.cx < 30 && d.vx < 0) || (d.cx > W - 30 && d.vx > 0)){ d.vx *= -1; d.dir *= -1; }
+        if(--d.ut <= 0){ d.cy = seaY(d.cx) - 2; seaSplash(d.cx, d.s); plan(d); d.vy = -8*K; d.vx = d.dir*2*K; } }   // bursts back out
+      else if(d.mode === 'leave'){ if(following()) plan(d), d.entering = true; else { steer(d, d.ex, d.ey, d.spd, .08); if(offScreen(d)){ d.mode = 'off'; d.offT = ri(40, 240); d.vx = d.vy = 0; } } }
       else if(d.mode === 'off'){ d.vx = d.vy = 0; if(--d.offT <= 0 || following()) reenter(d); }
       if(d.mode === 'fly') flyStep(d); else if(d.mode === 'land') landStep(d); else if(d.mode === 'dizzy') dizzyStep(d); else if(d.mode === 'toward') towardStep(d);
-      if(d.mode !== 'toward' && d.mode !== 'walk'){ d.cx += d.vx; d.cy += d.vy;
+      if(d.mode === 'fly' || d.mode === 'leave' || d.mode === 'land' || d.mode === 'dive') d.vx += WIND()*.1*K;   // the wind pushes fliers sideways
+      if(d.mode === 'spin') spinStep(d);
+      if(d.mode !== 'toward' && d.mode !== 'walk' && d.mode !== 'spin'){ d.cx += d.vx; d.cy += d.vy;
         const hw = GW*d.s/2, hh = GH*d.s/2;
         if(d.entering && d.cx - hw > 0 && d.cx + hw < W && d.cy - hh > 0 && d.cy + hh < VH) d.entering = false;   // fully in: back to the screen's bounds
         if(d.mode !== 'leave' && d.mode !== 'off' && !d.entering){ d.cx = clamp(d.cx, hw*.2, W - hw*.2); d.cy = clamp(d.cy, hh*.2, VH - hh*.4); }
@@ -421,15 +504,15 @@ function tick(){ T++;
         d.wing = ((T/(d.mode === 'fly' ? 6 : 4))|0)%2; if(d.mode === 'dizzy' && d.dz > d.dz1) d.wing = 0; } }
     // heading: the whole body turns to the way it flies
     const mvx = d.cx - d.lx, mvy = d.cy - d.ly; d.lx = d.cx; d.ly = d.cy;
-    let want = 0; const level = d.mode === 'walk' || d.mode === 'dizzy' || d.mode === 'toward' || (d.mode === 'land' && d.near) || Math.hypot(mvx, mvy) < .25;
+    let want = 0; const level = d.mode === 'walk' || d.mode === 'under' || d.mode === 'spin' || d.mode === 'dizzy' || d.mode === 'toward' || (d.mode === 'land' && d.near) || Math.hypot(mvx, mvy) < .25;
     if(!level) want = d.dir*Math.atan2(mvy, d.dir*mvx);
     if(d.loopN){ d.rot = want; } else { let dr = ((want - d.rot + Math.PI) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI) - Math.PI; d.rot += dr*.2; }
     // yaw in free flight: turning about, the body swings round edge-on (drawn in 4 steps, as on 1980s arcade sprites)
     const flying = d.mode === 'fly' || d.mode === 'leave' || (d.mode === 'land' && !d.near);
     if(d.yx === undefined) d.yx = d.dir;
-    if(flying) d.yx += clamp(d.dir - d.yx, -.12, .12); else d.yx = d.dir;
+    if(flying) d.yx += clamp(d.dir - d.yx, -.12, .12); else if(d.mode !== 'spin') d.yx = d.dir;
     // trail for the babies
-    d.trail.push({cx: d.cx, cy: d.cy, s: d.s, fy: d.fy, air: d.mode !== 'walk' || d.jy < -3*d.s, dir: d.dir, rot: d.rot, up: d.up, yx: d.yx}); if(d.trail.length > 700) d.trail.shift(); }
+    d.trail.push({cx: d.cx, cy: d.cy, s: d.s, fy: d.fy, air: d.mode !== 'walk' || d.jy < -3*d.s, dir: d.dir, rot: d.rot, up: d.up, yx: d.yx, hid: d.mode === 'under'}); if(d.trail.length > 700) d.trail.shift(); }
   for(const d of dg) if(d.mom) kidStep(d);
   // meetings: bump (80%) or fly over; catching up: the one behind flies over
   const W8 = adults().filter(d => d.mode === 'walk' && !d.jump && !d.over && !d.hop && !d.cool);
@@ -466,11 +549,12 @@ function tick(){ T++;
     const [mx, my] = mouth(d), dx = a.tx - mx, dy = a.ty - my, D = Math.hypot(dx, dy) || 1, sp = Math.min(40, 14*K/SPEEDS[cfg.spd]);   // about 550 px a second whatever the speed setting
     for(let i=0; i<3; i++){ const ang = Math.atan2(dy, dx) + (R()-.5)*.08, L = Math.max(2, D/sp*(0.92 + R()*.12));
       bits.push({k: a.water ? 'drop' : 'fire', shot: true, x: mx, y: my, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, sc: Math.max(2, d.s*.8), n: 0, L}); } }
-  if(cfg.breath !== 'none') for(const d of dg){ if(d.aim || d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
+  if(cfg.breath !== 'none') for(const d of dg){ if(d.aim || d.hid || d.mode === 'under' || d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
     if(d.breath > 0){ d.breath--; const [mx, my] = mouth(d), ang = (d.dir > 0 ? 0 : Math.PI) + d.rot;
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
     else if(--d.fireT <= 0){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } }
+  weatherTick();
   bits = moveBits(bits);
   sparks = sparks.filter(s => --s.n > 0);
   for(const c of clouds) c.x += c.v; }
@@ -486,7 +570,7 @@ function kidChoose(d){ const r = R(), solo = dg.filter(x => x.mom && x.solo && x
 function startSolo(d){ d.solo = true; d.lead = null; d.trail = d.trail || []; d.kt = ri(120, 320);
   if(d.air){ d.kmode = 'kfly'; d.kwx = rr(W*.1, W*.9); d.kwy = rr(VH*.1, band()[0] - 20); }
   else { d.kmode = 'kwalk'; d.fy = clamp(d.fy, ...band()); } }
-function soloStep(d){ d.yx = undefined; const ks = clamp(sNear*.42, 1, sNear*.6), [a, b] = band();
+function soloStep(d){ d.yx = undefined; d.hid = false; const ks = clamp(sNear*.42, 1, sNear*.6), [a, b] = band();
   if(d.kmode === 'kwalk'){ d.air = false; d.s = clamp(depthS(d.fy)*.42, 1, ks); d.rot = 0; d.up = false;
     d.cx += d.dir*.7*d.s; const hw = GW*d.s/2; if((d.cx > W - hw - 4 && d.dir > 0) || (d.cx < hw + 4 && d.dir < 0)) d.dir *= -1;
     d.hopT = (d.hopT || 0) - 1; let jy = 0; if(d.hopT < 14 && d.hopT > 0) jy = -Math.sin(Math.PI*d.hopT/14)*5*d.s; else if(d.hopT <= 0) d.hopT = ri(30, 120);
@@ -515,7 +599,7 @@ function kidStep(d){ if(!d.uid) d.uid = ++kidN;
     while(i > 0 && acc < gap){ acc += Math.hypot(tr[i].cx - tr[i-1].cx, tr[i].cy - tr[i-1].cy); i--; }
     const p = tr[i]; let cx = p.cx, cy;
     if(acc < gap) cx = p.cx - p.dir*(gap - acc);   // not enough trail yet: stand behind
-    d.s += (ks - d.s)*.2; d.up = p.up;
+    d.s += (ks - d.s)*.2; d.up = p.up; d.hid = !!p.hid;   // under the water with her
     const far = Math.hypot(cx - d.cx, (p.air ? p.cy : p.fy - FOOT*ks + GH*ks/2) - d.cy) > 24*K;   // still catching up: flies over
     if(p.air || far){ cy = p.air ? p.cy + Math.sin((T + d.k*9)*.15)*2*K : p.fy - FOOT*ks + GH*ks/2; d.air = true; d.wing = ((T/(2 + d.k%2))|0)%2; }
     else { d.air = false; d.rot = 0; cy = p.fy - FOOT*ks + GH*ks/2; d.step = (((T/5)|0) + d.k)%4; d.wing = ((T/9)|0)%2; }
@@ -563,13 +647,65 @@ function drawDragon(d){ if(d.s > MAXS) d.s = MAXS; const set = d.set, fr = frame
     if(col !== last){ ctx.fillStyle = col; last = col; } ctx.fillRect(ox + x*b, oy + y*b, b, b); }
   if(d.mode === 'dizzy' && d.dz < d.dz2){ const [hx, hy] = [d.cx + (d.dir > 0 ? 6 : -6)*s, d.cy + (d.up ? 9 : -11)*s]; ctx.fillStyle = 'rgb(255,214,60)';
     for(let k=0; k<3; k++){ const a = T*.2 + k*2.09; ctx.fillRect(hx + Math.cos(a)*6*s - s/2, hy + Math.sin(a)*1.5*s - s/2, s, s); } } }
+/* ---------- weather: rain, snow, wind with gusts, and now and then a twister (a waterspout over the sea) ----------
+   Random rolls the weather with the scene. Wind (cfg.windv: -3 gale from the right .. +3 gale from the left) gusts, pushes
+   fliers sideways, slows walkers walking into it and speeds them with it, bumps walkers into the air in strong gusts,
+   blows breath, rain and snow, and speeds the clouds. A dragon that strays into a twister is spun up the funnel and flung out. */
+let PREC = [], TW = null;
+const WIND = () => cfg.windv*(1 + .35*Math.sin(T*.013) + .2*Math.sin(T*.051));   // with gusts
+function weatherTick(){ const w = WIND();
+  // precipitation: a fixed crowd of drops or flakes, recycled at the top
+  const want = cfg.wx === 'rain' ? Math.round(W*VH/1800) : cfg.wx === 'snow' ? Math.round(W*VH/3600) : 0;
+  while(PREC.length < want) PREC.push({x: R()*W, y: R()*VH, v: rr(.6, 1.4), ph: R()*6.28});
+  if(PREC.length > want) PREC.length = want;
+  for(const q of PREC){
+    if(cfg.wx === 'rain'){ q.y += (9 + 4*q.v)*K; q.x += w*2.2*K; }
+    else { q.y += (.8 + .7*q.v)*K; q.x += (w*1.2 + Math.sin(T*.05 + q.ph)*.6)*K; }
+    const floor = SEA ? seaY(q.x) : band()[0] + (band()[1] - band()[0])*((q.ph*7) % 1);
+    if(q.y > floor || q.y > VH){ if(cfg.wx === 'rain' && R() < .25) bits.push(puff('steam', q.x, Math.min(q.y, floor), -Math.PI/2, 1.2)); q.y = -10*R(); q.x = R()*(W + 200) - 100; }
+    if(q.x < -20) q.x += W + 40; else if(q.x > W + 20) q.x -= W + 40; }
+  for(const e of bits) e.vx += w*.04*(e.k === 'steam' ? 1.5 : 1);   // breath and steam blow with the wind
+  for(const c of clouds) c.x += w*.025;
+  // twister: rare; likelier when windy
+  if(!TW && R() < (Math.abs(cfg.windv) >= 2 ? 1/1400 : 1/4200)){ const from = R() < .5 ? -1 : 1;
+    TW = {x: from < 0 ? -40 : W + 40, vx: -from*rr(.8, 1.4)*K, age: 0, life: ri(700, 1300), a: 0, ph: R()*6.28}; }
+  if(TW){ TW.age++; TW.x += TW.vx + w*.15*K; TW.a = Math.min(1, TW.age/60, (TW.life - TW.age)/60);
+    if(TW.age > TW.life || TW.x < -120 || TW.x > W + 120) TW = null; } }
+const twBase = () => SEA ? (SEA.top + SEA.H*.35)*P : (band()[0] + band()[1])/2, twTop = () => VH*.08;
+function twX(y){ return TW.x + Math.sin(y*.02 + T*.05 + TW.ph)*10*K*(1 - (twBase() - y)/(twBase() - twTop())*.3); }
+function twR(y){ const u = clamp((twBase() - y)/(twBase() - twTop()), 0, 1); return (6 + 54*Math.pow(u, 1.6))*K; }
+function caughtByTwister(d){ if(d.twc > 0){ d.twc--; return false; } if(!TW || TW.a < .5 || d.mode === 'spin' || d.mode === 'off' || d.mode === 'under') return false;
+  if(d.cy < twTop() || d.cy > twBase() + 10) return false;
+  if(Math.abs(d.cx - twX(d.cy)) > twR(d.cy)*.45 + 4*K || R() < .6) return false;
+  d.mode = 'spin'; d.sa = Math.atan2(0, d.cx - twX(d.cy)); d.sn = 0; d.sN = ri(80, 140); d.jump = d.over = d.hop = 0; d.jy = 0; return true; }
+function spinStep(d){ if(!TW){ plan(d); return; } d.sn++; const y = clamp(d.cy - 1.6*K, twTop() + 20, twBase());
+  d.sa += .22; const r = twR(y)*.75, x = twX(y) + Math.cos(d.sa)*r;
+  d.vx = x - d.cx; d.vy = y - d.cy; d.cx = x; d.cy = y; d.dir = Math.sin(d.sa) > 0 ? 1 : -1; d.yx = Math.cos(d.sa)*d.dir;   // yawing as it goes round
+  if(d.sn >= d.sN){ const out = Math.cos(d.sa) >= 0 ? 1 : -1; plan(d); d.twc = 600;   // not caught again for a while d.vx = out*9*K; d.vy = -3*K; d.dir = out;   // flung out
+    if(cfg.dizzy && R() < .5){ d.mode = 'dizzy'; d.dz = 0; d.dz1 = ri(25, 40); d.dz2 = d.dz1 + ri(70, 120); } } }
+function drawWeather(){ const w = WIND();
+  if(TW && TW.a > 0){ const b = twBase(), t = twTop(), sz = Math.max(2, Math.round(3*K)), grey = SEA ? [214,232,240] : cfg.ground === 'desert' ? [196,160,118] : [150,150,160], dark = grey.map(v => v*.72);
+    for(let y=b; y>t; y-=sz){ const r = twR(y), cx = twX(y), n = Math.max(6, Math.round(r/1.6));
+      for(let k=0; k<n; k++){ const a = T*.25 + k*2*Math.PI/n + y*.05, x = cx + Math.cos(a)*r, front = Math.sin(a) > 0;
+        ctx.globalAlpha = TW.a*(front ? .85 : .45); ctx.fillStyle = 'rgb(' + (front ? grey : dark).map(Math.round).join(',') + ')';
+        ctx.fillRect(Math.round((x - sz/2)/sz)*sz, Math.round((y + Math.sin(a)*r*.18)/sz)*sz, sz, sz); } }
+    ctx.globalAlpha = TW.a*.9; ctx.fillStyle = 'rgb(' + grey.map(v => Math.round(v*.6)).join(',') + ')';   // debris at the foot
+    for(let k=0; k<10; k++){ const a = T*.3 + k*.7, r = (10 + k*3)*K; ctx.fillRect(Math.round(TW.x + Math.cos(a)*r), Math.round(b - 4*K - Math.abs(Math.sin(a*1.3))*12*K), sz, sz); }
+    ctx.globalAlpha = 1; }
+  if(cfg.wx === 'rain'){ const sz = Math.max(2, Math.round(1.5*K)); ctx.fillStyle = cfg.sky === 'night' ? 'rgba(150,172,214,.75)' : cfg.sky === 'sunset' ? 'rgba(120,110,170,.7)' : 'rgba(84,118,178,.62)';
+    for(const q of PREC) for(let k=0; k<4; k++) ctx.fillRect(Math.round((q.x - w*.8*K*k)/sz)*sz, Math.round((q.y - k*2*sz)/sz)*sz, sz, sz*2); }   // slanted, block-snapped streaks
+  else if(cfg.wx === 'snow'){ ctx.fillStyle = 'rgba(255,255,255,.92)';
+    for(const q of PREC){ const z = Math.round((q.v > 1 ? 3 : 2)*K); ctx.fillRect(Math.round(q.x), Math.round(q.y), z, z); } } }
 function draw(){ ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+
   const key = d => d.mom ? (d.air ? 1e4 + d.s : d.fy + .01) : (d.mode === 'walk' ? d.fy : 1e4 + d.s);
   const order = dg.slice().sort((a, b) => key(a) - key(b));
-  for(const d of order) if(d.mode !== 'off' && !offScreen(d)) drawDragon(d);
+  const wxSave = cfg.wx; cfg.wx = 'clear'; drawWeather(); cfg.wx = wxSave;   // the twister, behind the dragons
+  for(const d of order) if(d.mode !== 'off' && d.mode !== 'under' && !d.hid && !offScreen(d)) drawDragon(d);
   for(const e of bits){ const [c, sz, a] = lookBit(e); if(a <= 0) continue; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = 'rgb(' + c.join(',') + ')'; const z = sz*e.sc; ctx.fillRect(e.x - z/2, e.y - z/2, z, z); }
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgb(255,226,80)';
-  for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } } }
+  for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } }
+  if(cfg.wx !== 'clear'){ const t = TW; TW = null; drawWeather(); TW = t; } }   // rain and snow, in front
 
 /* ---------- loop, resize, pointer ---------- */
 let playing = !RM.matches, raf = 0, last = 0, acc = 0, sceneDirty = 0;
@@ -577,7 +713,9 @@ const STEP = 25;
 function loop(now){ raf = 0; if(!playing){ return; }
   const dt = Math.min(200, now - (last || now)); last = now; acc += dt*SPEEDS[cfg.spd];
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
-  if(n){ draw(); if(++sceneDirty % 2 === 0 || stars.length) drawScene(); }
+  let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= 1000/30 && k < 4){ seaStep(); seaAcc -= 1000/30; k++; } }   // the sea keeps real time
+  if(n) draw();
+  if((n && (++sceneDirty % 2 === 0 || stars.length)) || k) drawScene();
   raf = requestAnimationFrame(loop); }
 function start(){ if(!raf && playing && !document.hidden){ last = 0; raf = requestAnimationFrame(loop); } }
 function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = innerWidth; VH = innerHeight; H = Math.max(VH, document.getElementById('lvh').offsetHeight || 0); DPR = Math.min(3, devicePixelRatio || 1);
@@ -598,7 +736,7 @@ const HOLD = 2500;
 let press = null, holdT = 0;
 function hold(){ if(!press) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
   for(const d of dg) if(d.aim && d.aim.p === press) d.aim.n = 0; }   // redirect: the flames stop
-function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'dizzy' && !d.up && !offScreen(d))
+function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'dizzy' && !d.up && !offScreen(d))
     .sort((a, b) => Math.hypot(a.cx - p.x, a.cy - p.y) - Math.hypot(b.cx - p.x, b.cy - p.y)).slice(0, Math.min(3, ri(1, 3) + 1));
   const wet = R() < .35 ? pick(who) : null;
   who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
@@ -658,9 +796,11 @@ for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' 
   cfg[id] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; save(); apply(id); show(); if(!playing) { draw(); drawScene(); } }); }
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
 $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, clouds, mountains, ground, rocks); the dragons and their settings stay
-  const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks].join();
-  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none']), rocks: R() < .7});
-  while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks].join() === was);   // always a visibly different one
+  const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv].join();
+  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert']), rocks: R() < .7,
+    wx: pick(['clear','clear','rain','snow']), windv: (R() < .5 ? -1 : 1)*pick([0, 0, 0, 0, 1, 1, 1, 2, 2, 3])});   // weather: clear about half the time; calm, breezy, windy or a gale
+  while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv].join() === was);
+  PREC = []; TW = null;   // always a visibly different one
   seed = (R()*1e9)|0; save(); buildScene(); drawScene();
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
@@ -672,7 +812,7 @@ function titleInk(){ const cs = adults().slice(0, 3).map(d => { if(d.water && cf
 titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
-window.__px = {draw: () => draw(), get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }};
+window.__px = {draw: () => draw(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }};
 })();
 </script>
 </body>
