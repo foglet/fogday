@@ -72,7 +72,7 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
 - BART: track and the 50 stations from `https://www.bart.gov/dev/schedules/google_transit.zip` (Transitland `f-9q9-bart`,
   version d4185c0d, fetched in the browser pane 2026-11-17). `data/bart.json`: stop-to-stop pieces of the GTFS shapes
   (simplified to 6 m, delta encoded like the shuttle shapes) and each station with the lines that stop there; `D.bart`.
-  Drawn under every view (layers `bart-line`, `bart-st`): grey track, stations ringed in BART blue; always on, not clickable.
+  Drawn under every view (layers `bart-line`, `bart-st`): grey track, stations as 5 px dots in the same grey; always on, not clickable.
   No train times. The 511 regional feed (`f-sf~bay~area~rg`) carries BART too but needs an API key.
 
 ## Refresh the schedule
