@@ -593,14 +593,38 @@ const FIRE = [[255,244,170],[255,206,80],[250,140,40],[220,70,30],[120,74,64]];
 const fireCol = u => FIRE[Math.min(4, (u*5)|0)];
 const MOUTH = [27, 6.5];   // just past the snout, in sprite pixels (facing right; mirrored when facing left)
 const breathes = o => { if(o.breath > 0){ o.breath--; return true; } if(--o.fireT <= 0){ o.breath = 14 + (Math.random()*16|0); o.fireT = 150 + (Math.random()*350|0); } return false; };
-const flame = (x, y, dir, sc, vx0 = 0, vy0 = 0) => { const vx = dir*(1.4 + Math.random()*1.6)*sc + vx0, vy = (Math.random()-.5)*.8*sc + vy0;   // starts one step back, so it shows at the snout
-  return {x: x - vx + dir*Math.random()*sc, y: y + (Math.random()-.5)*1.5*sc - vy, vx, vy, sc, n:0, L: 10 + Math.random()*9}; };
+// Water dragons (blue and teal) spray hot water instead: droplets arc out and fall, shedding steam. Where fire meets
+// water both go up in a burst of steam. All breath bits share these helpers; `ang` is the heading (0 = right, + = down).
+const WATER = [[236,250,255],[170,226,250],[104,182,236],[70,142,212]];
+const STEAM = [[246,248,250],[226,232,238],[204,212,220]];
+const puff = (k, x, y, ang, sc, vx0 = 0, vy0 = 0) => { const R = Math.random, a = ang + (R()-.5)*(k === 'drop' ? .45 : k === 'steam' ? 1.2 : .3),
+    sp = (k === 'drop' ? 2 + R()*1.8 : k === 'steam' ? .3 + R()*.5 : 1.4 + R()*1.6)*sc, vx = Math.cos(a)*sp + vx0, vy = Math.sin(a)*sp + vy0;   // starts one step back, so it shows at the snout
+  return {k, x: x - vx, y: y - vy + (R()-.5)*1.2*sc, vx, vy, sc, n:0, L: k === 'fire' ? 10 + R()*9 : k === 'drop' ? 14 + R()*10 : 24 + R()*18}; };
+function moveBits(list, m){ const out = [];
+  for(const e of list){ if(e.n >= e.L) continue; e.n += m; e.x += e.vx*m; e.y += e.vy*m;
+    if(e.k === 'fire'){ e.vx *= Math.pow(.93, m); e.vy -= .03*e.sc*m; }
+    else if(e.k === 'drop'){ e.vx *= Math.pow(.985, m); e.vy += .12*e.sc*m; if(Math.random() < .05*m) out.push(puff('steam', e.x, e.y, -Math.PI/2, e.sc*.8)); }   // hot: it steams
+    else { e.vx *= Math.pow(.95, m); e.vy = e.vy*Math.pow(.95, m) - .025*e.sc*m; } }
+  const fires = list.filter(e => e.k === 'fire' && e.n < e.L), drops = fires.length ? list.filter(e => e.k === 'drop' && e.n < e.L) : [];
+  for(const f of fires) for(const d of drops){ if(f.n >= f.L || d.n >= d.L) continue; const r = 3*Math.max(f.sc, d.sc);   // fire meets water: a burst of steam
+    if(Math.abs(f.x-d.x) < r && Math.abs(f.y-d.y) < r){ f.n = f.L; d.n = d.L; for(let i=0; i<3; i++) out.push(puff('steam', (f.x+d.x)/2, (f.y+d.y)/2, -Math.PI/2, Math.max(f.sc, d.sc)*1.3)); } }
+  const keep = list.filter(e => e.n < e.L).concat(out); return keep.length > 700 ? keep.slice(-700) : keep; }
+const lookBit = e => { const u = Math.min(.999, e.n/e.L);   // [colour, size in art px, alpha]
+  if(e.k === 'fire') return [fireCol(u), u < .65 ? 2 : 1, u > .8 ? (1-u)*5 : 1];
+  if(e.k === 'drop') return [WATER[Math.min(3, (u*4)|0)], u < .3 ? 2 : 1, u > .85 ? (1-u)/.15 : 1];
+  return [STEAM[Math.min(2, (u*3)|0)], 1 + Math.min(2, (u*3)|0), .55*(1-u)]; };
+function breathOut(list, o, x, y, ang, sc, vx0 = 0, vy0 = 0){   // one tick of breath from a mouth at (x, y)
+  if(o.water){ for(let i=0; i<3; i++) list.push(puff('drop', x, y, ang, sc, vx0, vy0)); list.push(puff('steam', x, y, ang, sc)); }
+  else for(let i=0; i<4; i++) list.push(puff('fire', x, y, ang, sc, vx0, vy0)); }
+// Water dragons keep to blues and teals, whatever their hues drift to.
+const wet = d => Object.assign({}, d, {h: [195 + (((d.h[0]%360)+360)%360)/360*35, 165 + (((d.h[1]%360)+360)%360)/360*70, 180 + (((d.h[2]%360)+360)%360)/360*40], sv: [Math.max(.45, d.sv[0]), d.sv[1]]});
 const SKY = (() => {
   let cv = null, ctx = null, raf = 0, last = 0, fireAcc = 0; const fl = [], ember = [], R = Math.random, WS = 2;   // WS: CSS px per art px when walking
   // Ledges are only things you can see: a line of text (feet on the tops of the letters, walking its length), or a
   // visible horizontal edge: a border line, the top of a box, field or button with its own fill, or a picture's top.
   function wp(f){ const vw = innerWidth, vh = innerHeight, w = f.GW*f.sT, h = f.GH*f.sT;
-    f.wx = 12 + R()*Math.max(1, vw-w-24); f.wy = 12 + R()*Math.max(1, vh-h-24); f.wk = 60 + R()*90; }
+    f.wx = 12 + R()*Math.max(1, vw-w-24); f.wy = 12 + R()*Math.max(1, vh-h-24); f.wk = 60 + R()*90;
+    if(R() < .25 && f.x != null){ f.wx = Math.max(12, Math.min(vw-w-12, f.x + (R()-.5)*20)); f.wy = f.y > vh/2 ? 12 + R()*vh*.2 : vh*.65 + R()*vh*.2; } }   // now and then straight up or down
   const mc = document.createElement('canvas').getContext('2d'), capC = {};
   function capTop(el, r){   // top of the capital letters on this line, from the font's own metrics
     const cs = getComputedStyle(el), fs = parseFloat(cs.fontSize) || 16, font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
@@ -669,7 +693,7 @@ const SKY = (() => {
         if(!k || u >= 1){ if(k) k.flap = 3;
           if(k && !F.ok && R() < .6) F.ok = true; else { F.i++; F.ok = false; }   // a feeble first hop, then a proper one
           F.pt = 0; if(F.i >= F.kids.length){ F.phase = 'go'; F.wait = 0; } } }
-      else if(F.phase === 'go'){ if(air() >= MAXAIR && (F.wait += n) < 150) {} else { mom.hy = 0; famFly(F); F.rise = .01; } }
+      else if(F.phase === 'go'){ if(air() >= MAXAIR) {} else { mom.hy = 0; famFly(F); F.rise = .01; } }
       if(F.phase !== 'fly'){ stand(mom, MS);
         F.kids.forEach((k, i) => { k.dir = F.dir; k.x = F.dir > 0 ? mom.x - (i+1)*(W1*KS + 8) : mom.x + W1*MS + 8 + i*(W1*KS + 8); stand(k, KS); });
         mom.dir = F.dir;
@@ -689,6 +713,9 @@ const SKY = (() => {
     const gone = f => F.dir > 0 ? f.x > vw + 40 : f.x + W1*f.s < -40;
     if(F.t > 30 && F.all.every(f => !f.alive || f.mode !== 'fam' || gone(f))) F.all.forEach(f => { if(f.mode === 'fam') f.alive = false; });
   }
+  // Loop-the-loop: a full circle, turning upward first, the body following round (any angle, upside down at the top).
+  function loopTheLoop(f){ f.mode = 'loop';   // (not `loop`: that name is the frame loop)
+    f.lt = 0; f.lT = 50 + R()*20; f.la = f.dir > 0 ? 0 : Math.PI; f.lsp = Math.max(4, Math.hypot(f.vx || 0, f.vy || 0)); }
   function dizzy(f){ f.mode = 'dizzy'; f.dz = 0; f.dzw = -1; f.up = false; f.dzT1 = 25 + R()*15; f.dzT2 = f.dzT1 + 70 + R()*50; f.dzT3 = f.dzT2 + 15; }
   function fly(f){ f.pt = null; f.mode = 'roam'; f.vy = -3; f.ft = 60 + R()*120; f.sT = 1.6+R()*1.6; wp(f); }   // take off for 2 to 6 s
   function add(f){ if(RM.matches){ f.alive = false; return; }
@@ -731,7 +758,7 @@ const SKY = (() => {
   if(+store.get('dragTilt', 0) && navigator.permissions) navigator.permissions.query({name:'accelerometer'}).then(st => { if(st.state === 'granted') tiltOn(); }).catch(() => {});   // Chrome: sensor access already granted
   const lean = () => G.on ? G.x : 0;
   function next(f){   // after a flight: land somewhere (70%), go home (15%), or keep flying (15%)
-    f.pt = null; if(following()){ fly(f); return; } if(R() < .1){ dizzy(f); return; } const r = R(); if(r < .15) toward(f, false); else if(r < .7){ f.ledge = pickLedge(); if(f.ledge) f.mode = 'land'; else fly(f); } else if(r < .85) f.mode = f.home ? 'home' : 'off'; else fly(f); }   // visitors have no home: they fly away   // 1 flight in 10 ends in a dizzy spell
+    f.pt = null; if(following()){ fly(f); return; } if(R() < .1){ dizzy(f); return; } if(R() < .12){ loopTheLoop(f); return; } const r = R(); if(r < .15) toward(f, false); else if(r < .7){ f.ledge = pickLedge(); if(f.ledge) f.mode = 'land'; else fly(f); } else if(r < .85) f.mode = f.home ? 'home' : 'off'; else fly(f); }   // visitors have no home: they fly away   // 1 flight in 10 ends in a dizzy spell
   function step(f, n, ms){   // n = ticks (speed-scaled), ms = real time
     const vw = innerWidth, vh = innerHeight; f.k += n;
     if(!f.out && f.orphan()){ f.out = 'off'; f.lv = R()*20; }   // its canvas went away (page changed): leave
@@ -754,6 +781,8 @@ const SKY = (() => {
         else { f.mode = 'walk'; f.wt = 90 + R()*150; f.s = WS; f.lx = null; } }
       return; }
     if(f.mode === 'fam') return;   // placed by famStep
+    if(f.mode === 'loop'){ const u = Math.min(1, (f.lt += n)/f.lT), a = f.la - f.dir*2*Math.PI*u;
+      f.vx = Math.cos(a)*f.lsp; f.vy = Math.sin(a)*f.lsp; f.x += f.vx*n; f.y += f.vy*n; if(u >= 1) fly(f); return; }
     if(f.mode === 'dizzy'){ f.dz += n;
       if(f.dz < f.dzT1){ f.up = false; f.vx *= Math.pow(.88, n); f.vy *= Math.pow(.88, n);   // wobble
         const w = (f.dz/4)|0; if(w !== f.dzw){ f.dzw = w; f.dir *= -1; } }
@@ -804,14 +833,25 @@ const SKY = (() => {
     for(const f of fl.sort((p, q) => p.s - q.s)){   // smaller (farther) first
       if(RM.matches){ f.alive = false; continue; }
       const n = dt/33.3*f.spd(); step(f, n, dt); if(!f.alive) continue;
-      f.fa = (f.fa || 0) + n; while(f.fa >= 1){ f.fa--; if(!f.fading && f.a > .5 && f.mode !== 'dizzy' && breathes(f))   // fire, once per tick
-        for(let i=0; i<4; i++) ember.push(flame(f.x + (f.dir > 0 ? MOUTH[0] : f.GW-1-MOUTH[0])*f.s, f.y + MOUTH[1]*f.s, f.dir, f.s, (f.vx||0)*.5, (f.vy||0)*.5)); }
+      // facing: the body turns to the way it is going, at any angle; level when walking, dizzy, swooping or touching down
+      const mvx = f.x - (f.px == null ? f.x : f.px), mvy = f.y - (f.py == null ? f.y : f.py); f.px = f.x; f.py = f.y;
+      const level = f.mode === 'walk' || f.mode === 'dizzy' || f.mode === 'toward' || f.mode === 'past' || (f.mode === 'fam' && f.pose === 'walk') || ((f.mode === 'land' || f.mode === 'home') && f.near);
+      let want = 0; if(!level && Math.hypot(mvx, mvy) > .25*n) want = f.dir*Math.atan2(mvy, f.dir*mvx);
+      if(f.rot == null) f.rot = 0; let dr = want - f.rot; dr -= Math.round(dr/(2*Math.PI))*2*Math.PI;
+      f.rot = f.mode === 'loop' ? want : f.rot + dr*Math.min(1, .2*n);
+      f.fa = (f.fa || 0) + n; while(f.fa >= 1){ f.fa--; if(!f.fading && f.a > .5 && f.mode !== 'dizzy' && breathes(f)){   // fire or hot water, once per tick
+        const cs = Math.cos(f.rot), sn = Math.sin(f.rot), lx = ((f.dir > 0 ? MOUTH[0] : f.GW-1-MOUTH[0]) - f.GW/2)*f.s, ly = (MOUTH[1] - f.GH/2)*f.s;
+        breathOut(ember, f, f.x + f.GW*f.s/2 + lx*cs - ly*sn, f.y + f.GH*f.s/2 + lx*sn + ly*cs, (f.dir > 0 ? 0 : Math.PI) + f.rot, f.s, (f.vx||0)*.5, (f.vy||0)*.5); } }
       const x = f.x, y = f.y, s = f.s, pal = f.pal(),
         down = f.mode === 'walk' || ((f.mode === 'land' || f.mode === 'home') && f.near),   // legs come down just before touchdown
         dz = f.mode === 'dizzy', up = dz && f.up,
         fm = f.mode === 'fam',
         spr = fm ? (f.pose === 'walk' ? f.SPR[(((f.k/(f.ps < 2 ? 5 : 8))|0)%4)*2 + (((f.k/18)|0)%2)] : f.SPR[8 + ((f.k/f.flap)|0)%2]) : dz ? f.SPR[8 + (up ? 0 : ((f.k/8)|0)%2)] : f.mode === 'walk' ? f.SPR[(((f.k/7)|0)%4)*2 + (((f.k/18)|0)%2)] : f.SPR[(down ? 0 : 8) + (((f.k/(f.mode === 'roam' ? 6 : 4))|0)%2)];
       ctx.globalAlpha = Math.max(0, Math.min(1, f.a));
+      if(Math.abs(f.rot) > .03){ const cx = x + f.GW*s/2, cy = y + f.GH*s/2; ctx.save(); ctx.translate(cx, cy); ctx.rotate(f.rot);   // turned: draw about its centre
+        for(let r=0; r<f.GH; r++) for(let c=0; c<f.GW; c++){ const v = spr[r*f.GW + (f.dir < 0 ? f.GW-1-c : c)]; if(!v) continue;
+          const p = pal[v]; ctx.fillStyle = `rgb(${p[0]},${p[1]},${p[2]})`; ctx.fillRect((c - f.GW/2)*s, (r - f.GH/2)*s, s + .6, s + .6); }
+        ctx.restore(); continue; }
       for(let r=0; r<f.GH; r++){ const y0 = Math.round(y + r*s), y1 = Math.round(y + (r+1)*s); if(y1 <= y0) continue;
         for(let c=0; c<f.GW; c++){ const v = spr[(up ? f.GH-1-r : r)*f.GW + (f.dir < 0 ? f.GW-1-c : c)]; if(!v) continue;   // upside down: rows flipped
           const x0 = Math.round(x + c*s), x1 = Math.round(x + (c+1)*s); if(x1 <= x0) continue;
@@ -820,10 +860,9 @@ const SKY = (() => {
         const hx = x + (f.dir > 0 ? 20 : f.GW-1-20)*s, hy = y + (up ? f.GH - 1 + 2 : -2)*s, z = Math.max(1, Math.round(s)); ctx.fillStyle = 'rgb(255,214,60)';
         for(let i=0; i<3; i++){ const a = f.k*.25 + i*2.09; ctx.fillRect(Math.round(hx + Math.cos(a)*6*s), Math.round(hy + Math.sin(a)*1.5*s), z, z); } } }
     const m = dt/33.3;
-    for(const e of ember){ e.n += m; e.x += e.vx*m; e.y += e.vy*m; e.vx *= Math.pow(.93, m); e.vy -= .03*e.sc*m;
-      const u = e.n/e.L; if(u >= 1) continue; const c = fireCol(u), z = Math.max(1, Math.round(e.sc*(u < .65 ? 2 : 1)));
-      ctx.globalAlpha = u > .8 ? (1-u)*5 : 1; ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(Math.round(e.x - z/2), Math.round(e.y - z/2), z, z); }
-    for(let i=ember.length-1; i>=0; i--) if(ember[i].n >= ember[i].L) ember.splice(i, 1);
+    const kept = moveBits(ember, m); ember.length = 0; ember.push(...kept);
+    for(const e of ember){ const [c, sz, a] = lookBit(e), z = Math.max(1, Math.round(e.sc*sz));
+      ctx.globalAlpha = Math.max(0, a); ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(Math.round(e.x - z/2), Math.round(e.y - z/2), z, z); }
     ctx.globalAlpha = 1;
     for(let i=fl.length-1; i>=0; i--) if(!fl[i].alive) fl.splice(i, 1);
     if(fl.length || ember.length) raf = requestAnimationFrame(loop); else { cv.remove(); cv = null; } }
@@ -846,7 +885,7 @@ function makeDragons(SEL, OPEN){
   // Colours: any hue, plus each dragon's own strength (sat) and brightness (val), so some come out pale and some deep.
   const scheme = () => { const h0 = R()*360; return [h0, h0+60+R()*240, h0+R()*360]; };
   const tone = () => [.3+R()*.55, .62+R()*.33];
-  function palOf(d){ const [b,w,l] = d.h, [sa,va] = d.sv;
+  function palOf(d){ if(d.water) d = wet(d); const [b,w,l] = d.h, [sa,va] = d.sv;
     let p = {2:hsv(b,sa,va), 3:hsv(b,Math.min(1,sa+.08),va*.7), 4:hsv(l,.3,1), 5:hsv(w,Math.min(1,sa+.06),Math.min(1,va+.02)), 6:hsv(w,Math.min(1,sa+.13),va*.72)};
     const k = .38*(1-d.z); if(k > .01) for(const n in p) p[n] = p[n].map((c,j) => Math.round(c + (PAPER[j]-c)*k));
     return Object.assign(p, FIX); }
@@ -855,7 +894,8 @@ function makeDragons(SEL, OPEN){
     if(tt>=t0 && tt<=t1){ let k = (tt-t0)/Math.max(1,t1-t0); k = k*k*(3-2*k); return z0+(z1-z0)*k; } } return 0; }
   function mk(i, x, dir){ const sc = scheme(), sv = tone(); return {i, x, dir, h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], fly:0, hop:0, cool:0, y:0, b:0, z:1, jump:0, jdur:1, jh:0,
     nextj:30+(R()*70|0), boost:0, ov:0, tk:60+(R()*240|0), fireT:60+(R()*300|0), breath:0, a:1, ex:0, od:0, fk:0, mode:'', gone:'', back:false, rin:0, side:1, flier:null, ph:[R()*6.28, R()*6.28], step:0, wing:0}; }
-  function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; fire = []; exiting = false; vis = []; spawnT = 150; }
+  function reset(){ dg = [mk(0, W*.12, 1), mk(1, W*.62, -1), mk(2, W*.82, -1)]; if(R() < .4) dg[(R()*3)|0].water = true; fire = [];   // sometimes one of the three is a water dragon
+    exiting = false; vis = []; spawnT = 150; }
   // Free range: during the run each dragon now and then takes off from its canvas and lives on the page (SKY), flying,
   // landing and walking on things, and sometimes flying home. When the run is up (and no sync is running) they all
   // leave, one after another: fly off screen or fade out in the air. Waking them early cancels that.
@@ -863,11 +903,12 @@ function makeDragons(SEL, OPEN){
   function famVisit(kind, nk){ if(RM.matches) return;   // a mother and her babies, in her colours (babies paler)
     const sc = scheme(), sv = tone(), mk2 = (h, t) => ({h:[...h], th:[...h], sv:[...t], tsv:[...t], z:1});
     const vs = [mk2(sc, sv)]; for(let i=0; i<nk; i++) vs.push(mk2(sc.map(x => x + (R()-.5)*30), [sv[0]*.8, Math.min(.98, sv[1] + .08)]));
-    const fs = vs.map(v => ({SPR, GW, GH, pal: () => palOf(v), dir:1, x:-300, y:-300, ps:2, spd: () => SPD, home: null, orphan: () => !cv || !cv.isConnected}));
+    if(R() < .33) vs.forEach(v => v.water = true);   // a water family
+    const fs = vs.map(v => ({SPR, GW, GH, water: v.water, pal: () => palOf(v), dir:1, x:-300, y:-300, ps:2, spd: () => SPD, home: null, orphan: () => !cv || !cv.isConnected}));
     if(SKY.family(kind, fs[0], fs.slice(1))) vs.forEach((v, i) => { v.f = fs[i]; vis.push(v); }); }
-  function visit(){ if(RM.matches) return; const sc = scheme(), sv = tone(), v = {h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], z:1};
+  function visit(){ if(RM.matches) return; const sc = scheme(), sv = tone(), v = {h:[...sc], th:[...sc], sv:[...sv], tsv:[...sv], z:1, water: R() < .33};
     const side = R() < .5 ? -1 : 1, ps = 2;
-    const f = {SPR, GW, GH, pal: () => palOf(v), dir: -side, x: side < 0 ? -GW*ps - 10 : innerWidth + 10, y: innerHeight*(.2 + R()*.5), ps, spd: () => SPD,
+    const f = {SPR, GW, GH, water: v.water, pal: () => palOf(v), dir: -side, x: side < 0 ? -GW*ps - 10 : innerWidth + 10, y: innerHeight*(.2 + R()*.5), ps, spd: () => SPD,
       home: null, orphan: () => !cv || !cv.isConnected};
     SKY.add(f); if(f.alive){ v.f = f; vis.push(v); } }
   function startExit(){ exiting = true; const same = R() < .3, m0 = pick(['fly','fade']);
@@ -885,7 +926,7 @@ function makeDragons(SEL, OPEN){
   function launch(d){
     const p = spot(d);
     if(!p || RM.matches || !onScreen()){ if(exiting){ d.ex = 2; d.fk = 0; } return false; }   // can't fly from here: at the end, fade in place
-    const f = {SPR, GW, GH, pal: () => palOf(Object.assign({}, d, {z:1})), dir:d.dir, x:p.x, y:p.y, ps:p.s, spd: () => SPD,
+    const f = {SPR, GW, GH, water: d.water, pal: () => palOf(Object.assign({}, d, {z:1})), dir:d.dir, x:p.x, y:p.y, ps:p.s, spd: () => SPD,
       home: () => { d.y = 0; return spot(d); }, orphan: () => !cv || !cv.isConnected};   // full colour that keeps drifting with the dragon's hues
     SKY.add(f); if(!f.alive) return false; d.flier = f; d.gone = 'fly'; d.ex = 0; d.jump = d.fly = d.hop = 0;
     if(exiting) SKY.leave(f, d.mode === 'fade' ? 'fade' : 'off', 0); return true; }
@@ -948,9 +989,8 @@ function makeDragons(SEL, OPEN){
       else if(here < MAXD && SKY.air() < SKY.MAXAIR) visit(); }
     for(const d of dg){ if(d.gone || d.ex || d.a < 1 || !breathes(d)) continue;   // fire from the snout
       const sc = (2+d.z)/3, ox = Math.round(d.x), oy = Math.round(d.b + d.y*sc - 22*sc);
-      for(let i=0; i<4; i++) fire.push(flame(ox + (d.dir > 0 ? MOUTH[0] : GW-1-MOUTH[0])*sc, oy + MOUTH[1]*sc, d.dir, sc, d.dir*SP*.5)); }
-    for(const e of fire){ e.n++; e.x += e.vx; e.y += e.vy; e.vx *= .93; e.vy -= .03*e.sc; }
-    fire = fire.filter(e => e.n < e.L);
+      breathOut(fire, d, ox + (d.dir > 0 ? MOUTH[0] : GW-1-MOUTH[0])*sc, oy + MOUTH[1]*sc, d.dir > 0 ? 0 : Math.PI, sc, d.dir*SP*.5); }
+    fire = moveBits(fire, 1);
     for(const d of [...dg, ...vis]){ d.th = d.th.map(x => x+.08); d.h = d.h.map((a,j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a,j) => a+(d.tsv[j]-a)*.06); }
     sparks = sparks.map(([x,y,n]) => [x,y,n-1]).filter(s => s[2] > 0);
   }
@@ -968,8 +1008,8 @@ function makeDragons(SEL, OPEN){
       for(let y=0; y<dh; y++){ const sy = (y*GH/dh)|0;
         for(let x=0; x<dw; x++){ const sx = (x*GW/dw)|0, v = s[sy*GW + (d.dir < 0 ? GW-1-sx : sx)]; if(v) put(ox+x, oy+y, pal[v], d.a); } }
     }
-    for(const e of fire){ const u = e.n/e.L, c = fireCol(u), a = u > .8 ? (1-u)*5 : 1, x = Math.round(e.x), y = Math.round(e.y);
-      put(x, y, c, a); if(u < .65 && e.sc > .8){ put(x+1, y, c, a); put(x, y+1, c, a); put(x+1, y+1, c, a); } }   // hot middle: 2x2
+    for(const e of fire){ const [c, sz, a] = lookBit(e), z = e.sc > .8 ? sz : 1, x = Math.round(e.x - z/2), y = Math.round(e.y - z/2);   // fire, water, steam
+      for(let i=0; i<z; i++) for(let j=0; j<z; j++) put(x+i, y+j, c, Math.max(0, a)); }
     for(const [sx,sy,n] of sparks){ const r = 16-n; for(let a=0; a<8; a++) put(Math.round(sx+Math.cos(a*Math.PI/4)*r), Math.round(sy+Math.sin(a*Math.PI/4)*r*.7), SPK); }
     const e = Math.max(1, Math.round(W*.1));   // soft side edges: dragons walk in and out
     for(let x=0; x<e; x++){ const f = x/e;
