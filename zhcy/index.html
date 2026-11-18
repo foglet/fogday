@@ -103,9 +103,15 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 #vBooks,#vInfo{padding:var(--s2) 0 calc(var(--s5) + env(safe-area-inset-bottom))}
 .pane{background:var(--surface);border-radius:var(--r-lg);padding:var(--s3) var(--s4) var(--s4)}
 .pane+.pane{margin-top:var(--s3)}
+/* Meaning is a stack of cards: the chengyu (with its tone) first, then one card per field, spaced like Meaning and Search. */
+.pane.flat{background:none;padding:0;border-radius:0}
+.mcard,.grp{background:var(--surface);border-radius:var(--r-lg);padding:var(--s3) var(--s4) var(--s4)}
+.grp{margin-top:var(--s3)}
+.grp dt{margin-top:0}
+.mtone{margin:calc(-1 * var(--s2)) 0 0}
 .ph2{margin:0 0 var(--s2);font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 /* Meaning opens with the chengyu it belongs to; tapping it goes back to the card. */
-.mhead{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 var(--s3);width:100%;min-height:var(--tap);margin:0 0 var(--s3);padding:0;border:0;background:none;cursor:pointer;text-align:left}
+.mhead{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 var(--s3);width:100%;min-height:var(--tap);margin:0 0 var(--s2);padding:0;border:0;background:none;cursor:pointer;text-align:left}
 .mhead b{font-family:var(--cyt);font-weight:500;font-size:1.75rem;line-height:1.2}
 .mhead span{color:var(--primary);font-size:var(--fs-lg)}
 .info p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
@@ -190,9 +196,10 @@ dd.zh{font-family:var(--cyt);font-size:1.0625rem;line-height:1.7}
 .chip:hover{text-decoration:underline;text-underline-offset:4px}
 span.chip{cursor:default;color:var(--ink)}
 span.chip:hover{text-decoration:none}
-.tag{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);background:var(--surface-2);font-size:var(--fs-sm)}
-.tag.pos{background:var(--primary-tint);color:var(--primary)}
-.tag.neg{background:var(--accent-tint);color:#8f2820}
+/* Tone: outlined pill, coloured by tone (green positive, red negative, grey neutral) */
+.tag{display:inline-block;padding:2px 10px;border:1.5px solid currentColor;border-radius:var(--r-pill);background:none;color:var(--ink-2);font-size:var(--fs-sm)}
+.tag.pos{color:var(--primary)}
+.tag.neg{color:#8f2820}
 
 /* Language switch (Phosphor translate): bottom left. */
 .lang:hover,.lang:active{background:transparent;color:var(--ink)}
@@ -300,9 +307,12 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   </div>
 
   <div class="view" id="vBooks" hidden>
-    <section class="pane" aria-labelledby="mH">
-      <h2 class="ph2" id="mH" data-t="meaning">Meaning</h2>
-      <button class="mhead" id="mHead" type="button" data-ta="backCard"></button>
+    <section class="pane flat" aria-labelledby="mH">
+      <div class="mcard">
+        <h2 class="ph2" id="mH" data-t="meaning">Meaning</h2>
+        <button class="mhead" id="mHead" type="button" data-ta="backCard"></button>
+        <p class="mtone" id="mTone" hidden></p>
+      </div>
       <dl id="dl"></dl>
     </section>
     <section class="pane" aria-labelledby="dSearchH">
@@ -569,7 +579,7 @@ function paintMore(r){
     if(isZh()) h += `<dt>${t('dtNote')}</dt><dd lang="en">${esc(r.x)}</dd>`;
     else h += `<dt>${t('dtNote')}</dt><dd>${esc(r.x)}</dd><dt>${t('dtNoteZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zx)}</dd>`;
     const k = byExpr.get(r.e);
-    if(k == null){ $('#dl').innerHTML = h; return; }
+    if(k == null){ paintTone(null); $('#dl').innerHTML = cards(h); return; }
     r = Object.assign({}, D[k], {en: isZh() ? D[k].en : null});
   }
   const sk = {'褒': 'pos', '贬': 'neg', '中': 'neu'}[r.s], TONE = sk ? [sk === 'neu' ? '' : sk, t('tone')[sk]] : null;
@@ -580,8 +590,16 @@ function paintMore(r){
   if(r.o) h += `<dt>${t('dtO')}</dt><dd class="zh" lang="${LT()}">${esc(tr(r, 'o'))}</dd>`;
   if(r.syn) h += `<dt>${t('dtSyn')}</dt><dd>${chipList(r.syn, tr(r, 'syn'))}</dd>`;
   if(r.ant) h += `<dt>${t('dtAnt')}</dt><dd>${chipList(r.ant, tr(r, 'ant'))}</dd>`;
-  if(TONE) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${TONE[0]}" lang="${LT()}">${TONE[1]}</span></dd>`;
-  $('#dl').innerHTML = h;
+  paintTone(TONE);
+  $('#dl').innerHTML = cards(h);
+}
+// Each dt/dd pair becomes its own rounded card (a div inside dl is valid HTML).
+function cards(h){ return h.replace(/<dt>[\s\S]*?<\/dd>/g, m => `<div class="grp">${m}</div>`); }
+// Tone sits under the chengyu, not at the end of the list.
+function paintTone(TONE){
+  const el = $('#mTone');
+  el.hidden = !TONE;
+  el.innerHTML = TONE ? `<span class="vh">${esc(t('dtTone'))}: </span><span class="tag ${TONE[0]}" lang="${LT()}">${TONE[1]}</span>` : '';
 }
 $('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(!b) return; setView('home'); if(MODE !== 'cy') setMode('cy', +b.dataset.go); else show(+b.dataset.go, 0, true); });
 $('#mHead').addEventListener('click', () => setView('home', true));
