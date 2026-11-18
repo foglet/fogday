@@ -86,11 +86,14 @@ body.unpinned .more{margin-top:var(--s5)}
    On first load it waits for its fonts, so nothing swaps or jumps. */
 .face{transition:opacity 450ms cubic-bezier(.22,.61,.36,1),transform 450ms cubic-bezier(.22,.61,.36,1)}
 .face.pre{opacity:0;transform:translateX(var(--dx,0px));transition:none}
+/* A font change eases in the characters only; pinyin and definition do not move. */
+.chars{transition:opacity 450ms cubic-bezier(.22,.61,.36,1)}
+.chars.pre{opacity:0;transition:none}
 @media (prefers-reduced-motion:reduce){.face{transition:opacity 300ms ease}.face.pre{transform:none}.ibtn.spin svg{animation:none}}
 .star{position:absolute;bottom:var(--s2);right:var(--s2);color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--accent)}
 .star[aria-pressed="true"] svg{fill:currentColor}
-.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:var(--s2) 0;
+.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:calc(var(--s2) + 10px) 0;
   border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
   font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
 .chars span{display:inline-block;width:1em;text-align:center}
@@ -303,7 +306,8 @@ function setFont(f){
 $('#chars').addEventListener('click', () => {
   const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
   const f = FONTS[i][0]; store.set('font', f);
-  fontFor(f, plain(D[cur].e)).then(() => { face.style.setProperty('--dx', '0px'); face.classList.add('pre'); setFont(f); void face.offsetWidth; requestAnimationFrame(() => face.classList.remove('pre')); });
+  const ch = $('#chars');
+  fontFor(f, plain(D[cur].e)).then(() => { ch.classList.add('pre'); setFont(f); void ch.offsetWidth; requestAnimationFrame(() => ch.classList.remove('pre')); });
 });
 
 /* ---------- stars ---------- */
