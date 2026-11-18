@@ -53,6 +53,9 @@ body[data-font="xing"]{--cy:var(--xing);--cyw:400}
 body[data-font="cao"]{--cy:var(--cao);--cyw:400}
 button,input{font:inherit;color:inherit}
 a{color:var(--primary)}
+/* Off-site links end in a 45 degree arrow (Phosphor ArrowUpRight). fogday.com links and local files stay plain. */
+a[href^="http"]:not([href*="//fogday.com"])::after{content:"";display:inline-block;width:.8em;height:.8em;margin-left:.15em;vertical-align:-.05em;
+  background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M204,64V168a12,12,0,0,1-24,0V93L72.49,200.49a12,12,0,0,1-17-17L163,76H88a12,12,0,0,1,0-24H192A12,12,0,0,1,204,64Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M204,64V168a12,12,0,0,1-24,0V93L72.49,200.49a12,12,0,0,1-17-17L163,76H88a12,12,0,0,1,0-24H192A12,12,0,0,1,204,64Z'/%3E%3C/svg%3E") center/contain no-repeat}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
 .wrap{width:100%;max-width:34rem;margin:0 auto;padding:0 var(--s4)}
