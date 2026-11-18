@@ -125,6 +125,13 @@ body.unpinned .actions{margin-top:var(--s2)}
 /* Play (left) and star (right) sit just above MEANING. */
 .actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s4)}
 .actions .note{flex:1;margin:0;text-align:center}
+/* 36: Thirty-Six Stratagems switch, right of play. Red when on. */
+.n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
+  font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}
+.n36:hover{color:var(--ink)}
+.n36[aria-pressed="true"]{color:var(--accent)}
+/* Chapter line: floats above the characters so it never moves them. */
+.chap{position:absolute;left:0;right:0;top:var(--s2);white-space:nowrap;margin:0;text-align:center;font-size:var(--fs-sm);color:var(--accent);letter-spacing:.02em}
 /* Copy (Phosphor clipboard-text, MIT): plain icon just left of the star. */
 .ph{fill:currentColor;stroke:none}
 .copy{color:var(--ink-2);margin-left:auto;margin-right:-8px}   /* 32px of space between the copy and star icons */
@@ -156,9 +163,9 @@ span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 
 footer{padding:0 0 calc(var(--s5) + env(safe-area-inset-bottom))}
 footer .info{margin-top:var(--s2)}
-/* Language switch (Phosphor translate) under INFO, centred over the chevron like the star. */
-.langrow{display:flex;justify-content:flex-end;margin-top:var(--s2)}
-.lang{margin-right:5px;color:var(--ink-2)}
+/* Language switch (Phosphor translate) under INFO, at the left. */
+.langrow{display:flex;justify-content:flex-start;margin-top:var(--s2)}
+.lang{margin-left:5px;color:var(--ink-2)}   /* icon lines up with the INFO label */
 .lang:hover,.lang:active{background:transparent;color:var(--ink)}
 html[lang="zh-Hans"] .brand .sub{display:none}
 footer .morebody p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
@@ -213,8 +220,8 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 <body>
 <header class="top">
   <div class="wrap bar">
-    <a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home"><span class="seal" aria-hidden="true">成</span>
-      <span class="ttl"><b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub">每日成语</small></span></a>
+    <a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home"><span class="seal" id="seal" aria-hidden="true">成</span>
+      <span class="ttl"><b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small></span></a>
     <div class="acts">
       <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search" data-ta="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
@@ -228,6 +235,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     <h1 class="vh" id="when" tabindex="-1">Chengyu</h1>
 
     <article class="card" id="card" aria-labelledby="when">
+      <p class="chap" id="chap" hidden></p>
       <div class="face pre" id="face">
         <button class="chars" id="chars" type="button" lang="zh-Hans"></button>
         <div class="meta" id="meta">
@@ -242,6 +250,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     <div class="actions">
       <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
+      <button class="n36" id="b36" type="button" aria-pressed="false" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
       <p class="note" id="note" role="status"></p>
       <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu" data-ta="copy">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></svg></button>
@@ -262,11 +271,11 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
       <h2><button class="tog" id="infoTog" type="button" aria-expanded="false" aria-controls="infoBody"><span data-t="info">Info</span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
       <div class="morebody" id="infoBody" hidden>
-        <p data-t="count">This dataset holds 1,015 chengyu.</p>
-        <p data-th="data">Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
+        <p data-t="count" id="infoA">This dataset holds 1,015 chengyu.</p>
+        <p data-th="data" id="infoB">Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
         <p data-th="fonts">Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).</p>
         <p><button class="lnk" id="bSync" type="button" aria-haspopup="dialog" data-t="syncLink">Sync stars across devices</button></p>
-        <p><a href="/">fogday.com</a></p>
+        <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
       </div>
     </section>
     <div class="langrow"><button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
@@ -308,6 +317,11 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 "use strict";
 const D = /*DATA*/[];
 const N = D.length, APP = 'zhcy:';
+// The Thirty-Six Stratagems: [characters, pinyin, English name, English note, Chinese note]; six per chapter.
+const S36 = /*S36*/{};
+const S = S36.items.map((x, k) => ({e: x[0], p: x[1], en: x[2], x: x[3], zx: x[4], n: k + 1, ch: Math.floor(k / 6), s36: true}));
+const byStrat = new Map(S.map((r, k) => [r.e, k]));
+let MODE = 'cy', LIST = D, cyCur = 0;
 /* ---------- language: English or Simplified Chinese ---------- */
 const NF = N.toLocaleString('en-US');
 const T = {
@@ -322,14 +336,18 @@ const T = {
     lang:'切换到简体中文', favOn:'In favorites. Tap to remove', favOff:'Add to favorites', fav:w => `Favorite ${w}`,
     favorites:'Favorites', favEmpty:'Favorites appear here. Tap the star by a chengyu to add it.',
     matches:(n, m) => n > m ? `${n} matches, showing ${m}` : `${n} match${n === 1 ? '' : 'es'}`, none:'No matches',
-    pos:(e, i) => `${e}, ${i} of ${N}`, title:'Chengyu of the day', fontLbl:(e, f) => `${e}. Font: ${f}. Tap for the next font.`,
+    pos:(e, i, n) => `${e}, ${i} of ${n}`, title:'Chengyu of the day', fontLbl:(e, f) => `${e}. Font: ${f}. Tap for the next font.`,
     copied:'Copied', noCopy:'Could not copy', noSpeech:'This browser cannot speak. Try Safari or Chrome.',
     noPlay:'Could not play. Add a Chinese (China) voice in your device settings.', noVoice:'No Mandarin voice found; using the default voice.',
     synced:'Synced.', badTok:'GitHub did not accept this token. Make a new one with the gist scope, then connect again.',
     offline:'Offline. Stars will sync when you are back online.', noGH:'Could not reach GitHub. Try Sync now.',
     connecting:'Connecting...', syncing:'Syncing...', discon:'Disconnected. Stars stay on this device.',
     dtZh:'释义 Explanation', dtEn:'English', dtEn2:'Another translation', dtO:'出处 Origin', dtSyn:'近义 Similar', dtAnt:'反义 Opposite', dtTone:'感情色彩 Tone',
-    tone:{'褒':'褒义 Positive', '贬':'贬义 Negative', '中':'中性 Neutral'}},
+    tone:{'褒':'褒义 Positive', '贬':'贬义 Negative', '中':'中性 Neutral'},
+    b36:'Thirty-Six Stratagems', brand36:'Stratagems', home36:'Thirty-Six Stratagems, back to chengyu', title36:'Thirty-Six Stratagems',
+    chap:(c, i) => `Chapter ${c + 1} · ${S36.chapters[c].zh} · ${i} of 36`, dtChap:'Chapter', dtNote:'Meaning', dtNoteZh:'释义',
+    info36A:'The Thirty-Six Stratagems (三十六计): 36 proverbs on strategy and deception, in six chapters of six.',
+    info36B:'Names, readings and chapter titles follow <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">Wikipedia</a> and <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies (China Strategies, PDF)</a>. The short explanations are written for this page.'},
   zh: {home:'每日成语，首页', brand:'每日成语', search:'搜索', play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
     ph:'画蛇、hua she、snake', qlabel:'按汉字、拼音或英文搜索', count:`本数据集共收录成语 ${NF} 条。`,
     data:'数据：Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>。采用 <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> 许可。释义来自汉典（Zdic），英文来自 Pleco 与 Jiao 等，均由该数据集汇编。',
@@ -341,23 +359,40 @@ const T = {
     lang:'Switch to English', favOn:'已收藏，点按取消', favOff:'加入收藏', fav:w => `收藏 ${w}`,
     favorites:'收藏', favEmpty:'收藏的成语会显示在这里。点按星标即可收藏。',
     matches:(n, m) => n > m ? `找到 ${n} 条，显示前 ${m} 条` : `找到 ${n} 条`, none:'没有结果',
-    pos:(e, i) => `${e}，第 ${i} 条，共 ${N} 条`, title:'每日成语', fontLbl:(e, f) => `${e}。字体：${f}。点按换下一种字体。`,
+    pos:(e, i, n) => `${e}，第 ${i} 条，共 ${n} 条`, title:'每日成语', fontLbl:(e, f) => `${e}。字体：${f}。点按换下一种字体。`,
     copied:'已复制', noCopy:'无法复制', noSpeech:'此浏览器无法朗读，请使用 Safari 或 Chrome。',
     noPlay:'无法播放。请在设备设置中添加中文（中国大陆）语音。', noVoice:'未找到普通话语音，使用默认语音。',
     synced:'已同步。', badTok:'GitHub 未接受此令牌。请生成具有 gist 权限的新令牌后重新连接。',
     offline:'当前离线。恢复联网后会同步收藏。', noGH:'无法连接 GitHub，请点按“立即同步”重试。',
     connecting:'正在连接…', syncing:'正在同步…', discon:'已断开连接。收藏仍保存在本设备。',
     dtZh:'释义', dtEn:'英文', dtEn2:'另一译法', dtO:'出处', dtSyn:'近义', dtAnt:'反义', dtTone:'感情色彩',
-    tone:{'褒':'褒义', '贬':'贬义', '中':'中性'}}
+    tone:{'褒':'褒义', '贬':'贬义', '中':'中性'},
+    b36:'三十六计', brand36:'三十六计', home36:'三十六计，返回成语', title36:'三十六计',
+    chap:(c, i) => `${S36.chapters[c].num} ${S36.chapters[c].zh} · 第 ${i} 计`, dtChap:'套', dtNote:'英文释义', dtNoteZh:'释义',
+    info36A:'三十六计：关于谋略与计策的三十六条成语，共六套，每套六计。',
+    info36B:'计名、读音与各套名称参考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">维基百科</a> 与 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。简短释义为本页所写。'}
 };
 let LANG = 'en';
 const t = (k, ...a) => { const v = (T[LANG] && T[LANG][k] != null) ? T[LANG][k] : T.en[k]; return typeof v === 'function' ? v(...a) : v; };
+// Header, logo, INFO and the 36 switch follow the mode (chengyu or stratagems).
+function paintMode(){
+  const s = MODE === 's36';
+  document.getElementById('seal').textContent = s ? '计' : '成';
+  document.querySelector('[data-t="brand"]').textContent = s ? t('brand36') : t('brand');
+  document.getElementById('sub').textContent = s ? '三十六计' : '每日成语';
+  document.querySelector('.brand').setAttribute('aria-label', s ? t('home36') : t('home'));
+  document.getElementById('infoA').textContent = s ? t('info36A') : t('count');
+  document.getElementById('infoB').innerHTML = s ? t('info36B') : t('data');
+  const b = document.getElementById('b36'); b.setAttribute('aria-pressed', s ? 'true' : 'false');
+  document.getElementById('chap').hidden = !s;
+}
 function applyLang(){
   document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
   document.querySelectorAll('[data-th]').forEach(el => el.innerHTML = t(el.dataset.th));   // our own strings only
   document.querySelectorAll('[data-ta]').forEach(el => el.setAttribute('aria-label', t(el.dataset.ta)));
   document.querySelectorAll('[data-tp]').forEach(el => el.setAttribute('placeholder', t(el.dataset.tp)));
+  paintMode();
   const lb = document.getElementById('lang');
   lb.setAttribute('aria-label', t('lang')); lb.setAttribute('lang', LANG === 'zh' ? 'en' : 'zh-Hans');
 }
@@ -394,13 +429,13 @@ let font = 'cao';
 function setFont(f){
   const F = FONTS.find(x => x[0] === f) || FONTS[0];
   font = F[0]; document.body.dataset.font = font;
-  $('#chars').setAttribute('aria-label', t('fontLbl', plain(D[cur].e), LANG === 'zh' ? F[1] : F[2]));
+  $('#chars').setAttribute('aria-label', t('fontLbl', plain(LIST[cur].e), LANG === 'zh' ? F[1] : F[2]));
 }
 $('#chars').addEventListener('click', () => {
   const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
   const f = FONTS[i][0]; store.set('font2', f);
   const ch = $('#chars');
-  fontFor(f, plain(D[cur].e)).then(() => { setFont(f); from(ch, 'none', `opacity 450ms ${EASE}`); });
+  fontFor(f, plain(LIST[cur].e)).then(() => { setFont(f); from(ch, 'none', `opacity 450ms ${EASE}`); });
 });
 
 /* ---------- stars ---------- */
@@ -413,11 +448,12 @@ function toggleStar(e){
   paintStar(); paintListStars(); syncSoon();
 }
 function paintStar(){
-  const on = isStar(D[cur].e), b = $('#star');
+  const on = isStar(LIST[cur].e), b = $('#star');
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
   b.setAttribute('aria-label', on ? t('favOn') : t('favOff'));
 }
-$('#star').addEventListener('click', () => toggleStar(D[cur].e));
+$('#star').addEventListener('click', () => toggleStar(LIST[cur].e));
+$('#b36').addEventListener('click', () => setMode(MODE === 's36' ? 'cy' : 's36'));
 
 /* copy: characters, pinyin and English, one per line */
 const CLIP_D = 'M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z', CHECK_D = 'M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z';
@@ -428,7 +464,7 @@ async function copyText(t){
     document.body.appendChild(a); a.select(); const ok = document.execCommand('copy'); a.remove(); return ok; }catch(e){ return false; }
 }
 $('#copy').addEventListener('click', async () => {
-  const r = D[cur], ok = await copyText([plain(r.e), r.p, r.en].filter(Boolean).join('\n'));
+  const r = LIST[cur], ok = await copyText([plain(r.e), r.p, r.en].filter(Boolean).join('\n'));
   const path = $('#copy path');
   if(ok){ path.setAttribute('d', CHECK_D); note(t('copied')); clearTimeout(copyTimer); copyTimer = setTimeout(() => path.setAttribute('d', CLIP_D), 1500); }
   else note(t('noCopy'));
@@ -448,8 +484,18 @@ function chipList(s){
     : `<span class="chip" lang="zh-Hans">${esc(w)}</span>`).join('') + '</div>';
 }
 function paintMore(r){
-  const S = r.s ? [{'褒': 'pos', '贬': 'neg', '中': ''}[r.s], t('tone')[r.s]] : null;
   let h = '';
+  if(r.s36){
+    // Stratagem: chapter, explanations, then anything the chengyu dataset adds for the same words.
+    const c = S36.chapters[r.ch];
+    h += `<dt>${t('dtChap')}</dt><dd>${esc(c.num)} <span lang="zh-Hans">${esc(c.zh)}</span> ${esc(c.en)}</dd>`;
+    if(LANG === 'zh') h += `<dt>${t('dtNote')}</dt><dd lang="en">${esc(r.x)}</dd>`;
+    else h += `<dt>${t('dtNote')}</dt><dd>${esc(r.x)}</dd><dt>${t('dtNoteZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zx)}</dd>`;
+    const k = byExpr.get(r.e);
+    if(k == null){ $('#dl').innerHTML = h; return; }
+    r = Object.assign({}, D[k], {en: LANG === 'zh' ? D[k].en : null});
+  }
+  const TONE = r.s ? [{'褒': 'pos', '贬': 'neg', '中': ''}[r.s], t('tone')[r.s]] : null;
   // In Chinese the card shows the Chinese explanation, so MEANING leads with the English instead.
   if(LANG === 'zh'){ if(r.en) h += `<dt>${t('dtEn')}</dt><dd lang="en">${esc(r.en)}</dd>`; }
   else if(r.zh) h += `<dt>${t('dtZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
@@ -457,10 +503,10 @@ function paintMore(r){
   if(r.o) h += `<dt>${t('dtO')}</dt><dd class="zh" lang="zh-Hans">${esc(r.o)}</dd>`;
   if(r.syn) h += `<dt>${t('dtSyn')}</dt><dd>${chipList(r.syn)}</dd>`;
   if(r.ant) h += `<dt>${t('dtAnt')}</dt><dd>${chipList(r.ant)}</dd>`;
-  if(S) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${S[0]}" lang="zh-Hans">${S[1]}</span></dd>`;
+  if(TONE) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${TONE[0]}" lang="zh-Hans">${TONE[1]}</span></dd>`;
   $('#dl').innerHTML = h;
 }
-$('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(b) show(+b.dataset.go, 0, true); });
+$('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(!b) return; if(MODE !== 'cy') setMode('cy', +b.dataset.go); else show(+b.dataset.go, 0, true); });
 
 const face = $('#face');
 let booted = false;
@@ -516,24 +562,38 @@ function centerStage(){
 }
 // The definition line: English, or the Chinese explanation when the site is in Chinese.
 function paintDef(r){
-  const d = $('#def'), zh = LANG === 'zh' && r.zh;
-  d.textContent = zh ? r.zh : (r.en || ''); d.lang = zh ? 'zh-Hans' : 'en';
+  const zhText = r.s36 ? r.zx : r.zh, zh = LANG === 'zh' && zhText, d = $('#def');
+  d.textContent = zh ? zhText : (r.en || ''); d.lang = zh ? 'zh-Hans' : 'en';
+}
+function paintHead(r){
+  $('#when').textContent = t('pos', plain(r.e), cur + 1, LIST.length);
+  document.title = `${plain(r.e)} | ${t(MODE === 's36' ? 'title36' : 'title')}`;
+  if(r.s36) $('#chap').textContent = t('chap', r.ch, r.n);
+}
+// Switch between the chengyu and the Thirty-Six Stratagems. Leaving 36 returns to the chengyu you were on.
+function setMode(m, i){
+  if(m === MODE && i == null) return;
+  if(m === 's36' && MODE !== 's36') cyCur = cur;
+  MODE = m; LIST = m === 's36' ? S : D;
+  paintMode();
+  show(i != null ? i : (m === 's36' ? 0 : cyCur), 0);
 }
 function show(i, dir, focus){
   stopSpeech();
-  cur = ((i % N) + N) % N;
-  const r = D[cur];
+  const n = LIST.length;
+  cur = ((i % n) + n) % n;
+  const r = LIST[cur];
   swapIn(dir, () => {
     $('#chars').innerHTML = charsHtml(r.e);
     $('#pin').textContent = `(${r.p})`;
     paintDef(r);
     setFont(font);
   });
-  $('#when').textContent = t('pos', plain(r.e), cur + 1);
-  document.title = `${plain(r.e)} | ${t('title')}`;
+  paintHead(r);
   setFont(font);
   paintStar(); paintMore(r); note('');
-  try{ history.replaceState(null, '', cur === today ? location.pathname : '#' + encodeURIComponent(plain(r.e))); }catch(e){}
+  const hash = MODE === 's36' ? '#36-' + r.n : (cur === today ? '' : '#' + encodeURIComponent(plain(r.e)));
+  try{ history.replaceState(null, '', location.pathname + hash); }catch(e){}
   if(focus) $('#when').focus({preventScroll:false});
 }
 document.addEventListener('keydown', ev => {
@@ -595,7 +655,7 @@ function stopSpeech(){ if(SS && (SS.speaking || SS.pending)) SS.cancel(); }
 $('#play').addEventListener('click', () => {
   if(!SS){ note(t('noSpeech')); return; }
   stopSpeech();
-  const u = new SpeechSynthesisUtterance(plain(D[cur].e));
+  const u = new SpeechSynthesisUtterance(plain(LIST[cur].e));
   u.lang = 'zh-CN'; u.rate = .8; if(voice) u.voice = voice;
   u.onerror = e => { if(e.error !== 'interrupted' && e.error !== 'canceled') note(t('noPlay')); };
   SS.speak(u);
@@ -615,7 +675,7 @@ document.querySelectorAll('dialog').forEach(d => {
   d.querySelector('[data-close]').addEventListener('click', () => d.close());
 });
 // Picking a result: close, then show it and move focus to the card heading.
-function pick(i, d){ opener = null; d.close(); show(i, 0, true); }
+function pick(i, d, s36){ opener = null; d.close(); if(s36) setMode('s36', i); else if(MODE !== 'cy') setMode('cy', i); else show(i, 0, true); $('#when').focus({preventScroll:false}); }
 
 /* search */
 function search(q){
@@ -634,37 +694,39 @@ function search(q){
   }
   return hits.sort((a, b) => b[0] - a[0] || a[1] - b[1]).map(h => h[1]);
 }
-function rowHtml(i){
-  const r = D[i];
+function rowHtml(i, s36){
+  const r = s36 ? S[i] : D[i];
   const on = isStar(r.e), w = esc(plain(r.e));
-  return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
-    + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="${esc(t('fav', w))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
+  return `<li><button class="row" type="button" data-i="${i}"${s36 ? ' data-s36="1"' : ''}><b lang="zh-Hans">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
+    + `<button class="ibtn sstar" type="button" data-star="${i}"${s36 ? ' data-s36="1"' : ''} aria-pressed="${on}" aria-label="${esc(t('fav', w))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
 }
 let qTimer = 0;
 function runSearch(){
   const q = $('#q').value, hits = search(q), MAX = 60;
   if(!q.trim()){
     // No query yet: show the starred list.
-    const list = Object.entries(stars).filter(([e]) => byExpr.has(e)).sort((a, b) => b[1] - a[1]).map(([e]) => byExpr.get(e));
-    $('#qList').innerHTML = list.map(rowHtml).join('');
+    // Favorites: chengyu, and stratagems that are not also in the chengyu list.
+    const list = Object.entries(stars).filter(([e]) => byExpr.has(e) || byStrat.has(e)).sort((a, b) => b[1] - a[1])
+      .map(([e]) => byExpr.has(e) ? rowHtml(byExpr.get(e)) : rowHtml(byStrat.get(e), true));
+    $('#qList').innerHTML = list.join('');
     $('#qCount').textContent = list.length ? t('favorites') : t('favEmpty');
     $('#qCount').classList.toggle('fav', list.length > 0);
     return;
   }
-  $('#qList').innerHTML = hits.slice(0, MAX).map(rowHtml).join('');
+  $('#qList').innerHTML = hits.slice(0, MAX).map(i => rowHtml(i)).join('');
   $('#qCount').classList.remove('fav');
   $('#qCount').textContent = hits.length ? t('matches', hits.length, MAX) : t('none');
 }
 $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
-$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, $('#dSearch')); } });
+$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, $('#dSearch'), !!b.dataset.s36); } });
 $('#qList').addEventListener('click', ev => {
   const st = ev.target.closest('[data-star]');
-  if(st){ toggleStar(D[+st.dataset.star].e); return; }   // the row stays, so focus stays on this star
-  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dSearch'));
+  if(st){ toggleStar((st.dataset.s36 ? S : D)[+st.dataset.star].e); return; }   // the row stays, so focus stays on this star
+  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dSearch'), !!b.dataset.s36);
 });
 // Star buttons in the list follow the stored state, updated in place.
-function paintListStars(){ document.querySelectorAll('[data-star]').forEach(b => b.setAttribute('aria-pressed', isStar(D[+b.dataset.star].e) ? 'true' : 'false')); }
-$('#bSearch').addEventListener('click', ev => { runSearch(); openDlg($('#dSearch'), ev.currentTarget); $('#q').focus(); $('#q').select(); });
+function paintListStars(){ document.querySelectorAll('[data-star]').forEach(b => b.setAttribute('aria-pressed', isStar((b.dataset.s36 ? S : D)[+b.dataset.star].e) ? 'true' : 'false')); }
+$('#bSearch').addEventListener('click', ev => { if(MODE !== 'cy') setMode('cy'); runSearch(); openDlg($('#dSearch'), ev.currentTarget); $('#q').focus(); $('#q').select(); });
 
 
 /* ---------- sync ----------
@@ -753,25 +815,27 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
   $('#lang').addEventListener('click', () => {
     LANG = LANG === 'zh' ? 'en' : 'zh'; store.set('lang', LANG); applyLang();
     // Repaint what depends on the language, in place (no slide).
-    const r = D[cur]; paintDef(r); paintMore(r); paintStar(); setFont(font);
-    $('#when').textContent = t('pos', plain(r.e), cur + 1); document.title = `${plain(r.e)} | ${t('title')}`;
+    const r = LIST[cur]; paintDef(r); paintMore(r); paintStar(); setFont(font);
+    paintHead(r);
     if($('#dSearch').open) runSearch();
   });
   store.del('font');   // older saved choice; caoshu is now the default
   font = store.get('font2', 'cao'); setFont(font);
   const fromHash = () => { let h = ''; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} const i = h ? IDX.findIndex(x => x.c === h) : -1; return i; };
-  const i0 = fromHash(); show(i0 >= 0 ? i0 : today, 0);
+  const s36Hash = () => { const m = location.hash.match(/^#36-(\d+)$/); return m && +m[1] >= 1 && +m[1] <= 36 ? +m[1] - 1 : -1; };
+  const i0 = fromHash(), k0 = s36Hash();
+  if(k0 >= 0){ cyCur = today; MODE = 's36'; LIST = S; paintMode(); show(k0, 0); } else show(i0 >= 0 ? i0 : today, 0);
   centerStage();
   // Only re-centre when the width changes (rotation). Mobile Safari fires height-only resizes as its toolbar hides on scroll.
   let w0 = innerWidth; addEventListener('resize', () => { if(innerWidth !== w0){ w0 = innerWidth; centerStage(); } });
-  Promise.race([Promise.all([document.fonts ? document.fonts.ready : 0, fontFor(font, plain(D[cur].e))]), wait(2500)])
+  Promise.race([Promise.all([document.fonts ? document.fonts.ready : 0, fontFor(font, plain(LIST[cur].e))]), wait(2500)])
     .then(() => { booted = true; requestAnimationFrame(() => face.classList.remove('pre')); });
-  window.addEventListener('hashchange', () => { const i = fromHash(); if(i >= 0 && i !== cur) show(i, 0); });
+  window.addEventListener('hashchange', () => { const k = s36Hash(); if(k >= 0){ setMode('s36', k); return; } const i = fromHash(); if(i >= 0) setMode('cy', i); });
   syncSoon(800);
   // A new day while the page is open: move to the new chengyu if the reader was on today's.
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'visible') return;
-    const t = todayIdx(); if(t !== today){ const was = cur === today; today = t; if(was) show(today, 0); }
+    const t = todayIdx(); if(t !== today){ const was = MODE === 'cy' && cur === today; today = t; if(was) show(today, 0); }
     syncSoon(500);
   });
 })();
