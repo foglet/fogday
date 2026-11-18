@@ -291,6 +291,28 @@ const hash = (x, y) => { let h = (x*374761393 + y*668265263) | 0; h = (h ^ (h >>
 function riverX(yA){ const u = clamp((yA - gTopA)/Math.max(1, gh - gTopA), 0, 1); return gw*(RIV.base + RIV.amp*Math.sin(u*3.4 + RIV.ph)*(.35 + .65*u)); }
 function riverW(yA){ const u = clamp((yA - gTopA)/Math.max(1, gh - gTopA), 0, 1); return (2 + 24*Math.pow(u, 1.2))*Math.min(1.6, gw/130); }
 const inRiver = (cx, fy) => RIV && fy > gTopA*P && Math.abs(cx/P - riverX(fy/P)) < riverW(fy/P)/2 - 1;
+/* ---------- eclipse: every 30th scene shown (each visit and each Random tap counts), two minutes of real time ----------
+   Day or sunset: a solar eclipse (the moon crosses the sun, the light fades, stars and the corona at totality).
+   Night: a lunar eclipse (Earth's shadow turns the full moon copper). On the moon: Earth passes before the sun, a red ring.
+   Coverage rises over the first 40%, holds total for the middle 20% (24 s), and falls. */
+let ORB = null, ECL = null, ESTARS = [];
+const ECL_MS = 120000;
+function eclK(){ if(!ECL) return 0; const u = ECL.t/ECL_MS; return u < .4 ? (u/.4)**1.2 : u < .6 ? 1 : ((1 - u)/.4)**1.2; }
+const eclDark = () => ECL && (cfg.sky === 'day' || cfg.sky === 'sunset') ? clamp((eclK() - .8)/.2, 0, 1)**1.5 : 0;   // daylight only fades near totality
+function countShow(){ let n = 0; try { n = (+localStorage.getItem('px:shows') || 0) + 1; localStorage.setItem('px:shows', n); } catch(e) {} if(n % 30 === 0) startEclipse(); }
+function startEclipse(){ ECL = {t: 0}; ESTARS = []; for(let i=0; i<gw*gh/120; i++) ESTARS.push([(R()*gw)|0, (R()*Math.max(4, gTopA*.85))|0]); }
+function drawEclipse(d){ if(!ECL || !ORB) return; const c = eclK(), {x: ox, y: oy, r} = ORB, set = (x, y, col, a = 1) => { x |= 0; y |= 0; if(x < 0 || y < 0 || x >= gw || y >= gh) return; const i = (y*gw + x)*4; d[i] += (col[0] - d[i])*a; d[i+1] += (col[1] - d[i+1])*a; d[i+2] += (col[2] - d[i+2])*a; };
+  if(cfg.sky === 'day' || cfg.sky === 'sunset'){ const mx = ox - (1 - c)*2.2*r*(ECL.t > ECL_MS/2 ? -1 : 1), R2 = r*1.04;   // the moon's disc comes in from one side and leaves by the other
+    const dk = eclDark();
+    if(dk > 0){ for(let i=0; i<d.length; i+=4){ d[i] = d[i]*(1 - .7*dk) + 14*dk; d[i+1] = d[i+1]*(1 - .7*dk) + 18*dk; d[i+2] = d[i+2]*(1 - .62*dk) + 46*dk; }   // dusk at midday
+      for(const [x, y] of ESTARS) set(x, y, [230,234,255], dk); }
+    if(c > .96){ for(let a=0; a<64; a++){ const ang = a*Math.PI/32, L = r + 1 + (a % 3) + (a % 7 === 0 ? 2 : 0); for(let k=r + 1; k<=L; k++) set(ox + Math.cos(ang)*k, oy + Math.sin(ang)*k, [255,248,220], .85*(1 - (k - r)/(L - r + 1))); } }   // corona
+    for(let y=-Math.ceil(R2); y<=Math.ceil(R2); y++) for(let x=-Math.ceil(R2); x<=Math.ceil(R2); x++) if(x*x + y*y <= R2*R2) set(mx + x, oy + y, [24,22,30]); }
+  else if(cfg.sky === 'night'){ const sx = ox - (1 - c)*2.4*r*(ECL.t > ECL_MS/2 ? -1 : 1), sr = r*1.5;   // Earth's shadow sweeps over a full moon
+    for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++){ if(x*x + y*y > r*r) continue; const inS = (x + ox - sx)**2 + y*y < sr*sr;
+      set(ox + x, oy + y, inS ? [146 + 20*(1 - c), 62, 40] : [240,236,212], inS ? .6 + .35*c : 1); } }
+  else if(cfg.sky === 'space'){ for(let y=-r - 2; y<=r + 2; y++) for(let x=-r - 2; x<=r + 2; x++){ const dd = Math.hypot(x, y);   // Earth before the sun: dark, with a red ring
+      if(dd <= r) set(ox + x, oy + y, [8,10,20], .85*c); else if(dd <= r + 1.8) set(ox + x, oy + y, [255,120,60], c*(1 - (dd - r)/1.9)); } } }
 const gdim = sk => sk.gdim || sk.dim;   // the ground at night is darker than the sky's dimming
 function buildScene(){
   const rand = rng(seed), on = cfg.bg === 'scene', sk = SKIES[cfg.sky];
@@ -307,16 +329,16 @@ function buildScene(){
   for(let y=0; y<gh; y++){ const u = clamp(y/skyH, 0, 1)*BANDS;
     for(let x=0; x<gw; x++){ const b = Math.min(BANDS, Math.floor(u + BAYER[(y&3)*4 + (x&3)]/16 - .5) + 0); put(skyBuf, x, y, lerpC(sk.stops, clamp(b/BANDS, 0, 1)).map(Math.round)); } }
   // sun, moon
-  if(cfg.sky === 'day'){ const cx = gw*.8, cy = skyH*.16, r = Math.max(4, gw*.035);
+  if(cfg.sky === 'day'){ const cx = gw*.8, cy = skyH*.16, r = Math.max(4, gw*.035); ORB = {x: cx, y: cy, r};
     for(let y=-r-3; y<=r+3; y++) for(let x=-r-3; x<=r+3; x++){ const d = Math.hypot(x, y); if(d <= r) put(skyBuf, cx+x, cy+y, [255,236,150]); else if(d <= r+2 && ((x+y)&1)) put(skyBuf, cx+x, cy+y, [255,246,206]); } }
-  else if(cfg.sky === 'sunset'){ const cx = gw*.3, cy = skyH*.86, r = Math.max(6, gw*.06);
+  else if(cfg.sky === 'sunset'){ const cx = gw*.3, cy = skyH*.86, r = Math.max(6, gw*.06); ORB = {x: cx, y: cy, r};
     for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++) if(Math.hypot(x, y) <= r) put(skyBuf, cx+x, cy+y, (y % 3 === 0 && y > 0) ? [250,150,96] : [255,196,110]); }
-  else if(cfg.sky === 'space'){ const cx = gw*.76, cy = skyH*.2, r = Math.max(5, gw*.045);   // Earth, half lit
+  else if(cfg.sky === 'space'){ const cx = gw*.76, cy = skyH*.2, r = Math.max(5, gw*.045); ORB = {x: cx, y: cy, r};   // Earth, half lit
     for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++){ const dd = Math.hypot(x, y); if(dd > r) continue; const lit = x > -r*.15;
       const land = hash(Math.round(x*1.3 + 40), Math.round(y*1.8 + 40)) < .32 + .25*Math.sin(x*.7 + y*.4), cloud = hash(x + 91, y*2 + 5) < .13;
       let c = cloud ? [236,240,246] : land ? [86,140,82] : [52,104,186]; if(!lit) c = c.map(v => v*.18); else if(dd > r - 1.2) c = [150,190,240];
       put(skyBuf, cx + x, cy + y, c.map(Math.round)); } }
-  else { const cx = gw*.78, cy = skyH*.15, r = Math.max(4, gw*.03);
+  else { const cx = gw*.78, cy = skyH*.15, r = Math.max(4, gw*.03); ORB = {x: cx, y: cy, r};
     for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++) if(Math.hypot(x, y) <= r && Math.hypot(x - r*.45, y - r*.2) > r*.82) put(skyBuf, cx+x, cy+y, [240,236,212]); }
   stars = []; if(cfg.sky === 'night' || cfg.sky === 'space'){ const n = (gw*skyH/(cfg.sky === 'space' ? 45 : 140))|0; for(let i=0; i<n; i++) stars.push([(rand()*gw)|0, (rand()*skyH*.8)|0, rand() < .25, (rand()*60)|0]); }   // stars: half as many as at first (gw*skyH/140)   // space: gobs of stars
   // mountains (into fgBuf, which is drawn over the clouds)
@@ -426,6 +448,7 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
   for(const [x, y, big, ph] of stars){ const tw = ((T + ph*7) % 90) < 6; const c = tw ? [120,130,170] : [236,238,255];
     let i = (y*gw + x)*4; d[i] = c[0]; d[i+1] = c[1]; d[i+2] = c[2];
     if(big && !tw) for(const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const xx = x+dx, yy = y+dy; if(xx<0||yy<0||xx>=gw||yy>=gh) continue; i = (yy*gw+xx)*4; d[i] = 150; d[i+1] = 156; d[i+2] = 200; } }
+  drawEclipse(d);
   for(const c of clouds){ const x0 = Math.round(c.x), y0 = Math.round(c.y);
     for(let y=0; y<c.h; y++){ const yy = y0 + y; if(yy < 0 || yy >= gh) continue; const row = c.m[y];
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
@@ -448,6 +471,7 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
           if(e > 1) continue; if(e > 0){ put3(y*gw + x, [104,90,66]); continue; }   // muddy banks
           const f = Math.sin(y*.55 - T*.09 + x*.18) + .6*Math.sin(y*.21 - T*.05 - x*.11), idx = clamp(Math.round(11 + 7*u + 3*f), 6, 30);
           put3(y*gw + x, f > 1.25 ? SEA_PAL[3] : SEA_PAL[idx]); } } } }
+  { const dk = eclDark(); if(dk > 0) for(let i=0; i<d.length; i+=4){ d[i] *= 1 - .55*dk; d[i+1] *= 1 - .55*dk; d[i+2] *= 1 - .45*dk; } }   // the land dims too
   sctx.putImageData(frame, 0, 0);
   if(!qframe || qframe.width !== gw || qframe.height !== gh) qframe = qctx.createImageData(gw, gh);
   const d2 = qframe.data; d2.fill(0);
@@ -455,6 +479,7 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
     for(let y=0; y<S.H; y++){ const row = S.top + y; if(row < 0 || row >= gh) continue;
       for(let x=0; x<gw; x++){ const v = S.px[y*gw + x]; if(!v) continue; const idx = Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2))), c = SEA_PAL[idx], i = (row*gw + x)*4;
         d[i] = clamp(c[0]*dim + tint[0], 0, 255); d[i+1] = clamp(c[1]*dim + tint[1], 0, 255); d[i+2] = clamp(c[2]*dim + tint[2], 0, 255); d[i+3] = 255; } } }
+  { const dk = eclDark(); if(dk > 0) for(let i=0; i<d2.length; i+=4){ d2[i] *= 1 - .55*dk; d2[i+1] *= 1 - .55*dk; d2[i+2] *= 1 - .45*dk; } }
   qctx.putImageData(qframe, 0, 0); }
 
 /* ---------- dragons ---------- */
@@ -742,7 +767,7 @@ function pose(set, fr, face, up, q, yi){ const key = set.id + '|' + fr + '|' + f
   for(let y=0; y<PG; y++) for(let x=0; x<PG; x++){ const i = y*PG + x; if(g[i]) continue;
     if((x > 0 && g[i-1] > 1) || (x < PG-1 && g[i+1] > 1) || (y > 0 && g[i-PG] > 1) || (y < PG-1 && g[i+PG] > 1)) o[i] = 1; }
   POSE.set(key, o); return o; }
-const DARK = () => cfg.bg === 'scene' && (cfg.sky === 'night' || cfg.sky === 'space');
+const DARK = () => cfg.bg === 'scene' && (cfg.sky === 'night' || cfg.sky === 'space' || eclDark() > .5);
 function drawDragon(d){ if(d.s > MAXS) d.s = MAXS; const glow = d.glow && DARK(), set = d.set, fr = frameOf(d), pal = glow ? palOf(Object.assign({}, d, {sv: [Math.min(1, d.sv[0] + .3), 1]})) : palOf(d), s = d.s;
   if(set.id === undefined) set.id = Math.random();
   const yx = d.yx === undefined ? d.dir : d.yx, face = yx >= 0 ? 1 : -1, yi = yawStep(yx), q = ((Math.round(d.rot/QA) % 16) + 16) % 16;
@@ -835,7 +860,8 @@ function loop(now){ raf = 0; if(!playing){ return; }
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
   let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= SEA_MS && k < 4){ seaStep(); seaAcc -= SEA_MS; k++; } }   // the sea keeps real time, at 35% of /waves
   if(n) draw();
-  if((n && (++sceneDirty % 2 === 0 || stars.length)) || k) drawScene();
+  if(ECL){ ECL.t += dt; if(ECL.t >= ECL_MS) ECL = null; }   // two minutes of real time, whatever the dragon speed
+  if((n && (++sceneDirty % 2 === 0 || stars.length)) || k || ECL) drawScene();
   raf = requestAnimationFrame(loop); }
 function start(){ if(!raf && playing && !document.hidden){ last = 0; raf = requestAnimationFrame(loop); } }
 function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = innerWidth; VH = innerHeight; H = Math.max(VH, document.getElementById('lvh').offsetHeight || 0); DPR = Math.min(3, devicePixelRatio || 1);
@@ -924,7 +950,7 @@ $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, 
   if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});
   else if(cfg.wx !== 'clear') cfg.clouds = 'many';   // rain and snow come with a cloudy sky   // the moon: black sky, stars, no weather
   PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;   // always a visibly different one
-  seed = (R()*1e9)|0; save(); buildScene(); drawScene();
+  seed = (R()*1e9)|0; save(); buildScene(); ECL = null; countShow(); drawScene();
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
 
@@ -936,7 +962,8 @@ function titleInk(){ const cs = adults().slice(0, 3).map(d => { if(d.water && cf
 titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
-window.__px = {draw: () => draw(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }};
+countShow();   // each visit counts as a scene shown
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }};
 })();
 </script>
 </body>
