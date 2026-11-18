@@ -88,12 +88,12 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 body.unpinned .stage{flex:none;min-height:0;padding-top:var(--s4)!important}
 body.unpinned .actions{margin-top:var(--s2)}
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
-.stage{min-height:calc(100vh - 148px);min-height:calc(100svh - 148px - env(safe-area-inset-top));display:flex;flex-direction:column;padding:var(--s4) 0}
+.stage{min-height:0;display:flex;flex-direction:column;padding:var(--s2) 0}
 
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
 /* No card surface for now: the chengyu floats on the page. */
 .card{position:relative;background:transparent;border:0;border-radius:var(--r-lg);box-shadow:none;
-  padding:var(--s5) var(--s4) var(--s4);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  padding:0 var(--s4);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 /* A new chengyu eases in: it starts transparent (and a little to the side when browsing), then transitions into place.
    On first load it waits for its fonts, so nothing swaps or jumps. */
 /* First load: the card content fades in once its fonts are ready. Browsing: the characters slide, the pinyin and
@@ -105,16 +105,16 @@ body.unpinned .actions{margin-top:var(--s2)}
 .star{color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--gold)}
 .star[aria-pressed="true"] svg{fill:currentColor}
-.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:calc(var(--s2) + 10px) 0 calc(var(--s2) + 10px + 50px);
+.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:0;padding:var(--s2) 0;
   border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
   font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
 .chars span{display:inline-block;width:1em;text-align:center}
 .chars .opt{color:var(--ink-2)}
 .chars .brk{flex-basis:100%;height:0;width:0}
 .chars:active{background:var(--surface-2)}
-.pin{margin:var(--s3) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
+.pin{margin:var(--s2) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
 /* The definition reserves three lines so most cards are the same height. */
-.def{margin:var(--s3) auto 50px;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
+.def{margin:var(--s2) auto var(--s2);max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
 /* Play: the green circle hugs the icon with 2px of padding; the button around it stays a 44px tap target. */
 .play{display:inline-flex;align-items:center;justify-content:center;width:var(--tap);height:var(--tap);margin:0;padding:0;flex:none;
   border:0;border-radius:50%;background:transparent;color:var(--primary);cursor:pointer}
@@ -126,7 +126,7 @@ body.unpinned .actions{margin-top:var(--s2)}
 
 /* More */
 /* Play (left) and star (right) sit just above MEANING. */
-.actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s4)}
+.actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s2)}
 .actions .note{flex:1;margin:0;text-align:center}
 /* 36: Thirty-Six Stratagems switch, right of play. Red when on. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
@@ -134,7 +134,7 @@ body.unpinned .actions{margin-top:var(--s2)}
 .n36:hover{color:var(--ink)}
 .n36[aria-pressed="true"]{color:var(--accent)}
 /* Chapter line: under the definition in 36 mode. */
-.chap{margin:0 0 50px;text-align:center;font-size:var(--fs-sm);color:var(--accent);letter-spacing:.02em}
+.chap{margin:0 0 var(--s2);text-align:center;font-size:var(--fs-sm);color:var(--accent);letter-spacing:.02em}
 body.m36 .def{margin-bottom:var(--s2);min-height:0}   /* chapter line sits right under the definition */
 /* Copy (Phosphor clipboard-text, MIT): plain icon just left of the star. */
 .ph{fill:currentColor;stroke:none}
@@ -144,7 +144,7 @@ body.m36 .def{margin-bottom:var(--s2);min-height:0}   /* chapter line sits right
 .star{width:var(--tap);height:var(--tap);margin-right:5px;padding:0;background:transparent}
 .star:hover{background:transparent;color:var(--ink)}
 .star:active{background:transparent}
-.more{margin-top:var(--s3);background:var(--surface);border-radius:var(--r-lg)}
+.more{margin-top:var(--s2);background:var(--surface);border-radius:var(--r-lg)}
 .more>h2{margin:0;font-size:inherit}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:52px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
   font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-lg);text-align:left}
@@ -165,10 +165,10 @@ span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 .tag.pos{background:var(--primary-tint);color:var(--primary)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
 
-footer{padding:0 0 calc(var(--s5) + env(safe-area-inset-bottom))}
+footer{padding:0 0 calc(var(--s2) + env(safe-area-inset-bottom))}
 footer .info{margin-top:var(--s2)}
 /* Language switch (Phosphor translate) under INFO, at the left. */
-.langrow{display:flex;justify-content:flex-start;margin-top:var(--s2)}
+.langrow{display:flex;justify-content:flex-start;margin-top:0}
 .lang{margin-left:5px;color:var(--ink-2)}   /* icon lines up with the INFO label */
 .lang:hover,.lang:active{background:transparent;color:var(--ink)}
 html[lang^="zh"] .brand .sub{display:none}
@@ -603,7 +603,18 @@ function centerStage(){
   st.style.paddingTop = '0px';
   const mid = first.getBoundingClientRect(), stTop = st.getBoundingClientRect().top;
   const off = mid.top + mid.height / 2 - stTop, want = window.innerHeight * 0.45 - (stTop + scrollY);
-  st.style.paddingTop = Math.max(16, Math.round(want - off)) + 'px';
+  basePad = Math.max(16, Math.round(want - off));
+  fitStage();
+}
+// Never make the first screen scroll: if this chengyu (a long one, or a short screen) would overflow, raise the
+// characters by the overflow. Otherwise they stay at the pinned spot.
+let basePad = null;
+function fitStage(){
+  const st = document.querySelector('.stage');
+  if(basePad === null || document.body.classList.contains('unpinned')) return;
+  st.style.paddingTop = basePad + 'px';
+  const over = document.documentElement.scrollHeight - window.innerHeight;
+  if(over > 0) st.style.paddingTop = Math.max(16, basePad - over) + 'px';
 }
 // The definition line: English, or the Chinese explanation when the site is in Chinese.
 function paintDef(r){
@@ -633,6 +644,7 @@ function show(i, dir, focus){
     $('#pin').textContent = r.p;
     paintDef(r);
     setFont(font);
+    fitStage();
   });
   paintHead(r);
   setFont(font);
@@ -862,7 +874,7 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
     // Repaint what depends on the language, in place (no slide).
     // Characters change script too; ease them in like a font change.
     const r = LIST[cur]; $('#chars').innerHTML = charsHtml(tr(r, 'e')); from($('#chars'), 'none', `opacity 450ms ${EASE}`);
-    paintDef(r); paintMore(r); paintStar(); setFont(font); fontFor(effFont(font), plain(tr(r, 'e')));
+    paintDef(r); paintMore(r); paintStar(); setFont(font); fitStage(); fontFor(effFont(font), plain(tr(r, 'e')));
     paintHead(r);
     if($('#dSearch').open) runSearch();
   });
