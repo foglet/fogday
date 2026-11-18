@@ -607,7 +607,7 @@ function show(i, dir, focus){
   const r = LIST[cur];
   swapIn(dir, () => {
     $('#chars').innerHTML = charsHtml(tr(r, 'e'));
-    $('#pin').textContent = `(${r.p})`;
+    $('#pin').textContent = r.p;
     paintDef(r);
     setFont(font);
   });
