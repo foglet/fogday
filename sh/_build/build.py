@@ -33,9 +33,9 @@ for s in data["stops"]: s[0] = re.sub(r"^\d+-", "", s[0].strip())
 # San Francisco Public Library: Main and the 27 branches (DataSF fhhu-wqa7), drawn on every view
 data["libs"] = json.loads((root / "data" / "sfpl-libraries.json").read_text(encoding="utf-8"))["libs"]
 # Rail under every view, no times, colored by mode as on /transit/: BART metro (bart.gov GTFS, Transitland f-9q9-bart),
-# Caltrain passenger rail (Trillium GTFS, f-9q9-caltrain), Muni light rail and streetcar (SFMTA GTFS, f-9q8y-sfmta)
+# Caltrain passenger rail (Trillium GTFS, f-9q9-caltrain), Muni light rail, streetcar and cable car (SFMTA GTFS, f-9q8y-sfmta)
 data["rail"] = []
-for mode, f in (("light", "muni-rail.json"), ("rail", "caltrain.json"), ("metro", "bart.json")):
+for mode, f in (("light", "muni-rail.json"), ("cable", "muni-cable.json"), ("rail", "caltrain.json"), ("metro", "bart.json")):
     r = json.loads((root / "data" / f).read_text(encoding="utf-8"))
     data["rail"].append({"m": mode, "st": [s[:3] for s in r["stations"]], "tr": [t for t in r["track"] if len(t) > 2]})
 config = {

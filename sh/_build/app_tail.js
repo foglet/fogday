@@ -75,7 +75,7 @@ function arrowImage(){
 const THEME = {
   get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
   style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/fogfish/cilhmh2ah00959gm3fy54zuik" },   // dark: the Spy map style (/spy/)
-  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, rail:{metro:"#3a4650", rail:"#d92020", light:"#31ad90"}} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, rail:{metro:"#edeff5", rail:"#d92020", light:"#31ad90"}} }
+  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, rail:{metro:"#3a4650", rail:"#d92020", light:"#31ad90", cable:"#d95520"}} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, rail:{metro:"#edeff5", rail:"#d92020", light:"#31ad90", cable:"#d95520"}} }
 };
 /* The Spy map draws some of its own lines (paths, tunnels) in lime green, which pull the eye from the shuttles.
    In dark mode, any basemap line in the lime-to-green range is muted (less saturated) and faded. */
@@ -115,10 +115,10 @@ function addLayers(){
   const firstLabel=(map.getStyle().layers||[]).find(l=>l.type==="symbol");
   const under=firstLabel ? firstLabel.id : undefined;
   /* Rail, on every view and in every state (not tied to the system or a selected route), not clickable, colored by mode
-     as on /transit/: metro (BART) white, passenger rail (Caltrain) red, light rail and streetcar (Muni) green.
+     as on /transit/: metro (BART) white, passenger rail (Caltrain) red, light rail and streetcar (Muni) green, cable car (Muni) orange.
      On the light map, metro is a dark slate (white would vanish). Below the shuttles. */
-  const railColor=["match",["get","m"],"metro",k.rail.metro,"rail",k.rail.rail,k.rail.light];
-  map.addLayer({id:"rail-line", type:"line", source:"rail", layout:{"line-cap":"round","line-join":"round","line-sort-key":["match",["get","m"],"metro",2,"rail",1,0]}, paint:{"line-color":railColor,"line-width":["interpolate",["linear"],["zoom"],9,1.5,13,2.5,16,4],"line-opacity":0.85}}, under);
+  const railColor=["match",["get","m"],"metro",k.rail.metro,"rail",k.rail.rail,"cable",k.rail.cable,k.rail.light];
+  map.addLayer({id:"rail-line", type:"line", source:"rail", layout:{"line-cap":"round","line-join":"round","line-sort-key":["match",["get","m"],"metro",3,"rail",2,"cable",1,0]}, paint:{"line-color":railColor,"line-width":["interpolate",["linear"],["zoom"],9,1.5,13,2.5,16,4],"line-opacity":0.85}}, under);
   map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.casing,"line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":k.casingOp,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}}, under);   // a finger-wide tap area along each line

@@ -79,7 +79,9 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   green #31ad90; stations 5 px dots in their line's color; always on, not clickable. `data/caltrain.json` from Trillium
   `caltrain-ca-us` (Transitland `f-9q9-caltrain`, version c15e175e); `data/muni-rail.json` from
   `https://muni-gtfs.apps.sfmta.com/data/muni_gtfs-current.zip` (Transitland `f-9q8y-sfmta`, SHA1 53c427d8), route_type 0
-  only (no buses or cable cars), stops with the same name within 150 m merged. Both built in the browser pane 2026-11-17.
+  only (no buses), stops with the same name within 150 m merged. Both built in the browser pane 2026-11-17.
+  Cable cars (Powell-Hyde, Powell-Mason, California; route_type 5, same SFMTA file) orange #d95520 as on /transit/:
+  `data/muni-cable.json`.
 - Bottom-right stack, top to bottom (as /treesf/): folded-map button (Systems: lists every system, bold = on view; tap one
   to show it, the same as tapping the name), zoom readout (live, one decimal, display only), location, + − and compass.
 
