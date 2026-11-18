@@ -371,7 +371,7 @@ $('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go
 
 const face = $('#face');
 let booted = false;
-const EASE = 'cubic-bezier(.22,.61,.36,1)', reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const EASE = 'cubic-bezier(.22,.61,.36,1)', SPRING = 'cubic-bezier(.34,1.5,.64,1)', reduce = matchMedia('(prefers-reduced-motion: reduce)');
 let swapTok = 0;
 // Put an element at a start state with no transition, then let it transition to rest.
 function from(el, transform, trans){
@@ -387,7 +387,10 @@ function swapIn(dir, fill){
     if(tok !== swapTok) return;
     fill();
     from(ch, rm || !dir ? 'none' : `translateX(${dir * 110}px)`, `transform 380ms ${EASE}, opacity 380ms ${EASE}`);
-    from(meta, rm ? 'none' : 'translateY(14px)', `transform 420ms ${EASE} 120ms, opacity 420ms ${EASE} 120ms`);
+    // Pinyin rises first, then the definition, each with a slight spring (a small overshoot before settling).
+    meta.style.transition = 'none'; meta.style.opacity = '';
+    from($('#pin'), rm ? 'none' : 'translateY(16px)', `transform 480ms ${SPRING} 90ms, opacity 360ms ${EASE} 90ms`);
+    from($('#def'), rm ? 'none' : 'translateY(16px)', `transform 520ms ${SPRING} 260ms, opacity 400ms ${EASE} 260ms`);
   };
   if(!dir || rm){ enter(); return; }
   // Out: the current characters slide away in the swipe direction while the definition fades.
