@@ -66,9 +66,6 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 .ibtn{position:relative;width:var(--tap);height:var(--tap);display:grid;place-items:center;border:0;border-radius:var(--r-md);background:transparent;cursor:pointer;color:var(--ink)}
 .ibtn:hover{background:var(--surface-2)}
 .ibtn:active{background:var(--surface-3)}
-.badge{position:absolute;top:4px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:var(--r-pill);background:var(--accent);color:var(--on-primary);
-  font-size:.6875rem;font-weight:600;line-height:18px;text-align:center}
-.badge:empty{display:none}
 .ibtn.spin svg{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -178,7 +175,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
       <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
       <button class="ibtn" id="bStars" type="button" aria-haspopup="dialog" aria-label="Starred">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg><span class="badge" id="nStars" aria-hidden="true"></span></button>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
       <button class="ibtn" id="bSync" type="button" aria-haspopup="dialog" aria-label="Sync devices">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></svg></button>
     </div>
@@ -321,7 +318,7 @@ function paintStar(){
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
   b.setAttribute('aria-label', on ? 'Starred. Tap to remove the star' : 'Star this chengyu');
 }
-function paintCount(){ const n = Object.keys(stars).length; $('#nStars').textContent = n ? String(n) : ''; $('#bStars').setAttribute('aria-label', n ? `Starred, ${n}` : 'Starred'); }
+function paintCount(){}   // no star count is shown
 $('#star').addEventListener('click', () => toggleStar(D[cur].e));
 
 /* ---------- card ---------- */
@@ -366,15 +363,15 @@ function fontFor(f, text){
   if(!document.fonts || !fam) return Promise.resolve();
   return Promise.race([document.fonts.load(`${f === "song" || f === "hei" ? 500 : 400} 80px ${fam}`, text).catch(() => {}), wait(1800)]);
 }
-// Put the first line of characters at the middle of the screen. Measured once (and on resize), not per chengyu,
-// so the characters stay put while a longer or shorter definition pushes what is below up or down.
+// Lock the first line of characters at 45% of the screen height (45 above, 55 below). Measured once (and on
+// rotation), not per chengyu, so the characters never move while a longer or shorter definition pushes what is below.
 function centerStage(){
   const st = document.querySelector('.stage'), first = $('#chars span');
   if(!first) return;
   st.style.paddingTop = '0px';
-  const top = document.querySelector('.top').offsetHeight, view = window.innerHeight - top;
-  const mid = first.getBoundingClientRect(), off = mid.top + mid.height / 2 - st.getBoundingClientRect().top;
-  st.style.paddingTop = Math.max(16, Math.round(view / 2 - off)) + 'px';
+  const mid = first.getBoundingClientRect(), stTop = st.getBoundingClientRect().top;
+  const off = mid.top + mid.height / 2 - stTop, want = window.innerHeight * 0.45 - (stTop + scrollY);
+  st.style.paddingTop = Math.max(16, Math.round(want - off)) + 'px';
 }
 function show(i, dir, focus){
   stopSpeech();
