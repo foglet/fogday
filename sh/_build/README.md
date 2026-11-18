@@ -92,6 +92,8 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
 
 - Stops and rail stations show from zoom 14 in only (layer minzoom).
 
+- Rail lines are grey (#5f6e7b dark, #8e9aa4 light) below zoom 13; their mode colors from 13 in.
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout

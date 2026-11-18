@@ -671,7 +671,7 @@ function arrowImage(){
 const THEME = {
   get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
   style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/fogfish/cilhmh2ah00959gm3fy54zuik" },   // dark: the Spy map style (/spy/)
-  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, rail:{metro:"#3a4650", rail:"#d92020", light:"#31ad90", cable:"#d95520"}} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, rail:{metro:"#edeff5", rail:"#d92020", light:"#31ad90", cable:"#d95520"}} }
+  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, rail:{metro:"#3a4650", rail:"#d92020", light:"#31ad90", cable:"#d95520", far:"#8e9aa4"}} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, rail:{metro:"#edeff5", rail:"#d92020", light:"#31ad90", cable:"#d95520", far:"#5f6e7b"}} }
 };
 /* The Spy map draws some of its own lines (paths, tunnels) in lime green, which pull the eye from the shuttles.
    In dark mode, any basemap line in the lime-to-green range is muted (less saturated) and faded. */
@@ -712,9 +712,9 @@ function addLayers(){
   const under=firstLabel ? firstLabel.id : undefined;
   /* Rail, on every view and in every state (not tied to the system or a selected route), not clickable, colored by mode
      as on /transit/: metro (BART) white, passenger rail (Caltrain) red, light rail and streetcar (Muni) green, cable car (Muni) orange.
-     On the light map, metro is a dark slate (white would vanish). Below the shuttles. */
+     On the light map, metro is a dark slate (white would vanish). Below zoom 13 all rail is one quiet grey. Below the shuttles. */
   const railColor=["match",["get","m"],"metro",k.rail.metro,"rail",k.rail.rail,"cable",k.rail.cable,k.rail.light];
-  map.addLayer({id:"rail-line", type:"line", source:"rail", layout:{"line-cap":"round","line-join":"round","line-sort-key":["match",["get","m"],"metro",3,"rail",2,"cable",1,0]}, paint:{"line-color":railColor,"line-width":["interpolate",["linear"],["zoom"],9,1.5,12,2.5,13,3.5,16,5],"line-opacity":0.85}}, under);
+  map.addLayer({id:"rail-line", type:"line", source:"rail", layout:{"line-cap":"round","line-join":"round","line-sort-key":["match",["get","m"],"metro",3,"rail",2,"cable",1,0]}, paint:{"line-color":["step",["zoom"],k.rail.far,13,railColor],"line-width":["interpolate",["linear"],["zoom"],9,1.5,12,2.5,13,3.5,16,5],"line-opacity":0.85}}, under);
   /* The rail marker (railroad symbol, as OSM's standard map draws railways): from zoom 12 in, a dashed core in the
      page color runs inside each rail line, so track reads as fixed rail and not as a shuttle route */
   map.addLayer({id:"rail-dash", type:"line", source:"rail", layout:{"line-join":"round"}, paint:{"line-color":k.stopFill,"line-width":["interpolate",["linear"],["zoom"],12,1,13,1.5,16,2.2],"line-dasharray":[2.5,2.5],"line-opacity":["interpolate",["linear"],["zoom"],11.5,0,12,1]}}, under);
