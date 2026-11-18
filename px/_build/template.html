@@ -102,7 +102,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 </nav>
 
 <section id="ctl" class="sheet" hidden aria-labelledby="ctlH">
-  <button class="grab" type="button" id="grab" aria-label="Make the controls taller" title="Swipe up for taller, down for shorter"><span aria-hidden="true"></span></button>
+  <button class="grab" type="button" id="grab" aria-label="Make the controls taller" title="Swipe up for 300 px more, down for less"><span aria-hidden="true"></span></button>
   <h2 class="vh" id="ctlH">Controls</h2>
   <section aria-labelledby="hD">
     <h2 id="hD">Dragons</h2>
@@ -530,19 +530,22 @@ const sheet = $('ctl'), ctlBtn = $('ctlBtn'), playBtn = $('play');
 const IDLE = 5000; let idleT = 0;   // an open panel closes itself after 5 s with no interaction
 function idle(){ clearTimeout(idleT); if(!sheet.hidden) idleT = setTimeout(() => { const inside = sheet.contains(document.activeElement); setOpen(false); if(inside) ctlBtn.focus(); }, IDLE); }
 function setOpen(open){ sheet.hidden = !open; ctlBtn.setAttribute('aria-expanded', String(open)); if(!open) sizeSheet(0); idle(); }
-const grab = $('grab'); let tall = false;
+const grab = $('grab'); let tall = false; const GROW = 300;
+const normalH = () => { const t = sheet.style.cssText; sheet.style.height = sheet.style.maxHeight = ''; const h = sheet.offsetHeight; sheet.style.cssText = t; return h; };
 const maxTall = () => Math.max(160, sheet.getBoundingClientRect().bottom - document.querySelector('.top h1').getBoundingClientRect().bottom - 12);   // up to just under the title
 function sizeSheet(h){ if(!h){ sheet.style.maxHeight = sheet.style.height = ''; tall = false; }
-  else { sheet.style.maxHeight = 'none'; sheet.style.height = h + 'px'; tall = h > maxTall()*.75; }
+  else { sheet.style.maxHeight = 'none'; sheet.style.height = h + 'px'; tall = true; }
   grab.setAttribute('aria-label', tall ? 'Make the controls shorter' : 'Make the controls taller'); }
 let drag = null;
 grab.addEventListener('pointerdown', e => { drag = {y: e.clientY, h: sheet.offsetHeight, moved: false}; grab.setPointerCapture(e.pointerId); });
 grab.addEventListener('pointermove', e => { if(!drag) return; const dy = drag.y - e.clientY; if(Math.abs(dy) > 6) drag.moved = true;
-  if(drag.moved) sizeSheet(clamp(drag.h + dy, 60, maxTall())); idle(); });
-grab.addEventListener('pointerup', e => { if(!drag) return; const d = drag; drag = null;
-  if(d.moved && sheet.offsetHeight < 110) setOpen(false), ctlBtn.focus(); });
+  if(drag.moved) sheet.style.transform = 'translateY(' + clamp(-dy, -40, 40)*.4 + 'px)'; idle(); });   // a small give while dragging
+grab.addEventListener('pointerup', e => { if(!drag) return; const d = drag, dy = d.y - e.clientY; drag = null; sheet.style.transform = '';
+  if(!d.moved) return;
+  if(dy > 24) sizeSheet(Math.min(normalH() + GROW, maxTall()));   // swipe up: 300 px taller
+  else if(dy < -24){ if(tall) sizeSheet(0); else { setOpen(false); ctlBtn.focus(); } } });   // swipe down: back to normal, then closed
 grab.addEventListener('pointercancel', () => { drag = null; });
-grab.addEventListener('click', e => { if(e.detail && grab._skip) return; sizeSheet(tall ? 0 : maxTall()); idle(); });
+grab.addEventListener('click', e => { if(e.detail && grab._skip) return; sizeSheet(tall ? 0 : Math.min(normalH() + GROW, maxTall())); idle(); });
 grab.addEventListener('pointerdown', () => { grab._skip = false; }, true);
 grab.addEventListener('pointermove', () => { if(drag && drag.moved) grab._skip = true; });
 for(const ev of ['pointerdown','pointermove','keydown','input','change','scroll','focusin','wheel','touchstart']) sheet.addEventListener(ev, idle, {passive: true});
