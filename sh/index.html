@@ -777,13 +777,13 @@ function pad(){
   if(innerWidth>=760) return {top:70, bottom:50, right:70, left: open ? Math.round(lg.right)+30 : 40};
   return {top:70, left:24, right:60, bottom: Math.max(60, Math.round(innerHeight-lg.top)+16)};
 }
-/* ---------- San Francisco Public Library: Phosphor "book-open-text" (regular, MIT) on a disc ---------- */
+/* ---------- San Francisco Public Library: Phosphor "book-open-text" (regular, MIT), icon only ---------- */
 const BOOK_OPEN_TEXT="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64ZM160,88h40a8,8,0,0,1,0,16H160a8,8,0,0,1,0-16Zm48,40a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,128Zm0,32a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,160Z";
 function libImage(){
   const light=THEME.get()==="light", S=56, c=document.createElement("canvas"); c.width=c.height=S; const g=c.getContext("2d");
-  g.beginPath(); g.arc(S/2,S/2,S/2-3,0,Math.PI*2); g.fillStyle=light?"#ffffff":"#021724"; g.fill();
-  g.lineWidth=3; g.strokeStyle=light?"#2f7fc1":"#7cc4f0"; g.stroke();
-  g.save(); g.translate(S/2-15,S/2-15); g.scale(30/256,30/256); g.fillStyle=light?"#2f7fc1":"#7cc4f0"; g.fill(new Path2D(BOOK_OPEN_TEXT)); g.restore();
+  /* the book alone: no disc, no ring; a soft halo in the page color so it reads over streets (as the control icons) */
+  g.save(); g.translate(S/2-18,S/2-18); g.scale(36/256,36/256); g.shadowColor=light?"#edf1f2":"#021724"; g.shadowBlur=14;
+  g.fillStyle=light?"#2f7fc1":"#7cc4f0"; g.fill(new Path2D(BOOK_OPEN_TEXT)); g.restore();
   return g.getImageData(0,0,S,S);
 }
 function libFeatures(){ return {type:"FeatureCollection", features:(D.libs||[]).map((l,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[l[3]/1e5, l[2]/1e5]}}))} }
