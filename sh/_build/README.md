@@ -90,6 +90,8 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   kind of line drawn as on the map (shuttle route solid; BART, Caltrain, Muni Metro, cable car with the rail marker), then
   Info (the data notes). Open/shut is remembered as before (`ucsf:info`).
 
+- Stops and rail stations show from zoom 14 in only (layer minzoom).
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout
