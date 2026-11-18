@@ -57,7 +57,8 @@ a{color:var(--primary)}
 :focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
 .wrap{width:100%;max-width:34rem;margin:0 auto;padding:0 var(--s4)}
 p,li,dd{overflow-wrap:anywhere}
-svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* All icons are 20px, in ink-2, as on fogday.com/cn-dr. */
+svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* Header */
 .top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
@@ -73,17 +74,17 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 /* The title block follows the chosen calligraphy: the seal, the Chinese subtitle, and the title itself in Chinese. */
 .brand small{font-family:var(--cy);font-weight:var(--cyw);font-size:1.0625rem}
 html[lang^="zh"] .brand b{font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;letter-spacing:.04em}
-/* Section icons, as on fogday.com/cn-dr: books (meaning and search), then detective (info) at the far right.
-   The detective glyph aligns with the page edge. The current section's icon sits on a tinted pill. */
-.acts{display:flex;gap:4px;margin-right:-11px}
+/* Section icons, as on fogday.com/cn-dr: books (meaning and search), then detective (info) at the far right,
+   spaced as on cn-dr. The detective glyph aligns with the page edge. The current section's icon sits on a tinted pill. */
+.acts{display:flex;gap:2px;margin-right:-12px}
 .ibtn.tab svg{position:relative;z-index:1}
 .tab::before{content:"";position:absolute;inset:5px;border-radius:10px;background:var(--primary-tint);opacity:0;transform:scale(.8);
   transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
 .ibtn.tab:hover,.ibtn.tab:active{background:transparent}
 .ibtn.tab[aria-current="page"]{color:var(--primary)}
 .tab[aria-current="page"]::before{opacity:1;transform:none}
-.ibtn{position:relative;width:var(--tap);height:var(--tap);display:grid;place-items:center;border:0;border-radius:var(--r-md);background:transparent;cursor:pointer;color:var(--ink)}
-.ibtn:hover{background:var(--surface-2)}
+.ibtn{position:relative;width:var(--tap);height:var(--tap);display:grid;place-items:center;border:0;border-radius:var(--r-md);background:transparent;cursor:pointer;color:var(--ink-2)}
+.ibtn:hover{background:var(--surface-2);color:var(--ink)}
 .ibtn:active{background:var(--surface-3)}
 .ibtn.spin svg{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -108,6 +109,12 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .info p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
 .info p:last-child{margin:0}
 @media (prefers-reduced-motion:reduce){.view.in{animation:none}.tab::before{transition:none}}
+/* Phones: header icons packed as on cn-dr (32px wide, no gap, 12px between glyphs); the pill fills the 32px button. */
+@media (max-width:39.99rem){
+  .acts{gap:0;margin-right:-6px}
+  .ibtn.tab{width:32px}
+  .tab::before{inset:6px 0}
+}
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
 .stage{min-height:0;display:flex;flex-direction:column;justify-content:center;padding:var(--s2) 0}
 
@@ -139,7 +146,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 /* Play: the green circle hugs the icon with 2px of padding; the button around it stays a 44px tap target. */
 .play{display:inline-flex;align-items:center;justify-content:center;width:var(--tap);height:var(--tap);margin:0;padding:0;flex:none;
   border:0;border-radius:50%;background:transparent;color:var(--primary);cursor:pointer}
-.play svg{width:24px;height:24px;padding:2px;box-sizing:content-box;border-radius:50%;background:var(--primary-tint)}
+.play svg{width:20px;height:20px;padding:2px;box-sizing:content-box;border-radius:50%;background:var(--primary-tint)}
 .play:hover svg{background:#d6e7dd}
 .play:active svg{background:#c8ddd0;transform:scale(.96)}
 .note{min-height:1.25em;font-size:var(--fs-cap);color:var(--ink-2)}
@@ -148,7 +155,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 /* More */
 /* Bottom row: translate, 36, play, copy, star, spread edge to edge (translate and star glyphs align with the page edges).
    Status messages float just above the row. */
-.actions{position:relative;display:flex;align-items:center;justify-content:space-between;margin:auto -11px 0;
+.actions{position:relative;display:flex;align-items:center;justify-content:space-between;margin:auto -12px 0;
   padding:var(--s2) 0 calc(var(--s2) + env(safe-area-inset-bottom))}
 .actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
 /* 36: Thirty-Six Stratagems switch, right of play. Red when on. */
@@ -181,7 +188,6 @@ span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
 
 /* Language switch (Phosphor translate): bottom left. */
-.lang{color:var(--ink)}
 .lang:hover,.lang:active{background:transparent;color:var(--ink)}
 html[lang^="zh"] .brand .sub{display:none}
 /* Traditional: Traditional Chinese system fonts, then Noto TC. Caoshu and xingshu fonts have no traditional forms. */

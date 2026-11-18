@@ -24,8 +24,8 @@ To add videos by hand: append rows to `shorts.txt` with the next index, then
 
 Lesson numbers: every Short has a stable number, oldest first (No. 1 is her first Short). They are frozen in `data/numbers.txt`; `build.py` gives new Shorts the next number and never renumbers. Full-length lessons have no number. Search accepts "42", "#42" or "No. 42".
 
-Language (footer, far left): one toggle, EN by default; tap for ZH and 简 | 繁 appear beside it; picking one hides them, and the next tap goes back to EN;
-ZH returns to the last script used. Kept per device.
+Language (footer, far left): one translate icon, the same as fogday.com/zhcy. English by default; first tap Simplified,
+second tap Traditional, third tap back to English. Kept per device.
 In Chinese, interface text comes from `data/ui_zh.tsv` (English, simplified, traditional; `re:` lines are patterns) and
 lesson titles from `data/titles_zh.tsv` (id, simplified, traditional). Write the simplified column, then run
 `python3 zh_trad.py` (needs `pip install opencc-python-reimplemented`) to fill the traditional column (OpenCC s2twp

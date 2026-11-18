@@ -262,21 +262,14 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .foot-c{text-align:center;text-wrap:balance}
 .foot-c a{white-space:nowrap}   /* the name never splits; on the narrowest phones the © sits on the line above */
 .foot .follow{justify-self:end}
-/* Language at the footer's far left: one toggle that reads EN (the default) or ZH. Tapping it flips the language. While ZH is on,
-   简 (simplified) | 繁 (traditional) appear beside it; the current one is tinted, like the level switch. */
-.lang{justify-self:start;display:flex;align-items:center;gap:4px;margin-left:-4px}
-.lang-seg{display:flex}
-.lang-seg[hidden]{display:none}
-.lang-sc{animation:fade 200ms var(--ease-out)}
-.lang-b{display:grid;place-items:center;min-height:var(--tap);min-width:28px;padding:0;border:0;background:none;cursor:pointer;
-  font:inherit;font-size:var(--fs-cap);font-weight:600;letter-spacing:.04em;color:var(--ink-2);border-radius:var(--r-md);position:relative;z-index:0}
-.lang-b::before{content:"";position:absolute;inset:8px 1px;border-radius:8px;z-index:-1}
-.lang-b[aria-current="true"],.lang-tg{color:var(--primary-ink)}
-/* no boxes: the current script is shown by green text, the other stays grey */
-.lang-tg{min-width:34px}
-@media (hover:hover){.lang-b:hover{color:var(--ink)}}
-.lang-b:active{transform:scale(.97)}
-.lang-b:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+/* Language at the footer's far left: one translate icon (Phosphor translate), as on fogday.com/zhcy. Each tap moves to the next:
+   English, then 简体, then 繁體, then back to English. The glyph aligns with the footer's left edge. */
+.lang{justify-self:start;display:grid;place-items:center;width:var(--tap);height:var(--tap);margin-left:-12px;padding:0;border:0;background:none;
+  cursor:pointer;color:var(--ink-2);border-radius:var(--r-sm)}
+.lang svg{width:20px;height:20px;fill:currentColor}
+@media (hover:hover){.lang:hover{color:var(--ink)}}
+.lang:active{transform:scale(.97)}
+.lang:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 /* Lesson row + Save toggle */
 .brow{display:flex;align-items:center;gap:var(--s1)}
 .brow .row{flex:1;min-width:0}
@@ -419,7 +412,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 </header>
 
 <main class="wrap" id="main" tabindex="-1"></main>
-<footer class="foot"><div class="foot-in"><div class="lang" id="lang" data-notr><button class="lang-b lang-tg" id="langTg" data-lang="tg" aria-label="中文 Chinese" aria-pressed="false">EN</button><div class="lang-seg lang-sc" role="group" id="langScript" aria-label="字体" hidden><button class="lang-b" data-lang="zh-Hans" lang="zh-Hans" aria-label="简体">简</button><button class="lang-b" data-lang="zh-Hant" lang="zh-Hant" aria-label="繁體">繁</button></div></div>
+<footer class="foot"><div class="foot-in"><button class="lang" id="lang" type="button" data-notr aria-label="切换到简体中文" lang="zh-Hans"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
   <p class="foot-c">© <a href="https://www.mandarininsights.com/" target="_blank" rel="noopener">Mandarin Insights<span class="vh">, opens a new tab</span></a></p><ul class="follow" id="follow" aria-label="Follow Dr. Jia"></ul></div></footer>
 <p class="vh" id="bmStatus" role="status"></p>
 
@@ -1807,27 +1800,20 @@ new MutationObserver(ms => ms.forEach(m => {
   else if(m.type==='characterData'){ if(!skipTr(m.target.parentElement)) trText(m.target); }
   else if(!skipTr(m.target)) trAttr(m.target, m.attributeName);
 })).observe(document.body, {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:I18N_ATTR});
-// ZH comes back in the last script chosen (simplified the first time). 简 / 繁 show only right after switching to ZH;
-// picking one collapses them so the toggle reads ZH alone, and the next tap goes to EN.
-let langOpen = false;
+// The translate icon cycles English, Simplified, Traditional. Its label names the language the next tap gives.
+const LANG_NEXT = {'en': ['zh-Hans', '切换到简体中文'], 'zh-Hans': ['zh-Hant', '切換到繁體中文'], 'zh-Hant': ['en', 'Switch to English']};
 function langUI(){
   document.documentElement.lang = LANG; document.title = trFull(TITLE_EN);
-  const zh = LANG!=='en';
-  const tg = $('#langTg'); tg.textContent = zh ? 'ZH' : 'EN'; tg.lang = zh ? LANG : 'en'; tg.setAttribute('aria-pressed', String(zh));   // on = Chinese
-  document.querySelectorAll('#langScript [data-lang]').forEach(b => b.setAttribute('aria-current', String(b.dataset.lang===LANG)));   // a choice, not an on/off switch
-  $('#langScript').hidden = !(zh && langOpen);
+  const b = $('#lang'), nx = LANG_NEXT[LANG]; b.setAttribute('aria-label', nx[1]); b.lang = nx[0] === 'en' ? 'en' : nx[0];
 }
 function setLang(l){
-  if(l===LANG) return; LANG = l; store.set('lang', l); if(l!=='en') store.set('zhScript', l); langUI();
+  if(l===LANG) return; LANG = l; store.set('lang', l); langUI();
   const y = window.scrollY; render(false); window.scrollTo(0, y);               // titles come from T(), so lists are rebuilt
   trTree(document.body);                                                          // everything else is translated in place
   if(cur && $('#sheetWrap').dataset.open==='true'){ $('#sheetTitle').textContent = T(cur); }
   $('#bmStatus').textContent = trFull(l==='en' ? 'English' : l==='zh-Hant' ? 'Traditional Chinese' : 'Simplified Chinese');
 }
-$('#lang').addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if(!b) return;   // focus stays on the button tapped
-  const l = b.dataset.lang;
-  if(l==='tg'){ langOpen = LANG==='en'; setLang(LANG==='en' ? store.get('zhScript', 'zh-Hans') : 'en'); langUI(); return; }
-  langOpen = false; setLang(l); langUI(); $('#langTg').focus(); });   // the script buttons hide, so focus returns to the toggle
+$('#lang').addEventListener('click', () => setLang(LANG_NEXT[LANG][0]));   // focus stays on the icon
 langUI();
 try{ history.replaceState({tab:S.tab, stack:[], y:0}, ''); }catch(e){}
 render(false, 'fade');
