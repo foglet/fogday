@@ -156,6 +156,11 @@ span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 
 footer{padding:0 0 calc(var(--s5) + env(safe-area-inset-bottom))}
 footer .info{margin-top:var(--s2)}
+/* Language switch (Phosphor translate) under INFO, centred over the chevron like the star. */
+.langrow{display:flex;justify-content:flex-end;margin-top:var(--s2)}
+.lang{margin-right:5px;color:var(--ink-2)}
+.lang:hover,.lang:active{background:transparent;color:var(--ink)}
+html[lang="zh-Hans"] .brand .sub{display:none}
 footer .morebody p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
 footer .morebody p:last-child{margin:0}
 
@@ -208,10 +213,10 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 <body>
 <header class="top">
   <div class="wrap bar">
-    <a class="brand" href="./" aria-label="Chengyu of the day, home"><span class="seal" aria-hidden="true">成</span>
-      <span class="ttl"><b>Chengyu</b> <small lang="zh-Hans">每日成语</small></span></a>
+    <a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home"><span class="seal" aria-hidden="true">成</span>
+      <span class="ttl"><b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub">每日成语</small></span></a>
     <div class="acts">
-      <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search">
+      <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search" data-ta="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
     </div>
   </div>
@@ -235,16 +240,16 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     </div>
 
     <div class="actions">
-      <button class="play" id="play" type="button" aria-label="Play pronunciation">
+      <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
       <p class="note" id="note" role="status"></p>
-      <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu">
+      <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu" data-ta="copy">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></svg></button>
       <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
     </div>
     <section class="more">
-      <h2><button class="tog" id="tog" type="button" aria-expanded="false" aria-controls="moreBody">Meaning
+      <h2><button class="tog" id="tog" type="button" aria-expanded="false" aria-controls="moreBody"><span data-t="meaning">Meaning</span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
       <div class="morebody" id="moreBody" hidden><dl id="dl"></dl></div>
     </section>
@@ -254,24 +259,26 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 <footer>
   <div class="wrap">
     <section class="more info">
-      <h2><button class="tog" id="infoTog" type="button" aria-expanded="false" aria-controls="infoBody">Info
+      <h2><button class="tog" id="infoTog" type="button" aria-expanded="false" aria-controls="infoBody"><span data-t="info">Info</span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
       <div class="morebody" id="infoBody" hidden>
-        <p>This dataset holds <span id="nAll">1,015</span> chengyu.</p>
-        <p>Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
-        <p>Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Copy icon: <a href="https://phosphoricons.com">Phosphor</a> (MIT).</p>
-        <p><button class="lnk" id="bSync" type="button" aria-haspopup="dialog">Sync stars across devices</button></p>
+        <p data-t="count">This dataset holds 1,015 chengyu.</p>
+        <p data-th="data">Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
+        <p data-th="fonts">Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).</p>
+        <p><button class="lnk" id="bSync" type="button" aria-haspopup="dialog" data-t="syncLink">Sync stars across devices</button></p>
         <p><a href="/">fogday.com</a></p>
       </div>
     </section>
+    <div class="langrow"><button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
+      <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button></div>
   </div>
 </footer>
 
 <dialog id="dSearch" aria-labelledby="dSearchH">
-  <div class="sh"><h2 id="dSearchH">Search</h2><button class="ibtn" type="button" data-close aria-label="Close">
+  <div class="sh"><h2 id="dSearchH" data-t="search">Search</h2><button class="ibtn" type="button" data-close aria-label="Close" data-ta="close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sb">
-    <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English">
+    <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English" data-tp="ph" data-ta="qlabel">
     <p class="count" id="qCount" role="status"></p>
     <ul class="list" id="qList"></ul>
   </div>
@@ -279,19 +286,19 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 
 
 <dialog id="dSync" aria-labelledby="dSyncH">
-  <div class="sh"><h2 id="dSyncH">Sync devices</h2><button class="ibtn" type="button" data-close aria-label="Close">
+  <div class="sh"><h2 id="dSyncH" data-t="syncH">Sync devices</h2><button class="ibtn" type="button" data-close aria-label="Close" data-ta="close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sb">
-    <p class="help" style="margin-top:0">Stars sync through a private GitHub Gist. Your token works as the sync password: paste the same one on each device. It stays on this device and is sent only to GitHub.</p>
+    <p class="help" style="margin-top:0" data-t="syncP">Stars sync through a private GitHub Gist. Your token works as the sync password: paste the same one on each device. It stays on this device and is sent only to GitHub.</p>
     <form id="syncOff">
-      <label for="tok">GitHub token (gist scope only)</label>
+      <label for="tok" data-t="tokL">GitHub token (gist scope only)</label>
       <input class="field" id="tok" type="password" autocomplete="off" spellcheck="false" required>
-      <div class="btns"><button class="btn pri" type="submit">Connect</button></div>
-      <a class="ext" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=zhcy%20sync" target="_blank" rel="noopener">Make a token on GitHub<span class="vh">, opens a new tab</span></a>
+      <div class="btns"><button class="btn pri" type="submit" data-t="connect">Connect</button></div>
+      <a class="ext" href="https://github.com/settings/tokens/new?scopes=gist&amp;description=zhcy%20sync" target="_blank" rel="noopener"><span data-t="mkTok">Make a token on GitHub</span><span class="vh" data-t="newTab">, opens a new tab</span></a>
     </form>
     <div id="syncOn" hidden>
-      <p>Connected. Stars sync when you change them and when you open the page.</p>
-      <div class="btns"><button class="btn pri" id="syncGo" type="button">Sync now</button><button class="btn" id="syncDis" type="button">Disconnect</button></div>
+      <p data-t="connected">Connected. Stars sync when you change them and when you open the page.</p>
+      <div class="btns"><button class="btn pri" id="syncGo" type="button" data-t="syncNow">Sync now</button><button class="btn" id="syncDis" type="button" data-t="disconnect">Disconnect</button></div>
     </div>
     <p class="st" id="syncSt" role="status"></p>
   </div>
@@ -301,7 +308,59 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 "use strict";
 const D = /*DATA*/[];
 const N = D.length, APP = 'zhcy:';
-document.getElementById('nAll').textContent = N.toLocaleString('en-US');   // always the real count
+/* ---------- language: English or Simplified Chinese ---------- */
+const NF = N.toLocaleString('en-US');
+const T = {
+  en: {home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
+    ph:'画蛇, hua she, snake', qlabel:'Search by characters, pinyin or English', count:`This dataset holds ${NF} chengyu.`,
+    data:'Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.',
+    fonts:'Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).',
+    syncLink:'Sync stars across devices', syncH:'Sync devices',
+    syncP:'Stars sync through a private GitHub Gist. Your token works as the sync password: paste the same one on each device. It stays on this device and is sent only to GitHub.',
+    tokL:'GitHub token (gist scope only)', connect:'Connect', mkTok:'Make a token on GitHub', newTab:', opens a new tab',
+    connected:'Connected. Stars sync when you change them and when you open the page.', syncNow:'Sync now', disconnect:'Disconnect',
+    lang:'切换到简体中文', favOn:'In favorites. Tap to remove', favOff:'Add to favorites', fav:w => `Favorite ${w}`,
+    favorites:'Favorites', favEmpty:'Favorites appear here. Tap the star by a chengyu to add it.',
+    matches:(n, m) => n > m ? `${n} matches, showing ${m}` : `${n} match${n === 1 ? '' : 'es'}`, none:'No matches',
+    pos:(e, i) => `${e}, ${i} of ${N}`, title:'Chengyu of the day', fontLbl:(e, f) => `${e}. Font: ${f}. Tap for the next font.`,
+    copied:'Copied', noCopy:'Could not copy', noSpeech:'This browser cannot speak. Try Safari or Chrome.',
+    noPlay:'Could not play. Add a Chinese (China) voice in your device settings.', noVoice:'No Mandarin voice found; using the default voice.',
+    synced:'Synced.', badTok:'GitHub did not accept this token. Make a new one with the gist scope, then connect again.',
+    offline:'Offline. Stars will sync when you are back online.', noGH:'Could not reach GitHub. Try Sync now.',
+    connecting:'Connecting...', syncing:'Syncing...', discon:'Disconnected. Stars stay on this device.',
+    dtZh:'释义 Explanation', dtEn:'English', dtEn2:'Another translation', dtO:'出处 Origin', dtSyn:'近义 Similar', dtAnt:'反义 Opposite', dtTone:'感情色彩 Tone',
+    tone:{'褒':'褒义 Positive', '贬':'贬义 Negative', '中':'中性 Neutral'}},
+  zh: {home:'每日成语，首页', brand:'每日成语', search:'搜索', play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
+    ph:'画蛇、hua she、snake', qlabel:'按汉字、拼音或英文搜索', count:`本数据集共收录成语 ${NF} 条。`,
+    data:'数据：Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>。采用 <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> 许可。释义来自汉典（Zdic），英文来自 Pleco 与 Jiao 等，均由该数据集汇编。',
+    fonts:'字体：刘建毛草、志莽行书（Google Fonts，OFL）；霞鹜文楷（<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>）；文鼎PL中楷（<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>）。楷体与欧体使用后两者的子集。图标：<a href="https://phosphoricons.com">Phosphor</a>（MIT）。',
+    syncLink:'在多台设备间同步收藏', syncH:'同步设备',
+    syncP:'收藏通过私有 GitHub Gist 同步。令牌就是同步密码：在每台设备上粘贴同一个令牌。令牌只保存在本设备，只发送给 GitHub。',
+    tokL:'GitHub 令牌（仅限 gist 权限）', connect:'连接', mkTok:'在 GitHub 上生成令牌', newTab:'（在新标签页打开）',
+    connected:'已连接。更改收藏或打开页面时会自动同步。', syncNow:'立即同步', disconnect:'断开连接',
+    lang:'Switch to English', favOn:'已收藏，点按取消', favOff:'加入收藏', fav:w => `收藏 ${w}`,
+    favorites:'收藏', favEmpty:'收藏的成语会显示在这里。点按星标即可收藏。',
+    matches:(n, m) => n > m ? `找到 ${n} 条，显示前 ${m} 条` : `找到 ${n} 条`, none:'没有结果',
+    pos:(e, i) => `${e}，第 ${i} 条，共 ${N} 条`, title:'每日成语', fontLbl:(e, f) => `${e}。字体：${f}。点按换下一种字体。`,
+    copied:'已复制', noCopy:'无法复制', noSpeech:'此浏览器无法朗读，请使用 Safari 或 Chrome。',
+    noPlay:'无法播放。请在设备设置中添加中文（中国大陆）语音。', noVoice:'未找到普通话语音，使用默认语音。',
+    synced:'已同步。', badTok:'GitHub 未接受此令牌。请生成具有 gist 权限的新令牌后重新连接。',
+    offline:'当前离线。恢复联网后会同步收藏。', noGH:'无法连接 GitHub，请点按“立即同步”重试。',
+    connecting:'正在连接…', syncing:'正在同步…', discon:'已断开连接。收藏仍保存在本设备。',
+    dtZh:'释义', dtEn:'英文', dtEn2:'另一译法', dtO:'出处', dtSyn:'近义', dtAnt:'反义', dtTone:'感情色彩',
+    tone:{'褒':'褒义', '贬':'贬义', '中':'中性'}}
+};
+let LANG = 'en';
+const t = (k, ...a) => { const v = (T[LANG] && T[LANG][k] != null) ? T[LANG][k] : T.en[k]; return typeof v === 'function' ? v(...a) : v; };
+function applyLang(){
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+  document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
+  document.querySelectorAll('[data-th]').forEach(el => el.innerHTML = t(el.dataset.th));   // our own strings only
+  document.querySelectorAll('[data-ta]').forEach(el => el.setAttribute('aria-label', t(el.dataset.ta)));
+  document.querySelectorAll('[data-tp]').forEach(el => el.setAttribute('placeholder', t(el.dataset.tp)));
+  const lb = document.getElementById('lang');
+  lb.setAttribute('aria-label', t('lang')); lb.setAttribute('lang', LANG === 'zh' ? 'en' : 'zh-Hans');
+}
 const $ = s => document.querySelector(s);
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(APP + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
@@ -335,7 +394,7 @@ let font = 'cao';
 function setFont(f){
   const F = FONTS.find(x => x[0] === f) || FONTS[0];
   font = F[0]; document.body.dataset.font = font;
-  $('#chars').setAttribute('aria-label', `${plain(D[cur].e)}. Font: ${F[2]}. Tap for the next font.`);
+  $('#chars').setAttribute('aria-label', t('fontLbl', plain(D[cur].e), LANG === 'zh' ? F[1] : F[2]));
 }
 $('#chars').addEventListener('click', () => {
   const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
@@ -356,7 +415,7 @@ function toggleStar(e){
 function paintStar(){
   const on = isStar(D[cur].e), b = $('#star');
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  b.setAttribute('aria-label', on ? 'In favorites. Tap to remove' : 'Add to favorites');
+  b.setAttribute('aria-label', on ? t('favOn') : t('favOff'));
 }
 $('#star').addEventListener('click', () => toggleStar(D[cur].e));
 
@@ -371,8 +430,8 @@ async function copyText(t){
 $('#copy').addEventListener('click', async () => {
   const r = D[cur], ok = await copyText([plain(r.e), r.p, r.en].filter(Boolean).join('\n'));
   const path = $('#copy path');
-  if(ok){ path.setAttribute('d', CHECK_D); note('Copied'); clearTimeout(copyTimer); copyTimer = setTimeout(() => path.setAttribute('d', CLIP_D), 1500); }
-  else note('Could not copy');
+  if(ok){ path.setAttribute('d', CHECK_D); note(t('copied')); clearTimeout(copyTimer); copyTimer = setTimeout(() => path.setAttribute('d', CLIP_D), 1500); }
+  else note(t('noCopy'));
 });
 
 /* ---------- card ---------- */
@@ -389,14 +448,16 @@ function chipList(s){
     : `<span class="chip" lang="zh-Hans">${esc(w)}</span>`).join('') + '</div>';
 }
 function paintMore(r){
-  const S = {'褒': ['pos', '褒义 Positive'], '贬': ['neg', '贬义 Negative'], '中': ['', '中性 Neutral']}[r.s];
+  const S = r.s ? [{'褒': 'pos', '贬': 'neg', '中': ''}[r.s], t('tone')[r.s]] : null;
   let h = '';
-  if(r.zh) h += `<dt>释义 Explanation</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
-  if(r.en2) h += `<dt>Another translation</dt><dd>${esc(r.en2)}</dd>`;
-  if(r.o) h += `<dt>出处 Origin</dt><dd class="zh" lang="zh-Hans">${esc(r.o)}</dd>`;
-  if(r.syn) h += `<dt>近义 Similar</dt><dd>${chipList(r.syn)}</dd>`;
-  if(r.ant) h += `<dt>反义 Opposite</dt><dd>${chipList(r.ant)}</dd>`;
-  if(S) h += `<dt>感情色彩 Tone</dt><dd><span class="tag ${S[0]}" lang="zh-Hans">${S[1]}</span></dd>`;
+  // In Chinese the card shows the Chinese explanation, so MEANING leads with the English instead.
+  if(LANG === 'zh'){ if(r.en) h += `<dt>${t('dtEn')}</dt><dd lang="en">${esc(r.en)}</dd>`; }
+  else if(r.zh) h += `<dt>${t('dtZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
+  if(r.en2) h += `<dt>${t('dtEn2')}</dt><dd lang="en">${esc(r.en2)}</dd>`;
+  if(r.o) h += `<dt>${t('dtO')}</dt><dd class="zh" lang="zh-Hans">${esc(r.o)}</dd>`;
+  if(r.syn) h += `<dt>${t('dtSyn')}</dt><dd>${chipList(r.syn)}</dd>`;
+  if(r.ant) h += `<dt>${t('dtAnt')}</dt><dd>${chipList(r.ant)}</dd>`;
+  if(S) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${S[0]}" lang="zh-Hans">${S[1]}</span></dd>`;
   $('#dl').innerHTML = h;
 }
 $('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(b) show(+b.dataset.go, 0, true); });
@@ -453,6 +514,11 @@ function centerStage(){
   const off = mid.top + mid.height / 2 - stTop, want = window.innerHeight * 0.45 - (stTop + scrollY);
   st.style.paddingTop = Math.max(16, Math.round(want - off)) + 'px';
 }
+// The definition line: English, or the Chinese explanation when the site is in Chinese.
+function paintDef(r){
+  const d = $('#def'), zh = LANG === 'zh' && r.zh;
+  d.textContent = zh ? r.zh : (r.en || ''); d.lang = zh ? 'zh-Hans' : 'en';
+}
 function show(i, dir, focus){
   stopSpeech();
   cur = ((i % N) + N) % N;
@@ -460,11 +526,11 @@ function show(i, dir, focus){
   swapIn(dir, () => {
     $('#chars').innerHTML = charsHtml(r.e);
     $('#pin').textContent = `(${r.p})`;
-    $('#def').textContent = r.en || '';
+    paintDef(r);
     setFont(font);
   });
-  $('#when').textContent = `${plain(r.e)}, ${cur + 1} of ${N}`;
-  document.title = `${plain(r.e)} | Chengyu of the day`;
+  $('#when').textContent = t('pos', plain(r.e), cur + 1);
+  document.title = `${plain(r.e)} | ${t('title')}`;
   setFont(font);
   paintStar(); paintMore(r); note('');
   try{ history.replaceState(null, '', cur === today ? location.pathname : '#' + encodeURIComponent(plain(r.e))); }catch(e){}
@@ -527,13 +593,13 @@ function pickVoice(){
 if(SS){ pickVoice(); SS.addEventListener && SS.addEventListener('voiceschanged', pickVoice); }
 function stopSpeech(){ if(SS && (SS.speaking || SS.pending)) SS.cancel(); }
 $('#play').addEventListener('click', () => {
-  if(!SS){ note('This browser cannot speak. Try Safari or Chrome.'); return; }
+  if(!SS){ note(t('noSpeech')); return; }
   stopSpeech();
   const u = new SpeechSynthesisUtterance(plain(D[cur].e));
   u.lang = 'zh-CN'; u.rate = .8; if(voice) u.voice = voice;
-  u.onerror = e => { if(e.error !== 'interrupted' && e.error !== 'canceled') note('Could not play. Add a Chinese (China) voice in your device settings.'); };
+  u.onerror = e => { if(e.error !== 'interrupted' && e.error !== 'canceled') note(t('noPlay')); };
   SS.speak(u);
-  if(!voice && SS.getVoices().length) note('No Mandarin voice found; using the default voice.');
+  if(!voice && SS.getVoices().length) note(t('noVoice'));
 });
 
 /* ---------- dialogs ---------- */
@@ -572,7 +638,7 @@ function rowHtml(i){
   const r = D[i];
   const on = isStar(r.e), w = esc(plain(r.e));
   return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
-    + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="Favorite ${w}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
+    + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="${esc(t('fav', w))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
 }
 let qTimer = 0;
 function runSearch(){
@@ -581,13 +647,13 @@ function runSearch(){
     // No query yet: show the starred list.
     const list = Object.entries(stars).filter(([e]) => byExpr.has(e)).sort((a, b) => b[1] - a[1]).map(([e]) => byExpr.get(e));
     $('#qList').innerHTML = list.map(rowHtml).join('');
-    $('#qCount').textContent = list.length ? 'Favorites' : 'Favorites appear here. Tap the star by a chengyu to add it.';
+    $('#qCount').textContent = list.length ? t('favorites') : t('favEmpty');
     $('#qCount').classList.toggle('fav', list.length > 0);
     return;
   }
   $('#qList').innerHTML = hits.slice(0, MAX).map(rowHtml).join('');
   $('#qCount').classList.remove('fav');
-  $('#qCount').textContent = hits.length ? (hits.length > MAX ? `${hits.length} matches, showing ${MAX}` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`) : 'No matches';
+  $('#qCount').textContent = hits.length ? t('matches', hits.length, MAX) : t('none');
 }
 $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
 $('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, $('#dSearch')); } });
@@ -656,11 +722,11 @@ async function syncNow(){
       if(!same(out, local)){ stars = out.stars; tomb = out.tomb; store.set('stars', stars); store.set('tomb', tomb); paintStar(); paintListStars(); }
       if(!same(out, remote)) await gh('/gists/' + id, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(out)}}})});
     }
-    syncSt('Synced.');
+    syncSt(t('synced'));
   }catch(e){
     if(e.message === 'gone'){ store.del('gist'); syncAgain = true; res = 'net'; }
-    else if(e.message === 'auth'){ res = 'auth'; syncSt('GitHub did not accept this token. Make a new one with the gist scope, then connect again.', true); }
-    else { res = 'net'; syncSt(navigator.onLine === false ? 'Offline. Stars will sync when you are back online.' : 'Could not reach GitHub. Try Sync now.', true); }
+    else if(e.message === 'auth'){ res = 'auth'; syncSt(t('badTok'), true); }
+    else { res = 'net'; syncSt(navigator.onLine === false ? t('offline') : t('noGH'), true); }
   }finally{
     syncBusy = false;
     if(syncAgain){ syncAgain = false; syncSoon(500); }
@@ -673,16 +739,24 @@ $('#syncOff').addEventListener('submit', async ev => {
   ev.preventDefault();
   const t = $('#tok').value.trim(); if(!t) return;
   store.set('tok', t); store.del('gist'); $('#tok').value = '';
-  syncSt('Connecting...');
+  syncSt(t('connecting'));
   const r = await syncNow();
   if(r === 'auth'){ store.del('tok'); paintSync(); $('#tok').focus(); }
   else { paintSync(); $('#syncGo').focus(); }
 });
-$('#syncGo').addEventListener('click', () => { syncSt('Syncing...'); syncNow(); });
-$('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.del); clearTimeout(syncTimer); syncSt('Disconnected. Stars stay on this device.'); paintSync(); $('#tok').focus(); });
+$('#syncGo').addEventListener('click', () => { syncSt(t('syncing')); syncNow(); });
+$('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.del); clearTimeout(syncTimer); syncSt(t('discon')); paintSync(); $('#tok').focus(); });
 
 /* ---------- start ---------- */
 (() => {
+  LANG = store.get('lang', 'en') === 'zh' ? 'zh' : 'en'; applyLang();
+  $('#lang').addEventListener('click', () => {
+    LANG = LANG === 'zh' ? 'en' : 'zh'; store.set('lang', LANG); applyLang();
+    // Repaint what depends on the language, in place (no slide).
+    const r = D[cur]; paintDef(r); paintMore(r); paintStar(); setFont(font);
+    $('#when').textContent = t('pos', plain(r.e), cur + 1); document.title = `${plain(r.e)} | ${t('title')}`;
+    if($('#dSearch').open) runSearch();
+  });
   store.del('font');   // older saved choice; caoshu is now the default
   font = store.get('font2', 'cao'); setFont(font);
   const fromHash = () => { let h = ''; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} const i = h ? IDX.findIndex(x => x.c === h) : -1; return i; };
