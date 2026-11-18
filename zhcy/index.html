@@ -122,8 +122,10 @@ body.unpinned .actions{margin-top:var(--s2)}
 /* Play (left) and star (right) sit just above MEANING. */
 .actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s4)}
 .actions .note{flex:1;margin:0;text-align:center}
-.star{width:56px;height:56px;border-radius:50%;background:var(--surface-2)}
-.star:hover{background:var(--surface-3)}
+/* Star: just the icon, centred over the MEANING chevron (chevron centre = 16px padding + 11px half icon from the right). */
+.star{width:var(--tap);height:var(--tap);margin-right:5px;padding:0;background:transparent}
+.star:hover{background:transparent;color:var(--ink)}
+.star:active{background:transparent}
 .more{margin-top:var(--s3);background:var(--surface);border-radius:var(--r-lg)}
 .more>h2{margin:0;font-size:inherit}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:52px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
