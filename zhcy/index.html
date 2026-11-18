@@ -86,7 +86,8 @@ body.unpinned .actions{margin-top:var(--s2)}
 .stage{min-height:calc(100vh - 148px);min-height:calc(100svh - 148px - env(safe-area-inset-top));display:flex;flex-direction:column;padding:var(--s4) 0}
 
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
-.card{position:relative;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:var(--shadow-card);
+/* No card surface for now: the chengyu floats on the page. */
+.card{position:relative;background:transparent;border:0;border-radius:var(--r-lg);box-shadow:none;
   padding:var(--s5) var(--s4) var(--s4);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 /* A new chengyu eases in: it starts transparent (and a little to the side when browsing), then transitions into place.
    On first load it waits for its fonts, so nothing swaps or jumps. */
