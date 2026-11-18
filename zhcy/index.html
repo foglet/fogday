@@ -108,7 +108,10 @@ body.unpinned .more{margin-top:var(--s5)}
 .chars .brk{flex-basis:100%;height:0;width:0}
 .chars:active{background:var(--surface-2)}
 .pin{margin:var(--s3) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
-.def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);color:var(--ink);user-select:text;-webkit-user-select:text}
+/* The definition always takes exactly three lines, so the play button never moves. Longer ones are cut with an
+   ellipsis; the full English is the first item under MEANING. */
+.def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;height:4.5em;overflow:hidden;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;color:var(--ink);user-select:text;-webkit-user-select:text}
 .play{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;margin:var(--s5) 0 0;padding:0;
   border:0;border-radius:50%;background:var(--primary-tint);color:var(--primary);font-weight:600;cursor:pointer}
 .play:hover{background:#d6e7dd}
@@ -355,6 +358,7 @@ function chipList(s){
 function paintMore(r){
   const S = {'褒': ['pos', '褒义 Positive'], '贬': ['neg', '贬义 Negative'], '中': ['', '中性 Neutral']}[r.s];
   let h = '';
+  if(r.en) h += `<dt>English</dt><dd>${esc(r.en)}</dd>`;
   if(r.zh) h += `<dt>释义 Explanation</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
   if(r.en2) h += `<dt>Another translation</dt><dd>${esc(r.en2)}</dd>`;
   if(r.o) h += `<dt>出处 Origin</dt><dd class="zh" lang="zh-Hans">${esc(r.o)}</dd>`;
