@@ -216,7 +216,7 @@ const SKIES = {
   day:   {stops:[[0,[92,152,218]],[.7,[168,206,240]],[1,[214,234,246]]], cloud:[[255,255,255],[214,226,240]], far:[150,168,204], cap:[240,244,250], near:[104,136,128], dim:1, tint:[0,0,0]},
   sunset:{stops:[[0,[56,58,124]],[.45,[176,96,150]],[.8,[240,140,100]],[1,[255,200,130]]], cloud:[[255,206,190],[214,130,140]], far:[122,92,138], cap:[236,190,196], near:[80,70,104], dim:.8, tint:[30,8,0]},
   space: {stops:[[0,[2,2,8]],[.7,[5,5,14]],[1,[12,12,24]]], cloud:[[0,0,0],[0,0,0]], far:[92,92,100], cap:[92,92,100], near:[118,118,124], dim:1, tint:[0,0,0]},   // the moon
-  night: {stops:[[0,[10,12,36]],[.7,[26,34,78]],[1,[46,56,104]]], cloud:[[78,86,128],[56,62,100]], far:[44,52,92], cap:[150,160,196], near:[30,38,64], dim:.45, tint:[0,0,14]}};
+  night: {stops:[[0,[10,12,36]],[.7,[26,34,78]],[1,[46,56,104]]], cloud:[[78,86,128],[56,62,100]], far:[44,52,92], cap:[150,160,196], near:[30,38,64], dim:.45, gdim:.27, tint:[0,0,14]}};
 const GROUNDS = {moon:{top:[112,112,118], body:[[148,148,152],[158,158,162],[168,168,172]], dots:[[128,128,134],[188,188,192],[110,110,116]]},
   desert:{top:[192,142,92], body:[[224,180,120],[230,188,128],[236,196,138]], dots:[[206,158,100],[244,212,160],[186,134,84]]},
   grass:{top:[70,132,72], body:[[96,162,84],[110,176,92],[120,184,98]], dots:[[78,146,70],[146,198,112],[66,124,62]]},
@@ -291,6 +291,7 @@ const hash = (x, y) => { let h = (x*374761393 + y*668265263) | 0; h = (h ^ (h >>
 function riverX(yA){ const u = clamp((yA - gTopA)/Math.max(1, gh - gTopA), 0, 1); return gw*(RIV.base + RIV.amp*Math.sin(u*3.4 + RIV.ph)*(.35 + .65*u)); }
 function riverW(yA){ const u = clamp((yA - gTopA)/Math.max(1, gh - gTopA), 0, 1); return (2 + 24*Math.pow(u, 1.2))*Math.min(1.6, gw/130); }
 const inRiver = (cx, fy) => RIV && fy > gTopA*P && Math.abs(cx/P - riverX(fy/P)) < riverW(fy/P)/2 - 1;
+const gdim = sk => sk.gdim || sk.dim;   // the ground at night is darker than the sky's dimming
 function buildScene(){
   const rand = rng(seed), on = cfg.bg === 'scene', sk = SKIES[cfg.sky];
   if(themeMeta) themeMeta.content = on ? 'rgb(' + sk.stops[0][1].join(',') + ')' : '#fbf8f1';
@@ -333,9 +334,9 @@ function buildScene(){
           if(y === Math.round(top)) c = c.map(v => v*.86);
           put(fgBuf, x, y, c.map(Math.round)); } } } }
   // ground
-  if(sea){ const G = GROUNDS.sand, sh = c => c.map((v, j) => Math.round(clamp(v*sk.dim + sk.tint[j], 0, 255)));   // the beach strip, wet at the waterline
+  if(sea){ const G = GROUNDS.sand, sh = c => c.map((v, j) => Math.round(clamp(v*gdim(sk) + sk.tint[j], 0, 255)));   // the beach strip, wet at the waterline
     for(let y=BEACH_A; y<gh; y++) for(let x=0; x<gw; x++){ let c = y < BEACH_A + 2 ? [188,166,118] : G.body[Math.min(2, ((y - BEACH_A)/3)|0)]; if(rand() < .06) c = G.dots[(rand()*3)|0]; put(fgBuf, x, y, sh(c)); } }
-  else if(cfg.ground !== 'none'){ const G = GROUNDS[cfg.ground], dim = sk.dim;
+  else if(cfg.ground !== 'none'){ const G = GROUNDS[cfg.ground], dim = gdim(sk);
     const sh = c => c.map((v, j) => Math.round(clamp(v*dim + sk.tint[j], 0, 255)));
     for(let y=gTopA; y<gh; y++){ const u = (y - gTopA)/Math.max(1, gh - gTopA), bi = Math.min(2, (u*3)|0);
       for(let x=0; x<gw; x++){ let c = y === gTopA ? G.top : G.body[bi];
@@ -364,7 +365,7 @@ function buildScene(){
     for(let i=0, nb = rand() < .35 ? 2 : 1; i<nb; i++){ const u = cfg.ground === 'none' ? 1 : .7 + rand()*.3, x = 10 + rand()*(gw - 20), y = top + u*(gh - top - 2);   // the big boulders, up front
       if(offRiver(x, y)) rs.push([x, y, u, rand() < .6 ? 'round' : 'jag', 2.2 + rand()*1.2]); }
     rs.sort((a, b) => a[1] - b[1]);
-    const dim = sk.dim, tint = sk.tint, sh = c => c.map((v, j) => Math.round(clamp(v*dim + tint[j], 0, 255)));
+    const dim = gdim(sk), tint = sk.tint, sh = c => c.map((v, j) => Math.round(clamp(v*dim + tint[j], 0, 255)));
     const rock = (cx, by, u, kind, big) => { const b0 = pal[(rand()*pal.length)|0].map(v => v + (rand() - .5)*18), w0 = (2 + u*4.5 + rand()*2.5)*big;
       const shape = {round: [1, .62, .07], slab: [1.45, .34, .05], jag: [.95, .78, .22], tall: [.5, 1.25, .1]}[kind] || [1, .6, .1];
       const w = w0*shape[0], h = w0*shape[1], jag = shape[2], nv = 5 + (rand()*4)|0, vr = Array.from({length: nv}, () => 1 - jag*rand());   // facet radii
@@ -380,7 +381,7 @@ function buildScene(){
     for(const [cx, by, u, kind, big] of rs){
       if(kind === 'pebbles') for(let k=0, m = 3 + (rand()*3)|0; k<m; k++) rock(cx + (rand() - .5)*8, by + (rand() - .5)*2, u*.35, 'round', 1);
       else rock(cx, by, u, kind, big); } }
-  if(desert){ const sh = c => c.map((v, j) => Math.round(clamp(v*sk.dim + sk.tint[j], 0, 255))), pl = [];
+  if(desert){ const sh = c => c.map((v, j) => Math.round(clamp(v*gdim(sk) + sk.tint[j], 0, 255))), pl = [];
     for(let i=0, n = Math.max(3, (gw/34)|0); i<n; i++) pl.push(['j', 10 + rand()*(gw - 20), rand()]);
     for(let i=0, n = Math.max(2, (gw/30)|0); i<n; i++) pl.push(['b', 4 + rand()*(gw - 8), rand()]);
     pl.sort((a, b) => a[2] - b[2]);
@@ -430,7 +431,7 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
         const col = v === 3 ? sk.cloud[1].map(c => c*.68) : v === 4 ? sk.cloud[0] : sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
   for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
-  if(cfg.bg === 'scene' && !SEA && cfg.ground !== 'none'){ const sk2 = SKIES[cfg.sky], dim = sk2.dim, tn = sk2.tint;
+  if(cfg.bg === 'scene' && !SEA && cfg.ground !== 'none'){ const sk2 = SKIES[cfg.sky], dim = gdim(sk2), tn = sk2.tint;
     const put3 = (i, c) => { i *= 4; d[i] = clamp(c[0]*dim + tn[0], 0, 255); d[i+1] = clamp(c[1]*dim + tn[1], 0, 255); d[i+2] = clamp(c[2]*dim + tn[2], 0, 255); };
     if(COVER > .01 && cfg.ground !== 'snow'){ for(let y=gTopA; y<gh; y++){ const u = (y - gTopA)/Math.max(1, gh - gTopA);   // snow settling in patches
         for(let x=0; x<gw; x++){ const h = hash(x >> 1, y >> 1)*.7 + hash(x, y)*.3; if(h < COVER*1.15 - .08*(1 - u)) put3(y*gw + x, hash(x + 7, y) < .15 ? [206,218,234] : [240,244,250]); } }
@@ -466,6 +467,7 @@ const airCount = () => adults().filter(d => d.mode !== 'walk' && d.mode !== 'off
 function looks(d){ const sh = cfg.body === 'mix' ? (R() < .4 ? 'n' : R() < .5 ? 'p' : 's') : cfg.body,
     tl = cfg.tail === 'mix' ? (R() < .4 ? 'n' : R() < .5 ? 'l' : 's') : cfg.tail;
   const r = R(); d.coat = r < .2 ? 'stripe' : r < .4 ? 'dots' : '';   // 1 in 5 striped, 1 in 5 polka-dotted
+  d.glow = R() < .2;   // glows in the dark
   d.shape = sh; d.tl = tl; d.set = coated(SPRS[sh + tl], d.coat); d.rainbow = cfg.wings === 'mix' ? R() < .3 : cfg.wings === 'three'; }
 /* Coats: stripes and polka dots are painted on the sprite's body pixels (index 2) as index 12, in sprite coordinates, so
    they stay put through walking, turning and yaw. Stripes: slanted 2-pixel bands every 5, across body and belly. Dots: a staggered 4x4 grid on the body. */
@@ -740,10 +742,15 @@ function pose(set, fr, face, up, q, yi){ const key = set.id + '|' + fr + '|' + f
   for(let y=0; y<PG; y++) for(let x=0; x<PG; x++){ const i = y*PG + x; if(g[i]) continue;
     if((x > 0 && g[i-1] > 1) || (x < PG-1 && g[i+1] > 1) || (y > 0 && g[i-PG] > 1) || (y < PG-1 && g[i+PG] > 1)) o[i] = 1; }
   POSE.set(key, o); return o; }
-function drawDragon(d){ if(d.s > MAXS) d.s = MAXS; const set = d.set, fr = frameOf(d), pal = palOf(d), s = d.s;
+const DARK = () => cfg.bg === 'scene' && (cfg.sky === 'night' || cfg.sky === 'space');
+function drawDragon(d){ if(d.s > MAXS) d.s = MAXS; const glow = d.glow && DARK(), set = d.set, fr = frameOf(d), pal = glow ? palOf(Object.assign({}, d, {sv: [Math.min(1, d.sv[0] + .3), 1]})) : palOf(d), s = d.s;
   if(set.id === undefined) set.id = Math.random();
   const yx = d.yx === undefined ? d.dir : d.yx, face = yx >= 0 ? 1 : -1, yi = yawStep(yx), q = ((Math.round(d.rot/QA) % 16) + 16) % 16;
   const g = pose(set, fr, face, !!d.up, q, yi), b = Math.max(1, Math.round(s));   // one block = one sprite pixel, whole CSS px
+  if(glow){ const ox0 = Math.round(d.cx/b)*b - PG/2*b, oy0 = Math.round(d.cy/b)*b - PG/2*b;   // a soft, pulsing halo in its own colour
+    ctx.fillStyle = 'rgb(' + hsv(d.h[0], .55, 1).join(',') + ')'; ctx.globalAlpha = .07 + .04*Math.sin(T*.08 + d.cx*.01);
+    for(let y=0; y<PG; y+=2) for(let x=0; x<PG; x+=2) if(g[y*PG + x]) ctx.fillRect(ox0 + (x - 3)*b, oy0 + (y - 3)*b, 7*b, 7*b);
+    ctx.globalAlpha = 1; }
   const ox = Math.round(d.cx/b)*b - PG/2*b, oy = Math.round(d.cy/b)*b - PG/2*b;
   let last = '';
   const wl = (d.wade && !d.air && (d.mom ? true : d.mode === 'walk')) ? (PG - GH)/2 + FOOT - 7 + ((T >> 3) & 1) : PG;   // wading: rows below the waterline are under water
