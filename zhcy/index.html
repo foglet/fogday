@@ -183,11 +183,13 @@ dt{margin-top:var(--s4);font-size:var(--fs-cap);font-weight:600;color:var(--ink-
 dt:first-child{margin-top:0}
 dd{margin:var(--s1) 0 0}
 dd.zh{font-family:var(--cyt);font-size:1.0625rem;line-height:1.7}
-.chips{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2)}
-.chip{display:inline-flex;align-items:center;min-height:var(--tap);padding:0 var(--s3);border:0;border-radius:var(--r-pill);background:var(--primary-tint);
+/* Synonyms and antonyms: plain text, no pill or border; linked ones are green and underline on hover */
+.chips{display:flex;flex-wrap:wrap;gap:0 var(--s4);margin-top:var(--s1)}
+.chip{display:inline-flex;align-items:center;min-height:var(--tap);padding:0;border:0;background:none;
   font-family:var(--song);font-size:1.0625rem;cursor:pointer;color:var(--primary)}
-.chip:hover{background:#d6e7dd}
-span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
+.chip:hover{text-decoration:underline;text-underline-offset:4px}
+span.chip{cursor:default;color:var(--ink)}
+span.chip:hover{text-decoration:none}
 .tag{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);background:var(--surface-2);font-size:var(--fs-sm)}
 .tag.pos{background:var(--primary-tint);color:var(--primary)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
@@ -211,8 +213,13 @@ dialog::backdrop{background:var(--scrim)}
 .count.fav{font-weight:600}
 .sb{overflow:auto;padding:var(--s4);padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom))}
 label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s1)}
-.field{width:100%;min-height:48px;padding:0 var(--s3);border:0;border-radius:var(--r-md);background:var(--surface-3);font-size:1rem}
-.field:focus-visible{outline-offset:0}
+/* Search: outlined like fogday.com/cn-dr (2px line, magnifier inside, no fill) */
+.search{position:relative;display:flex;align-items:center}
+.search-ic{position:absolute;left:var(--s3);width:20px;height:20px;fill:var(--ink-2);pointer-events:none}
+.field{flex:1;width:100%;min-width:0;min-height:var(--tap);padding:0 var(--s3) 0 calc(var(--s3) + 28px);border:2px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);font-size:1rem}
+.field::placeholder{font-size:var(--fs-sm)}
+.field:hover{border-color:var(--ink-2)}
+.field:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 .help{margin:var(--s2) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
 .count{margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
 .list{list-style:none;margin:0;padding:0}
@@ -300,7 +307,8 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     </section>
     <section class="pane" aria-labelledby="dSearchH">
       <h2 class="ph2" id="dSearchH" data-t="search">Search</h2>
-      <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English" data-tp="ph" data-ta="qlabel">
+      <div class="search"><svg class="search-ic" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>
+      <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English" data-tp="ph" data-ta="qlabel"></div>
       <p class="count" id="qCount" role="status"></p>
       <ul class="list" id="qList"></ul>
     </section>
