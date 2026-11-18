@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#fbf8f1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&family=Noto+Serif+TC:wght@500&family=Noto+Sans+TC:wght@500&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
 <style>
 @font-face{font-family:"zhcy kai";src:url(fonts/lxgw-wenkai-zhcy.woff2) format("woff2");font-display:block}
 @font-face{font-family:"zhcy ou";src:url(fonts/ar-pl-ukai-cn-zhcy.woff2) format("woff2");font-display:block}
@@ -168,7 +168,9 @@ footer .info{margin-top:var(--s2)}
 .langrow{display:flex;justify-content:flex-start;margin-top:var(--s2)}
 .lang{margin-left:5px;color:var(--ink-2)}   /* icon lines up with the INFO label */
 .lang:hover,.lang:active{background:transparent;color:var(--ink)}
-html[lang="zh-Hans"] .brand .sub{display:none}
+html[lang^="zh"] .brand .sub{display:none}
+/* Traditional: Traditional Chinese system fonts, then Noto TC. Caoshu and xingshu fonts have no traditional forms. */
+html[lang="zh-Hant"]{--song:"Songti TC","Noto Serif TC","Noto Serif CJK TC","PMingLiU",serif;--hei:"PingFang TC","Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;--kai:"Kaiti TC","BiauKai","DFKai-SB","zhcy kai",serif}
 footer .morebody p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
 footer .morebody p:last-child{margin:0}
 
@@ -320,13 +322,14 @@ const D = /*DATA*/[];
 const N = D.length, APP = 'zhcy:';
 // The Thirty-Six Stratagems: [characters, pinyin, English name, English note, Chinese note]; six per chapter.
 const S36 = /*S36*/{};
-const S = S36.items.map((x, k) => ({e: x[0], p: x[1], en: x[2], x: x[3], zx: x[4], n: k + 1, ch: Math.floor(k / 6), s36: true}));
+const S = S36.items.map((x, k) => ({e: x[0], p: x[1], en: x[2], x: x[3], zx: x[4], n: k + 1, ch: Math.floor(k / 6), s36: true, t: {e: S36.itemsT[k][0], zx: S36.itemsT[k][1]}}));
 const byStrat = new Map(S.map((r, k) => [r.e, k]));
 let MODE = 'cy', LIST = D, cyCur = 0;
 /* ---------- language: English or Simplified Chinese ---------- */
 const NF = N.toLocaleString('en-US');
 const T = {
-  en: {home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
+  en: {seal:'成', seal36:'计', sub:'每日成语', sub36:'三十六计', fn:{cao:'caoshu (cursive script)', xing:'xingshu (running script)', ou:'Ouyang Xun style regular script', kai:'Kaiti', song:'Songti', hei:'modern sans'},
+    home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
     ph:'画蛇, hua she, snake', qlabel:'Search by characters, pinyin or English', count:`This dataset holds ${NF} chengyu.`,
     data:'Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.',
     fonts:'Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).',
@@ -344,12 +347,13 @@ const T = {
     offline:'Offline. Stars will sync when you are back online.', noGH:'Could not reach GitHub. Try Sync now.',
     connecting:'Connecting...', syncing:'Syncing...', discon:'Disconnected. Stars stay on this device.',
     dtZh:'释义 Explanation', dtEn:'English', dtEn2:'Another translation', dtO:'出处 Origin', dtSyn:'近义 Similar', dtAnt:'反义 Opposite', dtTone:'感情色彩 Tone',
-    tone:{'褒':'褒义 Positive', '贬':'贬义 Negative', '中':'中性 Neutral'},
+    tone:{pos:'褒义 Positive', neg:'贬义 Negative', neu:'中性 Neutral'},
     b36:'Thirty-Six Stratagems', brand36:'Stratagems', home36:'Thirty-Six Stratagems, back to chengyu', title36:'Thirty-Six Stratagems',
-    chap:(c, i) => `Chapter ${c + 1} · ${S36.chapters[c].zh} · ${i} of 36`, dtChap:'Chapter', dtNote:'Meaning', dtNoteZh:'释义',
+    chap:(c, i) => `Chapter ${c + 1} · ${CH(c).zh} · ${i} of 36`, dtChap:'Chapter', dtNote:'Meaning', dtNoteZh:'释义',
     info36A:'The Thirty-Six Stratagems (三十六计): 36 proverbs on strategy and deception, in six chapters of six.',
     info36B:'Names, readings and chapter titles follow <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">Wikipedia</a> and <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies (China Strategies, PDF)</a>. The short explanations are written for this page.'},
-  zh: {home:'每日成语，首页', brand:'每日成语', search:'搜索', play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
+  /*ZH*/zh: {seal:'成', seal36:'计', sub:'每日成语', sub36:'三十六计', fn:{cao:'草书', xing:'行书', ou:'欧体', kai:'楷体', song:'宋体', hei:'黑体'},
+    home:'每日成语，首页', brand:'每日成语', search:'搜索', play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
     ph:'画蛇、hua she、snake', qlabel:'按汉字、拼音或英文搜索', count:`本数据集共收录成语 ${NF} 条。`,
     data:'数据：Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>。采用 <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> 许可。释义来自汉典（Zdic），英文来自 Pleco 与 Jiao 等，均由该数据集汇编。',
     fonts:'字体：刘建毛草、志莽行书（Google Fonts，OFL）；霞鹜文楷（<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>）；文鼎PL中楷（<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>）。楷体与欧体使用后两者的子集。图标：<a href="https://phosphoricons.com">Phosphor</a>（MIT）。',
@@ -367,20 +371,26 @@ const T = {
     offline:'当前离线。恢复联网后会同步收藏。', noGH:'无法连接 GitHub，请点按“立即同步”重试。',
     connecting:'正在连接…', syncing:'正在同步…', discon:'已断开连接。收藏仍保存在本设备。',
     dtZh:'释义', dtEn:'英文', dtEn2:'另一译法', dtO:'出处', dtSyn:'近义', dtAnt:'反义', dtTone:'感情色彩',
-    tone:{'褒':'褒义', '贬':'贬义', '中':'中性'},
+    tone:{pos:'褒义', neg:'贬义', neu:'中性'},
     b36:'三十六计', brand36:'三十六计', home36:'三十六计，返回成语', title36:'三十六计',
-    chap:(c, i) => `${S36.chapters[c].num} ${S36.chapters[c].zh} · 第 ${i} 计`, dtChap:'套', dtNote:'英文释义', dtNoteZh:'释义',
+    chap:(c, i) => `${CH(c).num} ${CH(c).zh} · 第 ${i} 计`, dtChap:'套', dtNote:'英文释义', dtNoteZh:'释义',
     info36A:'三十六计：关于谋略与计策的三十六条成语，共六套，每套六计。',
-    info36B:'计名、读音与各套名称参考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">维基百科</a> 与 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。简短释义为本页所写。'}
+    info36B:'计名、读音与各套名称参考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">维基百科</a> 与 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。简短释义为本页所写。'}/*ZHEND*/,
+  /*ZHT*/
 };
 let LANG = 'en';
+// Simplified or Traditional text for a record field; chapter names likewise.
+const tr = (r, k) => LANG === 'zht' && r.t && r.t[k] != null ? r.t[k] : r[k];
+const CH = c => { const x = S36.chapters[c]; return LANG === 'zht' ? {num: x.numt, zh: x.zht, en: x.en} : x; };
+const LT = () => LANG === 'zht' ? 'zh-Hant' : 'zh-Hans';
+const isZh = () => LANG !== 'en';
 const t = (k, ...a) => { const v = (T[LANG] && T[LANG][k] != null) ? T[LANG][k] : T.en[k]; return typeof v === 'function' ? v(...a) : v; };
 // Header, logo, INFO and the 36 switch follow the mode (chengyu or stratagems).
 function paintMode(){
   const s = MODE === 's36';
-  document.getElementById('seal').textContent = s ? '计' : '成';
+  document.getElementById('seal').textContent = s ? t('seal36') : t('seal');
   document.querySelector('[data-t="brand"]').textContent = s ? t('brand36') : t('brand');
-  document.getElementById('sub').textContent = s ? '三十六计' : '每日成语';
+  document.getElementById('sub').textContent = s ? t('sub36') : t('sub');
   document.querySelector('.brand').setAttribute('aria-label', s ? t('home36') : t('home'));
   document.getElementById('infoA').textContent = s ? t('info36A') : t('count');
   document.getElementById('infoB').innerHTML = s ? t('info36B') : t('data');
@@ -388,14 +398,17 @@ function paintMode(){
   document.getElementById('chap').hidden = !s; document.body.classList.toggle('m36', s);
 }
 function applyLang(){
-  document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+  document.documentElement.lang = LANG === 'en' ? 'en' : LT();
+  document.getElementById('chars').lang = LT(); document.getElementById('sub').lang = LT();
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
   document.querySelectorAll('[data-th]').forEach(el => el.innerHTML = t(el.dataset.th));   // our own strings only
   document.querySelectorAll('[data-ta]').forEach(el => el.setAttribute('aria-label', t(el.dataset.ta)));
   document.querySelectorAll('[data-tp]').forEach(el => el.setAttribute('placeholder', t(el.dataset.tp)));
   paintMode();
   const lb = document.getElementById('lang');
-  lb.setAttribute('aria-label', t('lang')); lb.setAttribute('lang', LANG === 'zh' ? 'en' : 'zh-Hans');
+  // Three-way switch: English, then Simplified, then Traditional, then back to English. The label names the next one.
+  const nx = {en: ['切换到简体中文', 'zh-Hans'], zh: ['切換到繁體中文', 'zh-Hant'], zht: ['Switch to English', 'en']}[LANG];
+  lb.setAttribute('aria-label', nx[0]); lb.setAttribute('lang', nx[1]);
 }
 const $ = s => document.querySelector(s);
 const store = {
@@ -420,23 +433,26 @@ const plain = e => e.replace(/[\s()]/g, '');
 function fold(s){
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ü|v/g, 'u').replace(/[^a-z㐀-鿿]/g, '');
 }
-const IDX = D.map(r => ({c: plain(r.e), p: fold(r.p), en: ' ' + (r.en + ' ' + (r.en2 || '')).toLowerCase() + ' '}));
+const IDX = D.map(r => ({c: plain(r.e), ct: plain((r.t && r.t.e) || r.e), p: fold(r.p), en: ' ' + (r.en + ' ' + (r.en2 || '')).toLowerCase() + ' '}));
 
 /* ---------- font ---------- */
 // Caoshu is the default. Tap cycles: caoshu, xingshu, Ouyang Xun kaishu, Kaiti, Songti, modern sans.
 const FONTS = [['cao', '草书', 'caoshu (cursive script)'], ['xing', '行书', 'xingshu (running script)'], ['ou', '欧体', 'Ouyang Xun style regular script'],
   ['kai', '楷体', 'Kaiti'], ['song', '宋体', 'Songti'], ['hei', '黑体', 'modern sans']];
 let font = 'cao';
+// Traditional skips caoshu and xingshu (those fonts only have simplified forms) and shows Kaiti in their place.
+const fontsNow = () => LANG === 'zht' ? FONTS.filter(x => x[0] !== 'cao' && x[0] !== 'xing') : FONTS;
+const effFont = f => LANG === 'zht' && (f === 'cao' || f === 'xing') ? 'kai' : f;
 function setFont(f){
   const F = FONTS.find(x => x[0] === f) || FONTS[0];
-  font = F[0]; document.body.dataset.font = font;
-  $('#chars').setAttribute('aria-label', t('fontLbl', plain(LIST[cur].e), LANG === 'zh' ? F[1] : F[2]));
+  font = F[0]; document.body.dataset.font = effFont(font);
+  $('#chars').setAttribute('aria-label', t('fontLbl', plain(tr(LIST[cur], 'e')), t('fn')[effFont(font)]));
 }
 $('#chars').addEventListener('click', () => {
-  const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
-  const f = FONTS[i][0]; store.set('font2', f);
+  const L = fontsNow(), i = (L.findIndex(x => x[0] === effFont(font)) + 1) % L.length, FONTS_ = L;
+  const f = FONTS_[i][0]; store.set('font2', f);
   const ch = $('#chars');
-  fontFor(f, plain(LIST[cur].e)).then(() => { setFont(f); from(ch, 'none', `opacity 450ms ${EASE}`); });
+  fontFor(f, plain(tr(LIST[cur], 'e'))).then(() => { setFont(f); from(ch, 'none', `opacity 450ms ${EASE}`); });
 });
 
 /* ---------- stars ---------- */
@@ -465,7 +481,7 @@ async function copyText(t){
     document.body.appendChild(a); a.select(); const ok = document.execCommand('copy'); a.remove(); return ok; }catch(e){ return false; }
 }
 $('#copy').addEventListener('click', async () => {
-  const r = LIST[cur], ok = await copyText([plain(r.e), r.p, r.en].filter(Boolean).join('\n'));
+  const r = LIST[cur], ok = await copyText([plain(tr(r, 'e')), r.p, r.en].filter(Boolean).join('\n'));
   const path = $('#copy path');
   if(ok){ path.setAttribute('d', CHECK_D); note(t('copied')); clearTimeout(copyTimer); copyTimer = setTimeout(() => path.setAttribute('d', CLIP_D), 1500); }
   else note(t('noCopy'));
@@ -479,32 +495,34 @@ function charsHtml(e){
   return sp(a) + (b ? '<i class="brk" aria-hidden="true"></i>' + sp(b, 1) : '');
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function chipList(s){
-  return '<div class="chips">' + s.split('、').map(w => byExpr.has(w)
-    ? `<button class="chip" type="button" lang="zh-Hans" data-go="${byExpr.get(w)}">${esc(w)}</button>`
-    : `<span class="chip" lang="zh-Hans">${esc(w)}</span>`).join('') + '</div>';
+// s: simplified list (for lookup); shown: the same list in the current script.
+function chipList(s, shown){
+  const sh = (shown || s).split('、');
+  return '<div class="chips">' + s.split('、').map((w, k) => byExpr.has(w)
+    ? `<button class="chip" type="button" lang="${LT()}" data-go="${byExpr.get(w)}">${esc(sh[k] || w)}</button>`
+    : `<span class="chip" lang="${LT()}">${esc(sh[k] || w)}</span>`).join('') + '</div>';
 }
 function paintMore(r){
   let h = '';
   if(r.s36){
     // Stratagem: chapter, explanations, then anything the chengyu dataset adds for the same words.
-    const c = S36.chapters[r.ch];
-    h += `<dt>${t('dtChap')}</dt><dd>${esc(c.num)} <span lang="zh-Hans">${esc(c.zh)}</span> ${esc(c.en)}</dd>`;
-    if(LANG === 'zh') h += `<dt>${t('dtNote')}</dt><dd lang="en">${esc(r.x)}</dd>`;
+    const c = CH(r.ch);
+    h += `<dt>${t('dtChap')}</dt><dd>${esc(c.num)} <span lang="${LT()}">${esc(c.zh)}</span> ${esc(c.en)}</dd>`;
+    if(isZh()) h += `<dt>${t('dtNote')}</dt><dd lang="en">${esc(r.x)}</dd>`;
     else h += `<dt>${t('dtNote')}</dt><dd>${esc(r.x)}</dd><dt>${t('dtNoteZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zx)}</dd>`;
     const k = byExpr.get(r.e);
     if(k == null){ $('#dl').innerHTML = h; return; }
-    r = Object.assign({}, D[k], {en: LANG === 'zh' ? D[k].en : null});
+    r = Object.assign({}, D[k], {en: isZh() ? D[k].en : null});
   }
-  const TONE = r.s ? [{'褒': 'pos', '贬': 'neg', '中': ''}[r.s], t('tone')[r.s]] : null;
+  const sk = {'褒': 'pos', '贬': 'neg', '中': 'neu'}[r.s], TONE = sk ? [sk === 'neu' ? '' : sk, t('tone')[sk]] : null;
   // In Chinese the card shows the Chinese explanation, so MEANING leads with the English instead.
-  if(LANG === 'zh'){ if(r.en) h += `<dt>${t('dtEn')}</dt><dd lang="en">${esc(r.en)}</dd>`; }
+  if(isZh()){ if(r.en) h += `<dt>${t('dtEn')}</dt><dd lang="en">${esc(r.en)}</dd>`; }
   else if(r.zh) h += `<dt>${t('dtZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
   if(r.en2) h += `<dt>${t('dtEn2')}</dt><dd lang="en">${esc(r.en2)}</dd>`;
-  if(r.o) h += `<dt>${t('dtO')}</dt><dd class="zh" lang="zh-Hans">${esc(r.o)}</dd>`;
-  if(r.syn) h += `<dt>${t('dtSyn')}</dt><dd>${chipList(r.syn)}</dd>`;
-  if(r.ant) h += `<dt>${t('dtAnt')}</dt><dd>${chipList(r.ant)}</dd>`;
-  if(TONE) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${TONE[0]}" lang="zh-Hans">${TONE[1]}</span></dd>`;
+  if(r.o) h += `<dt>${t('dtO')}</dt><dd class="zh" lang="${LT()}">${esc(tr(r, 'o'))}</dd>`;
+  if(r.syn) h += `<dt>${t('dtSyn')}</dt><dd>${chipList(r.syn, tr(r, 'syn'))}</dd>`;
+  if(r.ant) h += `<dt>${t('dtAnt')}</dt><dd>${chipList(r.ant, tr(r, 'ant'))}</dd>`;
+  if(TONE) h += `<dt>${t('dtTone')}</dt><dd><span class="tag ${TONE[0]}" lang="${LT()}">${TONE[1]}</span></dd>`;
   $('#dl').innerHTML = h;
 }
 $('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go]'); if(!b) return; if(MODE !== 'cy') setMode('cy', +b.dataset.go); else show(+b.dataset.go, 0, true); });
@@ -563,12 +581,12 @@ function centerStage(){
 }
 // The definition line: English, or the Chinese explanation when the site is in Chinese.
 function paintDef(r){
-  const zhText = r.s36 ? r.zx : r.zh, zh = LANG === 'zh' && zhText, d = $('#def');
-  d.textContent = zh ? zhText : (r.en || ''); d.lang = zh ? 'zh-Hans' : 'en';
+  const zhText = r.s36 ? tr(r, 'zx') : tr(r, 'zh'), zh = isZh() && zhText, d = $('#def');
+  d.textContent = zh ? zhText : (r.en || ''); d.lang = zh ? LT() : 'en';
 }
 function paintHead(r){
-  $('#when').textContent = t('pos', plain(r.e), cur + 1, LIST.length);
-  document.title = `${plain(r.e)} | ${t(MODE === 's36' ? 'title36' : 'title')}`;
+  $('#when').textContent = t('pos', plain(tr(r, 'e')), cur + 1, LIST.length);
+  document.title = `${plain(tr(r, 'e'))} | ${t(MODE === 's36' ? 'title36' : 'title')}`;
   if(r.s36) $('#chap').textContent = t('chap', r.ch, r.n);
 }
 // Switch between the chengyu and the Thirty-Six Stratagems. Leaving 36 returns to the chengyu you were on.
@@ -585,7 +603,7 @@ function show(i, dir, focus){
   cur = ((i % n) + n) % n;
   const r = LIST[cur];
   swapIn(dir, () => {
-    $('#chars').innerHTML = charsHtml(r.e);
+    $('#chars').innerHTML = charsHtml(tr(r, 'e'));
     $('#pin').textContent = `(${r.p})`;
     paintDef(r);
     setFont(font);
@@ -685,7 +703,7 @@ function search(q){
   const hits = [];
   for(let i = 0; i < N; i++){
     const x = IDX[i]; let s = 0;
-    if(cjk){ const c = q.replace(/[^㐀-鿿]/g, ''); if(x.c === c) s = 100; else if(x.c.startsWith(c)) s = 80; else if(x.c.includes(c)) s = 60; }
+    if(cjk){ const c = q.replace(/[^㐀-鿿]/g, ''); if(x.c === c || x.ct === c) s = 100; else if(x.c.startsWith(c) || x.ct.startsWith(c)) s = 80; else if(x.c.includes(c) || x.ct.includes(c)) s = 60; }
     else {
       if(f && x.p === f) s = 95; else if(f && x.p.startsWith(f)) s = 75; else if(f.length > 1 && x.p.includes(f)) s = 45;
       const w = lq.replace(/[^a-z' -]/g, '').trim();
@@ -697,8 +715,8 @@ function search(q){
 }
 function rowHtml(i, s36){
   const r = s36 ? S[i] : D[i];
-  const on = isStar(r.e), w = esc(plain(r.e));
-  return `<li><button class="row" type="button" data-i="${i}"${s36 ? ' data-s36="1"' : ''}><b lang="zh-Hans">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
+  const on = isStar(r.e), w = esc(plain(tr(r, 'e')));
+  return `<li><button class="row" type="button" data-i="${i}"${s36 ? ' data-s36="1"' : ''}><b lang="${LT()}">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
     + `<button class="ibtn sstar" type="button" data-star="${i}"${s36 ? ' data-s36="1"' : ''} aria-pressed="${on}" aria-label="${esc(t('fav', w))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
 }
 let qTimer = 0;
@@ -812,11 +830,13 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
 
 /* ---------- start ---------- */
 (() => {
-  LANG = store.get('lang', 'en') === 'zh' ? 'zh' : 'en'; applyLang();
+  LANG = ['zh', 'zht'].includes(store.get('lang', 'en')) ? store.get('lang') : 'en'; applyLang();
   $('#lang').addEventListener('click', () => {
-    LANG = LANG === 'zh' ? 'en' : 'zh'; store.set('lang', LANG); applyLang();
+    LANG = {en: 'zh', zh: 'zht', zht: 'en'}[LANG]; store.set('lang', LANG); applyLang();
     // Repaint what depends on the language, in place (no slide).
-    const r = LIST[cur]; paintDef(r); paintMore(r); paintStar(); setFont(font);
+    // Characters change script too; ease them in like a font change.
+    const r = LIST[cur]; $('#chars').innerHTML = charsHtml(tr(r, 'e')); from($('#chars'), 'none', `opacity 450ms ${EASE}`);
+    paintDef(r); paintMore(r); paintStar(); setFont(font); fontFor(effFont(font), plain(tr(r, 'e')));
     paintHead(r);
     if($('#dSearch').open) runSearch();
   });
@@ -829,7 +849,7 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
   centerStage();
   // Only re-centre when the width changes (rotation). Mobile Safari fires height-only resizes as its toolbar hides on scroll.
   let w0 = innerWidth; addEventListener('resize', () => { if(innerWidth !== w0){ w0 = innerWidth; centerStage(); } });
-  Promise.race([Promise.all([document.fonts ? document.fonts.ready : 0, fontFor(font, plain(LIST[cur].e))]), wait(2500)])
+  Promise.race([Promise.all([document.fonts ? document.fonts.ready : 0, fontFor(effFont(font), plain(tr(LIST[cur], 'e')))]), wait(2500)])
     .then(() => { booted = true; requestAnimationFrame(() => face.classList.remove('pre')); });
   window.addEventListener('hashchange', () => { const k = s36Hash(); if(k >= 0){ setMode('s36', k); return; } const i = fromHash(); if(i >= 0) setMode('cy', i); });
   syncSoon(800);
