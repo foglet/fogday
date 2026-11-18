@@ -8,8 +8,10 @@
 <meta name="theme-color" content="#fbf8f1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:"zhcy kai";src:url(fonts/lxgw-wenkai-zhcy.woff2) format("woff2");font-display:block}
+@font-face{font-family:"zhcy ou";src:url(fonts/ar-pl-ukai-cn-zhcy.woff2) format("woff2");font-display:block}
 /* Colours and fonts follow fogday.com/mahjong (paper, felt green, red), set in Rubik. Light only. */
 :root{
   color-scheme:light;
@@ -24,9 +26,12 @@
   /* Character fonts: Songti (default) and a modern sans. Apple devices use the system font; others load Noto. */
   --song:"Songti SC","STSong","Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
   --hei:"PingFang SC","Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-  /* Calligraphic hands: Kaiti uses the system Kaiti where present, else Ma Shan Zheng; xingshu Zhi Mang Xing; caoshu Liu Jian Mao Cao.
+  /* Calligraphic hands. Kaiti: system Kaiti, else LXGW WenKai (OFL). Ouyang Xun style: a licensed Ouyang font if the device has one,
+     else AR PL UKai CN (Arphic Public License), the closest freely licensed classical kaishu. Both are self-hosted subsets of only
+     the characters in the dataset (fonts/). Xingshu: Zhi Mang Xing; caoshu: Liu Jian Mao Cao (Google Fonts, OFL).
      Any glyph a web font lacks falls back to Songti. */
-  --kai:"Kaiti SC","STKaiti","KaiTi","Ma Shan Zheng","Noto Serif SC",serif;
+  --kai:"Kaiti SC","STKaiti","KaiTi","zhcy kai","Noto Serif SC",serif;
+  --ou:"FZOuYangXunKaiShuS","FZOuYangXunKaiShu-S","方正欧阳询楷书 简","DFOuYangXun-W5","華康歐陽詢體W5","zhcy ou","Noto Serif SC",serif;
   --xing:"Zhi Mang Xing","Noto Serif SC",serif;
   --cao:"Liu Jian Mao Cao","Noto Serif SC",serif;
   --cy:var(--song); --cyw:500; --cyt:var(--song);
@@ -43,6 +48,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);f
   display:flex;flex-direction:column;min-height:100vh;min-height:100svh}
 body[data-font="hei"]{--cy:var(--hei);--cyt:var(--hei)}
 body[data-font="kai"]{--cy:var(--kai);--cyw:400}
+body[data-font="ou"]{--cy:var(--ou);--cyw:400}
 body[data-font="xing"]{--cy:var(--xing);--cyw:400}
 body[data-font="cao"]{--cy:var(--cao);--cyw:400}
 button,input{font:inherit;color:inherit}
@@ -81,7 +87,7 @@ body.unpinned .more{margin-top:var(--s5)}
 
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
 .card{position:relative;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:var(--shadow-card);
-  padding:var(--s5) var(--s4) var(--s6);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  padding:var(--s5) var(--s4) var(--s4);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 /* A new chengyu eases in: it starts transparent (and a little to the side when browsing), then transitions into place.
    On first load it waits for its fonts, so nothing swaps or jumps. */
 .face{transition:opacity 450ms cubic-bezier(.22,.61,.36,1),transform 450ms cubic-bezier(.22,.61,.36,1)}
@@ -90,7 +96,8 @@ body.unpinned .more{margin-top:var(--s5)}
 .chars{transition:opacity 450ms cubic-bezier(.22,.61,.36,1)}
 .chars.pre{opacity:0;transition:none}
 @media (prefers-reduced-motion:reduce){.face{transition:opacity 300ms ease}.face.pre{transform:none}.ibtn.spin svg{animation:none}}
-.star{position:absolute;bottom:var(--s2);right:var(--s2);color:var(--ink-2)}
+.starrow{display:flex;justify-content:center;margin-top:var(--s2)}
+.star{color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--gold)}
 .star[aria-pressed="true"] svg{fill:currentColor}
 .chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:calc(var(--s2) + 10px) 0;
@@ -197,8 +204,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     <h1 class="vh" id="when" tabindex="-1">Chengyu</h1>
 
     <article class="card" id="card" aria-labelledby="when">
-      <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
       <div class="face pre" id="face">
         <button class="chars" id="chars" type="button" lang="zh-Hans"></button>
         <p class="pin" id="pin" lang="zh-Latn-pinyin"></p>
@@ -208,6 +213,10 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
       <p class="note" id="note" role="status"></p>
     </article>
+    <div class="starrow">
+      <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
+    </div>
 
     </div>
 
@@ -226,6 +235,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
       <div class="morebody" id="infoBody" hidden>
         <p>Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
+        <p>Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two.</p>
         <p><button class="lnk" id="bSync" type="button" aria-haspopup="dialog">Sync stars across devices</button></p>
         <p><a href="/">fogday.com</a></p>
       </div>
@@ -295,9 +305,10 @@ function fold(s){
 const IDX = D.map(r => ({c: plain(r.e), p: fold(r.p), en: ' ' + (r.en + ' ' + (r.en2 || '')).toLowerCase() + ' '}));
 
 /* ---------- font ---------- */
-// Tap cycles: Songti, modern sans, Kaiti, xingshu, caoshu.
-const FONTS = [['song', '宋体', 'Songti'], ['hei', '黑体', 'modern sans'], ['kai', '楷体', 'Kaiti'], ['xing', '行书', 'xingshu (running script)'], ['cao', '草书', 'caoshu (cursive script)']];
-let font = 'song';
+// Caoshu is the default. Tap cycles: caoshu, xingshu, Ouyang Xun kaishu, Kaiti, Songti, modern sans.
+const FONTS = [['cao', '草书', 'caoshu (cursive script)'], ['xing', '行书', 'xingshu (running script)'], ['ou', '欧体', 'Ouyang Xun style regular script'],
+  ['kai', '楷体', 'Kaiti'], ['song', '宋体', 'Songti'], ['hei', '黑体', 'modern sans']];
+let font = 'cao';
 function setFont(f){
   const F = FONTS.find(x => x[0] === f) || FONTS[0];
   font = F[0]; document.body.dataset.font = font;
@@ -305,7 +316,7 @@ function setFont(f){
 }
 $('#chars').addEventListener('click', () => {
   const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
-  const f = FONTS[i][0]; store.set('font', f);
+  const f = FONTS[i][0]; store.set('font2', f);
   const ch = $('#chars');
   fontFor(f, plain(D[cur].e)).then(() => { ch.classList.add('pre'); setFont(f); void ch.offsetWidth; requestAnimationFrame(() => ch.classList.remove('pre')); });
 });
@@ -604,7 +615,8 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
 
 /* ---------- start ---------- */
 (() => {
-  font = store.get('font', 'song'); setFont(font);
+  store.del('font');   // older saved choice; caoshu is now the default
+  font = store.get('font2', 'cao'); setFont(font);
   const fromHash = () => { let h = ''; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} const i = h ? IDX.findIndex(x => x.c === h) : -1; return i; };
   const i0 = fromHash(); show(i0 >= 0 ? i0 : today, 0);
   centerStage();
