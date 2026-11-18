@@ -128,7 +128,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 'use strict';
 /* ---------- sprites: 9 sets (body n/p/s x tail n/l/s), 10 frames each: 0-7 walk (step*2+wing), 8-9 fly (legs tucked) ---------- */
 const SPRS = /*SPRITES*/;
-for(const k in SPRS) SPRS[k] = SPRS[k].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));
+for(const k in SPRS){ SPRS[k] = SPRS[k].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48)); SPRS[k].key = k; }
 const GW = 30, GH = 26, FOOT = 22, MOUTH = [27, 6.5];
 const MAXS = 1.25*96/GW;   // no dragon longer than 1.25 in (CSS inches), so the pixels stay chunky: at most 4 px per sprite pixel
 const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
@@ -163,6 +163,7 @@ function palOf(d){ let h = d.h, sa = d.sv[0], va = d.sv[1];
   const [b,w,l] = h, p = {2:hsv(b,sa,va), 3:hsv(b,Math.min(1,sa+.08),va*.7), 4:hsv(l,.3,1), 5:hsv(w,Math.min(1,sa+.06),Math.min(1,va+.02)), 6:hsv(w,Math.min(1,sa+.13),va*.72)};
   p[10] = d.rainbow ? hsv(w+110, Math.min(1,sa+.15), Math.min(1,va+.04)) : p[5];
   p[11] = d.rainbow ? hsv(w+220, Math.min(1,sa+.15), Math.min(1,va+.04)) : p[5];
+  p[12] = d.coat === 'dots' ? hsv(l, .22, 1) : hsv(w, Math.min(1, sa + .15), va*.62);   // stripes: dark wing colour; dots: pale belly colour
   Object.assign(p, FIX); const out = []; for(const k in p) out[k] = 'rgb(' + p[k].join(',') + ')'; return out; }
 let shared = {h: scheme(), sv: tone()};   // for "All matching"
 function pickedScheme(){ const [h, s, v] = hexHsv(cfg.hue); return {h:[h, h+150, h+40], sv:[clamp(s, .25, .95), clamp(v, .5, .98)]}; }
@@ -299,7 +300,18 @@ const adults = () => dg.filter(d => !d.mom);
 const airCount = () => adults().filter(d => d.mode !== 'walk' && d.mode !== 'off').length;   // one out of sight frees its place in the air
 function looks(d){ const sh = cfg.body === 'mix' ? (R() < .4 ? 'n' : R() < .5 ? 'p' : 's') : cfg.body,
     tl = cfg.tail === 'mix' ? (R() < .4 ? 'n' : R() < .5 ? 'l' : 's') : cfg.tail;
-  d.shape = sh; d.tl = tl; d.set = SPRS[sh + tl]; d.rainbow = cfg.wings === 'mix' ? R() < .3 : cfg.wings === 'three'; }
+  const r = R(); d.coat = r < .2 ? 'stripe' : r < .4 ? 'dots' : '';   // 1 in 5 striped, 1 in 5 polka-dotted
+  d.shape = sh; d.tl = tl; d.set = coated(SPRS[sh + tl], d.coat); d.rainbow = cfg.wings === 'mix' ? R() < .3 : cfg.wings === 'three'; }
+/* Coats: stripes and polka dots are painted on the sprite's body pixels (index 2) as index 12, in sprite coordinates, so
+   they stay put through walking, turning and yaw. Stripes: slanted 2-pixel bands every 5, across body and belly. Dots: a staggered 4x4 grid on the body. */
+const COATS = new Map();
+function coated(set, coat){ if(!coat) return set; const key = set.key + coat; let c = COATS.get(key); if(c) return c;
+  c = set.map(fr => { const o = fr.slice();
+    for(let r=0; r<GH; r++) for(let col=0; col<GW; col++){ const i = r*GW + col, v = o[i];
+      if(coat === 'stripe'){ if((v === 2 || v === 4) && (col + r) % 5 < 2) o[i] = 12; }   // slanted bands across body and belly
+      else if(v === 2 && ((r % 4 === 1 && col % 4 === 1) || (r % 4 === 3 && col % 4 === 3))) o[i] = 12; }
+    return o; });
+  COATS.set(key, c); return c; }
 function breathKind(d){ d.water = cfg.breath === 'water' ? true : cfg.breath === 'fire' || cfg.breath === 'none' ? false : R() < .33; }
 function paint(d){ const s = cfg.color === 'match' ? shared : cfg.color === 'pick' ? pickedScheme() : {h: scheme(), sv: tone()};
   d.th = [...s.h]; d.tsv = [...s.sv]; if(!d.h){ d.h = [...s.h]; d.sv = [...s.sv]; } }
