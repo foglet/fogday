@@ -72,8 +72,14 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
 - BART: track and the 50 stations from `https://www.bart.gov/dev/schedules/google_transit.zip` (Transitland `f-9q9-bart`,
   version d4185c0d, fetched in the browser pane 2026-11-17). `data/bart.json`: stop-to-stop pieces of the GTFS shapes
   (simplified to 6 m, delta encoded like the shuttle shapes) and each station with the lines that stop there; `D.bart`.
-  Drawn under every view (layers `bart-line`, `bart-st`): grey track, stations as 5 px dots in the same grey; always on, not clickable.
+  Drawn under every view (now part of the rail layers below).
   No train times. The 511 regional feed (`f-sf~bay~area~rg`) carries BART too but needs an API key.
+- Rail by mode, as on /transit/ (D.rail, layers `rail-line`, `rail-st`; replaced the BART-only layers): metro (BART) white
+  (#edeff5; on the light map #3a4650), passenger rail (Caltrain) red #d92020, light rail and streetcar (Muni F J K L M N T)
+  green #31ad90; stations 5 px dots in their line's color; always on, not clickable. `data/caltrain.json` from Trillium
+  `caltrain-ca-us` (Transitland `f-9q9-caltrain`, version c15e175e); `data/muni-rail.json` from
+  `https://muni-gtfs.apps.sfmta.com/data/muni_gtfs-current.zip` (Transitland `f-9q8y-sfmta`, SHA1 53c427d8), route_type 0
+  only (no buses or cable cars), stops with the same name within 150 m merged. Both built in the browser pane 2026-11-17.
 - Bottom-right stack, top to bottom (as /treesf/): folded-map button (Systems: lists every system, bold = on view; tap one
   to show it, the same as tapping the name), zoom readout (live, one decimal, display only), location, + − and compass.
 

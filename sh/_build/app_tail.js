@@ -75,7 +75,7 @@ function arrowImage(){
 const THEME = {
   get(){ return document.documentElement.dataset.theme === "light" ? "light" : "dark" },
   style(){ return THEME.get()==="light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/fogfish/cilhmh2ah00959gm3fy54zuik" },   // dark: the Spy map style (/spy/)
-  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, bart:"#8e9aa4"} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, bart:"#5f6e7b"} }
+  ink(){ return THEME.get()==="light" ? {stopFill:"#ffffff", stopLine:"#1c2830", hollow:"#ffffff", casing:"#ffffff", casingOp:0.9, rail:{metro:"#3a4650", rail:"#d92020", light:"#31ad90"}} : {stopFill:"#021724", stopLine:"#e3eaee", hollow:"#021724", casing:"#c5ced5", casingOp:0.35, rail:{metro:"#edeff5", rail:"#d92020", light:"#31ad90"}} }
 };
 /* The Spy map draws some of its own lines (paths, tunnels) in lime green, which pull the eye from the shuttles.
    In dark mode, any basemap line in the lime-to-green range is muted (less saturated) and faded. */
@@ -108,19 +108,21 @@ function addLayers(){
   map.addSource("stops", {type:"geojson", data:stopFeatures()});
   map.addSource("veh", {type:"geojson", data:vehicleFeatures()});
   map.addSource("libs", {type:"geojson", data:libFeatures()});
-  map.addSource("bart", {type:"geojson", data:bartTrack()});
-  map.addSource("bart-st", {type:"geojson", data:bartStations()});
+  map.addSource("rail", {type:"geojson", data:railTrack()});
+  map.addSource("rail-st", {type:"geojson", data:railStations()});
   /* Routes go under the basemap's first label layer, so place and street names read on top of them;
      stops and shuttles stay above everything */
   const firstLabel=(map.getStyle().layers||[]).find(l=>l.type==="symbol");
   const under=firstLabel ? firstLabel.id : undefined;
-  /* BART, on every view and in every state (not tied to the system or a selected route), not clickable:
-     quiet grey track, stations as 5 px dots in the same grey, below the shuttles */
-  map.addLayer({id:"bart-line", type:"line", source:"bart", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.bart,"line-width":["interpolate",["linear"],["zoom"],9,1.5,13,2.5,16,4],"line-opacity":0.85}}, under);
+  /* Rail, on every view and in every state (not tied to the system or a selected route), not clickable, colored by mode
+     as on /transit/: metro (BART) white, passenger rail (Caltrain) red, light rail and streetcar (Muni) green.
+     On the light map, metro is a dark slate (white would vanish). Below the shuttles. */
+  const railColor=["match",["get","m"],"metro",k.rail.metro,"rail",k.rail.rail,k.rail.light];
+  map.addLayer({id:"rail-line", type:"line", source:"rail", layout:{"line-cap":"round","line-join":"round","line-sort-key":["match",["get","m"],"metro",2,"rail",1,0]}, paint:{"line-color":railColor,"line-width":["interpolate",["linear"],["zoom"],9,1.5,13,2.5,16,4],"line-opacity":0.85}}, under);
   map.addLayer({id:"route-casing", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":k.casing,"line-width":["interpolate",["linear"],["zoom"],11,2.6,15,7],"line-opacity":k.casingOp,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-line", type:"line", source:"routes", layout:{"line-cap":"round","line-join":"round"}, paint:{"line-color":["get","color"],"line-width":WIDTH,"line-opacity":0.95,"line-offset":OFFSET}}, under);
   map.addLayer({id:"route-hit", type:"line", source:"routes", paint:{"line-color":"#000","line-width":["interpolate",["linear"],["zoom"],11,8,15,14],"line-opacity":0.001,"line-offset":OFFSET}}, under);   // a finger-wide tap area along each line
-  map.addLayer({id:"bart-st", type:"circle", source:"bart-st", paint:{"circle-radius":2.5,"circle-color":k.bart,"circle-opacity":0.85}});   // stations: 5 px dots, the track's grey
+  map.addLayer({id:"rail-st", type:"circle", source:"rail-st", paint:{"circle-radius":2.5,"circle-color":railColor,"circle-opacity":0.85}});   // stations: 5 px dots in their line's color
   map.addLayer({id:"stop-dot", type:"circle", source:"stops", paint:{"circle-color":k.stopFill,"circle-stroke-color":k.stopLine}});   // size and ring color: applyFocus
   map.addLayer({id:"lib", type:"symbol", source:"libs", layout:{"icon-image":libImg,"icon-allow-overlap":true,"icon-size":["interpolate",["linear"],["zoom"],11,0.7,15,1]}});   // libraries: above stops, under shuttles
   map.addLayer({id:"veh-halo", type:"circle", source:"veh", paint:{"circle-radius":["interpolate",["linear"],["zoom"],11,10,15,15],"circle-color":["get","color"],"circle-opacity":["case",["==",["get","live"],1],0.3,0.15]}});
@@ -218,18 +220,18 @@ function pad(){
 const BOOK_OPEN_TEXT="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64ZM160,88h40a8,8,0,0,1,0,16H160a8,8,0,0,1,0-16Zm48,40a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,128Zm0,32a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,160Z";
 function libImage(){
   const light=THEME.get()==="light", S=56, c=document.createElement("canvas"); c.width=c.height=S; const g=c.getContext("2d");
-  /* the book alone: no disc, no ring; a soft halo in the page color so it reads over streets (as the control icons) */
-  g.save(); g.translate(S/2-18,S/2-18); g.scale(36/256,36/256); g.shadowColor=light?"#edf1f2":"#021724"; g.shadowBlur=14;
+  /* the book alone: no disc, no ring, no halo */
+  g.save(); g.translate(S/2-18,S/2-18); g.scale(36/256,36/256);
   g.fillStyle=light?"#2f7fc1":"#7cc4f0"; g.fill(new Path2D(BOOK_OPEN_TEXT)); g.restore();
   return g.getImageData(0,0,S,S);
 }
 function libFeatures(){ return {type:"FeatureCollection", features:(D.libs||[]).map((l,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[l[3]/1e5, l[2]/1e5]}}))} }
-/* ---------- BART (bart.gov GTFS): track and stations, no times ---------- */
-function bartTrack(){
-  const lines=((D.bart||{}).tr||[]).map(f=>{ const c=[]; let a=0, o=0; for(let k=0;k<f.length;k+=2){ a+=f[k]; o+=f[k+1]; c.push([o/1e5, a/1e5]) } return c });
-  return {type:"FeatureCollection", features:[{type:"Feature", properties:{}, geometry:{type:"MultiLineString", coordinates:lines}}]};
+/* ---------- Rail (BART, Caltrain, Muni Metro): track and stations by mode, no times ---------- */
+function railTrack(){
+  const line=f=>{ const c=[]; let a=0, o=0; for(let k=0;k<f.length;k+=2){ a+=f[k]; o+=f[k+1]; c.push([o/1e5, a/1e5]) } return c };
+  return {type:"FeatureCollection", features:(D.rail||[]).map(r=>({type:"Feature", properties:{m:r.m}, geometry:{type:"MultiLineString", coordinates:r.tr.map(line)}}))};
 }
-function bartStations(){ return {type:"FeatureCollection", features:((D.bart||{}).st||[]).map((s,i)=>({type:"Feature", properties:{i}, geometry:{type:"Point", coordinates:[s[2]/1e5, s[1]/1e5]}}))} }
+function railStations(){ return {type:"FeatureCollection", features:(D.rail||[]).flatMap(r=>r.st.map(s=>({type:"Feature", properties:{m:r.m}, geometry:{type:"Point", coordinates:[s[2]/1e5, s[1]/1e5]}})))} }
 function libPopup(i){
   const l=D.libs[i];
   new mapboxgl.Popup({offset:14, maxWidth:"260px"}).setLngLat([l[3]/1e5, l[2]/1e5]).setHTML("<h3>"+esc(l[0])+"</h3><p>"+esc(l[1])+"</p><p>San Francisco Public Library</p>").addTo(map);
