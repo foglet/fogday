@@ -167,6 +167,9 @@ dialog[open]{display:flex}
 dialog::backdrop{background:var(--scrim)}
 .sh{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4)}
 .sh h2{flex:1;margin:0;font-family:var(--display);font-weight:600;font-size:var(--fs-lg)}
+/* SEARCH heading and FAVORITES label: red capitals. */
+#dSearchH,.count.fav{color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+.count.fav{font-weight:600}
 .sb{overflow:auto;padding:var(--s4);padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom))}
 label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s1)}
 .field{width:100%;min-height:48px;padding:0 var(--s3);border:0;border-radius:var(--r-md);background:var(--surface-3);font-size:1rem}
@@ -268,9 +271,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   <div class="sh"><h2 id="dSearchH">Search</h2><button class="ibtn" type="button" data-close aria-label="Close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sb">
-    <label for="q">Characters, pinyin or English</label>
-    <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-describedby="qHelp">
-    <p class="help" id="qHelp">Tones are optional: ma, mǎ and ma3 all match.</p>
+    <input class="field" id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" placeholder="画蛇, hua she, snake" aria-label="Search by characters, pinyin or English">
     <p class="count" id="qCount" role="status"></p>
     <ul class="list" id="qList"></ul>
   </div>
@@ -355,7 +356,7 @@ function toggleStar(e){
 function paintStar(){
   const on = isStar(D[cur].e), b = $('#star');
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  b.setAttribute('aria-label', on ? 'Starred. Tap to remove the star' : 'Star this chengyu');
+  b.setAttribute('aria-label', on ? 'In favorites. Tap to remove' : 'Add to favorites');
 }
 $('#star').addEventListener('click', () => toggleStar(D[cur].e));
 
@@ -571,7 +572,7 @@ function rowHtml(i){
   const r = D[i];
   const on = isStar(r.e), w = esc(plain(r.e));
   return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${w}</b><span class="pd"><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span>&ensp;<span class="d">${esc(r.en || '')}</span></span></button>`
-    + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="Star ${w}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
+    + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="Favorite ${w}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
 }
 let qTimer = 0;
 function runSearch(){
@@ -580,10 +581,12 @@ function runSearch(){
     // No query yet: show the starred list.
     const list = Object.entries(stars).filter(([e]) => byExpr.has(e)).sort((a, b) => b[1] - a[1]).map(([e]) => byExpr.get(e));
     $('#qList').innerHTML = list.map(rowHtml).join('');
-    $('#qCount').textContent = list.length ? 'Starred' : 'Starred chengyu appear here. Tap the star by a chengyu to add it.';
+    $('#qCount').textContent = list.length ? 'Favorites' : 'Favorites appear here. Tap the star by a chengyu to add it.';
+    $('#qCount').classList.toggle('fav', list.length > 0);
     return;
   }
   $('#qList').innerHTML = hits.slice(0, MAX).map(rowHtml).join('');
+  $('#qCount').classList.remove('fav');
   $('#qCount').textContent = hits.length ? (hits.length > MAX ? `${hits.length} matches, showing ${MAX}` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`) : 'No matches';
 }
 $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
