@@ -354,16 +354,32 @@ function buildScene(){
     const u = rand(), y = gTopA + 4 + u*(gh - gTopA - 8), x = 6 + rand()*(gw - 12); if(offRiver(x, y)) PUD.push({x, y, r: 2.5 + u*7 + rand()*2}); }
   const putO = (x, y, c) => { put(fgBuf, x, y, c); x |= 0; y |= 0; if(x >= 0 && y >= 0 && x < gw && y < gh) OBJ[y*gw + x] = 1; };
   if(cfg.rocks){ const n = Math.max(3, ((sea ? .4 : 1)*gw/12)|0), top = sea ? BEACH_A + 2 : cfg.ground === 'none' ? gh - 2 : gTopA + 2;
-    const rs = []; for(let i=0; i<n; i++){ const u = cfg.ground === 'none' ? 1 : rand(), x = rand()*gw, y = top + u*(gh - top - 2); if(offRiver(x, y)) rs.push([x, y, u]); }
+    // Rocks differ from scene to scene and from rock to rock: shape (round boulder, flat slab, jagged, tall standing stone,
+    // pebbles), colour from the scene's own stone, speckled, lit from the upper left; moss on some in grass; a big boulder or two.
+    const ROCKS = {grass:[[128,124,120],[112,116,124],[134,120,102],[100,104,98]], sand:[[176,160,130],[150,136,112],[132,126,118]],
+      desert:[[178,104,72],[152,94,68],[196,150,92],[128,86,66]], snow:[[118,126,140],[100,106,118],[140,146,156]], moon:[[124,124,130],[98,98,106],[146,146,150]],
+      sea:[[136,130,122],[96,94,96],[118,112,104]], none:[[128,124,120],[110,112,118]]};
+    const pal = ROCKS[sea ? 'sea' : cfg.ground] || ROCKS.grass, kinds = ['round','round','slab','jag','jag','tall','pebbles'];
+    const rs = []; for(let i=0; i<n; i++){ const u = cfg.ground === 'none' ? 1 : rand(), x = rand()*gw, y = top + u*(gh - top - 2); if(offRiver(x, y)) rs.push([x, y, u, kinds[(rand()*kinds.length)|0], 1]); }
+    for(let i=0, nb = rand() < .35 ? 2 : 1; i<nb; i++){ const u = cfg.ground === 'none' ? 1 : .7 + rand()*.3, x = 10 + rand()*(gw - 20), y = top + u*(gh - top - 2);   // the big boulders, up front
+      if(offRiver(x, y)) rs.push([x, y, u, rand() < .6 ? 'round' : 'jag', 2.2 + rand()*1.2]); }
     rs.sort((a, b) => a[1] - b[1]);
     const dim = sk.dim, tint = sk.tint, sh = c => c.map((v, j) => Math.round(clamp(v*dim + tint[j], 0, 255)));
-    const base = [[128,124,120],[140,128,112],[118,122,130]][(rand()*3)|0];
-    for(const [cx, by, u] of rs){ const w = 2 + u*5 + rand()*3, h = w*(.5 + rand()*.25), bump = rand()*6.28;
+    const rock = (cx, by, u, kind, big) => { const b0 = pal[(rand()*pal.length)|0].map(v => v + (rand() - .5)*18), w0 = (2 + u*4.5 + rand()*2.5)*big;
+      const shape = {round: [1, .62, .07], slab: [1.45, .34, .05], jag: [.95, .78, .22], tall: [.5, 1.25, .1]}[kind] || [1, .6, .1];
+      const w = w0*shape[0], h = w0*shape[1], jag = shape[2], nv = 5 + (rand()*4)|0, vr = Array.from({length: nv}, () => 1 - jag*rand());   // facet radii
+      const rad = a => { const t = ((a/(2*Math.PI)) % 1 + 1) % 1*nv, k = Math.floor(t), f = t - k; return kind === 'round' || kind === 'slab' ? 1 - jag*.5*(1 + Math.sin(a*3 + vr[0]*9)) : vr[k % nv]*(1 - f) + vr[(k + 1) % nv]*f; };
+      const moss = cfg.ground === 'grass' && rand() < .4;
       for(let y=-Math.ceil(h); y<=0; y++) for(let x=-Math.ceil(w); x<=Math.ceil(w); x++){
-        const rx = x/w, ry = (y + h*.05)/h, edge = 1 + .15*Math.sin(Math.atan2(ry, rx)*3 + bump);
-        const d = Math.hypot(rx, ry); if(d > edge) continue;
-        let c = base; if(d > edge - .22) c = [60,56,58]; else if(rx < -.15 && ry < -.35) c = base.map(v => v + 40); else if(rx > .2 || ry > -.15) c = base.map(v => v*.76);
-        putO(cx + x, by + y, sh(c)); } } }
+        const rx = x/w, ry = (y + h*.08)/h, a = Math.atan2(ry, rx), d = Math.hypot(rx, ry), R0 = rad(a); if(d > R0) continue;
+        const lit = -(rx*.6 + ry*.8)/Math.max(.3, d), sp = hash(Math.round(cx + x)*3, Math.round(by + y)*5);   // light from the upper left; speckle
+        let c = d > R0 - .9/Math.max(1.5, Math.min(w, h)) ? [56,52,56] : lit > .45 ? b0.map(v => v + 36) : lit > -.1 ? b0 : lit > -.55 ? b0.map(v => v*.8) : b0.map(v => v*.64);
+        if(c !== b0 && sp < .12) c = c.map(v => v*.88); else if(sp > .93) c = c.map(v => v + 18);
+        if(moss && ry < -.55 && d < R0 - .1 && sp < .7) c = [86,128,70];
+        putO(cx + x, by + y, sh(c)); } };
+    for(const [cx, by, u, kind, big] of rs){
+      if(kind === 'pebbles') for(let k=0, m = 3 + (rand()*3)|0; k<m; k++) rock(cx + (rand() - .5)*8, by + (rand() - .5)*2, u*.35, 'round', 1);
+      else rock(cx, by, u, kind, big); } }
   if(desert){ const sh = c => c.map((v, j) => Math.round(clamp(v*sk.dim + sk.tint[j], 0, 255))), pl = [];
     for(let i=0, n = Math.max(3, (gw/34)|0); i<n; i++) pl.push(['j', 10 + rand()*(gw - 20), rand()]);
     for(let i=0, n = Math.max(2, (gw/30)|0); i<n; i++) pl.push(['b', 4 + rand()*(gw - 8), rand()]);
@@ -554,7 +570,7 @@ function tick(){ T++;
         const hw = GW*d.s/2, hh = GH*d.s/2;
         if(d.entering && d.cx - hw > 0 && d.cx + hw < W && d.cy - hh > 0 && d.cy + hh < VH) d.entering = false;   // fully in: back to the screen's bounds
         if(d.mode !== 'leave' && d.mode !== 'off' && !d.entering){ d.cx = clamp(d.cx, hw*.2, W - hw*.2); d.cy = clamp(d.cy, hh*.2, VH - hh*.4); }
-        if(d.mode !== 'dizzy' && !d.loopN && Math.abs(d.vx) > 1.2*K && Math.sign(d.vx) !== d.dir) d.dir = d.vx > 0 ? 1 : -1;   // turns round only when clearly going the other way (no wobble)
+        if(d.mode !== 'dizzy' && !d.loopN && !d.aim && Math.abs(d.vx) > 1.2*K && Math.sign(d.vx) !== d.dir) d.dir = d.vx > 0 ? 1 : -1;   // turns round only when clearly going the other way (no wobble)
         d.wing = ((T/(d.mode === 'fly' ? 6 : 4))|0)%2; if(d.mode === 'dizzy' && d.dz > d.dz1) d.wing = 0; } }
     // heading: the whole body turns to the way it flies
     const mvx = d.cx - d.lx, mvy = d.cy - d.ly; d.lx = d.cx; d.ly = d.cy;
@@ -598,13 +614,19 @@ function tick(){ T++;
   // breath
   for(const d of dg){ const a = d.aim; if(!a) continue;   // a tap: shoot at the spot (fire, or water for the one that decides so)
     if(a.p && a.p.down && !a.p.held){ a.tx = a.p.x; a.ty = a.p.y; a.n = Math.max(a.n, 4); }   // finger still down: keep firing at it
-    if(a.wait > 0){ a.wait--; continue; } if(d.mode === 'off' || d.mode === 'dizzy' || d.up || --a.n < 0){ d.aim = null; continue; }
-    if(d.mode === 'walk' || Math.abs(a.tx - d.cx) > GW*d.s*.3) d.dir = a.tx > d.cx ? 1 : -1;
+    if(d.mode === 'off' || d.mode === 'dizzy' || d.mode === 'under' || d.mode === 'spin' || d.up){ d.aim = null; continue; }
+    const want = Math.abs(a.tx - d.cx) > 4*K ? (a.tx > d.cx ? 1 : -1) : d.dir;
+    if(want !== d.dir){ d.dir = want; a.wait = Math.max(a.wait, 6); }   // turn to face the spot first
+    if(d.mode !== 'walk'){ d.vx *= .88; d.vy *= .88; }   // a flier hovers a moment to aim
+    if(a.wait > 0){ a.wait--; continue; }
+    const fx = d.yx === undefined ? d.dir : d.yx; if(Math.sign(fx) !== d.dir || Math.abs(fx) < .8) continue;   // still swinging round: no spray yet
+    if(--a.n < 0){ d.aim = null; continue; }
     const [mx, my] = mouth(d), dx = a.tx - mx, dy = a.ty - my, D = Math.hypot(dx, dy) || 1, sp = Math.min(40, 14*K/SPEEDS[cfg.spd]);   // about 550 px a second whatever the speed setting
     for(let i=0; i<3; i++){ const ang = Math.atan2(dy, dx) + (R()-.5)*.08, L = Math.max(2, D/sp*(0.92 + R()*.12));
       bits.push({k: a.water ? 'drop' : 'fire', shot: true, x: mx, y: my, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, sc: Math.max(2, d.s*.8), n: 0, L}); } }
   if(cfg.breath !== 'none') for(const d of dg){ if(d.aim || d.hid || d.mode === 'under' || d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
-    if(d.breath > 0){ d.breath--; const [mx, my] = mouth(d), ang = (d.dir > 0 ? 0 : Math.PI) + d.rot;
+    const fx = d.yx === undefined ? d.dir : d.yx; if(d.breath > 0 && Math.abs(fx) < .8) continue;   // mid-turn: hold the breath
+    if(d.breath > 0){ d.breath--; const [mx, my] = mouth(d), ang = (fx > 0 ? 0 : Math.PI) + Math.round(d.rot/QA)*QA;   // out of the snout it faces
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
     else if(--d.fireT <= 0){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } }
