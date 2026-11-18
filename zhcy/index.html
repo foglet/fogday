@@ -130,8 +130,9 @@ body.unpinned .actions{margin-top:var(--s2)}
   font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}
 .n36:hover{color:var(--ink)}
 .n36[aria-pressed="true"]{color:var(--accent)}
-/* Chapter line: floats above the characters so it never moves them. */
-.chap{position:absolute;left:0;right:0;top:var(--s2);white-space:nowrap;margin:0;text-align:center;font-size:var(--fs-sm);color:var(--accent);letter-spacing:.02em}
+/* Chapter line: under the definition in 36 mode. */
+.chap{margin:0 0 50px;text-align:center;font-size:var(--fs-sm);color:var(--accent);letter-spacing:.02em}
+body.m36 .def{margin-bottom:var(--s2);min-height:0}   /* chapter line sits right under the definition */
 /* Copy (Phosphor clipboard-text, MIT): plain icon just left of the star. */
 .ph{fill:currentColor;stroke:none}
 .copy{color:var(--ink-2);margin-left:auto;margin-right:-8px}   /* 32px of space between the copy and star icons */
@@ -235,12 +236,12 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     <h1 class="vh" id="when" tabindex="-1">Chengyu</h1>
 
     <article class="card" id="card" aria-labelledby="when">
-      <p class="chap" id="chap" hidden></p>
       <div class="face pre" id="face">
         <button class="chars" id="chars" type="button" lang="zh-Hans"></button>
         <div class="meta" id="meta">
           <p class="pin" id="pin" lang="zh-Latn-pinyin"></p>
           <p class="def" id="def"></p>
+          <p class="chap" id="chap" hidden></p>
         </div>
       </div>
     </article>
@@ -384,7 +385,7 @@ function paintMode(){
   document.getElementById('infoA').textContent = s ? t('info36A') : t('count');
   document.getElementById('infoB').innerHTML = s ? t('info36B') : t('data');
   const b = document.getElementById('b36'); b.setAttribute('aria-pressed', s ? 'true' : 'false');
-  document.getElementById('chap').hidden = !s;
+  document.getElementById('chap').hidden = !s; document.body.classList.toggle('m36', s);
 }
 function applyLang(){
   document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
