@@ -5,7 +5,7 @@ import json, math, random, colorsys, argparse, pathlib
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 ap = argparse.ArgumentParser(); ap.add_argument('out', nargs='?', default='banner.png')
-ap.add_argument('--seed', type=int, default=7); ap.add_argument('--font', default='/tmp/fonts/Silkscreen-700.ttf')
+ap.add_argument('--seed', type=int, default=7); ap.add_argument('--lean', action='store_true', help='six dragons: no D4, D5, and one walking baby (same colours and places)'); ap.add_argument('--font', default='/tmp/fonts/Silkscreen-700.ttf')
 A = ap.parse_args(); rnd = random.Random(A.seed)
 root = pathlib.Path(__file__).parent
 SPRS = {k: [[ord(c) - 48 for c in s] for s in v] for k, v in json.loads((root / 'sprites.json').read_text()).items()}
@@ -106,8 +106,9 @@ for d in dragons:
         else:
             bx = d['x'] - (k + 1)*(GW*bs + 6); by = (d['y'] + FOOT*d['s']) - FOOT*bs
             order.append((1, bset, (k*2 + 3) % 8, bx, by, bs, d['face'], bp))
+if A.lean: order = [o for i, o in enumerate(order) if not (o[0] == 1 and o[3] < D3['x'] - (GW*2 + 6))]   # keep only the walking baby nearest its mother
 for o in sorted(order, key=lambda o: o[0]): blit(o[1], o[2], o[3], o[4], o[5], o[6], o[7])
-for d in sorted(dragons, key=lambda d: (not d['fly'], d['y'] + GH*d['s'])):
+for d in sorted([d for d in dragons if not (A.lean and d in (D4, D5))], key=lambda d: (not d['fly'], d['y'] + GH*d['s'])):   # all dragons are still made, so the random colours don't shift
     blit(d['set'], d['fr'], d['x'], d['y'], d['s'], d['face'], d['p'])
 
 # fire: pixel puffs out of D1's snout, pale yellow at the mouth to red and smoke at the end
