@@ -316,7 +316,7 @@ const following = () => cfg.follow && performance.now() - P0.t < 2000;
 const canFly = () => cfg.act === 'mix' || cfg.act === 'fly';
 const maxAir = () => cfg.act === 'fly' ? 99 : Math.max(2, Math.ceil(adults().length*.6));
 const adults = () => dg.filter(d => !d.mom);
-const airCount = () => adults().filter(d => d.mode !== 'walk').length;
+const airCount = () => adults().filter(d => d.mode !== 'walk' && d.mode !== 'off').length;   // one out of sight frees its place in the air
 function looks(d){ const sh = cfg.body === 'mix' ? (R() < .4 ? 'n' : R() < .5 ? 'p' : 's') : cfg.body,
     tl = cfg.tail === 'mix' ? (R() < .4 ? 'n' : R() < .5 ? 'l' : 's') : cfg.tail;
   d.shape = sh; d.tl = tl; d.set = SPRS[sh + tl]; d.rainbow = cfg.wings === 'mix' ? R() < .3 : cfg.wings === 'three'; }
@@ -348,8 +348,19 @@ function plan(d){ d.mode = 'fly'; d.loopN = 0;
   d.pat = cfg.pat === 'mix' ? pick(FL_PATS) : cfg.pat; d.ft = ri(150, 420); d.sT = Math.min(MAXS, rr(.7, 1.15)*sNear); d.spd = rr(3, 5)*K; d.lt = ri(60, 140);
   d.ca = R()*6.28; d.cr = rr(50, 120)*K; d.ccx = clamp(d.cx, W*.25, W*.75); d.ccy = clamp(d.cy, H*.2, H*.5); d.cw = (R() < .5 ? -1 : 1)*.03; d.zp = R()*6.28;
   d.oa = R()*6.28; d.ri = rr(35, 85)*K; wp(d); }
-function land(d){ const [a, b] = band(); d.mode = 'land'; d.tfy = rr(a, b); d.tx = rr(GW*sNear*.6, W - GW*sNear*.6); }
-function next(d){ if(cfg.dizzy && R() < .1){ d.mode = 'dizzy'; d.dz = 0; d.dz1 = ri(25, 40); d.dz2 = d.dz1 + ri(70, 120); return; }
+/* Off and back: a flier sometimes heads out past any edge, waits out of sight, then flies back in from a random point
+   on any edge (its babies follow it out and back in). Off screen it is not drawn and does not breathe. */
+const offScreen = d => { const hw = GW*d.s/2, hh = GH*d.s/2; return d.cx + hw < 0 || d.cx - hw > W || d.cy + hh < 0 || d.cy - hh > H; };
+function edgePoint(d, out){ const hw = GW*d.s/2 + out, hh = GH*d.s/2 + out, e = R();   // a point just past a random edge
+  return e < .32 ? [-hw, rr(0, VH*.8)] : e < .64 ? [W + hw, rr(0, VH*.8)] : e < .92 ? [rr(0, W), -hh] : [rr(0, W), H + hh]; }
+function leave(d){ d.mode = 'leave'; d.loopN = 0; [d.ex, d.ey] = edgePoint(d, 40); d.spd = rr(4, 6)*K; }
+function reenter(d){ const [x, y] = edgePoint(d, 4), tx = rr(W*.2, W*.8), ty = rr(VH*.1, band()[0] - 30), L = Math.hypot(tx - x, ty - y) || 1;
+  d.cx = d.lx = x; d.cy = d.ly = y; d.vx = (tx - x)/L*5*K; d.vy = (ty - y)/L*5*K; d.dir = d.vx >= 0 ? 1 : -1; d.rot = 0; d.up = false;
+  d.entering = true; plan(d); d.wx = tx; d.wy = ty;
+  d.trail = []; for(let i=160; i>=1; i--) d.trail.push({cx: x - d.vx/5/K*i*4, cy: y - d.vy/5/K*i*4, s: d.s, fy: d.fy, air: true, dir: d.dir, rot: 0, up: false}); }   // babies come in behind her
+function land(d){ if(offScreen(d)) d.entering = true; const [a, b] = band(); d.mode = 'land'; d.tfy = rr(a, b); d.tx = rr(GW*sNear*.6, W - GW*sNear*.6); }
+function next(d){ if(!following() && R() < .2){ leave(d); return; }
+  if(cfg.dizzy && R() < .1){ d.mode = 'dizzy'; d.dz = 0; d.dz1 = ri(25, 40); d.dz2 = d.dz1 + ri(70, 120); return; }
   if(cfg.act === 'fly' || following() || R() < .3) plan(d);
   else land(d); }
 function steer(d, tx, ty, sp, ease = .05){ const dx = tx - d.cx, dy = ty - d.cy, L = Math.hypot(dx, dy) || 1;
@@ -361,10 +372,11 @@ function flyStep(d){
   if(following()){ d.oa += .05*(d.ri > 60*K ? -1 : 1); steer(d, P0.x + Math.cos(d.oa)*d.ri, P0.y + Math.sin(d.oa)*d.ri*.6, 7*K, .08); d.ft = Math.max(d.ft, 30); return; }
   switch(d.pat){
     case 'circles': { d.ca += d.cw*(1 + .2*Math.sin(T*.01)); const tx = d.ccx + Math.cos(d.ca)*d.cr, ty = d.ccy + Math.sin(d.ca)*d.cr*.7;
-      d.vx += (tx - d.cx - d.vx)*.2; d.vy += (ty - d.cy - d.vy)*.2; if(--d.lt <= 0){ d.lt = ri(160, 260); d.ccx = rr(W*.25, W*.75); d.ccy = rr(H*.15, H*.5); } break; }
+      let wx = tx - d.cx, wy = ty - d.cy; const wl = Math.hypot(wx, wy), cap = 6*K; if(wl > cap){ wx *= cap/wl; wy *= cap/wl; }   // flies to a new centre at flight speed, not in a leap
+      d.vx += (wx - d.vx)*.2; d.vy += (wy - d.vy)*.2; if(--d.lt <= 0){ d.lt = ri(160, 260); d.ccx = rr(W*.25, W*.75); d.ccy = rr(H*.15, H*.5); } break; }
     case 'zigzag': { d.zp += .07; const vx = d.dir*4*K, vy = Math.cos(d.zp)*3*K + (H*.3 - d.cy)*.004;
       d.vx += (vx - d.vx)*.1; d.vy += (vy - d.vy)*.15; const hw = GW*d.s/2;
-      if((d.cx > W - hw - 8 && d.vx > 0) || (d.cx < hw + 8 && d.vx < 0)) d.dir *= -1, d.vx *= -.3; break; }
+      if((d.cx > W - hw - 8 && d.vx > 0) || (d.cx < hw + 8 && d.vx < 0)){ if(!following() && R() < .3){ d.mode = 'leave'; d.ex = d.vx > 0 ? W + hw + 40 : -hw - 40; d.ey = d.cy; d.spd = 4*K; } else d.dir *= -1, d.vx *= -.3; } break; }
     default: { const L = steer(d, d.wx, d.wy, d.spd); if(L < 20 || --d.wt <= 0) wp(d);
       if((d.pat === 'loops' || d.pat === 'swoop') && --d.lt <= 0){ d.lt = ri(80, 170);
         if(d.pat === 'loops'){ d.la0 = Math.atan2(d.vy, d.vx); d.lsp = Math.max(4*K, Math.hypot(d.vx, d.vy)); d.ldir = d.vx >= 0 ? 1 : -1; d.loopN = ri(50, 70); d.loopU = 0; }
@@ -406,9 +418,13 @@ function tick(){ T++;
       d.step = marching ? ((T/7)|0)%4 : (((T/7)|0) + d.ph*2)%4; d.wing = marching ? ((T/18)|0)%2 : (((T + d.ph*7)/18)|0)%2;
       walkStep(d, marching); }
     else { if(!canFly() && d.mode !== 'land' && d.mode !== 'dizzy') land(d);
+      if(d.mode === 'leave'){ if(following()) plan(d), d.entering = true; else { steer(d, d.ex, d.ey, d.spd, .08); if(offScreen(d)){ d.mode = 'off'; d.offT = ri(40, 240); d.vx = d.vy = 0; } } }
+      else if(d.mode === 'off'){ d.vx = d.vy = 0; if(--d.offT <= 0 || following()) reenter(d); }
       if(d.mode === 'fly') flyStep(d); else if(d.mode === 'land') landStep(d); else if(d.mode === 'dizzy') dizzyStep(d); else if(d.mode === 'toward') towardStep(d);
       if(d.mode !== 'toward' && d.mode !== 'walk'){ d.cx += d.vx; d.cy += d.vy;
-        const hw = GW*d.s/2, hh = GH*d.s/2; d.cx = clamp(d.cx, hw*.2, W - hw*.2); d.cy = clamp(d.cy, hh*.2, VH - hh*.4);
+        const hw = GW*d.s/2, hh = GH*d.s/2;
+        if(d.entering && d.cx - hw > 0 && d.cx + hw < W && d.cy - hh > 0 && d.cy + hh < VH) d.entering = false;   // fully in: back to the screen's bounds
+        if(d.mode !== 'leave' && d.mode !== 'off' && !d.entering){ d.cx = clamp(d.cx, hw*.2, W - hw*.2); d.cy = clamp(d.cy, hh*.2, VH - hh*.4); }
         if(d.mode !== 'dizzy' && !d.loopN && Math.abs(d.vx) > .4) d.dir = d.vx > 0 ? 1 : -1;
         d.wing = ((T/(d.mode === 'fly' ? 6 : 4))|0)%2; if(d.mode === 'dizzy' && d.dz > d.dz1) d.wing = 0; } }
     // heading: the whole body turns to the way it flies
@@ -447,7 +463,7 @@ function tick(){ T++;
     if(cfg.color !== 'pick') d.th = d.th.map(x => x + .08);
     d.h = d.h.map((a, j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a, j) => a + (d.tsv[j] - a)*.06); }
   // breath
-  if(cfg.breath !== 'none') for(const d of dg){ if(d.mode === 'dizzy' || d.up) continue;
+  if(cfg.breath !== 'none') for(const d of dg){ if(d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
     if(d.breath > 0){ d.breath--; const [mx, my] = mouth(d), ang = (d.dir > 0 ? 0 : Math.PI) + d.rot;
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
@@ -456,16 +472,58 @@ function tick(){ T++;
   sparks = sparks.filter(s => --s.n > 0);
   for(const c of clouds) c.x += c.v; }
 function recolor(d, how){ if(how === 'shift' && cfg.color === 'any') d.th = d.th.map(x => x + 120); }
-function kidStep(d){ const m = d.mom, tr = m.trail; if(!tr.length) return;
-  const ks = clamp(m.s*.42, 1, sNear*.6), gap = GW*m.s*.45 + GW*ks*(d.k + .6) + 6*K*(d.k + 1);
-  let i = tr.length - 1, acc = 0;
-  while(i > 0 && acc < gap){ acc += Math.hypot(tr[i].cx - tr[i-1].cx, tr[i].cy - tr[i-1].cy); i--; }
-  const p = tr[i]; let cx = p.cx, cy;
-  if(acc < gap){ cx = p.cx - p.dir*(gap - acc); }   // not enough trail yet: stand behind her
-  d.dir = p.dir; d.s = ks; d.up = p.up;
-  if(p.air){ cy = p.cy + Math.sin((T + d.k*9)*.15)*2*K; d.air = true; d.rot = p.rot; d.wing = ((T/(2 + d.k%2))|0)%2; }
-  else { d.air = false; d.rot = 0; cy = p.fy - FOOT*ks + GH*ks/2; d.step = (((T/5)|0) + d.k)%4; d.wing = ((T/9)|0)%2; }
-  d.vx = cx - d.cx; d.vy = cy - d.cy; d.cx = cx; d.cy = cy; d.fy = p.fy; }
+/* Babies: each one follows its mother, goes off on its own, or tags along behind a baby that is on its own (any family).
+   Every 300 to 800 ticks it may pick again; it then glides over to its new leader instead of jumping there. */
+let kidN = 0;
+function kidChoose(d){ const r = R(), solo = dg.filter(x => x.mom && x.solo && x !== d);
+  if(r < .5) d.lead = d.mom, d.solo = false;
+  else if(r < .75 || !solo.length) startSolo(d);
+  else { d.lead = pick(solo); d.solo = false; }
+  d.lock = .03; d.swT = ri(300, 800); }
+function startSolo(d){ d.solo = true; d.lead = null; d.trail = d.trail || []; d.kt = ri(120, 320);
+  if(d.air){ d.kmode = 'kfly'; d.kwx = rr(W*.1, W*.9); d.kwy = rr(VH*.1, band()[0] - 20); }
+  else { d.kmode = 'kwalk'; d.fy = clamp(d.fy, ...band()); } }
+function soloStep(d){ const ks = clamp(sNear*.42, 1, sNear*.6), [a, b] = band();
+  if(d.kmode === 'kwalk'){ d.air = false; d.s = clamp(depthS(d.fy)*.42, 1, ks); d.rot = 0; d.up = false;
+    d.cx += d.dir*.7*d.s; const hw = GW*d.s/2; if((d.cx > W - hw - 4 && d.dir > 0) || (d.cx < hw + 4 && d.dir < 0)) d.dir *= -1;
+    d.hopT = (d.hopT || 0) - 1; let jy = 0; if(d.hopT < 14 && d.hopT > 0) jy = -Math.sin(Math.PI*d.hopT/14)*5*d.s; else if(d.hopT <= 0) d.hopT = ri(30, 120);
+    d.cy = d.fy - FOOT*d.s + GH*d.s/2 + jy; d.step = ((T/5)|0)%4; d.wing = ((T/9)|0)%2;
+    if(--d.kt <= 0 && canFly()){ d.kmode = 'kfly'; d.kt = ri(150, 320); d.kwx = rr(W*.1, W*.9); d.kwy = rr(VH*.1, a - 20); d.vy = -3*K; d.vx = d.dir*2*K; } }
+  else if(d.kmode === 'kfly' || d.kmode === 'kland'){ d.air = true; d.s += (ks - d.s)*.05;
+    let tx = d.kwx, ty = d.kwy;
+    if(d.kmode === 'kland'){ tx = d.ktx; const ts = clamp(depthS(d.kfy)*.42, 1, ks); ty = d.kfy - FOOT*ts + GH*ts/2; }
+    const dx = tx - d.cx, dy = ty - d.cy, L = Math.hypot(dx, dy) || 1, sp = 3.5*K;
+    if(d.kmode === 'kland' && L < 40*K){ d.vx = dx*.15; d.vy = dy*.15; } else { d.vx += (dx/L*sp - d.vx)*.07; d.vy += (dy/L*sp - d.vy)*.07; }
+    d.cx += d.vx; d.cy += d.vy; if(Math.abs(d.vx) > .4) d.dir = d.vx > 0 ? 1 : -1; d.wing = ((T/3)|0)%2;
+    if(d.kmode === 'kland' && L < 2){ d.kmode = 'kwalk'; d.fy = d.kfy; d.kt = ri(120, 320); }
+    else if(d.kmode === 'kfly'){ if(L < 16*K) d.kwx = rr(W*.1, W*.9), d.kwy = rr(VH*.08, a - 20);
+      if(--d.kt <= 0 || !canFly()){ d.kmode = 'kland'; d.kfy = rr(a, b); d.ktx = rr(W*.1, W*.9); } } }
+  if(d.air){ const want = d.dir*Math.atan2(d.vy, d.dir*d.vx); let dr = ((want - d.rot + Math.PI) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI) - Math.PI; d.rot += Math.hypot(d.vx, d.vy) > .25 ? dr*.2 : -d.rot*.2; } }
+function kidStep(d){ if(!d.uid) d.uid = ++kidN;
+  if(d.swT === undefined){ d.lead = d.mom; d.lock = 1; d.swT = ri(300, 800); }
+  if(--d.swT <= 0) kidChoose(d);
+  if(d.lead && (!dg.includes(d.lead) || (d.lead.mom && !d.lead.solo))) d.lead = d.mom, d.lock = .03;   // its leader settled down or is gone
+  const ox = d.cx, oy = d.cy;
+  if(d.solo) soloStep(d);
+  else { const m = d.lead, tr = m.trail || []; if(!tr.length) return;
+    const rank = dg.filter(x => x.mom && !x.solo && x.lead === m && x.uid < d.uid).length;
+    const ks = clamp((m.mom ? sNear : m.s)*.42, 1, sNear*.6), gap = GW*m.s*.45 + GW*ks*(rank + .6) + 6*K*(rank + 1);
+    let i = tr.length - 1, acc = 0;
+    while(i > 0 && acc < gap){ acc += Math.hypot(tr[i].cx - tr[i-1].cx, tr[i].cy - tr[i-1].cy); i--; }
+    const p = tr[i]; let cx = p.cx, cy;
+    if(acc < gap) cx = p.cx - p.dir*(gap - acc);   // not enough trail yet: stand behind
+    d.s += (ks - d.s)*.2; d.up = p.up;
+    const far = Math.hypot(cx - d.cx, (p.air ? p.cy : p.fy - FOOT*ks + GH*ks/2) - d.cy) > 24*K;   // still catching up: flies over
+    if(p.air || far){ cy = p.air ? p.cy + Math.sin((T + d.k*9)*.15)*2*K : p.fy - FOOT*ks + GH*ks/2; d.air = true; d.wing = ((T/(2 + d.k%2))|0)%2; }
+    else { d.air = false; d.rot = 0; cy = p.fy - FOOT*ks + GH*ks/2; d.step = (((T/5)|0) + d.k)%4; d.wing = ((T/9)|0)%2; }
+    // glide toward its place, never faster than a flier (or a bit faster than its leader), so it never jumps
+    const dx = cx - d.cx, dy = cy - d.cy, L = Math.hypot(dx, dy), mx = Math.max(6*K, Math.hypot(m.vx || 0, m.vy || 0)*1.4), caught = L <= mx;
+    if(caught){ d.cx = cx; d.cy = cy; d.lock = 1; } else { d.cx += dx/L*mx; d.cy += dy/L*mx; d.lock = .5; }
+    d.fy = p.fy;
+    const mvx = d.cx - ox; if(Math.abs(mvx) > .4) d.dir = mvx > 0 ? 1 : -1; else d.dir = p.dir;
+    if(d.air){ const mvy = d.cy - oy; d.rot = caught ? p.rot : (Math.hypot(mvx, mvy) > .25 ? d.dir*Math.atan2(mvy, d.dir*mvx) : 0); } }
+  d.vx = d.cx - ox; d.vy = d.cy - oy;
+  if(d.solo){ (d.trail = d.trail || []).push({cx: d.cx, cy: d.cy, s: d.s, fy: d.fy, air: d.air, dir: d.dir, rot: d.rot, up: false}); if(d.trail.length > 400) d.trail.shift(); } }
 function mouth(d){ const lx = (d.dir > 0 ? MOUTH[0] : GW - 1 - MOUTH[0]) - GW/2 + .5, ly = (d.up ? GH - 1 - MOUTH[1] : MOUTH[1]) - GH/2;
   const c = Math.cos(d.rot), s = Math.sin(d.rot); return [d.cx + (lx*c - ly*s)*d.s, d.cy + (lx*s + ly*c)*d.s]; }
 
@@ -485,9 +543,9 @@ function drawDragon(d){ if(d.s > MAXS) d.s = MAXS; const spr = d.set[frameOf(d)]
   if(d.mode === 'dizzy' && d.dz < d.dz2){ const [hx, hy] = [d.cx + (d.dir > 0 ? 6 : -6)*s, d.cy + (d.up ? 9 : -11)*s]; ctx.fillStyle = 'rgb(255,214,60)';
     for(let k=0; k<3; k++){ const a = T*.2 + k*2.09; ctx.fillRect(hx + Math.cos(a)*6*s - s/2, hy + Math.sin(a)*1.5*s - s/2, s, s); } } }
 function draw(){ ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
-  const key = d => { const m = d.mom || d; return (m.mode === 'walk' && !(d.mom && d.air)) ? d.fy + (d.mom ? .01 : 0) : 1e4 + d.s; };
+  const key = d => d.mom ? (d.air ? 1e4 + d.s : d.fy + .01) : (d.mode === 'walk' ? d.fy : 1e4 + d.s);
   const order = dg.slice().sort((a, b) => key(a) - key(b));
-  for(const d of order) drawDragon(d);
+  for(const d of order) if(d.mode !== 'off' && !offScreen(d)) drawDragon(d);
   for(const e of bits){ const [c, sz, a] = lookBit(e); if(a <= 0) continue; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = 'rgb(' + c.join(',') + ')'; const z = sz*e.sc; ctx.fillRect(e.x - z/2, e.y - z/2, z, z); }
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgb(255,226,80)';
   for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } } }
