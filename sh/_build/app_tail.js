@@ -398,7 +398,24 @@ $("opBtn").addEventListener("click", () => setOp(OPS[(OPS.findIndex(o=>o[0]===AG
 /* Systems menu: the folded-map button (as /treesf/'s Neighborhoods) lists every system; a tap shows that one.
    The same choice as tapping the name, all at once. */
 const sysPin=$("sysBtn"), sysPop=$("sys-pop"), sysList=sysPop.querySelector("ul");
-function setSys(open){ sysPin.setAttribute("aria-expanded", String(open)); sysPop.hidden=!open }
+/* As /treesf/: opening, the lines run up into place one by one; shutting, the menu eases out as one */
+const calm=matchMedia("(prefers-reduced-motion: reduce)");
+const LINE_IN=[{opacity:0, transform:"translateY(18px)", easing:"cubic-bezier(.2,.7,.35,1)"}, {opacity:1, transform:"translateY(-2px)", offset:.78, easing:"ease-in-out"}, {opacity:1, transform:"none"}];
+const POP_OUT=[{opacity:1, transform:"none"}, {opacity:0, transform:"translateY(10px)"}];
+let sysAnims=[];
+function slideLines(els){
+  const gap=els.length>1 ? Math.min(60, 380/(els.length-1)) : 0; let at=0;
+  return els.map((el,i)=>{ if(i) at+=gap+(Math.random()*2-1)*Math.min(15, gap/3); return el.animate(LINE_IN, {duration:420, delay:Math.max(0,at), fill:"backwards"}) });
+}
+function setSys(open){
+  if(open===(sysPin.getAttribute("aria-expanded")==="true")) return;
+  sysPin.setAttribute("aria-expanded", String(open));
+  sysAnims.forEach(a=>a.cancel()); sysAnims=[];
+  sysPop.hidden=false;
+  if(calm.matches || !sysPop.animate){ sysPop.hidden=!open; return }
+  if(open) sysAnims=slideLines([sysPop.querySelector(".oa-sys-title"), ...sysPop.querySelectorAll("li")]);
+  else { const a=sysPop.animate(POP_OUT, {duration:240, easing:"cubic-bezier(0,0,.2,1)", fill:"forwards"}); sysAnims=[a]; a.onfinish=()=>{ sysAnims=[]; sysPop.hidden=true; a.cancel() } }
+}
 function markSys(){ sysList.querySelectorAll("button").forEach(b=>{ if(b.dataset.ag===AG) b.setAttribute("aria-current","true"); else b.removeAttribute("aria-current") }) }
 OPS.forEach(([ag,name])=>{
   const li=document.createElement("li"), b=document.createElement("button"), sp=document.createElement("span");
@@ -407,8 +424,8 @@ OPS.forEach(([ag,name])=>{
 });
 markSys();
 sysPin.addEventListener("click", e=>{ e.stopPropagation(); setSys(sysPin.getAttribute("aria-expanded")!=="true") });
-document.addEventListener("click", e=>{ if(!sysPop.hidden && !$("systems").contains(e.target)) setSys(false) });
-document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !sysPop.hidden){ setSys(false); sysPin.focus() } });
+document.addEventListener("click", e=>{ if(sysPin.getAttribute("aria-expanded")==="true" && !$("systems").contains(e.target)) setSys(false) });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && sysPin.getAttribute("aria-expanded")==="true"){ setSys(false); sysPin.focus() } });
 showOp();   // the title clears the selection: all routes, the whole map
 /* Shuttle Legend: a button at the bottom of the panel; open, the routes and Info sit above the service line */
 function setLegend(open){ $("legendBtn").setAttribute("aria-expanded", String(open)); document.querySelector(".controls").dataset.open=String(open); store.set("info", open?"1":"0") }
