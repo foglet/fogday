@@ -62,6 +62,11 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   jurisdiction or lease; copied in the browser pane 2026-11-17). Offices and leased sites (750 Brannan, Brooks Hall,
   Library Support Services) left out. `data/sfpl-libraries.json`, `D.libs`; layer `lib`, Phosphor book-open-text icon.
 
+- Daly City Bayshore (76287) and Brisbane-Crocker Park (76243): same Commute.org Trillium GTFS as Oyster Point
+  (sha1 384eca6c), compacted the same way; `data/dcb-compact.json` (`ag: "daly"`), `data/bcp-compact.json`
+  (`ag: "brisbane"`). Thanksgiving 2026-11-26/27 added. The 511 regional feed (operator RG) also carries them but needs
+  an API key. Picker order now ends ... South City, Daly City, Brisbane.
+
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
 console fetch `/v1/gtfs.zip`, unzip, and rebuild the compact JSON with the same layout

@@ -21,8 +21,13 @@ for f in ("mbtma-compact.json",       # Mission Bay TMA (Trillium GTFS, Transitl
           "presidigo-compact.json",   # PresidiGo (presidiobus.com/gtfs, Transitland f-presidigo~ca~us)
           "ggp-compact.json",         # Golden Gate Park Shuttle (sfrecpark.org GTFS; calendar end extended, see README)
           "opb-compact.json",         # Oyster Point BART (Commute.org, Trillium GTFS commute-ca-us, route 76230)
-          "ssf-compact.json"):        # Free South City Shuttle (built by data/ssf_build.py from the city's PDF and tracker)
+          "ssf-compact.json",         # Free South City Shuttle (built by data/ssf_build.py from the city's PDF and tracker)
+          "dcb-compact.json",         # Daly City Bayshore (Commute.org, same Trillium GTFS, route 76287)
+          "bcp-compact.json"):        # Brisbane-Crocker Park (Commute.org, same Trillium GTFS, route 76243)
     merge(data, json.loads((root / "data" / f).read_text(encoding="utf-8")))
+# the feed's Daly City Bayshore green (#00fd9a) vanishes on the light map: a deeper green by day (night keeps a bright one)
+for r in data["routes"]:
+    if r["id"] == "commute:76287": r["c"], r["tc"] = "#12a874", "#ffffff"
 # tidy stop names: stray ids ("31796-Caulfield Cut") and spaces
 for s in data["stops"]: s[0] = re.sub(r"^\d+-", "", s[0].strip())
 # San Francisco Public Library: Main and the 27 branches (DataSF fhhu-wqa7), drawn on every view

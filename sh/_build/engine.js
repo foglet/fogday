@@ -26,10 +26,11 @@ const NIGHT = {"Gold":"#f2d15c","Lilac AM":"#b79cff","Lilac PM":"#b79cff","Orang
   "Blue":"#6e8bff","Cherry":"#e0607e","Bronze":"#d9a26a","Red":"#ff5a4f","Pink AM":"#ff8fc8","Pink PM":"#ff8fc8","Green (Oakland)":"#7fcf4a","Lime":"#c6f25a",
   "Mission Bay TMA East":"#5cb8ff","Mission Bay TMA Transbay-Caltrain":"#ff7a52","Mission Bay TMA CCA/Adobe":"#d58f6f","Mission Bay TMA West":"#76c95e",
   "Presidio GO Downtown":"#ff6a4d","Presidio GO South Hills":"#5fc46a","Golden Gate Park Shuttle":"#a08cff",
-  "Oyster Point BART":"#7fb2ff","South City Blue":"#6e9bff","South City Green":"#6fd08a","South City Orange":"#ffa24d"};
+  "Oyster Point BART":"#7fb2ff","South City Blue":"#6e9bff","South City Green":"#6fd08a","South City Orange":"#ffa24d",
+  "Daly City Bayshore":"#4fe0a8","Brisbane Crocker Park":"#9cc3ff"};
 const ROUTES = D.routes.map((r, i) => ({i, id:r.id, name:r.n, long:r.ln, day:r.c.toUpperCase(), night:NIGHT[r.ln]||r.c,
   ag:r.ag||"ucsf", get color(){ return document.documentElement.dataset.theme==="light" ? this.day : this.night }, text: lum(r.c) > .35 ? "#1d2421" : "#ffffff"}));
-/* Shuttle system (tap the name): AG is "mbtma", "ucsf", "presidio", "ggp", "oyster" or "ssf";
+/* Shuttle system (tap the name): AG is "mbtma", "ucsf", "presidio", "ggp", "oyster", "ssf", "daly" or "brisbane";
    the schedule only looks at trips it lets through */
 let AG = "mbtma";   // Mission Bay first, and the default
 const agOk = ri => AG==="all" || ROUTES[ri].ag===AG;

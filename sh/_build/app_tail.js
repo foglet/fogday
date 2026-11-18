@@ -342,7 +342,7 @@ async function pollLive(){
 })();
 $("home").addEventListener("click", ()=>pickRoute(null, true));
 /* Shuttle system: tap the name for the next one, as the beach name on /tides/ (not remembered; a reload is Mission Bay again) */
-const OPS=[["mbtma","Mission Bay"],["ucsf","UCSF"],["presidio","Presidio"],["ggp","Golden Gate Park"],["oyster","Oyster Point"],["ssf","South City"]];
+const OPS=[["mbtma","Mission Bay"],["ucsf","UCSF"],["presidio","Presidio"],["ggp","Golden Gate Park"],["oyster","Oyster Point"],["ssf","South City"],["daly","Daly City"],["brisbane","Brisbane"]];
 function showOp(){
   const i=OPS.findIndex(o=>o[0]===AG), nx=OPS[(i+1)%OPS.length][1];
   setText($("opName"), OPS[i][1]);
