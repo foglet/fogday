@@ -120,21 +120,7 @@ canvas{position:absolute;left:0;top:0;display:block}
     <div class="row"><label for="breath">Breath</label><select id="breath">
       <option value="mix">Fire and water</option><option value="fire">Fire</option><option value="water">Water</option><option value="none">None</option></select></div>
   </section>
-  <section aria-labelledby="hS">
-    <h2 id="hS">Scene</h2>
-    <div class="row"><label for="bg">Background</label><select id="bg">
-      <option value="scene">Landscape</option><option value="paper">Plain paper</option></select></div>
-    <div class="row sc"><label for="sky">Sky</label><select id="sky">
-      <option value="day">Day</option><option value="sunset">Sunset</option><option value="night">Night</option></select></div>
-    <div class="row sc"><label for="clouds">Clouds</label><select id="clouds">
-      <option value="few">A few</option><option value="many">Lots</option><option value="none">None</option></select></div>
-    <div class="row sc"><span class="lab" id="lMtn">Mountains</span><span class="sw"><input id="mtn" type="checkbox" aria-labelledby="lMtn"><span></span></span></div>
-    <div class="row sc"><label for="ground">Ground</label><select id="ground">
-      <option value="grass">Grass</option><option value="sand">Sand</option><option value="snow">Snow</option><option value="none">None</option></select></div>
-    <div class="row sc"><span class="lab" id="lRck">Random rocks</span><span class="sw"><input id="rocks" type="checkbox" aria-labelledby="lRck"><span></span></span></div>
-  </section>
   <div class="acts">
-    <button class="btn" type="button" id="scatter">New rocks and clouds</button>
     <button class="btn" type="button" id="hatch">New dragons</button>
     <button class="btn" type="button" id="reset">Random</button>
   </div>
@@ -167,7 +153,7 @@ const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x; the default (BASE.s
 const KEY = 'px:settings';
 let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
-Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some'}); cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
+Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene'}); cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };
 let seed = (R()*1e9)|0;
 
@@ -656,13 +642,13 @@ ctlBtn.addEventListener('click', () => setOpen(sheet.hidden));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !sheet.hidden){ setOpen(false); ctlBtn.focus(); } });
 function setPlay(on){ playing = on; $('playT').textContent = on ? 'Pause' : 'Play'; playBtn.setAttribute('aria-pressed', String(on)); if(on) start(); }
 playBtn.addEventListener('click', () => setPlay(!playing));
-const IDS = ['n','act','pat','follow','dizzy','color','hue','breath','spd','bg','sky','clouds','mtn','ground','rocks'];
+const IDS = ['n','act','pat','follow','dizzy','color','hue','breath','spd'];   // the scene is not a choice: Random rolls a new one
 function show(){ for(const id of IDS){ const el = $(id); if(el.type === 'checkbox') el.checked = !!cfg[id]; else el.value = cfg[id]; }
   $('nOut').textContent = cfg.n; $('spdOut').textContent = SPEEDS[cfg.spd] + 'x';
   $('spd').setAttribute('aria-valuetext', SPEEDS[cfg.spd] + ' times');
   $('hueRow').hidden = cfg.color !== 'pick';
   $('pat').disabled = !canFly(); $('pat').closest('.row').classList.toggle('off', !canFly());
-  for(const r of document.querySelectorAll('.row.sc')){ const off = cfg.bg !== 'scene'; r.classList.toggle('off', off); r.querySelector('select,input').disabled = off; } }
+}
 const SCENE = new Set(['bg','sky','clouds','mtn','ground','rocks']);
 function apply(id){
   if(SCENE.has(id)){ buildScene(); drawScene(); const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } return; }
@@ -679,16 +665,13 @@ function apply(id){
   } }
 for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' || el.type === 'color' ? 'input' : 'change', () => {
   cfg[id] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; save(); apply(id); show(); if(!playing) { draw(); drawScene(); } }); }
-$('scatter').addEventListener('click', () => { seed = (R()*1e9)|0; buildScene(); drawScene(); });
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
-$('reset').addEventListener('click', () => {   // Random setup: a fresh mix of every setting (Follow my finger kept), new dragons, new rocks and clouds
-  const one = id => { const o = [...$(id).options].map(x => x.value); return pick(o); };
-  cfg = Object.assign({}, BASE, {follow: cfg.follow,
-    n: ri(1, 9), act: one('act'), pat: one('pat'), dizzy: R() < .7, color: one('color'), breath: one('breath'), spd: ri(0, 3),
-    hue: '#' + hsv(R()*360, rr(.4, .9), rr(.6, .95)).map(v => v.toString(16).padStart(2, '0')).join(''),
-    bg: R() < .9 ? 'scene' : 'paper', sky: one('sky'), clouds: one('clouds'), mtn: R() < .75, ground: one('ground'), rocks: R() < .7});
-  if(cfg.color === 'match') shared = {h: scheme(), sv: tone()};
-  seed = (R()*1e9)|0; save(); show(); buildScene(); populate(true); titleInk(); drawScene(); draw(); });
+$('reset').addEventListener('click', () => {   // Random: a new landscape (sky, clouds, mountains, ground, rocks); the dragons and their settings stay
+  const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks].join();
+  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none']), rocks: R() < .7});
+  while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks].join() === was);   // always a visibly different one
+  seed = (R()*1e9)|0; save(); buildScene(); drawScene();
+  const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
 
 show(); resize(); populate(true);
