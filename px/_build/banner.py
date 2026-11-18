@@ -123,7 +123,7 @@ for i in range(70):
     dr.rectangle([x, y, x + z - 1, y + z - 1], fill=c)
 
 # ---------- title: Silkscreen, gradient of the first dragons' body colours, hard 4 px outline ----------
-font = ImageFont.truetype(A.font, 48); text = 'PIXEL DRAGONS'
+font = ImageFont.truetype(A.font, 36); text = 'PIXEL DRAGONS'   # 36 px: 25% smaller than the first 48 px
 tw = round(font.getlength(text)) + 16; th = 64
 mask = Image.new('L', (tw, th)); md = ImageDraw.Draw(mask); md.fontmode = '1'; md.text((8, 4), text, font=font, fill=255)
 bb = mask.getbbox(); mask = mask.crop((bb[0] - 4, bb[1] - 4, bb[2] + 4, bb[3] + 4)); tw, th = mask.size
@@ -133,10 +133,13 @@ for x in range(tw):
     u = x / (tw - 1)*(len(cols) - 1); i = min(len(cols) - 2, int(u)); k = u - i
     c = tuple(round(a + (b - a)*k) for a, b in zip(cols[i], cols[i + 1]))
     for y in range(th): gp[x, y] = c + (255,)
-outline = mask.filter(ImageFilter.MaxFilter(9))          # 4 px each way
-tx, ty = 40, 34
+outline = mask.filter(ImageFilter.MaxFilter(7))          # 3 px each way, in step with the smaller type
+tx, ty = 40, 40
 img.paste(Image.new('RGBA', (tw, th), OUT + (255,)), (tx, ty), outline)
 img.paste(grad, (tx, ty), mask)
 
-img.convert('RGB').save(A.out, optimize=True)
+R10 = 10   # rounded corners: transparent outside a 10 px radius (drawn 4x larger, then reduced, for a smooth edge)
+cm = Image.new('L', (W*4, H*4)); ImageDraw.Draw(cm).rounded_rectangle([0, 0, W*4 - 1, H*4 - 1], radius=R10*4, fill=255)
+img.putalpha(cm.resize((W, H), Image.LANCZOS))
+img.save(A.out, optimize=True)
 print(A.out, img.size, 'title', (tx, ty, tw, th), 'title colours', cols)
