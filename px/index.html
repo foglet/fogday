@@ -472,6 +472,7 @@ function tick(){ T++;
     d.h = d.h.map((a, j) => hl(a, d.th[j], .08)); d.sv = d.sv.map((a, j) => a + (d.tsv[j] - a)*.06); }
   // breath
   for(const d of dg){ const a = d.aim; if(!a) continue;   // a tap: shoot at the spot (fire, or water for the one that decides so)
+    if(a.p && a.p.down && !a.p.held){ a.tx = a.p.x; a.ty = a.p.y; a.n = Math.max(a.n, 4); }   // finger still down: keep firing at it
     if(a.wait > 0){ a.wait--; continue; } if(d.mode === 'off' || d.mode === 'dizzy' || d.up || --a.n < 0){ d.aim = null; continue; }
     if(d.mode === 'walk' || Math.abs(a.tx - d.cx) > GW*d.s*.3) d.dir = a.tx > d.cx ? 1 : -1;
     const [mx, my] = mouth(d), dx = a.tx - mx, dy = a.ty - my, D = Math.hypot(dx, dy) || 1, sp = Math.min(40, 14*K/SPEEDS[cfg.spd]);   // about 550 px a second whatever the speed setting
@@ -602,22 +603,24 @@ function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = inner
 addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
 document.addEventListener('visibilitychange', () => { if(!document.hidden) start(); });
 const inUI = e => e.target && e.target.closest && e.target.closest('.sheet,.dock,.top h1');
-/* A quick tap: the nearest one to three dragons shoot fire at the spot; now and then one of them quietly sends water
-   instead (no sign which). A press held for 250 ms, or dragged, steers them as before; a mouse just moving steers too. */
+/* Press: the nearest one to three dragons fire at your finger for as long as it stays down, following it if it moves;
+   now and then one of them quietly sends water instead (no sign which). Hold 2.5 s and the flames stop and the
+   dragons are redirected: they follow the finger, as before. A mouse just moving does nothing. */
+const HOLD = 2500;
 let press = null, holdT = 0;
-const steerTo = e => { P0 = {x: e.clientX, y: e.clientY, t: performance.now()}; };
-function hold(){ if(press){ press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()}; } }
-function shoot(tx, ty){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'dizzy' && !d.up && !offScreen(d))
-    .sort((a, b) => Math.hypot(a.cx - tx, a.cy - ty) - Math.hypot(b.cx - tx, b.cy - ty)).slice(0, Math.min(3, ri(1, 3) + 1));
+function hold(){ if(!press) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
+  for(const d of dg) if(d.aim && d.aim.p === press) d.aim.n = 0; }   // redirect: the flames stop
+function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'dizzy' && !d.up && !offScreen(d))
+    .sort((a, b) => Math.hypot(a.cx - p.x, a.cy - p.y) - Math.hypot(b.cx - p.x, b.cy - p.y)).slice(0, Math.min(3, ri(1, 3) + 1));
   const wet = R() < .35 ? pick(who) : null;
-  who.forEach((d, i) => { d.aim = {tx, ty, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
-addEventListener('pointerdown', e => { if(inUI(e)) return; press = {x: e.clientX, y: e.clientY, t: performance.now(), held: false, wasOpen: !sheet.hidden};
-  clearTimeout(holdT); holdT = setTimeout(hold, 250); }, {passive: true});
-addEventListener('pointermove', e => { if(inUI(e)) return;
-  if(press){ if(!press.held && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) press.held = true; if(press.held){ press.x = e.clientX; press.y = e.clientY; steerTo(e); } }
-  else if(e.pointerType === 'mouse') steerTo(e); }, {passive: true});
-const lift = e => { clearTimeout(holdT); const p = press; press = null;
-  if(p && !p.held && !p.wasOpen && e.type === 'pointerup' && performance.now() - p.t < 250) shoot(p.x, p.y); };
+  who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
+addEventListener('pointerdown', e => { if(inUI(e)) return;
+  press = {x: e.clientX, y: e.clientY, t: performance.now(), held: false, down: true, wasOpen: !sheet.hidden};
+  if(!press.wasOpen) shoot(press);
+  clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }, {passive: true});
+addEventListener('pointermove', e => { if(!press || inUI(e)) return; press.x = e.clientX; press.y = e.clientY;
+  if(press.held) P0 = {x: press.x, y: press.y, t: performance.now()}; }, {passive: true});
+const lift = () => { clearTimeout(holdT); if(press) press.down = false; press = null; };
 addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
 setInterval(() => { if(press && press.held) P0.t = performance.now(); }, 200);   // holding still keeps them coming
 addEventListener('pointerout', e => { if(!e.relatedTarget) P0.t = -1e9; });
