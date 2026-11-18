@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#fbf8f1">
+<!-- Added to the Home Screen it opens with no browser toolbars (iPhone has no full-screen button for pages) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dragons">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Pixel Dragons</title>
 <meta name="description" content="Original pixel dragons that walk, jump, fly, breathe fire or water and raise their babies, with controls for the dragons and their world.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,9 +44,18 @@ canvas{position:absolute;left:0;top:0;display:block}
 .bento{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:11px;filter:drop-shadow(2px 0 0 #241630) drop-shadow(-2px 0 0 #241630) drop-shadow(0 2px 0 #241630) drop-shadow(0 -2px 0 #241630)}   /* the title's outline */
 .bento-grid{display:block;width:100%;height:100%;background-image:var(--tg,linear-gradient(to right,#3f9e6e,#5aa0d8,#d0708a));-webkit-mask:var(--grid) center/contain no-repeat;mask:var(--grid) center/contain no-repeat;
   --grid:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg%3E%3Crect x='2' y='2' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='2' width='5' height='5' rx='1'/%3E%3Crect x='17' y='2' width='5' height='5' rx='1'/%3E%3Crect x='2' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='17' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='2' y='17' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='17' width='5' height='5' rx='1'/%3E%3Crect x='17' y='17' width='5' height='5' rx='1'/%3E%3C/g%3E%3C/svg%3E")}
+/* Full screen: the same look as the bento, a 9x9 block icon (corners out; corners in while full screen). Shown only where
+   the browser can do it (not iPhone, which gets full screen from Add to Home Screen) */
+.fs{display:none;align-items:center;justify-content:center;width:40px;height:40px;padding:11px;margin:0;border:0;background:transparent;cursor:pointer;touch-action:manipulation;filter:drop-shadow(2px 0 0 #241630) drop-shadow(-2px 0 0 #241630) drop-shadow(0 2px 0 #241630) drop-shadow(0 -2px 0 #241630)}
+.fs.on{display:inline-flex}
+.fs-ico{display:block;width:100%;height:100%;background-image:var(--tg,linear-gradient(to right,#3f9e6e,#5aa0d8,#d0708a));-webkit-mask:var(--ex) center/contain no-repeat;mask:var(--ex) center/contain no-repeat;
+  --ex:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h3v1H1v2H0zM6 0h3v3H8V1H6zM0 6h1v2h2v1H0zM8 6h1v3H6V8h2z'/%3E%3C/svg%3E");--co:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h1v3H0V2h2zM6 0h1v2h2v1H6zM0 6h3v3H2V7H0zM6 6h3v1H7v2H6z'/%3E%3C/svg%3E")}
+.fs[aria-pressed="true"] .fs-ico{-webkit-mask-image:var(--co);mask-image:var(--co)}
+.fs:hover .fs-ico{--tg:linear-gradient(#fff,#fff)}
+.fs:focus-visible{outline:3px solid var(--red);outline-offset:3px;border-radius:2px}
 .bento:focus-visible{outline:3px solid var(--red);outline-offset:3px;border-radius:2px}
 @media (min-width:760px){.corner{top:calc(13px + var(--sat))}}
-@media (pointer:coarse){.corner{top:calc(7px + var(--sat))}.bento{width:44px;height:44px;padding:13px}}
+@media (pointer:coarse){.corner{top:calc(7px + var(--sat))}.bento,.fs{width:44px;height:44px;padding:13px}}
 .dock{position:fixed;left:calc(12px + var(--sal));bottom:calc(12px + var(--sab));display:flex;gap:8px;z-index:6}
 .dock.right{left:auto;right:calc(12px + var(--sar))}
 .btn{min-height:44px;min-width:44px;padding:0 16px;border-radius:22px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 16px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation}
@@ -100,6 +116,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 <div id="lvh" aria-hidden="true"></div>
 <header class="top"><h1 class="px-out"><span class="px-ink">Pixel Dragons</span></h1></header>
 <nav class="corner" aria-label="Site">
+  <button class="fs" type="button" id="fs" aria-pressed="false" aria-label="Full screen" title="Full screen (F)"><span class="fs-ico" aria-hidden="true"></span></button>
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><span class="bento-grid" aria-hidden="true"></span></a>
 </nav>
 
@@ -875,7 +892,7 @@ function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = inner
   drawScene(); draw(); }
 addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
 document.addEventListener('visibilitychange', () => { if(!document.hidden) start(); });
-const inUI = e => e.target && e.target.closest && e.target.closest('.sheet,.dock,.top h1');
+const inUI = e => e.target && e.target.closest && e.target.closest('.sheet,.dock,.top h1,.corner');
 /* Press: the nearest one to three dragons fire at your finger for as long as it stays down, following it if it moves;
    now and then one of them quietly sends water instead (no sign which). Hold 2.5 s and the flames stop and the
    dragons are redirected: they follow the finger, as before. A mouse just moving does nothing. */
@@ -920,6 +937,16 @@ ctlBtn.addEventListener('click', () => setOpen(sheet.hidden));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !sheet.hidden){ setOpen(false); ctlBtn.focus(); } });
 function setPlay(on){ playing = on; $('playT').textContent = on ? 'Pause' : 'Play'; playBtn.setAttribute('aria-pressed', String(on)); if(on) start(); }
 playBtn.addEventListener('click', () => setPlay(!playing));
+/* Full screen (hides the browser's toolbars). iPhone Safari has no full-screen for pages, so the button stays hidden there */
+const fsBtn = $('fs'), DOC = document.documentElement;
+const fsNow = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+if((DOC.requestFullscreen || DOC.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) fsBtn.classList.add('on');
+function fsToggle(){ if(fsNow()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  const r = (DOC.requestFullscreen || DOC.webkitRequestFullscreen).call(DOC, {navigationUI: 'hide'}); if(r && r.catch) r.catch(() => {}); }
+function fsMark(){ const on = !!fsNow(); fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen'); fsBtn.title = on ? 'Exit full screen (F or Esc)' : 'Full screen (F)'; resize(); }
+fsBtn.addEventListener('click', fsToggle);
+for(const ev of ['fullscreenchange','webkitfullscreenchange']) document.addEventListener(ev, fsMark);
+document.addEventListener('keydown', e => { if((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target.closest && e.target.closest('input,select,textarea')) && fsBtn.classList.contains('on')){ e.preventDefault(); fsToggle(); } });
 const IDS = ['n','follow','spd'];   // the scene is not a choice: Random rolls a new one
 function show(){ for(const id of IDS){ const el = $(id); if(el.type === 'checkbox') el.checked = !!cfg[id]; else el.value = cfg[id]; }
   $('nOut').textContent = cfg.n; $('spdOut').textContent = SPEEDS[cfg.spd] + 'x';

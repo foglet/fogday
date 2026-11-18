@@ -4,6 +4,7 @@ Full-screen pixel dragons (the original design from the pixel-dragons-multi skil
 
 - Edit `template.html`, never `../index.html`, then run `python3 build.py`.
 - `sprites.json`: the 9 body x tail sprite sets (10 frames of 30x26 each), copied from `cn-dr/_build/template.html`.
+- Full screen: the corner button (or F) hides the browser toolbars where the browser allows it. iPhone Safari has no page full screen, so the button is hidden there; `manifest.webmanifest` and the apple-mobile-web-app tags make Add to Home Screen open with no toolbars. `icon.py` draws `icon-180.png` and `icon-512.png`.
 - Settings are saved on the device under `px:settings`. "Reset all" restores the baseline.
 
 Dragon controls: number (1-12), what they do (mixed, walk, hop, march in step, fly), flight pattern (mixed, roam, loops, circles, swoop, zigzag), follow finger, dizzy spells, colors (any, matching, pick), wings, offspring (sometimes, every dragon, none; 1-3 babies), breath (fire and water, fire, water, none), body (normal, fat, skinny), tail, speed.
