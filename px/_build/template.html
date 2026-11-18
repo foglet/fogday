@@ -225,6 +225,7 @@ const DESERT_MTN = {day:{far:[204,150,130], near:[176,110,84]}, sunset:{far:[156
    Same 36-shade palette, swell and wind-wave trains, churned foam and spray; fixed calm-to-moderate conditions, no tide.
    Value 0 is empty (the sky and mountains show), 1 is foam, 36 the deep. It steps 30 times a second on its own clock. */
 let SEA = null, BEACH_A = 0, seaAcc = 0;
+const SEA_SPEED = .35, SEA_MS = 1000/(30*SEA_SPEED);   // waves at 35% of the /waves pace (owner's choice)
 const SEA_STOPS = [[1,[244,255,251]],[5,[191,238,224]],[10,[111,211,181]],[15,[47,179,154]],[20,[26,143,138]],[25,[20,109,134]],[30,[13,79,115]],[33,[8,52,90]],[36,[4,32,61]]];
 const SEA_PAL = [[0,0,0]]; for(let i=1; i<=36; i++){ for(let k=0; k<SEA_STOPS.length-1; k++){ const [a, ca] = SEA_STOPS[k], [b, cb] = SEA_STOPS[k+1];
   if(i >= a && i <= b){ const t = (i - a)/(b - a); SEA_PAL.push(ca.map((v, j) => Math.round(v + (cb[j] - v)*t))); break; } } }
@@ -713,7 +714,7 @@ const STEP = 25;
 function loop(now){ raf = 0; if(!playing){ return; }
   const dt = Math.min(200, now - (last || now)); last = now; acc += dt*SPEEDS[cfg.spd];
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
-  let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= 1000/30 && k < 4){ seaStep(); seaAcc -= 1000/30; k++; } }   // the sea keeps real time
+  let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= SEA_MS && k < 4){ seaStep(); seaAcc -= SEA_MS; k++; } }   // the sea keeps real time, at 35% of /waves
   if(n) draw();
   if((n && (++sceneDirty % 2 === 0 || stars.length)) || k) drawScene();
   raf = requestAnimationFrame(loop); }
