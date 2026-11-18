@@ -120,6 +120,7 @@ canvas{position:fixed;left:0;top:0;display:block}
 const SPRS = /*SPRITES*/;
 for(const k in SPRS) SPRS[k] = SPRS[k].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));
 const GW = 30, GH = 26, FOOT = 22, MOUTH = [27, 6.5];
+const MAXS = 2*96/GW;   // no dragon wider than 2 in (CSS inches), so the pixels stay chunky: at most 6.4 px per sprite pixel
 const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
 const R = Math.random, pick = a => a[(R()*a.length)|0], rr = (a, b) => a + R()*(b-a), ri = (a, b) => (a + R()*(b-a+1))|0;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -307,7 +308,7 @@ function wp(d){ const m = 16; if(R() < .25){ d.wx = d.cx + rr(-10, 10); d.wy = d
   else { d.wx = rr(m + 40, W - m - 40); d.wy = rr(H*.08, band()[0] - 20); } d.wt = ri(60, 150); }
 function takeOff(d, init){ d.mode = 'fly'; d.jump = d.over = d.hop = 0; d.jy = 0; if(init) d.cy = rr(H*.1, H*.5); else { d.vy = -4*K; d.vx = d.dir*2*K; } plan(d); }
 function plan(d){ d.mode = 'fly'; d.loopN = 0;
-  d.pat = cfg.pat === 'mix' ? pick(FL_PATS) : cfg.pat; d.ft = ri(150, 420); d.sT = rr(.7, 1.15)*sNear; d.spd = rr(3, 5)*K; d.lt = ri(60, 140);
+  d.pat = cfg.pat === 'mix' ? pick(FL_PATS) : cfg.pat; d.ft = ri(150, 420); d.sT = Math.min(MAXS, rr(.7, 1.15)*sNear); d.spd = rr(3, 5)*K; d.lt = ri(60, 140);
   d.ca = R()*6.28; d.cr = rr(50, 120)*K; d.ccx = clamp(d.cx, W*.25, W*.75); d.ccy = clamp(d.cy, H*.2, H*.5); d.cw = (R() < .5 ? -1 : 1)*.03; d.zp = R()*6.28;
   d.oa = R()*6.28; d.ri = rr(35, 85)*K; wp(d); }
 function land(d){ const [a, b] = band(); d.mode = 'land'; d.tfy = rr(a, b); d.tx = rr(GW*sNear*.6, W - GW*sNear*.6); }
@@ -330,7 +331,7 @@ function flyStep(d){
     default: { const L = steer(d, d.wx, d.wy, d.spd); if(L < 20 || --d.wt <= 0) wp(d);
       if((d.pat === 'loops' || d.pat === 'swoop') && --d.lt <= 0){ d.lt = ri(80, 170);
         if(d.pat === 'loops'){ d.la0 = Math.atan2(d.vy, d.vx); d.lsp = Math.max(4*K, Math.hypot(d.vx, d.vy)); d.ldir = d.vx >= 0 ? 1 : -1; d.loopN = ri(50, 70); d.loopU = 0; }
-        else { d.mode = 'toward'; d.tu = 0; d.tn = ri(70, 110); d.c0 = [d.cx, d.cy]; d.s0 = d.s; d.tt = [rr(.35, .65)*W, rr(.35, .6)*H]; d.sM = Math.min(rr(7, 11)*K, W/GW*.9); } } } }
+        else { d.mode = 'toward'; d.tu = 0; d.tn = ri(70, 110); d.c0 = [d.cx, d.cy]; d.s0 = d.s; d.tt = [rr(.35, .65)*W, rr(.35, .6)*H]; d.sM = Math.min(rr(7, 11)*K, W/GW*.9, MAXS); } } } }
   if(--d.ft <= 0) next(d); }
 function towardStep(d){ const u = ++d.tu/d.tn, e = u*u*(3-2*u);
   d.vx = 0; d.vy = 0; const nx = d.c0[0] + (d.tt[0] - d.c0[0])*e, ny = d.c0[1] + (d.tt[1] - d.c0[1])*e; d.cx = nx; d.cy = ny;
@@ -434,7 +435,7 @@ function mouth(d){ const lx = (d.dir > 0 ? MOUTH[0] : GW - 1 - MOUTH[0]) - GW/2 
 /* ---------- drawing ---------- */
 function frameOf(d){ const air = d.mom ? d.air : (d.mode !== 'walk' && !(d.mode === 'land' && d.near)) || d.over || (d.jump && d.jy < -3*d.s);
   return air ? 8 + d.wing : d.step*2 + d.wing; }
-function drawDragon(d){ const spr = d.set[frameOf(d)], pal = palOf(d), s = d.s;
+function drawDragon(d){ if(d.s > MAXS) d.s = MAXS; const spr = d.set[frameOf(d)], pal = palOf(d), s = d.s;
   const turned = Math.abs(d.rot) > .03, w = turned ? s + .6 : Math.ceil(s);
   ctx.save(); ctx.translate(d.cx, d.cy); if(turned) ctx.rotate(d.rot);
   const ox = turned ? -GW*s/2 : Math.round(-GW*s/2), oy = turned ? -GH*s/2 : Math.round(-GH*s/2);
@@ -467,7 +468,7 @@ function resize(){ const oW = W || innerWidth, oH = H || innerHeight; W = innerW
   P = W > 900 ? 4 : 3; gw = Math.ceil(W/P); gh = Math.ceil(H/P);
   scv.width = gw; scv.height = gh; scv.style.width = gw*P + 'px'; scv.style.height = gh*P + 'px';
   fcv.width = Math.round(W*DPR); fcv.height = Math.round(H*DPR); fcv.style.width = W + 'px'; fcv.style.height = H + 'px';
-  sNear = clamp(Math.min(W/120, H/150), 2.6, 6); sFar = sNear*.62; K = sNear/3;
+  sNear = clamp(Math.min(W/120, H/150), 2.6, Math.min(6, MAXS)); sFar = sNear*.62; K = sNear/3;
   buildScene();
   for(const d of dg){ d.cx *= W/oW; d.cy *= H/oH; if(d.mode === 'walk'){ const [a, b] = band(); d.fy = d.fyT = clamp(d.fy*H/oH, a, b); } d.trail = []; d.lx = d.cx; d.ly = d.cy; }
   drawScene(); draw(); }
