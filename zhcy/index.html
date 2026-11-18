@@ -100,7 +100,7 @@ body.unpinned .actions{margin-top:var(--s2)}
 .star{color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--gold)}
 .star[aria-pressed="true"] svg{fill:currentColor}
-.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:calc(var(--s2) + 10px) 0;
+.chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:calc(var(--s2) + 10px) 0 calc(var(--s2) + 10px + 50px);
   border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
   font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
 .chars span{display:inline-block;width:1em;text-align:center}
@@ -109,7 +109,7 @@ body.unpinned .actions{margin-top:var(--s2)}
 .chars:active{background:var(--surface-2)}
 .pin{margin:var(--s3) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
 /* The definition reserves three lines so most cards are the same height. */
-.def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
+.def{margin:var(--s3) auto 50px;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
 /* Play: the green circle hugs the icon with 2px of padding; the button around it stays a 44px tap target. */
 .play{display:inline-flex;align-items:center;justify-content:center;width:var(--tap);height:var(--tap);margin:0;padding:0;flex:none;
   border:0;border-radius:50%;background:transparent;color:var(--primary);cursor:pointer}
