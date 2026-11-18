@@ -501,7 +501,8 @@ const FL_PATS = ['roam','roam','loops','circles','swoop','zigzag'];
 function wp(d){ const m = 16; if(R() < .25){ d.wx = d.cx + rr(-10, 10); d.wy = d.cy > H/2 ? rr(m, H*.2) : rr(H*.65, H*.85); }
   else { d.wx = rr(m + 40, W - m - 40); d.wy = rr(H*.08, band()[0] - 20); } d.wt = ri(60, 150); }
 function takeOff(d, init){ d.mode = 'fly'; d.jump = d.over = d.hop = 0; d.jy = 0; if(init) d.cy = rr(H*.1, H*.5); else { d.vy = -4*K; d.vx = d.dir*2*K; } plan(d); }
-function plan(d){ d.mode = 'fly'; d.loopN = 0;
+function plan(d){ d.mode = 'fly'; d.loopN = 0; if(!d.inv && R() < .12) d.inv = ri(120, 320);   // now and then it flies upside down for a while
+ 
   d.pat = cfg.pat === 'mix' ? pick(FL_PATS) : cfg.pat; d.ft = ri(150, 420); d.sT = Math.min(MAXS, rr(.7, 1.15)*sNear); d.spd = rr(3, 5)*K; d.lt = ri(60, 140);
   d.ca = R()*6.28; d.cr = rr(50, 120)*K; d.ccx = clamp(d.cx, W*.25, W*.75); d.ccy = clamp(d.cy, H*.2, H*.5); d.cw = (R() < .5 ? -1 : 1)*.03; d.zp = R()*6.28;
   d.oa = R()*6.28; d.ri = rr(35, 85)*K; wp(d); }
@@ -575,6 +576,7 @@ function tick(){ T++;
   const marching = cfg.act === 'march' || (cfg.act === 'mix' && (T % 1300 >= 150 && T % 1300 < 300));
   for(const d of dg){ if(d.mom) continue;
     caughtByTwister(d);
+    if(d.inv > 0 && d.mode !== 'dizzy'){ if(d.mode === 'fly' || d.mode === 'leave' || d.mode === 'spin'){ d.up = true; if(--d.inv <= 0) d.up = false; } else { d.inv = 0; d.up = false; } }   // upside down; rights itself to land, dive or swoop
     if(d.mode === 'walk'){
       d.step = marching ? ((T/7)|0)%4 : (((T/7)|0) + d.ph*2)%4; d.wing = marching ? ((T/18)|0)%2 : (((T + d.ph*7)/18)|0)%2;
       walkStep(d, marching); }
@@ -638,7 +640,7 @@ function tick(){ T++;
   // breath
   for(const d of dg){ const a = d.aim; if(!a) continue;   // a tap: shoot at the spot (fire, or water for the one that decides so)
     if(a.p && a.p.down && !a.p.held){ a.tx = a.p.x; a.ty = a.p.y; a.n = Math.max(a.n, 4); }   // finger still down: keep firing at it
-    if(d.mode === 'off' || d.mode === 'dizzy' || d.mode === 'under' || d.mode === 'spin' || d.up){ d.aim = null; continue; }
+    if(d.mode === 'off' || d.mode === 'dizzy' || d.mode === 'under' || d.mode === 'spin'){ d.aim = null; continue; }
     const want = Math.abs(a.tx - d.cx) > 4*K ? (a.tx > d.cx ? 1 : -1) : d.dir;
     if(want !== d.dir){ d.dir = want; a.wait = Math.max(a.wait, 6); }   // turn to face the spot first
     if(d.mode !== 'walk'){ d.vx *= .88; d.vy *= .88; }   // a flier hovers a moment to aim
@@ -648,7 +650,7 @@ function tick(){ T++;
     const [mx, my] = mouth(d), dx = a.tx - mx, dy = a.ty - my, D = Math.hypot(dx, dy) || 1, sp = Math.min(40, 14*K/SPEEDS[cfg.spd]);   // about 550 px a second whatever the speed setting
     for(let i=0; i<3; i++){ const ang = Math.atan2(dy, dx) + (R()-.5)*.08, L = Math.max(2, D/sp*(0.92 + R()*.12));
       bits.push({k: a.water ? 'drop' : 'fire', shot: true, x: mx, y: my, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, sc: Math.max(2, d.s*.8), n: 0, L}); } }
-  if(cfg.breath !== 'none') for(const d of dg){ if(d.aim || d.hid || d.mode === 'under' || d.mode === 'dizzy' || d.up || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
+  if(cfg.breath !== 'none') for(const d of dg){ if(d.aim || d.hid || d.mode === 'under' || d.mode === 'dizzy' || d.mode === 'off' || (d.mom && d.mom.mode === 'off' && offScreen(d))) continue;
     const fx = d.yx === undefined ? d.dir : d.yx; if(d.breath > 0 && Math.abs(fx) < .8) continue;   // mid-turn: hold the breath
     if(d.breath > 0){ d.breath--; const [mx, my] = mouth(d), ang = (fx > 0 ? 0 : Math.PI) + Math.round(d.rot/QA)*QA;   // out of the snout it faces
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
@@ -848,7 +850,7 @@ const HOLD = 2500;
 let press = null, holdT = 0;
 function hold(){ if(!press) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
   for(const d of dg) if(d.aim && d.aim.p === press) d.aim.n = 0; }   // redirect: the flames stop
-function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'dizzy' && !d.up && !offScreen(d))
+function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'dizzy' && !offScreen(d))
     .sort((a, b) => Math.hypot(a.cx - p.x, a.cy - p.y) - Math.hypot(b.cx - p.x, b.cy - p.y)).slice(0, Math.min(3, ri(1, 3) + 1));
   const wet = R() < .35 ? pick(who) : null;
   who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
