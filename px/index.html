@@ -201,6 +201,7 @@ const scv = document.getElementById('scene'), sctx = scv.getContext('2d');
 const fcv = document.getElementById('fg'), ctxA = fcv.getContext('2d'), fcv2 = document.getElementById('fg2'), ctxB = fcv2.getContext('2d');
 const qcv = document.getElementById('sea'), qctx = qcv.getContext('2d'); let qframe = null, ctx = ctxA;
 let W = 0, H = 0, VH = 0, DPR = 1, P = 3, gw = 0, gh = 0, gTopA = 0, K = 1, sNear = 3, sFar = 2;
+const LOWG = () => cfg.ground === 'moon' ? 1.7 : 1;   // the moon: higher, floatier jumps
 function band(){   // where walkers' feet can be, in CSS px
   if(SEA) return [BEACH_A*P + 4, VH - 10];   // sea scene: the strip of beach at the bottom
   if(cfg.bg === 'scene' && cfg.ground !== 'none') return [gTopA*P + 6, VH - 10];
@@ -214,8 +215,10 @@ const BAYER = [0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
 const SKIES = {
   day:   {stops:[[0,[92,152,218]],[.7,[168,206,240]],[1,[214,234,246]]], cloud:[[255,255,255],[214,226,240]], far:[150,168,204], cap:[240,244,250], near:[104,136,128], dim:1, tint:[0,0,0]},
   sunset:{stops:[[0,[56,58,124]],[.45,[176,96,150]],[.8,[240,140,100]],[1,[255,200,130]]], cloud:[[255,206,190],[214,130,140]], far:[122,92,138], cap:[236,190,196], near:[80,70,104], dim:.8, tint:[30,8,0]},
+  space: {stops:[[0,[2,2,8]],[.7,[5,5,14]],[1,[12,12,24]]], cloud:[[0,0,0],[0,0,0]], far:[92,92,100], cap:[92,92,100], near:[118,118,124], dim:1, tint:[0,0,0]},   // the moon
   night: {stops:[[0,[10,12,36]],[.7,[26,34,78]],[1,[46,56,104]]], cloud:[[78,86,128],[56,62,100]], far:[44,52,92], cap:[150,160,196], near:[30,38,64], dim:.45, tint:[0,0,14]}};
-const GROUNDS = {desert:{top:[192,142,92], body:[[224,180,120],[230,188,128],[236,196,138]], dots:[[206,158,100],[244,212,160],[186,134,84]]},
+const GROUNDS = {moon:{top:[112,112,118], body:[[148,148,152],[158,158,162],[168,168,172]], dots:[[128,128,134],[188,188,192],[110,110,116]]},
+  desert:{top:[192,142,92], body:[[224,180,120],[230,188,128],[236,196,138]], dots:[[206,158,100],[244,212,160],[186,134,84]]},
   grass:{top:[70,132,72], body:[[96,162,84],[110,176,92],[120,184,98]], dots:[[78,146,70],[146,198,112],[66,124,62]]},
   sand:{top:[204,174,118], body:[[228,200,146],[234,208,154],[238,214,162]], dots:[[212,182,126],[246,226,182],[196,166,112]]},
   snow:{top:[196,210,228], body:[[232,238,246],[238,242,248],[244,247,251]], dots:[[212,222,236],[255,255,255],[200,212,230]]}};
@@ -307,12 +310,17 @@ function buildScene(){
     for(let y=-r-3; y<=r+3; y++) for(let x=-r-3; x<=r+3; x++){ const d = Math.hypot(x, y); if(d <= r) put(skyBuf, cx+x, cy+y, [255,236,150]); else if(d <= r+2 && ((x+y)&1)) put(skyBuf, cx+x, cy+y, [255,246,206]); } }
   else if(cfg.sky === 'sunset'){ const cx = gw*.3, cy = skyH*.86, r = Math.max(6, gw*.06);
     for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++) if(Math.hypot(x, y) <= r) put(skyBuf, cx+x, cy+y, (y % 3 === 0 && y > 0) ? [250,150,96] : [255,196,110]); }
+  else if(cfg.sky === 'space'){ const cx = gw*.76, cy = skyH*.2, r = Math.max(5, gw*.045);   // Earth, half lit
+    for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++){ const dd = Math.hypot(x, y); if(dd > r) continue; const lit = x > -r*.15;
+      const land = hash(Math.round(x*1.3 + 40), Math.round(y*1.8 + 40)) < .32 + .25*Math.sin(x*.7 + y*.4), cloud = hash(x + 91, y*2 + 5) < .13;
+      let c = cloud ? [236,240,246] : land ? [86,140,82] : [52,104,186]; if(!lit) c = c.map(v => v*.18); else if(dd > r - 1.2) c = [150,190,240];
+      put(skyBuf, cx + x, cy + y, c.map(Math.round)); } }
   else { const cx = gw*.78, cy = skyH*.15, r = Math.max(4, gw*.03);
     for(let y=-r; y<=r; y++) for(let x=-r; x<=r; x++) if(Math.hypot(x, y) <= r && Math.hypot(x - r*.45, y - r*.2) > r*.82) put(skyBuf, cx+x, cy+y, [240,236,212]); }
-  stars = []; if(cfg.sky === 'night'){ const n = (gw*skyH/140)|0; for(let i=0; i<n; i++) stars.push([(rand()*gw)|0, (rand()*skyH*.8)|0, rand() < .25, (rand()*60)|0]); }   // stars: half as many as at first (gw*skyH/140)
+  stars = []; if(cfg.sky === 'night' || cfg.sky === 'space'){ const n = (gw*skyH/(cfg.sky === 'space' ? 45 : 140))|0; for(let i=0; i<n; i++) stars.push([(rand()*gw)|0, (rand()*skyH*.8)|0, rand() < .25, (rand()*60)|0]); }   // stars: half as many as at first (gw*skyH/140)   // space: gobs of stars
   // mountains (into fgBuf, which is drawn over the clouds)
   const mBase = gTopA;
-  const MT = desert ? DESERT_MTN[cfg.sky] : sk;   // desert: rust and purple ranges, no snow
+  const moon = on && cfg.ground === 'moon', MT = desert ? DESERT_MTN[cfg.sky] : sk;   // desert: rust and purple ranges, no snow
   if(cfg.mtn){ for(const [layer, col, hgt] of [[0, MT.far, .42], [1, MT.near, .26]]){
       const ph = [rand()*6.28, rand()*6.28, rand()*6.28], f = [1.3 + rand(), 2.8 + rand()*2, 6 + rand()*4];
       let j = 0;
@@ -320,7 +328,7 @@ function buildScene(){
         const top = mBase - skyH*hgt*(.55 + .25*Math.sin(u*f[0]*6.28 + ph[0]) + .12*Math.sin(u*f[1]*6.28 + ph[1]) + .06*Math.abs(Math.sin(u*f[2]*6.28 + ph[2]))) + j;
         const capY = mBase - skyH*hgt*.78;
         for(let y=Math.max(0, Math.round(top)); y<mBase; y++){
-          let c = col; if(layer === 0 && !desert && y < capY + ((x*7)%3)) c = sk.cap;
+          let c = col; if(layer === 0 && !desert && !moon && y < capY + ((x*7)%3)) c = sk.cap;
           else if(layer === 1 && ((x + y) % 5 === 0) && y > top + 2) c = col.map(v => v*.9);
           if(y === Math.round(top)) c = c.map(v => v*.86);
           put(fgBuf, x, y, c.map(Math.round)); } } } }
@@ -335,7 +343,12 @@ function buildScene(){
         put(fgBuf, x, y, sh(c)); }
       if(cfg.ground === 'grass' && y > gTopA + 1) for(let x=0; x<gw; x++) if(rand() < .025) { put(fgBuf, x, y-1, sh(G.dots[2])); put(fgBuf, x, y-2, sh(G.dots[0])); } } }
   // rocks
-  RIV = on && !sea && cfg.river && cfg.ground !== 'none' ? {base: .3 + rand()*.4, amp: .12 + rand()*.12, ph: rand()*6.28} : null;
+  if(moon){ const sh = c => c.map(Math.round);   // small craters: dark floor, shadowed left rim, lit right rim
+    for(let i=0, n = Math.max(10, (gw/5)|0); i<n; i++){ const u = rand(), cy = gTopA + 3 + u*(gh - gTopA - 5), cx = rand()*gw, rx = 1.2 + u*3.5 + rand()*1.5, ry = Math.max(.8, rx*.32);
+      for(let dy=-Math.ceil(ry) - 1; dy<=Math.ceil(ry) + 1; dy++) for(let dx=-Math.ceil(rx) - 1; dx<=Math.ceil(rx) + 1; dx++){ const e = (dx/rx)**2 + (dy/ry)**2;
+        if(e <= 1) put(fgBuf, cx + dx, cy + dy, sh(dx < 0 && e > .4 ? [88,88,96] : [118,118,126]));
+        else if(e <= 1.8 && (dx > 0 || dy > 0)) put(fgBuf, cx + dx, cy + dy, sh([204,204,208])); } } }
+  RIV = on && !sea && !moon && cfg.river && cfg.ground !== 'none' ? {base: .3 + rand()*.4, amp: .12 + rand()*.12, ph: rand()*6.28} : null;
   const offRiver = (x, y) => !RIV || Math.abs(x - riverX(y)) > riverW(y)/2 + 3;
   PUD = []; if(on && !sea && cfg.ground !== 'none') for(let i=0, n = Math.max(3, (gw/16)|0); i<n*3 && PUD.length < n; i++){
     const u = rand(), y = gTopA + 4 + u*(gh - gTopA - 8), x = 6 + rand()*(gw - 12); if(offRiver(x, y)) PUD.push({x, y, r: 2.5 + u*7 + rand()*2}); }
@@ -509,8 +522,8 @@ function walkStep(d, marching){
   else if(d.hop){ d.jy = -[0,2,4,5,5,4,2,1,0,0,0,0][12 - d.hop]*d.s; d.hop--; }
   else if(d.jump){ const k = d.jdur - d.jump; d.jy = -Math.sin(Math.PI*k/d.jdur)*d.jh*d.s; d.jump--; d.wing = ((T/Math.max(3, d.jdur/6|0))|0)%2; d.step = 1; }
   else { d.jy = 0;
-    if(d.gj && --d.nextj <= 0){ d.jdur = d.gj; d.jh = d.jdur*.38; d.jump = d.jdur; d.gj = 0; d.nextj = ri(90, 220); }
-    else if(!marching && !d.gj && --d.nextj <= 0){ d.jdur = pick([12,16,22,30,40]); d.jh = d.jdur*.38 + rr(-1, 2); d.jump = d.jdur; d.nextj = cfg.act === 'hop' ? ri(8, 40) : ri(45, 140); } }
+    if(d.gj && --d.nextj <= 0){ d.jdur = d.gj*LOWG(); d.jh = d.gj*.38*LOWG(); d.jump = d.jdur; d.gj = 0; d.nextj = ri(90, 220); }
+    else if(!marching && !d.gj && --d.nextj <= 0){ const j0 = pick([12,16,22,30,40]); d.jdur = Math.round(j0*LOWG()); d.jh = (j0*.38 + rr(-1, 2))*LOWG(); d.jump = d.jdur; d.nextj = cfg.act === 'hop' ? ri(8, 40) : ri(45, 140); } }
   const wv = WIND(); d.cx += d.dir*.6*d.s*(d.boost ? 1.9 : 1)*Math.max(.25, 1 + d.dir*wv*.18); if(d.boost) d.boost--; if(d.cool) d.cool--;   // into the wind: slower; with it: faster
   if(Math.abs(wv) > 2.2 && !d.jump && R() < .004){ d.jdur = 16; d.jh = 5; d.jump = 16; d.dir = wv > 0 ? 1 : -1; }   // a strong gust bumps it up
   const hw = GW*d.s/2; if((d.cx > W - hw - 4 && d.dir > 0) || (d.cx < hw + 4 && d.dir < 0)) d.dir *= -1;
@@ -701,7 +714,8 @@ function weatherTick(){ const w = WIND();
   COVER = clamp(COVER + (cfg.wx === 'snow' ? .0015 : cfg.wx === 'rain' ? -.003 : -.0005), 0, 1);   // settles, melts
   WET = clamp(WET + (cfg.wx === 'rain' ? .002 : -.0005), 0, 1);   // fills, dries
   // precipitation: a fixed crowd of drops or flakes, recycled at the top
-  const want = cfg.wx === 'rain' ? Math.round(W*VH/1800) : cfg.wx === 'snow' ? Math.round(W*VH/3600) : 0;
+  if(cfg.ground === 'moon'){ PREC.length = 0; TW = null; }
+  const want = cfg.ground === 'moon' ? 0 : cfg.wx === 'rain' ? Math.round(W*VH/1800) : cfg.wx === 'snow' ? Math.round(W*VH/3600) : 0;
   while(PREC.length < want) PREC.push({x: R()*W, y: R()*VH, v: rr(.6, 1.4), ph: R()*6.28});
   if(PREC.length > want) PREC.length = want;
   for(const q of PREC){
@@ -714,7 +728,7 @@ function weatherTick(){ const w = WIND();
   for(const e of bits) e.vx += w*.04*(e.k === 'steam' ? 1.5 : 1);   // breath and steam blow with the wind
   for(const c of clouds) c.x += w*.025;
   // twister: rare; likelier when windy
-  if(!TW && R() < (Math.abs(cfg.windv) >= 2 ? 1/1400 : 1/4200)){ const from = R() < .5 ? -1 : 1;
+  if(!TW && cfg.ground !== 'moon' && R() < (Math.abs(cfg.windv) >= 2 ? 1/1400 : 1/4200)){ const from = R() < .5 ? -1 : 1;
     TW = {x: from < 0 ? -40 : W + 40, vx: -from*rr(.8, 1.4)*K, age: 0, life: ri(700, 1300), a: 0, ph: R()*6.28}; }
   if(TW){ TW.age++; TW.x += TW.vx + w*.15*K; TW.a = Math.min(1, TW.age/60, (TW.life - TW.age)/60);
     if(TW.age > TW.life || TW.x < -120 || TW.x > W + 120) TW = null; } }
@@ -849,9 +863,10 @@ for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' 
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
 $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, clouds, mountains, ground, rocks); the dragons and their settings stay
   const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join();
-  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert']), rocks: R() < .7,
+  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert','moon']), rocks: R() < .7,
     river: R() < .4, wx: pick(['clear','clear','rain','snow']), windv: (R() < .5 ? -1 : 1)*pick([0, 0, 0, 0, 1, 1, 1, 2, 2, 3])});   // weather: clear about half the time; calm, breezy, windy or a gale
   while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join() === was);
+  if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});   // the moon: black sky, stars, no weather
   PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;   // always a visibly different one
   seed = (R()*1e9)|0; save(); buildScene(); drawScene();
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
