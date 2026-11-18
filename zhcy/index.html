@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#fbf8f1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
 <style>
 /* Colours and fonts follow fogday.com/mahjong (Young Serif + Rubik; paper, felt green, red). Light only. */
 :root{
@@ -24,6 +24,12 @@
   /* Character fonts: Songti (default) and a modern sans. Apple devices use the system font; others load Noto. */
   --song:"Songti SC","STSong","Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
   --hei:"PingFang SC","Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  /* Calligraphic hands: Kaiti uses the system Kaiti where present, else Ma Shan Zheng; xingshu Zhi Mang Xing; caoshu Liu Jian Mao Cao.
+     Any glyph a web font lacks falls back to Songti. */
+  --kai:"Kaiti SC","STKaiti","KaiTi","Ma Shan Zheng","Noto Serif SC",serif;
+  --xing:"Zhi Mang Xing","Noto Serif SC",serif;
+  --cao:"Liu Jian Mao Cao","Noto Serif SC",serif;
+  --cy:var(--song); --cyw:500; --cyt:var(--song);
   --fs-cap:.8125rem; --fs-sm:.875rem; --fs-body:1rem; --fs-lg:1.125rem; --fs-h2:1.375rem;
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
   --r-sm:10px; --r-md:14px; --r-lg:20px; --r-pill:999px;
@@ -35,6 +41,10 @@
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:1.5;
   display:flex;flex-direction:column;min-height:100vh;min-height:100svh}
+body[data-font="hei"]{--cy:var(--hei);--cyt:var(--hei)}
+body[data-font="kai"]{--cy:var(--kai);--cyw:400}
+body[data-font="xing"]{--cy:var(--xing);--cyw:400}
+body[data-font="cao"]{--cy:var(--cao);--cyw:400}
 button,input{font:inherit;color:inherit}
 a{color:var(--primary)}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -45,7 +55,7 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 
 /* Header */
 .top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding-top:env(safe-area-inset-top)}
 .bar{display:flex;align-items:center;gap:var(--s3);min-height:60px}
 .brand{display:flex;align-items:center;gap:var(--s2);flex:1;min-width:0;text-decoration:none;color:var(--ink)}
 .seal{flex:none;width:34px;height:34px;border-radius:8px;background:var(--accent);color:var(--on-primary);display:grid;place-items:center;
@@ -64,53 +74,44 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 
 /* Day line */
 main{flex:1;padding-bottom:var(--s6)}
-.when{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin:var(--s5) 0 var(--s3);color:var(--ink-2);font-size:var(--fs-sm)}
-.when h1{margin:0;font-family:var(--display);font-weight:400;font-size:var(--fs-h2);color:var(--ink);line-height:1.2;outline:none}
+main>.wrap{padding-top:var(--s5)}
 
 /* Card: row 1 characters, row 2 pinyin, row 3 definition, row 4 play */
-.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-card);
+.card{position:relative;background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:var(--shadow-card);
   padding:var(--s6) var(--s4) var(--s5);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .card.go-l{animation:inL var(--dur) var(--ease)}
 .card.go-r{animation:inR var(--dur) var(--ease)}
 @keyframes inL{from{opacity:.2;transform:translateX(28px)}}
 @keyframes inR{from{opacity:.2;transform:translateX(-28px)}}
 @media (prefers-reduced-motion:reduce){.card.go-l,.card.go-r{animation:none}.ibtn.spin svg{animation:none}}
-.fontmark{position:absolute;top:var(--s3);left:var(--s3);font-size:var(--fs-cap);color:var(--ink-2);padding:2px 8px;border:1px solid var(--line);border-radius:var(--r-pill);
-  font-family:var(--song)}
-body.hei .fontmark{font-family:var(--hei)}
 .star{position:absolute;top:var(--s1);right:var(--s1);color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--accent)}
 .star[aria-pressed="true"] svg{fill:currentColor}
 .chars{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:0 .06em;width:100%;margin:var(--s3) 0 0;padding:var(--s2) 0;
   border:0;background:transparent;cursor:pointer;border-radius:var(--r-md);
-  font-family:var(--song);font-weight:500;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
-body.hei .chars{font-family:var(--hei)}
+  font-family:var(--cy);font-weight:var(--cyw);font-synthesis:none;font-size:clamp(3rem,19.5vw,5.25rem);line-height:1.2;color:var(--ink)}
 .chars span{display:inline-block;width:1em;text-align:center}
 .chars .opt{color:var(--ink-2)}
 .chars .brk{flex-basis:100%;height:0;width:0}
 .chars:active{background:var(--surface-2)}
 .pin{margin:var(--s3) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
 .def{margin:var(--s3) auto 0;max-width:30rem;font-size:var(--fs-body);color:var(--ink);user-select:text;-webkit-user-select:text}
-.play{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);min-width:9rem;margin:var(--s5) 0 0;padding:0 var(--s5);
-  border:0;border-bottom:var(--edge) solid var(--primary-edge);border-radius:var(--r-pill);background:var(--primary);color:var(--on-primary);font-weight:600;cursor:pointer}
+.play{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;margin:var(--s5) 0 0;padding:0;
+  border:0;border-radius:50%;background:var(--primary);color:var(--on-primary);font-weight:600;cursor:pointer}
 .play:hover{background:var(--primary-hover)}
-.play:active{background:var(--primary-press);transform:translateY(1px);border-bottom-width:2px}
+.play:active{background:var(--primary-press);transform:scale(.96)}
 .play[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
-.play svg{width:20px;height:20px}
+.play svg{width:28px;height:28px}
 .note{min-height:1.25em;margin:var(--s2) 0 0;font-size:var(--fs-cap);color:var(--ink-2)}
 
 /* Pager */
-.pager{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2);margin-top:var(--s4)}
-.pbtn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s1);min-width:0;min-height:var(--tap);padding:var(--s1) var(--s2);text-align:center;line-height:1.2;border:1px solid var(--line-strong);
-  border-bottom-width:var(--edge);border-radius:var(--r-pill);background:var(--surface);cursor:pointer;font-weight:600;font-size:var(--fs-sm)}
-.pbtn:hover{background:var(--surface-2)}
-.pbtn:active{transform:translateY(1px);border-bottom-width:2px}
-.pbtn.today{color:var(--primary)}
-.pbtn.today[hidden]{display:inline-flex;visibility:hidden}
-.hint{margin:var(--s2) 0 0;text-align:center;font-size:var(--fs-cap);color:var(--ink-2)}
+.pager{display:flex;justify-content:space-between;margin-top:var(--s4)}
+.pbtn{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;padding:0;border:0;border-radius:50%;background:var(--surface-2);cursor:pointer;color:var(--ink)}
+.pbtn:hover{background:var(--surface-3)}
+.pbtn:active{transform:scale(.96)}
 
 /* More */
-.more{margin-top:var(--s5);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
+.more{margin-top:var(--s5);background:var(--surface);border-radius:var(--r-lg)}
 .more>h2{margin:0;font-size:inherit}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:52px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
   font-family:var(--display);font-weight:400;font-size:var(--fs-lg);border-radius:var(--r-lg);text-align:left}
@@ -121,14 +122,12 @@ dl{margin:0}
 dt{margin-top:var(--s4);font-size:var(--fs-cap);font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
 dt:first-child{margin-top:0}
 dd{margin:var(--s1) 0 0}
-dd.zh{font-family:var(--song);font-size:1.0625rem;line-height:1.7}
-body.hei dd.zh{font-family:var(--hei)}
+dd.zh{font-family:var(--cyt);font-size:1.0625rem;line-height:1.7}
 .chips{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2)}
-.chip{display:inline-flex;align-items:center;min-height:var(--tap);padding:0 var(--s3);border:1px solid var(--line-strong);border-radius:var(--r-pill);background:var(--surface);
+.chip{display:inline-flex;align-items:center;min-height:var(--tap);padding:0 var(--s3);border:0;border-radius:var(--r-pill);background:var(--primary-tint);
   font-family:var(--song);font-size:1.0625rem;cursor:pointer;color:var(--primary)}
-body.hei .chip{font-family:var(--hei)}
-.chip:hover{background:var(--primary-tint)}
-span.chip{cursor:default;color:var(--ink);border-style:dashed}
+.chip:hover{background:#d6e7dd}
+span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 .tag{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);background:var(--surface-2);font-size:var(--fs-sm)}
 .tag.pos{background:var(--primary-tint);color:var(--primary)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
@@ -144,27 +143,26 @@ dialog{width:100%;max-width:34rem;max-height:min(88vh,44rem);margin:auto auto 0;
 dialog[open]{display:flex}
 @media (min-width:600px){dialog{margin:auto;border-radius:var(--r-lg)}}
 dialog::backdrop{background:var(--scrim)}
-.sh{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4);border-bottom:1px solid var(--line)}
+.sh{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4)}
 .sh h2{flex:1;margin:0;font-family:var(--display);font-weight:400;font-size:var(--fs-lg)}
 .sb{overflow:auto;padding:var(--s4);padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom))}
 label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s1)}
-.field{width:100%;min-height:48px;padding:0 var(--s3);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);font-size:1rem}
+.field{width:100%;min-height:48px;padding:0 var(--s3);border:0;border-radius:var(--r-md);background:var(--surface-3);font-size:1rem}
 .field:focus-visible{outline-offset:0}
 .help{margin:var(--s2) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
 .count{margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
 .list{list-style:none;margin:0;padding:0}
-.list li+li{border-top:1px solid var(--line)}
+.list li+li{margin-top:2px}
 .row{display:grid;grid-template-columns:auto 1fr;gap:2px var(--s3);align-items:baseline;width:100%;min-height:56px;padding:var(--s2) var(--s1);border:0;background:transparent;
   text-align:left;cursor:pointer;border-radius:var(--r-sm)}
 .row:hover{background:var(--surface-2)}
-.row b{font-family:var(--song);font-weight:500;font-size:1.375rem;line-height:1.3;grid-row:span 2}
-body.hei .row b{font-family:var(--hei)}
+.row b{font-family:var(--cyt);font-weight:500;font-size:1.375rem;line-height:1.3;grid-row:span 2}
 .row .p{color:var(--primary);font-size:var(--fs-sm)}
 .row .d{color:var(--ink-2);font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{color:var(--ink-2);font-size:var(--fs-sm);margin:var(--s3) 0}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);padding:0 var(--s4);border-radius:var(--r-pill);cursor:pointer;font-weight:600;
-  border:1px solid var(--line-strong);border-bottom-width:var(--edge);background:var(--surface)}
-.btn.pri{background:var(--primary);color:var(--on-primary);border-color:var(--primary-edge)}
+  border:0;background:var(--surface-2)}
+.btn.pri{background:var(--primary);color:var(--on-primary)}
 .btn.pri:hover{background:var(--primary-hover)}
 .btns{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)}
 .st{min-height:1.5em;margin:var(--s3) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
@@ -190,29 +188,25 @@ body.hei .row b{font-family:var(--hei)}
 
 <main id="main">
   <div class="wrap">
-    <div class="when"><h1 id="when" tabindex="-1">Today</h1><span id="pos"></span></div>
+    <h1 class="vh" id="when" tabindex="-1">Chengyu</h1>
 
     <article class="card" id="card" aria-labelledby="when">
-      <span class="fontmark" id="fontmark" aria-hidden="true">宋体</span>
       <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
       <button class="chars" id="chars" type="button" lang="zh-Hans"></button>
       <p class="pin" id="pin" lang="zh-Latn-pinyin"></p>
       <p class="def" id="def"></p>
-      <button class="play" id="play" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
-        <span>Play</span></button>
+      <button class="play" id="play" type="button" aria-label="Play pronunciation">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
       <p class="note" id="note" role="status"></p>
     </article>
 
     <nav class="pager" aria-label="Browse chengyu">
       <button class="pbtn" id="prev" type="button" aria-label="Previous chengyu">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Previous</button>
-      <button class="pbtn today" id="today" type="button" hidden>Today</button>
-      <button class="pbtn" id="next" type="button" aria-label="Next chengyu">Next
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="pbtn" id="next" type="button" aria-label="Next chengyu">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     </nav>
-    <p class="hint">Swipe the card to browse. Tap the characters to change the font.</p>
 
     <section class="more">
       <h2><button class="tog" id="tog" type="button" aria-expanded="false" aria-controls="moreBody">Meaning and origin
@@ -302,12 +296,18 @@ function fold(s){
 const IDX = D.map(r => ({c: plain(r.e), p: fold(r.p), en: ' ' + (r.en + ' ' + (r.en2 || '')).toLowerCase() + ' '}));
 
 /* ---------- font ---------- */
-function setFont(hei){
-  document.body.classList.toggle('hei', hei);
-  $('#fontmark').textContent = hei ? '黑体' : '宋体';
-  $('#chars').setAttribute('aria-label', `${plain(D[cur].e)}. Font: ${hei ? 'modern sans' : 'Songti'}. Tap to switch.`);
+// Tap cycles: Songti, modern sans, Kaiti, xingshu, caoshu.
+const FONTS = [['song', '宋体', 'Songti'], ['hei', '黑体', 'modern sans'], ['kai', '楷体', 'Kaiti'], ['xing', '行书', 'xingshu (running script)'], ['cao', '草书', 'caoshu (cursive script)']];
+let font = 'song';
+function setFont(f){
+  const F = FONTS.find(x => x[0] === f) || FONTS[0];
+  font = F[0]; document.body.dataset.font = font;
+  $('#chars').setAttribute('aria-label', `${plain(D[cur].e)}. Font: ${F[2]}. Tap for the next font.`);
 }
-$('#chars').addEventListener('click', () => { const h = !document.body.classList.contains('hei'); store.set('font', h ? 'hei' : 'song'); setFont(h); note(h ? 'Modern font' : 'Songti font'); });
+$('#chars').addEventListener('click', () => {
+  const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
+  store.set('font', FONTS[i][0]); setFont(FONTS[i][0]);
+});
 
 /* ---------- stars ---------- */
 let stars = store.get('stars', {}), tomb = store.get('tomb', {});
@@ -359,11 +359,9 @@ function show(i, dir, focus){
   $('#chars').innerHTML = charsHtml(r.e);
   $('#pin').textContent = `(${r.p})`;
   $('#def').textContent = r.en || '';
-  $('#when').textContent = cur === today ? 'Today' : (cur === (today + 1) % N ? 'Tomorrow' : cur === (today - 1 + N) % N ? 'Yesterday' : 'Chengyu');
-  $('#pos').textContent = `${cur + 1} of ${N}`;
-  $('#today').hidden = cur === today;
+  $('#when').textContent = `${plain(r.e)}, ${cur + 1} of ${N}`;
   document.title = `${plain(r.e)} | Chengyu of the day`;
-  setFont(document.body.classList.contains('hei'));
+  setFont(font);
   paintStar(); paintMore(r); note('');
   const c = $('#card'); c.classList.remove('go-l', 'go-r');
   if(dir){ void c.offsetWidth; c.classList.add(dir > 0 ? 'go-l' : 'go-r'); }
@@ -372,7 +370,6 @@ function show(i, dir, focus){
 }
 $('#prev').addEventListener('click', () => show(cur - 1, -1));
 $('#next').addEventListener('click', () => show(cur + 1, 1));
-$('#today').addEventListener('click', () => { show(today, cur > today ? -1 : 1); $('#next').focus(); });
 document.addEventListener('keydown', ev => {
   if(document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
   if(ev.key === 'ArrowLeft'){ ev.preventDefault(); show(cur - 1, -1); }
@@ -564,7 +561,7 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
 
 /* ---------- start ---------- */
 (() => {
-  setFont(store.get('font', 'song') === 'hei');
+  font = store.get('font', 'song'); setFont(font);
   const fromHash = () => { let h = ''; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} const i = h ? IDX.findIndex(x => x.c === h) : -1; return i; };
   const i0 = fromHash(); show(i0 >= 0 ? i0 : today, 0);
   window.addEventListener('hashchange', () => { const i = fromHash(); if(i >= 0 && i !== cur) show(i, 0); });
@@ -573,7 +570,7 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
   // A new day while the page is open: move to the new chengyu if the reader was on today's.
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'visible') return;
-    const t = todayIdx(); if(t !== today){ const was = cur === today; today = t; if(was) show(today, 0); else $('#today').hidden = cur === today; }
+    const t = todayIdx(); if(t !== today){ const was = cur === today; today = t; if(was) show(today, 0); }
     syncSoon(500);
   });
 })();
