@@ -248,6 +248,13 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
   .oa-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (hover: hover) { .oa-pin:hover { color: var(--accent); } }
   .oa-here .oa-pin[aria-busy="true"] svg { animation: here-pulse 1s ease-in-out infinite; }
+  /* No background on the icon buttons in any state: Mapbox gives its control buttons a hover/active fill, which sticks
+     after a tap on phones, and WebKit adds its own tap highlight. Icons only, as on /transit/. */
+  .mapboxgl-ctrl button, .mapboxgl-ctrl button:hover, .mapboxgl-ctrl button:active, .mapboxgl-ctrl button:focus,
+  .mapboxgl-ctrl button:not(:disabled):hover, .mapboxgl-ctrl button:not(:disabled):active,
+  .mapboxgl-ctrl-group button:not(:disabled):hover, .mapboxgl-ctrl-group button:not(:disabled):active,
+  .oa-pin, .oa-pin:hover, .oa-pin:active, .oa-pin:focus { background: transparent !important; box-shadow: none; }
+  .mapboxgl-ctrl button, .oa-pin, .theme-toggle, .bento, .maps-btn, .legend-toggle, .title { -webkit-tap-highlight-color: transparent; }
   /* Zoom readout (as /treesf/): the current zoom, live; display only, taps pass through to the map */
   .oa-zoomread { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; pointer-events: none;
                  color: var(--muted); font: 700 .72rem/1 var(--font); font-variant-numeric: tabular-nums; letter-spacing: -.01em;
