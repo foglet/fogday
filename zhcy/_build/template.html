@@ -108,6 +108,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .mcard,.grp{background:var(--surface);border-radius:var(--r-lg);padding:var(--s3) var(--s4) var(--s4)}
 .grp{margin-top:var(--s3)}
 .grp dt{margin-top:0}
+.grp dt.key{color:var(--primary)}   /* 释义 Explanation label in green */
 .mtone{margin:calc(-1 * var(--s2)) 0 0}
 .ph2{margin:0 0 var(--s2);font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 /* Meaning opens with the chengyu it belongs to; tapping it goes back to the card. */
@@ -562,7 +563,7 @@ function paintMore(r){
   const sk = {'褒': 'pos', '贬': 'neg', '中': 'neu'}[r.s], TONE = sk ? [sk === 'neu' ? '' : sk, t('tone')[sk]] : null;
   // In Chinese the card shows the Chinese explanation, so MEANING leads with the English instead.
   if(isZh()){ if(r.en) h += `<dt>${t('dtEn')}</dt><dd lang="en">${esc(r.en)}</dd>`; }
-  else if(r.zh) h += `<dt>${t('dtZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
+  else if(r.zh) h += `<dt class="key">${t('dtZh')}</dt><dd class="zh" lang="zh-Hans">${esc(r.zh)}</dd>`;
   if(r.en2) h += `<dt>${t('dtEn2')}</dt><dd lang="en">${esc(r.en2)}</dd>`;
   if(r.o) h += `<dt>${t('dtO')}</dt><dd class="zh" lang="${LT()}">${esc(tr(r, 'o'))}</dd>`;
   if(r.syn) h += `<dt>${t('dtSyn')}</dt><dd>${chipList(r.syn, tr(r, 'syn'))}</dd>`;
@@ -571,7 +572,7 @@ function paintMore(r){
   $('#dl').innerHTML = cards(h);
 }
 // Each dt/dd pair becomes its own rounded card (a div inside dl is valid HTML).
-function cards(h){ return h.replace(/<dt>[\s\S]*?<\/dd>/g, m => `<div class="grp">${m}</div>`); }
+function cards(h){ return h.replace(/<dt[ >][\s\S]*?<\/dd>/g, m => `<div class="grp">${m}</div>`); }
 // Tone sits under the chengyu, not at the end of the list.
 function paintTone(TONE){
   const el = $('#mTone');
