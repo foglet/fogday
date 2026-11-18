@@ -826,7 +826,7 @@ function applyFocus(fly){
   const rf = ["in",["get","r"],["literal",okR]];
   ["route-casing","route-line","route-hit"].forEach(l=>map.setFilter(l, rf));
   map.setFilter("stop-dot", ["in",["get","i"],["literal",okS]]);
-  /* Stops: as wide as their line (ring + fill = the line's width at every zoom), ringed in the line's color.
+  /* Stops: twice as wide as their line at every zoom (ring 0.4 of the line's width, fill radius 0.6), ringed in the line's color.
      A stop shared by routes takes the selected route's color if it serves it, else its first route's (A–Z). */
   const pick=okS.map(si=>{ const rs=stopRoutes[si].filter(agOk); return [si, f!=null && rs.includes(f) ? f : rs[0]] }).filter(x=>x[1]!=null);
   const ring=pick.length ? ["match",["get","i"], ...pick.flatMap(([si,r])=>[si, ROUTES[r].color]), THEME.ink().stopLine] : THEME.ink().stopLine;
@@ -834,8 +834,8 @@ function applyFocus(fly){
   const w=(a,b)=>["case",onS,b,a];   // line width: plain, or the selected route's wider line
   const zw=(k)=>["interpolate",["linear"],["zoom"],11,["*",w(2,3.5),k],13,["*",w(3,5),k],15,["*",w(4.5,7),k],17,["*",w(6.5,9),k]];
   map.setPaintProperty("stop-dot","circle-stroke-color", ring);
-  map.setPaintProperty("stop-dot","circle-radius", zw(0.3));
-  map.setPaintProperty("stop-dot","circle-stroke-width", zw(0.2));
+  map.setPaintProperty("stop-dot","circle-radius", zw(0.6));
+  map.setPaintProperty("stop-dot","circle-stroke-width", zw(0.4));
   const vf = f==null ? null : ["==",["get","r"],f];
   map.setFilter("veh-dot", vf); map.setFilter("veh-halo", vf);
   map.setFilter("veh-arrow", vf ? ["all",["==",["get","hasHd"],1], vf] : ["==",["get","hasHd"],1]);
