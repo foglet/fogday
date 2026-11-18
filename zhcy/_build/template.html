@@ -133,8 +133,10 @@ span.chip{cursor:default;color:var(--ink);border-style:dashed}
 .tag.pos{background:var(--primary-tint);color:var(--primary)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
 
-footer{border-top:1px solid var(--line);padding:var(--s5) 0 calc(var(--s5) + env(safe-area-inset-bottom));font-size:var(--fs-cap);color:var(--ink-2)}
-footer p{margin:0 0 var(--s2)}
+footer{padding:0 0 calc(var(--s5) + env(safe-area-inset-bottom))}
+footer .info{margin-top:0}
+footer .morebody p{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
+footer .morebody p:last-child{margin:0}
 
 /* Sheets (native modal dialogs: focus stays inside, Escape closes) */
 dialog{width:100%;max-width:34rem;max-height:min(88vh,44rem);margin:auto auto 0;padding:0;border:0;border-radius:var(--r-lg) var(--r-lg) 0 0;
@@ -222,8 +224,14 @@ body.hei .row b{font-family:var(--hei)}
 
 <footer>
   <div class="wrap">
-    <p>Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
-    <p><a href="/">fogday.com</a></p>
+    <section class="more info">
+      <h2><button class="tog" id="infoTog" type="button" aria-expanded="false" aria-controls="infoBody">Info
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h2>
+      <div class="morebody" id="infoBody" hidden>
+        <p>Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.</p>
+        <p><a href="/">fogday.com</a></p>
+      </div>
+    </section>
   </div>
 </footer>
 
@@ -390,6 +398,10 @@ document.addEventListener('keydown', ev => {
 $('#tog').addEventListener('click', () => {
   const b = $('#tog'), open = b.getAttribute('aria-expanded') !== 'true';
   b.setAttribute('aria-expanded', open ? 'true' : 'false'); $('#moreBody').hidden = !open; store.set('more', open);
+});
+$('#infoTog').addEventListener('click', () => {
+  const b = $('#infoTog'), open = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', open ? 'true' : 'false'); $('#infoBody').hidden = !open;
 });
 if(store.get('more', false)){ $('#tog').setAttribute('aria-expanded', 'true'); $('#moreBody').hidden = false; }
 
