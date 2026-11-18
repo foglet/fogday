@@ -73,6 +73,9 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 main{flex:1;display:flex;flex-direction:column}
 main>.wrap{flex:1;display:flex;flex-direction:column}
 .stage{flex:1}
+/* With MEANING or INFO open the characters are no longer locked: the page flows from the top. */
+body.unpinned .stage{flex:none;min-height:0;padding-top:var(--s4)!important}
+body.unpinned .more{margin-top:var(--s5)}
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
 .stage{min-height:calc(100vh - 60px);min-height:calc(100svh - 60px - env(safe-area-inset-top));display:flex;flex-direction:column;padding:var(--s4) 0}
 
@@ -147,7 +150,13 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 .help{margin:var(--s2) 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
 .count{margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);color:var(--ink-2)}
 .list{list-style:none;margin:0;padding:0}
+.list li{display:flex;align-items:center;gap:var(--s1)}
 .list li+li{margin-top:2px}
+.list .row{flex:1;min-width:0}
+.sstar{color:var(--ink-2)}
+.sstar[aria-pressed="true"],.star[aria-pressed="true"]{color:var(--accent)}
+.sstar[aria-pressed="true"] svg{fill:currentColor}
+.count{font-weight:400}
 .row{display:grid;grid-template-columns:auto 1fr;gap:2px var(--s3);align-items:baseline;width:100%;min-height:56px;padding:var(--s2) var(--s1);border:0;background:transparent;
   text-align:left;cursor:pointer;border-radius:var(--r-sm)}
 .row:hover{background:var(--surface-2)}
@@ -174,8 +183,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     <div class="acts">
       <button class="ibtn" id="bSearch" type="button" aria-haspopup="dialog" aria-label="Search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button>
-      <button class="ibtn" id="bStars" type="button" aria-haspopup="dialog" aria-label="Starred">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
       <button class="ibtn" id="bSync" type="button" aria-haspopup="dialog" aria-label="Sync devices">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></svg></button>
     </div>
@@ -235,11 +242,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   </div>
 </dialog>
 
-<dialog id="dStars" aria-labelledby="dStarsH">
-  <div class="sh"><h2 id="dStarsH">Starred</h2><button class="ibtn" type="button" data-close aria-label="Close">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-  <div class="sb"><p class="empty" id="sEmpty">Nothing starred yet. Tap the star on a card to keep it here.</p><ul class="list" id="sList"></ul></div>
-</dialog>
 
 <dialog id="dSync" aria-labelledby="dSyncH">
   <div class="sh"><h2 id="dSyncH">Sync devices</h2><button class="ibtn" type="button" data-close aria-label="Close">
@@ -311,14 +313,13 @@ function toggleStar(e){
   const now = Date.now();
   if(stars[e]){ delete stars[e]; tomb[e] = now; } else { stars[e] = now; delete tomb[e]; }
   store.set('stars', stars); store.set('tomb', tomb); store.set('mtime', now);
-  paintStar(); paintCount(); syncSoon();
+  paintStar(); paintListStars(); syncSoon();
 }
 function paintStar(){
   const on = isStar(D[cur].e), b = $('#star');
   b.setAttribute('aria-pressed', on ? 'true' : 'false');
   b.setAttribute('aria-label', on ? 'Starred. Tap to remove the star' : 'Star this chengyu');
 }
-function paintCount(){}   // no star count is shown
 $('#star').addEventListener('click', () => toggleStar(D[cur].e));
 
 /* ---------- card ---------- */
@@ -367,7 +368,7 @@ function fontFor(f, text){
 // rotation), not per chengyu, so the characters never move while a longer or shorter definition pushes what is below.
 function centerStage(){
   const st = document.querySelector('.stage'), first = $('#chars span');
-  if(!first) return;
+  if(!first || document.body.classList.contains('unpinned')) return;
   st.style.paddingTop = '0px';
   const mid = first.getBoundingClientRect(), stTop = st.getBoundingClientRect().top;
   const off = mid.top + mid.height / 2 - stTop, want = window.innerHeight * 0.45 - (stTop + scrollY);
@@ -420,15 +421,18 @@ document.addEventListener('keydown', ev => {
 })();
 
 /* more toggle */
-$('#tog').addEventListener('click', () => {
-  const b = $('#tog'), open = b.getAttribute('aria-expanded') !== 'true';
-  b.setAttribute('aria-expanded', open ? 'true' : 'false'); $('#moreBody').hidden = !open; store.set('more', open);
-});
-$('#infoTog').addEventListener('click', () => {
-  const b = $('#infoTog'), open = b.getAttribute('aria-expanded') !== 'true';
-  b.setAttribute('aria-expanded', open ? 'true' : 'false'); $('#infoBody').hidden = !open;
-});
-if(store.get('more', false)){ $('#tog').setAttribute('aria-expanded', 'true'); $('#moreBody').hidden = false; }
+// MEANING and INFO start closed on every load, so the characters always open locked in place.
+function pinState(btn){
+  const open = ['#tog', '#infoTog'].some(id => $(id).getAttribute('aria-expanded') === 'true');
+  document.body.classList.toggle('unpinned', open);
+  if(!open) centerStage();
+  if(btn) btn.scrollIntoView({block:'nearest'});
+}
+[['#tog', '#moreBody'], ['#infoTog', '#infoBody']].forEach(([t, body]) => $(t).addEventListener('click', () => {
+  const b = $(t), open = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', open ? 'true' : 'false'); $(body).hidden = !open;
+  pinState(b);
+}));
 
 /* ---------- pronunciation (the device's Mandarin voice) ---------- */
 const SS = window.speechSynthesis;
@@ -485,27 +489,34 @@ function search(q){
 }
 function rowHtml(i){
   const r = D[i];
-  return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${esc(plain(r.e))}</b><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span><span class="d">${esc(r.en || '')}</span></button></li>`;
+  const on = isStar(r.e), w = esc(plain(r.e));
+  return `<li><button class="row" type="button" data-i="${i}"><b lang="zh-Hans">${w}</b><span class="p" lang="zh-Latn-pinyin">${esc(r.p)}</span><span class="d">${esc(r.en || '')}</span></button>`
+    + `<button class="ibtn sstar" type="button" data-star="${i}" aria-pressed="${on}" aria-label="Star ${w}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button></li>`;
 }
 let qTimer = 0;
 function runSearch(){
   const q = $('#q').value, hits = search(q), MAX = 60;
+  if(!q.trim()){
+    // No query yet: show the starred list.
+    const list = Object.entries(stars).filter(([e]) => byExpr.has(e)).sort((a, b) => b[1] - a[1]).map(([e]) => byExpr.get(e));
+    $('#qList').innerHTML = list.map(rowHtml).join('');
+    $('#qCount').textContent = list.length ? 'Starred' : 'Starred chengyu appear here. Tap the star by a chengyu to add it.';
+    return;
+  }
   $('#qList').innerHTML = hits.slice(0, MAX).map(rowHtml).join('');
-  $('#qCount').textContent = !q.trim() ? `${N} chengyu` : hits.length ? (hits.length > MAX ? `${hits.length} matches, showing ${MAX}` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`) : 'No matches';
+  $('#qCount').textContent = hits.length ? (hits.length > MAX ? `${hits.length} matches, showing ${MAX}` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`) : 'No matches';
 }
 $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
-$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList button'); if(b) pick(+b.dataset.i, $('#dSearch')); } });
-$('#qList').addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dSearch')); });
+$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, $('#dSearch')); } });
+$('#qList').addEventListener('click', ev => {
+  const st = ev.target.closest('[data-star]');
+  if(st){ toggleStar(D[+st.dataset.star].e); return; }   // the row stays, so focus stays on this star
+  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dSearch'));
+});
+// Star buttons in the list follow the stored state, updated in place.
+function paintListStars(){ document.querySelectorAll('[data-star]').forEach(b => b.setAttribute('aria-pressed', isStar(D[+b.dataset.star].e) ? 'true' : 'false')); }
 $('#bSearch').addEventListener('click', ev => { runSearch(); openDlg($('#dSearch'), ev.currentTarget); $('#q').focus(); $('#q').select(); });
 
-/* starred */
-function paintStars(){
-  const list = Object.entries(stars).filter(([e]) => byExpr.has(e)).sort((a, b) => b[1] - a[1]).map(([e]) => byExpr.get(e));
-  $('#sEmpty').hidden = list.length > 0;
-  $('#sList').innerHTML = list.map(rowHtml).join('');
-}
-$('#sList').addEventListener('click', ev => { const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, $('#dStars')); });
-$('#bStars').addEventListener('click', ev => { paintStars(); openDlg($('#dStars'), ev.currentTarget); });
 
 /* ---------- sync ----------
    One private Gist (file zhcy-sync.json) holds {v:1, stars:{expr:time}, tomb:{expr:time}}.
@@ -559,7 +570,7 @@ async function syncNow(){
       let remote = null;
       if(f){ let txt = f.content; if(f.truncated) txt = await (await fetch(f.raw_url, {cache:'no-store'})).text(); try{ remote = JSON.parse(txt); }catch(e){} }
       const out = merge(local, remote);
-      if(!same(out, local)){ stars = out.stars; tomb = out.tomb; store.set('stars', stars); store.set('tomb', tomb); paintStar(); paintCount(); if($('#dStars').open) paintStars(); }
+      if(!same(out, local)){ stars = out.stars; tomb = out.tomb; store.set('stars', stars); store.set('tomb', tomb); paintStar(); paintListStars(); }
       if(!same(out, remote)) await gh('/gists/' + id, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(out)}}})});
     }
     syncSt('Synced.');
@@ -598,7 +609,6 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
   Promise.race([Promise.all([document.fonts ? document.fonts.ready : 0, fontFor(font, plain(D[cur].e))]), wait(2500)])
     .then(() => { booted = true; requestAnimationFrame(() => face.classList.remove('pre')); });
   window.addEventListener('hashchange', () => { const i = fromHash(); if(i >= 0 && i !== cur) show(i, 0); });
-  paintCount();
   syncSoon(800);
   // A new day while the page is open: move to the new chengyu if the reader was on today's.
   document.addEventListener('visibilitychange', () => {
