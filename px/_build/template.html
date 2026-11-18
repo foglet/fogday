@@ -49,6 +49,13 @@ canvas{position:absolute;left:0;top:0;display:block}
 @media (max-width:759px){.sheet{max-height:min(33vh,33dvh)}}
 @keyframes sheet-in{from{opacity:0;transform:translateY(6px)}}
 .sheet[hidden]{display:none}
+/* Grab handle: swipe up to make the panel taller (up to just under the title), down to shrink it or close it; a tap
+   toggles tall and normal */
+.grab{position:sticky;top:-4px;z-index:1;display:flex;align-items:center;justify-content:center;width:calc(100% + 28px);min-height:32px;margin:-4px -14px 0;padding:0;border:0;
+  background:rgba(255,253,248,.96);cursor:ns-resize;touch-action:none;border-radius:12px 12px 0 0}
+.grab span{width:44px;height:5px;border-radius:3px;background:#8a8173}
+.grab:hover span{background:var(--felt)}
+.grab:focus-visible{outline:3px solid var(--red);outline-offset:-3px}
 .sheet h2{font:700 16px/1.2 var(--pixel);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 2px;color:var(--felt)}
 .sheet section+section{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
 .row[hidden]{display:none}
@@ -87,6 +94,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 </nav>
 
 <section id="ctl" class="sheet" hidden aria-labelledby="ctlH">
+  <button class="grab" type="button" id="grab" aria-label="Make the controls taller" title="Swipe up for taller, down for shorter"><span aria-hidden="true"></span></button>
   <h2 class="vh" id="ctlH">Controls</h2>
   <section aria-labelledby="hD">
     <h2 id="hD">Dragons</h2>
@@ -95,6 +103,7 @@ canvas{position:absolute;left:0;top:0;display:block}
       <option value="mix">A bit of everything</option><option value="walk">Walk</option><option value="hop">Hop and jump</option><option value="march">March in step</option><option value="fly">Fly</option></select></div>
     <div class="row"><label for="pat">Flight pattern</label><select id="pat">
       <option value="mix">Mixed</option><option value="roam">Roam</option><option value="loops">Loop-the-loops</option><option value="circles">Circles</option><option value="swoop">Swoop at you</option><option value="zigzag">Zigzag</option></select></div>
+    <div class="row"><span class="lab" id="lMov">Moving</span><span class="sw"><input id="play" type="checkbox" aria-labelledby="lMov"><span></span></span></div>
     <div class="row"><span class="lab" id="lFol">Follow my finger</span><span class="sw"><input id="follow" type="checkbox" aria-labelledby="lFol"><span></span></span></div>
     <div class="row"><span class="lab" id="lDiz">Dizzy spells</span><span class="sw"><input id="dizzy" type="checkbox" aria-labelledby="lDiz"><span></span></span></div>
     <div class="row"><label for="color">Colors</label><select id="color">
@@ -135,7 +144,6 @@ canvas{position:absolute;left:0;top:0;display:block}
 
 <div class="dock">
   <button class="btn primary" type="button" id="ctlBtn" aria-expanded="false" aria-controls="ctl">Controls<span class="chev" aria-hidden="true">&#9650;</span></button>
-  <button class="btn" type="button" id="play" aria-label="Pause the dragons">Pause</button>
 </div>
 
 <script>
@@ -145,7 +153,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 const SPRS = /*SPRITES*/;
 for(const k in SPRS) SPRS[k] = SPRS[k].map(s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48));
 const GW = 30, GH = 26, FOOT = 22, MOUTH = [27, 6.5];
-const MAXS = 2*96/GW;   // no dragon wider than 2 in (CSS inches), so the pixels stay chunky: at most 6.4 px per sprite pixel
+const MAXS = 1.25*96/GW;   // no dragon longer than 1.25 in (CSS inches), so the pixels stay chunky: at most 4 px per sprite pixel
 const FIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
 const R = Math.random, pick = a => a[(R()*a.length)|0], rr = (a, b) => a + R()*(b-a), ri = (a, b) => (a + R()*(b-a+1))|0;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -511,14 +519,29 @@ const $ = id => document.getElementById(id);
 const sheet = $('ctl'), ctlBtn = $('ctlBtn'), playBtn = $('play');
 const IDLE = 5000; let idleT = 0;   // an open panel closes itself after 5 s with no interaction
 function idle(){ clearTimeout(idleT); if(!sheet.hidden) idleT = setTimeout(() => { const inside = sheet.contains(document.activeElement); setOpen(false); if(inside) ctlBtn.focus(); }, IDLE); }
-function setOpen(open){ sheet.hidden = !open; ctlBtn.setAttribute('aria-expanded', String(open)); idle(); }
+function setOpen(open){ sheet.hidden = !open; ctlBtn.setAttribute('aria-expanded', String(open)); if(!open) sizeSheet(0); idle(); }
+const grab = $('grab'); let tall = false;
+const maxTall = () => Math.max(160, sheet.getBoundingClientRect().bottom - document.querySelector('.top h1').getBoundingClientRect().bottom - 12);   // up to just under the title
+function sizeSheet(h){ if(!h){ sheet.style.maxHeight = sheet.style.height = ''; tall = false; }
+  else { sheet.style.maxHeight = 'none'; sheet.style.height = h + 'px'; tall = h > maxTall()*.75; }
+  grab.setAttribute('aria-label', tall ? 'Make the controls shorter' : 'Make the controls taller'); }
+let drag = null;
+grab.addEventListener('pointerdown', e => { drag = {y: e.clientY, h: sheet.offsetHeight, moved: false}; grab.setPointerCapture(e.pointerId); });
+grab.addEventListener('pointermove', e => { if(!drag) return; const dy = drag.y - e.clientY; if(Math.abs(dy) > 6) drag.moved = true;
+  if(drag.moved) sizeSheet(clamp(drag.h + dy, 60, maxTall())); idle(); });
+grab.addEventListener('pointerup', e => { if(!drag) return; const d = drag; drag = null;
+  if(d.moved && sheet.offsetHeight < 110) setOpen(false), ctlBtn.focus(); });
+grab.addEventListener('pointercancel', () => { drag = null; });
+grab.addEventListener('click', e => { if(e.detail && grab._skip) return; sizeSheet(tall ? 0 : maxTall()); idle(); });
+grab.addEventListener('pointerdown', () => { grab._skip = false; }, true);
+grab.addEventListener('pointermove', () => { if(drag && drag.moved) grab._skip = true; });
 for(const ev of ['pointerdown','pointermove','keydown','input','change','scroll','focusin','wheel','touchstart']) sheet.addEventListener(ev, idle, {passive: true});
 ctlBtn.addEventListener('pointermove', idle, {passive: true});
 addEventListener('pointerdown', e => { if(!sheet.hidden && !(e.target.closest && e.target.closest('.sheet,.dock'))) setOpen(false); }, {passive: true});   // a tap anywhere else closes it
 ctlBtn.addEventListener('click', () => setOpen(sheet.hidden));
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !sheet.hidden){ setOpen(false); ctlBtn.focus(); } });
-function setPlay(on){ playing = on; playBtn.textContent = on ? 'Pause' : 'Play'; playBtn.setAttribute('aria-label', on ? 'Pause the dragons' : 'Play the dragons'); if(on) start(); }
-playBtn.addEventListener('click', () => setPlay(!playing));
+function setPlay(on){ playing = on; playBtn.checked = on; if(on) start(); }
+playBtn.addEventListener('change', () => setPlay(playBtn.checked));
 const IDS = ['n','act','pat','follow','dizzy','color','hue','wings','kids','nk','breath','body','tail','spd','bg','sky','clouds','mtn','ground','rocks'];
 function show(){ for(const id of IDS){ const el = $(id); if(el.type === 'checkbox') el.checked = !!cfg[id]; else el.value = cfg[id]; }
   $('nOut').textContent = cfg.n; $('nkOut').textContent = cfg.nk; $('spdOut').textContent = SPEEDS[cfg.spd] + 'x';
