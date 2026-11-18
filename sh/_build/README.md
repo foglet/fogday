@@ -66,6 +66,9 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   (sha1 384eca6c), compacted the same way; `data/dcb-compact.json` (`ag: "daly"`), `data/bcp-compact.json`
   (`ag: "brisbane"`). Thanksgiving 2026-11-26/27 added. The 511 regional feed (operator RG) also carries them but needs
   an API key. Picker order now ends ... South City, Daly City, Brisbane.
+  Daly City Bayshore is run by SamTrans (agency 4968 in the feed). Checked against the SamTrans timetable linked from
+  commute.org (`samtrans.com/media/23748`, eff. 2022-02-01): 20 of 23 trips match; westbound 5:30p (timetable 5:34p) and
+  eastbound 4:00p and 5:09p (stops in between 1-2 min off) follow the timetable. Christmas and New Year's Day added too.
 
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its
