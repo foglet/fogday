@@ -62,7 +62,7 @@ svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:
 /* Header */
 .top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding-top:env(safe-area-inset-top)}
-.bar{display:flex;align-items:center;gap:var(--s3);min-height:60px}
+.bar{display:flex;align-items:center;gap:var(--s3);min-height:52px}
 .brand{display:flex;align-items:center;gap:var(--s2);flex:1;min-width:0;text-decoration:none;color:var(--ink)}
 .seal{flex:none;width:34px;height:34px;border-radius:8px;background:#e34234;color:var(--on-primary);display:grid;place-items:center;
   font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;line-height:1}
@@ -112,9 +112,9 @@ body.unpinned .actions{margin-top:var(--s2)}
 .chars .opt{color:var(--ink-2)}
 .chars .brk{flex-basis:100%;height:0;width:0}
 .chars:active{background:var(--surface-2)}
-.pin{margin:var(--s2) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
+.pin{margin:var(--s1) 0 0;font-size:var(--fs-lg);color:var(--primary);letter-spacing:.01em}
 /* The definition reserves three lines so most cards are the same height. */
-.def{margin:var(--s2) auto var(--s2);max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
+.def{margin:var(--s1) auto 0;max-width:30rem;font-size:var(--fs-body);line-height:1.5;min-height:4.5em;color:var(--ink);user-select:text;-webkit-user-select:text}
 /* Play: the green circle hugs the icon with 2px of padding; the button around it stays a 44px tap target. */
 .play{display:inline-flex;align-items:center;justify-content:center;width:var(--tap);height:var(--tap);margin:0;padding:0;flex:none;
   border:0;border-radius:50%;background:transparent;color:var(--primary);cursor:pointer}
@@ -126,7 +126,7 @@ body.unpinned .actions{margin-top:var(--s2)}
 
 /* More */
 /* Play (left) and star (right) sit just above MEANING. */
-.actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s2)}
+.actions{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:0}
 .actions .note{flex:1;margin:0;text-align:center}
 /* 36: Thirty-Six Stratagems switch, right of play. Red when on. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
@@ -146,7 +146,7 @@ body.m36 .def{margin-bottom:var(--s2);min-height:0}   /* chapter line sits right
 .star:active{background:transparent}
 .more{margin-top:var(--s2);background:var(--surface);border-radius:var(--r-lg)}
 .more>h2{margin:0;font-size:inherit}
-.tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:52px;padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
+.tog{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);width:100%;min-height:var(--tap);padding:0 var(--s4);border:0;background:transparent;cursor:pointer;
   font-family:var(--font);font-weight:600;font-size:var(--fs-sm);letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-lg);text-align:left}
 .tog svg{transition:transform var(--dur) var(--ease)}
 .tog[aria-expanded="true"] svg{transform:rotate(180deg)}
@@ -165,7 +165,7 @@ span.chip{cursor:default;color:var(--ink);background:var(--surface-2)}
 .tag.pos{background:var(--primary-tint);color:var(--primary)}
 .tag.neg{background:var(--accent-tint);color:#8f2820}
 
-footer{padding:0 0 calc(var(--s2) + env(safe-area-inset-bottom))}
+footer{padding:0 0 calc(var(--s1) + env(safe-area-inset-bottom))}
 footer .info{margin-top:var(--s2)}
 /* Language switch (Phosphor translate) under INFO, at the left. */
 .langrow{display:flex;justify-content:flex-start;margin-top:0}
