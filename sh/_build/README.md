@@ -86,6 +86,9 @@ Full-screen map in the /treesf/ and /transit/ interface: title + all-maps menu t
   so fixed rail reads apart from the solid shuttle routes.
 - Bottom-right stack, top to bottom (as /treesf/): folded-map button (Systems: lists every system, bold = on view; tap one
   to show it, the same as tapping the name), zoom readout (live, one decimal, display only), location, + − and compass.
+- Transport mode (the bottom-left toggle, was Info; as /transit/'s Transport mode): opens a key, one glass box, with each
+  kind of line drawn as on the map (shuttle route solid; BART, Caltrain, Muni Metro, cable car with the rail marker), then
+  Info (the data notes). Open/shut is remembered as before (`ucsf:info`).
 
 ## Refresh the schedule
 The sandbox cannot reach tripshot.com. Open `https://ucsf.tripshot.com/` in a browser, then in its

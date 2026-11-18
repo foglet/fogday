@@ -206,6 +206,18 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
   .notes > summary { display: inline-flex; align-items: center; min-height: 28px; }
   .notes-body { display: grid; justify-items: start; max-height: min(26vh, 26dvh, 240px); overflow-y: auto; overscroll-behavior: contain; }
   .note { font-size: .78rem; color: var(--muted); margin: 0; }
+  /* Transport mode key (as /transit/'s): one glass box; each line drawn as on the map. Rail: the rail marker, a dashed
+     core in the page color inside the mode's color (BART white; dark slate on the light map). Shuttles: solid. */
+  :root { --m-metro: #edeff5; }
+  :root[data-theme="light"] { --m-metro: #3a4650; }
+  .modes { list-style: none; margin: 0; padding: 8px 12px; display: grid; gap: 6px; font-size: .85rem; color: var(--ink); border-radius: var(--glass-r);
+           background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+  .modes li { display: flex; align-items: center; gap: 10px; }
+  .mline { flex: none; width: 28px; height: 6px; border-radius: 1px; }
+  .mline.rail { background: linear-gradient(var(--c), var(--c)) top / 100% 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom / 100% 2px no-repeat,
+                repeating-linear-gradient(to right, var(--c) 0 4px, var(--bg) 4px 8px); }
+  .mline.shuttle { height: 5px; border-radius: 3px; background: linear-gradient(to right, #ff963b 0 33%, #5cb8ff 33% 66%, #76c95e 66%); }
+  .info-head { margin: 4px 0 0; padding: 0 10px; font: 700 .75rem/1.2 var(--font); letter-spacing: .08em; text-transform: uppercase; }
   .note b { color: var(--ink); font-weight: 600; }
   .note a { color: var(--ink); }
   .note a:hover { color: var(--ink); }
@@ -384,8 +396,17 @@ description: Free and campus shuttles in San Francisco on one map. Mission Bay T
     <p class="status next" id="hereMsg" hidden></p>
   </div>
   <button type="button" class="opbtn" id="opBtn"><span id="opName">Mission Bay</span></button>
-  <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Info</span></button>
+  <button type="button" class="legend-toggle" id="legendBtn" aria-expanded="false" aria-controls="legendBody"><span class="sky-text">Transport mode</span></button>
   <div class="legend-body" id="legendBody">
+    <!-- Transport mode, as on /transit/: what each line on the map is, drawn as it is on the map; then Info -->
+    <ul class="modes" aria-label="Transport mode">
+      <li><span class="mline shuttle" aria-hidden="true"></span>Shuttle route (tap a line to pick it)</li>
+      <li><span class="mline rail" style="--c:var(--m-metro)" aria-hidden="true"></span>BART (metro)</li>
+      <li><span class="mline rail" style="--c:#d92020" aria-hidden="true"></span>Caltrain (passenger rail)</li>
+      <li><span class="mline rail" style="--c:#31ad90" aria-hidden="true"></span>Muni Metro (light rail, streetcar)</li>
+      <li><span class="mline rail" style="--c:#d95520" aria-hidden="true"></span>Cable car</li>
+    </ul>
+    <p class="info-head sky-text">Info</p>
     <div class="notes-body">
           <p class="note">Data: GTFS data is from <a href="https://www.missionbaytma.org/">Mission Bay TMA</a>, <a href="https://transportation.ucsf.edu/">UCSF</a>, <a href="https://sfrecpark.org/1617/Golden-Gate-Park-Free-Shuttle">SF Recreation and Parks</a>, <a href="https://www.transit.land/">Transitland</a> and respective agencies and organizations. Rail: <a href="https://www.bart.gov/schedules/developers/gtfs">BART</a>, <a href="https://www.caltrain.com/">Caltrain</a>, <a href="https://www.sfmta.com/">SFMTA</a>. Libraries: <a href="https://data.sf.gov/City-Infrastructure/City-Facilities-Public-Library-Jurisdiction-or-Lea/fhhu-wqa7">DataSF</a>. Times are accurate as of publication. Schedules change. Verify.</p>
         </div>
