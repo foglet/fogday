@@ -314,7 +314,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .search input:hover{border-color:var(--ink-2)}
 .search input:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 
-/* Top navigation: icon buttons at the header's top right (Phosphor books, microphone-stage, detective). The logo goes Home. */
+/* Top navigation: icon buttons at the header's top right (Phosphor books, microphone-stage, detective), then the bento to fogday.com/works/. The logo goes Home. */
 .icons{position:relative;display:flex;align-items:center;gap:2px;flex:none}
 .tab{position:relative;z-index:1;display:grid;place-items:center;width:var(--tap);height:var(--tap);border:0;background:none;cursor:pointer;color:var(--ink-2);padding:0;border-radius:var(--r-sm)}
 .tab svg{width:20px;height:20px}   /* all UI icons are 20px */
@@ -325,6 +325,11 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 .icons .ind.on{opacity:1}
 .icons.ready .ind{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s ease}
 .tab:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+/* Bento: all fogday projects (fogday.com/works/), far top right, as across fogday.com. Sized and coloured like the tabs. */
+.bento{display:grid;place-items:center;width:var(--tap);height:var(--tap);color:var(--ink-2);border-radius:var(--r-sm)}
+.bento svg{width:20px;height:20px}
+@media (hover:hover){.bento:hover{color:var(--ink)}}
+.bento:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
 
 /* Player sheet */
 .sheet-wrap{position:fixed;inset:0;z-index:50;display:none}
@@ -390,7 +395,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
   :root{--lh-body:1.35;--lh-tight:1.1}
   .srow b,.page-h,h1.pg-h,.offer h3,.tile h3,.sheet-h h2{line-height:1.15}
   .icons{gap:0;margin-right:-5px}
-  .tab{width:32px}
+  .tab,.bento{width:32px}
   .icons .ind{width:32px;height:32px;top:6px}
   .fav-tg{margin-right:-11px}   /* mobile: matches the packed 32px About tab */
 }
@@ -407,7 +412,7 @@ h2.display.jia-h{font-size:var(--fs-h3);max-width:none;margin-top:var(--s6,var(-
 <header class="top">
   <div class="wrap">
     <a class="brand" id="home" href="./" aria-label="Mandarin Insights. Home"><div class="seal" aria-hidden="true">贾</div><div class="brand-txt"><b>Mandarin Insights</b></div></a>
-    <nav class="icons" aria-label="Sections"><span class="ind" aria-hidden="true"></span><button class="tab" data-tab="learn" aria-label="Library" title="Library"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></svg></button><button class="tab" data-tab="practice" aria-label="Practice" title="Practice"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M168,16A72.07,72.07,0,0,0,96,88a73.29,73.29,0,0,0,.63,9.42L27.12,192.22A15.93,15.93,0,0,0,28.71,213L43,227.29a15.93,15.93,0,0,0,20.78,1.59l94.81-69.53A73.29,73.29,0,0,0,168,160a72,72,0,1,0,0-144Zm56,72a55.72,55.72,0,0,1-11.16,33.52L134.49,43.16A56,56,0,0,1,224,88ZM54.32,216,40,201.68,102.14,117A72.37,72.37,0,0,0,139,153.86ZM112,88a55.67,55.67,0,0,1,11.16-33.51l78.34,78.34A56,56,0,0,1,112,88Zm-2.35,58.34a8,8,0,0,1,0,11.31l-8,8a8,8,0,1,1-11.31-11.31l8-8A8,8,0,0,1,109.67,146.33Z"/></svg></button><button class="tab" data-tab="materials" aria-label="About Dr. Jia" title="About Dr. Jia"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button></nav>
+    <nav class="icons" aria-label="Sections"><span class="ind" aria-hidden="true"></span><button class="tab" data-tab="learn" aria-label="Library" title="Library"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></svg></button><button class="tab" data-tab="practice" aria-label="Practice" title="Practice"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M168,16A72.07,72.07,0,0,0,96,88a73.29,73.29,0,0,0,.63,9.42L27.12,192.22A15.93,15.93,0,0,0,28.71,213L43,227.29a15.93,15.93,0,0,0,20.78,1.59l94.81-69.53A73.29,73.29,0,0,0,168,160a72,72,0,1,0,0-144Zm56,72a55.72,55.72,0,0,1-11.16,33.52L134.49,43.16A56,56,0,0,1,224,88ZM54.32,216,40,201.68,102.14,117A72.37,72.37,0,0,0,139,153.86ZM112,88a55.67,55.67,0,0,1,11.16-33.51l78.34,78.34A56,56,0,0,1,112,88Zm-2.35,58.34a8,8,0,0,1,0,11.31l-8,8a8,8,0,1,1-11.31-11.31l8-8A8,8,0,0,1,109.67,146.33Z"/></svg></button><button class="tab" data-tab="materials" aria-label="About Dr. Jia" title="About Dr. Jia"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button><a class="bento" href="/works/" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor" stroke="none"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg></a></nav>
   </div>
 </header>
 

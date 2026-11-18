@@ -74,13 +74,15 @@ svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:
 /* The title block follows the chosen calligraphy: the seal, the Chinese subtitle, and the title itself in Chinese. */
 .brand small{font-family:var(--cy);font-weight:var(--cyw);font-size:1.0625rem}
 html[lang^="zh"] .brand b{font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;letter-spacing:.04em}
-/* Section icons, as on fogday.com/cn-dr: books (meaning and search), then detective (info) at the far right,
-   spaced as on cn-dr. The detective glyph aligns with the page edge. The current section's icon sits on a tinted pill. */
+/* Section icons, as on fogday.com/cn-dr: books (meaning and search), then detective (info), then the bento
+   (fogday.com/works/) at the far right, spaced as on cn-dr. The bento glyph aligns with the page edge. The current section's icon sits on a tinted pill. */
 .acts{display:flex;gap:2px;margin-right:-12px}
 .ibtn.tab svg{position:relative;z-index:1}
 .tab::before{content:"";position:absolute;inset:5px;border-radius:10px;background:var(--primary-tint);opacity:0;transform:scale(.8);
   transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
 .ibtn.tab:hover,.ibtn.tab:active{background:transparent}
+/* Bento: all fogday projects (fogday.com/works/), far top right, as across fogday.com. */
+.ibtn.bento:hover,.ibtn.bento:active{background:transparent}
 .ibtn.tab[aria-current="page"]{color:var(--primary)}
 .tab[aria-current="page"]::before{opacity:1;transform:none}
 .ibtn{position:relative;width:var(--tap);height:var(--tap);display:grid;place-items:center;border:0;border-radius:var(--r-md);background:transparent;cursor:pointer;color:var(--ink-2)}
@@ -112,7 +114,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 /* Phones: header icons packed as on cn-dr (32px wide, no gap, 12px between glyphs); the pill fills the 32px button. */
 @media (max-width:39.99rem){
   .acts{gap:0;margin-right:-6px}
-  .ibtn.tab{width:32px}
+  .ibtn.tab,.ibtn.bento{width:32px}
   .tab::before{inset:6px 0}
 }
 /* The chengyu sits in the middle of the first screen; everything else is above (header) or below (details, info). */
@@ -249,6 +251,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
       <button class="ibtn tab" id="bInfo" type="button" data-view="info" aria-controls="vInfo" aria-label="Info" data-ta="info">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button>
 
+      <a class="ibtn bento" href="/works/" aria-label="Projects" title="Projects" data-ta="works"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor" stroke="none"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg></a>
     </nav>
   </div>
 </header>
@@ -347,7 +350,7 @@ let MODE = 'cy', LIST = D, cyCur = 0;
 const NF = N.toLocaleString('en-US');
 const T = {
   en: {seal:'成', seal36:'计', sub:'每日成语', sub36:'三十六计', fn:{cao:'caoshu (cursive script)', xing:'xingshu (running script)', ou:'Ouyang Xun style regular script', kai:'Kaiti', song:'Songti', hei:'modern sans'},
-    home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', books:'Meaning and search', backCard:w => `${w}. Back to the card`, play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
+    home:'Chengyu of the day, home', brand:'Chengyu', search:'Search', books:'Meaning and search', works:'Projects', backCard:w => `${w}. Back to the card`, play:'Play pronunciation', copy:'Copy chengyu', meaning:'Meaning', info:'Info', close:'Close',
     ph:'画蛇, hua she, snake', qlabel:'Search by characters, pinyin or English', count:`This dataset holds ${NF} chengyu.`,
     data:'Data: Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>. Licensed <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Explanations from Zdic; English from Pleco and Jiao et al., as compiled there.',
     fonts:'Fonts: Liu Jian Mao Cao and Zhi Mang Xing (Google Fonts, OFL); LXGW WenKai (<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>); AR PL UKai CN (<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>). Kaiti and Ouyang Xun style use subsets of the last two. Icons: <a href="https://phosphoricons.com">Phosphor</a> (MIT).',
@@ -371,7 +374,7 @@ const T = {
     info36A:'The Thirty-Six Stratagems (三十六计): 36 proverbs on strategy and deception, in six chapters of six.',
     info36B:'Names, readings and chapter titles follow <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">Wikipedia</a> and <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies (China Strategies, PDF)</a>. The short explanations are written for this page.'},
   /*ZH*/zh: {seal:'成', seal36:'计', sub:'每日成语', sub36:'三十六计', fn:{cao:'草书', xing:'行书', ou:'欧体', kai:'楷体', song:'宋体', hei:'黑体'},
-    home:'每日成语，首页', brand:'每日成语', search:'搜索', books:'释义与搜索', backCard:w => `${w}。返回卡片`, play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
+    home:'每日成语，首页', brand:'每日成语', search:'搜索', books:'释义与搜索', works:'作品', backCard:w => `${w}。返回卡片`, play:'播放读音', copy:'复制成语', meaning:'释义', info:'说明', close:'关闭',
     ph:'画蛇、hua she、snake', qlabel:'按汉字、拼音或英文搜索', count:`本数据集共收录成语 ${NF} 条。`,
     data:'数据：Davey, J. (2026). Chengyu dataset: Information and native speaker ratings. OSF. <a href="https://doi.org/10.17605/OSF.IO/3TDA7">doi.org/10.17605/OSF.IO/3TDA7</a>。采用 <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a> 许可。释义来自汉典（Zdic），英文来自 Pleco 与 Jiao 等，均由该数据集汇编。',
     fonts:'字体：刘建毛草、志莽行书（Google Fonts，OFL）；霞鹜文楷（<a href="fonts/lxgw-wenkai-OFL.txt">OFL</a>）；文鼎PL中楷（<a href="fonts/ar-pl-ukai-LICENSE.txt">Arphic Public License</a>）。楷体与欧体使用后两者的子集。图标：<a href="https://phosphoricons.com">Phosphor</a>（MIT）。',
