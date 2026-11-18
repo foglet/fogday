@@ -139,7 +139,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const RM = matchMedia('(prefers-reduced-motion: reduce)');
 
 /* ---------- settings (baseline = everything on, as in the dragon skill) ---------- */
-const BASE = {wx:'clear', windv:0, river:false, n:3, act:'mix', pat:'mix', follow:true, dizzy:true, color:'any', hue:'#3f9e6e', wings:'mix', kids:'some', nk:2,
+const BASE = {wx:'clear', windv:0, river:false, n:4, act:'mix', pat:'mix', follow:true, dizzy:true, color:'any', hue:'#3f9e6e', wings:'mix', kids:'some', nk:2,
   breath:'mix', body:'mix', tail:'mix', spd:1, bg:'scene', sky:'day', clouds:'few', mtn:true, ground:'grass', rocks:true};
 const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x; the default (BASE.spd = 1) is 0.5x
 const KEY = 'px:settings';
