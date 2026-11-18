@@ -90,12 +90,12 @@ body.unpinned .more{margin-top:var(--s5)}
   padding:var(--s5) var(--s4) var(--s4);text-align:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 /* A new chengyu eases in: it starts transparent (and a little to the side when browsing), then transitions into place.
    On first load it waits for its fonts, so nothing swaps or jumps. */
-.face{transition:opacity 450ms cubic-bezier(.22,.61,.36,1),transform 450ms cubic-bezier(.22,.61,.36,1)}
-.face.pre{opacity:0;transform:translateX(var(--dx,0px));transition:none}
+/* First load: the card content fades in once its fonts are ready. Browsing: the characters slide, the pinyin and
+   definition ease in sliding up (set from script). */
+.face{transition:opacity 450ms cubic-bezier(.22,.61,.36,1)}
+.face.pre{opacity:0;transition:none}
 /* A font change eases in the characters only; pinyin and definition do not move. */
-.chars{transition:opacity 450ms cubic-bezier(.22,.61,.36,1)}
-.chars.pre{opacity:0;transition:none}
-@media (prefers-reduced-motion:reduce){.face{transition:opacity 300ms ease}.face.pre{transform:none}.ibtn.spin svg{animation:none}}
+@media (prefers-reduced-motion:reduce){.face{transition:opacity 300ms ease}.ibtn.spin svg{animation:none}}
 .starrow{display:flex;justify-content:center;margin-top:var(--s2)}
 .star{color:var(--ink-2)}
 .star[aria-pressed="true"]{color:var(--gold)}
@@ -206,8 +206,10 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     <article class="card" id="card" aria-labelledby="when">
       <div class="face pre" id="face">
         <button class="chars" id="chars" type="button" lang="zh-Hans"></button>
-        <p class="pin" id="pin" lang="zh-Latn-pinyin"></p>
-        <p class="def" id="def"></p>
+        <div class="meta" id="meta">
+          <p class="pin" id="pin" lang="zh-Latn-pinyin"></p>
+          <p class="def" id="def"></p>
+        </div>
       </div>
       <button class="play" id="play" type="button" aria-label="Play pronunciation">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
@@ -318,7 +320,7 @@ $('#chars').addEventListener('click', () => {
   const i = (FONTS.findIndex(x => x[0] === font) + 1) % FONTS.length;
   const f = FONTS[i][0]; store.set('font2', f);
   const ch = $('#chars');
-  fontFor(f, plain(D[cur].e)).then(() => { ch.classList.add('pre'); setFont(f); void ch.offsetWidth; requestAnimationFrame(() => ch.classList.remove('pre')); });
+  fontFor(f, plain(D[cur].e)).then(() => { setFont(f); from(ch, 'none', `opacity 450ms ${EASE}`); });
 });
 
 /* ---------- stars ---------- */
@@ -365,12 +367,30 @@ $('#dl').addEventListener('click', ev => { const b = ev.target.closest('[data-go
 
 const face = $('#face');
 let booted = false;
-function easeIn(dir){
-  face.style.setProperty('--dx', dir ? (dir > 0 ? '24px' : '-24px') : '0px');
-  face.classList.add('pre');
-  if(!booted) return;   // first paint waits for fonts
-  void face.offsetWidth;
-  requestAnimationFrame(() => face.classList.remove('pre'));
+const EASE = 'cubic-bezier(.22,.61,.36,1)', reduce = matchMedia('(prefers-reduced-motion: reduce)');
+let swapTok = 0;
+// Put an element at a start state with no transition, then let it transition to rest.
+function from(el, transform, trans){
+  el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = transform;
+  void el.offsetWidth;
+  el.style.transition = trans; el.style.opacity = ''; el.style.transform = '';
+}
+// Swap the visible card text. dir: +1 next (slides left), -1 previous (slides right), 0 no slide.
+function swapIn(dir, fill){
+  const ch = $('#chars'), meta = $('#meta'), tok = ++swapTok, rm = reduce.matches;
+  if(!booted){ fill(); return; }   // first paint waits for fonts, then the whole card fades in
+  const enter = () => {
+    if(tok !== swapTok) return;
+    fill();
+    from(ch, rm || !dir ? 'none' : `translateX(${dir * 110}px)`, `transform 380ms ${EASE}, opacity 380ms ${EASE}`);
+    from(meta, rm ? 'none' : 'translateY(14px)', `transform 420ms ${EASE} 120ms, opacity 420ms ${EASE} 120ms`);
+  };
+  if(!dir || rm){ enter(); return; }
+  // Out: the current characters slide away in the swipe direction while the definition fades.
+  ch.style.transition = 'transform 160ms ease-in, opacity 160ms ease-in';
+  ch.style.transform = `translateX(${-dir * 110}px)`; ch.style.opacity = '0';
+  meta.style.transition = 'opacity 140ms ease-in'; meta.style.opacity = '0';
+  setTimeout(enter, 160);
 }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 // Load the characters' font for this text before showing it, so a late web font never swaps in visibly.
@@ -393,14 +413,16 @@ function show(i, dir, focus){
   stopSpeech();
   cur = ((i % N) + N) % N;
   const r = D[cur];
-  $('#chars').innerHTML = charsHtml(r.e);
-  $('#pin').textContent = `(${r.p})`;
-  $('#def').textContent = r.en || '';
+  swapIn(dir, () => {
+    $('#chars').innerHTML = charsHtml(r.e);
+    $('#pin').textContent = `(${r.p})`;
+    $('#def').textContent = r.en || '';
+    setFont(font);
+  });
   $('#when').textContent = `${plain(r.e)}, ${cur + 1} of ${N}`;
   document.title = `${plain(r.e)} | Chengyu of the day`;
   setFont(font);
   paintStar(); paintMore(r); note('');
-  easeIn(dir);
   try{ history.replaceState(null, '', cur === today ? location.pathname : '#' + encodeURIComponent(plain(r.e))); }catch(e){}
   if(focus) $('#when').focus({preventScroll:false});
 }
