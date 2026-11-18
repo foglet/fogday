@@ -390,11 +390,16 @@ function swapIn(dir, fill){
   const enter = () => {
     if(tok !== swapTok) return;
     fill();
-    from(ch, rm || !dir ? 'none' : `translateX(${dir * 110}px)`, `transform 380ms ${EASE}, opacity 380ms ${EASE}`);
-    // Pinyin rises first, then the definition, each with a slight spring (a small overshoot before settling).
+    // The container is back at rest; each character then slides in on its own, one after another.
+    ch.style.transition = 'none'; ch.style.transform = ''; ch.style.opacity = '';
+    const spans = [...ch.querySelectorAll('span')], step = spans.length > 4 ? 55 : 75;
+    spans.forEach((sp, k) => from(sp, rm || !dir ? 'none' : `translateX(${dir * 48}px)`,
+      `transform 420ms ${EASE} ${k * step}ms, opacity 380ms ${EASE} ${k * step}ms`));
+    // Then the pinyin rises, then the definition, each with a slight spring (a small overshoot before settling).
+    const t0 = spans.length * step + 40;
     meta.style.transition = 'none'; meta.style.opacity = '';
-    from($('#pin'), rm ? 'none' : 'translateY(16px)', `transform 480ms ${SPRING} 90ms, opacity 360ms ${EASE} 90ms`);
-    from($('#def'), rm ? 'none' : 'translateY(16px)', `transform 520ms ${SPRING} 260ms, opacity 400ms ${EASE} 260ms`);
+    from($('#pin'), rm ? 'none' : 'translateY(16px)', `transform 480ms ${SPRING} ${t0}ms, opacity 360ms ${EASE} ${t0}ms`);
+    from($('#def'), rm ? 'none' : 'translateY(16px)', `transform 520ms ${SPRING} ${t0 + 170}ms, opacity 400ms ${EASE} ${t0 + 170}ms`);
   };
   if(!dir || rm){ enter(); return; }
   // Out: the current characters slide away in the swipe direction while the definition fades.
