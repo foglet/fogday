@@ -388,14 +388,38 @@ function buildScene(){
   EDGES = []; for(let y=1; y<gh; y++) for(let x=0; x<gw; x++){ const i = y*gw + x; if(OBJ[i] && !OBJ[i - gw]) EDGES.push(i); }   // tops of rocks, trees and cacti, for snow caps
   // clouds: soft pixel blobs that drift
   const nc = cfg.clouds === 'none' ? 0 : cfg.clouds === 'many' ? Math.max(6, (gw/16)|0) : Math.max(3, (gw/40)|0);
-  clouds = []; for(let i=0; i<nc; i++) clouds.push(mkCloud(rand, rand()*gw));
+  const wet = cfg.wx === 'rain' || cfg.wx === 'snow', CK = wet ? ['storm','storm','storm','stratus','cumulus'] : ['cumulus','cumulus','cumulus','cirrus','puffs','stratus', cfg.mtn ? 'lens' : 'cirrus'];
+  clouds = []; for(let i=0; i<nc; i++) clouds.push(mkCloud(rand, rand()*gw, CK[(rand()*CK.length)|0]));
 }
-function mkCloud(rand, x){ const w = 12 + rand()*Math.min(30, gw*.25), h = Math.round(w*.42), m = [];
-  const blobs = []; for(let i=0; i<4; i++) blobs.push([w*(.15 + i*.22), h*(.55 - (i%2)*.2), h*(.35 + rand()*.25)]);
-  for(let y=0; y<h; y++){ const row = []; for(let x=0; x<w; x++){ let v = 0;
-    for(const [bx, by, br] of blobs) if(Math.hypot(x - bx, (y - by)*1.3) < br) v = 1;
-    if(y >= h - 1 && x > w*.08 && x < w*.92) v = 1; row.push(v ? (y > h*.62 ? 2 : 1) : 0); } m.push(row); }
-  return {x, y: 1 + rand()*Math.max(4, gTopA*.42), m, w: Math.ceil(w), h, v: .015 + rand()*.03}; }
+/* Clouds of different kinds. Matrix values: 1 lit top, 2 shaded underside, 3 dark storm base, 4 thin wisp.
+   cumulus: puffy heaps with towering tops; stratus: long flat bands; cirrus: thin high streaks; puffs: a mackerel-sky
+   cluster; lens: stacked lenticular lenses over the mountains; storm: big grey clouds with dark flat bases (rain, snow). */
+function mkCloud(rand, x, kind){ const m = [], grid = (w, h) => { for(let y=0; y<h; y++) m.push(new Array(w).fill(0)); }, set = (x, y, v) => { if(m[y] && x >= 0 && x < m[y].length && (!m[y][x] || v > m[y][x])) m[y][x] = v; };
+  let w, h, y0, v;
+  if(kind === 'stratus'){ w = 30 + (rand()*Math.min(50, gw*.4))|0; h = 3 + (rand()*3)|0; grid(w, h);
+    for(let x=0; x<w; x++){ const t = Math.min(x, w - 1 - x), top = t < 3 ? 2 - Math.min(2, t) + (hash(x, 3) < .5 ? 1 : 0) : hash(x, 7) < .3 ? 1 : 0;
+      for(let y=top; y<h; y++) set(x, y, y >= h - 2 ? 2 : 1); }
+    y0 = gTopA*(.3 + rand()*.25); v = .008 + rand()*.012; }
+  else if(kind === 'cirrus'){ w = 24 + (rand()*Math.min(40, gw*.35))|0; h = 7 + (rand()*4)|0; grid(w, h);
+    for(let k=0, n = 3 + (rand()*3)|0; k<n; k++){ const yy = (rand()*(h - 2))|0, x0 = (rand()*w*.4)|0, L = (w*(.4 + rand()*.5))|0, sl = rand() < .5 ? .15 : -.12;
+      for(let t=0; t<L; t++) if(hash(t + k*31, yy) < .85) set(x0 + t, Math.round(yy + t*sl) , 4); }
+    y0 = 1 + rand()*gTopA*.18; v = .03 + rand()*.03; }
+  else if(kind === 'puffs'){ w = 24 + (rand()*20)|0; h = 9 + (rand()*5)|0; grid(w, h);
+    for(let yy=1; yy<h - 1; yy+=3) for(let xx=(yy % 2) + 1; xx<w - 2; xx+=4) if(rand() < .75){ const r = 1 + (rand() < .4 ? 1 : 0);
+      for(let dy=-r; dy<=r; dy++) for(let dx=-r - 1; dx<=r + 1; dx++) if(Math.abs(dx)/(r + 1) + Math.abs(dy)/(r + .6) <= 1.1) set(xx + dx, yy + dy, dy > 0 ? 2 : 1); }
+    y0 = gTopA*(.08 + rand()*.2); v = .02 + rand()*.02; }
+  else if(kind === 'lens'){ w = 20 + (rand()*18)|0; h = 8; grid(w, h);
+    for(let k=0, n = 2 + (rand()*2)|0; k<n; k++){ const yy = 1 + k*2.4, ww = w*(1 - k*.22), x0 = (w - ww)/2;
+      for(let x=0; x<ww; x++){ const t = Math.sin(Math.PI*x/ww), th = Math.round(t*1.6); for(let y=-th; y<=0; y++) set(Math.round(x0 + x), Math.round(yy + y + 1), y === 0 ? 2 : 1); } }
+    y0 = Math.max(1, gTopA*.5 - 6 + rand()*6); v = .004 + rand()*.006; }
+  else { const storm = kind === 'storm'; w = storm ? 32 + (rand()*Math.min(36, gw*.3))|0 : 12 + (rand()*Math.min(26, gw*.22))|0; h = Math.round(w*(storm ? .5 : .55)); grid(w, h);
+    const base = h - 1, blobs = [];
+    for(let i=0, n = 3 + (rand()*3)|0; i<n; i++){ const bx = w*(.12 + .76*i/(n - 1 || 1)) + (rand() - .5)*3, br = h*(.22 + rand()*.18); blobs.push([bx, base - br*.7, br]); }
+    for(let i=0, n = 1 + (rand()*2)|0; i<n; i++){ const bx = w*(.3 + rand()*.4), br = h*(.25 + rand()*.15); blobs.push([bx, base - h*.45 - br*.4, br]); }   // the towering top
+    for(let y=0; y<h; y++) for(let x=0; x<w; x++){ let inn = false; for(const [bx, by, br] of blobs) if(Math.hypot(x - bx, (y - by)*1.15) < br) inn = true;
+      if(!inn) continue; const u = y/h; set(x, y, storm && u > .78 ? 3 : u > .62 ? 2 : (hash(x, y) < .08 && u > .4) ? 2 : 1); }
+    y0 = 1 + rand()*Math.max(4, gTopA*(storm ? .3 : .42)); v = (storm ? .01 : .015) + rand()*.025; }
+  return {x, y: y0, m, w: m[0].length, h: m.length, v}; }
 function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
   const sk = SKIES[cfg.sky];
   for(const [x, y, big, ph] of stars){ const tw = ((T + ph*7) % 90) < 6; const c = tw ? [120,130,170] : [236,238,255];
@@ -404,7 +428,7 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
   for(const c of clouds){ const x0 = Math.round(c.x), y0 = Math.round(c.y);
     for(let y=0; y<c.h; y++){ const yy = y0 + y; if(yy < 0 || yy >= gh) continue; const row = c.m[y];
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
-        const col = sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
+        const col = v === 3 ? sk.cloud[1].map(c => c*.68) : v === 4 ? sk.cloud[0] : sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
   for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
   if(cfg.bg === 'scene' && !SEA && cfg.ground !== 'none'){ const sk2 = SKIES[cfg.sky], dim = sk2.dim, tn = sk2.tint;
     const put3 = (i, c) => { i *= 4; d[i] = clamp(c[0]*dim + tn[0], 0, 255); d[i+1] = clamp(c[1]*dim + tn[1], 0, 255); d[i+2] = clamp(c[2]*dim + tn[2], 0, 255); };
@@ -888,7 +912,8 @@ $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, 
   do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert','moon']), rocks: R() < .7,
     river: R() < .4, wx: pick(['clear','clear','rain','snow']), windv: (R() < .5 ? -1 : 1)*pick([0, 0, 0, 0, 1, 1, 1, 2, 2, 3])});   // weather: clear about half the time; calm, breezy, windy or a gale
   while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join() === was);
-  if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});   // the moon: black sky, stars, no weather
+  if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});
+  else if(cfg.wx !== 'clear') cfg.clouds = 'many';   // rain and snow come with a cloudy sky   // the moon: black sky, stars, no weather
   PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;   // always a visibly different one
   seed = (R()*1e9)|0; save(); buildScene(); drawScene();
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
