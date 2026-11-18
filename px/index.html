@@ -136,7 +136,7 @@ canvas{position:absolute;left:0;top:0;display:block}
   <div class="acts">
     <button class="btn" type="button" id="scatter">New rocks and clouds</button>
     <button class="btn" type="button" id="hatch">New dragons</button>
-    <button class="btn" type="button" id="reset">Reset all</button>
+    <button class="btn" type="button" id="reset">Random</button>
   </div>
 </section>
 
@@ -652,13 +652,21 @@ for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' 
   cfg[id] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value; save(); apply(id); show(); if(!playing) { draw(); drawScene(); } }); }
 $('scatter').addEventListener('click', () => { seed = (R()*1e9)|0; buildScene(); drawScene(); });
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
-$('reset').addEventListener('click', () => { cfg = Object.assign({}, BASE); save(); show(); buildScene(); populate(true); drawScene(); draw(); });
+$('reset').addEventListener('click', () => {   // Random setup: a fresh mix of every setting (Follow my finger kept), new dragons, new rocks and clouds
+  const one = id => { const o = [...$(id).options].map(x => x.value); return pick(o); };
+  cfg = Object.assign({}, BASE, {follow: cfg.follow,
+    n: ri(1, 9), act: one('act'), pat: one('pat'), dizzy: R() < .7, color: one('color'), breath: one('breath'), spd: ri(0, 3),
+    hue: '#' + hsv(R()*360, rr(.4, .9), rr(.6, .95)).map(v => v.toString(16).padStart(2, '0')).join(''),
+    bg: R() < .9 ? 'scene' : 'paper', sky: one('sky'), clouds: one('clouds'), mtn: R() < .75, ground: one('ground'), rocks: R() < .7});
+  if(cfg.color === 'match') shared = {h: scheme(), sv: tone()};
+  seed = (R()*1e9)|0; save(); show(); buildScene(); populate(true); titleInk(); drawScene(); draw(); });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
 
 show(); resize(); populate(true);
-(function titleInk(){ const cs = adults().slice(0, 3).map(d => { if(d.water && cfg.color === 'any') return hsv(wet(d.h)[0], Math.max(.45, d.sv[0]), d.sv[1]); return hsv(d.h[0], d.sv[0], d.sv[1]); });
+function titleInk(){ const cs = adults().slice(0, 3).map(d => { if(d.water && cfg.color === 'any') return hsv(wet(d.h)[0], Math.max(.45, d.sv[0]), d.sv[1]); return hsv(d.h[0], d.sv[0], d.sv[1]); });
   while(cs.length < 2) cs.push(cs[0] || [63,158,110]);
-  document.documentElement.style.setProperty('--tg', 'linear-gradient(to right,' + cs.map(c => 'rgb(' + c.join(',') + ')').join(',') + ')'); })();
+  document.documentElement.style.setProperty('--tg', 'linear-gradient(to right,' + cs.map(c => 'rgb(' + c.join(',') + ')').join(',') + ')'); }
+titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 window.__px = {draw: () => draw(), get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }};
