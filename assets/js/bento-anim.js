@@ -9,7 +9,7 @@
   var MODE = "mix";          // "shuffle" = a random preset | "generate" = brand-new params | "mix" = either, 50/50
   var PLAY_ON_LOAD = true;   // play once when the page opens
   var WILD = 0.2;            // dark mode: share of loads that leave the site's green-blue range
-  // Per page, on the script tag: data-colors="random" (default) | "site" (green-blue only, both themes)
+  // Per page, on the script tag: data-colors="random" (default) | "site" (green-blue only, both themes) | "grey"
   // | "none" (keep the page's own bento colors, e.g. /px's dragon colors); data-theme="light" | "dark"
   // for pages with one fixed background, "dark-first" for dark pages with a light toggle (default: follow the site's theme toggle / system setting).
   var CFG = (document.currentScript && document.currentScript.dataset) || {};
@@ -141,7 +141,16 @@
     do { b = between(150, 265); } while (Math.abs(b - a) < 45);
     return [a, b];
   }
+  // data-colors="grey" (/cn-dr, /zhcy): a light-to-dark neutral grey gradient, new depths and direction each load
+  function greys() {
+    function ramp3(a, b) { return [hex(a, 0, 0), hex((a + b) / 2, 0, 0), hex(b, 0, 0)]; }
+    var flip = R() < 0.5;
+    var light = ramp3(between(0.66, 0.76), between(0.3, 0.42)), dark = ramp3(between(0.86, 0.94), between(0.52, 0.62));
+    if (flip) { light.reverse(); dark.reverse(); }
+    return { light: light, dark: dark, wild: false };
+  }
   function colors(siteOnly) {
+    if (siteOnly === "grey") return greys();
     var wild = !siteOnly && R() < WILD, h1, h2, l1, l2;
     if (wild) { h1 = between(0, 360); h2 = h1 + (R() < 0.5 ? -1 : 1) * between(40, 110); }
     else { h1 = between(155, 260); do { h2 = between(150, 265); } while (Math.abs(h2 - h1) < 45); }
@@ -242,7 +251,7 @@
     var out = build(choice.params, ".bento", "bento-" + ((R() * 1e6) | 0));
     var css = out.css, mode = CFG.colors || "random";
     if (mode !== "none") {
-      var col = colors(mode === "site");
+      var col = colors(mode === "grey" ? "grey" : mode === "site");
       if (CFG.theme === "light" || CFG.theme === "dark") css += colorCSS(":root", ".bento", col[CFG.theme]);
       else if (CFG.theme === "dark-first")             // dark page that turns light only when the toggle says so
         css += colorCSS(":root", ".bento", col.dark) + colorCSS(':root[data-theme="light"]', ".bento", col.light);
