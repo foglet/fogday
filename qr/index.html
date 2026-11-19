@@ -73,9 +73,10 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .meta{transition:width .35s ease-in}
 @media (prefers-reduced-motion:reduce){#qr,.ctl,.meta{transition:none}}
 /* Typing: a focused field goes solid so the text is easy to read */
-.field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--card)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+.field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--solid,var(--card))!important;color:var(--soltx,var(--ink))!important;-webkit-backdrop-filter:none;backdrop-filter:none}
 .field input:focus{background-image:none!important}
 .field input::placeholder{color:var(--ph,#757575);opacity:1}
+.field input:focus::placeholder{color:var(--solph,#757575)}
 .field select:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important}
 /* No borders on any box or button (focus still shows its red ring) */
 .btn,.field select,.field input:not([type=checkbox]),.meta{border:0!important}
@@ -984,6 +985,11 @@ function boot(){
     el.style.imageRendering = 'pixelated';
     el.style.color = 'rgb(' + best.join(',') + ')';
     el.style.setProperty('--ph', 'rgba(' + best.join(',') + ',.75)');   // the placeholder takes it too
+    // focused: the dragon's body colour, solid, with ink or white text (whichever reads better on it)
+    var tx = (lum(c[0]) + 0.05)/(0.0175 + 0.05) > (1.05)/(lum(c[0]) + 0.05) ? [29,38,34] : [255,255,255];
+    el.style.setProperty('--solid', 'rgb(' + c[0].join(',') + ')');
+    el.style.setProperty('--soltx', 'rgb(' + tx.join(',') + ')');
+    el.style.setProperty('--solph', 'rgba(' + tx.join(',') + ',.7)');
     el.style.textShadow = lum(best) < 0.3 ? '0 1px 0 rgba(255,255,255,.6)' : '0 1px 0 rgba(0,0,0,.55)';
     el.style.borderColor = 'rgb(' + c[3].join(',') + ')';
   }

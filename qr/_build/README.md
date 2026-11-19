@@ -27,5 +27,5 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Remix: when the new code is a different size, the code (and the controls under it) ease in to the new size over 0.35 s; reduced motion: instant.
 - Remix has the same light 50% style as the other buttons. When a dragon repaints a button, its text takes one of that dragon's colours that contrasts 4.5:1 or more with the pattern (else ink or white), with a thin opposite shadow.
 - Focus: a field (website menu, caption, address box) goes solid while it has focus, and back to 50% see-through after.
-- Opacity: everything (buttons, menu, fields, the details chip) is 50% see-through; only the menu or a box with focus is solid, and after 2 s with no typing, tapping or change in it, it lets go (blurs) and goes back. Repainted text is chosen to read on each pattern colour on its own.
+- Opacity: everything (buttons, menu, fields, the details chip) is 50% see-through; only the menu or a box with focus is solid (in the body colour of the last dragon that passed over it, with ink or white text; paper if none has), and after 2 s with no typing, tapping or change in it, it lets go (blurs) and goes back. Repainted text is chosen to read on each pattern colour on its own.
 - No borders on any box or button; keyboard focus still shows the red ring.
