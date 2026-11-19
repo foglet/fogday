@@ -46,6 +46,12 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .field .check,.check{display:flex;margin:0;align-items:center;gap:12px;min-height:48px;font:400 16px/1.2 var(--pixel);letter-spacing:.04em;color:var(--ink);cursor:pointer}
 .check input{width:24px;height:24px;margin:0;accent-color:var(--felt)}
 .check input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.btn.more{display:flex;width:100%;gap:10px;margin:0 0 10px}
+.chev{display:inline-block;width:14px;height:8px;background:currentColor;transition:transform .2s;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat}
+.btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
@@ -83,11 +89,6 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 
   <div class="row">
     <button type="button" class="btn primary" id="remix">Remix</button>
-    <input type="file" id="file" class="file" accept="image/*">
-    <label for="file" class="btn" id="fileLabel">Add picture</label>
-    <button type="button" class="btn" id="unpic" disabled>Remove picture</button>
-    <button type="button" class="btn" id="text">Text it</button>
-    <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
   <div class="field">
@@ -97,13 +98,25 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
       <option value="https://ohlonesky.com">ohlonesky.com</option>
       <option value="https://oysteratlas.com">oysteratlas.com</option>
     </select>
-    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Or type a website" aria-label="Or type a website" style="text-transform:none;margin-top:8px">
   </div>
 
   <div class="field">
     <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption under the code" aria-label="Caption under the code">
   </div>
 
+  <button type="button" class="btn more" id="moreBtn" aria-expanded="false" aria-controls="more">More<span class="chev" aria-hidden="true"></span></button>
+  <div id="more" hidden>
+    <div class="row">
+      <input type="file" id="file" class="file" accept="image/*">
+      <label for="file" class="btn" id="fileLabel">Add picture</label>
+      <button type="button" class="btn" id="unpic" disabled>Remove picture</button>
+      <button type="button" class="btn" id="text">Text it</button>
+      <button type="button" class="btn" id="scene">New scene</button>
+    </div>
+    <div class="field">
+      <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Or type a website" aria-label="Or type a website" style="text-transform:none">
+    </div>
+  </div>
 
   <fieldset class="styles" id="styles"><legend>Style</legend><div class="row" id="styleRow"></div></fieldset>
 
@@ -757,6 +770,10 @@ function boot(){
       if (!minVersion(new TextEncoder().encode(u).length,'L')){ say('That address is too long for a QR code'); return; }
       setUrl(u);
     }, 300);
+  });
+  $('moreBtn').addEventListener('click', function(){
+    var open = this.getAttribute('aria-expanded') !== 'true';
+    this.setAttribute('aria-expanded', String(open)); $('more').hidden = !open;
   });
   $('text').addEventListener('click', textIt);
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
