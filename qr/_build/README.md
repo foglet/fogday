@@ -24,3 +24,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Code details: two lines, "No. N · version V" and "level L · mask M".
 - Burning: fire or water from any dragon (the walker's own breath, or the /px dragons' breath reported in `px:where` hits) burns the loose blocks past the quiet zone: flames, then grey, then gone (water skips the flames). The code itself never burns. New scene puts every block back and brings the walker back; the website stays.
 - The walker may walk off the code some time in its first minute and join the dragons over the page (`px:spawn`).
+- Remix: when the new code is a different size, the code (and the controls under it) ease in to the new size over 0.35 s; reduced motion: instant.

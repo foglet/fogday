@@ -67,6 +67,11 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 #boxDragon{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;image-rendering:pixelated;image-rendering:crisp-edges}
 .sitef.dragon #boxDragon{display:block}
 .sitef.dragon select{color:transparent}
+/* Remix: the code eases to its new size (and the controls with it) */
+#qr{transition:width .35s ease-in,height .35s ease-in}
+.ctl{transition:max-width .35s ease-in}
+.meta{transition:width .35s ease-in}
+@media (prefers-reduced-motion:reduce){#qr,.ctl,.meta{transition:none}}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
