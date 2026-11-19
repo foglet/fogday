@@ -846,5 +846,6 @@ if(map) map.on("click", e=>{
   tapAirport(e).catch(()=>null).then(a=>{ if(mine===spotTurn) showSpot(e.lngLat, a||undefined) });
 });
 </script>
+<script src="/assets/js/bento-anim.js?v={{ site.time | date: '%s' }}" data-theme="dark-first" defer></script>  <!-- bento: new color + animation each load -->
 </body>
 </html>

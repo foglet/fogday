@@ -9,6 +9,10 @@
   var MODE = "mix";          // "shuffle" = a random preset | "generate" = brand-new params | "mix" = either, 50/50
   var PLAY_ON_LOAD = true;   // play once when the page opens
   var WILD = 0.2;            // dark mode: share of loads that leave the site's green-blue range
+  // Per page, on the script tag: data-colors="random" (default) | "site" (green-blue only, both themes)
+  // | "none" (keep the page's own bento colors, e.g. /px's dragon colors); data-theme="light" | "dark"
+  // for pages with one fixed background, "dark-first" for dark pages with a light toggle (default: follow the site's theme toggle / system setting).
+  var CFG = (document.currentScript && document.currentScript.dataset) || {};
 
   // A preset is just a fixed set of generator params.
   var PRESETS = {
@@ -83,20 +87,22 @@
       tiles.push([dx, dy]);
       reach = Math.max(reach, Math.abs(dx), Math.abs(dy));
     }
-    var on = sel + ":hover rect," + sel + ".go rect";
-    var css = sel + " rect{transform-box:fill-box;transform-origin:center}\n" +
+    var css = sel + " rect," + sel + " .bt{transform-box:fill-box;transform-origin:center}\n" +
       "@keyframes " + name + "{" + keyframes(p) + "}\n" +
-      on + "{animation:" + name + " " + p.dur + "ms " + (EASE[p.move] || "cubic-bezier(.3,0,.3,1)") + " both}\n";
+      [" rect", " .bt"].map(function (c) { return sel + ":hover" + c + "," + sel + ".go" + c; }).join(",") +
+      "{animation:" + name + " " + p.dur + "ms " + (EASE[p.move] || "cubic-bezier(.3,0,.3,1)") + " both}\n";
     for (i = 0; i < 9; i++) {
       var t = tiles[i], d = Math.round(dist(t[0], t[1]) * p.step);
       maxDelay = Math.max(maxDelay, d);
-      // pull = toward origin, push = away; scaled so the farthest tile moves `amp` px
+      // pull = toward origin, push = away; scaled so the farthest tile moves `amp` units (a tile is 5 units)
       var k = (p.move === "pull" ? -1 : 1) * (p.amp || 0) / (reach || 1);
-      var n = ":nth-child(" + (i + 1) + ")";
+      var n = ":nth-child(" + (i + 1) + ")", x = t[0] * k, y = t[1] * k;
       css += sel + ":hover rect" + n + "," + sel + ".go rect" + n +
-        "{animation-delay:" + d + "ms;--dx:" + (t[0] * k).toFixed(2) + "px;--dy:" + (t[1] * k).toFixed(2) + "px}\n";
+        "{animation-delay:" + d + "ms;--dx:" + x.toFixed(2) + "px;--dy:" + y.toFixed(2) + "px}\n" +
+        sel + ":hover .bt" + n + "," + sel + ".go .bt" + n +
+        "{animation-delay:" + d + "ms;--dx:" + (x * 20).toFixed(1) + "%;--dy:" + (y * 20).toFixed(1) + "%}\n";
     }
-    css += "@media (prefers-reduced-motion:reduce){" + sel + " rect{animation:none!important}}\n";
+    css += "@media (prefers-reduced-motion:reduce){" + sel + " rect," + sel + " .bt{animation:none!important}}\n";
     return { css: css, total: p.dur + maxDelay, origin: o };
   }
 
@@ -130,12 +136,20 @@
     if (avoid && olive(mid)) mid += 180;                                    // ...unless it passes through olive
     return [hex(L1, C, h1), hex((L1 + L2) / 2, C + 0.02, mid), hex(L2, C, h2)];
   }
-  function colors() {
-    var wild = R() < WILD, h1, h2, l1, l2;
+  function siteHues() {
+    var a = between(155, 260), b;
+    do { b = between(150, 265); } while (Math.abs(b - a) < 45);
+    return [a, b];
+  }
+  function colors(siteOnly) {
+    var wild = !siteOnly && R() < WILD, h1, h2, l1, l2;
     if (wild) { h1 = between(0, 360); h2 = h1 + (R() < 0.5 ? -1 : 1) * between(40, 110); }
     else { h1 = between(155, 260); do { h2 = between(150, 265); } while (Math.abs(h2 - h1) < 45); }
-    do { l1 = between(0, 360); } while (olive(l1));
-    do { l2 = l1 + (R() < 0.5 ? -1 : 1) * between(90, 170); } while (olive(l2));
+    if (siteOnly) { var sh = siteHues(); l1 = sh[0]; l2 = sh[1]; }
+    else {
+      do { l1 = between(0, 360); } while (olive(l1));
+      do { l2 = l1 + (R() < 0.5 ? -1 : 1) * between(90, 170); } while (olive(l2));
+    }
     return {
       dark:  ramp(h1, h2, between(0.78, 0.88), between(0.68, 0.8), between(0.12, 0.16), false),
       light: ramp(l1, l2, between(0.55, 0.63), between(0.5, 0.58), between(0.16, 0.2), true),
@@ -149,7 +163,12 @@
     var s = ["", ":hover", ".lit"];
     return ["g1", "g3", "g2"].map(function (g, i) {
       return s.map(function (x) { return scope + " " + sel + x + " ." + g; }).join(",") + "{stop-color:" + pair[i] + "}";
-    }).join("\n") + "\n";
+    }).join("\n") + "\n" +
+      s.map(function (x) { return scope + " " + sel + x + " .bt"; }).join(",") +
+      "{background-image:linear-gradient(to bottom right," + pair.join(",") + ")!important}\n" +   // beats the tile's inline fill
+      // the header logo mirrors the bento: same colors, always shown
+      scope + " .logo," + scope + " .logo:hover," + scope + " .logo.lit" +
+      "{background-image:linear-gradient(to right," + pair.join(",") + ");color:transparent}\n";
   }
   // add the midpoint stop (class g3) to each bento gradient, once
   function addMidStop(root) {
@@ -159,6 +178,43 @@
       st.setAttribute("offset", ".5"); st.setAttribute("class", "g3");
       g.insertBefore(st, g.querySelector(".g2"));
     });
+  }
+
+  // An SVG bento with a plain fill or stroke (no theme.js on the page): give it its own gradient.
+  // Hollow bentos (/cn-dr, /zhcy: fill="none", stroked squares) stay hollow: the gradient goes on the stroke.
+  var NS = "http://www.w3.org/2000/svg", gid = 0;
+  function ensureGradient(el) {
+    var svg = el.querySelector("svg"), g = svg && svg.querySelector("g");
+    if (!g || svg.querySelector("linearGradient")) return;
+    var id = "bento-anim-grad-" + (gid++);
+    var defs = document.createElementNS(NS, "defs"), grad = document.createElementNS(NS, "linearGradient");
+    grad.id = id;
+    [["gradientUnits", "userSpaceOnUse"], ["x1", "2"], ["y1", "2"], ["x2", "22"], ["y2", "22"]]
+      .forEach(function (a) { grad.setAttribute(a[0], a[1]); });
+    [["g1", "0"], ["g2", "1"]].forEach(function (c) {
+      var st = document.createElementNS(NS, "stop");
+      st.setAttribute("class", c[0]); st.setAttribute("offset", c[1]); grad.appendChild(st);
+    });
+    defs.appendChild(grad); svg.insertBefore(defs, svg.firstChild);
+    g.setAttribute(g.getAttribute("fill") === "none" ? "stroke" : "fill", "url(#" + id + ")");
+  }
+  // A mask-drawn bento (<span class="bento-grid">: /px, /transit, /spy, /treesf): swap the mask for 9 real
+  // tiles. They keep the grid's own fill (its gradient; on /px the dragon colors via --tg, white on hover)
+  // unless this script sets colors. The page's outline filter on .bento still draws around each tile.
+  function ensureTiles(el) {
+    var grid = el.querySelector(".bento-grid");
+    if (!grid || grid.querySelector(".bt")) return;
+    var bg = getComputedStyle(grid).backgroundImage;
+    var fill = bg && bg !== "none" ? "var(--tg," + bg + ")" : "currentColor";
+    grid.style.cssText += ";-webkit-mask:none;mask:none;background:none;position:relative";
+    for (var i = 0; i < 9; i++) {
+      var t = document.createElement("span"), c = i % 3, r = (i / 3) | 0;
+      t.className = "bt";
+      t.style.cssText = "position:absolute;display:block;width:20.833%;height:20.833%;border-radius:20%;" +
+        "left:" + ((2 + c * 7.5) / 0.24).toFixed(3) + "%;top:" + ((2 + r * 7.5) / 0.24).toFixed(3) + "%;" +
+        "background-image:" + fill + ";background-size:400% 400%;background-position:" + c * 50 + "% " + r * 50 + "%";
+      grid.appendChild(t);
+    }
   }
 
   function play(el, total) {
@@ -175,24 +231,30 @@
     return { name: "generated", params: generate() };
   }
 
-  window.BentoAnim = { PRESETS: PRESETS, generate: generate, build: build, play: play, choose: choose, colors: colors, colorCSS: colorCSS, addMidStop: addMidStop };
+  window.BentoAnim = { PRESETS: PRESETS, generate: generate, build: build, play: play, choose: choose, colors: colors, colorCSS: colorCSS, addMidStop: addMidStop, ensureGradient: ensureGradient, ensureTiles: ensureTiles };
   if (window.BENTO_DEMO) return;
 
   // ---- site wiring ----
-  document.addEventListener("DOMContentLoaded", function () {   // after theme.js has added the gradient
+  document.addEventListener("DOMContentLoaded", function () {   // after theme.js has added its gradient
     var icons = document.querySelectorAll(".bento");
     if (!icons.length) return;
     var choice = choose();
     var out = build(choice.params, ".bento", "bento-" + ((R() * 1e6) | 0));
-    var col = colors();
+    var css = out.css, mode = CFG.colors || "random";
+    if (mode !== "none") {
+      var col = colors(mode === "site");
+      if (CFG.theme === "light" || CFG.theme === "dark") css += colorCSS(":root", ".bento", col[CFG.theme]);
+      else if (CFG.theme === "dark-first")             // dark page that turns light only when the toggle says so
+        css += colorCSS(":root", ".bento", col.dark) + colorCSS(':root[data-theme="light"]', ".bento", col.light);
+      else css += colorCSS(":root", ".bento", col.light) +
+        colorCSS(':root[data-theme="dark"]', ".bento", col.dark) +
+        "@media (prefers-color-scheme:dark){" + colorCSS(':root:not([data-theme="light"])', ".bento", col.dark) + "}\n";
+    }
     var style = document.createElement("style");
-    style.textContent = out.css +
-      colorCSS(":root", ".bento", col.light) +
-      colorCSS(':root[data-theme="dark"]', ".bento", col.dark) +
-      "@media (prefers-color-scheme:dark){" + colorCSS(':root:not([data-theme="light"])', ".bento", col.dark) + "}\n";
+    style.textContent = css;
     document.head.appendChild(style);
     icons.forEach(function (el) {
-      addMidStop(el);
+      ensureGradient(el); addMidStop(el); ensureTiles(el);
       el.addEventListener("touchstart", function () { play(el, out.total); }, { passive: true });
       if (PLAY_ON_LOAD) setTimeout(function () { play(el, out.total); }, 400);
     });
