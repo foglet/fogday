@@ -19,6 +19,11 @@ html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 var(--
 /* Background: the live /px scene (dragons over a pixel landscape), behind everything and not interactive */
 .bgpx{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;background:var(--paper)}
 header,main{position:relative;z-index:1}
+/* Front layer: the /px dragons and weather fly over the fields (see-through, never takes taps); the code itself stays on top so it always scans */
+.fgpx{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2;pointer-events:none;background:transparent}
+.stage{position:relative;z-index:3}
+/* Controls are never wider than the code */
+.ctl{max-width:var(--qrw,440px);margin:0 auto}
 /* No card: the scene shows around everything; small text sits on paper chips so it reads over the sky and grass */
 .meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;padding:4px 10px;border-radius:8px;background:rgba(251,248,241,.92)}
 main .field>label{display:inline-block;margin-left:0}
@@ -34,11 +39,12 @@ h1 a{text-decoration:none}
 main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .lede{margin:4px 0 14px;color:var(--muted)}
 .stage{display:flex;justify-content:center;align-items:center;min-height:240px;margin:0 0 6px}
-#qr{display:block;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 6px 14px rgba(36,22,48,.18))}
+#qr{display:block;border-radius:10px;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 6px 14px rgba(36,22,48,.18))}
 .meta{margin:0 0 14px;text-align:center;font:400 13px/1.3 var(--pixel);color:var(--muted);letter-spacing:.04em}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
 .row>*{flex:1 1 calc(50% - 4px)}
 .row>.wide{flex-basis:100%}
+.row .btn:not(.primary){font-size:14px;padding:0 8px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border:0;margin:6px 0 10px;padding:0}
 .seg legend{padding:0;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
 .seg .btn{min-height:44px;font-size:14px;padding:0 8px}
@@ -57,7 +63,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
-.btn.primary{background:var(--felt);color:#fff;border-color:var(--felt-d);flex-basis:100%;font-size:18px;min-height:54px}
+.btn.primary{background:var(--felt);color:#fff;border-color:var(--felt-d);font-size:18px;min-height:54px}
 .btn.primary:hover{background:var(--felt-d)}
 .btn:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .btn[disabled]{color:#7d8a84;border-color:#b9c4be;cursor:default}
@@ -80,7 +86,9 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 </style>
 </head>
 <body>
-<iframe class="bgpx" src="/px/?bg" title="Pixel dragons background" aria-hidden="true" tabindex="-1" loading="eager"></iframe>
+<iframe class="bgpx" id="pxBack" title="Pixel landscape background" aria-hidden="true" tabindex="-1"></iframe>
+<iframe class="fgpx" id="pxFront" title="Pixel dragons flying over the page" aria-hidden="true" tabindex="-1"></iframe>
+<script>/* both /px layers share one landscape seed */(function(){ var sd = 1 + Math.floor(Math.random()*999999998); document.getElementById('pxBack').src = '/px/?bg&seed=' + sd; document.getElementById('pxFront').src = '/px/?fg&seed=' + sd; })();</script>
 <header>
   <h1><a href="./" class="px-out"><span class="px-ink">Pixel QR</span></a></h1>
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><span class="bento-grid" aria-hidden="true"></span></a>
@@ -89,19 +97,20 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
   <div class="stage"><canvas id="qr" role="img" aria-label="QR code for https://fogday.com" width="1" height="1"></canvas></div>
   <p class="meta" id="meta" aria-live="off"></p>
 
+  <div class="ctl">
   <div class="row">
     <button type="button" class="btn primary" id="remix">Remix</button>
+    <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
   <div class="field">
-    <label for="site">Website</label>
-    <select id="site">
-      <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios: fogday.com</option>
-      <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky: ohlonesky.com</option>
-      <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas: oysteratlas.com</option>
-      <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram: https://www.instagram.com/fogfish/</option>
-      <option value="https://wa.me/?text=Bonjour%21" data-cap="WHATSAPP">WhatsApp: https://wa.me/?text=Bonjour%21</option>
-      <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn: https://www.linkedin.com/in/fogfish/</option>
+    <select id="site" aria-label="Website">
+      <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
+      <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
+      <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas</option>
+      <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
+      <option value="https://wa.me/?text=Bonjour%21" data-cap="WHATSAPP">WhatsApp</option>
+      <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
     </select>
   </div>
 
@@ -115,12 +124,12 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
       <input type="file" id="file" class="file" accept="image/*">
       <label for="file" class="btn" id="fileLabel">Add picture</label>
       <button type="button" class="btn" id="unpic" disabled>Remove picture</button>
-      <button type="button" class="btn" id="text">Text it</button>
-      <button type="button" class="btn" id="scene">New scene</button>
+      <button type="button" class="btn wide" id="text">Text it</button>
     </div>
     <div class="field">
       <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Type a website" aria-label="Website address (edit to use your own)" style="text-transform:none">
     </div>
+  </div>
   </div>
 
   <fieldset class="styles" id="styles"><legend>Style</legend><div class="row" id="styleRow"></div></fieldset>
@@ -594,6 +603,7 @@ function readHash(){
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
 var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com','https://www.instagram.com/fogfish/','https://wa.me/?text=Bonjour%21','https://www.linkedin.com/in/fogfish/'];
 /* Auto caption: the menu entry's short name (social links read better as a name than as an address) */
+function bare(u){ return u.replace(/^https:\/{2}/,''); }   // fogday.com, not https://fogday.com
 function autoCap(u){
   var o = document.querySelector('#site option[value="' + u.replace(/"/g,'') + '"]');
   return o ? o.getAttribute('data-cap') : host(u);
@@ -610,6 +620,7 @@ function paint(img){
   var k = scale(), dpr = window.devicePixelRatio || 1;
   if (canvas.width !== cur.W*k || canvas.height !== cur.H*k){ canvas.width = cur.W*k; canvas.height = cur.H*k; }
   canvas.style.width = (cur.W*k/dpr) + 'px'; canvas.style.height = (cur.H*k/dpr) + 'px';
+  document.documentElement.style.setProperty('--qrw', Math.round(cur.W*k/dpr) + 'px');
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(art, 0, 0, cur.W*k, cur.H*k);
 }
@@ -712,6 +723,8 @@ function pngBlob(cb){
   c.width = cur.W*k; c.height = cur.H*k;
   var g = c.getContext('2d'); g.imageSmoothingEnabled = false;
   art.width = cur.W; art.height = cur.H; art.getContext('2d').putImageData(new ImageData(frameData(), cur.W, cur.H), 0, 0);
+  var rad = Math.round(10 * c.width / (parseFloat(canvas.style.width) || c.width));   // the same 10px rounding as on screen
+  if (g.roundRect){ g.beginPath(); g.roundRect(0, 0, c.width, c.height, rad); g.clip(); }
   g.drawImage(art, 0, 0, c.width, c.height);
   c.toBlob(cb, 'image/png');
 }
@@ -766,13 +779,13 @@ function boot(){
   var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
   syncHash();
   if (SITES.indexOf(state.url) >= 0) $('site').value = state.url;
-  $('siteFree').value = state.url;   // the address in use, shown (and editable) under More
+  $('siteFree').value = bare(state.url);   // the address in use, shown (and editable) under More
   $('cap').value = state.capAuto ? '' : state.caption;
   initStyles();
   draw(false);
   $('remix').addEventListener('click', remix);
   function setUrl(u){ state.url = u; store('url', u === URL_TEXT ? '' : u); syncHash(); draw(true); }
-  $('site').addEventListener('change', function(){ $('siteFree').value = this.value; setUrl(this.value); });
+  $('site').addEventListener('change', function(){ $('siteFree').value = bare(this.value); setUrl(this.value); });
   var ut;
   $('siteFree').addEventListener('input', function(){
     var v = this.value.trim();
@@ -789,8 +802,13 @@ function boot(){
   });
   $('text').addEventListener('click', textIt);
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
-    var f = document.querySelector('.bgpx');
+    var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
+  });
+  window.addEventListener('message', function(e){   // the back layer reports its new landscape; the front layer matches it
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'px:scene') return;
+    var f = $('pxFront');
+    if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:apply', cfg: e.data.cfg, seed: e.data.seed}, location.origin);
   });
   $('file').addEventListener('change', function(){ setPicture(this.files[0]); this.value = ''; });
   $('unpic').addEventListener('click', function(){

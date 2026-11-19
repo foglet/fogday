@@ -107,7 +107,10 @@ canvas{position:absolute;left:0;top:0;display:block}
 .row.off{opacity:.45}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.btn .chev,.sw span,.sw span::after{transition:none}.sheet{animation:none}}
-html.bg .top,html.bg .corner,html.bg .dock,html.bg .sheet{display:none!important}
+/* Embedded on /qr in two layers: ?bg is the landscape alone (behind the page), ?fg is the dragons and weather alone (in front, see-through) */
+html.bg .top,html.bg .corner,html.bg .dock,html.bg .sheet,html.fg .top,html.fg .corner,html.fg .dock,html.fg .sheet{display:none!important}
+html.bg #fg,html.bg #fg2,html.fg #scene,html.fg #sea{display:none!important}
+html.fg,html.fg body,html.fg .stage{background:transparent!important}
 </style>
 </head>
 <body>
@@ -145,8 +148,9 @@ html.bg .top,html.bg .corner,html.bg .dock,html.bg .sheet{display:none!important
 
 <script>
 /* ?bg: the scene alone, as a page background (fogday.com/qr): no title, buttons or controls */
-const BGM = /[?&]bg(=|&|$)/.test(location.search);
+const QS = new URLSearchParams(location.search), BGM = QS.has('bg'), FGM = QS.has('fg'), EMB = BGM || FGM, QSEED = parseInt(QS.get('seed'), 10);
 if (BGM) document.documentElement.classList.add('bg');
+if (FGM) document.documentElement.classList.add('fg');
 (() => {
 'use strict';
 /* ---------- sprites: 9 sets (body n/p/s x tail n/l/s), 10 frames each: 0-7 walk (step*2+wing), 8-9 fly (legs tucked) ---------- */
@@ -167,9 +171,10 @@ const KEY = 'px:settings';
 let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
 Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene', act:'mix', pat:'mix', color:'any', breath:'mix', dizzy:true});   // not choices: they just happen cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
-if (BGM) Object.assign(cfg, {n: Math.min(cfg.n, 4), spd: 1, kids: 'none'});   // background for /qr: at most four dragons in all (no babies), speed fixed at 0.5x
-const save = () => { if (BGM) return; try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };   // the background never changes the visitor's /px settings
-let seed = (R()*1e9)|0;
+if (BGM) cfg.n = 0;   // the landscape layer has no dragons (they live in the front layer)
+if (FGM) Object.assign(cfg, {n: Math.min(cfg.n, 4), spd: 1, kids: 'none'});   // front layer for /qr: at most four dragons in all (no babies), speed fixed at 0.5x
+const save = () => { if (EMB) return; try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };   // the background never changes the visitor's /px settings
+let seed = QSEED > 0 ? QSEED : (R()*1e9)|0;   // /qr passes the same seed to both layers so their landscapes match
 
 /* ---------- colour ---------- */
 function hsv(h, s, v){ h = ((h%360)+360)%360/60; const i = Math.floor(h), f = h-i, p = v*(1-s), q = v*(1-s*f), u = v*(1-s*(1-f));
@@ -986,18 +991,31 @@ $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, 
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
 /* /qr's "New scene" button: a new landscape and new dragons (same origin only) */
-/* Background mode follows /px: when the scene changes on /px (another tab), the same scene shows here at once */
-if (BGM) addEventListener('storage', e => {
+/* Embedded layers follow /px: a scene change saved on /px (another tab) shows here at once. Both layers derive the same
+   landscape seed from the saved settings, so the front layer's walkers stand on the back layer's ground. */
+const SCENE_KEYS = ['bg','sky','clouds','mtn','ground','rocks','river','wx','windv'];
+function applyScene(n, sd){
+  for (const k of SCENE_KEYS) if (k in n) cfg[k] = n[k];
+  PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;
+  seed = sd; buildScene(); ECL = null; drawScene();
+  const [a, b] = band(); for (const d of adults()) if (d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); }
+}
+function strSeed(t){ let h = 2166136261; for (let i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) % 1e9 + 1; }
+if (EMB) addEventListener('storage', e => {
   if (e.key !== KEY) return;
   let n = {}; try { n = JSON.parse(e.newValue || '{}'); } catch(_) {}
-  let changed = false;
-  for (const k of ['bg','sky','clouds','mtn','ground','rocks','river','wx','windv']) if (k in n && n[k] !== cfg[k]){ cfg[k] = n[k]; changed = true; }
-  if (!changed) return;
-  PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;
-  seed = (R()*1e9)|0; buildScene(); ECL = null; drawScene();
-  const [a, b] = band(); for (const d of adults()) if (d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); }
+  if (SCENE_KEYS.some(k => k in n && n[k] !== cfg[k])) applyScene(n, strSeed(e.newValue || ''));
 });
-if (BGM) addEventListener('message', e => { if (e.origin === location.origin && e.data === 'px:new-scene'){ $('reset').click(); populate(true); titleInk(); if(!playing){ draw(); drawScene(); } } });
+/* /qr's "New scene": the back layer rolls a landscape and reports it; /qr hands it to the front layer, which matches it and hatches new dragons */
+if (EMB) addEventListener('message', e => {
+  if (e.origin !== location.origin) return;
+  if (BGM && e.data === 'px:new-scene'){
+    $('reset').click();
+    const sc = {}; for (const k of SCENE_KEYS) sc[k] = cfg[k];
+    parent.postMessage({type: 'px:scene', cfg: sc, seed: seed}, location.origin);
+  }
+  if (FGM && e.data && e.data.type === 'px:apply'){ applyScene(e.data.cfg, e.data.seed); populate(true); titleInk(); if(!playing){ draw(); drawScene(); } }
+});
 
 COVER = cfg.wx === 'snow' ? .55 : 0; WET = cfg.wx === 'rain' ? .55 : 0;
 show(); resize(); populate(true);
