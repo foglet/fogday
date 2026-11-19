@@ -27,6 +27,7 @@ header,main{position:relative;z-index:1}
 /* No card: the scene shows around everything; small text sits on paper chips so it reads over the sky and grass */
 .meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;max-width:var(--qrw,440px);box-sizing:border-box;padding:4px 10px;border-radius:10px;background:rgba(251,248,241,.92)}
 .meta{display:block;width:var(--qrw,100%);text-align:center}
+.meta span{display:block}
 main .field>label{display:inline-block;margin-left:0}
 .field .check{display:inline-flex;padding:0 14px;border-radius:12px;background:rgba(251,248,241,.92)}
 header{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sat) + 10px) calc(12px + var(--sar)) 0 calc(12px + var(--sal))}
@@ -101,7 +102,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 </header>
 <main>
   <div class="stage"><canvas id="qr" role="img" aria-label="QR code for https://fogday.com" width="1" height="1"></canvas></div>
-  <p class="meta" id="meta" aria-live="off"></p>
+  <p class="meta" id="meta" aria-live="off"><span id="meta1"></span><span id="meta2"></span></p>
 
   <div class="ctl">
   <div class="row">
@@ -123,7 +124,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
   </div>
 
   <div class="field">
-    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption under the code" aria-label="Caption under the code">
+    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption" aria-label="Caption under the code">
   </div>
 
   <button type="button" class="btn more" id="moreBtn" aria-expanded="false" aria-controls="more">More<span class="chev" aria-hidden="true"></span></button>
@@ -591,7 +592,7 @@ function render(seed, styleId, caption, img, url, finder){
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', capAuto: true, img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
+var state = {seed: 0, style: 'px', caption: '', img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
@@ -610,12 +611,7 @@ function readHash(){
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
 var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com','https://www.instagram.com/fogfish/','https://wa.me/?text=Bonjour%21','https://www.linkedin.com/in/fogfish/'];
-/* Auto caption: the menu entry's short name (social links read better as a name than as an address) */
 function bare(u){ return u.replace(/^https:\/{2}/,''); }   // fogday.com, not https://fogday.com
-function autoCap(u){
-  var o = document.querySelector('#site option[value="' + u.replace(/"/g,'') + '"]');
-  return o ? o.getAttribute('data-cap') : host(u);
-}
 function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(){ s.textContent = msg; }, 30); }
 
 function scale(){
@@ -634,11 +630,12 @@ function paint(img){
 }
 function draw(animate){
   prev = cur;
-  cur = render(state.seed, state.style, state.capAuto ? autoCap(state.url) : state.caption, state.img, state.url, 'random');
+  cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random');
   makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
-  $('meta').textContent = 'No. ' + state.seed + '  ·  version ' + c.v + ', ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
+  $('meta1').textContent = 'No. ' + state.seed + '  ·  version ' + c.v;
+  $('meta2').textContent = 'level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
   canvas.setAttribute('aria-label', 'Pixel QR code number ' + state.seed + ' for ' + c.text);
   var full = new ImageData(cur.data, cur.W, cur.H);
   cancelAnimationFrame(anim); revealing = false;
@@ -844,10 +841,10 @@ function boot(){
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
   if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
-  var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
+  var cp = load('caption'); if (cp) state.caption = cp;   // the caption is only what you type
   syncHash();
   $('siteFree').value = bare(state.url);   // the address in use, shown (and editable) under More
-  $('cap').value = state.capAuto ? '' : state.caption;
+  $('cap').value = state.caption;
   initStyles();
   draw(false);
   showSite();
@@ -888,6 +885,34 @@ function boot(){
     var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
   });
+  /* A dragon flying over Remix or New scene leaves its pattern on the button (its body, wing and belly colours, 50% see-through)
+     until the next dragon flies over */
+  var lastOver = {remix: 0, scene: 0};
+  function rgbOf(c){ var m = /(\d+)\D+(\d+)\D+(\d+)/.exec(c); return m ? [+m[1], +m[2], +m[3]] : [128,128,128]; }
+  function paintBtn(el, cols){
+    var c = cols.map(rgbOf), T = ['001100','011110','001102','100001','110011','120001'], k = document.createElement('canvas');
+    k.width = 6; k.height = 6;
+    var g = k.getContext('2d');
+    for (var y = 0; y < 6; y++) for (var x = 0; x < 6; x++){ var v = c[+T[y][x]]; g.fillStyle = 'rgba(' + v.join(',') + ',0.5)'; g.fillRect(x, y, 1, 1); }
+    var avg = (lum(c[0]) + lum(c[1]))/2;
+    el.style.backgroundImage = 'url(' + k.toDataURL() + ')';
+    el.style.backgroundSize = '18px 18px';
+    el.style.backgroundColor = 'transparent';
+    el.style.imageRendering = 'pixelated';
+    el.style.color = avg < 0.3 ? '#fff' : '#1d2622';
+    el.style.textShadow = avg < 0.3 ? '0 1px 0 rgba(0,0,0,.6)' : '0 1px 0 rgba(255,255,255,.7)';
+    el.style.borderColor = 'rgb(' + c[3].join(',') + ')';
+  }
+  window.addEventListener('message', function(e){
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'px:where') return;
+    ['remix', 'scene'].forEach(function(id){
+      var el = $(id), r = el.getBoundingClientRect();
+      for (var i = 0; i < e.data.list.length; i++){
+        var d = e.data.list[i], nx = Math.max(r.left, Math.min(d.x, r.right)), ny = Math.max(r.top, Math.min(d.y, r.bottom));
+        if (Math.hypot(d.x - nx, d.y - ny) < d.r){ if (d.id !== lastOver[id]){ lastOver[id] = d.id; paintBtn(el, d.c); } break; }
+      }
+    });
+  });
   window.addEventListener('message', function(e){   // the back layer reports its new landscape; the front layer matches it
     if (e.origin !== location.origin || !e.data || e.data.type !== 'px:scene') return;
     var f = $('pxFront');
@@ -902,8 +927,7 @@ function boot(){
   var t;
   $('cap').addEventListener('input', function(){
     state.caption = this.value.replace(/[^\x20-\x7e]/g, '');
-    state.capAuto = this.value === '';
-    if (state.capAuto){ try { localStorage.removeItem(LS+'caption'); } catch (err) {} } else store('caption', state.caption);
+    store('caption', state.caption);
     clearTimeout(t); t = setTimeout(function(){ draw(false); }, 120);
   });
   document.addEventListener('keydown', function(e){

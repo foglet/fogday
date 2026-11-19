@@ -1007,6 +1007,14 @@ if (EMB) addEventListener('storage', e => {
   if (SCENE_KEYS.some(k => k in n && n[k] !== cfg[k])) applyScene(n, strSeed(e.newValue || ''));
 });
 /* /qr's "New scene": the back layer rolls a landscape and reports it; /qr hands it to the front layer, which matches it and hatches new dragons */
+/* Front layer: where the dragons are and their colours, a few times a second, so /qr can repaint the button a dragon flies over */
+let UID = 0;
+if (FGM) setInterval(() => {
+  const L = [];
+  for (const d of adults()){ if (d.mode === 'off' || d.mode === 'under' || d.hid || offScreen(d)) continue;
+    if (!d.uid) d.uid = ++UID; const p = palOf(d); L.push({id: d.uid, x: d.cx, y: d.cy, r: 13*d.s, c: [p[2], p[5], p[4], p[3], p[6]]}); }
+  parent.postMessage({type: 'px:where', list: L}, location.origin);
+}, 120);
 if (EMB) addEventListener('message', e => {
   if (e.origin !== location.origin) return;
   if (BGM && e.data === 'px:new-scene'){
