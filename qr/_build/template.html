@@ -960,7 +960,7 @@ function boot(){
     if (pal.length) best = pal[Math.floor(Math.random()*pal.length)];
     el.style.backgroundImage = 'url(' + k.toDataURL() + ')';
     el.style.backgroundSize = '18px 18px';
-    el.style.backgroundColor = 'transparent';
+    el.style.backgroundColor = el.classList.contains('meta') ? 'rgba(251,248,241,.6)' : 'transparent';   // the details keep a light base so they stay readable
     el.style.imageRendering = 'pixelated';
     el.style.color = 'rgb(' + best.join(',') + ')';
     el.style.textShadow = lum(best) < 0.3 ? '0 1px 0 rgba(255,255,255,.6)' : '0 1px 0 rgba(0,0,0,.55)';
@@ -972,8 +972,8 @@ function boot(){
       var cr = canvas.getBoundingClientRect(), sx = cur.W / cr.width;
       e.data.hits.forEach(function(h){ if (h.x >= cr.left && h.x < cr.right && h.y >= cr.top && h.y < cr.bottom) hitArt((h.x - cr.left)*sx, (h.y - cr.top)*sx, h.w); });
     }
-    // every button, the page title and the projects icon take the colours of a dragon flying over them
-    Array.prototype.forEach.call(document.querySelectorAll('.btn, h1 .px-out, .bento'), function(el){
+    // every button, the code details, the page title and the projects icon take the colours of a dragon flying over them
+    Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, h1 .px-out, .bento'), function(el){
       var r = el.getBoundingClientRect();
       if (!r.width) return;   // hidden (More closed)
       for (var i = 0; i < e.data.list.length; i++){
@@ -981,7 +981,7 @@ function boot(){
         if (Math.hypot(d.x - nx, d.y - ny) < d.r){
           if (String(d.id) !== el.dataset.dragon){
             el.dataset.dragon = d.id;
-            if (el.classList.contains('btn')) paintBtn(el, d.c);
+            if (el.classList.contains('btn') || el.classList.contains('meta')) paintBtn(el, d.c);
             else el.style.setProperty('--tg', 'linear-gradient(to right,' + d.c[0] + ',' + d.c[1] + ',' + d.c[2] + ')');
           }
           break;
