@@ -713,7 +713,17 @@ function tick(){ T++;
   weatherTick();
   bits = moveBits(bits);
   sparks = sparks.filter(s => --s.n > 0);
-  for(const c of clouds) c.x += c.v; }
+  for(const c of clouds) c.x += c.v;
+  if (NOFLY) for (const d of adults()){   // /qr's no-fly zone over the code: a dragon inside is pushed out the nearest side and turned away
+    const [l, t, r, b] = NOFLY, hw = 12*d.s, hh = 10*d.s;
+    if (d.cx + hw > l && d.cx - hw < r && d.cy + hh > t && d.cy - hh < b){
+      const out = [[d.cx + hw - l, -1, 0], [r - (d.cx - hw), 1, 0], [d.cy + hh - t, 0, -1], [b - (d.cy - hh), 0, 1]].sort((p, q) => p[0] - q[0])[0];
+      d.cx += out[1]*out[0]; d.cy += out[2]*out[0];
+      if (out[1]){ d.vx = out[1]*Math.abs(d.vx || 2*K); d.dir = out[1]; } if (out[2]) d.vy = out[2]*Math.abs(d.vy || 2*K);
+      if (d.mode === 'fly' && d.wx !== undefined && d.wx > l && d.wx < r && d.wy > t && d.wy < b){ d.wx = out[1] ? (out[1] > 0 ? r + 60 : l - 60) : d.cx; d.wy = out[2] ? (out[2] > 0 ? b + 60 : t - 60) : d.cy; }
+    }
+  } }
+let NOFLY = null;   // [left, top, right, bottom] in page pixels, set by /qr
 function recolor(d, how){ if(how === 'shift' && cfg.color === 'any') d.th = d.th.map(x => x + 120); }
 /* Babies: each one follows its mother, goes off on its own, or tags along behind a baby that is on its own (any family).
    Every 300 to 800 ticks it may pick again; it then glides over to its new leader instead of jumping there. */
@@ -1032,6 +1042,7 @@ if (EMB) addEventListener('message', e => {
     d.cx = d.lx = m.x; d.cy = d.ly = m.y; d.dir = m.dir > 0 ? 1 : -1; dg.push(d); takeOff(d);
     const a = adults(); if (a.length > 4){ const old = a.find(o => o !== d); dg.splice(dg.indexOf(old), 1); }
     titleInk(); }
+  if (FGM && e.data && e.data.type === 'px:nofly') NOFLY = e.data.rect || null;
   if (FGM && e.data && e.data.type === 'px:apply'){ applyScene(e.data.cfg, e.data.seed); populate(true); titleInk(); if(!playing){ draw(); drawScene(); } }
 });
 

@@ -455,10 +455,11 @@ function mixRgb(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i] +
    No frame: past the quiet zone the code's own pattern drifts outward and thins away (the halo). */
 var P = 3, QZ = 4, OUT = [36,22,48];
 var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only: it does not scan
-function render(seed, styleId, caption, img, url, finder){
+function render(seed, styleId, caption, img, url, finder, ground){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
   R.shape = 'flat';   // solid blocks
+  if (ground) R.groundM = lightMat(ground);   // a dragon's colours as the ground, lifted to stay light enough to scan
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
   P = Math.max(1, Math.min(3, Math.round(140 / M)));
@@ -674,6 +675,7 @@ function paint(img){
 }
 function draw(animate){
   prev = cur;
+  state.ground = null;
   cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random');
   burns = {}; nBurn = 0; sparks = [];
   makeDragons(); startFlying();
@@ -812,7 +814,7 @@ function frameData(){
     var X = Math.round(p.x), Y = Math.round(p.y);
     if (X >= 0 && Y >= 0 && X < W && Y < H){ var pal = p.water ? WATER : FIRE, c = pal[Math.min(pal.length-1, Math.floor(p.n/p.life*pal.length))], o = (Y*W + X)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; }
   });
-  dragons.forEach(function(d){
+  (window.__quiet && !window.__quiet() ? [] : dragons).forEach(function(d){   // the walker is away while the code is a no-fly zone
     var p = walkPos(d), ox = Math.round(p[0]), oy = Math.round(p[1]), rot = p[2];
     var fr = d.set[Math.floor(dTick/4) % d.set.length];
     for (var v = 0; v < SH; v++) for (var u = 0; u < SW; u++){
@@ -843,6 +845,7 @@ function flyLoop(now){
     dLast = now; dTick++;
     var b = cur.inner, L = 2*((b[2]-b[0]) + (b[3]-b[1]));
     dragons.forEach(function(d){
+      if (window.__quiet && !window.__quiet()){ d.br = 0; return; }   // away during the no-fly time
       if (d.br > 0){   // breathing: stands still, fire (or water) streams forward and a little outward
         d.br--;
         var m = mouthAt(d), f = FWD[m[2]], ow = OUTW[m[2]];
@@ -856,7 +859,7 @@ function flyLoop(now){
     var tnow = performance.now();
     for (var k in burns) if (tnow - burns[k].t > 1800 && !burns[k].done){ burns[k].done = true; }
     // the walker may walk off the code and join the dragons over the page
-    if (dragons.length && now > dragons[0].leave && dragons[0].br === 0){
+    if (dragons.length && now > dragons[0].leave && dragons[0].br === 0 && window.__quiet && window.__quiet()){
       var d = dragons[0], p = walkPos(d), r = canvas.getBoundingClientRect(), sc = r.width / cur.W, f = $('pxFront');
       if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:spawn', x: r.left + (p[0] + 15)*sc, y: r.top + (p[1] + 13)*sc, dir: 1}, location.origin);
       dragons = [];
@@ -1008,9 +1011,27 @@ function boot(){
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
     var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
+    if (state.ground){ state.ground = null; cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random'); }   // the ground goes back too
     refreshPixels();   // burnt blocks come back and the walker returns; the website stays
     calm();
   });
+  /* Activity: any tap, key or typing; the ground waits for six quiet seconds */
+  var QUIET_MS = 6000;   // six seconds with nobody touching anything
+  var lastAct = performance.now(), groundBy = 0;
+  ['pointerdown', 'keydown', 'input', 'wheel'].forEach(function(ev){ addEventListener(ev, function(){ lastAct = performance.now(); }, {passive: true, capture: true}); });
+  /* For six seconds after any activity the code is a no-fly zone: the /px dragons are kept out of it and the walker steps off */
+  function quiet(){ return performance.now() - lastAct > QUIET_MS; }
+  setInterval(function(){
+    var f = $('pxFront'); if (!f || !f.contentWindow || !cur) return;
+    var r = canvas.getBoundingClientRect();
+    f.contentWindow.postMessage({type: 'px:nofly', rect: quiet() ? null : [r.left, r.top, r.right, r.bottom]}, location.origin);
+  }, 250);
+  window.__quiet = quiet;
+  function reground(cols){   // same code, same burns and walker; only the ground's colours change
+    state.ground = [cols[0], cols[2], cols[1], cols[2]];
+    cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', state.ground);
+    paintFrame();
+  }
   /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
      until the next dragon flies over */
   var CHEV = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 7 4\' shape-rendering=\'crispEdges\'%3E%3Cpath fill=\'%231f5c4a\' d=\'M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z\'/%3E%3C/svg%3E")';
@@ -1054,6 +1075,17 @@ function boot(){
       e.data.hits.forEach(function(h){ if (h.x >= cr.left && h.x < cr.right && h.y >= cr.top && h.y < cr.bottom) hitArt((h.x - cr.left)*sx, (h.y - cr.top)*sx, h.w); });
     }
     if (performance.now() < calmUntil) return;   // the five calm seconds after a reload, Remix or New scene
+    // after six quiet seconds, a dragon flying over the code changes its ground to its own colours
+    if (cur && performance.now() - lastAct > QUIET_MS){
+      var qr = canvas.getBoundingClientRect();
+      for (var j = 0; j < e.data.list.length; j++){
+        var q = e.data.list[j];
+        if (q.x > qr.left && q.x < qr.right && q.y > qr.top && q.y < qr.bottom){
+          if (q.id !== groundBy){ groundBy = q.id; reground(q.c.map(rgbOf)); }
+          break;
+        }
+      }
+    }
     // every button, the code details, the page title and the projects icon take the colours of a dragon flying over them
     Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, #site, #cap, #siteFree, h1 .px-out, .bento'), function(el){
       var r = el.getBoundingClientRect();
