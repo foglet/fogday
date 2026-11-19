@@ -118,7 +118,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
       <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
       <option value="https://wa.me/?text=Bonjour%21" data-cap="WHATSAPP">WhatsApp</option>
       <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
-      <option value="custom" id="customOpt" hidden>Your website</option>
+      <option value="custom" id="customOpt">Your website</option>
     </select>
   </div>
 
@@ -676,7 +676,6 @@ function dragonPal(r){
 /* The menu: a known website shows its name; a typed one shows "Your website" */
 function showSite(){
   var known = SITES.indexOf(state.url) >= 0;
-  $('customOpt').hidden = known;
   $('site').value = known ? state.url : 'custom';
   if (known) boxStop(false); else if (!box.on && box.url !== state.url) boxStart();
 }
@@ -854,7 +853,14 @@ function boot(){
   showSite();
   $('remix').addEventListener('click', remix);
   function setUrl(u){ state.url = u; syncHash(); draw(true); showSite(); }
-  $('site').addEventListener('change', function(){ $('siteFree').value = bare(this.value); setUrl(this.value); });
+  function openMore(){ $('moreBtn').setAttribute('aria-expanded', 'true'); $('more').hidden = false; }
+  $('site').addEventListener('change', function(){
+    if (this.value === 'custom'){   // "Your website": open More and go to the address box
+      openMore(); var f = $('siteFree'); f.focus(); f.select(); f.scrollIntoView({block: 'center', behavior: reduce ? 'auto' : 'smooth'});
+      return;
+    }
+    $('siteFree').value = bare(this.value); setUrl(this.value);
+  });
   var ut;
   $('siteFree').addEventListener('input', function(){
     var v = this.value.trim();
