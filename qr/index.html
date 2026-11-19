@@ -25,7 +25,7 @@ header,main{position:relative;z-index:1}
 /* Controls are never wider than the code */
 .ctl{max-width:var(--qrw,440px);margin:0 auto}
 /* No card: the scene shows around everything; small text sits on paper chips so it reads over the sky and grass */
-.meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;padding:4px 10px;border-radius:8px;background:rgba(251,248,241,.92)}
+.meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;max-width:var(--qrw,440px);box-sizing:border-box;padding:4px 10px;border-radius:8px;background:rgba(251,248,241,.92)}
 main .field>label{display:inline-block;margin-left:0}
 .field .check{display:inline-flex;padding:0 14px;border-radius:12px;background:rgba(251,248,241,.92)}
 header{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sat) + 10px) calc(12px + var(--sar)) 0 calc(12px + var(--sal))}
