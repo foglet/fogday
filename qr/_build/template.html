@@ -95,6 +95,10 @@ main{margin:0 auto;padding:4px calc(8px + var(--sar)) calc(8px + var(--sab)) cal
 .field select:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important}
 /* No borders on any box or button (focus still shows its red ring) */
 .btn,.field select,.field input:not([type=checkbox]),.meta{border:0!important}
+/* Idle: all backgrounds fully transparent (a soft light halo keeps the words readable on the scene) */
+html.idle .btn,html.idle .meta,html.idle .field input:not(:focus){background-color:transparent!important;background-image:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
+html.idle .field select:not(:focus){background-color:transparent!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
+html.idle #qr{filter:none}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
@@ -671,6 +675,7 @@ function paint(img){
   canvas.style.width = (cur.W*k/dpr) + 'px'; canvas.style.height = (cur.H*k/dpr) + 'px';
   document.documentElement.style.setProperty('--qrw', Math.round(cur.W*k/dpr) + 'px');
   ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);   // the idle ground is transparent: no old frame may show through
   ctx.drawImage(art, 0, 0, cur.W*k, cur.H*k);
 }
 function draw(animate){
@@ -797,9 +802,19 @@ function walkPos(d){
 var burns = {}, sparks = [], nBurn = 0;
 function ignite(k, water){ if (!cur.halo[k] || burns[k]) return; burns[k] = {t: performance.now(), water: water}; nBurn++; startFlying(); }
 function hitArt(ax, ay, water){ var P = cur.P; ignite(Math.floor(ax/P) + ',' + Math.floor(ay/P), water); }
+/* Idle (ten quiet seconds): the code's light ground turns fully transparent, so only its dark squares sit on the scene.
+   Any tap brings the ground back for scanning. */
+var IDLE = false;
+function groundMask(){
+  if (cur.gmask) return cur.gmask;
+  var d = cur.data, m = new Uint8Array(d.length/4);
+  for (var i = 0; i < m.length; i++) m[i] = (0.2126*d[i*4] + 0.7152*d[i*4+1] + 0.0722*d[i*4+2]) > 140 ? 1 : 0;   // light = ground; the code's dark squares stay
+  return (cur.gmask = m);
+}
 function frameData(){
-  if ((!dragons.length && !nBurn && !sparks.length) || !cur.inner) return cur.data;
+  if ((!dragons.length && !nBurn && !sparks.length && !IDLE) || !cur.inner) return cur.data;
   var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H, now = performance.now(), P = cur.P;
+  if (IDLE){ var gm = groundMask(); for (var gi = 0; gi < gm.length; gi++) if (gm[gi]) out[gi*4+3] = 0; }
   for (var k in burns){
     var b = burns[k], age = now - b.t, mx = +k.split(',')[0], my = +k.split(',')[1];
     for (var yy = my*P; yy < my*P + P && yy < H; yy++) for (var xx = mx*P; xx < mx*P + P && xx < W; xx++){
@@ -807,12 +822,12 @@ function frameData(){
       if (!b.water && age < 700) c = FIRE[Math.floor(Math.random()*4)];
       else if (age < (b.water ? 900 : 1700)){ var gv = Math.round((out[o] + out[o+1] + out[o+2])/3*0.6 + 70); c = [gv, gv, gv]; }
       else c = cur.bgAt(xx, yy);
-      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2];
+      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = (IDLE && age >= (b.water ? 900 : 1700)) ? 0 : 255;
     }
   }
   sparks.forEach(function(p){
     var X = Math.round(p.x), Y = Math.round(p.y);
-    if (X >= 0 && Y >= 0 && X < W && Y < H){ var pal = p.water ? WATER : FIRE, c = pal[Math.min(pal.length-1, Math.floor(p.n/p.life*pal.length))], o = (Y*W + X)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; }
+    if (X >= 0 && Y >= 0 && X < W && Y < H){ var pal = p.water ? WATER : FIRE, c = pal[Math.min(pal.length-1, Math.floor(p.n/p.life*pal.length))], o = (Y*W + X)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = 255; }
   });
   (window.__quiet && !window.__quiet() ? [] : dragons).forEach(function(d){   // the walker is away while the code is a no-fly zone
     var p = walkPos(d), ox = Math.round(p[0]), oy = Math.round(p[1]), rot = p[2];
@@ -825,7 +840,7 @@ function frameData(){
       X += ox; Y += oy;
       if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
       var c = d.pal[ch] || d.pal[2], o = (Y*W + X)*4;
-      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2];
+      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = 255;
     }
   });
   return out;
@@ -1018,13 +1033,16 @@ function boot(){
   /* Activity: any tap, key or typing; the ground waits for six quiet seconds */
   var QUIET_MS = 6000;   // six seconds with nobody touching anything
   var lastAct = performance.now(), groundBy = 0;
-  ['pointerdown', 'keydown', 'input', 'wheel'].forEach(function(ev){ addEventListener(ev, function(){ lastAct = performance.now(); }, {passive: true, capture: true}); });
+  var IDLE_MS = 10000;   // after ten quiet seconds every box, button, the menu and the code's ground go fully transparent
+  function setIdle(on){ if (on === IDLE) return; IDLE = on; document.documentElement.classList.toggle('idle', on); if (cur) paintFrame(); }
+  ['pointerdown', 'keydown', 'input', 'wheel'].forEach(function(ev){ addEventListener(ev, function(){ lastAct = performance.now(); setIdle(false); }, {passive: true, capture: true}); });
   /* For six seconds after any activity the code is a no-fly zone: the /px dragons are kept out of it and the walker steps off */
   function quiet(){ return performance.now() - lastAct > QUIET_MS; }
   setInterval(function(){
     var f = $('pxFront'); if (!f || !f.contentWindow || !cur) return;
     var r = canvas.getBoundingClientRect();
     f.contentWindow.postMessage({type: 'px:nofly', rect: quiet() ? null : [r.left, r.top, r.right, r.bottom]}, location.origin);
+    setIdle(performance.now() - lastAct > IDLE_MS);
   }, 250);
   window.__quiet = quiet;
   function reground(cols){   // same code, same burns and walker; only the ground's colours change
