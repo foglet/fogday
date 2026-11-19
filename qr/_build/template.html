@@ -31,6 +31,12 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .meta{margin:0 0 14px;text-align:center;font:400 13px/1.3 var(--pixel);color:var(--muted);letter-spacing:.04em}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
 .row>*{flex:1 1 calc(50% - 4px)}
+.row>.wide{flex-basis:100%}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border:0;margin:6px 0 10px;padding:0}
+.seg legend{padding:0;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
+.seg .btn{min-height:44px;font-size:14px;padding:0 8px}
+.seg .btn[aria-pressed="true"]{background:var(--felt);color:#fff;border-color:var(--felt-d)}
+.hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
 .btn.primary{background:var(--felt);color:#fff;border-color:var(--felt-d);flex-basis:100%;font-size:18px;min-height:54px}
@@ -59,7 +65,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><span class="bento-grid" aria-hidden="true"></span></a>
 </header>
 <main>
-  <p class="lede">A new lo-res code for fogday.com every time. They all scan.</p>
+  <p class="lede">A new lo-res code every time you remix. They all scan.</p>
   <div class="stage"><canvas id="qr" role="img" aria-label="QR code for https://fogday.com" width="1" height="1"></canvas></div>
   <p class="meta" id="meta" aria-live="off"></p>
 
@@ -69,14 +75,24 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
     <label for="file" class="btn" id="fileLabel">Add picture</label>
     <button type="button" class="btn" id="text">Text it</button>
     <button type="button" class="btn" id="save">Save PNG</button>
-    <button type="button" class="btn" id="copy">Copy link</button>
+    <button type="button" class="btn" id="svg">Save SVG</button>
+    <button type="button" class="btn wide" id="copy">Copy link</button>
   </div>
 
   <div class="pic" id="pic"><span>Picture colors on</span><button type="button" class="btn" id="unpic">Remove picture</button></div>
 
   <div class="field">
+    <label for="site">Website</label>
+    <input id="site" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="fogday.com" style="text-transform:none">
+    <p class="hint" id="siteHint">The code opens https://fogday.com</p>
+  </div>
+
+  <fieldset class="seg" id="corners"><legend>Corner markers</legend></fieldset>
+
+  <div class="field">
     <label for="cap">Caption under the code</label>
-    <input id="cap" maxlength="22" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Leave blank for none">
+    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Auto">
+    <p class="hint">Blank shows the website. A single space shows no caption.</p>
   </div>
 
   <fieldset class="styles" id="styles"><legend>Style</legend><div class="row" id="styleRow"></div></fieldset>
@@ -90,9 +106,17 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 var URL_TEXT = 'https://fogday.com';
 var LS = 'qr:';
 
-/* ---------- QR encoder: byte mode, versions 1 to 10, any level, any mask ---------- */
-var ECC = {L:[7,10,15,20,26,18,20,24,30,18],M:[10,16,26,18,24,16,18,22,22,26],Q:[13,22,18,26,18,24,18,22,20,24],H:[17,28,22,16,22,28,26,26,24,28]};
-var BLK = {L:[1,1,1,1,1,2,2,2,2,4],M:[1,1,1,2,2,4,4,4,5,5],Q:[1,1,2,2,4,4,6,6,8,8],H:[1,1,2,4,4,4,5,6,8,8]};
+/* ---------- QR encoder: byte mode, versions 1 to 40, any level, any mask ---------- */
+var ECC = {
+  L:[7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+  M:[10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+  Q:[13,22,18,26,18,24,18,22,20,24,28,26,24,20,30,24,28,28,26,30,28,30,30,30,30,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+  H:[17,28,22,16,22,28,26,26,24,28,24,28,22,24,24,30,28,28,26,28,30,24,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]};
+var BLK = {
+  L:[1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+  M:[1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49],
+  Q:[1,1,2,2,4,4,6,6,8,8,8,10,12,16,12,17,16,18,21,20,23,23,25,27,29,34,34,35,38,40,43,45,48,51,53,56,59,62,65,68],
+  H:[1,1,2,4,4,4,5,6,8,8,11,11,16,16,18,16,19,21,25,25,25,34,30,32,35,37,40,42,45,48,51,54,57,60,63,66,70,74,77,81]};
 var FMT = {L:1,M:0,Q:3,H:2};
 function rawModules(v){
   var r = (16*v+128)*v+64;
@@ -101,7 +125,7 @@ function rawModules(v){
 }
 function dataCap(v,e){ return Math.floor(rawModules(v)/8) - ECC[e][v-1]*BLK[e][v-1]; }
 function minVersion(len,e){
-  for (var v = 1; v <= 10; v++) if (4 + (v < 10 ? 8 : 16) + 8*len <= dataCap(v,e)*8) return v;
+  for (var v = 1; v <= 40; v++) if (4 + (v < 10 ? 8 : 16) + 8*len <= dataCap(v,e)*8) return v;
   return 0;
 }
 function gmul(x,y){
@@ -279,7 +303,7 @@ var STYLES = {
         f2: toLum(hsl(h2, 50 + r()*30, 55), 0.1 + r()*0.05),
         shape: pick(r,['flat','brick','gem','dither','round','round','brick']),
         paper: pick(r,['plain','plain','speck']),
-        finder: pick(r,['square','round','eye','eye']),
+        finder: pick(r,['square','round','eye','dot','bevel']),
         frame: pick(r,['bands','checker','stars','plain']),
         mixDark: r() < 0.35
       };
@@ -287,11 +311,19 @@ var STYLES = {
   }
 };
 
-var TEXTS = [URL_TEXT, URL_TEXT + '/'];
-function makeCode(r){
-  var text = pick(r,TEXTS), bytes = new TextEncoder().encode(text);
-  var e = pick(r,['M','Q','Q','H','H']), v0 = minVersion(bytes.length,e), v = v0 + (r() < 0.35 ? 1 : 0);
-  return encode(bytes, e, v, Math.floor(r()*8));
+/* Smallest code that holds the address (sometimes one size up), so the picture stays chunky */
+function makeCode(r, url){
+  var text = /^https?:\/\/[^\/]+$/i.test(url) && r() < 0.5 ? url + '/' : url, bytes = new TextEncoder().encode(text);
+  var levels = ['M','Q','Q','H','H'].filter(function(e){ return minVersion(bytes.length,e) > 0; });
+  var e = levels.length ? pick(r,levels) : 'L';
+  var v = Math.min(40, minVersion(bytes.length,e) + (r() < 0.35 ? 1 : 0));
+  var c = encode(bytes, e, v, Math.floor(r()*8)); c.text = text; return c;
+}
+function normUrl(s){
+  s = (s || '').trim().replace(/\s+/g,'');
+  if (!s) return URL_TEXT;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s;
+  return s;
 }
 
 /* Sample the picture into a size x size grid of colours (cover crop) */
@@ -304,9 +336,17 @@ function sampleImage(img,n){
   return g.getImageData(0,0,n,n).data;
 }
 
+/* Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the whole picture about 90 to 130 px wide).
+   3 px per module for short addresses; long addresses drop to 2 or 1 px per module to stay near that width. */
 var P = 3, QZ = 4, OUT = [36,22,48];
-function render(seed, styleId, caption, img){
-  var r = rng(seed), code = makeCode(r), R = STYLES[styleId].recipe(r);
+function render(seed, styleId, caption, img, url, finder){
+  var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
+  if (finder && finder !== 'random') R.finder = finder;
+  P = Math.max(1, Math.min(3, Math.round(115 / (code.size + QZ*2))));
+  if (P < 3){   // shaded and rounded shapes need 3 px per module
+    if (R.shape !== 'dither') R.shape = 'flat';
+    if (R.finder !== 'square' && R.finder !== 'bevel') R.finder = 'square';
+  }
   var N = code.size, C = (N + QZ*2) * P, fw = 2*P, gs = glyphs(caption.trim()), tw = textWidth(gs);
   var ls = caption.trim() ? Math.max(1, Math.min(2, Math.floor((C - 4)/tw))) : 0;
   var bottom = ls ? Math.max(fw, 5*ls + 2*P) : fw;
@@ -359,6 +399,19 @@ function render(seed, styleId, caption, img){
             px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue;
           }
         }
+        if (R.finder === 'dot' && kind === 2){
+          var fx3 = (x <= 7 ? 0 : N-7), fy3 = (y <= 7 ? 0 : N-7), cx3 = x-fx3, cy3 = y-fy3;
+          if ((cx3 === 2 || cx3 === 4) && (cy3 === 2 || cy3 === 4) && ((cx3 === 2) === (sx === 0)) && ((cy3 === 2) === (sy === 0)) && sx !== 1 && sy !== 1){
+            px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue;
+          }
+        }
+        if (R.finder === 'round' && kind === 2){
+          var fx4 = (x <= 7 ? 0 : N-7), fy4 = (y <= 7 ? 0 : N-7), cx4 = x-fx4, cy4 = y-fy4;
+          if ((cx4 === 2 || cx4 === 4) && (cy4 === 2 || cy4 === 4) && ((cx4 === 2) === (sx === 0)) && ((cy4 === 2) === (sy === 0)) && sx !== 1 && sy !== 1){
+            px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue;
+          }
+        }
+        if (R.finder === 'bevel'){ lvl = (sx === 0 || sy === 0) ? 0 : ((sx === P-1 || sy === P-1) ? 2 : 1); }
         if (R.finder === 'eye' && kind === 2){
           var fx2 = (x <= 7 ? 0 : N-7), fy2 = (y <= 7 ? 0 : N-7);
           lvl = (x-fx2 === 2 && y-fy2 === 2 && sx === 0 && sy === 0) ? 0 : 1;
@@ -394,19 +447,32 @@ function render(seed, styleId, caption, img){
   }
   var grad = 'linear-gradient(to right,' + [toLum(R.dark[0],0.18), R.f1, toLum(R.accent[0],0.2)].map(css).join(',') + ')';
   if (pic) grad = 'linear-gradient(to right,' + css(toLum(avg,0.12)) + ',' + css(R.f1) + ',' + css(toLum(avg,0.22)) + ')';
-  return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape};
+  return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder};
 }
 
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', img: null}, cur = null, prev = null, anim = 0;
+var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', capAuto: true, img: null, url: URL_TEXT, finder: 'random'}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
 function load(k){ try { return localStorage.getItem(LS+k); } catch (err) { return null; } }
 function newSeed(){ return 1 + Math.floor(Math.random()*999998); }
-function shareUrl(){ return location.origin + location.pathname + '#' + state.seed; }
+function hashFor(){
+  var h = '#' + state.seed;
+  if (state.url !== URL_TEXT) h += '&u=' + encodeURIComponent(state.url.replace(/^https:\/{2}/,''));
+  if (state.finder !== 'random') h += '&c=' + state.finder;
+  return h;
+}
+function shareUrl(){ return location.origin + location.pathname + hashFor(); }
+function readHash(){
+  var parts = location.hash.slice(1).split('&'), out = {seed: parseInt(parts[0],10)};
+  parts.slice(1).forEach(function(kv){ var i = kv.indexOf('='); if (i > 0) out[kv.slice(0,i)] = decodeURIComponent(kv.slice(i+1)); });
+  return out;
+}
+function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
+var FINDERS = [['random','Random'],['square','Square'],['round','Round'],['eye','Eye'],['dot','Dot'],['bevel','Bevel']];
 function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(){ s.textContent = msg; }, 30); }
 
 function scale(){
@@ -424,11 +490,12 @@ function paint(img){
 }
 function draw(animate){
   prev = cur;
-  cur = render(state.seed, state.style, state.caption, state.img);
+  cur = render(state.seed, state.style, state.capAuto ? host(state.url) : state.caption, state.img, state.url, state.finder);
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
-  $('meta').textContent = 'No. ' + state.seed + '  ·  ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
-  canvas.setAttribute('aria-label', 'Pixel QR code number ' + state.seed + ' for ' + URL_TEXT);
+  $('meta').textContent = 'No. ' + state.seed + '  ·  version ' + c.v + ', ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
+  canvas.setAttribute('aria-label', 'Pixel QR code number ' + state.seed + ' for ' + c.text);
+  $('siteHint').textContent = 'The code opens ' + c.text;
   var full = new ImageData(cur.data, cur.W, cur.H);
   cancelAnimationFrame(anim);
   if (!animate || reduce || !prev || prev.W !== cur.W || prev.H !== cur.H){ paint(full); return; }
@@ -446,9 +513,10 @@ function draw(animate){
     if (p < 1) anim = requestAnimationFrame(step); else paint(full);
   })(t0);
 }
+function syncHash(){ history.replaceState(null, '', hashFor()); }
 function remix(){
   state.seed = newSeed();
-  history.replaceState(null, '', '#' + state.seed);
+  syncHash();
   draw(true);
 }
 function pngBlob(cb){
@@ -459,15 +527,35 @@ function pngBlob(cb){
   g.drawImage(art, 0, 0, c.width, c.height);
   c.toBlob(cb, 'image/png');
 }
-function fileName(){ return 'fogday-qr-' + state.seed + '.png'; }
+function fileName(ext){ return host(state.url).toLowerCase().replace(/[^a-z0-9.-]+/g,'-').replace(/\./g,'-') + '-qr-' + state.seed + '.' + (ext || 'png'); }
+/* SVG: one rect per horizontal run of same-colour art pixels, crisp edges, scales to any size */
+function svgText(){
+  var W = cur.W, H = cur.H, d = cur.data, k = Math.max(1, Math.ceil(1200/W)), out = [], y, x;
+  out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W*k + '" height="' + H*k + '" shape-rendering="crispEdges">');
+  out.push('<title>QR code for ' + cur.code.text.replace(/[<>&"]/g,'') + '</title>');
+  var groups = {};
+  for (y = 0; y < H; y++){
+    x = 0;
+    while (x < W){
+      var o = (y*W+x)*4, key = '#' + ((1<<24) | (d[o]<<16) | (d[o+1]<<8) | d[o+2]).toString(16).slice(1), x0 = x;
+      do { x++; o += 4; } while (x < W && '#' + ((1<<24) | (d[o]<<16) | (d[o+1]<<8) | d[o+2]).toString(16).slice(1) === key);
+      (groups[key] = groups[key] || []).push('M' + x0 + ' ' + y + 'h' + (x-x0) + 'v1h-' + (x-x0) + 'z');
+    }
+  }
+  Object.keys(groups).forEach(function(c){ out.push('<path fill="' + c + '" d="' + groups[c].join('') + '"/>'); });
+  out.push('</svg>');
+  return out.join('\n');
+}
+function download(blob, name){
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  say('Saved ' + name);
+}
+function saveSvg(){ download(new Blob([svgText()], {type:'image/svg+xml'}), fileName('svg')); }
 function save(){
-  pngBlob(function(b){
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(b); a.download = fileName();
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
-    say('Saved ' + fileName());
-  });
+  pngBlob(function(b){ download(b, fileName('png')); });
 }
 function copyLink(){
   var u = shareUrl();
@@ -478,9 +566,9 @@ function textIt(){
   pngBlob(function(b){
     var file = new File([b], fileName(), {type:'image/png'});
     if (navigator.canShare && navigator.canShare({files:[file]})){
-      navigator.share({files:[file], text: URL_TEXT}).catch(function(){});
+      navigator.share({files:[file], text: cur.code.text}).catch(function(){});
     } else if (navigator.share){
-      navigator.share({title:'Pixel QR', text: URL_TEXT, url: shareUrl()}).catch(function(){});
+      navigator.share({title:'Pixel QR', text: cur.code.text, url: shareUrl()}).catch(function(){});
     } else if (/iPhone|iPad|Android/i.test(navigator.userAgent)){
       location.href = 'sms:?&body=' + encodeURIComponent(shareUrl());
     } else { copyLink(); say('This browser cannot text. Link copied instead.'); }
@@ -497,6 +585,20 @@ function setPicture(file){
   im.src = u;
 }
 
+function initCorners(){
+  var box = $('corners');
+  FINDERS.forEach(function(f){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn'; b.textContent = f[1]; b.dataset.f = f[0];
+    b.setAttribute('aria-pressed', String(f[0] === state.finder));
+    b.addEventListener('click', function(){
+      state.finder = f[0]; store('finder', f[0]); syncHash();
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+      draw(false);
+    });
+    box.appendChild(b);
+  });
+}
 function initStyles(){
   var ids = Object.keys(STYLES);
   if (ids.length < 2) return;
@@ -515,16 +617,33 @@ function initStyles(){
 }
 
 function boot(){
-  var h = parseInt(location.hash.slice(1), 10);
+  var hs = readHash(), h = hs.seed;
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
-  if (!(h > 0)) history.replaceState(null, '', '#' + state.seed);
   var st = load('style'); if (st && STYLES[st]) state.style = st;
-  var cp = load('caption'); if (cp !== null) state.caption = cp;
-  $('cap').value = state.caption;
+  var su = hs.u || load('url'); if (su) state.url = normUrl(su);
+  var sf = hs.c || load('finder'); if (sf && FINDERS.some(function(f){ return f[0] === sf; })) state.finder = sf;
+  var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
+  syncHash();
+  $('site').value = state.url === URL_TEXT ? '' : state.url.replace(/^https:\/{2}/,'');
+  $('cap').value = state.capAuto ? '' : state.caption;
+  $('cap').placeholder = 'Auto: ' + host(state.url);
   initStyles();
+  initCorners();
   draw(false);
   $('remix').addEventListener('click', remix);
   $('save').addEventListener('click', save);
+  $('svg').addEventListener('click', saveSvg);
+  var ut;
+  $('site').addEventListener('input', function(){
+    var v = this.value;
+    clearTimeout(ut); ut = setTimeout(function(){
+      var u = normUrl(v), bytes = new TextEncoder().encode(u).length;
+      if (!minVersion(bytes,'L')){ say('That address is too long for a QR code'); return; }
+      state.url = u; store('url', u === URL_TEXT ? '' : u);
+      $('cap').placeholder = 'Auto: ' + host(u);
+      syncHash(); draw(false);
+    }, 250);
+  });
   $('copy').addEventListener('click', copyLink);
   $('text').addEventListener('click', textIt);
   $('file').addEventListener('change', function(){ setPicture(this.files[0]); this.value = ''; });
@@ -535,19 +654,21 @@ function boot(){
   $('fileLabel').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
   var t;
   $('cap').addEventListener('input', function(){
-    state.caption = this.value.replace(/[^\x20-\x7e]/g, ''); store('caption', state.caption);
+    state.caption = this.value.replace(/[^\x20-\x7e]/g, '');
+    state.capAuto = this.value === '';
+    if (state.capAuto){ try { localStorage.removeItem(LS+'caption'); } catch (err) {} } else store('caption', state.caption);
     clearTimeout(t); t = setTimeout(function(){ draw(false); }, 120);
   });
   document.addEventListener('keydown', function(e){
     if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey && !e.altKey && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) remix();
   });
   window.addEventListener('hashchange', function(){
-    var n = parseInt(location.hash.slice(1), 10);
+    var n = readHash().seed;
     if (n > 0 && n !== state.seed){ state.seed = n; draw(true); }
   });
   var rt;
   window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (cur) paint(new ImageData(cur.data, cur.W, cur.H)); }, 100); });
-  window.__qr = {render: render, encode: encode, state: state};
+  window.__qr = {render: render, encode: encode, state: state, svg: svgText};
 }
 boot();
 })();
