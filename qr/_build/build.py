@@ -3,6 +3,10 @@ Edit template.html, never ../index.html, then run: python3 build.py"""
 import json, pathlib
 root = pathlib.Path(__file__).parent
 html = (root / "template.html").read_text(encoding="utf-8")
+spr = json.loads((root / "sprites.json").read_text())   # /px dragon sprites, flying frames 8 and 9 only (30x26 each)
+assert len(spr) == 9 and all(len(v) == 2 and all(len(f) == 780 for f in v) for v in spr.values())
+assert "/*SPRITES*/" in html
+html = html.replace("/*SPRITES*/", json.dumps(spr, separators=(",", ":")))
 # Guard: a // comment pasted into the middle of a line comments out the rest of it (a lost "}" breaks the whole page).
 # Count braces through the script, skipping strings and comments; they must balance, and each top-level function
 # must start at the IIFE's depth (1).

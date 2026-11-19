@@ -36,6 +36,9 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .seg legend{padding:0;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
 .seg .btn{min-height:44px;font-size:14px;padding:0 8px}
 .seg .btn[aria-pressed="true"]{background:var(--felt);color:#fff;border-color:var(--felt-d)}
+.field .check,.check{display:flex;margin:0;align-items:center;gap:12px;min-height:48px;font:400 16px/1.2 var(--pixel);letter-spacing:.04em;color:var(--ink);cursor:pointer}
+.check input{width:24px;height:24px;margin:0;accent-color:var(--felt)}
+.check input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
@@ -52,7 +55,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .field label{display:block;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
 .field select{width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.04em;-webkit-appearance:none;appearance:none}
 .field select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.field input{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
+.field input:not([type=checkbox]){width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 .styles{display:none;border:0;margin:0 0 10px;padding:0}
 .styles.on{display:block}
 .styles legend{padding:0;margin:0 0 4px;font:400 13px/1.3 var(--pixel);color:var(--muted)}
@@ -85,19 +88,20 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
       <option value="https://ohlonesky.com">ohlonesky.com</option>
       <option value="https://oysteratlas.com">oysteratlas.com</option>
     </select>
-    <p class="hint" id="siteHint">The code opens https://fogday.com</p>
+    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Or type a website" aria-label="Or type a website" style="text-transform:none;margin-top:8px">
   </div>
 
   <div class="field">
-    <label for="cap">Caption under the code</label>
-    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Auto">
-    <p class="hint">Blank shows the website. A single space shows no caption.</p>
+    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption under the code" aria-label="Caption under the code">
+  </div>
+
+  <div class="field">
+    <label class="check"><input type="checkbox" id="dragons"> Flying dragons</label>
   </div>
 
   <fieldset class="styles" id="styles"><legend>Style</legend><div class="row" id="styleRow"></div></fieldset>
 
   <p class="status" id="status" role="status" aria-live="polite"></p>
-  <p class="note">Your picture stays on your device. Press R to remix.</p>
 </main>
 <script>
 (function(){
@@ -379,13 +383,14 @@ function mixRgb(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i] +
    No frame: past the quiet zone the code's own pattern drifts outward and thins away (the halo). */
 var P = 3, QZ = 4, OUT = [36,22,48];
 var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only: it does not scan
-function render(seed, styleId, caption, img, url, finder){
+function render(seed, styleId, caption, img, url, finder, dragons){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
   R.shape = 'flat';   // solid blocks
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
-  var N = code.size, HW = R.halo + (img ? 3 : 0), M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
+  var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
   P = Math.max(1, Math.min(3, Math.round(140 / M)));
+  if (dragons){ HW = Math.max(HW, Math.ceil(34 / P)); M = N + 2*QZ + 2*HW; off = HW + QZ; }   // a lane for dragons, clear of the quiet zone
   if (P < 3){   // shaded and rounded shapes need 3 px per module; the drawn corner shapes work at any size
     if (R.shape !== 'dither') R.shape = 'flat';
     if (!SUPER[R.finder] && R.finder !== 'bevel') R.finder = 'square';
@@ -434,7 +439,7 @@ function render(seed, styleId, caption, img, url, finder){
       continue;
     }
     var vx = x - cx, vy = y - cy, vl = Math.hypot(vx,vy) || 1, along = (vx*dirx + vy*diry)/vl;
-    var p = R.dens * Math.pow(Math.max(0, 1 - (d2-1)/(HW+2)), 1.1) * (1 + R.driftK*along) * (0.25 + 1.3*noise(x,y));
+    var p = R.dens * Math.pow(Math.max(0, 1 - (d2-1)/(HW0+2)), 1.1) * (1 + R.driftK*along) * (0.25 + 1.3*noise(x,y));
     var sx = ((Math.round(x - dirx*d2*R.streak - off) % N) + N) % N, sy = ((Math.round(y - diry*d2*R.streak - off) % N) + N) % N;
     var bit = code.fn[sy*N+sx] ? r() < 0.5 : code.mod[sy*N+sx];   // the code's data texture, not its timing rows
     if (bit && r() < p){ D[k] = 1; FADE[k] = Math.min(0.7, Math.max(0, d2-1)/(HW+1)); }
@@ -525,29 +530,25 @@ function render(seed, styleId, caption, img, url, finder){
   if (ls){
     var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 3 - Math.max(0, Math.floor((HW*P - 5*ls - 4)/2));
     for (var py = ty - ls; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
-      if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, mixRgb(bg(pxx,py), [0,0,0], 0.62));   // nametag plate
+      if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : bg(pxx,py));   // plate: the light ground
     gs.forEach(function(g){
-      for (var gy = 0; gy < 5; gy++) for (var gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
-        for (var yy = 0; yy < ls; yy++) for (var xx = 0; xx < ls; xx++){
-          var X = tx + gx*ls + xx, Y = ty + gy*ls + yy;
-          if (X+ls < W && Y+ls < H) px(X+ls, Y+ls, [63,63,63]);   // text shadow
-        }
+      var gy, gx, yy, xx, X, Y;
       for (gy = 0; gy < 5; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (yy = 0; yy < ls; yy++) for (xx = 0; xx < ls; xx++){
           X = tx + gx*ls + xx; Y = ty + gy*ls + yy;
-          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, [255,255,255]);
+          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, R.bodyM[texShade(X, Y, R.tseed)]);   // letters in the code's block colours
         }
       tx += (g[0].length + 1)*ls;
     });
   }
   var grad = 'linear-gradient(to right,' + [toLum(R.dark[0],0.16), toLum(R.accent[0],0.22), toLum(R.dark2[0],0.2)].map(css).join(',') + ')';
-  return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder};
+  return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P]};
 }
 
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', capAuto: true, img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
+var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', capAuto: true, img: null, url: URL_TEXT, dragons: false}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
@@ -583,15 +584,16 @@ function paint(img){
 }
 function draw(animate){
   prev = cur;
-  cur = render(state.seed, state.style, state.capAuto ? host(state.url) : state.caption, state.img, state.url, 'random');
+  cur = render(state.seed, state.style, state.capAuto ? host(state.url) : state.caption, state.img, state.url, 'random', state.dragons);
+  makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
   $('meta').textContent = 'No. ' + state.seed + '  ·  version ' + c.v + ', ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
   canvas.setAttribute('aria-label', 'Pixel QR code number ' + state.seed + ' for ' + c.text);
-  $('siteHint').textContent = 'The code opens ' + c.text;
   var full = new ImageData(cur.data, cur.W, cur.H);
-  cancelAnimationFrame(anim);
-  if (!animate || reduce || !prev || prev.W !== cur.W || prev.H !== cur.H){ paint(full); return; }
+  cancelAnimationFrame(anim); revealing = false;
+  if (!animate || reduce || !prev || prev.W !== cur.W || prev.H !== cur.H){ paintFrame(); return; }
+  revealing = true;
   // reveal the new code in 3x3 blocks
   var from = prev.data, to = cur.data, W = cur.W, H = cur.H, bw = Math.ceil(W/3), noise = new Float32Array(bw*Math.ceil(H/3)), t0 = performance.now();
   for (var i = 0; i < noise.length; i++) noise[i] = Math.random();
@@ -603,9 +605,69 @@ function draw(animate){
       mix[o] = src[o]; mix[o+1] = src[o+1]; mix[o+2] = src[o+2]; mix[o+3] = 255;
     }
     paint(new ImageData(mix, W, H));
-    if (p < 1) anim = requestAnimationFrame(step); else paint(full);
+    if (p < 1) anim = requestAnimationFrame(step); else { revealing = false; paintFrame(); }
   })(t0);
 }
+/* ---------- flying dragons (the /px sprites, flying frames only), in a lane outside the quiet zone ---------- */
+var SPR = /*SPRITES*/, SW = 30, SH = 26, DFIX = {1:[36,22,48], 7:[250,236,200], 8:[255,214,60], 9:[20,14,30]};
+var dragons = [], revealing = false, dAnim = 0, dTick = 0, dLast = 0;
+function hsv(h, s, v){
+  h = ((h%360)+360)%360/60; s = Math.min(1,s);
+  var i = Math.floor(h), f = h-i, p = v*(1-s), q = v*(1-s*f), u = v*(1-s*(1-f));
+  return [[v,u,p],[q,v,p],[p,v,u],[p,q,v],[u,p,v],[v,p,q]][i%6].map(function(x){ return Math.round(x*255); });
+}
+function dragonPal(r){
+  var b = Math.floor(r()*360), w = b + 150, l = b + 40, sa = 0.5 + r()*0.4, va = 0.75 + r()*0.2;
+  var p = {2:hsv(b,sa,va), 3:hsv(b,sa+0.08,va*0.7), 4:hsv(l,0.3,1), 5:hsv(w,sa+0.06,va), 6:hsv(w,sa+0.13,va*0.72), 12:hsv(w,sa+0.15,va*0.62)};
+  p[10] = p[5]; p[11] = p[5];
+  for (var k in DFIX) p[k] = DFIX[k];
+  return p;
+}
+function makeDragons(){
+  dragons = [];
+  if (!state.dragons) return;
+  var r = rng(state.seed ^ 0x5bd1e995), sets = Object.keys(SPR), n = 2 + Math.floor(r()*3), dir = r() < 0.5 ? 1 : -1;
+  for (var i = 0; i < n; i++) dragons.push({set: SPR[pick(r,sets)], pal: dragonPal(r), t: (i + r()*0.4)/n, v: (0.0009 + r()*0.0008)*dir, ph: r()*6, face: dir});
+}
+function lane(t){   // a loop around the code, sprite top-left corner
+  var W = cur.W, H = cur.H, xL = 1, xR = W - SW - 1, yT = 1, yB = H - SH - 1, a = xR - xL, b = yB - yT, L = 2*(a+b), d = (((t % 1) + 1) % 1) * L;
+  if (d < a) return [xL + d, yT];
+  if (d < a + b) return [xR, yT + d - a];
+  if (d < 2*a + b) return [xR - (d - a - b), yB];
+  return [xL, yB - (d - 2*a - b)];
+}
+function frameData(){
+  if (!dragons.length) return cur.data;
+  var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H;
+  dragons.forEach(function(d){
+    var p = lane(d.t), p2 = lane(d.t + d.v*4), dx = p2[0] - p[0];
+    if (Math.abs(dx) > 0.01) d.face = dx > 0 ? 1 : -1;
+    var ox = Math.round(p[0]), oy = Math.max(0, Math.min(H - SH, Math.round(p[1] + Math.sin(dTick*0.12 + d.ph)*1.2)));
+    var fr = d.set[(Math.floor(dTick/5 + d.ph) % 2)];
+    for (var y = 0; y < SH; y++) for (var x = 0; x < SW; x++){
+      var ch = fr.charCodeAt(y*SW + x) - 48;
+      if (ch <= 0) continue;
+      var X = ox + (d.face > 0 ? x : SW - 1 - x), Y = oy + y;
+      if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
+      var c = d.pal[ch] || d.pal[2], o = (Y*W + X)*4;
+      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2];
+    }
+  });
+  return out;
+}
+function paintFrame(){ paint(new ImageData(frameData(), cur.W, cur.H)); }
+function flyLoop(now){
+  dAnim = 0;
+  if (!dragons.length || reduce) return;
+  if (!revealing && now - dLast > 45){
+    dLast = now; dTick++;
+    dragons.forEach(function(d){ d.t += d.v; });
+    paintFrame();
+  }
+  dAnim = requestAnimationFrame(flyLoop);
+}
+function startFlying(){ if (!dAnim && dragons.length && !reduce) dAnim = requestAnimationFrame(flyLoop); }
+
 function syncHash(){ history.replaceState(null, '', hashFor()); }
 function remix(){
   state.seed = newSeed();
@@ -616,26 +678,23 @@ function pngBlob(cb){
   var k = Math.max(1, Math.ceil(1200/cur.W)), c = document.createElement('canvas');
   c.width = cur.W*k; c.height = cur.H*k;
   var g = c.getContext('2d'); g.imageSmoothingEnabled = false;
-  art.width = cur.W; art.height = cur.H; art.getContext('2d').putImageData(new ImageData(cur.data, cur.W, cur.H), 0, 0);
+  art.width = cur.W; art.height = cur.H; art.getContext('2d').putImageData(new ImageData(frameData(), cur.W, cur.H), 0, 0);
   g.drawImage(art, 0, 0, c.width, c.height);
   c.toBlob(cb, 'image/png');
 }
 function fileName(ext){ return host(state.url).toLowerCase().replace(/[^a-z0-9.-]+/g,'-').replace(/\./g,'-') + '-qr-' + state.seed + '.' + (ext || 'png'); }
-function copyLink(){
-  var u = shareUrl();
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(function(){ say('Link copied'); }, function(){ say(u); });
-  else say(u);
-}
 function textIt(){
   pngBlob(function(b){
     var file = new File([b], fileName(), {type:'image/png'});
     if (navigator.canShare && navigator.canShare({files:[file]})){
       navigator.share({files:[file], text: cur.code.text}).catch(function(){});
-    } else if (navigator.share){
-      navigator.share({title:'Pixel QR', text: cur.code.text, url: shareUrl()}).catch(function(){});
-    } else if (/iPhone|iPad|Android/i.test(navigator.userAgent)){
-      location.href = 'sms:?&body=' + encodeURIComponent(shareUrl());
-    } else { copyLink(); say('This browser cannot text. Link copied instead.'); }
+    } else {   // no share sheet for files here: save the PNG so it can be attached by hand
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = fileName('png');
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      say('Saved ' + fileName('png') + '. Attach it to your text.');
+    }
   });
 }
 function setPicture(file){
@@ -670,20 +729,28 @@ function boot(){
   var hs = readHash(), h = hs.seed;
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
-  var su = hs.u || load('url'); if (su){ su = normUrl(su); if (SITES.indexOf(su) >= 0) state.url = su; }
+  var su = hs.u || load('url'); if (su) state.url = normUrl(su);
+  state.dragons = load('dragons') === '1';
   var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
   syncHash();
-  $('site').value = state.url;
+  if (SITES.indexOf(state.url) >= 0) $('site').value = state.url; else $('siteFree').value = state.url.replace(/^https:\/{2}/,'');
   $('cap').value = state.capAuto ? '' : state.caption;
-  $('cap').placeholder = 'Auto: ' + host(state.url);
+  $('dragons').checked = state.dragons;
   initStyles();
   draw(false);
   $('remix').addEventListener('click', remix);
-  $('site').addEventListener('change', function(){
-    state.url = this.value; store('url', state.url === URL_TEXT ? '' : state.url);
-    $('cap').placeholder = 'Auto: ' + host(state.url);
-    syncHash(); draw(true);
+  function setUrl(u){ state.url = u; store('url', u === URL_TEXT ? '' : u); syncHash(); draw(true); }
+  $('site').addEventListener('change', function(){ $('siteFree').value = ''; setUrl(this.value); });
+  var ut;
+  $('siteFree').addEventListener('input', function(){
+    var v = this.value.trim();
+    clearTimeout(ut); ut = setTimeout(function(){
+      var u = v ? normUrl(v) : $('site').value;
+      if (!minVersion(new TextEncoder().encode(u).length,'L')){ say('That address is too long for a QR code'); return; }
+      setUrl(u);
+    }, 300);
   });
+  $('dragons').addEventListener('change', function(){ state.dragons = this.checked; store('dragons', this.checked ? '1' : '0'); draw(false); });
   $('text').addEventListener('click', textIt);
   $('file').addEventListener('change', function(){ setPicture(this.files[0]); this.value = ''; });
   $('unpic').addEventListener('click', function(){
@@ -706,8 +773,8 @@ function boot(){
     if (n > 0 && n !== state.seed){ state.seed = n; draw(true); }
   });
   var rt;
-  window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (cur) paint(new ImageData(cur.data, cur.W, cur.H)); }, 100); });
-  window.__qr = {render: render, encode: encode, state: state};
+  window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (cur) paintFrame(); }, 100); });
+  window.__qr = {render: render, encode: encode, state: state, frame: frameData, cur: function(){ return cur; }};
 }
 boot();
 })();
