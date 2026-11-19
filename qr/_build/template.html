@@ -86,7 +86,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
     <input type="file" id="file" class="file" accept="image/*">
     <label for="file" class="btn" id="fileLabel">Add picture</label>
     <button type="button" class="btn" id="unpic" disabled>Remove picture</button>
-    <button type="button" class="btn wide" id="text">Text it</button>
+    <button type="button" class="btn" id="text">Text it</button>
+    <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
   <div class="field">
@@ -762,6 +763,10 @@ function boot(){
   });
   $('dragons').addEventListener('change', function(){ state.dragons = this.checked; store('dragons', this.checked ? '1' : '0'); draw(false); });
   $('text').addEventListener('click', textIt);
+  $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
+    var f = document.querySelector('.bgpx');
+    if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
+  });
   $('file').addEventListener('change', function(){ setPicture(this.files[0]); this.value = ''; });
   $('unpic').addEventListener('click', function(){
     state.img = null; $('unpic').disabled = true; $('fileLabel').textContent = 'Add picture';
