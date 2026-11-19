@@ -16,6 +16,13 @@
 html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 var(--font);-webkit-text-size-adjust:100%}
 .px-ink{color:transparent;background-image:var(--tg,linear-gradient(to right,#3f9e6e,#5aa0d8,#d0708a));-webkit-background-clip:text;background-clip:text}
 .px-out{display:inline-flex;align-items:center;filter:drop-shadow(2px 0 0 var(--out)) drop-shadow(-2px 0 0 var(--out)) drop-shadow(0 2px 0 var(--out)) drop-shadow(0 -2px 0 var(--out))}
+/* Background: the live /px scene (dragons over a pixel landscape), behind everything and not interactive */
+.bgpx{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;background:var(--paper)}
+header,main{position:relative;z-index:1}
+/* No card: the scene shows around everything; small text sits on paper chips so it reads over the sky and grass */
+.meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;padding:4px 10px;border-radius:8px;background:rgba(251,248,241,.92)}
+main .field>label{display:inline-block;margin-left:0}
+.field .check{display:inline-flex;padding:0 14px;border-radius:12px;background:rgba(251,248,241,.92)}
 header{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sat) + 10px) calc(12px + var(--sar)) 0 calc(12px + var(--sal))}
 h1{margin:0;padding:6px 4px;font:700 22px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 h1 a{text-decoration:none}
@@ -45,7 +52,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .btn.primary{background:var(--felt);color:#fff;border-color:var(--felt-d);flex-basis:100%;font-size:18px;min-height:54px}
 .btn.primary:hover{background:var(--felt-d)}
 .btn:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.btn[disabled]{opacity:.5;cursor:default}
+.btn[disabled]{color:#7d8a84;border-color:#b9c4be;cursor:default}
 .file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .file:focus-visible+label{outline:3px solid var(--red);outline-offset:2px}
 .pic{display:none;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;padding:6px 6px 6px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:15px}
@@ -65,6 +72,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 </style>
 </head>
 <body>
+<iframe class="bgpx" src="/px/?bg" title="Pixel dragons background" aria-hidden="true" tabindex="-1" loading="eager"></iframe>
 <header>
   <h1><a href="./" class="px-out"><span class="px-ink">Pixel QR</span></a></h1>
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><span class="bento-grid" aria-hidden="true"></span></a>
@@ -272,19 +280,21 @@ function rng(seed){
 function pick(r,arr){ return arr[Math.floor(r()*arr.length)]; }
 
 /* ---------- Minecraft-style blocks: each material is 4 texture shades, dark to light ---------- */
+/* Never black: every material has a clear hue, and the darkest edge shade keeps it */
 var DARK_MATS = {
-  deepslate:   [[42,42,50],[56,56,64],[70,70,78],[86,86,94]],
-  obsidian:    [[14,10,22],[28,18,44],[44,28,68],[62,42,92]],
+  crimsonStem: [[74,22,34],[92,30,44],[110,38,54],[128,48,64]],
+  purpur:      [[70,40,90],[86,52,108],[100,62,124],[116,74,140]],
+  amethyst:    [[80,48,120],[98,62,146],[114,76,166],[130,92,184]],
+  leaves:      [[24,70,22],[32,88,28],[40,104,34],[50,120,42]],
+  oxCopper:    [[34,90,74],[44,108,90],[54,124,104],[66,140,118]],
   darkOakLog:  [[38,26,14],[52,36,20],[66,46,26],[82,58,34]],
-  blackstone:  [[28,24,30],[40,34,40],[52,44,52],[64,56,64]],
   netherBrick: [[42,20,24],[56,26,32],[70,34,40],[84,42,48]],
   darkPrisma:  [[26,58,48],[36,76,62],[46,92,76],[58,108,90]],
   lapis:       [[20,40,104],[28,54,130],[36,68,152],[46,82,172]],
   redstone:    [[96,8,4],[124,12,8],[150,18,10],[172,26,16]],
   spruceLog:   [[36,24,14],[48,32,18],[60,42,24],[74,52,30]],
-  coalBlock:   [[10,10,10],[20,20,20],[30,30,30],[42,42,42]],
   warpedStem:  [[24,52,56],[34,70,72],[44,86,86],[58,100,98]],
-  mud:         [[50,40,36],[62,50,44],[74,60,52],[86,70,60]]
+  mud:         [[66,44,30],[80,54,36],[94,64,42],[108,74,48]]
 };
 var LIGHT_MATS = {
   snow:     [[226,236,238],[236,244,246],[244,250,252],[252,255,255]],
@@ -298,7 +308,7 @@ var ORES = {diamond:[64,196,206], emerald:[30,180,80], gold:[230,190,40], redsto
 /* Shades for the block faces: 0 shadow edge, 1 to 4 texture, 5 lit edge. Dark blocks stay under the scanner cap. */
 function darkMat(m){
   var t = m.map(function(c){ return darkAt(c, 0.075); });
-  return [darkAt(m[0].map(function(c){ return c*0.55; }), 0.03)].concat(t, [darkAt(m[3].map(function(c){ return Math.min(255,c*1.35); }), 0.10)]);
+  return [darkAt(m[0].map(function(c){ return c*0.7; }), 0.04)].concat(t, [darkAt(m[3].map(function(c){ return Math.min(255,c*1.35); }), 0.10)]);
 }
 function lightMat(m){ var t = m.map(function(c){ return lightAt(c, LT + 0.02); }); return [toLum(m[0], 0.5)].concat(t, [t[3]]); }
 function hash2(x,y,s){ var h = Math.imul(x*374761393 + y*668265263 + s*2246822519, 1274126177); h ^= h >>> 13; h = Math.imul(h, 1103515245); return ((h ^ h >>> 16) >>> 0) / 4294967296; }

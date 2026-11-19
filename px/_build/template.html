@@ -107,6 +107,7 @@ canvas{position:absolute;left:0;top:0;display:block}
 .row.off{opacity:.45}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.btn .chev,.sw span,.sw span::after{transition:none}.sheet{animation:none}}
+html.bg .top,html.bg .corner,html.bg .dock,html.bg .sheet{display:none!important}
 </style>
 </head>
 <body>
@@ -143,6 +144,8 @@ canvas{position:absolute;left:0;top:0;display:block}
 </div>
 
 <script>
+/* ?bg: the scene alone, as a page background (fogday.com/qr): no title, buttons or controls */
+if (/[?&]bg(=|&|$)/.test(location.search)) document.documentElement.classList.add('bg');
 (() => {
 'use strict';
 /* ---------- sprites: 9 sets (body n/p/s x tail n/l/s), 10 frames each: 0-7 walk (step*2+wing), 8-9 fly (legs tucked) ---------- */
