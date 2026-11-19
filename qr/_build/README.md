@@ -1,6 +1,6 @@
 # fogday.com/qr: Pixel QR
 
-Random lo-res pixel QR codes, default https://fogday.com (Website field takes any address). Remix gives a new one; every seed is a real, different code.
+Random lo-res pixel QR codes, Website menu: fogday.com (default), ohlonesky.com, oysteratlas.com. Remix gives a new one; every seed is a real, different code.
 
 Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the picture about 90 to 130 px wide). 3 px per module for short addresses; long ones drop to 2 or 1 px per module, with flat or dither shapes and square or bevel corners.
 
@@ -13,6 +13,6 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Text it: share sheet with the PNG (Web Share), else sms: link on phones, else copies the link.
 - Caption: 3x5 pixel font, 22 chars, saved under `qr:caption`. URL hash holds the seed (`#572228`).
 - Styles: add an entry to `STYLES`; the Style picker shows once there are two.
-- Corner markers: Random, Morph, Circle, Square, Round, Eye, Dot, Bevel. Circle and Morph are drawn superellipses (Morph: each anchor its own shape, circle to squircle; alignment markers morph too). Diamond scanned 0%, so it was dropped from the picker (saved under `qr:finder`, and in the link as `&c=`). Round, Circle and Morph fail OpenCV's detector often; zbar reads Circle 100%, Morph about 96%.
-- Save SVG: one path per colour, built from horizontal runs of art pixels, crisp edges.
-- Link format: `#SEED`, plus `&u=site` and `&c=corner` when not default.
+- Corner markers: random on every remix (no picker): square, round, eye, dot, bevel, circle, morph. Circle and morph are drawn superellipses (morph: each anchor its own shape, circle to squircle; alignment markers morph too). Round, circle and morph fail OpenCV's detector often; zbar reads circle 100%, morph about 96%.
+- Link format: `#SEED`, plus `&u=site` when not fogday.com.
+- Buttons: Remix; Add picture and Remove picture side by side; Text it. Save and copy buttons were removed at the owner's request.

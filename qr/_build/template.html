@@ -50,6 +50,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .pic .btn{min-height:44px;font-size:13px}
 .field{margin:6px 0 10px}
 .field label{display:block;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
+.field select{width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.04em;-webkit-appearance:none;appearance:none}
+.field select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .field input{width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 .styles{display:none;border:0;margin:0 0 10px;padding:0}
 .styles.on{display:block}
@@ -72,21 +74,19 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
     <button type="button" class="btn primary" id="remix">Remix</button>
     <input type="file" id="file" class="file" accept="image/*">
     <label for="file" class="btn" id="fileLabel">Add picture</label>
-    <button type="button" class="btn" id="text">Text it</button>
-    <button type="button" class="btn" id="save">Save PNG</button>
-    <button type="button" class="btn" id="svg">Save SVG</button>
-    <button type="button" class="btn wide" id="copy">Copy link</button>
+    <button type="button" class="btn" id="unpic" disabled>Remove picture</button>
+    <button type="button" class="btn wide" id="text">Text it</button>
   </div>
-
-  <div class="pic" id="pic"><span>Picture in the background</span><button type="button" class="btn" id="unpic">Remove picture</button></div>
 
   <div class="field">
     <label for="site">Website</label>
-    <input id="site" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="fogday.com" style="text-transform:none">
+    <select id="site">
+      <option value="https://fogday.com">fogday.com</option>
+      <option value="https://ohlonesky.com">ohlonesky.com</option>
+      <option value="https://oysteratlas.com">oysteratlas.com</option>
+    </select>
     <p class="hint" id="siteHint">The code opens https://fogday.com</p>
   </div>
-
-  <fieldset class="seg" id="corners"><legend>Corner markers</legend></fieldset>
 
   <div class="field">
     <label for="cap">Caption under the code</label>
@@ -491,7 +491,7 @@ function render(seed, styleId, caption, img, url, finder){
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', capAuto: true, img: null, url: URL_TEXT, finder: 'random'}, cur = null, prev = null, anim = 0;
+var state = {seed: 0, style: 'px', caption: 'FOGDAY.COM', capAuto: true, img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
@@ -500,7 +500,6 @@ function newSeed(){ return 1 + Math.floor(Math.random()*999998); }
 function hashFor(){
   var h = '#' + state.seed;
   if (state.url !== URL_TEXT) h += '&u=' + encodeURIComponent(state.url.replace(/^https:\/{2}/,''));
-  if (state.finder !== 'random') h += '&c=' + state.finder;
   return h;
 }
 function shareUrl(){ return location.origin + location.pathname + hashFor(); }
@@ -510,7 +509,7 @@ function readHash(){
   return out;
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
-var FINDERS = [['random','Random'],['morph','Morph'],['circle','Circle'],['square','Square'],['round','Round'],['eye','Eye'],['dot','Dot'],['bevel','Bevel']];
+var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com'];
 function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(){ s.textContent = msg; }, 30); }
 
 function scale(){
@@ -528,7 +527,7 @@ function paint(img){
 }
 function draw(animate){
   prev = cur;
-  cur = render(state.seed, state.style, state.capAuto ? host(state.url) : state.caption, state.img, state.url, state.finder);
+  cur = render(state.seed, state.style, state.capAuto ? host(state.url) : state.caption, state.img, state.url, 'random');
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
   $('meta').textContent = 'No. ' + state.seed + '  ·  version ' + c.v + ', ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
@@ -566,35 +565,6 @@ function pngBlob(cb){
   c.toBlob(cb, 'image/png');
 }
 function fileName(ext){ return host(state.url).toLowerCase().replace(/[^a-z0-9.-]+/g,'-').replace(/\./g,'-') + '-qr-' + state.seed + '.' + (ext || 'png'); }
-/* SVG: one rect per horizontal run of same-colour art pixels, crisp edges, scales to any size */
-function svgText(){
-  var W = cur.W, H = cur.H, d = cur.data, k = Math.max(1, Math.ceil(1200/W)), out = [], y, x;
-  out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W*k + '" height="' + H*k + '" shape-rendering="crispEdges">');
-  out.push('<title>QR code for ' + cur.code.text.replace(/[<>&"]/g,'') + '</title>');
-  var groups = {};
-  for (y = 0; y < H; y++){
-    x = 0;
-    while (x < W){
-      var o = (y*W+x)*4, key = '#' + ((1<<24) | (d[o]<<16) | (d[o+1]<<8) | d[o+2]).toString(16).slice(1), x0 = x;
-      do { x++; o += 4; } while (x < W && '#' + ((1<<24) | (d[o]<<16) | (d[o+1]<<8) | d[o+2]).toString(16).slice(1) === key);
-      (groups[key] = groups[key] || []).push('M' + x0 + ' ' + y + 'h' + (x-x0) + 'v1h-' + (x-x0) + 'z');
-    }
-  }
-  Object.keys(groups).forEach(function(c){ out.push('<path fill="' + c + '" d="' + groups[c].join('') + '"/>'); });
-  out.push('</svg>');
-  return out.join('\n');
-}
-function download(blob, name){
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
-  say('Saved ' + name);
-}
-function saveSvg(){ download(new Blob([svgText()], {type:'image/svg+xml'}), fileName('svg')); }
-function save(){
-  pngBlob(function(b){ download(b, fileName('png')); });
-}
 function copyLink(){
   var u = shareUrl();
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(function(){ say('Link copied'); }, function(){ say(u); });
@@ -616,27 +586,13 @@ function setPicture(file){
   if (!file || !/^image\//.test(file.type)){ say('That file is not a picture'); return; }
   var u = URL.createObjectURL(file), im = new Image();
   im.onload = function(){
-    state.img = im; $('pic').classList.add('on'); $('fileLabel').textContent = 'New picture';
+    state.img = im; $('unpic').disabled = false; $('fileLabel').textContent = 'New picture';
     draw(true); say('Picture added. Remix keeps it.');
   };
   im.onerror = function(){ URL.revokeObjectURL(u); say('Could not read that picture'); };
   im.src = u;
 }
 
-function initCorners(){
-  var box = $('corners');
-  FINDERS.forEach(function(f){
-    var b = document.createElement('button');
-    b.type = 'button'; b.className = 'btn'; b.textContent = f[1]; b.dataset.f = f[0];
-    b.setAttribute('aria-pressed', String(f[0] === state.finder));
-    b.addEventListener('click', function(){
-      state.finder = f[0]; store('finder', f[0]); syncHash();
-      Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
-      draw(false);
-    });
-    box.appendChild(b);
-  });
-}
 function initStyles(){
   var ids = Object.keys(STYLES);
   if (ids.length < 2) return;
@@ -658,36 +614,25 @@ function boot(){
   var hs = readHash(), h = hs.seed;
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
-  var su = hs.u || load('url'); if (su) state.url = normUrl(su);
-  var sf = hs.c || load('finder'); if (sf && FINDERS.some(function(f){ return f[0] === sf; })) state.finder = sf;
+  var su = hs.u || load('url'); if (su){ su = normUrl(su); if (SITES.indexOf(su) >= 0) state.url = su; }
   var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
   syncHash();
-  $('site').value = state.url === URL_TEXT ? '' : state.url.replace(/^https:\/{2}/,'');
+  $('site').value = state.url;
   $('cap').value = state.capAuto ? '' : state.caption;
   $('cap').placeholder = 'Auto: ' + host(state.url);
   initStyles();
-  initCorners();
   draw(false);
   $('remix').addEventListener('click', remix);
-  $('save').addEventListener('click', save);
-  $('svg').addEventListener('click', saveSvg);
-  var ut;
-  $('site').addEventListener('input', function(){
-    var v = this.value;
-    clearTimeout(ut); ut = setTimeout(function(){
-      var u = normUrl(v), bytes = new TextEncoder().encode(u).length;
-      if (!minVersion(bytes,'L')){ say('That address is too long for a QR code'); return; }
-      state.url = u; store('url', u === URL_TEXT ? '' : u);
-      $('cap').placeholder = 'Auto: ' + host(u);
-      syncHash(); draw(false);
-    }, 250);
+  $('site').addEventListener('change', function(){
+    state.url = this.value; store('url', state.url === URL_TEXT ? '' : state.url);
+    $('cap').placeholder = 'Auto: ' + host(state.url);
+    syncHash(); draw(true);
   });
-  $('copy').addEventListener('click', copyLink);
   $('text').addEventListener('click', textIt);
   $('file').addEventListener('change', function(){ setPicture(this.files[0]); this.value = ''; });
   $('unpic').addEventListener('click', function(){
-    state.img = null; $('pic').classList.remove('on'); $('fileLabel').textContent = 'Add picture';
-    draw(true); $('fileLabel').focus(); say('Picture removed');
+    state.img = null; $('unpic').disabled = true; $('fileLabel').textContent = 'Add picture';
+    draw(true); $('file').focus(); say('Picture removed');
   });
   $('fileLabel').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
   var t;
@@ -706,7 +651,7 @@ function boot(){
   });
   var rt;
   window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (cur) paint(new ImageData(cur.data, cur.W, cur.H)); }, 100); });
-  window.__qr = {render: render, encode: encode, state: state, svg: svgText};
+  window.__qr = {render: render, encode: encode, state: state};
 }
 boot();
 })();
