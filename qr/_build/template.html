@@ -25,11 +25,11 @@ header,main{position:relative;z-index:1}
 /* Controls are never wider than the code */
 .ctl{max-width:var(--qrw,440px);margin:0 auto}
 /* No card: the scene shows around everything; small text sits on paper chips so it reads over the sky and grass */
-.meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;max-width:var(--qrw,440px);box-sizing:border-box;padding:4px 10px;border-radius:10px;background:rgba(251,248,241,.92)}
+.meta,.field>label,.status:not(:empty){display:table;margin-left:auto;margin-right:auto;max-width:var(--qrw,440px);box-sizing:border-box;padding:4px 10px;border-radius:10px;background:rgba(251,248,241,.5)}
 .meta{display:block;width:var(--qrw,100%);text-align:center}
 .meta span{display:block}
 main .field>label{display:inline-block;margin-left:0}
-.field .check{display:inline-flex;padding:0 14px;border-radius:12px;background:rgba(251,248,241,.92)}
+.field .check{display:inline-flex;padding:0 14px;border-radius:12px;background:rgba(251,248,241,.5)}
 header{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sat) + 10px) calc(12px + var(--sar)) 0 calc(12px + var(--sal))}
 h1{margin:0;padding:6px 4px;font:700 22px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 h1 a{text-decoration:none}
@@ -73,7 +73,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .meta{transition:width .35s ease-in}
 @media (prefers-reduced-motion:reduce){#qr,.ctl,.meta{transition:none}}
 /* Typing: a focused field goes solid so the text is easy to read */
-.field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none}
+.field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--card)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+.field select:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
@@ -945,6 +946,7 @@ function boot(){
   });
   /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
      until the next dragon flies over */
+  var CHEV = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 7 4\' shape-rendering=\'crispEdges\'%3E%3Cpath fill=\'%231f5c4a\' d=\'M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z\'/%3E%3C/svg%3E")';
   function rgbOf(c){ var m = /(\d+)\D+(\d+)\D+(\d+)/.exec(c); return m ? [+m[1], +m[2], +m[3]] : [128,128,128]; }
   function paintBtn(el, cols){
     var c = cols.map(rgbOf), T = ['001100','011110','001102','100001','110011','120001'], k = document.createElement('canvas');
@@ -952,15 +954,21 @@ function boot(){
     var g = k.getContext('2d');
     for (var y = 0; y < 6; y++) for (var x = 0; x < 6; x++){ var v = c[+T[y][x]]; g.fillStyle = 'rgba(' + v.join(',') + ',0.5)'; g.fillRect(x, y, 1, 1); }
     // text: the dragon colour that stands out most against the pattern (seen over a light page), else ink or white
-    var seen = [0,1,2].map(function(i){ return Math.round((c[0][i] + c[1][i] + c[2][i])/3*0.5 + 250*0.5); }), ls = lum(seen);
-    function ratio(a){ var la = lum(a); return (Math.max(la, ls) + 0.05)/(Math.min(la, ls) + 0.05); }
+    // checked against each pattern colour on its own (seen at 50% over a light base), so it reads on every square
+    var seen = [0,1,2].map(function(j){ return lum(c[j].map(function(v){ return Math.round(v*0.5 + 250*0.5); })); });
+    function ratio(a){ var la = lum(a); return Math.min.apply(null, seen.map(function(ls){ return (Math.max(la, ls) + 0.05)/(Math.min(la, ls) + 0.05); })); }
     var cands = c.concat([[29,38,34], [255,255,255]]), best = cands[0];
     cands.forEach(function(v){ if (ratio(v) > ratio(best)) best = v; });
     var pal = c.filter(function(v){ return ratio(v) >= 4.5; });
     if (pal.length) best = pal[Math.floor(Math.random()*pal.length)];
-    el.style.backgroundImage = 'url(' + k.toDataURL() + ')';
-    el.style.backgroundSize = '18px 18px';
-    el.style.backgroundColor = el.classList.contains('meta') ? 'rgba(251,248,241,.6)' : 'transparent';   // the details keep a light base so they stay readable
+    if (el.tagName === 'SELECT'){   // the menu keeps its chevron on top of the pattern
+      el.style.backgroundImage = CHEV + ', url(' + k.toDataURL() + ')';
+      el.style.backgroundSize = '14px 8px, 18px 18px'; el.style.backgroundPosition = 'right 14px center, 0 0'; el.style.backgroundRepeat = 'no-repeat, repeat';
+    } else {
+      el.style.backgroundImage = 'url(' + k.toDataURL() + ')';
+      el.style.backgroundSize = '18px 18px';
+    }
+    el.style.backgroundColor = 'transparent';   // 50% see-through like everything else; only a focused field goes solid
     el.style.imageRendering = 'pixelated';
     el.style.color = 'rgb(' + best.join(',') + ')';
     el.style.textShadow = lum(best) < 0.3 ? '0 1px 0 rgba(255,255,255,.6)' : '0 1px 0 rgba(0,0,0,.55)';
@@ -973,7 +981,7 @@ function boot(){
       e.data.hits.forEach(function(h){ if (h.x >= cr.left && h.x < cr.right && h.y >= cr.top && h.y < cr.bottom) hitArt((h.x - cr.left)*sx, (h.y - cr.top)*sx, h.w); });
     }
     // every button, the code details, the page title and the projects icon take the colours of a dragon flying over them
-    Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, h1 .px-out, .bento'), function(el){
+    Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, #site, h1 .px-out, .bento'), function(el){
       var r = el.getBoundingClientRect();
       if (!r.width) return;   // hidden (More closed)
       for (var i = 0; i < e.data.list.length; i++){
@@ -981,7 +989,7 @@ function boot(){
         if (Math.hypot(d.x - nx, d.y - ny) < d.r){
           if (String(d.id) !== el.dataset.dragon){
             el.dataset.dragon = d.id;
-            if (el.classList.contains('btn') || el.classList.contains('meta')) paintBtn(el, d.c);
+            if (el.classList.contains('btn') || el.classList.contains('meta') || el.id === 'site') paintBtn(el, d.c);
             else el.style.setProperty('--tg', 'linear-gradient(to right,' + d.c[0] + ',' + d.c[1] + ',' + d.c[2] + ')');
           }
           break;
