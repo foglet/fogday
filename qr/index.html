@@ -267,6 +267,39 @@ function rng(seed){
 }
 function pick(r,arr){ return arr[Math.floor(r()*arr.length)]; }
 
+/* ---------- Minecraft-style blocks: each material is 4 texture shades, dark to light ---------- */
+var DARK_MATS = {
+  deepslate:   [[42,42,50],[56,56,64],[70,70,78],[86,86,94]],
+  obsidian:    [[14,10,22],[28,18,44],[44,28,68],[62,42,92]],
+  darkOakLog:  [[38,26,14],[52,36,20],[66,46,26],[82,58,34]],
+  blackstone:  [[28,24,30],[40,34,40],[52,44,52],[64,56,64]],
+  netherBrick: [[42,20,24],[56,26,32],[70,34,40],[84,42,48]],
+  darkPrisma:  [[26,58,48],[36,76,62],[46,92,76],[58,108,90]],
+  lapis:       [[20,40,104],[28,54,130],[36,68,152],[46,82,172]],
+  redstone:    [[96,8,4],[124,12,8],[150,18,10],[172,26,16]],
+  spruceLog:   [[36,24,14],[48,32,18],[60,42,24],[74,52,30]],
+  coalBlock:   [[10,10,10],[20,20,20],[30,30,30],[42,42,42]],
+  warpedStem:  [[24,52,56],[34,70,72],[44,86,86],[58,100,98]],
+  mud:         [[50,40,36],[62,50,44],[74,60,52],[86,70,60]]
+};
+var LIGHT_MATS = {
+  snow:     [[226,236,238],[236,244,246],[244,250,252],[252,255,255]],
+  quartz:   [[226,220,212],[234,228,220],[240,236,230],[248,246,242]],
+  concrete: [[220,224,226],[230,232,234],[238,240,240],[246,246,246]],
+  calcite:  [[214,218,216],[224,228,226],[234,236,234],[244,246,244]],
+  endStone: [[222,226,166],[230,232,178],[236,238,190],[244,244,204]],
+  bone:     [[226,222,200],[232,228,208],[238,236,218],[246,244,230]]
+};
+var ORES = {diamond:[64,196,206], emerald:[30,180,80], gold:[230,190,40], redstone:[200,20,20], lapis:[40,80,200], copper:[200,110,70]};
+/* Shades for the block faces: 0 shadow edge, 1 to 4 texture, 5 lit edge. Dark blocks stay under the scanner cap. */
+function darkMat(m){
+  var t = m.map(function(c){ return darkAt(c, 0.075); });
+  return [darkAt(m[0].map(function(c){ return c*0.55; }), 0.03)].concat(t, [darkAt(m[3].map(function(c){ return Math.min(255,c*1.35); }), 0.10)]);
+}
+function lightMat(m){ var t = m.map(function(c){ return lightAt(c, LT + 0.02); }); return [toLum(m[0], 0.5)].concat(t, [t[3]]); }
+function hash2(x,y,s){ var h = Math.imul(x*374761393 + y*668265263 + s*2246822519, 1274126177); h ^= h >>> 13; h = Math.imul(h, 1103515245); return ((h ^ h >>> 16) >>> 0) / 4294967296; }
+function texShade(x,y,s){ var t = hash2(x,y,s); return t < 0.28 ? 1 : t < 0.68 ? 2 : t < 0.9 ? 3 : 4; }
+
 /* ---------- 3x5 pixel font for the caption ---------- */
 var FONT = {
   A:'111 101 111 101 101',B:'110 101 110 101 110',C:'111 100 100 100 111',D:'110 101 101 101 110',E:'111 100 110 100 111',
@@ -292,7 +325,12 @@ var STYLES = {
     name: 'Pixels',
     recipe: function(r){
       var h = Math.floor(r()*360), h2 = h + pick(r,[150,180,210,120,240]);
+      var dk = Object.keys(DARK_MATS), b1 = pick(r,dk), b2 = pick(r,dk), b3 = pick(r,dk.filter(function(k){ return k !== b1; }));
+      var gnd = pick(r,Object.keys(LIGHT_MATS)), ore = r() < 0.55 ? pick(r,Object.keys(ORES)) : null;
       return {
+        bodyM: darkMat(DARK_MATS[b1]), body2M: r() < 0.4 && b2 !== b1 ? darkMat(DARK_MATS[b2]) : null, accM: darkMat(DARK_MATS[b3]),
+        groundM: lightMat(LIGHT_MATS[gnd]), oreC: ore ? darkAt(ORES[ore], 0.16) : null, tseed: Math.floor(r()*1e6),
+        mats: [b1, b2, b3, gnd, ore],
         dark: darkSet(hsl(h, 55 + r()*30, 34 + r()*12)),
         dark2: darkSet(hsl(h + pick(r,[-40,40,0]), 60, 38)),
         accent: darkSet(hsl(h2, 60 + r()*25, 36 + r()*10)),
@@ -344,8 +382,10 @@ var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only:
 function render(seed, styleId, caption, img, url, finder){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
+  R.shape = 'flat';   // solid blocks
+  R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
   var N = code.size, HW = R.halo + (img ? 3 : 0), M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
-  P = Math.max(1, Math.min(3, Math.round(130 / M)));
+  P = Math.max(1, Math.min(3, Math.round(140 / M)));
   if (P < 3){   // shaded and rounded shapes need 3 px per module; the drawn corner shapes work at any size
     if (R.shape !== 'dither') R.shape = 'flat';
     if (!SUPER[R.finder] && R.finder !== 'bevel') R.finder = 'square';
@@ -378,7 +418,10 @@ function render(seed, styleId, caption, img, url, finder){
     if (pic) base = lightAt(base, LT * Math.max(0, 1 - Math.pow(d/(HW+1), 1.5)));
     bgM.push(base);
   }
-  function bg(ax,ay){ return bgM[Math.floor(ay/P)*M + Math.floor(ax/P)]; }
+  function bg(ax,ay){
+    if (pic) return bgM[Math.floor(ay/P)*M + Math.floor(ax/P)];
+    return R.groundM[texShade(Math.floor(ax/2), Math.floor(ay/2), R.tseed)];   // ground texture, 2x2 grain
+  }
 
   // module map: the code, then its pattern carried on past the quiet zone, drifting downwind and thinning
   var D = new Uint8Array(M*Mh), FADE = new Float32Array(M*Mh), dirx = Math.cos(R.drift), diry = Math.sin(R.drift);
@@ -414,6 +457,7 @@ function render(seed, styleId, caption, img, url, finder){
       if (ax >= W || ay >= H) continue;
       if (!dark){
         var rgb = bg(ax,ay);
+        if (sy2 === 0 && isDark(mx,my-1)) rgb = mixRgb(rgb, [20,20,28], 0.18);   // a block casts a thin shadow south
         if (R.shape === 'round' && inCode && !fn && sx2 !== 1 && sy2 !== 1){
           var nx = sx2 === 0 ? -1 : 1, ny = sy2 === 0 ? -1 : 1;
           if (isDark(mx+nx,my) && isDark(mx,my+ny) && isDark(mx+nx,my+ny)) rgb = R.dark[1];
@@ -437,7 +481,15 @@ function render(seed, styleId, caption, img, url, finder){
         if (!isDark(mx + (sx2 === 0 ? -1 : 1), my) && !isDark(mx, my + (sy2 === 0 ? -1 : 1))) cut = true;
       }
       if (cut){ px(ax, ay, bg(ax,ay)); continue; }
-      px(ax, ay, fade ? mixRgb(set[lvl], bg(ax,ay), fade) : set[lvl]);
+      // block: textured top, lit north edge, shadowed south edge, some ore specks
+      var mat = (kind === 1 || kind === 2) ? R.accM : (R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM);
+      var sh = texShade(ax, ay, R.tseed);
+      if (sx2 === 0 && !isDark(mx-1,my)) sh = Math.min(5, sh + 1);
+      if (sy2 === 0 && !isDark(mx,my-1)) sh = 5;
+      if (sy2 === P-1 && !isDark(mx,my+1)) sh = 0;
+      var col = mat[sh];
+      if (R.oreC && mat === R.bodyM && !fn && hash2(mx,my,R.tseed+3) < 0.16 && !(sx2 === 1 && sy2 === 1) && hash2(ax,ay,R.tseed+5) < 0.45) col = R.oreC;
+      px(ax, ay, col);
     }
   }
 
@@ -451,8 +503,7 @@ function render(seed, styleId, caption, img, url, finder){
         var dx = Math.abs((xx + 0.5)/P - c0), dy = Math.abs((yy + 0.5)/P - c0);
         var rr = Math.pow(Math.pow(dx,nr) + Math.pow(dy,nr), 1/nr), rc = Math.pow(Math.pow(dx,nc) + Math.pow(dy,nc), 1/nc);
         var ax = bx + xx, ay = by + yy;
-        if (rc < 1.5) px(ax, ay, R.accent[1]);
-        else if (rr >= 2.5 && rr < 3.5) px(ax, ay, R.accent[1]);
+        if (rc < 1.5 || (rr >= 2.5 && rr < 3.5)) px(ax, ay, R.accM[texShade(ax, ay, R.tseed)]);
         else px(ax, ay, bg(ax, ay));
       }
     });
@@ -464,7 +515,7 @@ function render(seed, styleId, caption, img, url, finder){
         for (var y3 = 0; y3 < 5*P; y3++) for (var x3 = 0; x3 < 5*P; x3++){
           var ddx = Math.abs((x3 + 0.5)/P - 2.5), ddy = Math.abs((y3 + 0.5)/P - 2.5), ar = Math.pow(Math.pow(ddx,an) + Math.pow(ddy,an), 1/an);
           var X3 = abx + x3, Y3 = aby + y3;
-          px(X3, Y3, ((ddx < 0.5 && ddy < 0.5) || (ar >= 1.5 && ar < 2.5)) ? R.dark[1] : bg(X3, Y3));
+          px(X3, Y3, ((ddx < 0.5 && ddy < 0.5) || (ar >= 1.5 && ar < 2.5)) ? R.bodyM[texShade(X3, Y3, R.tseed)] : bg(X3, Y3));
         }
       }
     }
@@ -472,14 +523,19 @@ function render(seed, styleId, caption, img, url, finder){
 
   // caption on a light plate in the bottom margin
   if (ls){
-    var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 2 - Math.max(0, Math.floor((HW*P - 5*ls - 4)/2));
-    for (var py = ty - 1; py < ty + 5*ls + 1; py++) for (var pxx = tx - 2; pxx < tx + tw*ls + 2; pxx++)
-      if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : R.light);
+    var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 3 - Math.max(0, Math.floor((HW*P - 5*ls - 4)/2));
+    for (var py = ty - ls; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
+      if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, mixRgb(bg(pxx,py), [0,0,0], 0.62));   // nametag plate
     gs.forEach(function(g){
       for (var gy = 0; gy < 5; gy++) for (var gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (var yy = 0; yy < ls; yy++) for (var xx = 0; xx < ls; xx++){
           var X = tx + gx*ls + xx, Y = ty + gy*ls + yy;
-          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, OUT);
+          if (X+ls < W && Y+ls < H) px(X+ls, Y+ls, [63,63,63]);   // text shadow
+        }
+      for (gy = 0; gy < 5; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
+        for (yy = 0; yy < ls; yy++) for (xx = 0; xx < ls; xx++){
+          X = tx + gx*ls + xx; Y = ty + gy*ls + yy;
+          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, [255,255,255]);
         }
       tx += (g[0].length + 1)*ls;
     });
