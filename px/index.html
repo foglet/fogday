@@ -986,6 +986,17 @@ $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, 
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
 /* /qr's "New scene" button: a new landscape and new dragons (same origin only) */
+/* Background mode follows /px: when the scene changes on /px (another tab), the same scene shows here at once */
+if (BGM) addEventListener('storage', e => {
+  if (e.key !== KEY) return;
+  let n = {}; try { n = JSON.parse(e.newValue || '{}'); } catch(_) {}
+  let changed = false;
+  for (const k of ['bg','sky','clouds','mtn','ground','rocks','river','wx','windv']) if (k in n && n[k] !== cfg[k]){ cfg[k] = n[k]; changed = true; }
+  if (!changed) return;
+  PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;
+  seed = (R()*1e9)|0; buildScene(); ECL = null; drawScene();
+  const [a, b] = band(); for (const d of adults()) if (d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); }
+});
 if (BGM) addEventListener('message', e => { if (e.origin === location.origin && e.data === 'px:new-scene'){ $('reset').click(); populate(true); titleInk(); if(!playing){ draw(); drawScene(); } } });
 
 COVER = cfg.wx === 'snow' ? .55 : 0; WET = cfg.wx === 'rain' ? .55 : 0;
