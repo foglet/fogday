@@ -934,6 +934,14 @@ function boot(){
   addEventListener('pointermove', function(e){ if (ptrOn) toDragons('move', e); }, {passive: true});
   addEventListener('pointerup', function(){ if (ptrOn){ ptrOn = false; toDragons('up'); } }, {passive: true});
   addEventListener('pointercancel', function(){ if (ptrOn){ ptrOn = false; toDragons('out'); } }, {passive: true});
+  /* A focused menu or box is solid; after 2 s with nothing happening in it, it lets go and goes back to 50% (or its dragon pattern) */
+  var idleT = 0;
+  Array.prototype.forEach.call(document.querySelectorAll('.field select, .field input'), function(el){
+    function arm(){ clearTimeout(idleT); idleT = setTimeout(function(){ if (document.activeElement === el) el.blur(); }, 2000); }
+    el.addEventListener('focus', arm);
+    ['input', 'keydown', 'change', 'pointerdown'].forEach(function(ev){ el.addEventListener(ev, arm); });
+    el.addEventListener('blur', function(){ clearTimeout(idleT); });
+  });
   $('moreBtn').addEventListener('click', function(){
     var open = this.getAttribute('aria-expanded') !== 'true';
     this.setAttribute('aria-expanded', String(open)); $('more').hidden = !open;
