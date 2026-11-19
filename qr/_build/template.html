@@ -72,6 +72,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .ctl{transition:max-width .35s ease-in}
 .meta{transition:width .35s ease-in}
 @media (prefers-reduced-motion:reduce){#qr,.ctl,.meta{transition:none}}
+/* Typing: a focused field goes solid so the text is easy to read */
+.field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
