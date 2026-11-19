@@ -75,6 +75,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 /* Typing: a focused field goes solid so the text is easy to read */
 .field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--card)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
 .field select:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important}
+/* No borders on any box or button (focus still shows its red ring) */
+.btn,.field select,.field input:not([type=checkbox]),.meta{border:0!important}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
