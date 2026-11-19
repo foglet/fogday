@@ -95,10 +95,10 @@ svg{fill:currentColor}
 .seg button:active{transform:scale(.98)}
 .seg button[aria-selected="true"]{background:var(--surface);color:var(--primary-ink);box-shadow:0 1px 0 var(--line-strong),0 0 0 1px var(--line)}
 .seg small{display:block;font-weight:400;font-size:var(--fs-cap);color:var(--ink-2)}
-/* Level switch has four: columns size to their labels, spare room shared; labels shrink a little on narrow phones so Intermediate fits */
+/* Level switch has four HSK ranges: columns size to their labels, spare room shared */
 .seg.lv{grid-template-columns:repeat(4,auto)}
-.seg.lv button{font-size:clamp(.6875rem,3.5vw,var(--fs-sm));padding:0 6px;white-space:nowrap}
-.seg.lv small{font-size:clamp(.6875rem,3vw,var(--fs-cap))}
+.seg.lv button{font-size:clamp(.75rem,3.5vw,var(--fs-sm));font-weight:700;color:var(--primary);padding:0 6px;white-space:nowrap}
+@media (hover:hover){.seg.lv button:hover{color:var(--primary)}}
 
 /* Page heading */
 .kicker{font-size:var(--fs-cap);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:var(--s5) 0 var(--s1)}
@@ -1302,7 +1302,7 @@ function learnHead(){ const L = LEVELS.find(l=>l.id===S.level);
 function learnMain(){
   if(S.q.trim()) return searchResults();
   if(S.histOpen && getHist().length) return histPanel();
-  return `<div class="seg lv" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.name}<small>${l.note}</small></button>`).join('')}</div>
+  return `<div class="seg lv" role="tablist" aria-label="Level">${LEVELS.map(l=>`<button role="tab" data-level="${l.id}" aria-selected="${l.id===S.level}">${l.note}</button>`).join('')}</div>
     <div id="learnBody">${viewLearn(true)}</div>`;
 }
 function viewLearn(bodyOnly){
