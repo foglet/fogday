@@ -60,6 +60,11 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
 /* Fields are 50% see-through over the /px scene; a light blur keeps their text readable */
 .field select,.field input:not([type=checkbox]){-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+/* A typed website: a dragon walks in the menu box, breathes fire or water, then flies off to roam */
+.sitef{position:relative}
+#boxDragon{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;image-rendering:pixelated;image-rendering:crisp-edges}
+.sitef.dragon #boxDragon{display:block}
+.sitef.dragon select{color:transparent}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
@@ -104,6 +109,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
   </div>
 
   <div class="field sitef" id="siteField">
+    <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
     <select id="site" aria-label="Website">
       <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
       <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
@@ -671,6 +677,61 @@ function showSite(){
   var known = SITES.indexOf(state.url) >= 0;
   $('customOpt').hidden = known;
   $('site').value = known ? state.url : 'custom';
+  if (known) boxStop(false); else if (!box.on && box.url !== state.url) boxStart();
+}
+/* The menu dragon: walks back and forth in the box, now and then breathes fire (or water), and after a few seconds
+   flies out into the page, where the front /px layer takes it over */
+var FIRE = [[255,244,170],[255,206,80],[250,140,40],[220,70,30],[120,74,64]], WATER = [[236,250,255],[170,226,250],[104,182,236],[70,142,212]];
+var box = {on: false, raf: 0, url: ''}, BOXS = 1.5;
+function boxStart(){
+  var f = $('siteField'), c = $('boxDragon'), r = f.getBoundingClientRect();
+  if (!r.width) return;
+  c.width = Math.max(40, Math.round(r.width/BOXS)); c.height = Math.round(r.height/BOXS);
+  var sets = Object.keys(SPR);
+  box = {on: true, url: state.url, set: SPR[sets[Math.floor(Math.random()*sets.length)]], pal: dragonPal(Math.random), x: 4, dir: 1, t: 0,
+         parts: [], br: 0, water: false, until: performance.now() + (reduce ? 2500 : 6500), last: 0, raf: 0};
+  f.classList.add('dragon');
+  box.raf = requestAnimationFrame(boxTick);
+}
+function boxStop(release){
+  if (!box.on) return;
+  box.on = false; cancelAnimationFrame(box.raf); $('siteField').classList.remove('dragon');
+  if (release){
+    var r = $('siteField').getBoundingClientRect(), f = $('pxFront');
+    var x = r.left + (box.x + 15)*BOXS, y = r.top + 13*BOXS;
+    if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:spawn', x: x, y: y, dir: box.dir}, location.origin);
+  }
+}
+function boxTick(now){
+  if (!box.on) return;
+  if (now - box.last > 70){
+    box.last = now; box.t++;
+    var c = $('boxDragon'), g = c.getContext('2d'), W = c.width, H = c.height;
+    if (box.br > 0){
+      box.br--;
+      for (var k = 0; k < 2; k++) box.parts.push({x: box.x + (box.dir > 0 ? 29 : 0), y: H - 24 + 6, vx: box.dir*(1.2 + Math.random()*1.4), vy: (Math.random() - 0.5)*0.8, n: 0, life: 7 + Math.floor(Math.random()*5), water: box.water});
+    } else if (!reduce){
+      box.x += box.dir;
+      if (box.x <= 1 || box.x >= W - 31) box.dir *= -1;
+      if (Math.random() < 0.05){ box.br = 12; box.water = Math.random() < 0.35; }
+    }
+    box.parts = box.parts.filter(function(p){ p.x += p.vx; p.y += p.vy; p.n++; return p.n < p.life && p.x > -2 && p.x < W + 2; });
+    var img = g.createImageData(W, H), d = img.data, fr = box.set[box.br > 0 ? 0 : Math.floor(box.t/2) % box.set.length], oy = H - 24;
+    for (var v = 0; v < SH; v++) for (var u = 0; u < SW; u++){
+      var ch = fr.charCodeAt(v*SW + u) - 48; if (ch <= 0) continue;
+      var X = Math.round(box.x) + (box.dir > 0 ? u : SW - 1 - u), Y = oy + v;
+      if (X < 0 || X >= W || Y < 0 || Y >= H) continue;
+      var col = box.pal[ch] || box.pal[2], o = (Y*W + X)*4;
+      d[o] = col[0]; d[o+1] = col[1]; d[o+2] = col[2]; d[o+3] = 255;
+    }
+    box.parts.forEach(function(p){
+      var pal = p.water ? WATER : FIRE, col = pal[Math.min(pal.length - 1, Math.floor(p.n/p.life*pal.length))], X = Math.round(p.x), Y = Math.round(p.y);
+      if (X >= 0 && X < W && Y >= 0 && Y < H){ var o = (Y*W + X)*4; d[o] = col[0]; d[o+1] = col[1]; d[o+2] = col[2]; d[o+3] = 255; }
+    });
+    g.putImageData(img, 0, 0);
+    if (now > box.until && box.br === 0){ boxStop(true); return; }
+  }
+  box.raf = requestAnimationFrame(boxTick);
 }
 function makeDragons(){
   var r = rng(state.seed ^ 0x5bd1e995), sets = Object.keys(SPR);

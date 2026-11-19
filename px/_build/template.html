@@ -1017,6 +1017,11 @@ if (EMB) addEventListener('message', e => {
   /* /qr passes its taps on (this layer never takes them itself): tap to shoot fire or water, hold 2.5 s to lead the dragons */
   if (FGM && e.data && e.data.type === 'px:ptr'){ const m = e.data;
     if (m.kind === 'down') pDown(m.x, m.y); else if (m.kind === 'move') pMove(m.x, m.y); else { lift(); if (m.kind === 'out') P0.t = -1e9; } }
+  /* /qr's menu dragon flies out to join the others: a new dragon takes off from that spot; the group stays at four */
+  if (FGM && e.data && e.data.type === 'px:spawn'){ const m = e.data, d = mkAdult(0, 1);
+    d.cx = d.lx = m.x; d.cy = d.ly = m.y; d.dir = m.dir > 0 ? 1 : -1; dg.push(d); takeOff(d);
+    const a = adults(); if (a.length > 4){ const old = a.find(o => o !== d); dg.splice(dg.indexOf(old), 1); }
+    titleInk(); }
   if (FGM && e.data && e.data.type === 'px:apply'){ applyScene(e.data.cfg, e.data.seed); populate(true); titleInk(); if(!playing){ draw(); drawScene(); } }
 });
 
