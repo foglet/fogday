@@ -55,9 +55,9 @@ h1 a{text-decoration:none}
 .bento:focus-visible,h1 a:focus-visible{outline:3px solid var(--red);outline-offset:3px;border-radius:2px}
 main{margin:0 auto;padding:4px calc(8px + var(--sar)) calc(8px + var(--sab)) calc(8px + var(--sal))}
 .lede{margin:4px 0 14px;color:var(--muted)}
-.stage{display:flex;justify-content:center;align-items:center;margin:0 0 4px}
+.stage{display:flex;justify-content:center;align-items:center;margin:0 0 3px}
 #qr{display:block;border-radius:10px;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 6px 14px rgba(36,22,48,.18))}
-.meta{margin:0 auto 6px;text-align:center;font:400 13px/1.3 var(--pixel);color:var(--muted);letter-spacing:.04em}
+.meta{margin:0 auto 4px;text-align:center;font:400 13px/1.3 var(--pixel);color:var(--muted);letter-spacing:.04em}
 .row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
 .row>*{flex:1 1 calc(50% - 4px)}
 .row>.wide{flex-basis:100%}
@@ -82,11 +82,6 @@ main{margin:0 auto;padding:4px calc(8px + var(--sar)) calc(8px + var(--sab)) cal
 #boxDragon{display:none;position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;image-rendering:pixelated;image-rendering:crisp-edges}
 .sitef.dragon #boxDragon{display:block}
 .sitef.dragon select{color:transparent}
-/* Remix: the code eases to its new size (and the controls with it) */
-#qr{transition:width .35s ease-in,height .35s ease-in}
-.ctl{transition:max-width .35s ease-in}
-.meta{transition:width .35s ease-in}
-@media (prefers-reduced-motion:reduce){#qr,.ctl,.meta{transition:none}}
 /* Typing: a focused field goes solid so the text is easy to read */
 .field select:focus,.field input:not([type=checkbox]):focus{background-color:var(--solid,var(--card))!important;color:var(--soltx,var(--ink))!important;-webkit-backdrop-filter:none;backdrop-filter:none}
 .field input:focus{background-image:none!important}
@@ -419,7 +414,7 @@ var STYLES = {
         shape: pick(r,['flat','brick','gem','dither','round','round','brick']),
         paper: pick(r,['plain','plain','speck']),
         finder: pick(r,['square','round','eye','dot','bevel','circle','morph','morph']),
-        halo: 4 + Math.floor(r()*3), dens: 0.35 + r()*0.35, drift: r()*Math.PI*2, driftK: 0.3 + r()*0.6, streak: r()*0.6,
+        halo: 5 + 0*r(), dens: 0.35 + r()*0.35, drift: r()*Math.PI*2, driftK: 0.3 + r()*0.6, streak: r()*0.6,
         morphN: [0,1,2].map(function(){ return 2 * Math.pow(3, r()); }),     // ring: circle (2) to squircle (6)
         morphC: [0,1,2].map(function(){ return 2 * Math.pow(3, r()); }),     // centre: circle (2) to squircle (6)
         mixDark: r() < 0.35
@@ -433,7 +428,7 @@ function makeCode(r, url){
   var text = /^https?:\/\/[^\/]+$/i.test(url) && r() < 0.5 ? url + '/' : url, bytes = new TextEncoder().encode(text);
   var levels = ['M','Q','Q','H','H'].filter(function(e){ return minVersion(bytes.length,e) > 0; });
   var e = levels.length ? pick(r,levels) : 'L';
-  var v = Math.min(40, minVersion(bytes.length,e) + (r() < 0.35 ? 1 : 0));
+  var v = minVersion(bytes.length,e); r();   // always the smallest code (r() keeps each seed's other choices as they were)
   var c = encode(bytes, e, v, Math.floor(r()*8)); c.text = text; return c;
 }
 function normUrl(s){
@@ -659,24 +654,27 @@ function fitBox(){
   var ctl = document.querySelector('.ctl'), more = $('more'), meta = $('meta'), mt = getComputedStyle(meta), st = getComputedStyle(canvas.parentNode);
   var ctlH = ctl.offsetHeight - (more.hidden ? 0 : more.offsetHeight);
   var metaH = meta.offsetHeight + parseFloat(mt.marginTop) + parseFloat(mt.marginBottom);
-  var h = vh - head - ctlH - metaH - parseFloat(ms.paddingTop) - parseFloat(ms.paddingBottom) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - 2;
+  var h = vh - head - ctlH - metaH - parseFloat(ms.paddingTop) - parseFloat(ms.paddingBottom) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - 8;
   var w = document.documentElement.clientWidth - parseFloat(ms.paddingLeft) - parseFloat(ms.paddingRight);
   return [w, Math.max(120, h)];
 }
-function scale(){
-  var b = fitBox(), dpr = window.devicePixelRatio || 1;
-  return Math.max(1, Math.floor(Math.min(b[0]*dpr/cur.W, b[1]*dpr/cur.H)));
+/* One size: on a phone the code is 95% of the screen's width, whatever Remix makes; on a wide screen it fills the room left.
+   Drawn nearest-neighbour on device pixels, so the squares stay sharp. */
+function qrWidth(){
+  var vw = document.documentElement.clientWidth;
+  if (vw <= 600) return Math.round(vw*0.95);
+  var b = fitBox(); return Math.max(120, Math.floor(Math.min(b[0], b[1]*cur.W/cur.H)));
 }
 function paint(img){
   art.width = cur.W; art.height = cur.H;
   actx.putImageData(img, 0, 0);
-  var k = scale(), dpr = window.devicePixelRatio || 1;
-  if (canvas.width !== cur.W*k || canvas.height !== cur.H*k){ canvas.width = cur.W*k; canvas.height = cur.H*k; }
-  canvas.style.width = (cur.W*k/dpr) + 'px'; canvas.style.height = (cur.H*k/dpr) + 'px';
-  document.documentElement.style.setProperty('--qrw', Math.round(cur.W*k/dpr) + 'px');
+  var cw = qrWidth(), ch = Math.round(cw*cur.H/cur.W), dpr = window.devicePixelRatio || 1, bw = Math.round(cw*dpr), bh = Math.round(ch*dpr);
+  if (canvas.width !== bw || canvas.height !== bh){ canvas.width = bw; canvas.height = bh; }
+  canvas.style.width = cw + 'px'; canvas.style.height = ch + 'px';
+  document.documentElement.style.setProperty('--qrw', cw + 'px');
   ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);   // the idle ground is transparent: no old frame may show through
-  ctx.drawImage(art, 0, 0, cur.W*k, cur.H*k);
+  ctx.clearRect(0, 0, bw, bh);   // the idle ground is transparent: no old frame may show through
+  ctx.drawImage(art, 0, 0, bw, bh);
 }
 function draw(animate){
   prev = cur;
