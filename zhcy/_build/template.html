@@ -624,7 +624,7 @@ function springCurve(bounce){
   }
   return 'linear(' + pts.join(',') + ')';
 }
-const SPR = HAS_LINEAR ? springCurve(.32) : SPRING, SPR_SMOOTH = HAS_LINEAR ? springCurve(0) : 'cubic-bezier(.2,.9,.25,1)';
+const SPR = HAS_LINEAR ? springCurve(.12) : 'cubic-bezier(.3,1.15,.5,1)', SPR_SMOOTH = HAS_LINEAR ? springCurve(0) : 'cubic-bezier(.2,.9,.25,1)';
 if(HAS_LINEAR){ document.documentElement.style.setProperty('--spring', SPR); document.documentElement.style.setProperty('--spring-smooth', SPR_SMOOTH); }
 const canSwoop = () => booted && !reduce.matches && 'animate' in Element.prototype;
 // One box per character: the card's spans, or each character of a text element (search row, Meaning heading).
@@ -654,7 +654,7 @@ function landAll(){ const f = flights; flights = []; f.forEach(x => x.done()); }
 // curves (x on a bouncy spring, y on a slow-start ease), so the path arcs. The glyph scales to its new size and
 // cross-fades from the old font to the new one. `reveal(i)` shows the real character as its ghost lands.
 function fly(src, dst, reveal, onDone){
-  const n = dst.length, step = n > 4 ? 30 : 42, D = 640;
+  const n = dst.length, step = n > 4 ? 12 : 18, D = 480;
   let left = n;
   dst.forEach((d, i) => {
     const s0 = src[i], k = s0.fs / d.fs, W = d.fs * 1.25;
@@ -667,10 +667,10 @@ function fly(src, dst, reveal, onDone){
     a.style.cssText = `font-family:${s0.ff};font-weight:${s0.fw};color:${s0.col};font-size:${d.fs}px`;
     b.style.cssText = `font-family:${d.ff};font-weight:${d.fw};color:${d.col};font-size:${d.fs}px;opacity:0`;
     inner.append(a, b); g.append(inner); document.body.append(g);
-    const delay = i * step, rot = (i % 2 ? 1 : -1) * Math.min(10, Math.abs(dx) / 30);
+    const delay = i * step;
     const anims = [
       g.animate([{transform: `translateX(${dx}px)`}, {transform: 'none'}], {duration: D, delay, easing: SPR, fill: 'both'}),
-      inner.animate([{transform: `translateY(${dy}px) scale(${k}) rotate(${rot}deg)`}, {transform: 'none'}], {duration: D, delay, easing: 'cubic-bezier(.55,0,.15,1)', fill: 'both'}),
+      inner.animate([{transform: `translateY(${dy}px) scale(${k})`}, {transform: 'none'}], {duration: D, delay, easing: 'cubic-bezier(.55,0,.15,1)', fill: 'both'}),
       a.animate([{opacity: 1}, {opacity: 0}], {duration: D * .5, delay: delay + D * .15, easing: 'ease', fill: 'both'}),
       b.animate([{opacity: 0}, {opacity: 1}], {duration: D * .5, delay: delay + D * .15, easing: 'ease', fill: 'both'})
     ];
@@ -721,7 +721,7 @@ function swapIn(dir, fill){
   // After a drag, keep going from where the finger let go.
   const far = Math.max(110, dragX + 90); dragX = 0;
   ch.style.transition = 'transform 160ms ease-in, opacity 160ms ease-in';
-  ch.style.transform = `translateX(${-dir * far}px) rotate(${-dir * far / 40}deg)`; ch.style.opacity = '0';
+  ch.style.transform = `translateX(${-dir * far}px) rotate(${-dir * far / 160}deg)`; ch.style.opacity = '0';
   meta.style.transition = 'opacity 140ms ease-in'; meta.style.opacity = '0';
   setTimeout(enter, 160);
 }
@@ -787,7 +787,7 @@ document.addEventListener('keydown', ev => {
   let x0 = null, y0 = 0, axis = '', last = [];
   const follow = dx => {
     if(reduce.matches) return;
-    ch.style.transition = 'none'; ch.style.transform = `translateX(${dx}px) rotate(${dx / 40}deg)`;
+    ch.style.transition = 'none'; ch.style.transform = `translateX(${dx}px) rotate(${dx / 160}deg)`;
     ch.style.opacity = String(1 - Math.min(.5, Math.abs(dx) / 600));
     meta.style.transition = 'none'; meta.style.opacity = String(1 - Math.min(.7, Math.abs(dx) / 220));
   };
