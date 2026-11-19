@@ -172,7 +172,7 @@ let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
 Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene', act:'mix', pat:'mix', color:'any', breath:'mix', dizzy:true});   // not choices: they just happen cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
 if (BGM) cfg.n = 0;   // the landscape layer has no dragons (they live in the front layer)
-if (FGM) Object.assign(cfg, {n: Math.min(cfg.n, 4), spd: 1, kids: 'none'});   // front layer for /qr: at most four dragons in all (no babies), speed fixed at 0.5x
+if (FGM) Object.assign(cfg, {n: Math.min(cfg.n, 4), spd: 1, kids: 'none', follow: true});   // front layer for /qr: at most four dragons in all (no babies), speed fixed at 0.5x
 const save = () => { if (EMB) return; try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };   // the background never changes the visitor's /px settings
 let seed = QSEED > 0 ? QSEED : (R()*1e9)|0;   // /qr passes the same seed to both layers so their landscapes match
 
@@ -914,12 +914,12 @@ function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !
     .sort((a, b) => Math.hypot(a.cx - p.x, a.cy - p.y) - Math.hypot(b.cx - p.x, b.cy - p.y)).slice(0, Math.min(3, ri(1, 3) + 1));
   const wet = R() < .35 ? pick(who) : null;
   who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
-addEventListener('pointerdown', e => { if(inUI(e)) return;
-  press = {x: e.clientX, y: e.clientY, t: performance.now(), held: false, down: true, wasOpen: !sheet.hidden};
+function pDown(x, y){ press = {x, y, t: performance.now(), held: false, down: true, wasOpen: !sheet.hidden};
   if(!press.wasOpen) shoot(press);
-  clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }, {passive: true});
-addEventListener('pointermove', e => { if(!press || inUI(e)) return; press.x = e.clientX; press.y = e.clientY;
-  if(press.held) P0 = {x: press.x, y: press.y, t: performance.now()}; }, {passive: true});
+  clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }
+function pMove(x, y){ if(!press) return; press.x = x; press.y = y; if(press.held) P0 = {x, y, t: performance.now()}; }
+addEventListener('pointerdown', e => { if(inUI(e)) return; pDown(e.clientX, e.clientY); }, {passive: true});
+addEventListener('pointermove', e => { if(inUI(e)) return; pMove(e.clientX, e.clientY); }, {passive: true});
 const lift = () => { clearTimeout(holdT); if(press) press.down = false; press = null; };
 addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
 setInterval(() => { if(press && press.held) P0.t = performance.now(); }, 200);   // holding still keeps them coming
@@ -1014,6 +1014,9 @@ if (EMB) addEventListener('message', e => {
     const sc = {}; for (const k of SCENE_KEYS) sc[k] = cfg[k];
     parent.postMessage({type: 'px:scene', cfg: sc, seed: seed}, location.origin);
   }
+  /* /qr passes its taps on (this layer never takes them itself): tap to shoot fire or water, hold 2.5 s to lead the dragons */
+  if (FGM && e.data && e.data.type === 'px:ptr'){ const m = e.data;
+    if (m.kind === 'down') pDown(m.x, m.y); else if (m.kind === 'move') pMove(m.x, m.y); else { lift(); if (m.kind === 'out') P0.t = -1e9; } }
   if (FGM && e.data && e.data.type === 'px:apply'){ applyScene(e.data.cfg, e.data.seed); populate(true); titleInk(); if(!playing){ draw(); drawScene(); } }
 });
 

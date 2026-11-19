@@ -60,12 +60,6 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
 /* Fields are 50% see-through over the /px scene; a light blur keeps their text readable */
 .field select,.field input:not([type=checkbox]){-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-/* A typed website: the menu shows the walking dragon instead of a name */
-.sitef{position:relative}
-.sitef select{position:relative;z-index:1}
-#siteDragon{display:none;position:absolute;z-index:2;left:14px;top:50%;width:45px;height:39px;margin-top:-20px;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none}
-.sitef.custom #siteDragon{display:block}
-.sitef.custom select{color:transparent}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
@@ -110,7 +104,6 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
   </div>
 
   <div class="field sitef" id="siteField">
-    <canvas id="siteDragon" width="30" height="26" aria-hidden="true"></canvas>
     <select id="site" aria-label="Website">
       <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
       <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
@@ -636,7 +629,6 @@ function draw(animate){
   prev = cur;
   cur = render(state.seed, state.style, state.capAuto ? autoCap(state.url) : state.caption, state.img, state.url, 'random');
   makeDragons(); startFlying();
-  if ($('siteField').classList.contains('custom')) drawSiteDragon();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
   $('meta').textContent = 'No. ' + state.seed + '  ·  version ' + c.v + ', ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
@@ -674,24 +666,11 @@ function dragonPal(r){
   for (var k in DFIX) p[k] = DFIX[k];
   return p;
 }
-/* The menu: a known website shows its name; a typed one shows the walking dragon */
+/* The menu: a known website shows its name; a typed one shows "Your website" */
 function showSite(){
-  var known = SITES.indexOf(state.url) >= 0, f = $('siteField');
+  var known = SITES.indexOf(state.url) >= 0;
   $('customOpt').hidden = known;
   $('site').value = known ? state.url : 'custom';
-  f.classList.toggle('custom', !known);
-  if (!known) drawSiteDragon();
-}
-function drawSiteDragon(){
-  var c = $('siteDragon'), g = c.getContext('2d'), d = dragons[0];
-  if (!d) return;
-  var img = g.createImageData(SW, SH), fr = d.set[0];
-  for (var i = 0; i < SW*SH; i++){
-    var ch = fr.charCodeAt(i) - 48; if (ch <= 0) continue;
-    var col = d.pal[ch] || d.pal[2];
-    img.data[i*4] = col[0]; img.data[i*4+1] = col[1]; img.data[i*4+2] = col[2]; img.data[i*4+3] = 255;
-  }
-  g.clearRect(0, 0, SW, SH); g.putImageData(img, 0, 0);
 }
 function makeDragons(){
   var r = rng(state.seed ^ 0x5bd1e995), sets = Object.keys(SPR);
@@ -824,6 +803,14 @@ function boot(){
       setUrl(u);
     }, 300);
   });
+  /* Tap the page (not a control or the code) and the dragons shoot fire or water at it, as on /px; hold 2.5 s and they follow your finger */
+  var ptrOn = false;
+  function toDragons(kind, e){ var f = $('pxFront'); if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:ptr', kind: kind, x: e ? e.clientX : 0, y: e ? e.clientY : 0}, location.origin); }
+  function onUI(e){ return e.target && e.target.closest && e.target.closest('button,a,input,select,label,.stage,.meta,#more'); }
+  addEventListener('pointerdown', function(e){ if (onUI(e)) return; ptrOn = true; toDragons('down', e); }, {passive: true});
+  addEventListener('pointermove', function(e){ if (ptrOn) toDragons('move', e); }, {passive: true});
+  addEventListener('pointerup', function(){ if (ptrOn){ ptrOn = false; toDragons('up'); } }, {passive: true});
+  addEventListener('pointercancel', function(){ if (ptrOn){ ptrOn = false; toDragons('out'); } }, {passive: true});
   $('moreBtn').addEventListener('click', function(){
     var open = this.getAttribute('aria-expanded') !== 'true';
     this.setAttribute('aria-expanded', String(open)); $('more').hidden = !open;
