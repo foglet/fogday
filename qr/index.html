@@ -52,6 +52,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
           mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat}
 .btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
+/* Fields are 50% see-through over the /px scene; a light blur keeps their text readable */
+.field select,.field input:not([type=checkbox]){-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
@@ -66,9 +68,9 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .pic .btn{min-height:44px;font-size:13px}
 .field{margin:6px 0 10px}
 .field label{display:block;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
-.field select{width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.04em;-webkit-appearance:none;appearance:none}
+.field select{width:100%;min-height:48px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,253,248,.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 15px/1 var(--pixel);letter-spacing:.02em;text-overflow:ellipsis;-webkit-appearance:none;appearance:none}
 .field select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.field input:not([type=checkbox]){width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
+.field input:not([type=checkbox]){width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,253,248,.5);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 .styles{display:none;border:0;margin:0 0 10px;padding:0}
 .styles.on{display:block}
 .styles legend{padding:0;margin:0 0 4px;font:400 13px/1.3 var(--pixel);color:var(--muted)}
@@ -94,9 +96,12 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
   <div class="field">
     <label for="site">Website</label>
     <select id="site">
-      <option value="https://fogday.com">fogday.com</option>
-      <option value="https://ohlonesky.com">ohlonesky.com</option>
-      <option value="https://oysteratlas.com">oysteratlas.com</option>
+      <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios: fogday.com</option>
+      <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky: ohlonesky.com</option>
+      <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas: oysteratlas.com</option>
+      <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram: https://www.instagram.com/fogfish/</option>
+      <option value="https://wa.me/?text=Bonjour%21" data-cap="WHATSAPP">WhatsApp: https://wa.me/?text=Bonjour%21</option>
+      <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn: https://www.linkedin.com/in/fogfish/</option>
     </select>
   </div>
 
@@ -114,7 +119,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
       <button type="button" class="btn" id="scene">New scene</button>
     </div>
     <div class="field">
-      <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Or type a website" aria-label="Or type a website" style="text-transform:none">
+      <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Type a website" aria-label="Website address (edit to use your own)" style="text-transform:none">
     </div>
   </div>
 
@@ -587,7 +592,12 @@ function readHash(){
   return out;
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
-var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com'];
+var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com','https://www.instagram.com/fogfish/','https://wa.me/?text=Bonjour%21','https://www.linkedin.com/in/fogfish/'];
+/* Auto caption: the menu entry's short name (social links read better as a name than as an address) */
+function autoCap(u){
+  var o = document.querySelector('#site option[value="' + u.replace(/"/g,'') + '"]');
+  return o ? o.getAttribute('data-cap') : host(u);
+}
 function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(){ s.textContent = msg; }, 30); }
 
 function scale(){
@@ -605,7 +615,7 @@ function paint(img){
 }
 function draw(animate){
   prev = cur;
-  cur = render(state.seed, state.style, state.capAuto ? host(state.url) : state.caption, state.img, state.url, 'random');
+  cur = render(state.seed, state.style, state.capAuto ? autoCap(state.url) : state.caption, state.img, state.url, 'random');
   makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
@@ -755,18 +765,20 @@ function boot(){
   var su = hs.u || load('url'); if (su) state.url = normUrl(su);
   var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
   syncHash();
-  if (SITES.indexOf(state.url) >= 0) $('site').value = state.url; else $('siteFree').value = state.url.replace(/^https:\/{2}/,'');
+  if (SITES.indexOf(state.url) >= 0) $('site').value = state.url;
+  $('siteFree').value = state.url;   // the address in use, shown (and editable) under More
   $('cap').value = state.capAuto ? '' : state.caption;
   initStyles();
   draw(false);
   $('remix').addEventListener('click', remix);
   function setUrl(u){ state.url = u; store('url', u === URL_TEXT ? '' : u); syncHash(); draw(true); }
-  $('site').addEventListener('change', function(){ $('siteFree').value = ''; setUrl(this.value); });
+  $('site').addEventListener('change', function(){ $('siteFree').value = this.value; setUrl(this.value); });
   var ut;
   $('siteFree').addEventListener('input', function(){
     var v = this.value.trim();
     clearTimeout(ut); ut = setTimeout(function(){
       var u = v ? normUrl(v) : $('site').value;
+      if (u === state.url) return;
       if (!minVersion(new TextEncoder().encode(u).length,'L')){ say('That address is too long for a QR code'); return; }
       setUrl(u);
     }, 300);
