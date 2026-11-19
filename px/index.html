@@ -1013,7 +1013,9 @@ if (FGM) setInterval(() => {
   const L = [];
   for (const d of adults()){ if (d.mode === 'off' || d.mode === 'under' || d.hid || offScreen(d)) continue;
     if (!d.uid) d.uid = ++UID; const p = palOf(d); L.push({id: d.uid, x: d.cx, y: d.cy, r: 13*d.s, c: [p[2], p[5], p[4], p[3], p[6]]}); }
-  parent.postMessage({type: 'px:where', list: L}, location.origin);
+  const hits = [];   // where the fire and water are, so /qr can burn the pixels they reach
+  for (const b of bits) if ((b.k === 'fire' || b.k === 'drop') && hits.length < 80) hits.push({x: Math.round(b.x), y: Math.round(b.y), w: b.k === 'drop'});
+  parent.postMessage({type: 'px:where', list: L, hits}, location.origin);
 }, 120);
 if (EMB) addEventListener('message', e => {
   if (e.origin !== location.origin) return;

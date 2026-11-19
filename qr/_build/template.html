@@ -586,7 +586,11 @@ function render(seed, styleId, caption, img, url, finder){
     });
   }
   var grad = 'linear-gradient(to right,' + [toLum(R.dark[0],0.16), toLum(R.accent[0],0.22), toLum(R.dark2[0],0.2)].map(css).join(',') + ')';
-  return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P]};
+  // the loose blocks past the quiet zone: the only pixels a dragon can burn (the code itself never burns, so it always scans)
+  var halo = {};
+  for (y = 0; y < Mh; y++) for (x = 0; x < M; x++) if (D[y*M+x] && dq(x,y) >= 1) halo[x + ',' + y] = 1;
+  return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
+          halo:halo, P:P, bgAt:bg};
 }
 
 /* ---------- UI ---------- */
@@ -631,6 +635,7 @@ function paint(img){
 function draw(animate){
   prev = cur;
   cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random');
+  burns = {}; nBurn = 0; sparks = [];
   makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
@@ -732,7 +737,9 @@ function boxTick(now){
 }
 function makeDragons(){
   var r = rng(state.seed ^ 0x5bd1e995), sets = Object.keys(SPR);
-  dragons = [{set: SPR[pick(r,sets)], pal: dragonPal(r), s: r(), v: 0.55 + r()*0.25}];
+  dragons = [{set: SPR[pick(r,sets)], pal: dragonPal(r), s: r(), v: 0.55 + r()*0.25, br: 0, water: false,
+               leave: performance.now() + 25000 + Math.random()*35000}];   // some time in the next minute it may walk off the code
+  sparks = [];
 }
 /* Where the dragon is: s runs once round the quiet-zone box (clockwise from the top left). Returns the sprite's top-left,
    its turn (0 standing on top, 1 on the right side, 2 under the bottom, 3 on the left side) */
@@ -744,9 +751,27 @@ function walkPos(d){
   t -= h; if (t < w) return [x1 - t - SW/2, y1 + FOOT - SH + 1, 2];
   t -= w; return [x0 - 1 - FOOT, y1 - t - SW/2, 3];
 }
+/* Burning: a block hit by fire flickers in flames, turns grey, then is gone (water: grey, then gone). New scene puts them all back. */
+var burns = {}, sparks = [], nBurn = 0;
+function ignite(k, water){ if (!cur.halo[k] || burns[k]) return; burns[k] = {t: performance.now(), water: water}; nBurn++; startFlying(); }
+function hitArt(ax, ay, water){ var P = cur.P; ignite(Math.floor(ax/P) + ',' + Math.floor(ay/P), water); }
 function frameData(){
-  if (!dragons.length || !cur.inner) return cur.data;
-  var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H;
+  if ((!dragons.length && !nBurn && !sparks.length) || !cur.inner) return cur.data;
+  var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H, now = performance.now(), P = cur.P;
+  for (var k in burns){
+    var b = burns[k], age = now - b.t, mx = +k.split(',')[0], my = +k.split(',')[1];
+    for (var yy = my*P; yy < my*P + P && yy < H; yy++) for (var xx = mx*P; xx < mx*P + P && xx < W; xx++){
+      var o = (yy*W + xx)*4, c;
+      if (!b.water && age < 700) c = FIRE[Math.floor(Math.random()*4)];
+      else if (age < (b.water ? 900 : 1700)){ var gv = Math.round((out[o] + out[o+1] + out[o+2])/3*0.6 + 70); c = [gv, gv, gv]; }
+      else c = cur.bgAt(xx, yy);
+      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2];
+    }
+  }
+  sparks.forEach(function(p){
+    var X = Math.round(p.x), Y = Math.round(p.y);
+    if (X >= 0 && Y >= 0 && X < W && Y < H){ var pal = p.water ? WATER : FIRE, c = pal[Math.min(pal.length-1, Math.floor(p.n/p.life*pal.length))], o = (Y*W + X)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; }
+  });
   dragons.forEach(function(d){
     var p = walkPos(d), ox = Math.round(p[0]), oy = Math.round(p[1]), rot = p[2];
     var fr = d.set[Math.floor(dTick/4) % d.set.length];
@@ -764,18 +789,44 @@ function frameData(){
   return out;
 }
 function paintFrame(){ paint(new ImageData(frameData(), cur.W, cur.H)); }
+var FWD = [[1,0],[0,1],[-1,0],[0,-1]], OUTW = [[0,-1],[1,0],[0,1],[-1,0]];
+function mouthAt(d){   // the mouth (sprite 28,6) after the walk's turn
+  var p = walkPos(d), u = 28, v = 6, r = p[2], X, Y;
+  if (r === 0){ X = u; Y = v; } else if (r === 1){ X = SH - 1 - v; Y = u; } else if (r === 2){ X = SW - 1 - u; Y = SH - 1 - v; } else { X = v; Y = SW - 1 - u; }
+  return [p[0] + X, p[1] + Y, r];
+}
 function flyLoop(now){
   dAnim = 0;
-  if (!dragons.length || reduce) return;
+  var busy = dragons.length || sparks.length || Object.keys(burns).some(function(k){ return !burns[k].done; });
+  if (!busy || reduce) return;
   if (!revealing && now - dLast > 60){
     dLast = now; dTick++;
     var b = cur.inner, L = 2*((b[2]-b[0]) + (b[3]-b[1]));
-    dragons.forEach(function(d){ d.s += d.v / L; });
+    dragons.forEach(function(d){
+      if (d.br > 0){   // breathing: stands still, fire (or water) streams forward and a little outward
+        d.br--;
+        var m = mouthAt(d), f = FWD[m[2]], ow = OUTW[m[2]];
+        for (var i = 0; i < 2; i++) sparks.push({x: m[0], y: m[1], vx: f[0]*(1.4 + Math.random()) + ow[0]*Math.random()*0.9, vy: f[1]*(1.4 + Math.random()) + ow[1]*Math.random()*0.9, n: 0, life: 10 + Math.floor(Math.random()*8), water: d.water});
+      } else {
+        d.s += d.v / L;
+        if (Math.random() < 0.025){ d.br = 10 + Math.floor(Math.random()*8); d.water = Math.random() < 0.35; }
+      }
+    });
+    sparks = sparks.filter(function(p){ p.x += p.vx; p.y += p.vy; p.n++; hitArt(p.x, p.y, p.water); return p.n < p.life && p.x >= 0 && p.y >= 0 && p.x < cur.W && p.y < cur.H; });
+    var tnow = performance.now();
+    for (var k in burns) if (tnow - burns[k].t > 1800 && !burns[k].done){ burns[k].done = true; }
+    // the walker may walk off the code and join the dragons over the page
+    if (dragons.length && now > dragons[0].leave && dragons[0].br === 0){
+      var d = dragons[0], p = walkPos(d), r = canvas.getBoundingClientRect(), sc = r.width / cur.W, f = $('pxFront');
+      if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:spawn', x: r.left + (p[0] + 15)*sc, y: r.top + (p[1] + 13)*sc, dir: 1}, location.origin);
+      dragons = [];
+    }
     paintFrame();
   }
   dAnim = requestAnimationFrame(flyLoop);
 }
-function startFlying(){ if (!dAnim && dragons.length && !reduce) dAnim = requestAnimationFrame(flyLoop); }
+function startFlying(){ if (!dAnim && !reduce) dAnim = requestAnimationFrame(flyLoop); }
+function refreshPixels(){ burns = {}; nBurn = 0; sparks = []; makeDragons(); startFlying(); paintFrame(); }
 
 function syncHash(){ history.replaceState(null, '', hashFor()); }
 function remix(){
@@ -884,10 +935,10 @@ function boot(){
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
     var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
+    refreshPixels();   // burnt blocks come back and the walker returns; the website stays
   });
-  /* A dragon flying over Remix or New scene leaves its pattern on the button (its body, wing and belly colours, 50% see-through)
+  /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
      until the next dragon flies over */
-  var lastOver = {remix: 0, scene: 0};
   function rgbOf(c){ var m = /(\d+)\D+(\d+)\D+(\d+)/.exec(c); return m ? [+m[1], +m[2], +m[3]] : [128,128,128]; }
   function paintBtn(el, cols){
     var c = cols.map(rgbOf), T = ['001100','011110','001102','100001','110011','120001'], k = document.createElement('canvas');
@@ -905,11 +956,24 @@ function boot(){
   }
   window.addEventListener('message', function(e){
     if (e.origin !== location.origin || !e.data || e.data.type !== 'px:where') return;
-    ['remix', 'scene'].forEach(function(id){
-      var el = $(id), r = el.getBoundingClientRect();
+    if (e.data.hits && e.data.hits.length && cur){   // fire and water from the dragons over the page burn the blocks they reach
+      var cr = canvas.getBoundingClientRect(), sx = cur.W / cr.width;
+      e.data.hits.forEach(function(h){ if (h.x >= cr.left && h.x < cr.right && h.y >= cr.top && h.y < cr.bottom) hitArt((h.x - cr.left)*sx, (h.y - cr.top)*sx, h.w); });
+    }
+    // every button, the page title and the projects icon take the colours of a dragon flying over them
+    Array.prototype.forEach.call(document.querySelectorAll('.btn, h1 .px-out, .bento'), function(el){
+      var r = el.getBoundingClientRect();
+      if (!r.width) return;   // hidden (More closed)
       for (var i = 0; i < e.data.list.length; i++){
         var d = e.data.list[i], nx = Math.max(r.left, Math.min(d.x, r.right)), ny = Math.max(r.top, Math.min(d.y, r.bottom));
-        if (Math.hypot(d.x - nx, d.y - ny) < d.r){ if (d.id !== lastOver[id]){ lastOver[id] = d.id; paintBtn(el, d.c); } break; }
+        if (Math.hypot(d.x - nx, d.y - ny) < d.r){
+          if (String(d.id) !== el.dataset.dragon){
+            el.dataset.dragon = d.id;
+            if (el.classList.contains('btn')) paintBtn(el, d.c);
+            else el.style.setProperty('--tg', 'linear-gradient(to right,' + d.c[0] + ',' + d.c[1] + ',' + d.c[2] + ')');
+          }
+          break;
+        }
       }
     });
   });
@@ -939,7 +1003,7 @@ function boot(){
   });
   var rt;
   window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (cur) paintFrame(); }, 100); });
-  window.__qr = {render: render, encode: encode, state: state, frame: frameData, cur: function(){ return cur; }};
+  window.__qr = {render: render, encode: encode, state: state, frame: frameData, cur: function(){ return cur; }, burns: function(){ return burns; }};
 }
 boot();
 })();
