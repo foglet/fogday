@@ -600,7 +600,7 @@ function render(seed, styleId, caption, img, url, finder, ground){
 
   // caption on a light plate in the bottom margin
   if (ls){
-    var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 3;
+    var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 5;   // 2 art pixels higher (about 5 screen pixels on a phone)
     for (var py = ty - ls; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
       if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : bg(pxx,py));   // plate: the light ground
     gs.forEach(function(g){
