@@ -40,6 +40,8 @@
   --r-sm:10px; --r-md:14px; --r-lg:20px; --r-pill:999px;
   --edge:3px; --tap:44px; --ring-w:3px;
   --dur:200ms; --ease:cubic-bezier(.2,.8,.2,1);
+  /* Spring curves. Script replaces these with true spring physics (CSS linear()) where the browser supports it. */
+  --spring:cubic-bezier(.34,1.5,.64,1); --spring-smooth:cubic-bezier(.2,.9,.25,1);
   --shadow-card:0 1px 2px rgba(42,36,32,.06),0 8px 24px rgba(42,36,32,.06);
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -101,8 +103,9 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 /* Views: home (the card), books (meaning and search), info. One shows at a time. */
 .view{flex:1;display:flex;flex-direction:column}
 .view[hidden]{display:none}
-.view.in{animation:vin 240ms var(--ease)}
-@keyframes vin{from{opacity:0;transform:translateY(6px)}}
+/* A page swoops up into place on a spring with no overshoot, like an iOS push. */
+.view.in{animation:vin 520ms var(--spring-smooth)}
+@keyframes vin{from{opacity:0;transform:translateY(18px) scale(.985)}}
 #vBooks,#vInfo{padding:var(--s2) 0 calc(var(--s5) + env(safe-area-inset-bottom))}
 .pane{background:var(--surface);border-radius:var(--r-lg);padding:var(--s3) var(--s4) var(--s4)}
 .pane+.pane{margin-top:var(--s3)}
@@ -217,6 +220,23 @@ dialog{width:100%;max-width:34rem;max-height:min(88vh,44rem);margin:auto auto 0;
 dialog[open]{display:flex}
 @media (min-width:600px){dialog{margin:auto;border-radius:var(--r-lg)}}
 dialog::backdrop{background:var(--scrim)}
+/* The sheet swoops up from the bottom edge (a centred card on wide screens) and drops away on close. */
+dialog[open]{animation:sheetUp 560ms var(--spring-smooth)}
+dialog[open]::backdrop{animation:fadeIn 300ms ease}
+dialog.out{animation:sheetDown 220ms cubic-bezier(.4,0,1,1) forwards}
+dialog.out::backdrop{animation:fadeIn 220ms ease reverse forwards}
+@keyframes sheetUp{from{transform:translateY(100%)}}
+@keyframes sheetDown{to{transform:translateY(100%)}}
+@keyframes fadeIn{from{opacity:0}}
+@media (min-width:600px){
+  @keyframes sheetUp{from{opacity:0;transform:translateY(48px) scale(.96)}}
+  @keyframes sheetDown{to{opacity:0;transform:translateY(32px) scale(.97)}}
+}
+/* Characters in flight between the search list, the card and the Meaning page. */
+.ghost{position:fixed;z-index:60;pointer-events:none;will-change:transform}
+.ghost>div{width:100%;height:100%;display:grid;place-items:center;will-change:transform}
+.ghost span{grid-area:1/1;line-height:1;font-synthesis:none}
+@media (prefers-reduced-motion:reduce){dialog[open],dialog[open]::backdrop,dialog.out,dialog.out::backdrop{animation:none}}
 .sh{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s2) var(--s2) var(--s4)}
 .sh h2{flex:1;margin:0;font-family:var(--display);font-weight:600;font-size:var(--fs-lg)}
 /* SEARCH heading and FAVORITES label: red capitals. */
@@ -612,6 +632,79 @@ const face = $('#face');
 let booted = false;
 const EASE = 'cubic-bezier(.22,.61,.36,1)', SPRING = 'cubic-bezier(.34,1.5,.64,1)', reduce = matchMedia('(prefers-reduced-motion: reduce)');
 let swapTok = 0;
+
+/* ---------- swoop ----------
+   Spring physics, like iOS: a damped spring sampled into a CSS linear() curve. bounce 0 settles with no overshoot
+   (the iOS "smooth" spring); higher values overshoot and settle back. Browsers without linear() keep the cubic-bezier fallbacks. */
+const HAS_LINEAR = !!(window.CSS && CSS.supports && CSS.supports('transition-timing-function', 'linear(0, 1)'));
+function springCurve(bounce){
+  const z = 1 - bounce, n = 40, pts = [];
+  for(let i = 0; i <= n; i++){
+    const t = i / n; let x;
+    if(z >= 1){ const w = 9.2; x = 1 - Math.exp(-w * t) * (1 + w * t); }
+    else { const w = 6.2 / z, wd = w * Math.sqrt(1 - z * z); x = 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + z * w / wd * Math.sin(wd * t)); }
+    pts.push(i === n ? 1 : +x.toFixed(4));
+  }
+  return 'linear(' + pts.join(',') + ')';
+}
+const SPR = HAS_LINEAR ? springCurve(.32) : SPRING, SPR_SMOOTH = HAS_LINEAR ? springCurve(0) : 'cubic-bezier(.2,.9,.25,1)';
+if(HAS_LINEAR){ document.documentElement.style.setProperty('--spring', SPR); document.documentElement.style.setProperty('--spring-smooth', SPR_SMOOTH); }
+const canSwoop = () => booted && !reduce.matches && 'animate' in Element.prototype;
+// One box per character: the card's spans, or each character of a text element (search row, Meaning heading).
+function glyphs(el){
+  if(!el) return [];
+  const cs = getComputedStyle(el), out = [];
+  const style = {ff: cs.fontFamily, fw: cs.fontWeight, col: cs.color, fs: parseFloat(cs.fontSize)};
+  const spans = el.querySelectorAll('span');
+  if(el.id === 'chars'){
+    spans.forEach(sp => { const c = getComputedStyle(sp); out.push({ch: sp.textContent, el: sp, r: sp.getBoundingClientRect(), ff: c.fontFamily, fw: c.fontWeight, col: c.color, fs: parseFloat(c.fontSize)}); });
+    return out;
+  }
+  const tn = el.firstChild; if(!tn || tn.nodeType !== 3) return [];
+  const txt = tn.data, rg = document.createRange();
+  for(let k = 0; k < txt.length; k++){
+    if(/\s/.test(txt[k])) continue;
+    rg.setStart(tn, k); rg.setEnd(tn, k + 1);
+    out.push(Object.assign({ch: txt[k], r: rg.getBoundingClientRect()}, style));
+  }
+  return out;
+}
+const onScreen = g => g.length && g.some(x => x.r.bottom > 0 && x.r.top < innerHeight && x.r.width > 0);
+let flights = [];
+// Land anything still in the air at once (a new swoop or a page change interrupts the old one).
+function landAll(){ const f = flights; flights = []; f.forEach(x => x.done()); }
+// Fly each character from its box in `src` to its box in `dst` on a curved path: x and y run on different
+// curves (x on a bouncy spring, y on a slow-start ease), so the path arcs. The glyph scales to its new size and
+// cross-fades from the old font to the new one. `reveal(i)` shows the real character as its ghost lands.
+function fly(src, dst, reveal, onDone){
+  const n = dst.length, step = n > 4 ? 30 : 42, D = 640;
+  let left = n;
+  dst.forEach((d, i) => {
+    const s0 = src[i], k = s0.fs / d.fs, W = d.fs * 1.25;
+    const cx = d.r.left + d.r.width / 2, cy = d.r.top + d.r.height / 2;
+    const dx = s0.r.left + s0.r.width / 2 - cx, dy = s0.r.top + s0.r.height / 2 - cy;
+    const g = document.createElement('div'); g.className = 'ghost'; g.setAttribute('aria-hidden', 'true');
+    g.style.cssText = `left:${cx - W / 2}px;top:${cy - W / 2}px;width:${W}px;height:${W}px`;
+    const inner = document.createElement('div'), a = document.createElement('span'), b = document.createElement('span');
+    a.textContent = b.textContent = d.ch;
+    a.style.cssText = `font-family:${s0.ff};font-weight:${s0.fw};color:${s0.col};font-size:${d.fs}px`;
+    b.style.cssText = `font-family:${d.ff};font-weight:${d.fw};color:${d.col};font-size:${d.fs}px;opacity:0`;
+    inner.append(a, b); g.append(inner); document.body.append(g);
+    const delay = i * step, rot = (i % 2 ? 1 : -1) * Math.min(10, Math.abs(dx) / 30);
+    const anims = [
+      g.animate([{transform: `translateX(${dx}px)`}, {transform: 'none'}], {duration: D, delay, easing: SPR, fill: 'both'}),
+      inner.animate([{transform: `translateY(${dy}px) scale(${k}) rotate(${rot}deg)`}, {transform: 'none'}], {duration: D, delay, easing: 'cubic-bezier(.55,0,.15,1)', fill: 'both'}),
+      a.animate([{opacity: 1}, {opacity: 0}], {duration: D * .5, delay: delay + D * .15, easing: 'ease', fill: 'both'}),
+      b.animate([{opacity: 0}, {opacity: 1}], {duration: D * .5, delay: delay + D * .15, easing: 'ease', fill: 'both'})
+    ];
+    let over = false;
+    const f = {done(){ if(over) return; over = true; anims.forEach(an => an.cancel()); g.remove(); reveal(i); if(--left === 0 && onDone) onDone(); }};
+    flights.push(f);
+    anims[1].finished.then(() => { flights = flights.filter(x => x !== f); f.done(); }, () => {});
+  });
+}
+let heroSrc = null;   // set just before show() so the next card swoops in from these boxes
+let dragX = 0;        // how far a drag had already carried the characters when it committed
 // Put an element at a start state with no transition, then let it transition to rest.
 function from(el, transform, trans){
   el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = transform;
@@ -620,7 +713,8 @@ function from(el, transform, trans){
 }
 // Swap the visible card text. dir: +1 next (slides left), -1 previous (slides right), 0 no slide.
 function swapIn(dir, fill){
-  const ch = $('#chars'), meta = $('#meta'), tok = ++swapTok, rm = reduce.matches;
+  const ch = $('#chars'), meta = $('#meta'), tok = ++swapTok, rm = reduce.matches, hero = heroSrc;
+  heroSrc = null; landAll();
   if(!booted){ fill(); return; }   // first paint waits for fonts, then the whole card fades in
   const enter = () => {
     if(tok !== swapTok) return;
@@ -628,18 +722,29 @@ function swapIn(dir, fill){
     // The container is back at rest; each character then slides in on its own, one after another.
     ch.style.transition = 'none'; ch.style.transform = ''; ch.style.opacity = '';
     const spans = [...ch.querySelectorAll('span')], step = spans.length > 4 ? 55 : 75;
-    spans.forEach((sp, k) => from(sp, rm || !dir ? 'none' : `translateX(${dir * 48}px)`,
-      `transform 420ms ${EASE} ${k * step}ms, opacity 380ms ${EASE} ${k * step}ms`));
+    const dst = hero && canSwoop() ? glyphs(ch) : [];
+    let t0;
+    if(dst.length && dst.length === hero.length){
+      // Hero: each character flies in from where it was tapped; the real one appears as its ghost lands.
+      spans.forEach(sp => { sp.style.transition = 'none'; sp.style.transform = ''; sp.style.opacity = '0'; });
+      fly(hero, dst, i => { spans[i].style.opacity = ''; });
+      t0 = 260;
+    } else {
+      spans.forEach((sp, k) => from(sp, rm || !dir ? 'none' : `translateX(${dir * 48}px)`,
+        `transform 520ms ${SPR} ${k * step}ms, opacity 380ms ${EASE} ${k * step}ms`));
+      t0 = spans.length * step + 40;
+    }
     // Then the pinyin rises, then the definition, each with a slight spring (a small overshoot before settling).
-    const t0 = spans.length * step + 40;
     meta.style.transition = 'none'; meta.style.opacity = '';
-    from($('#pin'), rm ? 'none' : 'translateY(16px)', `transform 480ms ${SPRING} ${t0}ms, opacity 360ms ${EASE} ${t0}ms`);
-    from($('#def'), rm ? 'none' : 'translateY(16px)', `transform 520ms ${SPRING} ${t0 + 170}ms, opacity 400ms ${EASE} ${t0 + 170}ms`);
+    from($('#pin'), rm ? 'none' : 'translateY(16px)', `transform 560ms ${SPR} ${t0}ms, opacity 360ms ${EASE} ${t0}ms`);
+    from($('#def'), rm ? 'none' : 'translateY(16px)', `transform 600ms ${SPR} ${t0 + 170}ms, opacity 400ms ${EASE} ${t0 + 170}ms`);
   };
   if(!dir || rm){ enter(); return; }
   // Out: the current characters slide away in the swipe direction while the definition fades.
+  // After a drag, keep going from where the finger let go.
+  const far = Math.max(110, dragX + 90); dragX = 0;
   ch.style.transition = 'transform 160ms ease-in, opacity 160ms ease-in';
-  ch.style.transform = `translateX(${-dir * 110}px)`; ch.style.opacity = '0';
+  ch.style.transform = `translateX(${-dir * far}px) rotate(${-dir * far / 40}deg)`; ch.style.opacity = '0';
   meta.style.transition = 'opacity 140ms ease-in'; meta.style.opacity = '0';
   setTimeout(enter, 160);
 }
@@ -699,42 +804,81 @@ document.addEventListener('keydown', ev => {
   else if(ev.key === 'ArrowRight'){ ev.preventDefault(); show(cur + 1, 1); }
 });
 
-/* swipe */
+/* swipe: the characters follow the finger, then either fly off (next or previous) or spring back. */
 (() => {
-  let x0 = null, y0 = 0, t0 = 0;
-  const card = $('#card');
-  card.addEventListener('touchstart', ev => { if(ev.touches.length !== 1) return; x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY; t0 = Date.now(); }, {passive:true});
+  const card = $('#card'), ch = $('#chars'), meta = $('#meta');
+  let x0 = null, y0 = 0, axis = '', last = [];
+  const follow = dx => {
+    if(reduce.matches) return;
+    ch.style.transition = 'none'; ch.style.transform = `translateX(${dx}px) rotate(${dx / 40}deg)`;
+    ch.style.opacity = String(1 - Math.min(.5, Math.abs(dx) / 600));
+    meta.style.transition = 'none'; meta.style.opacity = String(1 - Math.min(.7, Math.abs(dx) / 220));
+  };
+  const springBack = () => {
+    ch.style.transition = `transform 560ms ${SPR}, opacity 300ms ${EASE}`; ch.style.transform = ''; ch.style.opacity = '';
+    meta.style.transition = `opacity 300ms ${EASE}`; meta.style.opacity = '';
+  };
+  const start = (x, y) => { x0 = x; y0 = y; axis = ''; last = [[x, performance.now()]]; };
+  // Returns true once the gesture is a horizontal drag.
+  const move = (x, y) => {
+    if(x0 == null) return false;
+    const dx = x - x0, dy = y - y0;
+    if(!axis && Math.hypot(dx, dy) > 8) axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+    if(axis === 'y'){ x0 = null; return false; }
+    if(axis === 'x'){ follow(dx); last.push([x, performance.now()]); if(last.length > 5) last.shift(); }
+    return axis === 'x';
+  };
+  // Returns true if the gesture was a drag (so it is not also a tap on the characters).
+  const end = x => {
+    if(x0 == null) return false;
+    const dx = x - x0, was = axis === 'x'; x0 = null;
+    const [xa, ta] = last[0], v = (x - xa) / Math.max(1, performance.now() - ta);   // px per ms, recent motion only
+    const go = Math.abs(dx) > 70 || (Math.abs(v) > .4 && Math.abs(dx) > 20 && Math.sign(v) === Math.sign(dx));
+    if(go && was){ dragX = Math.abs(dx); show(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); }
+    else if(was) springBack();
+    return was;
+  };
+  card.addEventListener('touchstart', ev => { if(ev.touches.length !== 1){ x0 = null; return; } start(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
+  card.addEventListener('touchmove', ev => { move(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
+  card.addEventListener('touchend', ev => { if(end(ev.changedTouches[0].clientX)) ev.preventDefault(); });   // no click on the characters after a drag
+  card.addEventListener('touchcancel', () => { if(x0 != null && axis === 'x') springBack(); x0 = null; });
   // Mouse: drag the card left or right.
-  let mx = null, my = 0, dragged = false;
-  card.addEventListener('pointerdown', ev => { if(ev.pointerType !== 'mouse' || ev.button) return; mx = ev.clientX; my = ev.clientY; dragged = false; });
-  addEventListener('pointerup', ev => {
-    if(mx == null) return;
-    const dx = ev.clientX - mx, dy = ev.clientY - my; mx = null;
-    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){ dragged = true; show(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); }
-  });
-  // A drag that changed the chengyu is not also a tap on the characters.
+  let mouse = false, dragged = false;
+  card.addEventListener('pointerdown', ev => { if(ev.pointerType !== 'mouse' || ev.button) return; mouse = true; dragged = false; start(ev.clientX, ev.clientY); });
+  addEventListener('pointermove', ev => { if(mouse && move(ev.clientX, ev.clientY)) dragged = true; });
+  addEventListener('pointerup', ev => { if(!mouse) return; mouse = false; if(end(ev.clientX)) dragged = true; });
   card.addEventListener('click', ev => { if(dragged){ dragged = false; ev.stopPropagation(); ev.preventDefault(); } }, true);
-  card.addEventListener('touchend', ev => {
-    if(x0 == null) return;
-    const t = ev.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
-    if(Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 800){
-      ev.preventDefault();   // no click on the characters after a swipe
-      show(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
-    }
-  });
 })();
 
 /* ---------- views ----------
    Home is the card. Books (meaning and search) and detective (info) each open a page in its place, as on fogday.com/cn-dr.
    Tapping the current icon, the logo, or Escape returns to the card. */
 let VIEW = 'home';
-function setView(v, focus){
+function setView(v, focus, quiet){
   if(v === VIEW) v = 'home';
-  VIEW = v;
+  const prev = VIEW; VIEW = v;
+  landAll();
+  // The chengyu swoops between the card and the top of the Meaning page, both ways.
+  let src = [];
+  if(canSwoop() && prev === 'home' && v === 'books') src = glyphs($('#chars'));
+  else if(canSwoop() && prev === 'books' && v === 'home') src = glyphs($('#mHead b'));
+  if(quiet || !onScreen(src)) src = [];
+  let into = null;
   [['home', '#vHome'], ['books', '#vBooks'], ['info', '#vInfo']].forEach(([k, id]) => {
     const el = $(id), on = k === v; el.hidden = !on;
-    el.classList.remove('in'); if(on && v !== 'home'){ void el.offsetWidth; el.classList.add('in'); }
+    el.classList.remove('in'); if(on && v !== 'home') into = el;
   });
+  if(src.length){
+    window.scrollTo(0, 0);
+    if(v === 'books'){
+      const b = $('#mHead b'), dst = glyphs(b);
+      if(dst.length === src.length){ b.style.opacity = '0'; fly(src, dst, () => {}, () => { b.style.opacity = ''; }); }
+    } else {
+      const ch = $('#chars'), dst = glyphs(ch), spans = [...ch.querySelectorAll('span')];
+      if(dst.length === src.length){ spans.forEach(sp => { sp.style.transition = 'none'; sp.style.opacity = '0'; }); fly(src, dst, i => { spans[i].style.opacity = ''; }); }
+    }
+  }
+  if(into){ void into.offsetWidth; into.classList.add('in'); }
   document.querySelectorAll('.tab').forEach(b => b.dataset.view === v ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
   if(v === 'books') runSearch();
   if(v !== 'home') stopSpeech();
@@ -772,14 +916,23 @@ function openDlg(d, from){
   opener = from || document.activeElement;
   d.showModal();
 }
+// Close with the sheet dropping away first (instant with reduced motion).
+function shut(d){
+  if(!d.open || d.classList.contains('out')) return;
+  if(reduce.matches){ d.close(); return; }
+  d.classList.add('out');
+  setTimeout(() => { d.classList.remove('out'); d.close(); }, 220);
+}
 document.querySelectorAll('dialog').forEach(d => {
   d.addEventListener('close', () => { const o = opener; opener = null; if(o && document.contains(o)) o.focus(); });
-  d.addEventListener('click', ev => { if(ev.target === d) d.close(); });   // tap on the backdrop
-  d.addEventListener('keydown', ev => { if(ev.key === 'Escape'){ ev.preventDefault(); d.close(); } });   // one Escape closes, even from a filled search field
-  d.querySelector('[data-close]').addEventListener('click', () => d.close());
+  d.addEventListener('click', ev => { if(ev.target === d) shut(d); });   // tap on the backdrop
+  d.addEventListener('keydown', ev => { if(ev.key === 'Escape'){ ev.preventDefault(); shut(d); } });   // one Escape closes, even from a filled search field
+  d.querySelector('[data-close]').addEventListener('click', () => shut(d));
 });
 // Picking a result: close, then show it and move focus to the card heading.
-function pick(i, s36){ $('#q').blur(); setView('home'); if(s36) setMode('s36', i); else if(MODE !== 'cy') setMode('cy', i); else show(i, 0, true); $('#when').focus({preventScroll:true}); }
+function pick(i, s36, row){
+  const g = canSwoop() && row ? glyphs(row.querySelector('b')) : [];
+  $('#q').blur(); setView('home', false, true); if(onScreen(g)) heroSrc = g; if(s36) setMode('s36', i); else if(MODE !== 'cy') setMode('cy', i); else show(i, 0, true); $('#when').focus({preventScroll:true}); }
 
 /* search */
 function search(q){
@@ -822,11 +975,11 @@ function runSearch(){
   $('#qCount').textContent = hits.length ? t('matches', hits.length, MAX) : t('none');
 }
 $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runSearch, 120); });
-$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, !!b.dataset.s36); } });
+$('#q').addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); const b = $('#qList .row'); if(b) pick(+b.dataset.i, !!b.dataset.s36, b); } });
 $('#qList').addEventListener('click', ev => {
   const st = ev.target.closest('[data-star]');
   if(st){ toggleStar((st.dataset.s36 ? S : D)[+st.dataset.star].e); return; }   // the row stays, so focus stays on this star
-  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, !!b.dataset.s36);
+  const b = ev.target.closest('[data-i]'); if(b) pick(+b.dataset.i, !!b.dataset.s36, b);
 });
 // Star buttons in the list follow the stored state, updated in place.
 function paintListStars(){ document.querySelectorAll('[data-star]').forEach(b => b.setAttribute('aria-pressed', isStar((b.dataset.s36 ? S : D)[+b.dataset.star].e) ? 'true' : 'false')); }
