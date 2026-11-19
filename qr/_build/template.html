@@ -79,7 +79,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
     <button type="button" class="btn wide" id="copy">Copy link</button>
   </div>
 
-  <div class="pic" id="pic"><span>Picture colors on</span><button type="button" class="btn" id="unpic">Remove picture</button></div>
+  <div class="pic" id="pic"><span>Picture in the background</span><button type="button" class="btn" id="unpic">Remove picture</button></div>
 
   <div class="field">
     <label for="site">Website</label>
@@ -299,12 +299,12 @@ var STYLES = {
         accent: darkSet(hsl(h2, 60 + r()*25, 36 + r()*10)),
         light: lightAt(hsl(h + pick(r,[0,30,180]), 30 + r()*50, 95 + r()*3), LT),
         light2: lightAt(hsl(h, 40, 90), 0.78),
-        f1: toLum(hsl(h + pick(r,[0,20,-20]), 50 + r()*30, 50), 0.035 + r()*0.04),
-        f2: toLum(hsl(h2, 50 + r()*30, 55), 0.1 + r()*0.05),
         shape: pick(r,['flat','brick','gem','dither','round','round','brick']),
         paper: pick(r,['plain','plain','speck']),
-        finder: pick(r,['square','round','eye','dot','bevel']),
-        frame: pick(r,['bands','checker','stars','plain']),
+        finder: pick(r,['square','round','eye','dot','bevel','circle','morph','morph']),
+        halo: 4 + Math.floor(r()*3), dens: 0.35 + r()*0.35, drift: r()*Math.PI*2, driftK: 0.3 + r()*0.6, streak: r()*0.6,
+        morphN: [0,1,2].map(function(){ return 2 * Math.pow(3, r()); }),     // ring: circle (2) to squircle (6)
+        morphC: [0,1,2].map(function(){ return 2 * Math.pow(3, r()); }),     // centre: circle (2) to squircle (6)
         mixDark: r() < 0.35
       };
     }
@@ -326,127 +326,166 @@ function normUrl(s){
   return s;
 }
 
-/* Sample the picture into a size x size grid of colours (cover crop) */
-function sampleImage(img,n){
-  var c = document.createElement('canvas'); c.width = n; c.height = n;
+/* Sample the picture into a w x h grid of colours (cover crop): one colour per module, so it pixelates */
+function sampleImage(img,w,h){
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
   var g = c.getContext('2d');
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-  var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height, s = Math.min(w,h);
-  g.drawImage(img, (w-s)/2, (h-s)/2, s, s, 0, 0, n, n);
-  return g.getImageData(0,0,n,n).data;
+  var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, s = Math.min(iw/w, ih/h);
+  g.drawImage(img, (iw - w*s)/2, (ih - h*s)/2, w*s, h*s, 0, 0, w, h);
+  return g.getImageData(0,0,w,h).data;
 }
+function mixRgb(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i] + (b[i]-a[i])*t); }); }
 
-/* Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the whole picture about 90 to 130 px wide).
-   3 px per module for short addresses; long addresses drop to 2 or 1 px per module to stay near that width. */
+/* Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the whole picture about 90 to 150 px wide).
+   3 px per module for short addresses; long addresses drop to 2 or 1 px per module to stay near that width.
+   No frame: past the quiet zone the code's own pattern drifts outward and thins away (the halo). */
 var P = 3, QZ = 4, OUT = [36,22,48];
+var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only: it does not scan
 function render(seed, styleId, caption, img, url, finder){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
-  P = Math.max(1, Math.min(3, Math.round(115 / (code.size + QZ*2))));
-  if (P < 3){   // shaded and rounded shapes need 3 px per module
+  var N = code.size, HW = R.halo + (img ? 3 : 0), M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
+  P = Math.max(1, Math.min(3, Math.round(130 / M)));
+  if (P < 3){   // shaded and rounded shapes need 3 px per module; the drawn corner shapes work at any size
     if (R.shape !== 'dither') R.shape = 'flat';
-    if (R.finder !== 'square' && R.finder !== 'bevel') R.finder = 'square';
+    if (!SUPER[R.finder] && R.finder !== 'bevel') R.finder = 'square';
   }
-  var N = code.size, C = (N + QZ*2) * P, fw = 2*P, gs = glyphs(caption.trim()), tw = textWidth(gs);
-  var ls = caption.trim() ? Math.max(1, Math.min(2, Math.floor((C - 4)/tw))) : 0;
-  var bottom = ls ? Math.max(fw, 5*ls + 2*P) : fw;
-  var W = 1 + fw + C + fw + 1, H = 1 + fw + C + bottom + 1;
+  var gs = glyphs(caption.trim()), tw = textWidth(gs), C = M*P;
+  var ls = caption.trim() ? Math.max(1, Math.min(2, Math.floor((C - 8)/tw))) : 0;
+  var W = C, H = C + Math.max(0, ls ? 5*ls + 4 - (HW*P - 2) : 0), Mh = Math.ceil(H/P);
   var data = new Uint8ClampedArray(W*H*4);
   function px(x,y,rgb){ var o = (y*W+x)*4; data[o] = rgb[0]; data[o+1] = rgb[1]; data[o+2] = rgb[2]; data[o+3] = 255; }
-  var pic = img ? sampleImage(img, C) : null, avg = null;
-  if (pic){
-    var sr = 0, sg = 0, sb = 0, n = C*C;
-    for (var q = 0; q < n; q++){ sr += pic[q*4]; sg += pic[q*4+1]; sb += pic[q*4+2]; }
-    avg = [sr/n, sg/n, sb/n].map(Math.round);
-    R.f1 = toLum(avg, 0.035 + r()*0.04); R.f2 = toLum(avg.map(function(c){ return 255 - (255-c)*0.6; }), 0.12);
+
+  // background: the picture pixelated to the module grid, or paper; washed light inside the quiet zone, fading out past it
+  var pic = img ? sampleImage(img, M, Mh) : null;
+  function dq(mx,my){   // modules outside the code + quiet zone square, rounded at the corners (no square edge)
+    var lo = HW, hi = HW + N + 2*QZ - 1, ex = Math.max(0, lo - mx, mx - hi), ey = Math.max(0, lo - my, my - hi);
+    return Math.hypot(ex, ey);
   }
-  // frame
-  var fx, fy;
-  for (fy = 0; fy < H; fy++) for (fx = 0; fx < W; fx++){
-    if (fx === 0 || fy === 0 || fx === W-1 || fy === H-1){ px(fx,fy,OUT); continue; }
-    var ring = Math.min(fx, fy, W-1-fx, H-1-fy), col = R.f1;
-    if (R.frame === 'bands') col = (Math.floor((ring-1)/2) % 2) ? R.f2 : R.f1;
-    else if (R.frame === 'checker') col = ((Math.floor(fx/2) + Math.floor(fy/2)) % 2) ? R.f2 : R.f1;
-    else if (R.frame === 'stars') col = r() < 0.06 ? (r() < 0.5 ? [255,253,240] : R.f2) : R.f1;
-    px(fx,fy,col);
+  // soft clumps: value noise on a 3-module lattice, so the drift thins in patches, never in rows
+  var NL = Math.ceil(M/3) + 2, NZ = [];
+  for (i = 0; i < NL*NL; i++) NZ.push(r());
+  function noise(mx,my){
+    var gx = mx/3, gy = my/3, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+    function at(a,b){ return NZ[Math.min(NL-1,b)*NL + Math.min(NL-1,a)]; }
+    fx = fx*fx*(3-2*fx); fy = fy*fy*(3-2*fy);
+    return (at(x0,y0)*(1-fx) + at(x0+1,y0)*fx)*(1-fy) + (at(x0,y0+1)*(1-fx) + at(x0+1,y0+1)*fx)*fy;
   }
-  var ox = 1 + fw, oy = 1 + fw, M = N + QZ*2;
-  function isDark(mx,my){ var x = mx-QZ, y = my-QZ; return x >= 0 && y >= 0 && x < N && y < N && code.mod[y*N+x] === 1; }
-  for (var my = 0; my < M; my++) for (var mx = 0; mx < M; mx++){
-    var x = mx-QZ, y = my-QZ, inCode = x >= 0 && y >= 0 && x < N && y < N, idx = y*N+x;
-    var dark = inCode && code.mod[idx] === 1, kind = inCode ? code.kind[idx] : 0;
-    for (var sy = 0; sy < P; sy++) for (var sx = 0; sx < P; sx++){
-      var ax = mx*P + sx, ay = my*P + sy, base, rgb;
-      if (pic){ var po = (ay*C + ax)*4; base = [pic[po], pic[po+1], pic[po+2]]; }
-      if (!dark){
-        if (pic) rgb = lightAt(base, LT);
-        else rgb = (R.paper === 'speck' && r() < 0.05) ? R.light2 : R.light;
-        // rounded pixels: a dark neighbour's outer corner stays light; nothing to do here
-        if (R.shape === 'round' && inCode && !code.fn[idx] && sx !== 1 && sy !== 1){
-          // light module: fill the inner corner when both orthogonal neighbours toward it are dark (pixel fillet)
-          var nx = sx === 0 ? -1 : 1, ny = sy === 0 ? -1 : 1;
-          if (isDark(mx+nx,my) && isDark(mx,my+ny) && isDark(mx+nx,my+ny)) rgb = pic ? darkAt(base,DK[1]) : R.dark[1];
-        }
-        px(ox+ax, oy+ay, rgb); continue;
-      }
-      var set = pic ? darkSet(base) : (kind === 1 || kind === 2 ? R.accent : (R.mixDark && (x*7+y*3)%5 === 0 ? R.dark2 : R.dark));
-      if (kind === 1 && !pic) set = R.accent;
-      var lvl = 1;
-      if (kind === 1 || kind === 2){
-        if (R.finder === 'round' && kind === 1){
-          var fxp = (x <= 7 ? 0 : N-7), fyp = (y <= 7 ? 0 : N-7), lx = x-fxp, ly = y-fyp;
-          if ((lx === 0 || lx === 6) && (ly === 0 || ly === 6) && sx !== 1 && sy !== 1 && ((lx === 0) === (sx === 0)) && ((ly === 0) === (sy === 0))){
-            px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue;
-          }
-        }
-        if (R.finder === 'dot' && kind === 2){
-          var fx3 = (x <= 7 ? 0 : N-7), fy3 = (y <= 7 ? 0 : N-7), cx3 = x-fx3, cy3 = y-fy3;
-          if ((cx3 === 2 || cx3 === 4) && (cy3 === 2 || cy3 === 4) && ((cx3 === 2) === (sx === 0)) && ((cy3 === 2) === (sy === 0)) && sx !== 1 && sy !== 1){
-            px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue;
-          }
-        }
-        if (R.finder === 'round' && kind === 2){
-          var fx4 = (x <= 7 ? 0 : N-7), fy4 = (y <= 7 ? 0 : N-7), cx4 = x-fx4, cy4 = y-fy4;
-          if ((cx4 === 2 || cx4 === 4) && (cy4 === 2 || cy4 === 4) && ((cx4 === 2) === (sx === 0)) && ((cy4 === 2) === (sy === 0)) && sx !== 1 && sy !== 1){
-            px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue;
-          }
-        }
-        if (R.finder === 'bevel'){ lvl = (sx === 0 || sy === 0) ? 0 : ((sx === P-1 || sy === P-1) ? 2 : 1); }
-        if (R.finder === 'eye' && kind === 2){
-          var fx2 = (x <= 7 ? 0 : N-7), fy2 = (y <= 7 ? 0 : N-7);
-          lvl = (x-fx2 === 2 && y-fy2 === 2 && sx === 0 && sy === 0) ? 0 : 1;
-          if (kind === 2 && !pic) set = R.dark;
-        }
-      } else if (R.shape === 'brick'){
-        lvl = (sx === 0 || sy === 0) ? 0 : ((sx === P-1 || sy === P-1) ? 2 : 1);
-      } else if (R.shape === 'gem'){
-        lvl = (sx === 1 && sy === 1) ? 0 : ((sx === P-1 && sy === P-1) ? 2 : 1);
-      } else if (R.shape === 'dither'){
-        lvl = ((ax + ay) % 2) ? 1 : 2;
-      } else if (R.shape === 'round' && !code.fn[idx]){
-        if (sx !== 1 && sy !== 1){
-          var cx = sx === 0 ? -1 : 1, cy = sy === 0 ? -1 : 1;
-          if (!isDark(mx+cx,my) && !isDark(mx,my+cy)){ px(ox+ax, oy+ay, pic ? lightAt(base,LT) : R.light); continue; }
-        }
-      }
-      px(ox+ax, oy+ay, set[lvl]);
+  var bgM = [];
+  for (y = 0; y < Mh; y++) for (x = 0; x < M; x++){
+    var base = pic ? [pic[(y*M+x)*4], pic[(y*M+x)*4+1], pic[(y*M+x)*4+2]] : ((R.paper === 'speck' && r() < 0.06) ? R.light2 : R.light);
+    var d = dq(x,y);
+    if (pic) base = lightAt(base, LT * Math.max(0, 1 - Math.pow(d/(HW+1), 1.5)));
+    bgM.push(base);
+  }
+  function bg(ax,ay){ return bgM[Math.floor(ay/P)*M + Math.floor(ax/P)]; }
+
+  // module map: the code, then its pattern carried on past the quiet zone, drifting downwind and thinning
+  var D = new Uint8Array(M*Mh), FADE = new Float32Array(M*Mh), dirx = Math.cos(R.drift), diry = Math.sin(R.drift);
+  var cx = M/2, cy = M/2;
+  for (y = 0; y < Mh; y++) for (x = 0; x < M; x++){
+    var k = y*M + x, d2 = dq(x,y);
+    if (d2 < 0.5){
+      var qx = x - off, qy = y - off;
+      D[k] = qx >= 0 && qy >= 0 && qx < N && qy < N ? code.mod[qy*N+qx] : 0;
+      continue;
+    }
+    var vx = x - cx, vy = y - cy, vl = Math.hypot(vx,vy) || 1, along = (vx*dirx + vy*diry)/vl;
+    var p = R.dens * Math.pow(Math.max(0, 1 - (d2-1)/(HW+2)), 1.1) * (1 + R.driftK*along) * (0.25 + 1.3*noise(x,y));
+    var sx = ((Math.round(x - dirx*d2*R.streak - off) % N) + N) % N, sy = ((Math.round(y - diry*d2*R.streak - off) % N) + N) % N;
+    var bit = code.fn[sy*N+sx] ? r() < 0.5 : code.mod[sy*N+sx];   // the code's data texture, not its timing rows
+    if (bit && r() < p){ D[k] = 1; FADE[k] = Math.min(0.7, Math.max(0, d2-1)/(HW+1)); }
+  }
+  // drift trails: some loose pixels leave a pixel downwind
+  var tx0 = Math.round(dirx), ty0 = Math.round(diry);
+  for (y = Mh-1; y >= 0; y--) for (x = M-1; x >= 0; x--){
+    var kk = y*M + x, nx0 = x + tx0, ny0 = y + ty0;
+    if (D[kk] && dq(x,y) >= 1 && nx0 >= 0 && ny0 >= 0 && nx0 < M && ny0 < Mh && dq(nx0,ny0) >= 1 && r() < 0.3*R.driftK){
+      D[ny0*M+nx0] = 1; FADE[ny0*M+nx0] = Math.min(0.75, FADE[kk] + 0.15);
     }
   }
-  // caption
+  function isDark(mx,my){ return mx >= 0 && my >= 0 && mx < M && my < Mh && D[my*M+mx] === 1; }
+
+  for (var my = 0; my < Mh; my++) for (var mx = 0; mx < M; mx++){
+    var qx2 = mx - off, qy2 = my - off, inCode = qx2 >= 0 && qy2 >= 0 && qx2 < N && qy2 < N, idx = qy2*N + qx2;
+    var dark = D[my*M+mx] === 1, kind = inCode ? code.kind[idx] : 0, fn = inCode && code.fn[idx], fade = FADE[my*M+mx];
+    for (var sy2 = 0; sy2 < P; sy2++) for (var sx2 = 0; sx2 < P; sx2++){
+      var ax = mx*P + sx2, ay = my*P + sy2;
+      if (ax >= W || ay >= H) continue;
+      if (!dark){
+        var rgb = bg(ax,ay);
+        if (R.shape === 'round' && inCode && !fn && sx2 !== 1 && sy2 !== 1){
+          var nx = sx2 === 0 ? -1 : 1, ny = sy2 === 0 ? -1 : 1;
+          if (isDark(mx+nx,my) && isDark(mx,my+ny) && isDark(mx+nx,my+ny)) rgb = R.dark[1];
+        }
+        px(ax, ay, rgb); continue;
+      }
+      var set = (kind === 1 || kind === 2) ? R.accent : (R.mixDark && (mx*7+my*3)%5 === 0 ? R.dark2 : R.dark), lvl = 1, cut = false;
+      if (kind === 1 || kind === 2){
+        var fx0 = (qx2 <= 7 ? 0 : N-7), fy0 = (qy2 <= 7 ? 0 : N-7), lx = qx2-fx0, ly = qy2-fy0;
+        if (R.finder === 'round' && kind === 1 && (lx === 0 || lx === 6) && (ly === 0 || ly === 6) && sx2 !== 1 && sy2 !== 1 && ((lx === 0) === (sx2 === 0)) && ((ly === 0) === (sy2 === 0))) cut = true;
+        if ((R.finder === 'round' || R.finder === 'dot') && kind === 2 && (lx === 2 || lx === 4) && (ly === 2 || ly === 4) && ((lx === 2) === (sx2 === 0)) && ((ly === 2) === (sy2 === 0)) && sx2 !== 1 && sy2 !== 1) cut = true;
+        if (R.finder === 'bevel') lvl = (sx2 === 0 || sy2 === 0) ? 0 : ((sx2 === P-1 || sy2 === P-1) ? 2 : 1);
+        if (R.finder === 'eye' && kind === 2){ set = R.dark; lvl = (lx === 2 && ly === 2 && sx2 === 0 && sy2 === 0) ? 0 : 1; }
+      } else if (!fn && R.shape === 'brick'){
+        lvl = (sx2 === 0 || sy2 === 0) ? 0 : ((sx2 === P-1 || sy2 === P-1) ? 2 : 1);
+      } else if (!fn && R.shape === 'gem'){
+        lvl = (sx2 === 1 && sy2 === 1) ? 0 : ((sx2 === P-1 && sy2 === P-1) ? 2 : 1);
+      } else if (R.shape === 'dither'){
+        lvl = ((ax + ay) % 2) ? 1 : 2;
+      } else if (!fn && R.shape === 'round' && sx2 !== 1 && sy2 !== 1){
+        if (!isDark(mx + (sx2 === 0 ? -1 : 1), my) && !isDark(mx, my + (sy2 === 0 ? -1 : 1))) cut = true;
+      }
+      if (cut){ px(ax, ay, bg(ax,ay)); continue; }
+      px(ax, ay, fade ? mixRgb(set[lvl], bg(ax,ay), fade) : set[lvl]);
+    }
+  }
+
+  // drawn corner markers (circle, diamond, morph): superellipses |x|^n + |y|^n, so a line through the centre still reads 1:1:3:1:1
+  if (SUPER[R.finder]){
+    var pos = [[0,0],[N-7,0],[0,N-7]];
+    pos.forEach(function(f, fi){
+      var nr = R.finder === 'circle' ? 2 : R.finder === 'diamond' ? 1 : R.morphN[fi], nc = R.finder === 'morph' ? R.morphC[fi] : nr;
+      var bx = (off + f[0])*P, by = (off + f[1])*P, c0 = 3.5;
+      for (var yy = 0; yy < 7*P; yy++) for (var xx = 0; xx < 7*P; xx++){
+        var dx = Math.abs((xx + 0.5)/P - c0), dy = Math.abs((yy + 0.5)/P - c0);
+        var rr = Math.pow(Math.pow(dx,nr) + Math.pow(dy,nr), 1/nr), rc = Math.pow(Math.pow(dx,nc) + Math.pow(dy,nc), 1/nc);
+        var ax = bx + xx, ay = by + yy;
+        if (rc < 1.5) px(ax, ay, R.accent[1]);
+        else if (rr >= 2.5 && rr < 3.5) px(ax, ay, R.accent[1]);
+        else px(ax, ay, bg(ax, ay));
+      }
+    });
+    if (R.finder === 'morph'){   // small alignment markers morph too
+      var ap = alignPos(code.v), na = ap.length;
+      for (var ai = 0; ai < na; ai++) for (var aj = 0; aj < na; aj++){
+        if ((ai === 0 && aj === 0) || (ai === 0 && aj === na-1) || (ai === na-1 && aj === 0)) continue;
+        var an = R.morphN[(ai+aj)%3], abx = (off + ap[ai] - 2)*P, aby = (off + ap[aj] - 2)*P;
+        for (var y3 = 0; y3 < 5*P; y3++) for (var x3 = 0; x3 < 5*P; x3++){
+          var ddx = Math.abs((x3 + 0.5)/P - 2.5), ddy = Math.abs((y3 + 0.5)/P - 2.5), ar = Math.pow(Math.pow(ddx,an) + Math.pow(ddy,an), 1/an);
+          var X3 = abx + x3, Y3 = aby + y3;
+          px(X3, Y3, ((ddx < 0.5 && ddy < 0.5) || (ar >= 1.5 && ar < 2.5)) ? R.dark[1] : bg(X3, Y3));
+        }
+      }
+    }
+  }
+
+  // caption on a light plate in the bottom margin
   if (ls){
-    var tx = Math.floor((W - tw*ls)/2), ty = oy + C + Math.floor((bottom - 5*ls)/2);
-    for (var by = ty - 1; by < ty + 5*ls + 1; by++) for (var bx = tx - 2; bx < tx + tw*ls + 2; bx++) if (bx > 0 && bx < W-1 && by > oy + C - 1 && by < H-1) px(bx, by, R.f1);
+    var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 2 - Math.max(0, Math.floor((HW*P - 5*ls - 4)/2));
+    for (var py = ty - 1; py < ty + 5*ls + 1; py++) for (var pxx = tx - 2; pxx < tx + tw*ls + 2; pxx++)
+      if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : R.light);
     gs.forEach(function(g){
       for (var gy = 0; gy < 5; gy++) for (var gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (var yy = 0; yy < ls; yy++) for (var xx = 0; xx < ls; xx++){
           var X = tx + gx*ls + xx, Y = ty + gy*ls + yy;
-          if (X > 0 && X < W-1 && Y > 0 && Y < H-1) px(X, Y, R.light);
+          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, OUT);
         }
       tx += (g[0].length + 1)*ls;
     });
   }
-  var grad = 'linear-gradient(to right,' + [toLum(R.dark[0],0.18), R.f1, toLum(R.accent[0],0.2)].map(css).join(',') + ')';
-  if (pic) grad = 'linear-gradient(to right,' + css(toLum(avg,0.12)) + ',' + css(R.f1) + ',' + css(toLum(avg,0.22)) + ')';
+  var grad = 'linear-gradient(to right,' + [toLum(R.dark[0],0.16), toLum(R.accent[0],0.22), toLum(R.dark2[0],0.2)].map(css).join(',') + ')';
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder};
 }
 
@@ -472,7 +511,7 @@ function readHash(){
   return out;
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
-var FINDERS = [['random','Random'],['square','Square'],['round','Round'],['eye','Eye'],['dot','Dot'],['bevel','Bevel']];
+var FINDERS = [['random','Random'],['morph','Morph'],['circle','Circle'],['square','Square'],['round','Round'],['eye','Eye'],['dot','Dot'],['bevel','Bevel']];
 function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(){ s.textContent = msg; }, 30); }
 
 function scale(){
