@@ -676,9 +676,8 @@ function landAll(){ const f = flights; flights = []; f.forEach(x => x.done()); }
 // Fly each character from its box in `src` to its box in `dst` on a curved path: x and y run on different
 // curves (x on a bouncy spring, y on a slow-start ease), so the path arcs. The glyph scales to its new size and
 // cross-fades from the old font to the new one. `reveal(i)` shows the real character as its ghost lands.
-// opt.direct: a straight, quicker move with no stagger (card to Meaning and back), for a calmer shift in place.
-function fly(src, dst, reveal, onDone, opt){
-  const direct = opt && opt.direct, n = dst.length, step = direct ? 0 : n > 4 ? 12 : 18, D = direct ? 380 : 480;
+function fly(src, dst, reveal, onDone){
+  const n = dst.length, step = n > 4 ? 12 : 18, D = 480;
   let left = n;
   dst.forEach((d, i) => {
     const s0 = src[i], k = s0.fs / d.fs, W = d.fs * 1.25;
@@ -693,8 +692,8 @@ function fly(src, dst, reveal, onDone, opt){
     inner.append(a, b); g.append(inner); document.body.append(g);
     const delay = i * step;
     const anims = [
-      g.animate([{transform: `translateX(${dx}px)`}, {transform: 'none'}], {duration: D, delay, easing: direct ? SPR_SMOOTH : SPR, fill: 'both'}),
-      inner.animate([{transform: `translateY(${dy}px) scale(${k})`}, {transform: 'none'}], {duration: D, delay, easing: direct ? SPR_SMOOTH : 'cubic-bezier(.55,0,.15,1)', fill: 'both'}),
+      g.animate([{transform: `translateX(${dx}px)`}, {transform: 'none'}], {duration: D, delay, easing: SPR, fill: 'both'}),
+      inner.animate([{transform: `translateY(${dy}px) scale(${k})`}, {transform: 'none'}], {duration: D, delay, easing: 'cubic-bezier(.55,0,.15,1)', fill: 'both'}),
       a.animate([{opacity: 1}, {opacity: 0}], {duration: D * .5, delay: delay + D * .15, easing: 'ease', fill: 'both'}),
       b.animate([{opacity: 0}, {opacity: 1}], {duration: D * .5, delay: delay + D * .15, easing: 'ease', fill: 'both'})
     ];
@@ -859,25 +858,19 @@ function setView(v, focus, quiet){
   if(v === VIEW) v = 'home';
   const prev = VIEW; VIEW = v;
   landAll();
-  // The chengyu swoops between the card and the top of the Meaning page, both ways.
-  let src = [];
-  if(canSwoop() && prev === 'home' && v === 'books') src = glyphs($('#chars'));
-  else if(canSwoop() && prev === 'books' && v === 'home') src = glyphs($('#mHead b'));
-  if(quiet || !onScreen(src)) src = [];
   let into = null;
+  // Between the card and the Meaning page the chengyu does not fly: it fades in where it lands, easing down
+  // from a little larger, so it reads as shrinking in place.
+  const fadeTo = quiet || !canSwoop() ? null
+    : prev === 'home' && v === 'books' ? '#mHead b' : prev === 'books' && v === 'home' ? '#chars' : null;
   [['home', '#vHome'], ['books', '#vBooks'], ['info', '#vInfo']].forEach(([k, id]) => {
     const el = $(id), on = k === v; el.hidden = !on;
     el.classList.remove('in'); if(on && v !== 'home') into = el;
   });
-  if(src.length){
-    window.scrollTo(0, 0);
-    if(v === 'books'){
-      const b = $('#mHead b'), dst = glyphs(b);
-      if(dst.length === src.length){ b.style.opacity = '0'; fly(src, dst, () => {}, () => { b.style.opacity = ''; }, {direct: true}); }
-    } else {
-      const ch = $('#chars'), dst = glyphs(ch), spans = [...ch.querySelectorAll('span')];
-      if(dst.length === src.length){ spans.forEach(sp => { sp.style.transition = 'none'; sp.style.opacity = '0'; }); fly(src, dst, i => { spans[i].style.opacity = ''; }, null, {direct: true}); }
-    }
+  if(fadeTo){
+    const el = $(fadeTo);
+    el.style.transformOrigin = fadeTo === '#chars' ? 'center' : 'left center';
+    el.animate([{opacity: 0, transform: 'scale(1.12)'}, {opacity: 1, transform: 'none'}], {duration: 340, easing: SPR_SMOOTH});
   }
   if(into){ void into.offsetWidth; into.classList.add('in'); }
   document.querySelectorAll('.tab').forEach(b => b.dataset.view === v ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
