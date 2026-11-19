@@ -25,3 +25,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Burning: fire or water from any dragon (the walker's own breath, or the /px dragons' breath reported in `px:where` hits) burns the loose blocks past the quiet zone: flames, then grey, then gone (water skips the flames). The code itself never burns. New scene puts every block back and brings the walker back; the website stays.
 - The walker may walk off the code some time in its first minute and join the dragons over the page (`px:spawn`).
 - Remix: when the new code is a different size, the code (and the controls under it) ease in to the new size over 0.35 s; reduced motion: instant.
+- Remix has the same light 50% style as the other buttons. When a dragon repaints a button, its text takes one of that dragon's colours that contrasts 4.5:1 or more with the pattern (else ink or white), with a thin opposite shadow.

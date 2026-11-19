@@ -75,8 +75,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
-.btn.primary{background:rgba(31,92,74,.5);color:#fff;border-color:var(--felt-d);font-size:18px;min-height:54px}
-.btn.primary:hover{background-color:rgba(22,69,54,.5)}
+.btn.primary{font-size:18px;min-height:54px}
 .btn:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .btn[disabled]{color:#7d8a84;border-color:#b9c4be;background:rgba(255,253,248,.5);cursor:default}
 .file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
@@ -950,13 +949,19 @@ function boot(){
     k.width = 6; k.height = 6;
     var g = k.getContext('2d');
     for (var y = 0; y < 6; y++) for (var x = 0; x < 6; x++){ var v = c[+T[y][x]]; g.fillStyle = 'rgba(' + v.join(',') + ',0.5)'; g.fillRect(x, y, 1, 1); }
-    var avg = (lum(c[0]) + lum(c[1]))/2;
+    // text: the dragon colour that stands out most against the pattern (seen over a light page), else ink or white
+    var seen = [0,1,2].map(function(i){ return Math.round((c[0][i] + c[1][i] + c[2][i])/3*0.5 + 250*0.5); }), ls = lum(seen);
+    function ratio(a){ var la = lum(a); return (Math.max(la, ls) + 0.05)/(Math.min(la, ls) + 0.05); }
+    var cands = c.concat([[29,38,34], [255,255,255]]), best = cands[0];
+    cands.forEach(function(v){ if (ratio(v) > ratio(best)) best = v; });
+    var pal = c.filter(function(v){ return ratio(v) >= 4.5; });
+    if (pal.length) best = pal[Math.floor(Math.random()*pal.length)];
     el.style.backgroundImage = 'url(' + k.toDataURL() + ')';
     el.style.backgroundSize = '18px 18px';
     el.style.backgroundColor = 'transparent';
     el.style.imageRendering = 'pixelated';
-    el.style.color = avg < 0.3 ? '#fff' : '#1d2622';
-    el.style.textShadow = avg < 0.3 ? '0 1px 0 rgba(0,0,0,.6)' : '0 1px 0 rgba(255,255,255,.7)';
+    el.style.color = 'rgb(' + best.join(',') + ')';
+    el.style.textShadow = lum(best) < 0.3 ? '0 1px 0 rgba(255,255,255,.6)' : '0 1px 0 rgba(0,0,0,.55)';
     el.style.borderColor = 'rgb(' + c[3].join(',') + ')';
   }
   window.addEventListener('message', function(e){
