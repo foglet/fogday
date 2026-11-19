@@ -29,3 +29,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Focus: a field (website menu, caption, address box) goes solid while it has focus, and back to 50% see-through after.
 - Opacity: everything (buttons, menu, fields, the details chip) is 50% see-through; only the menu or a box with focus is solid (in the body colour of the last dragon that passed over it, with ink or white text; paper if none has), and after 2 s with no typing, tapping or change in it, it lets go (blurs) and goes back. Repainted text is chosen to read on each pattern colour on its own.
 - No borders on any box or button; keyboard focus still shows the red ring.
+- Calm: on load, Remix and New scene every box goes back to plain 50% (dragon colours cleared) and the dragons cannot repaint anything for 5 s.

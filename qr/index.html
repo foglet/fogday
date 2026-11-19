@@ -845,6 +845,17 @@ function remix(){
   state.seed = newSeed();
   syncHash();
   draw(true);
+  calm();
+}
+/* Reload, Remix and New scene: every box goes back to plain 50% for five seconds, then the dragons may paint them again */
+var calmUntil = 0;
+function calm(){
+  calmUntil = performance.now() + 5000;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-dragon]'), function(el){
+    ['background-image','background-size','background-position','background-repeat','background-color','color','text-shadow','border-color','image-rendering','--tg','--ph','--solid','--soltx','--solph']
+      .forEach(function(k){ el.style.removeProperty(k); });
+    delete el.dataset.dragon;
+  });
 }
 function pngBlob(cb){
   var k = Math.max(1, Math.ceil(1200/cur.W)), c = document.createElement('canvas');
@@ -911,6 +922,7 @@ function boot(){
   initStyles();
   draw(false);
   showSite();
+  calm();
   $('remix').addEventListener('click', remix);
   function setUrl(u){ state.url = u; syncHash(); draw(true); showSite(); }
   function openMore(){ $('moreBtn').setAttribute('aria-expanded', 'true'); $('more').hidden = false; }
@@ -956,6 +968,7 @@ function boot(){
     var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
     refreshPixels();   // burnt blocks come back and the walker returns; the website stays
+    calm();
   });
   /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
      until the next dragon flies over */
@@ -999,6 +1012,7 @@ function boot(){
       var cr = canvas.getBoundingClientRect(), sx = cur.W / cr.width;
       e.data.hits.forEach(function(h){ if (h.x >= cr.left && h.x < cr.right && h.y >= cr.top && h.y < cr.bottom) hitArt((h.x - cr.left)*sx, (h.y - cr.top)*sx, h.w); });
     }
+    if (performance.now() < calmUntil) return;   // the five calm seconds after a reload, Remix or New scene
     // every button, the code details, the page title and the projects icon take the colours of a dragon flying over them
     Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, #site, #cap, #siteFree, h1 .px-out, .bento'), function(el){
       var r = el.getBoundingClientRect();
