@@ -1,6 +1,6 @@
 # fogday.com/qr: Pixel QR
 
-Random lo-res pixel QR codes, Website menu shows names only: Fogday Studios (default), Ohlone Sky, Oyster Atlas, Instagram (instagram.com/fogfish), WhatsApp (wa.me/?text=Bonjour%21), LinkedIn (linkedin.com/in/fogfish). Under More, a box shows the address in use without https:// (fogday.com) and can be edited to override the menu. Auto caption: the entry's short name (data-cap). Remix gives a new one; every seed is a real, different code.
+Random lo-res pixel QR codes, Website menu shows names only: Fogday Studios (default), Ohlone Sky, Oyster Atlas, Instagram (instagram.com/fogfish), WhatsApp (wa.me/?text=Bonjour%21), LinkedIn (linkedin.com/in/fogfish). Under More, a box shows the address in use without https:// (fogday.com) and can be edited to override the menu: a typed website that is not on the menu makes the menu show the walking dragon (hidden "Your website" option, dragon drawn over it); clearing the box goes back to Fogday Studios. The menu always starts on Fogday Studios (no saved choice); a shared link with `&u=` keeps its website. Auto caption: the entry's short name (data-cap). Remix gives a new one; every seed is a real, different code.
 
 Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the picture about 90 to 130 px wide). 3 px per module for short addresses; long ones drop to 2 or 1 px per module, with flat or dither shapes and square or bevel corners.
 

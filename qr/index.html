@@ -60,6 +60,12 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
 /* Fields are 50% see-through over the /px scene; a light blur keeps their text readable */
 .field select,.field input:not([type=checkbox]){-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+/* A typed website: the menu shows the walking dragon instead of a name */
+.sitef{position:relative}
+.sitef select{position:relative;z-index:1}
+#siteDragon{display:none;position:absolute;z-index:2;left:14px;top:50%;width:45px;height:39px;margin-top:-20px;image-rendering:pixelated;image-rendering:crisp-edges;pointer-events:none}
+.sitef.custom #siteDragon{display:block}
+.sitef.custom select{color:transparent}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;padding:0 14px;border-radius:24px;border:1px solid var(--felt);background:var(--card);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background:#eef5f1}
@@ -103,7 +109,8 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
     <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
-  <div class="field">
+  <div class="field sitef" id="siteField">
+    <canvas id="siteDragon" width="30" height="26" aria-hidden="true"></canvas>
     <select id="site" aria-label="Website">
       <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
       <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
@@ -111,6 +118,7 @@ main{max-width:480px;margin:0 auto;padding:8px 16px calc(28px + var(--sab))}
       <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
       <option value="https://wa.me/?text=Bonjour%21" data-cap="WHATSAPP">WhatsApp</option>
       <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
+      <option value="custom" id="customOpt" hidden>Your website</option>
     </select>
   </div>
 
@@ -628,6 +636,7 @@ function draw(animate){
   prev = cur;
   cur = render(state.seed, state.style, state.capAuto ? autoCap(state.url) : state.caption, state.img, state.url, 'random');
   makeDragons(); startFlying();
+  if ($('siteField').classList.contains('custom')) drawSiteDragon();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
   $('meta').textContent = 'No. ' + state.seed + '  ·  version ' + c.v + ', ' + c.size + 'x' + c.size + '  ·  level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
@@ -664,6 +673,25 @@ function dragonPal(r){
   p[10] = p[5]; p[11] = p[5];
   for (var k in DFIX) p[k] = DFIX[k];
   return p;
+}
+/* The menu: a known website shows its name; a typed one shows the walking dragon */
+function showSite(){
+  var known = SITES.indexOf(state.url) >= 0, f = $('siteField');
+  $('customOpt').hidden = known;
+  $('site').value = known ? state.url : 'custom';
+  f.classList.toggle('custom', !known);
+  if (!known) drawSiteDragon();
+}
+function drawSiteDragon(){
+  var c = $('siteDragon'), g = c.getContext('2d'), d = dragons[0];
+  if (!d) return;
+  var img = g.createImageData(SW, SH), fr = d.set[0];
+  for (var i = 0; i < SW*SH; i++){
+    var ch = fr.charCodeAt(i) - 48; if (ch <= 0) continue;
+    var col = d.pal[ch] || d.pal[2];
+    img.data[i*4] = col[0]; img.data[i*4+1] = col[1]; img.data[i*4+2] = col[2]; img.data[i*4+3] = 255;
+  }
+  g.clearRect(0, 0, SW, SH); g.putImageData(img, 0, 0);
 }
 function makeDragons(){
   var r = rng(state.seed ^ 0x5bd1e995), sets = Object.keys(SPR);
@@ -775,22 +803,22 @@ function boot(){
   var hs = readHash(), h = hs.seed;
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
-  var su = hs.u || load('url'); if (su) state.url = normUrl(su);
+  if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
   var cp = load('caption'); if (cp !== null){ state.caption = cp; state.capAuto = false; }
   syncHash();
-  if (SITES.indexOf(state.url) >= 0) $('site').value = state.url;
   $('siteFree').value = bare(state.url);   // the address in use, shown (and editable) under More
   $('cap').value = state.capAuto ? '' : state.caption;
   initStyles();
   draw(false);
+  showSite();
   $('remix').addEventListener('click', remix);
-  function setUrl(u){ state.url = u; store('url', u === URL_TEXT ? '' : u); syncHash(); draw(true); }
+  function setUrl(u){ state.url = u; syncHash(); draw(true); showSite(); }
   $('site').addEventListener('change', function(){ $('siteFree').value = bare(this.value); setUrl(this.value); });
   var ut;
   $('siteFree').addEventListener('input', function(){
     var v = this.value.trim();
     clearTimeout(ut); ut = setTimeout(function(){
-      var u = v ? normUrl(v) : $('site').value;
+      var u = v ? normUrl(v) : URL_TEXT;   // cleared: back to Fogday Studios
       if (u === state.url) return;
       if (!minVersion(new TextEncoder().encode(u).length,'L')){ say('That address is too long for a QR code'); return; }
       setUrl(u);
