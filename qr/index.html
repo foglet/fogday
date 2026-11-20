@@ -1158,6 +1158,12 @@ function draw(animate){
     from[o] = pd[q]; from[o+1] = pd[q+1]; from[o+2] = pd[q+2];
   }
   var when = new Float32Array(W*H), t0 = performance.now(), DUR = 900, mix = new Uint8ClampedArray(to.length);
+  // clear ground: the old and the new code each keep their see-through ground all through the change (never a solid flash)
+  var toM = CLEAR ? clearMask() : null, fromM = null;
+  if (CLEAR){
+    var LL = function(a, i){ return 0.2126*a[i] + 0.7152*a[i+1] + 0.0722*a[i+2]; }, pLight = LL(pd, 0) > 140;
+    fromM = new Uint8Array(W*H); for (var fm = 0; fm < fromM.length; fm++) fromM[fm] = (LL(from, fm*4) > 140) === pLight ? 1 : 0;
+  }
   for (var i = 0; i < when.length; i++) when[i] = Math.random()*0.82;
   (function step(now){
     var p = Math.min(1, (now - t0)/DUR);
@@ -1167,8 +1173,8 @@ function draw(animate){
         var light = 0.2126*to[o2] + 0.7152*to[o2+1] + 0.0722*to[o2+2] > 140, k = 1 - (p - t)/0.09;
         var star = light ? [255, 206, 60] : [255, 255, 240];
         mix[o2] = Math.round(star[0]*k + to[o2]*(1-k)); mix[o2+1] = Math.round(star[1]*k + to[o2+1]*(1-k)); mix[o2+2] = Math.round(star[2]*k + to[o2+2]*(1-k));
-      } else { mix[o2] = src[o2]; mix[o2+1] = src[o2+1]; mix[o2+2] = src[o2+2]; }
-      mix[o2+3] = 255;
+        mix[o2+3] = toM && toM[j] ? Math.round(255*k) : 255;   // on a clear ground the star fades out to nothing
+      } else { mix[o2] = src[o2]; mix[o2+1] = src[o2+1]; mix[o2+2] = src[o2+2]; mix[o2+3] = (src === to ? toM : fromM) && (src === to ? toM : fromM)[j] ? 0 : 255; }
     }
     paint(new ImageData(mix, W, H));
     if (p < 1) anim = requestAnimationFrame(step); else { revealing = false; paintFrame(); }
@@ -1359,7 +1365,7 @@ function frameData(){
       if (!b.water && age < 700) c = FIRE[Math.floor(Math.random()*4)];
       else if (age < (b.water ? 900 : 1700)){ var gv = Math.round((out[o] + out[o+1] + out[o+2])/3*0.6 + 70); c = [gv, gv, gv]; }
       else c = cur.bgAt(xx, yy);
-      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = (IDLE && age >= (b.water ? 900 : 1700)) ? 0 : 255;
+      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = ((IDLE || (CLEAR && clearMask()[o/4])) && age >= (b.water ? 900 : 1700)) ? 0 : 255;   // a clear ground stays clear once the burn is over
     }
   }
   // 中: the face-up tiles (drawn here so they can flip); a flipping tile shows its green back for a moment
