@@ -1317,6 +1317,7 @@ function boot(){
   $('siteFree').addEventListener('focus', function(){ siteWas = this.value; siteTyped = false; this.value = ''; $('site').value = 'custom'; });   // the menu shows the dash option while you type a website
   $('siteFree').addEventListener('blur', function(){ if (!siteTyped && siteWas !== null) this.value = siteWas; siteWas = null; setTimeout(showSite, 400); });
   $('siteFree').addEventListener('input', function(){ siteTyped = true; });
+  document.addEventListener('focusin', function(e){ if (e.target && e.target !== document.body) clearDragons(); });   // any button, box or menu taking focus sends the dragons away for six seconds
   $('clear').addEventListener('click', function(){   // Reset: fogday.com, the mode's default caption, dragons away for six seconds
     try { localStorage.removeItem(LS + 'cap'); } catch (err) {}
     state.capUser = false; state.caption = CAP_DEFAULT[state.mode]; $('cap').value = state.caption;
