@@ -74,7 +74,8 @@ h1 a{text-decoration:none}
 main{margin:0 auto;padding:2px calc(8px + var(--sar)) calc(4px + var(--sab)) calc(8px + var(--sal))}
 .lede{margin:4px 0 14px;color:var(--muted)}
 .stage{display:flex;justify-content:center;align-items:center;margin:0 0 3px}
-#qr{display:block;border-radius:10px;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 6px 14px rgba(36,22,48,.18))}
+html.bare main>*,html.bare .status{visibility:hidden}   /* double tap the code: only the background (scene, dragons, camera) stays; double tap anywhere brings it all back */
+#qr{touch-action:manipulation;display:block;border-radius:10px;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 6px 14px rgba(36,22,48,.18))}
 .meta{margin:0 auto 4px;text-align:center;font:400 13px/1.3 var(--pixel);color:var(--muted);letter-spacing:.04em}
 .row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
 .row>*{flex:1 1 calc(50% - 4px)}
@@ -1676,6 +1677,17 @@ function boot(){
       setUrl(u);
     }, 300);
   });
+  /* Double tap the code: everything but the background hides; double tap anywhere (or Esc) brings it back */
+  var tap2 = {t: 0, x: 0, y: 0};
+  function setBare(on){ document.documentElement.classList.toggle('bare', on); if (!on && cur) paintFrame(); }
+  addEventListener('pointerup', function(e){
+    var bare = document.documentElement.classList.contains('bare');
+    if (!bare && e.target !== canvas){ tap2.t = 0; return; }
+    var now = performance.now(), near = Math.abs(e.clientX - tap2.x) < 40 && Math.abs(e.clientY - tap2.y) < 40;
+    if (now - tap2.t < 350 && near){ tap2.t = 0; setBare(!bare); }
+    else { tap2.t = now; tap2.x = e.clientX; tap2.y = e.clientY; }
+  }, {passive: true});
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && document.documentElement.classList.contains('bare')) setBare(false); });
   /* Tap the page (not a control or the code) and the dragons shoot fire or water at it, as on /px; hold 2.5 s and they follow your finger */
   var ptrOn = false;
   function toDragons(kind, e){ if (cleared()) return; var f = $('pxFront'); if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:ptr', kind: kind, x: e ? e.clientX : 0, y: e ? e.clientY : 0}, location.origin); }
