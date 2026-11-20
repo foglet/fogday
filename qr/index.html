@@ -694,8 +694,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode, artId){
   var ART = MJ || IG || TR ? null : ART_NAME[artId] ? artId : null, ar0 = rng(seed ^ 0x1b873593);
   if (!ART && RO && !MONO && ar0() < 0.5) ART = ARTS[Math.floor(ar0()*ARTS.length)];   // half the round 3 px codes take one of the seven
   if (ART) RO = true;   // the seven are drawn at 9 px a square, like the round codes
-  if (RO && (!finder || finder === 'random')) R.finder = rng(seed ^ 0x61c88647)() < 0.5 ? 'squircle' : 'circle';
-  if (ART) R.finder = 'squircle';   // the circle corner marker scans poorly next to the art shapes (zbar)
+  if (RO && (!finder || finder === 'random')){ rng(seed ^ 0x61c88647)(); R.finder = 'squircle'; }   // round codes: rounded-square corner markers; the circle failed zbar about half the time at 9 px
   var QZ = MJ ? 4 : 2;   // clear border round the code: 3 px and CMYK keep 2 squares (scanners manage), 中 keeps the standard 4
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
   if (RO){ HW = Math.max(HW, Math.ceil(0.21*N + 4.3)); M = N + 2*QZ + 2*HW; off = HW + QZ; }   // room for the ring
@@ -1588,6 +1587,8 @@ function boot(){
   }
   $('remix').addEventListener('click', function(){ setMode('px'); remix(); });
   function artTap(){
+    var D0 = document.documentElement, rf = D0.requestFullscreen || D0.webkitRequestFullscreen;   // the No. tap goes full screen too
+    if (rf && !(document.fullscreenElement || document.webkitFullscreenElement) && (document.fullscreenEnabled || document.webkitFullscreenEnabled)){ var fr = rf.call(D0, {navigationUI: 'hide'}); if (fr && fr.catch) fr.catch(function(){}); }
     if (state.mode === 'mj' || state.mode === 'trees') setMode('px');
     var cu = cur && cur.art, n; do { n = ARTS[Math.floor(Math.random()*ARTS.length)]; } while (n === cu);
     state.art = n; state.seed = newSeed(); syncHash(); draw(true); calm();
