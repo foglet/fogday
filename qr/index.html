@@ -1603,7 +1603,7 @@ function boot(){
     var zs = quiet() ? [] : [[r.left, r.top, r.right, r.bottom]], a = document.activeElement;
     if (a && a.matches && a.matches('.field input, .field select')){ var q = a.getBoundingClientRect(), PAD = 40; zs.push([q.left - PAD, q.top - PAD, q.right + PAD, q.bottom + PAD]); }   // a box in use: dragons are shooed off it
     f.contentWindow.postMessage({type: 'px:nofly', rects: zs.length ? zs : null}, location.origin);
-    setIdle(performance.now() - lastAct > IDLE_MS);
+    setIdle(dragonsOn && performance.now() - lastAct > IDLE_MS);   // dragons off: no fade, the controls stay put
   }, 250);
   window.__quiet = function(){ return quiet() && !cleared(); };   // the walker only comes out when dragons are on
   function reground(cols){   // same code, same burns and walker; only the ground's colours change
