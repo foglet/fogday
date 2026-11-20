@@ -384,7 +384,7 @@ var FONT = {
   T:'111 010 010 010 010',U:'101 101 101 101 111',V:'101 101 101 101 010',W:'10001 10001 10101 11011 10001',X:'101 101 010 101 101',
   Y:'101 101 111 010 010',Z:'111 001 010 100 111','0':'111 101 101 101 111','1':'010 110 010 010 111','2':'111 001 111 100 111',
   '3':'111 001 011 001 111','4':'101 101 111 001 001','5':'111 100 111 001 111','6':'111 100 111 101 111','7':'111 001 010 010 010',
-  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','?':'111 001 011 000 010',
+  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
   '-':'000 000 111 000 000',':':'0 1 0 1 0','/':'001 001 010 100 100',"'":'1 1 0 0 0','+':'000 010 111 010 000','#':'1010 1111 1010 1111 0101',
   '&':'010 101 010 101 011','@':'111 101 111 100 111',' ':'00 00 00 00 00'
 };
@@ -413,7 +413,7 @@ var STYLES = {
         light2: lightAt(hsl(h, 40, 90), 0.78),
         shape: pick(r,['flat','brick','gem','dither','round','round','brick']),
         paper: pick(r,['plain','plain','speck']),
-        finder: pick(r,['square','round','eye','dot','bevel','circle','morph','morph']),
+        finder: pick(r,['square','round','eye','dot','bevel','bevel','eye','dot']),   // circle and morph corners were dropped: about 1 in 10 failed to scan
         halo: 5 + 0*r(), dens: 0.35 + r()*0.35, drift: r()*Math.PI*2, driftK: 0.3 + r()*0.6, streak: r()*0.6,
         morphN: [0,1,2].map(function(){ return 2 * Math.pow(3, r()); }),     // ring: circle (2) to squircle (6)
         morphC: [0,1,2].map(function(){ return 2 * Math.pow(3, r()); }),     // centre: circle (2) to squircle (6)
@@ -601,13 +601,14 @@ function render(seed, styleId, caption, img, url, finder, ground){
   // caption on a light plate in the bottom margin
   if (ls){
     var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 5;   // 2 art pixels higher (about 5 screen pixels on a phone)
-    for (var py = ty - ls; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
+    for (var py = ty - 2*ls - 1; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
       if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : bg(pxx,py));   // plate: the light ground
     gs.forEach(function(g){
       var gy, gx, yy, xx, X, Y;
-      for (gy = 0; gy < 5; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
+      var top = g.length - 5;   // accented letters have their dots one row above the line
+      for (gy = 0; gy < g.length; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (yy = 0; yy < ls; yy++) for (xx = 0; xx < ls; xx++){
-          X = tx + gx*ls + xx; Y = ty + gy*ls + yy;
+          X = tx + gx*ls + xx; Y = ty + (gy - top)*ls + yy;
           if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, R.bodyM[texShade(X, Y, R.tseed)]);   // letters in the code's block colours
         }
       tx += (g[0].length + 1)*ls;
@@ -624,12 +625,16 @@ function render(seed, styleId, caption, img, url, finder, ground){
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var state = {seed: 0, style: 'px', caption: '', img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
+var state = {seed: 0, style: 'px', caption: 'Toï Toï Toï !!', img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
 function load(k){ try { return localStorage.getItem(LS+k); } catch (err) { return null; } }
-function newSeed(){ return 1 + Math.floor(Math.random()*999998); }
+/* Never the same pattern twice: every code shown is remembered on this device and never picked again */
+var SEEN = (function(){ try { return JSON.parse(localStorage.getItem('qr:seen') || '[]'); } catch (err) { return []; } })(), SEENSET = {};
+SEEN.forEach(function(n){ SEENSET[n] = 1; });
+function markSeen(n){ if (SEENSET[n]) return; SEENSET[n] = 1; SEEN.push(n); if (SEEN.length > 20000) SEEN.splice(0, SEEN.length - 20000); try { localStorage.setItem('qr:seen', JSON.stringify(SEEN)); } catch (err) {} }
+function newSeed(){ var n; do { n = 1 + Math.floor(Math.random()*999998); } while (SEENSET[n]); return n; }
 function hashFor(){
   var h = '#' + state.seed;
   if (state.url !== URL_TEXT) h += '&u=' + encodeURIComponent(state.url.replace(/^https:\/{2}/,''));
@@ -684,22 +689,32 @@ function draw(animate){
   makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
+  markSeen(state.seed);
   $('meta1').textContent = 'No. ' + state.seed + '  ·  version ' + c.v;
   $('meta2').textContent = 'level ' + c.e + '  ·  mask ' + c.mask + (state.img ? '  ·  picture' : '');
   canvas.setAttribute('aria-label', 'Pixel QR code number ' + state.seed + ' for ' + c.text);
   var full = new ImageData(cur.data, cur.W, cur.H);
   cancelAnimationFrame(anim); revealing = false;
-  if (!animate || reduce || !prev || prev.W !== cur.W || prev.H !== cur.H){ paintFrame(); return; }
+  if (!animate || reduce || !prev){ paintFrame(); return; }
   revealing = true;
-  // reveal the new code in 3x3 blocks
-  var from = prev.data, to = cur.data, W = cur.W, H = cur.H, bw = Math.ceil(W/3), noise = new Float32Array(bw*Math.ceil(H/3)), t0 = performance.now();
-  for (var i = 0; i < noise.length; i++) noise[i] = Math.random();
-  var mix = new Uint8ClampedArray(to.length);
+  // twinkle: every pixel changes at its own moment, flashing like a star (gold on light, white on dark) as it turns
+  var W = cur.W, H = cur.H, to = cur.data, pw = prev.W, ph = prev.H, pd = prev.data, from = new Uint8ClampedArray(to.length);
+  for (var y = 0; y < H; y++) for (var x = 0; x < W; x++){   // the old code stretched onto the new grid (sizes can differ)
+    var o = (y*W + x)*4, q = (Math.min(ph-1, Math.floor(y*ph/H))*pw + Math.min(pw-1, Math.floor(x*pw/W)))*4;
+    from[o] = pd[q]; from[o+1] = pd[q+1]; from[o+2] = pd[q+2];
+  }
+  var when = new Float32Array(W*H), t0 = performance.now(), DUR = 900, mix = new Uint8ClampedArray(to.length);
+  for (var i = 0; i < when.length; i++) when[i] = Math.random()*0.82;
   (function step(now){
-    var p = Math.min(1, (now - t0)/280);
-    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++){
-      var o = (y*W+x)*4, src = noise[Math.floor(y/3)*bw + Math.floor(x/3)] < p ? to : from;
-      mix[o] = src[o]; mix[o+1] = src[o+1]; mix[o+2] = src[o+2]; mix[o+3] = 255;
+    var p = Math.min(1, (now - t0)/DUR);
+    for (var j = 0; j < when.length; j++){
+      var o2 = j*4, t = when[j], src = p < t ? from : to;
+      if (p >= t && p < t + 0.09){   // the twinkle
+        var light = 0.2126*to[o2] + 0.7152*to[o2+1] + 0.0722*to[o2+2] > 140, k = 1 - (p - t)/0.09;
+        var star = light ? [255, 206, 60] : [255, 255, 240];
+        mix[o2] = Math.round(star[0]*k + to[o2]*(1-k)); mix[o2+1] = Math.round(star[1]*k + to[o2+1]*(1-k)); mix[o2+2] = Math.round(star[2]*k + to[o2+2]*(1-k));
+      } else { mix[o2] = src[o2]; mix[o2+1] = src[o2+1]; mix[o2+2] = src[o2+2]; }
+      mix[o2+3] = 255;
     }
     paint(new ImageData(mix, W, H));
     if (p < 1) anim = requestAnimationFrame(step); else { revealing = false; paintFrame(); }
@@ -959,7 +974,7 @@ function boot(){
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
   if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
-  var cp = load('caption'); if (cp) state.caption = cp;   // the caption is only what you type
+  var cp = load('cap'); if (cp !== null) state.caption = cp;   // default "toi toi toi !!!"; once you edit it, yours (even blank) is kept
   syncHash();
   $('siteFree').value = bare(state.url);   // the address in use, shown (and editable) under More
   $('cap').value = state.caption;
@@ -968,7 +983,7 @@ function boot(){
   showSite();
   calm();
   $('remix').addEventListener('click', remix);
-  function setUrl(u){ state.url = u; syncHash(); draw(true); showSite(); }
+  function setUrl(u){ state.url = u; state.seed = newSeed(); syncHash(); draw(true); calm(); showSite(); }   // a new website is always a new pattern
   function openMore(){ $('moreBtn').setAttribute('aria-expanded', 'true'); $('more').hidden = false; }
   $('site').addEventListener('change', function(){
     if (this.value === 'custom'){   // "Your website": open More and go to the address box
@@ -1132,8 +1147,8 @@ function boot(){
   $('fileLabel').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
   var t;
   $('cap').addEventListener('input', function(){
-    state.caption = this.value.replace(/[^\x20-\x7e]/g, '');
-    store('caption', state.caption);
+    state.caption = this.value.replace(/[\u0000-\u001f]/g, '');   // any letter; ones the pixel font lacks show as ?
+    store('cap', state.caption);
     clearTimeout(t); t = setTimeout(function(){ draw(false); }, 120);
   });
   document.addEventListener('keydown', function(e){
