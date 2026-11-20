@@ -540,7 +540,7 @@ function mixRgb(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i] +
    3 px per module for short addresses; long addresses drop to 2 or 1 px per module to stay near that width.
    No frame: past the quiet zone the code's own pattern drifts outward and thins away (the halo). */
 var P = 3, QZ = 4, OUT = [36,22,48];
-var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only: it does not scan
+var SUPER = {circle:1, diamond:1, morph:1, squircle:1};   // diamond is kept for links only: it does not scan
 function render(seed, styleId, caption, img, url, finder, ground, mode){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT, mode), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
@@ -604,16 +604,21 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     R.body2M = null; R.oreC = null;
   }
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
+  // ROUND (about 1 in 4 of 3 px and MONO): dots and pill strokes at 9 px a square, rounded corner markers, and the loose
+  // pieces in a ring round the code, as on the Ohlone Sky code
+  var RO = !MJ && !IG && rng(seed ^ 0x2545f491)() < 0.25;
+  if (RO && (!finder || finder === 'random')) R.finder = rng(seed ^ 0x61c88647)() < 0.5 ? 'squircle' : 'circle';
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
-  P = MJ ? 12 : Math.max(1, Math.min(3, Math.round(140 / M)));
-  var DS = MJ ? P/3 : 1;   // the walking dragon keeps its 3 px look: 4 art pixels per dragon pixel in 中
+  if (RO){ HW = Math.max(HW, Math.ceil(0.21*N + 4.5)); M = N + 2*QZ + 2*HW; off = HW + QZ; }   // room for the ring
+  P = MJ ? 12 : RO ? 9 : Math.max(1, Math.min(3, Math.round(140 / M)));
+  var DS = MJ || RO ? P/3 : 1;   // the walking dragon keeps its 3 px look: 4 art pixels per dragon pixel in 中
   HW = Math.max(HW, Math.ceil(26*DS / P)); M = N + 2*QZ + 2*HW; off = HW + QZ;   // room for the walking dragon, clear of the quiet zone
   if (P < 3){   // shaded and rounded shapes need 3 px per module; the drawn corner shapes work at any size
     if (R.shape !== 'dither') R.shape = 'flat';
     if (!SUPER[R.finder] && R.finder !== 'bevel') R.finder = 'square';
   }
   var gs = glyphs(caption.trim()), tw = textWidth(gs), C = M*P;
-  var ls = caption.trim() ? Math.max(1, Math.min(MJ ? 4 : 2, Math.floor((C - 8)/tw))) : 0;
+  var ls = caption.trim() ? Math.max(1, Math.min(MJ || RO ? 4 : 2, Math.floor((C - 8)/tw))) : 0;
   var GR = gs.reduce(function(m, g){ return Math.max(m, g.length); }, 5);   // tallest glyph (Chinese: 11 rows)
   var W = C, H = C + (ls && !MJ ? GR*ls + 6 : 0), Mh = Math.ceil(H/P);   // 中: the caption fits inside the wide bottom margin, so the code stays square   // the caption gets its own rows below the dragon's path
   var data = new Uint8ClampedArray(W*H*4);
@@ -670,13 +675,17 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     var p = R.dens * Math.pow(Math.max(0, 1 - (d2-1)/(HW0+2)), 1.1) * (1 + R.driftK*along) * (0.25 + 1.3*noise(x,y));
     var sx = ((Math.round(x - dirx*d2*R.streak - off) % N) + N) % N, sy = ((Math.round(y - diry*d2*R.streak - off) % N) + N) % N;
     var bit = code.fn[sy*N+sx] ? r() < 0.5 : code.mod[sy*N+sx];   // the code's data texture, not its timing rows
+    if (RO){   // the ring: just clear of the code's corners, four squares wide
+      var rc = Math.hypot(x + 0.5 - M/2, y + 0.5 - M/2), rin = N/2*Math.SQRT2 + 2.5;
+      p = rc >= rin && rc < rin + 4 ? 0.55*(0.4 + noise(x,y)) : 0;
+    }
     if (bit && r() < p){ D[k] = 1; FADE[k] = Math.min(0.7, Math.max(0, d2-1)/(HW+1)); }
   }
   // drift trails: some loose pixels leave a pixel downwind
   var tx0 = Math.round(dirx), ty0 = Math.round(diry);
   for (y = Mh-1; y >= 0; y--) for (x = M-1; x >= 0; x--){
     var kk = y*M + x, nx0 = x + tx0, ny0 = y + ty0;
-    if (D[kk] && dq(x,y) >= 1 && nx0 >= 0 && ny0 >= 0 && nx0 < M && ny0 < Mh && dq(nx0,ny0) >= 1 && r() < 0.3*R.driftK){
+    if (!RO && D[kk] && dq(x,y) >= 1 && nx0 >= 0 && ny0 >= 0 && nx0 < M && ny0 < Mh && dq(nx0,ny0) >= 1 && r() < 0.3*R.driftK){
       D[ny0*M+nx0] = 1; FADE[ny0*M+nx0] = Math.min(0.75, FADE[kk] + 0.15);
     }
   }
@@ -690,6 +699,27 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     return true;
   }
 
+  // ROUND: each dark square joins a horizontal stroke, a vertical one (whichever run is longer), or stands as a dot
+  var RO_O = null, RO_A = null, RO_B = null;
+  if (RO){
+    var fin0 = function(x0, y0){ var qx = x0 - off, qy = y0 - off; return qx >= 0 && qy >= 0 && qx < N && qy < N && (code.kind[qy*N+qx] === 1 || code.kind[qy*N+qx] === 2); };
+    var dk0 = function(x0, y0){ return isDark(x0, y0) && !fin0(x0, y0); };
+    RO_O = new Uint8Array(M*Mh); RO_A = new Int16Array(M*Mh); RO_B = new Int16Array(M*Mh);
+    for (y = 0; y < Mh; y++) for (x = 0; x < M; x++){
+      if (!dk0(x, y)) continue;
+      var hl = 1, vl = 1, t0;
+      for (t0 = x-1; dk0(t0, y); t0--) hl++; for (t0 = x+1; dk0(t0, y); t0++) hl++;
+      for (t0 = y-1; dk0(x, t0); t0--) vl++; for (t0 = y+1; dk0(x, t0); t0++) vl++;
+      RO_O[y*M+x] = hl >= vl && hl > 1 ? 1 : vl > 1 ? 2 : 3;
+    }
+    for (y = 0; y < Mh; y++) for (x = 0; x < M; x++){   // each stroke's two ends, among squares of the same direction
+      var o0 = RO_O[y*M+x]; if (!o0) continue;
+      var a0 = o0 === 1 ? x : y, b0 = a0;
+      if (o0 === 1){ while (a0 > 0 && RO_O[y*M+a0-1] === 1) a0--; while (b0 < M-1 && RO_O[y*M+b0+1] === 1) b0++; }
+      if (o0 === 2){ while (a0 > 0 && RO_O[(a0-1)*M+x] === 2) a0--; while (b0 < Mh-1 && RO_O[(b0+1)*M+x] === 2) b0++; }
+      RO_A[y*M+x] = a0; RO_B[y*M+x] = b0;
+    }
+  }
   for (var my = 0; my < Mh; my++) for (var mx = 0; mx < M; mx++){
     var qx2 = mx - off, qy2 = my - off, inCode = qx2 >= 0 && qy2 >= 0 && qx2 < N && qy2 < N, idx = qy2*N + qx2;
     var dark = D[my*M+mx] === 1, kind = inCode ? code.kind[idx] : 0, fn = inCode && code.fn[idx], fade = FADE[my*M+mx];
@@ -698,12 +728,22 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       if (ax >= W || ay >= H) continue;
       if (!dark){
         var rgb = bg(ax,ay);
-        if (!MJ && sy2 === 0 && isDark(mx,my-1)) rgb = mixRgb(rgb, [20,20,28], 0.18);   // a block casts a thin shadow south (not in 中: flat like /mj)
+        if (!MJ && !RO && sy2 === 0 && isDark(mx,my-1)) rgb = mixRgb(rgb, [20,20,28], 0.18);   // a block casts a thin shadow south (not in 中: flat like /mj)
         if (R.shape === 'round' && inCode && !fn && sx2 !== 1 && sy2 !== 1){
           var nx = sx2 === 0 ? -1 : 1, ny = sy2 === 0 ? -1 : 1;
           if (isDark(mx+nx,my) && isDark(mx,my+ny) && isDark(mx+nx,my+ny)) rgb = R.dark[1];
         }
         px(ax, ay, rgb); continue;
+      }
+      if (RO){   // a pill or dot: its middle always covers the square's centre, and it never reaches a light square
+        var o1 = RO_O[my*M+mx], u = (ax + 0.5)/P, v = (ay + 0.5)/P, dd;
+        if (!o1){ px(ax, ay, bg(ax, ay)); continue; }   // corner markers are drawn round, further down
+        if (o1 === 1) dd = Math.hypot(Math.max(0, RO_A[my*M+mx] + 0.5 - u, u - RO_B[my*M+mx] - 0.5), v - my - 0.5);
+        else if (o1 === 2) dd = Math.hypot(u - mx - 0.5, Math.max(0, RO_A[my*M+mx] + 0.5 - v, v - RO_B[my*M+mx] - 0.5));
+        else dd = Math.hypot(u - mx - 0.5, v - my - 0.5);
+        if (dd > (o1 === 3 ? 0.43 : 0.37)){ px(ax, ay, bg(ax, ay)); continue; }
+        var sh1 = texShade(ax, ay, R.tseed), mat1 = R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM;
+        px(ax, ay, isSky(ax, ay) ? SK.glow[sh1] : mat1[sh1]); continue;
       }
       var set = (kind === 1 || kind === 2) ? R.accent : (R.mixDark && (mx*7+my*3)%5 === 0 ? R.dark2 : R.dark), lvl = 1, cut = false;
       if (kind === 1 || kind === 2){
@@ -764,7 +804,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   if (SUPER[R.finder]){
     var pos = [[0,0],[N-7,0],[0,N-7]];
     pos.forEach(function(f, fi){
-      var nr = R.finder === 'circle' ? 2 : R.finder === 'diamond' ? 1 : R.morphN[fi], nc = R.finder === 'morph' ? R.morphC[fi] : nr;
+      var nr = R.finder === 'circle' ? 2 : R.finder === 'diamond' ? 1 : R.finder === 'squircle' ? 4 : R.morphN[fi], nc = R.finder === 'morph' ? R.morphC[fi] : nr;
       var bx = (off + f[0])*P, by = (off + f[1])*P, c0 = 3.5;
       for (var yy = 0; yy < 7*P; yy++) for (var xx = 0; xx < 7*P; xx++){
         var dx = Math.abs((xx + 0.5)/P - c0), dy = Math.abs((yy + 0.5)/P - c0);
@@ -881,7 +921,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     gm0 = new Uint8Array(W*H);   // idle keeps the night ground: light squares need it behind them to scan
   }
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
-          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : MONO ? 'mono' : 'px', mono: MO, sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
+          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : MONO ? 'mono' : 'px', mono: MO, round: RO, sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
           moves: rng(seed ^ 0x27d4eb2f)() < 1/3};   // only about 1 code in 3 moves (the glint and twinkle); the seed decides, so a shared link looks the same
 }
 
