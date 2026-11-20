@@ -986,7 +986,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
         if (hs6 > 0.62) continue;
         var su6 = dir ? t6 : base6, sv6 = dir ? base6 : t6, uu = su6*ca - sv6*sa, vv = su6*sa + sv6*ca;
         if (uu < -1 || vv < -1 || uu > W/P + 1 || vv > H/P + 1) continue;
-        dots.push([uu, vv, 0.22 + hash2(Math.round(t6*10), li, 31)*0.18, treeCol(0, li*13 + dir, Math.round(t6*10) + side, 0)]);
+        dots.push([uu, vv, 0.14 + Math.pow(hash2(Math.round(t6*10), li*3 + side + dir*7, 31), 2.4)*0.66, treeCol(0, li*13 + dir, Math.round(t6*10) + side, 0)]);
       }
     }
     dots.forEach(function(d6){
