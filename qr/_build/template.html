@@ -519,6 +519,19 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     R.accM = darkMat([[120,28,24],[140,34,28],[160,40,32],[176,48,38]]);
     R.groundM = lightMat([[251,248,241],[251,248,241],[251,248,241],[251,248,241]]);   // /mahjong's ivory, flat
   }
+  // Instagram: the code takes Instagram's gradient (orange, red, magenta, purple, blue from bottom left to top right),
+  // each colour darkened to the same scan-safe depth, on a pale pink ground
+  var IG = (url || URL_TEXT) === 'https://www.instagram.com/fogfish/', IGM = null;
+  if (IG){
+    R.groundM = lightMat([[252,238,246],[252,238,246],[252,238,246],[252,238,246]]);
+    var IGS = [[247,119,55],[253,29,29],[193,53,132],[131,58,180],[88,81,219]];
+    IGM = [];
+    for (var gi = 0; gi < 16; gi++){
+      var gt = gi/15*(IGS.length-1), g0 = Math.min(IGS.length-2, Math.floor(gt)), gf = gt - g0, gc = mixRgb(IGS[g0], IGS[g0+1], gf);
+      IGM.push(darkMat([gc.map(function(c){ return c*0.85; }), gc, gc.map(function(c){ return Math.min(255,c*1.1); }), gc.map(function(c){ return Math.min(255,c*1.2); })]));
+    }
+  }
+  function igAt(x, y, w, h){ var t = ((x/w) + (1 - y/h))/2; return IGM[Math.max(0, Math.min(15, Math.round(t*15)))]; }   // 0 bottom left, 1 top right
   if (ground) R.groundM = lightMat(ground);   // a dragon's colours as the ground, lifted to stay light enough to scan
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
@@ -633,12 +646,12 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
                  // the alignment marker stay solid squares; the corner markers are drawn as cookies further down
         var solid = fn && (kind === 3 || qx2 === 6 || qy2 === 6), fin = kind === 1 || kind === 2 || (qx2 < 8 && qy2 < 8) || (qx2 >= N-8 && qy2 < 8) || (qx2 < 8 && qy2 >= N-8);
         if (fin){ px(ax, ay, bg(ax,ay)); continue; }
-        if (solid){ px(ax, ay, MJG); continue; }
+        if (solid){ px(ax, ay, IG ? igAt(ax,ay,W,H)[2] : MJG); continue; }
         var hh = P/2, gp = 2, top3 = (P - hh)/2;
         var drift = dq(mx,my) >= 1;   // past the quiet zone: the drifting pattern, its own dots and dashes
         var runL = drift ? isDark(mx-1,my) && dq(mx-1,my) >= 1 : isMorse(qx2-1, qy2), runR = drift ? isDark(mx+1,my) && dq(mx+1,my) >= 1 : isMorse(qx2+1, qy2);
         var on = sy2 >= top3 && sy2 < top3 + hh && (runL || sx2 >= gp) && (runR || sx2 < P - gp);
-        px(ax, ay, on ? MJG : bg(ax,ay)); continue;
+        px(ax, ay, on ? (IG ? igAt(ax,ay,W,H)[2] : MJG) : bg(ax,ay)); continue;
       }
       // block: textured top, lit north edge, shadowed south edge, some ore specks
       var mat = (kind === 1 || kind === 2) ? R.accM : (R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM);
@@ -646,8 +659,8 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       if (sx2 === 0 && !isDark(mx-1,my)) sh = Math.min(5, sh + 1);
       if (sy2 === 0 && !isDark(mx,my-1)) sh = 5;
       if (sy2 === P-1 && !isDark(mx,my+1)) sh = 0;
-      var col = mat[sh];
-      if (R.oreC && mat === R.bodyM && !fn && hash2(mx,my,R.tseed+3) < 0.16 && !(sx2 === 1 && sy2 === 1) && hash2(ax,ay,R.tseed+5) < 0.45) col = R.oreC;
+      var col = IG ? igAt(ax,ay,W,H)[(kind === 1 || kind === 2) ? Math.max(1, sh-1) : sh] : mat[sh];
+      if (!IG && R.oreC && mat === R.bodyM && !fn && hash2(mx,my,R.tseed+3) < 0.16 && !(sx2 === 1 && sy2 === 1) && hash2(ax,ay,R.tseed+5) < 0.45) col = R.oreC;
       px(ax, ay, col);
     }
   }
@@ -659,7 +672,8 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
         var X = bx + xx, Y = by + yy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
         var rr = Math.hypot(xx + 0.5 - c0, yy + 0.5 - c0)/P, col = bg(X, Y);
         if (xx >= 0 && yy >= 0 && xx < 7*P && yy < 7*P){
-          if (rr <= 0.8) col = MJR; else if (rr <= 1.5) col = MJG; else if (rr >= 2.5 && rr <= 3.5) col = MJG;
+          var cg = IG ? igAt(X,Y,W,H)[2] : MJG;
+          if (rr <= 0.8) col = IG ? igAt(X,Y,W,H)[1] : MJR; else if (rr <= 1.5) col = cg; else if (rr >= 2.5 && rr <= 3.5) col = cg;
         }
         px(X, Y, col);
       }
@@ -704,7 +718,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       for (gy = 0; gy < g.length; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (yy = 0; yy < ls; yy++) for (xx = 0; xx < ls; xx++){
           X = tx + gx*ls + xx; Y = ty + (gy - top)*ls + yy;
-          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, MJ ? R.accM[2] : R.bodyM[texShade(X, Y, R.tseed)]);   // letters in the code's block colours (中: tile red)
+          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, IG ? igAt(X,Y,W,H)[2] : MJ ? R.accM[2] : R.bodyM[texShade(X, Y, R.tseed)]);   // letters in the code's block colours (中: tile red)
         }
       tx += (g[0].length + 1)*ls;
     });
