@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* iPhone/iPad: Safari zooms in on a field under 16 px when it takes focus; maximum-scale stops that (pinch zoom still works on iOS) */
+if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))
+  document.querySelector("meta[name=viewport]").setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover");</script>
 <meta name="theme-color" content="#fbf8f1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -18,67 +21,68 @@
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 "Rubik",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.35 "Rubik",system-ui,sans-serif;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1180px;margin:0 auto;
-  padding:calc(8px + var(--sat)) calc(12px + var(--sar)) 4px calc(16px + var(--sal))}
-h1{margin:0;font:400 26px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
-.bento{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:10px;color:var(--muted);border-radius:10px}
+  padding:calc(6px + var(--sat)) calc(2.5vw + var(--sar) - 4px) 2px calc(2.5vw + var(--sal))}
+h1{margin:0;font:400 22px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
+.bento{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:5px;color:var(--muted);border-radius:10px}
 .bento svg{display:block;width:100%;height:100%}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.wrap{max-width:1180px;margin:0 auto;padding:6px calc(16px + var(--sar)) calc(32px + var(--sab)) calc(16px + var(--sal));display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
-@media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{position:sticky;top:12px}}
+.wrap{max-width:1180px;margin:0 auto;padding:4px calc(2.5vw + var(--sar)) calc(24px + var(--sab)) calc(2.5vw + var(--sal));display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{position:sticky;top:12px}}
 .stage{display:flex;justify-content:center}
-#cv{display:block;border-radius:16px;background:#eee8dc;box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12)}
+#cv{display:block;border-radius:12px;background:#eee8dc;box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12)}
+#cv{touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking{cursor:crosshair}
-.hint{margin:8px 0 0;text-align:center;font-size:14px;color:var(--muted);min-height:20px}
+.hint{margin:6px 0 0;text-align:center;font-size:12px;color:var(--muted);min-height:16px}
 .stagecol,.ctlcol{min-width:0}
-.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-.actions .btn{min-width:0;padding:8px 10px}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px}
+.actions .btn{min-width:0;padding:0 6px}
 @media (min-width:480px){.actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:340px){.actions .btn svg{display:none}}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:8px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;height:32px;padding:0 10px;border-radius:8px;font-size:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--felt)}
-.btn svg{width:22px;height:22px;flex:0 0 22px}
+.btn svg{width:16px;height:16px;flex:0 0 16px}
 .btn.primary{background:var(--felt);border-color:var(--felt);color:#fff}
 .btn.primary:hover{background:var(--felt-d)}
 .btn[disabled]{opacity:.5;cursor:default}
-.ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-.seg{display:flex;border:1px solid var(--line);border-radius:14px;padding:4px;background:var(--card);gap:4px;margin:0;min-width:0}
+.ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--card);gap:2px;height:32px;margin:0;min-width:0}
 .seg legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .seg label{flex:1 1 0;min-width:0;position:relative;display:flex}
 @media (max-width:340px){.seg span{padding:4px 2px;font-size:14px;line-height:1.15}}
 .seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
-.seg span{flex:1;display:flex;align-items:center;justify-content:center;min-height:44px;padding:4px 8px;border-radius:10px;text-align:center;font-weight:500;color:var(--muted)}
+.seg span{flex:1;display:flex;align-items:center;justify-content:center;min-height:26px;padding:0 6px;border-radius:6px;font-size:13px;text-align:center;font-weight:500;color:var(--muted)}
 .seg input:checked+span{background:var(--felt);color:#fff}
 .seg input:focus-visible+span{outline:3px solid var(--red);outline-offset:1px}
-.seg.big span{min-height:48px;font-size:17px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px}
-.ph{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:52px;padding:10px 16px;border:0;background:none;cursor:pointer;font:400 19px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:14px}
-.ph svg{width:20px;height:20px;transition:transform .2s;color:var(--muted)}
+.seg.big span{min-height:26px;font-size:13px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.ph{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
+.ph svg{width:16px;height:16px;transition:transform .2s;color:var(--muted)}
 .ph[aria-expanded="false"] svg{transform:rotate(-90deg)}
-.pb{padding:2px 16px 16px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.pb{padding:0 12px 10px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
 .pb[hidden]{display:none}
-.f{display:grid;gap:4px}
-.f>.lab{display:flex;justify-content:space-between;gap:8px;font-size:15px;color:var(--muted)}
+.f{display:grid;gap:0}
+.f>.lab{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
 .f>.lab output{color:var(--ink);font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;height:44px;margin:0;accent-color:var(--felt);background:transparent}
-select,textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:16px}
-textarea{resize:vertical;min-height:64px;line-height:1.3}
+input[type=range]{width:100%;height:26px;margin:0;accent-color:var(--felt);background:transparent}
+select,textarea{width:100%;min-height:32px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px}
+textarea{resize:vertical;height:auto;padding:6px 8px;min-height:48px;line-height:1.3}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.color{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.color input[type=color]{width:52px;height:44px;padding:2px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer}
-.color .sw{width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
+.color{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
+.color input[type=color]{width:40px;height:32px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+.color .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
 .color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--felt)}
-.icob{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;padding:0}
-.icob svg{width:20px;height:20px}
+.icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;padding:0}
+.icob svg{width:16px;height:16px}
 .icob[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
-.chk{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
-.chk input{width:22px;height:22px;accent-color:var(--felt)}
+.chk{display:flex;align-items:center;gap:8px;min-height:32px;cursor:pointer;font-size:13px}
+.chk input{width:18px;height:18px;accent-color:var(--felt)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row .btn{flex:1 1 auto}
-.status{min-height:22px;margin:0;font-size:15px;color:var(--felt)}
+.status{min-height:18px;margin:0;font-size:13px;color:var(--felt)}
 body[data-look="dot"] .only-half,body[data-look="half"] .only-dot{display:none!important}
 body[data-ht="ink"] .ht-noink,body[data-ht="image"] .ht-ink,body[data-ht="cmyk"] .ht-ink{display:none!important}
 .modal{position:fixed;inset:0;z-index:20;background:rgba(20,26,24,.72);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -86,7 +90,7 @@ body[data-ht="ink"] .ht-noink,body[data-ht="image"] .ht-ink,body[data-ht="cmyk"]
 .sheet{background:var(--card);border-radius:16px;padding:14px;max-width:640px;width:100%;display:grid;gap:12px}
 .sheet h2{margin:0;font:400 20px/1.2 "Young Serif",Georgia,serif}
 .sheet video{width:100%;border-radius:12px;background:#000;max-height:60vh;object-fit:contain}
-.foot{text-align:center;font-size:13px;color:var(--muted);margin:8px 0 0}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin:8px 0 0}
 .foot a{color:var(--felt)}
 @media (prefers-reduced-motion:reduce){.ph svg{transition:none}}
 </style>
@@ -100,7 +104,7 @@ body[data-ht="ink"] .ht-noink,body[data-ht="image"] .ht-ink,body[data-ht="cmyk"]
 <main class="wrap">
   <section class="stagecol" aria-label="Preview">
     <div class="stage" id="stage"><canvas id="cv" role="img" aria-label="Preview of the image look"></canvas></div>
-    <p class="hint" id="hint">Drag on the image to move the text.</p>
+    <p class="hint" id="hint"></p>
     <div class="actions">
       <button type="button" class="btn" id="addImg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Add image</span></button>
       <button type="button" class="btn" id="takePhoto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Take photo</span></button>
@@ -278,7 +282,7 @@ var cv = $("#cv"), pctx = cv.getContext("2d");
 var stage = $("#stage"), statusEl = $("#status");
 var src = document.createElement("canvas"), sctx = src.getContext("2d", { willReadFrequently: true });
 var cache = {};
-var pickKey = null;
+var pickKey = null, big = false;
 var playing = 0;
 
 function loadSettings() {
@@ -508,15 +512,16 @@ function draw(prog) {
   if (!src.width) return;
   render(pctx, cv.width, cv.height, prog == null ? S.reveal / 100 : prog);
   cv.classList.toggle("drag", hasText());
-  $("#hint").textContent = pickKey ? "Tap the image to pick a color." : hasText() ? "Drag on the image to move the text." : "";
+  $("#hint").textContent = pickKey ? "Tap the image to pick a color." : (hasText() ? "Drag to move the text. " : "") + (big ? "Double tap to fit." : "Double tap for full width.");
   cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview" + (hasText() ? " with the text " + S.text : ""));
 }
 function fit() {
   if (!src.width) return;
   var wide = window.innerWidth >= 900;
-  var maxH = wide ? window.innerHeight - 150 : Math.min(window.innerHeight * 0.62, 760);
   var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
-  if (h > maxH) { h = maxH; w = h / ar; }
+  /* fitted: the image fits the screen height. Double tap: full width (95% of a phone screen), the page scrolls past a tall photo */
+  var maxH = wide ? window.innerHeight - 150 : Math.min(window.innerHeight * 0.62, 760);
+  if (!big && h > maxH) { h = maxH; w = h / ar; }
   var dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -739,12 +744,13 @@ document.querySelectorAll(".ph").forEach(function (b) {
   });
 });
 
-/* canvas: drag the text, or pick a color */
-var dragging = false;
+/* canvas: drag moves the text (a tap does not), double tap toggles full width, or pick a color */
+var down = null, dragging = false, lastTap = 0;
+function toggleBig() { big = !big; fit(); draw(); say(big ? "Full width." : "Fitted to the screen."); }
 function moveText(e) {
   var r = cv.getBoundingClientRect();
-  S.tx = Math.round(clamp((e.clientX - r.left) / r.width, 0, 1) * 200) / 2;
-  S.ty = Math.round(clamp((e.clientY - r.top) / r.height, 0, 1) * 200) / 2;
+  S.tx = Math.round(clamp(down.tx + (e.clientX - down.x) / r.width * 100, 0, 100) * 2) / 2;
+  S.ty = Math.round(clamp(down.ty + (e.clientY - down.y) / r.height * 100, 0, 100) * 2) / 2;
   $("#tx").value = S.tx; $("#ty").value = S.ty; out("tx"); out("ty");
   schedule();
 }
@@ -761,13 +767,26 @@ cv.addEventListener("pointerdown", function (e) {
     draw();
     return;
   }
-  if (!hasText()) return;
-  dragging = true; cv.setPointerCapture(e.pointerId); moveText(e); e.preventDefault();
+  down = { x: e.clientX, y: e.clientY, tx: S.tx, ty: S.ty };
+  dragging = false;
+  if (hasText()) { cv.setPointerCapture(e.pointerId); e.preventDefault(); }
 });
-cv.addEventListener("pointermove", function (e) { if (dragging) moveText(e); });
-function endDrag() { if (dragging) { dragging = false; saveSettings(); } }
+cv.addEventListener("pointermove", function (e) {
+  if (!down || !hasText()) return;
+  if (!dragging && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) dragging = true;
+  if (dragging) moveText(e);
+});
+function endDrag(e) {
+  if (!down) return;
+  var was = dragging; down = null; dragging = false;
+  if (was) { saveSettings(); lastTap = 0; return; }
+  if (e.type !== "pointerup") return;
+  var now = performance.now();
+  if (now - lastTap < 350) { lastTap = 0; toggleBig(); } else lastTap = now;
+}
 cv.addEventListener("pointerup", endDrag);
 cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("dblclick", function (e) { e.preventDefault(); });
 
 /* buttons */
 $("#addImg").addEventListener("click", function () { $("#fileIn").click(); });

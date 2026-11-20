@@ -6,7 +6,7 @@ html = (root / "template.html").read_text(encoding="utf-8")
 # Guard: a // comment pasted into the middle of a line comments out the rest of it (a lost "}" breaks the whole page).
 # Count braces through the script, skipping strings and comments; they must balance, and each top-level function
 # must start at the IIFE's depth (1).
-js = html.split("<script>")[1].split("</script>")[0]
+js = html.split("<script>")[-1].split("</script>")[0]   # the app script (the last inline one)
 depth, bad = 0, []
 for n, line in enumerate(js.split("\n"), 1):
     if line.startswith("function ") and depth != 1: bad.append(f"line {n}: starts at depth {depth}: {line[:60]}")
