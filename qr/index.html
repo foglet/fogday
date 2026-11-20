@@ -142,11 +142,16 @@ html.idle #qr{filter:none}
   <div class="ctl">
   <div class="row">
     <button type="button" class="btn primary" id="remix" aria-pressed="true" title="Remix in 3 px">3 px</button>
-    <button type="button" class="btn primary zh" id="mj" aria-pressed="false" title="Mahjong: 12 px tiles, tap again to remix" aria-label="中 mahjong">中</button>
+    <button type="button" class="btn primary zh" id="mj" aria-pressed="false" title="Mahjong: 12 px tiles, tap again to remix" aria-label="中 mahjong"><svg width="21" height="21" viewBox="0 0 21 21" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true"><rect x="9" y="0" width="3" height="3"/><rect x="0" y="3" width="3" height="3"/><rect x="3" y="3" width="3" height="3"/><rect x="6" y="3" width="3" height="3"/><rect x="9" y="3" width="3" height="3"/><rect x="12" y="3" width="3" height="3"/><rect x="15" y="3" width="3" height="3"/><rect x="18" y="3" width="3" height="3"/><rect x="0" y="6" width="3" height="3"/><rect x="9" y="6" width="3" height="3"/><rect x="18" y="6" width="3" height="3"/><rect x="0" y="9" width="3" height="3"/><rect x="9" y="9" width="3" height="3"/><rect x="18" y="9" width="3" height="3"/><rect x="0" y="12" width="3" height="3"/><rect x="3" y="12" width="3" height="3"/><rect x="6" y="12" width="3" height="3"/><rect x="9" y="12" width="3" height="3"/><rect x="12" y="12" width="3" height="3"/><rect x="15" y="12" width="3" height="3"/><rect x="18" y="12" width="3" height="3"/><rect x="9" y="15" width="3" height="3"/><rect x="9" y="18" width="3" height="3"/></svg></button>
     <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
-  <div class="field duo sitef" id="siteField">
+  <div class="field duo">
+    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption" aria-label="Caption under the code">
+    <button type="button" class="btn" id="text">Text me</button>
+  </div>
+
+  <div class="field sitef" id="siteField">
     <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
     <select id="site" aria-label="Website">
       <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
@@ -155,14 +160,12 @@ html.idle #qr{filter:none}
       <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
       <option value="https://wa.me/?text=Bonjour%21" data-cap="WHATSAPP">WhatsApp</option>
       <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
-      <option value="custom" id="customOpt">Your website</option>
+      <option value="custom" id="customOpt">—</option>
     </select>
-    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Website" aria-label="Website address (edit to use your own)" style="text-transform:none">
   </div>
 
-  <div class="field duo">
-    <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption" aria-label="Caption under the code">
-    <button type="button" class="btn" id="text">Text me</button>
+  <div class="field">
+    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Website" aria-label="Website address (edit to use your own)" style="text-transform:none">
   </div>
   </div>
 
@@ -515,7 +518,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   var gs = glyphs(caption.trim()), tw = textWidth(gs), C = M*P;
   var ls = caption.trim() ? Math.max(1, Math.min(MJ ? 4 : 2, Math.floor((C - 8)/tw))) : 0;
   var GR = gs.reduce(function(m, g){ return Math.max(m, g.length); }, 5);   // tallest glyph (Chinese: 11 rows)
-  var W = C, H = C + (ls ? GR*ls + 6 : 0), Mh = Math.ceil(H/P);   // the caption gets its own rows below the dragon's path
+  var W = C, H = C + (ls && !MJ ? GR*ls + 6 : 0), Mh = Math.ceil(H/P);   // 中: the caption fits inside the wide bottom margin, so the code stays square   // the caption gets its own rows below the dragon's path
   var data = new Uint8ClampedArray(W*H*4);
   function px(x,y,rgb){ var o = (y*W+x)*4; data[o] = rgb[0]; data[o+1] = rgb[1]; data[o+2] = rgb[2]; data[o+3] = 255; }
 
@@ -588,7 +591,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       if (ax >= W || ay >= H) continue;
       if (!dark){
         var rgb = bg(ax,ay);
-        if (sy2 === 0 && isDark(mx,my-1)) rgb = mixRgb(rgb, [20,20,28], 0.18);   // a block casts a thin shadow south
+        if (!MJ && sy2 === 0 && isDark(mx,my-1)) rgb = mixRgb(rgb, [20,20,28], 0.18);   // a block casts a thin shadow south (not in 中: flat like /mj)
         if (R.shape === 'round' && inCode && !fn && sx2 !== 1 && sy2 !== 1){
           var nx = sx2 === 0 ? -1 : 1, ny = sy2 === 0 ? -1 : 1;
           if (isDark(mx+nx,my) && isDark(mx,my+ny) && isDark(mx+nx,my+ny)) rgb = R.dark[1];
@@ -677,7 +680,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
 
   // caption on a light plate in the bottom margin
   if (ls){
-    var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 5;   // 2 art pixels higher (about 5 screen pixels on a phone)
+    var tx = Math.floor((W - tw*ls)/2), ty = MJ ? (HW+N+2*QZ)*P + Math.floor((HW*P - GR*ls)/2) + (GR-5)*ls : H - 5*ls - 5;   // 2 art pixels higher (about 5 screen pixels on a phone)
     for (var py = ty - (GR-5)*ls - 1; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
       if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : bg(pxx,py));   // plate: the light ground
     gs.forEach(function(g){
@@ -1169,9 +1172,7 @@ function boot(){
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
     var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
-    if (state.ground){ state.ground = null; cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', null, state.mode); }   // the ground goes back too
-    refreshPixels();   // burnt blocks come back and the walker returns; the website stays
-    calm();
+    remix();   // and a new code in the current mode (3 px or 中), as Remix does; the website stays
   });
   /* Activity: any tap, key or typing; the ground waits for six quiet seconds */
   var QUIET_MS = 6000;   // six seconds with nobody touching anything
@@ -1272,8 +1273,8 @@ function boot(){
   var t;
   /* The website box too: tapping in clears it; leaving without typing puts the address back */
   var siteWas = null, siteTyped = false;
-  $('siteFree').addEventListener('focus', function(){ siteWas = this.value; siteTyped = false; this.value = ''; });
-  $('siteFree').addEventListener('blur', function(){ if (!siteTyped && siteWas !== null) this.value = siteWas; siteWas = null; });
+  $('siteFree').addEventListener('focus', function(){ siteWas = this.value; siteTyped = false; this.value = ''; $('site').value = 'custom'; });   // the menu shows the dash option while you type a website
+  $('siteFree').addEventListener('blur', function(){ if (!siteTyped && siteWas !== null) this.value = siteWas; siteWas = null; setTimeout(showSite, 400); });
   $('siteFree').addEventListener('input', function(){ siteTyped = true; });
   /* Tapping into the caption clears it for fresh typing; leaving without typing puts the old caption back */
   var capWas = null, capTyped = false;
