@@ -42,3 +42,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - 中 mode: the pattern drifts past the quiet zone as in 3 px (Morse dots and dashes), and loose tiles lie scattered across the margin (about one per 100 margin squares), never in the quiet zone or on the caption. The canvas is 95% of the phone's width in both modes.
 - Caption box: stays open (wide, solid) for 15 s without typing before it lets go; other boxes and the menu still let go after 2 s.
 - A box or menu in use shoos the dragons: while it has focus, a no-fly zone 40 px around it keeps the /px front-layer dragons off (`px:nofly` now takes `rects`, a list; `rect` still works), and the menu's own dragon flies out at once.
+- The website box stays empty while a menu website is in use (the menu names it; the code is the same); it shows only an address you typed. Typing @fogfish or 4158733873 still picks Instagram or WhatsApp.

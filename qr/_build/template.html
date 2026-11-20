@@ -770,7 +770,7 @@ var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.c
 function bare(u){ return u.replace(/^https:\/{2}/,''); }   // fogday.com, not https://fogday.com
 /* Some menu addresses show a short label in the website box: @fogfish, the phone number */
 var LABELS = {'https://www.instagram.com/fogfish/': '@fogfish', 'https://wa.me/14158733873?text=Bon%20jour%21': '4158733873'};
-function shown(u){ return LABELS[u] || bare(u); }
+function shown(u){ return SITES.indexOf(u) >= 0 ? '' : bare(u); }   // a menu website leaves the box empty (the menu already names it)
 function unshown(v){ for (var k in LABELS) if (LABELS[k] === v) return k; return null; }
 function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(){ s.textContent = msg; }, 30); }
 
