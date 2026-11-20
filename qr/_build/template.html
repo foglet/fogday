@@ -44,6 +44,12 @@ html.cleared .fgpx{opacity:0}
 #meta .mtxt{flex:1 1 auto;margin:0;padding:4px 10px;border-radius:10px;background:rgba(251,248,241,.5)}
 html.idle #meta .mtxt{background:transparent}
 #meta{margin:6px auto 6px!important;height:40px;box-sizing:border-box}   /* every row 40 px tall, 6 px apart */
+/* the four rows spread evenly down the screen under the code: the space left over goes equally above each row and below the last */
+main{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;box-sizing:border-box}
+.ctl{display:contents}
+main>.row,main>.field,.ctl>.row,.ctl>.field{width:100%;max-width:var(--qrw,440px);margin-left:auto!important;margin-right:auto!important;box-sizing:border-box}
+#meta,.ctl>.row,.ctl>.field{margin-top:auto!important}
+.ctl>.sitedu{margin-bottom:auto!important}
 #meta .mtxt{padding:1px 10px;align-self:stretch;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box}
 #meta .btn{min-height:40px;height:40px}
 
