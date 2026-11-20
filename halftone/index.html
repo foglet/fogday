@@ -49,6 +49,8 @@ body.big .stagecol{position:static}
 .btn:hover{border-color:var(--felt)}
 .btn.primary{background:var(--felt);border-color:var(--felt);color:#fff}
 .btn.primary:hover{background:var(--felt-d)}
+.btn[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
+#riley{width:100%}
 .btn[disabled]{opacity:.5;cursor:default}
 @media (max-width:360px){.actions .btn span{display:none}}
 /* pill slider: Dot matrix, Halftone, Text share one switch; the green pill slides to the chosen one */
@@ -176,6 +178,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
 
     <!-- Halftone -->
     <div class="tabp" role="tabpanel" id="p-half" aria-labelledby="t-half" hidden>
+      <button type="button" class="btn" id="riley" aria-pressed="false"><span>Bridget Riley</span></button>
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-screen">Screen<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-screen" hidden>
@@ -350,7 +353,7 @@ var DEF = {
   look: "dot",
   cols: 56, reveal: 60, dmDot: 86, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7,
-  htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htCon: 120, htLight: 0, htInvert: false,
+  htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
   outSize: "2048", active: 0
 };
 var FONTS = {
@@ -647,6 +650,42 @@ function renderHalf(ctx, W, H) {
     return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
   }
   ctx.globalCompositeOperation = "source-over";
+  if (S.htRiley) { riley(); } else { inks(); }
+  ctx.globalCompositeOperation = "source-over";
+  if (m) {
+    grid(W, H, cell, S.htAngle, function (x, y, ca, sa) {
+      var q = at(x, y), a = m[q + 3] / 255;
+      if (a < 0.02) return;
+      ctx.fillStyle = "rgb(" + m[q] + "," + m[q + 1] + "," + m[q + 2] + ")"; ctx.beginPath();
+      shape(ctx, x, y, cell, a * gain, ca, sa, S.htShape); ctx.fill();
+    });
+  }
+  /* Bridget Riley: black wavy lines on white, one per "Dots across" step; the wave swells and drifts down the page
+     (as in her 1960s line paintings) and each line thickens where the photo is dark */
+  function riley() {
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#111111"; ctx.beginPath();
+    var s = cell, lam = W / 5, step = Math.max(1, s / 3), Amax = s * 2;
+    function A(y) { var k = Math.sin(Math.PI * clamp(y / H, 0, 1) * 1.5); return s * 0.4 + (Amax - s * 0.4) * k * k; }
+    function ph(y) { return 2 * Math.PI * 0.75 * y / H; }
+    for (var y0 = -Amax - s; y0 <= H + Amax + s; y0 += s) {
+      var a = A(y0), p = ph(y0), top = [], bot = [];
+      for (var x = -s; x <= W + s + step; x += step) {
+        var w = 2 * Math.PI * x / lam + p, yc = y0 + a * Math.sin(w), dy = a * 2 * Math.PI / lam * Math.cos(w);
+        var q = at(clamp(x, 0, W - 1), clamp(yc, 0, H - 1));
+        var v = adj(1 - (0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2]) / 255);
+        var hw = s * clamp(v * gain, 0.07, 0.96) / 2, len = Math.hypot(1, dy), nx = -dy / len * hw, ny = 1 / len * hw;
+        top.push([x + nx, yc - ny]); bot.push([x - nx, yc + ny]);
+      }
+      if (y0 + a + s < 0 || y0 - a - s > H) continue;
+      ctx.moveTo(top[0][0], top[0][1]);
+      for (var i = 1; i < top.length; i++) ctx.lineTo(top[i][0], top[i][1]);
+      for (var j = bot.length - 1; j >= 0; j--) ctx.lineTo(bot[j][0], bot[j][1]);
+      ctx.closePath();
+    }
+    ctx.fill();
+  }
+  function inks() {
   ctx.fillStyle = S.htMode === "rgb" ? "#000000" : S.htPaper; ctx.fillRect(0, 0, W, H);
   var chans;
   if (S.htMode === "rgb") {
@@ -680,14 +719,6 @@ function renderHalf(ctx, W, H) {
     });
     if (col) ctx.fill();
   });
-  ctx.globalCompositeOperation = "source-over";
-  if (m) {
-    grid(W, H, cell, S.htAngle, function (x, y, ca, sa) {
-      var q = at(x, y), a = m[q + 3] / 255;
-      if (a < 0.02) return;
-      ctx.fillStyle = "rgb(" + m[q] + "," + m[q + 1] + "," + m[q + 2] + ")"; ctx.beginPath();
-      shape(ctx, x, y, cell, a * gain, ca, sa, S.htShape); ctx.fill();
-    });
   }
 }
 function grid(W, H, cell, deg, fn) {
@@ -749,7 +780,7 @@ function draw(prog) {
   cv.classList.toggle("drag", any);
   cv.classList.toggle("drawing", drawMode);
   $("#hint").textContent = pickKey ? "Tap the image to pick a color." : drawMode ? "Draw the path with your finger." :
-    (any ? "Drag text to move it, pinch to size and turn it. " : "") + (big ? "Double tap to fit." : "Double tap for full width.");
+    (any ? "Drag text to move it, pinch to size and turn it, double tap it to edit. " : "") + (big ? "Double tap the image to fit." : "Double tap the image for full width.");
   cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview" +
     (any ? " with the text " + S.layers.map(function (l) { return l.text; }).join(", ") : ""));
 }
@@ -1040,6 +1071,7 @@ function sync() {
   document.querySelectorAll("[data-k]").forEach(function (el) { var k = el.dataset.k; setVal(el, S[k]); out(k, S[k]); });
   document.querySelectorAll("[data-color]").forEach(syncColor);
   document.body.dataset.ht = S.htMode;
+  $("#riley").setAttribute("aria-pressed", S.htRiley ? "true" : "false");
   syncLayer();
 }
 function onChange(el) {
@@ -1149,6 +1181,9 @@ function setDraw(on) {
   draw();
 }
 $("#drawPath").addEventListener("click", function () { setDraw(!drawMode); });
+$("#riley").addEventListener("click", function () {
+  S.htRiley = !S.htRiley; this.setAttribute("aria-pressed", S.htRiley ? "true" : "false"); saveSettings(); schedule();
+});
 function finishPath() {
   var p = stroke; stroke = null; setDraw(false);
   if (!p || p.length < 4) return;
@@ -1166,8 +1201,9 @@ function finishPath() {
 }
 
 /* ---------- canvas gestures ---------- */
-/* drag moves the text under the finger (a tap does not), two fingers size and turn it, double tap toggles full width */
-var pts = new Map(), down = null, dragging = false, pinch = null, lastTap = 0;
+/* drag moves the text under the finger (a tap does not), two fingers size and turn it,
+   double tap on text edits it (Text tab, field focused and selected), double tap elsewhere toggles full width */
+var pts = new Map(), down = null, dragging = false, pinch = null, lastTap = 0, lastOn = false;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 function hit(p) {
   var pad = 0.03;
@@ -1178,6 +1214,13 @@ function hit(p) {
   return -1;
 }
 function toggleBig() { big = !big; fit(); }
+function editText() {
+  if (big) toggleBig();
+  setTab("text");
+  var ta = $("#ltext");
+  ta.focus({ preventScroll: true }); ta.select();
+  ta.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
 cv.addEventListener("pointerdown", function (e) {
   var p = fr(e);
   if (pickKey) {
@@ -1234,11 +1277,11 @@ function up(e) {
   pts.delete(e.pointerId);
   if (pinch) { if (pts.size < 2) { pinch = null; down = null; saveSettings(); } return; }
   if (!down) return;
-  var was = dragging; down = null; dragging = false;
+  var was = dragging, on = down.on; down = null; dragging = false;
   if (was) { saveSettings(); lastTap = 0; return; }
   if (e.type !== "pointerup") return;
   var now = performance.now();
-  if (now - lastTap < 350) { lastTap = 0; toggleBig(); } else lastTap = now;
+  if (now - lastTap < 350) { lastTap = 0; if (on && lastOn) editText(); else toggleBig(); } else { lastTap = now; lastOn = on; }
 }
 cv.addEventListener("pointerup", up);
 cv.addEventListener("pointercancel", up);
