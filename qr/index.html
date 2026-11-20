@@ -805,6 +805,7 @@ var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': '
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
 var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px'}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+setInterval(function(){ if (cur && !revealing && !reduce && document.visibilityState === 'visible') paintFrame(); }, 70);   // the glint and twinkle, about 14 frames a second
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
 function load(k){ try { return localStorage.getItem(LS+k); } catch (err) { return null; } }
@@ -1009,9 +1010,47 @@ function groundMask(){
   for (var i = 0; i < m.length; i++) m[i] = (0.2126*d[i*4] + 0.7152*d[i*4+1] + 0.0722*d[i*4+2]) > 140 ? 1 : 0;   // light = ground; the code's dark squares stay
   return (cur.gmask = m);
 }
+/* Always moving, always scannable: a glint sweeps across the code's dark squares now and then, and the loose
+   pixels past the quiet zone twinkle like stars. Both turn a dark pixel toward its opposite hue, kept dark (luminance 0.10 at
+   most), so the code reads the same in every frame. */
+var LINT = []; for (var li = 0; li < 256; li++) LINT.push(lin(li));
+function sat(c){ var m = (c[0] + c[1] + c[2])/3; return c.map(function(v){ return Math.max(0, Math.min(255, m + (v - m)*2.2)); }); }
+function litPrep(){
+  var W = cur.W, H = cur.H, d = cur.data, n = W*H, dk = new Uint8Array(n), lit = new Uint8ClampedArray(n*3);
+  for (var i = 0; i < n; i++){
+    var o = i*4, y = 0.2126*LINT[d[o]] + 0.7152*LINT[d[o+1]] + 0.0722*LINT[d[o+2]];
+    if (y > 0.12) continue;
+    dk[i] = 1; var c = darkAt(sat([255 - d[o], 255 - d[o+1], 255 - d[o+2]]), 0.10);   // the opposite hue, as bright as a dark square may be
+    lit[i*3] = c[0]; lit[i*3+1] = c[1]; lit[i*3+2] = c[2];
+  }
+  var tw = [], P = cur.P;   // the loose pixels, each with its own twinkle phase and speed
+  for (var k in cur.halo){ var mx = +k.split(',')[0], my = +k.split(',')[1]; tw.push([mx, my, hash2(mx, my, 91)*6.283, 0.6 + hash2(my, mx, 17)*1.4]); }
+  cur.dk = dk; cur.lit = lit; cur.tw = tw;
+}
+function ambient(out, now){
+  if (reduce) return;
+  if (!cur.dk) litPrep();
+  var W = cur.W, H = cur.H, P = cur.P, dk = cur.dk, lit = cur.lit, x, y, i;
+  function lift(i, a){ var o = i*4; out[o] += (lit[i*3] - out[o])*a; out[o+1] += (lit[i*3+1] - out[o+1])*a; out[o+2] += (lit[i*3+2] - out[o+2])*a; }
+  // the glint: a soft diagonal band crossing the code every 4.5 s, with a pause between
+  var T = 4500, ph = (now % T)/T, band = (W + H)*0.07, pos = (ph*1.6 - 0.3)*(W + H);
+  if (pos > -band && pos < W + H + band) for (y = 0; y < H; y++){
+    var x0 = Math.max(0, Math.floor(pos - band - y)), x1 = Math.min(W - 1, Math.ceil(pos + band - y));
+    for (x = x0; x <= x1; x++){ i = y*W + x; if (!dk[i]) continue; var a = 1 - Math.abs(x + y - pos)/band; if (a > 0) lift(i, a*a); }
+  }
+  // the twinkle: each loose pixel brightens briefly on its own beat
+  var t = now/1000;
+  for (var j = 0; j < cur.tw.length; j++){
+    var q = cur.tw[j], s2 = Math.sin(t*q[3] + q[2]); if (s2 < 0.75) continue;
+    var a2 = (s2 - 0.75)/0.25;
+    if (burns[q[0] + ',' + q[1]]) continue;
+    for (y = q[1]*P; y < q[1]*P + P && y < H; y++) for (x = q[0]*P; x < q[0]*P + P && x < W; x++){ i = y*W + x; if (dk[i]) lift(i, a2); }
+  }
+}
 function frameData(){
-  if ((!dragons.length && !nBurn && !sparks.length && !IDLE && !(cur.tiles && cur.tiles.length)) || !cur.inner) return cur.data;
+  if (!cur.inner) return cur.data;
   var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H, now = performance.now(), P = cur.P;
+  ambient(out, now);
   if (IDLE){ var gm = groundMask(); for (var gi = 0; gi < gm.length; gi++) if (gm[gi]) out[gi*4+3] = 0; }
   for (var k in burns){
     var b = burns[k], age = now - b.t, mx = +k.split(',')[0], my = +k.split(',')[1];
