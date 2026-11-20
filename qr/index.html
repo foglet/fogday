@@ -605,7 +605,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     var inv = pf.light.length >= 3 && (pf.dark.length < 3 || mr() < 0.35), pool = (inv ? pf.light : pf.dark).slice(), pk = [];
     while (pk.length < 3 && pool.length) pk.push(pool.splice(Math.floor(mr()*pool.length), 1)[0]);
     pk.sort(function(a, b){ return lum(hex2rgb(a[1])) - lum(hex2rgb(b[1])); });
-    MO = {fam: fam, inv: inv, ang: mr()*Math.PI*2, names: pk.map(function(q){ return q[0]; }), stops: pk.map(function(q){ return hex2rgb(q[1]); })};
+    MO = {fam: fam, inv: inv, ang: mr()*Math.PI*2, names: pk.map(function(q){ return q[0]; }), hexes: pk.map(function(q){ return q[1]; }), stops: pk.map(function(q){ return hex2rgb(q[1]); })};
     if (MO.stops.length === 2) MO.stops.splice(1, 0, mixRgb(MO.stops[0], MO.stops[1], 0.5));
     MO.hue = rgbHue(MO.stops[1]);
     var vary = function(c){ return [0.94, 1, 1.03, 1.06].map(function(k){ return c.map(function(v){ return Math.min(255, Math.round(v*k)); }); }); };
@@ -631,8 +631,10 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   var ls = caption.trim() ? Math.max(1, Math.min(MJ || RO ? 4 : 2, Math.floor((C - 8)/tw))) : 0;
   var GR = gs.reduce(function(m, g){ return Math.max(m, g.length); }, 5);   // tallest glyph (Chinese: 11 rows)
   // CMYK: the Pantone equivalents written on the code, on their own line under the caption
-  var LAB = MO ? 'PANTONE ' + MO.names.map(function(n){ return n.replace(/ C$/, ''); }).join(' / ') + ' C' : '';
-  var gL = glyphs(LAB), twL = textWidth(gL), lsL = LAB ? Math.max(1, Math.min(3, Math.floor((C - 8)/twL))) : 0, labH = LAB ? 5*lsL + 8 : 0;
+  // each Pantone colour as its number then a solid swatch of it: 021 [swatch] 165 [swatch] 1505 [swatch]
+  var LAB = MO ? MO.names.map(function(n, i){ return {g: glyphs(n.replace(/ C$/, '')), c: hex2rgb(MO.hexes[i])}; }) : null;
+  var SWW = 9, twL = LAB ? LAB.reduce(function(w, it, i){ return w + textWidth(it.g) + 2 + SWW + (i ? 5 : 0); }, 0) : 0;
+  var lsL = LAB ? Math.max(1, Math.min(3, Math.floor((C - 8)/twL))) : 0, labH = LAB ? 5*lsL + 8 : 0;
   var W = C, H = C + (ls && !MJ ? GR*ls + 6 : 0) + labH, Mh = Math.ceil(H/P);   // 中: the caption fits inside the wide bottom margin, so the code stays square   // the caption gets its own rows below the dragon's path
   var data = new Uint8ClampedArray(W*H*4);
   function px(x,y,rgb){ var o = (y*W+x)*4; data[o] = rgb[0]; data[o+1] = rgb[1]; data[o+2] = rgb[2]; data[o+3] = 255; }
@@ -857,19 +859,6 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       tx += (g[0].length + 1)*ls;
     });
   }
-  if (LAB){   // the Pantone line: same plate and letter colours as the caption (the gradient pass recolours the letters)
-    var txL = Math.floor((W - twL*lsL)/2), tyL = H - 5*lsL - 5;
-    for (var pyL = tyL - 1; pyL < tyL + 5*lsL + 1; pyL++) for (var pxL = txL - 2*lsL; pxL < txL + twL*lsL + 2*lsL; pxL++)
-      if (pxL >= 0 && pxL < W && pyL >= 0 && pyL < H) px(pxL, pyL, bg(pxL, pyL));
-    gL.forEach(function(g){
-      for (var gy = 0; gy < g.length; gy++) for (var gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
-        for (var yy = 0; yy < lsL; yy++) for (var xx = 0; xx < lsL; xx++){
-          var X = txL + gx*lsL + xx, Y = tyL + (gy - (g.length - 5))*lsL + yy;
-          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, R.bodyM[texShade(X, Y, R.tseed)]);
-        }
-      txL += (g[0].length + 1)*lsL;
-    });
-  }
   var grad = 'linear-gradient(to right,' + [toLum(R.dark[0],0.16), toLum(R.accent[0],0.22), toLum(R.dark2[0],0.2)].map(css).join(',') + ')';
   // the loose blocks past the quiet zone: the only pixels a dragon can burn (the code itself never burns, so it always scans)
   var halo = {};
@@ -933,6 +922,23 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       var c7 = b7.map(function(v){ return Math.min(255, Math.round(v*k7)); });
       data[o7] = c7[0]; data[o7+1] = c7[1]; data[o7+2] = c7[2];
     }
+  }
+  if (LAB){   // drawn after the gradient pass, so every swatch and number shows its Pantone colour as it is
+    var txL = Math.floor((W - twL*lsL)/2), tyL = H - 5*lsL - 5;
+    LAB.forEach(function(it, i){
+      if (i) txL += 5*lsL;
+      it.g.forEach(function(g){
+        for (var gy = 0; gy < g.length; gy++) for (var gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
+          for (var yy = 0; yy < lsL; yy++) for (var xx = 0; xx < lsL; xx++){
+            var X = txL + gx*lsL + xx, Y = tyL + (gy - (g.length - 5))*lsL + yy;
+            if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, it.c);
+          }
+        txL += (g[0].length + 1)*lsL;
+      });
+      txL += lsL;
+      for (var sy = tyL; sy < tyL + 5*lsL; sy++) for (var sx = txL; sx < txL + SWW*lsL; sx++) if (sx < W && sy < H) px(sx, sy, it.c);   // the swatch
+      txL += SWW*lsL;
+    });
   }
   if (MO && MO.inv){ gm0 = new Uint8Array(W*H); R.groundM = MO.deep; }   // light codes keep their deep ground when idle (and burns show it)
   // Night inverts the code: no light pad. Inside the quiet zone the ground turns to night and every dark pixel of the code
