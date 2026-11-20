@@ -143,6 +143,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
         <div class="pb" id="a-grid" hidden>
           <div class="f"><label class="lab" for="cols">Dots across <output data-for="cols"></output></label><input type="range" id="cols" min="12" max="160" step="1" data-k="cols"></div>
           <div class="f"><label class="lab" for="dmDot">Dot size <output data-for="dmDot"></output></label><input type="range" id="dmDot" min="20" max="100" step="1" data-k="dmDot"></div>
+          <div class="f"><label class="lab" for="dmOp">Dot opacity <output data-for="dmOp"></output></label><input type="range" id="dmOp" min="5" max="100" step="1" data-k="dmOp"></div>
           <fieldset class="seg"><legend>Dot shape</legend>
             <label><input type="radio" name="dmShape" value="circle" data-k="dmShape"><span>Circle</span></label>
             <label><input type="radio" name="dmShape" value="square" data-k="dmShape"><span>Square</span></label>
@@ -190,6 +191,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
             <label><input type="radio" name="htShape" value="line" data-k="htShape"><span>Line</span></label>
           </fieldset>
           <div class="f"><label class="lab" for="htGain">Dot gain <output data-for="htGain"></output></label><input type="range" id="htGain" min="40" max="160" step="1" data-k="htGain"></div>
+          <div class="f"><label class="lab" for="htOp">Dot opacity <output data-for="htOp"></output></label><input type="range" id="htOp" min="5" max="100" step="1" data-k="htOp"></div>
         </div>
       </div>
       <div class="acc">
@@ -351,9 +353,9 @@ var LDEF = {
 };
 var DEF = {
   look: "dot",
-  cols: 56, reveal: 60, dmDot: 86, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
+  cols: 56, reveal: 60, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7,
-  htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
+  htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
   outSize: "2048", active: 0
 };
 var FONTS = {
@@ -609,6 +611,7 @@ function renderDot(ctx, W, H, prog) {
   var sat = S.dmSat / 100, con = S.dmCon / 100;
   var r = Math.min(cell, cellY) / 2 * S.dmDot / 100;
   ctx.fillStyle = S.dmBg; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = S.dmOp / 100;
   for (var j = 0; j < rows; j++) {
     for (var i = 0; i < cols; i++) {
       var pc = pal[(rnd() * pal.length) | 0], n = rnd(), q = (j * cols + i) * 4;
@@ -636,6 +639,7 @@ function renderDot(ctx, W, H, prog) {
       else { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
     }
   }
+  ctx.globalAlpha = 1;
 }
 
 /* ---------- halftone ---------- */
@@ -654,6 +658,7 @@ function renderHalf(ctx, W, H) {
   }
   ctx.globalCompositeOperation = "source-over";
   if (S.htRiley) { riley(); } else { inks(); }
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
   if (m) {
     grid(W, H, cell, S.htAngle, function (x, y, ca, sa) {
@@ -667,7 +672,7 @@ function renderHalf(ctx, W, H) {
      (as in her 1960s line paintings) and each line thickens where the photo is dark */
   function riley() {
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#111111"; ctx.beginPath();
+    ctx.fillStyle = "#111111"; ctx.globalAlpha = S.htOp / 100; ctx.beginPath();
     var s = cell, lam = W / 5, step = Math.max(1, s / 3), Amax = s * 2;
     function A(y) { var k = Math.sin(Math.PI * clamp(y / H, 0, 1) * 1.5); return s * 0.4 + (Amax - s * 0.4) * k * k; }
     function ph(y) { return 2 * Math.PI * 0.75 * y / H; }
@@ -710,6 +715,7 @@ function renderHalf(ctx, W, H) {
   } else {
     chans = [{ a: S.htAngle, col: S.htMode === "ink" ? S.htInk : null, f: function (q) { return 1 - (0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2]) / 255; } }];
   }
+  ctx.globalAlpha = S.htOp / 100;
   chans.forEach(function (ch) {
     var col = ch.col;
     if (col) { ctx.fillStyle = col; ctx.beginPath(); }
@@ -1048,7 +1054,7 @@ document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
 });
 
 /* ---------- controls ---------- */
-var UNITS = { reveal: "%", dmDot: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
+var UNITS = { reveal: "%", dmDot: "%", dmOp: "%", htOp: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
   tx: "%", ty: "%", lead: "%", hs: "%", vs: "%", revealTime: " s", htAngle: "°", rot: "°", skew: "°", bend: "%", radius: "%",
   waveA: "%", start: "%", strokeW: "%", shadow: "%", shift: "%" };
 var SIGNED = { htLight: 1, rot: 1, skew: 1, shift: 1, bend: 1, start: 1, track: 1 };
