@@ -86,8 +86,8 @@ main{margin:0 auto;padding:2px calc(8px + var(--sar)) calc(4px + var(--sab)) cal
 .check input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .btn.more{display:flex;width:100%;gap:10px;margin:0 0 6px;min-height:40px}
 .chev{display:inline-block;width:14px;height:8px;background:currentColor;transition:transform .2s;
-  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat;
-          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat}
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%2355605a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%2355605a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") center/contain no-repeat}
 .btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
 /* Fields are 50% see-through over the /px scene; a light blur keeps their text readable */
@@ -102,12 +102,12 @@ main{margin:0 auto;padding:2px calc(8px + var(--sar)) calc(4px + var(--sab)) cal
 .field input:focus{background-image:none!important}
 .field input::placeholder{color:var(--ph,#757575);opacity:1}
 .field input:focus::placeholder{color:var(--solph,#757575)}
-.field select:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important}
+.field select:focus{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%2355605a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important}
 /* No borders on any box or button (focus still shows its red ring) */
 .btn,.field select,.field input:not([type=checkbox]),.meta{border:0!important}
 /* Idle: all backgrounds fully transparent (a soft light halo keeps the words readable on the scene) */
 html.idle .btn,html.idle .meta,html.idle .field input:not(:focus){background-color:transparent!important;background-image:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
-html.idle .field select:not(:focus){background-color:transparent!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
+html.idle .field select:not(:focus){background-color:transparent!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%2355605a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
 html.idle #qr{filter:none}
 /* Two to a row; the box you are typing in (or the menu you opened) widens, then shrinks back when you leave it */
 .duo{display:flex;gap:6px;align-items:stretch}
@@ -137,7 +137,7 @@ html.idle #qr{filter:none}
 .pic .btn{min-height:44px;font-size:13px}
 .field{margin:0 0 6px}
 .field label{display:block;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
-.field select{width:100%;min-height:40px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,253,248,.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 15px/1 var(--pixel);letter-spacing:.02em;text-overflow:ellipsis;-webkit-appearance:none;appearance:none}
+.field select{width:100%;min-height:40px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,253,248,.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%2355605a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 15px/1 var(--pixel);letter-spacing:.02em;text-overflow:ellipsis;-webkit-appearance:none;appearance:none}
 .field select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .field input:not([type=checkbox]){width:100%;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,253,248,.5);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 .styles{display:none;border:0;margin:0 0 10px;padding:0}
@@ -1581,7 +1581,7 @@ function boot(){
   }
   /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
      until the next dragon flies over */
-  var CHEV = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 7 4\' shape-rendering=\'crispEdges\'%3E%3Cpath fill=\'%231f5c4a\' d=\'M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z\'/%3E%3C/svg%3E")';
+  var CHEV = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 7 4\' shape-rendering=\'crispEdges\'%3E%3Cpath fill=\'%2355605a\' d=\'M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z\'/%3E%3C/svg%3E")';
   function rgbOf(c){ var m = /(\d+)\D+(\d+)\D+(\d+)/.exec(c); return m ? [+m[1], +m[2], +m[3]] : [128,128,128]; }
   function paintBtn(el, cols){
     var c = cols.map(rgbOf), T = ['001100','011110','001102','100001','110011','120001'], k = document.createElement('canvas');
