@@ -1845,7 +1845,7 @@ function boot(){
         if (dragonsOn) setDragons(false);   // clear the scene: no dragons over the camera
         document.documentElement.classList.add('cam');
         b.setAttribute('aria-pressed', 'true'); b.title = 'Camera on: tap to bring the scene back';
-      }).catch(function(){ stop(); say('Camera not allowed'); });
+      }).catch(function(){ stop(); });   // no message when the camera is refused (removed on request)
     }
     b.addEventListener('click', function(){ if (stream) stop(); else start(); });
     $('scene').addEventListener('click', function(){ stop(); setClear(false); });   // New scene brings the scene and the code's normal ground back
