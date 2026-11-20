@@ -137,7 +137,7 @@ html.idle #qr{filter:none}
 .btn:not(.zh):not(.dtog),.field select{font-size:15px!important;color:var(--muted)!important}
 #cap,#cap::placeholder,#siteFree::placeholder{font-size:15px!important;color:var(--muted)}   /* every button label: one size, grey */
 .sitedu>.sitef{flex:0 1 auto;min-width:0}
-.duo>.bento{flex:0 0 44px;width:44px;height:40px;min-height:40px;padding:0;align-self:stretch}   /* a 44 px icon button like the others in the rows */
+.duo>.bento{flex:0 0 44px;width:44px;height:40px;padding:0;align-self:center;background:none!important;border:0!important}   /* 44 px like the icon buttons, but never a background */
 .duo>.bento svg{width:24px;height:24px}
 .sitedu #site{padding-right:34px;background-position:right 12px center}
 .btn.wide{width:100%}
@@ -209,6 +209,7 @@ html.qrclear .meta,html.qrclear #meta .mtxt,html.qrclear .field>label,html.qrcle
       <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
       <select id="site" aria-label="Website">
         <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
+        <option value="https://fogday.com/mahjong" data-cap="BAY MAHJONG">Bay Mahjong</option>
         <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
         <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas</option>
         <option value="https://makeshine.co" data-cap="MAKESHINE.CO">makeshine.co</option>
@@ -225,7 +226,7 @@ html.qrclear .meta,html.qrclear #meta .mtxt,html.qrclear .field>label,html.qrcle
   <div class="field duo">
     <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption" aria-label="Caption under the code">
     <button type="button" class="btn" id="text">Text me</button>
-    <a href="/works/" class="btn bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
+    <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
   </div>
 
   </div>
@@ -1177,7 +1178,8 @@ function readHash(){
   return out;
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
-var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com','https://makeshine.co','https://www.instagram.com/fogfish/','https://wa.me/14158733873?text=Bon%20jour%21','https://www.linkedin.com/in/fogfish/'];
+var MJ_SITE = 'https://fogday.com/mahjong';
+var SITES = ['https://fogday.com','https://fogday.com/mahjong','https://ohlonesky.com','https://oysteratlas.com','https://makeshine.co','https://www.instagram.com/fogfish/','https://wa.me/14158733873?text=Bon%20jour%21','https://www.linkedin.com/in/fogfish/'];
 function bare(u){ return u.replace(/^https:\/{2}/,''); }   // fogday.com, not https://fogday.com
 /* Some menu addresses show a short label in the website box: @fogfish, the phone number */
 var LABELS = {'https://www.instagram.com/fogfish/': '@fogfish', 'https://wa.me/14158733873?text=Bon%20jour%21': '4158733873'};
@@ -1650,7 +1652,14 @@ function boot(){
   mtx.setAttribute('role', 'button'); mtx.tabIndex = 0; mtx.title = 'Tap for Bacteria, City Lights, Golden Hour, Elegant, Flourish, Lazy Art or Puzzle';
   mtx.addEventListener('click', artTap);
   mtx.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); artTap(); } });
-  $('mj').addEventListener('click', function(){ setMode('mj'); remix(); });
+  $('mj').addEventListener('click', function(){   // 中發白 also switches the website to Bay Mahjong (fogday.com/mahjong)
+    setMode('mj');
+    if (state.url !== MJ_SITE){
+      state.url = MJ_SITE; state.capUser = false; try { localStorage.removeItem(LS + 'cap'); } catch (err) {}
+      state.caption = defCap(); $('cap').value = state.caption; $('siteFree').value = ''; showSite();
+    }
+    remix();
+  });
   $('mono').addEventListener('click', function(){ setMode('mono'); remix(); });
   $('trees').addEventListener('click', function(){ setMode('trees'); remix(); });
   $('remix').setAttribute('aria-pressed', String(state.mode === 'px')); $('mj').setAttribute('aria-pressed', String(state.mode === 'mj')); $('mono').setAttribute('aria-pressed', String(state.mode === 'mono')); $('trees').setAttribute('aria-pressed', String(state.mode === 'trees'));
@@ -1805,7 +1814,7 @@ function boot(){
       }
     }
     // every button, the code details, the page title and the projects icon take the colours of a dragon flying over them
-    Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, #site, #cap, #siteFree, h1 .px-out, .bento'), function(el){
+    Array.prototype.forEach.call(document.querySelectorAll('.btn, .meta, #site, #cap, #siteFree, h1 .px-out'), function(el){   // not the bento: it never has a background
       var r = el.getBoundingClientRect();
       if (!r.width) return;   // hidden (More closed)
       for (var i = 0; i < e.data.list.length; i++){
