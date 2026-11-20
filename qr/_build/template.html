@@ -40,6 +40,7 @@ html.cleared .fgpx{opacity:0}
 .mtxt span{white-space:nowrap;overflow:hidden;text-overflow:clip}
 .meta #scene{padding:0 10px}
 .meta #scene{flex:0 0 auto}
+
 .meta span{display:block}
 main .field>label{display:inline-block;margin-left:0}
 .field .check{display:inline-flex;padding:0 14px;border-radius:12px;background:rgba(251,248,241,.5)}
@@ -109,9 +110,11 @@ html.idle #qr{filter:none}
 .duo{display:flex;gap:6px;align-items:stretch}
 .duo>select,.duo>input,.duo>.btn{flex:1 1 0;min-width:0;width:auto!important;transition:flex-grow .25s ease}
 .duo>select:focus,.duo>input:focus{flex-grow:3.5}
-.sitedu>.sitef{flex:1.5 1 0;min-width:0;transition:flex-grow .25s ease}
-.sitedu>.sitef:focus-within{flex-grow:3.5}
+.sitedu>.sitef{flex:0 1 auto;min-width:0}
+.sitedu #site{padding-right:34px;background-position:right 12px center}
 .btn.wide{width:100%}
+.sitedu>.dtog{flex:0 0 auto;padding:0 8px;color:#1f7a5c!important}
+.sitedu>.dtog[aria-pressed="true"]{color:#b8352b!important}
 @media (prefers-reduced-motion:reduce){.duo>*{transition:none}}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
@@ -161,6 +164,7 @@ html.idle #qr{filter:none}
   </div>
 
   <div class="field duo sitedu">
+    <button type="button" class="btn dtog" id="dragons" aria-pressed="false" aria-label="Dragons" title="Dragons: tap to let them in"><svg width="30" height="23" viewBox="0 0 30 23" shape-rendering="crispEdges" aria-hidden="true"><g fill="currentColor"><rect x="8" y="1" width="1" height="1"/><rect x="13" y="1" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="13" y="2" width="1" height="1"/><rect x="14" y="2" width="1" height="1"/><rect x="20" y="2" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="11" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="13" y="3" width="1" height="1"/><rect x="14" y="3" width="1" height="1"/><rect x="17" y="3" width="1" height="1"/><rect x="18" y="3" width="1" height="1"/><rect x="19" y="3" width="1" height="1"/><rect x="20" y="3" width="1" height="1"/><rect x="21" y="3" width="1" height="1"/><rect x="22" y="3" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="13" y="4" width="1" height="1"/><rect x="14" y="4" width="1" height="1"/><rect x="15" y="4" width="1" height="1"/><rect x="16" y="4" width="1" height="1"/><rect x="17" y="4" width="1" height="1"/><rect x="18" y="4" width="1" height="1"/><rect x="19" y="4" width="1" height="1"/><rect x="20" y="4" width="1" height="1"/><rect x="23" y="4" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="12" y="5" width="1" height="1"/><rect x="13" y="5" width="1" height="1"/><rect x="14" y="5" width="1" height="1"/><rect x="15" y="5" width="1" height="1"/><rect x="16" y="5" width="1" height="1"/><rect x="17" y="5" width="1" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="19" y="5" width="1" height="1"/><rect x="20" y="5" width="1" height="1"/><rect x="21" y="5" width="1" height="1"/><rect x="22" y="5" width="1" height="1"/><rect x="23" y="5" width="1" height="1"/><rect x="24" y="5" width="1" height="1"/><rect x="25" y="5" width="1" height="1"/><rect x="26" y="5" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="13" y="6" width="1" height="1"/><rect x="14" y="6" width="1" height="1"/><rect x="15" y="6" width="1" height="1"/><rect x="16" y="6" width="1" height="1"/><rect x="17" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="19" y="6" width="1" height="1"/><rect x="20" y="6" width="1" height="1"/><rect x="21" y="6" width="1" height="1"/><rect x="22" y="6" width="1" height="1"/><rect x="23" y="6" width="1" height="1"/><rect x="24" y="6" width="1" height="1"/><rect x="25" y="6" width="1" height="1"/><rect x="26" y="6" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="13" y="7" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/><rect x="15" y="7" width="1" height="1"/><rect x="16" y="7" width="1" height="1"/><rect x="17" y="7" width="1" height="1"/><rect x="18" y="7" width="1" height="1"/><rect x="19" y="7" width="1" height="1"/><rect x="20" y="7" width="1" height="1"/><rect x="26" y="7" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="11" y="8" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="13" y="8" width="1" height="1"/><rect x="14" y="8" width="1" height="1"/><rect x="15" y="8" width="1" height="1"/><rect x="16" y="8" width="1" height="1"/><rect x="17" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="19" y="8" width="1" height="1"/><rect x="20" y="8" width="1" height="1"/><rect x="21" y="8" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="2" y="9" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="4" y="9" width="1" height="1"/><rect x="5" y="9" width="1" height="1"/><rect x="6" y="9" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/><rect x="11" y="9" width="1" height="1"/><rect x="12" y="9" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="14" y="9" width="1" height="1"/><rect x="15" y="9" width="1" height="1"/><rect x="16" y="9" width="1" height="1"/><rect x="17" y="9" width="1" height="1"/><rect x="18" y="9" width="1" height="1"/><rect x="19" y="9" width="1" height="1"/><rect x="20" y="9" width="1" height="1"/><rect x="1" y="10" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="5" y="10" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="7" y="10" width="1" height="1"/><rect x="9" y="10" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/><rect x="12" y="10" width="1" height="1"/><rect x="13" y="10" width="1" height="1"/><rect x="14" y="10" width="1" height="1"/><rect x="15" y="10" width="1" height="1"/><rect x="16" y="10" width="1" height="1"/><rect x="17" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="19" y="10" width="1" height="1"/><rect x="1" y="11" width="1" height="1"/><rect x="2" y="11" width="1" height="1"/><rect x="5" y="11" width="1" height="1"/><rect x="6" y="11" width="1" height="1"/><rect x="7" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="9" y="11" width="1" height="1"/><rect x="10" y="11" width="1" height="1"/><rect x="11" y="11" width="1" height="1"/><rect x="12" y="11" width="1" height="1"/><rect x="13" y="11" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/><rect x="15" y="11" width="1" height="1"/><rect x="16" y="11" width="1" height="1"/><rect x="17" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="19" y="11" width="1" height="1"/><rect x="5" y="12" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="9" y="12" width="1" height="1"/><rect x="10" y="12" width="1" height="1"/><rect x="11" y="12" width="1" height="1"/><rect x="12" y="12" width="1" height="1"/><rect x="17" y="12" width="1" height="1"/><rect x="18" y="12" width="1" height="1"/><rect x="5" y="13" width="1" height="1"/><rect x="6" y="13" width="1" height="1"/><rect x="7" y="13" width="1" height="1"/><rect x="8" y="13" width="1" height="1"/><rect x="9" y="13" width="1" height="1"/><rect x="10" y="13" width="1" height="1"/><rect x="11" y="13" width="1" height="1"/><rect x="17" y="13" width="1" height="1"/><rect x="18" y="13" width="1" height="1"/><rect x="5" y="14" width="1" height="1"/><rect x="6" y="14" width="1" height="1"/><rect x="7" y="14" width="1" height="1"/><rect x="8" y="14" width="1" height="1"/><rect x="9" y="14" width="1" height="1"/><rect x="10" y="14" width="1" height="1"/><rect x="18" y="14" width="1" height="1"/><rect x="19" y="14" width="1" height="1"/><rect x="6" y="15" width="1" height="1"/><rect x="7" y="15" width="1" height="1"/><rect x="8" y="15" width="1" height="1"/><rect x="9" y="15" width="1" height="1"/><rect x="10" y="15" width="1" height="1"/><rect x="7" y="16" width="1" height="1"/><rect x="8" y="16" width="1" height="1"/><rect x="9" y="16" width="1" height="1"/><rect x="10" y="16" width="1" height="1"/><rect x="8" y="17" width="1" height="1"/><rect x="9" y="17" width="1" height="1"/><rect x="10" y="17" width="1" height="1"/><rect x="11" y="17" width="1" height="1"/><rect x="16" y="17" width="1" height="1"/><rect x="17" y="17" width="1" height="1"/><rect x="8" y="18" width="1" height="1"/><rect x="9" y="18" width="1" height="1"/><rect x="11" y="18" width="1" height="1"/><rect x="12" y="18" width="1" height="1"/><rect x="16" y="18" width="1" height="1"/><rect x="17" y="18" width="1" height="1"/><rect x="8" y="19" width="1" height="1"/><rect x="9" y="19" width="1" height="1"/><rect x="16" y="19" width="1" height="1"/><rect x="17" y="19" width="1" height="1"/><rect x="8" y="20" width="1" height="1"/><rect x="9" y="20" width="1" height="1"/><rect x="16" y="20" width="1" height="1"/><rect x="17" y="20" width="1" height="1"/></g><g fill="currentColor" opacity=".55"><rect x="21" y="7" width="1" height="1"/><rect x="22" y="7" width="1" height="1"/><rect x="23" y="7" width="1" height="1"/><rect x="24" y="7" width="1" height="1"/><rect x="25" y="7" width="1" height="1"/><rect x="13" y="12" width="1" height="1"/><rect x="14" y="12" width="1" height="1"/><rect x="15" y="12" width="1" height="1"/><rect x="16" y="12" width="1" height="1"/><rect x="12" y="13" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/><rect x="14" y="13" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/><rect x="16" y="13" width="1" height="1"/><rect x="11" y="14" width="1" height="1"/><rect x="12" y="14" width="1" height="1"/><rect x="13" y="14" width="1" height="1"/><rect x="14" y="14" width="1" height="1"/><rect x="15" y="14" width="1" height="1"/><rect x="16" y="14" width="1" height="1"/><rect x="17" y="14" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/><rect x="12" y="15" width="1" height="1"/><rect x="13" y="15" width="1" height="1"/><rect x="14" y="15" width="1" height="1"/><rect x="15" y="15" width="1" height="1"/><rect x="16" y="15" width="1" height="1"/><rect x="17" y="15" width="1" height="1"/><rect x="18" y="15" width="1" height="1"/><rect x="11" y="16" width="1" height="1"/><rect x="12" y="16" width="1" height="1"/><rect x="13" y="16" width="1" height="1"/><rect x="14" y="16" width="1" height="1"/><rect x="15" y="16" width="1" height="1"/><rect x="16" y="16" width="1" height="1"/><rect x="17" y="16" width="1" height="1"/><rect x="18" y="16" width="1" height="1"/><rect x="12" y="17" width="1" height="1"/><rect x="13" y="17" width="1" height="1"/><rect x="14" y="17" width="1" height="1"/><rect x="15" y="17" width="1" height="1"/><rect x="13" y="18" width="1" height="1"/><rect x="14" y="18" width="1" height="1"/><rect x="15" y="18" width="1" height="1"/></g><g fill="#241630"><rect x="8" y="0" width="1" height="1"/><rect x="13" y="0" width="1" height="1"/><rect x="16" y="0" width="1" height="1"/><rect x="18" y="0" width="1" height="1"/><rect x="21" y="0" width="1" height="1"/><rect x="7" y="1" width="1" height="1"/><rect x="9" y="1" width="1" height="1"/><rect x="12" y="1" width="1" height="1"/><rect x="14" y="1" width="1" height="1"/><rect x="17" y="1" width="1" height="1"/><rect x="19" y="1" width="1" height="1"/><rect x="20" y="1" width="1" height="1"/><rect x="22" y="1" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="15" y="2" width="1" height="1"/><rect x="17" y="2" width="1" height="1"/><rect x="18" y="2" width="1" height="1"/><rect x="22" y="2" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="15" y="3" width="1" height="1"/><rect x="16" y="3" width="1" height="1"/><rect x="23" y="3" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="22" y="4" width="1" height="1"/><rect x="24" y="4" width="1" height="1"/><rect x="25" y="4" width="1" height="1"/><rect x="26" y="4" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="27" y="5" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="27" y="6" width="1" height="1"/><rect x="2" y="7" width="1" height="1"/><rect x="3" y="7" width="1" height="1"/><rect x="4" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="27" y="7" width="1" height="1"/><rect x="1" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="9" y="8" width="1" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="22" y="8" width="1" height="1"/><rect x="23" y="8" width="1" height="1"/><rect x="24" y="8" width="1" height="1"/><rect x="25" y="8" width="1" height="1"/><rect x="26" y="8" width="1" height="1"/><rect x="0" y="9" width="1" height="1"/><rect x="7" y="9" width="1" height="1"/><rect x="8" y="9" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/><rect x="21" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="8" y="10" width="1" height="1"/><rect x="20" y="10" width="1" height="1"/><rect x="0" y="11" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="4" y="11" width="1" height="1"/><rect x="20" y="11" width="1" height="1"/><rect x="1" y="12" width="1" height="1"/><rect x="2" y="12" width="1" height="1"/><rect x="4" y="12" width="1" height="1"/><rect x="19" y="12" width="1" height="1"/><rect x="4" y="13" width="1" height="1"/><rect x="19" y="13" width="1" height="1"/><rect x="20" y="13" width="1" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="21" y="14" width="1" height="1"/><rect x="5" y="15" width="1" height="1"/><rect x="19" y="15" width="1" height="1"/><rect x="20" y="15" width="1" height="1"/><rect x="6" y="16" width="1" height="1"/><rect x="19" y="16" width="1" height="1"/><rect x="7" y="17" width="1" height="1"/><rect x="18" y="17" width="1" height="1"/><rect x="7" y="18" width="1" height="1"/><rect x="10" y="18" width="1" height="1"/><rect x="18" y="18" width="1" height="1"/><rect x="7" y="19" width="1" height="1"/><rect x="10" y="19" width="1" height="1"/><rect x="11" y="19" width="1" height="1"/><rect x="12" y="19" width="1" height="1"/><rect x="13" y="19" width="1" height="1"/><rect x="14" y="19" width="1" height="1"/><rect x="15" y="19" width="1" height="1"/><rect x="18" y="19" width="1" height="1"/><rect x="7" y="20" width="1" height="1"/><rect x="10" y="20" width="1" height="1"/><rect x="15" y="20" width="1" height="1"/><rect x="18" y="20" width="1" height="1"/><rect x="7" y="21" width="1" height="1"/><rect x="11" y="21" width="1" height="1"/><rect x="15" y="21" width="1" height="1"/><rect x="19" y="21" width="1" height="1"/><rect x="8" y="22" width="1" height="1"/><rect x="9" y="22" width="1" height="1"/><rect x="10" y="22" width="1" height="1"/><rect x="16" y="22" width="1" height="1"/><rect x="17" y="22" width="1" height="1"/><rect x="18" y="22" width="1" height="1"/></g><g fill="#fae8c8"><rect x="17" y="0" width="1" height="1"/><rect x="18" y="1" width="1" height="1"/><rect x="21" y="1" width="1" height="1"/><rect x="19" y="2" width="1" height="1"/><rect x="21" y="2" width="1" height="1"/><rect x="21" y="4" width="1" height="1"/><rect x="20" y="14" width="1" height="1"/><rect x="8" y="21" width="1" height="1"/><rect x="9" y="21" width="1" height="1"/><rect x="10" y="21" width="1" height="1"/><rect x="16" y="21" width="1" height="1"/><rect x="17" y="21" width="1" height="1"/><rect x="18" y="21" width="1" height="1"/></g></svg></button>
     <div class="sitef" id="siteField">
       <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
       <select id="site" aria-label="Website">
@@ -881,6 +885,7 @@ function showSite(){
 var FIRE = [[255,244,170],[255,206,80],[250,140,40],[220,70,30],[120,74,64]], WATER = [[236,250,255],[170,226,250],[104,182,236],[70,142,212]];
 var box = {on: false, raf: 0, url: ''}, BOXS = 1.5;
 function boxStart(){
+  if (cleared()) return;   // dragons off (or sent away): no menu dragon
   var f = $('siteField'), c = $('boxDragon'), r = f.getBoundingClientRect();
   if (!r.width) return;
   c.width = Math.max(40, Math.round(r.width/BOXS)); c.height = Math.round(r.height/BOXS);
@@ -896,7 +901,7 @@ function boxStop(release){
   if (release){
     var r = $('siteField').getBoundingClientRect(), f = $('pxFront');
     var x = r.left + (box.x + 15)*BOXS, y = r.top + 13*BOXS;
-    if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:spawn', x: x, y: y, dir: box.dir}, location.origin);
+    if (f && f.contentWindow && !cleared()) f.contentWindow.postMessage({type: 'px:spawn', x: x, y: y, dir: box.dir}, location.origin);
   }
 }
 function boxTick(now){
@@ -1042,7 +1047,7 @@ function flyLoop(now){
     // the walker may walk off the code and join the dragons over the page
     if (dragons.length && now > dragons[0].leave && dragons[0].br === 0 && window.__quiet && window.__quiet()){
       var d = dragons[0], p = walkPos(d), r = canvas.getBoundingClientRect(), sc = r.width / cur.W, f = $('pxFront');
-      if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:spawn', x: r.left + (p[0] + 15)*sc, y: r.top + (p[1] + 13)*sc, dir: 1}, location.origin);
+      if (f && f.contentWindow && !cleared()) f.contentWindow.postMessage({type: 'px:spawn', x: r.left + (p[0] + 15)*sc, y: r.top + (p[1] + 13)*sc, dir: 1}, location.origin);
       dragons = [];
     }
     paintFrame();
@@ -1061,12 +1066,14 @@ function remix(){
 }
 /* Reload, Remix and New scene: every box goes back to plain 50% for five seconds, then the dragons may paint them again */
 var calmUntil = 0, clearUntil = 0;
-function cleared(){ return performance.now() < clearUntil; }
+var dragonsOn = false;   // the dragon button: off on every visit
+function cleared(){ return !dragonsOn || performance.now() < clearUntil; }
+function markCleared(){ document.documentElement.classList.toggle('cleared', cleared()); }
 /* Clear: every dragon leaves for six seconds (the flying ones fade out and do nothing, the walker steps off, the menu dragon goes) */
 function clearDragons(){
   clearUntil = performance.now() + 6000; calmUntil = Math.max(calmUntil, clearUntil);
   document.documentElement.classList.add('cleared'); boxStop(false);
-  setTimeout(function(){ if (!cleared()) document.documentElement.classList.remove('cleared'); }, 6050);
+  setTimeout(markCleared, 6050);
 }
 function calm(){
   calmUntil = performance.now() + 5000;
@@ -1235,7 +1242,7 @@ function boot(){
     f.contentWindow.postMessage({type: 'px:nofly', rects: zs.length ? zs : null}, location.origin);
     setIdle(performance.now() - lastAct > IDLE_MS);
   }, 250);
-  window.__quiet = quiet;
+  window.__quiet = function(){ return quiet() && !cleared(); };   // the walker only comes out when dragons are on
   function reground(cols){   // same code, same burns and walker; only the ground's colours change
     state.ground = [cols[0], cols[2], cols[1], cols[2]];
     cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', state.ground, state.mode);
@@ -1324,7 +1331,16 @@ function boot(){
   $('siteFree').addEventListener('focus', function(){ siteWas = this.value; siteTyped = false; this.value = ''; $('site').value = 'custom'; });   // the menu shows the dash option while you type a website
   $('siteFree').addEventListener('blur', function(){ if (!siteTyped && siteWas !== null) this.value = siteWas; siteWas = null; setTimeout(showSite, 400); });
   $('siteFree').addEventListener('input', function(){ siteTyped = true; });
-  document.addEventListener('focusin', function(e){ if (e.target && e.target !== document.body) clearDragons(); });   // any button, box or menu taking focus sends the dragons away for six seconds
+  document.addEventListener('focusin', function(e){ if (e.target && e.target !== document.body && e.target.id !== 'dragons') clearDragons(); });   // any button, box or menu taking focus sends the dragons away for six seconds
+  /* The dragon button: green when the dragons are off (tap to let them in), red when they are on (tap to stop them all) */
+  function setDragons(on){
+    dragonsOn = on; var b = $('dragons');
+    b.setAttribute('aria-pressed', String(on)); b.title = on ? 'Dragons on: tap to stop them all' : 'Dragons off: tap to let them in';
+    if (!on){ boxStop(false); calmUntil = Math.max(calmUntil, performance.now() + 500); }
+    markCleared(); if (cur) paintFrame();
+  }
+  $('dragons').addEventListener('click', function(){ setDragons(!dragonsOn); });
+  markCleared();
   $('clear').addEventListener('click', function(){   // Reset: fogday.com, the mode's default caption, dragons away for six seconds
     try { localStorage.removeItem(LS + 'cap'); } catch (err) {}
     state.capUser = false; state.caption = CAP_DEFAULT[state.mode]; $('cap').value = state.caption;
@@ -1332,6 +1348,17 @@ function boot(){
     setUrl(URL_TEXT);
     clearDragons();
   });
+  /* The menu is as wide as the name it shows, so its chevron sits right after the text */
+  var mctx = document.createElement('canvas').getContext('2d');
+  function menuFit(){
+    var el = $('site'), o = el.options[el.selectedIndex], cs = getComputedStyle(el); if (!o) return;
+    mctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var w = mctx.measureText(o.text).width + o.text.length*(parseFloat(cs.letterSpacing) || 0) + 14 + 34 + 2;
+    el.style.width = Math.ceil(w) + 'px';
+  }
+  ['change', 'focus', 'blur'].forEach(function(ev){ $('site').addEventListener(ev, function(){ setTimeout(menuFit, 0); }); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(menuFit);
+  setInterval(menuFit, 1000); menuFit();
   function siteGrow(){ var n = $('siteFree').value.length; $('siteFree').style.setProperty('--fg', Math.max(1, Math.min(3.5, n/9)).toFixed(2)); }   // wide for a long address, back to half when short or empty
   ['input', 'blur', 'change'].forEach(function(ev){ $('siteFree').addEventListener(ev, function(){ setTimeout(siteGrow, 0); }); });
   $('site').addEventListener('change', function(){ setTimeout(siteGrow, 0); });
