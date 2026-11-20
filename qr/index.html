@@ -53,7 +53,7 @@ h1 a{text-decoration:none}
   --grid:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg%3E%3Crect x='2' y='2' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='2' width='5' height='5' rx='1'/%3E%3Crect x='17' y='2' width='5' height='5' rx='1'/%3E%3Crect x='2' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='17' y='9.5' width='5' height='5' rx='1'/%3E%3Crect x='2' y='17' width='5' height='5' rx='1'/%3E%3Crect x='9.5' y='17' width='5' height='5' rx='1'/%3E%3Crect x='17' y='17' width='5' height='5' rx='1'/%3E%3C/g%3E%3C/svg%3E")}
 .bento:hover .bento-grid{--tg:linear-gradient(#fff,#fff)}
 .bento:focus-visible,h1 a:focus-visible{outline:3px solid var(--red);outline-offset:3px;border-radius:2px}
-main{margin:0 auto;padding:4px calc(8px + var(--sar)) calc(8px + var(--sab)) calc(8px + var(--sal))}
+main{margin:0 auto;padding:2px calc(8px + var(--sar)) calc(4px + var(--sab)) calc(8px + var(--sal))}
 .lede{margin:4px 0 14px;color:var(--muted)}
 .stage{display:flex;justify-content:center;align-items:center;margin:0 0 3px}
 #qr{display:block;border-radius:10px;image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 6px 14px rgba(36,22,48,.18))}
@@ -97,6 +97,11 @@ main{margin:0 auto;padding:4px calc(8px + var(--sar)) calc(8px + var(--sab)) cal
 html.idle .btn,html.idle .meta,html.idle .field input:not(:focus){background-color:transparent!important;background-image:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
 html.idle .field select:not(:focus){background-color:transparent!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%231f5c4a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")!important;background-size:14px 8px!important;background-position:right 14px center!important;background-repeat:no-repeat!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 6px rgba(255,255,255,.8)!important}
 html.idle #qr{filter:none}
+/* Two to a row; the box you are typing in (or the menu you opened) widens, then shrinks back when you leave it */
+.duo{display:flex;gap:6px;align-items:stretch}
+.duo>select,.duo>input,.duo>.btn{flex:1 1 0;min-width:0;width:auto!important;transition:flex-grow .25s ease}
+.duo>select:focus,.duo>input:focus{flex-grow:3.5}
+@media (prefers-reduced-motion:reduce){.duo>*{transition:none}}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
 .btn:hover{background-color:rgba(238,245,241,.5)}
@@ -141,7 +146,7 @@ html.idle #qr{filter:none}
     <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
-  <div class="field sitef" id="siteField">
+  <div class="field duo sitef" id="siteField">
     <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
     <select id="site" aria-label="Website">
       <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
@@ -152,20 +157,12 @@ html.idle #qr{filter:none}
       <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
       <option value="custom" id="customOpt">Your website</option>
     </select>
+    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Website" aria-label="Website address (edit to use your own)" style="text-transform:none">
   </div>
 
-  <div class="field">
+  <div class="field duo">
     <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption" aria-label="Caption under the code">
-  </div>
-
-  <button type="button" class="btn more" id="moreBtn" aria-expanded="false" aria-controls="more">More<span class="chev" aria-hidden="true"></span></button>
-  <div id="more" hidden>
-    <div class="row">
-      <button type="button" class="btn wide" id="text">Text me</button>
-    </div>
-    <div class="field">
-      <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Type a website" aria-label="Website address (edit to use your own)" style="text-transform:none">
-    </div>
+    <button type="button" class="btn" id="text">Text me</button>
   </div>
   </div>
 
@@ -463,11 +460,12 @@ var STYLES = {
 };
 
 /* Smallest code that holds the address (sometimes one size up), so the picture stays chunky */
-function makeCode(r, url){
+function makeCode(r, url, mode){
   var text = /^https?:\/\/[^\/]+$/i.test(url) && r() < 0.5 ? url + '/' : url, bytes = new TextEncoder().encode(text);
   var levels = ['M','Q','Q','H','H'].filter(function(e){ return minVersion(bytes.length,e) > 0; });
   var e = levels.length ? pick(r,levels) : 'L';
   var v = minVersion(bytes.length,e); r();   // always the smallest code (r() keeps each seed's other choices as they were)
+  if (mode === 'mj'){ e = 'H'; v = Math.max(6, minVersion(bytes.length,'H')); }   // 中: as on fogday.com/mj, level H and version 6 or more, so tiles can sit on the code
   var c = encode(bytes, e, v, Math.floor(r()*8)); c.text = text; return c;
 }
 function normUrl(s){
@@ -494,7 +492,7 @@ function mixRgb(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i] +
 var P = 3, QZ = 4, OUT = [36,22,48];
 var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only: it does not scan
 function render(seed, styleId, caption, img, url, finder, ground, mode){
-  var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
+  var r = rng(seed), code = makeCode(r, url || URL_TEXT, mode), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
   R.shape = 'flat';   // solid blocks
   var MJ = mode === 'mj';
@@ -502,7 +500,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     R.finder = 'square'; R.dens = 0; R.oreC = null; R.body2M = null;
     R.bodyM = darkMat([[18,70,52],[24,86,64],[30,100,74],[36,112,84]]);
     R.accM = darkMat([[120,28,24],[140,34,28],[160,40,32],[176,48,38]]);
-    R.groundM = lightMat([[244,238,222],[248,243,230],[251,247,236],[254,251,243]]);
+    R.groundM = lightMat([[251,248,241],[251,248,241],[251,248,241],[251,248,241]]);   // /mahjong's ivory, flat
   }
   if (ground) R.groundM = lightMat(ground);   // a dragon's colours as the ground, lifted to stay light enough to scan
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
@@ -573,6 +571,14 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     }
   }
   function isDark(mx,my){ return mx >= 0 && my >= 0 && mx < M && my < Mh && D[my*M+mx] === 1; }
+  var MJG = [31,92,74], MJR = [184,53,43];   // fogday.com/mahjong green and red
+  function isMorse(qx, qy){   // a dark data square that joins a dot or dash (not a timing line, alignment marker or corner marker)
+    if (qx < 0 || qy < 0 || qx >= N || qy >= N || !code.mod[qy*N+qx]) return false;
+    var k = code.kind[qy*N+qx];
+    if (code.fn[qy*N+qx] && (k === 3 || qx === 6 || qy === 6)) return false;
+    if ((qx < 8 && qy < 8) || (qx >= N-8 && qy < 8) || (qx < 8 && qy >= N-8)) return false;
+    return true;
+  }
 
   for (var my = 0; my < Mh; my++) for (var mx = 0; mx < M; mx++){
     var qx2 = mx - off, qy2 = my - off, inCode = qx2 >= 0 && qy2 >= 0 && qx2 < N && qy2 < N, idx = qy2*N + qx2;
@@ -606,17 +612,15 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
         if (!isDark(mx + (sx2 === 0 ? -1 : 1), my) && !isDark(mx, my + (sy2 === 0 ? -1 : 1))) cut = true;
       }
       if (cut){ px(ax, ay, bg(ax,ay)); continue; }
-      if (MJ){   // a face-down tile: dark grout between neighbours, lit top and left edges, thick bottom, an engraved inner line
-        var tm = (kind === 1 || kind === 2) ? R.accM : R.bodyM, e = P - 1, tc;
-        var nN = isDark(mx,my-1), nS = isDark(mx,my+1), nW = isDark(mx-1,my), nE = isDark(mx+1,my);
-        if ((sx2 === 0 && sy2 === 0 && !nN && !nW) || (sx2 === e && sy2 === 0 && !nN && !nE) || (sx2 === 0 && sy2 === e && !nS && !nW) || (sx2 === e && sy2 === e && !nS && !nE)){ px(ax, ay, bg(ax,ay)); continue; }
-        if ((sx2 === 0 && nW) || (sy2 === 0 && nN)) tc = tm[0];
-        else if (sy2 >= P-2 && !nS) tc = tm[0];
-        else if (sy2 <= 1 && !nN) tc = tm[5];
-        else if (sx2 <= 1 && !nW) tc = tm[4];
-        else if (sx2 >= 3 && sx2 <= P-4 && sy2 >= 3 && sy2 <= P-5 && (sx2 === 3 || sx2 === P-4 || sy2 === 3 || sy2 === P-5)) tc = tm[4];
-        else tc = tm[2];
-        px(ax, ay, tc); continue;
+      if (MJ){   // as on /mj: each run of dark squares along a row is one dot or dash, half a square tall; timing lines and
+                 // the alignment marker stay solid squares; the corner markers are drawn as cookies further down
+        var solid = fn && (kind === 3 || qx2 === 6 || qy2 === 6), fin = kind === 1 || kind === 2 || (qx2 < 8 && qy2 < 8) || (qx2 >= N-8 && qy2 < 8) || (qx2 < 8 && qy2 >= N-8);
+        if (fin){ px(ax, ay, bg(ax,ay)); continue; }
+        if (solid){ px(ax, ay, MJG); continue; }
+        var hh = P/2, gp = 2, top3 = (P - hh)/2;
+        var runL = isMorse(qx2-1, qy2), runR = isMorse(qx2+1, qy2);
+        var on = sy2 >= top3 && sy2 < top3 + hh && (runL || sx2 >= gp) && (runR || sx2 < P - gp);
+        px(ax, ay, on ? MJG : bg(ax,ay)); continue;
       }
       // block: textured top, lit north edge, shadowed south edge, some ore specks
       var mat = (kind === 1 || kind === 2) ? R.accM : (R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM);
@@ -630,6 +634,19 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     }
   }
 
+  if (MJ){   // corner markers as /mj's cookies: green ring, green disc, red centre, on a clear square
+    [[0,0],[N-7,0],[0,N-7]].forEach(function(f){
+      var bx = (off + f[0])*P, by = (off + f[1])*P, c0 = 3.5*P;
+      for (var yy = -P; yy < 8*P; yy++) for (var xx = -P; xx < 8*P; xx++){
+        var X = bx + xx, Y = by + yy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
+        var rr = Math.hypot(xx + 0.5 - c0, yy + 0.5 - c0)/P, col = bg(X, Y);
+        if (xx >= 0 && yy >= 0 && xx < 7*P && yy < 7*P){
+          if (rr <= 0.8) col = MJR; else if (rr <= 1.5) col = MJG; else if (rr >= 2.5 && rr <= 3.5) col = MJG;
+        }
+        px(X, Y, col);
+      }
+    });
+  }
   // drawn corner markers (circle, diamond, morph): superellipses |x|^n + |y|^n, so a line through the centre still reads 1:1:3:1:1
   if (SUPER[R.finder]){
     var pos = [[0,0],[N-7,0],[0,N-7]];
@@ -678,15 +695,23 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   // the loose blocks past the quiet zone: the only pixels a dragon can burn (the code itself never burns, so it always scans)
   var halo = {};
   for (y = 0; y < Mh; y++) for (x = 0; x < M; x++) if (D[y*M+x] && dq(x,y) >= 1) halo[x + ',' + y] = 1;
-  // 中: face-up tiles scattered in the margin, never over the quiet zone, never touching each other
+  // 中: as on /mj, small tiles lie on the code itself at random angles (about one square each); never on the corner,
+  // timing or alignment markers, never touching each other; level H error correction reads through them
   var tiles = [];
   if (MJ){
-    var tr = rng(seed ^ 0x2545f491), ib = [HW*P - 4, HW*P - 4, (HW+N+2*QZ)*P + 4, (HW+N+2*QZ)*P + 4], keys = Object.keys(TILE_SYM);
-    for (var tries = 0; tries < 4000 && tiles.length < 16; tries++){
-      var side = tr() < 0.25, tw2 = side ? 32 : 24, th2 = side ? 24 : 32, tx2 = Math.floor(tr()*(W - tw2)), ty2 = Math.floor(tr()*(C - th2));
-      if (tx2 < ib[2] && tx2 + tw2 > ib[0] && ty2 < ib[3] && ty2 + th2 > ib[1]) continue;
-      if (tiles.some(function(t){ return tx2 < t.x + t.w + 6 && tx2 + tw2 + 6 > t.x && ty2 < t.y + t.h + 6 && ty2 + th2 + 6 > t.y; })) continue;
-      tiles.push({x: tx2, y: ty2, w: tw2, h: th2, side: side, sym: keys[Math.floor(tr()*keys.length)], flip: 0});
+    var tr = rng(seed ^ 0x2545f491), keys = Object.keys(TILE_SYM), ap2 = alignPos(code.v), keep = [];
+    function kb(r0, c0, r1, c1){ keep.push([(off + c0)*P, (off + r0)*P, (off + c1)*P, (off + r1)*P]); }
+    kb(-1,-1,9,9); kb(-1,N-9,9,N+1); kb(N-9,-1,N+1,9); kb(5,8,8,N-8); kb(8,5,N-8,8);
+    ap2.forEach(function(ay2, i2){ ap2.forEach(function(ax2, j2){ var la = ap2.length - 1; if ((i2 === 0 && j2 === 0) || (i2 === 0 && j2 === la) || (i2 === la && j2 === 0)) return; kb(ay2-3, ax2-3, ay2+4, ax2+4); }); });
+    var lo = off*P, hi = (off + N)*P;
+    for (var tries = 0; tries < 6000 && tiles.length < Math.round(N*N/100); tries++){
+      var ang = (tr()*2 - 1)*Math.PI, ca = Math.abs(Math.cos(ang)), sa = Math.abs(Math.sin(ang));
+      var bw2 = Math.ceil(12*ca + 16*sa), bh2 = Math.ceil(12*sa + 16*ca);
+      var tx2 = lo + Math.floor(tr()*(hi - lo - bw2)), ty2 = lo + Math.floor(tr()*(hi - lo - bh2));
+      var bb = [tx2, ty2, tx2 + bw2, ty2 + bh2];
+      if (keep.some(function(k){ return bb[0] < k[2] + 4 && bb[2] + 4 > k[0] && bb[1] < k[3] + 4 && bb[3] + 4 > k[1]; })) continue;
+      if (tiles.some(function(t){ return bb[0] < t.x + t.w + 6 && bb[2] + 6 > t.x && bb[1] < t.y + t.h + 6 && bb[3] + 6 > t.y; })) continue;
+      tiles.push({x: tx2, y: ty2, w: bw2, h: bh2, ang: ang, sym: keys[Math.floor(tr()*keys.length)], down: tr() < 0.06, flip: 0});
     }
   }
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
@@ -729,10 +754,10 @@ function say(msg){ var s = $('status'); s.textContent = ''; setTimeout(function(
 function fitBox(){
   var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   var head = document.querySelector('header').offsetHeight, main = document.querySelector('main'), ms = getComputedStyle(main);
-  var ctl = document.querySelector('.ctl'), more = $('more'), meta = $('meta'), mt = getComputedStyle(meta), st = getComputedStyle(canvas.parentNode);
-  var ctlH = ctl.offsetHeight - (more.hidden ? 0 : more.offsetHeight);
+  var ctl = document.querySelector('.ctl'), meta = $('meta'), mt = getComputedStyle(meta), st = getComputedStyle(canvas.parentNode);
+  var ctlH = ctl.offsetHeight;
   var metaH = meta.offsetHeight + parseFloat(mt.marginTop) + parseFloat(mt.marginBottom);
-  var h = vh - head - ctlH - metaH - parseFloat(ms.paddingTop) - parseFloat(ms.paddingBottom) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - 8;
+  var h = vh - head - ctlH - metaH - parseFloat(ms.paddingTop) - parseFloat(ms.paddingBottom) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - 12;
   var w = document.documentElement.clientWidth - parseFloat(ms.paddingLeft) - parseFloat(ms.paddingRight);
   return [w, Math.max(120, h)];
 }
@@ -913,16 +938,14 @@ function frameData(){
     }
   }
   // 中: the face-up tiles (drawn here so they can flip); a flipping tile shows its green back for a moment
-  (cur.tiles || []).forEach(function(t){
-    var spr = tileSprite(t.sym, now < t.flip);
-    for (var v = 0; v < 16; v++) for (var u = 0; u < 12; u++){
+  (cur.tiles || []).forEach(function(t){   // each tile turned to its angle (nearest pixel, as /mj does)
+    var spr = tileSprite(t.sym, t.down || now < t.flip), c1 = Math.cos(t.ang), s1 = Math.sin(t.ang), cx = t.x + t.w/2, cy = t.y + t.h/2;
+    for (var Y3 = t.y; Y3 < t.y + t.h; Y3++) for (var X3 = t.x; X3 < t.x + t.w; X3++){
+      if (X3 < 0 || Y3 < 0 || X3 >= W || Y3 >= H) continue;
+      var dx = X3 + 0.5 - cx, dy = Y3 + 0.5 - cy, u = Math.floor(dx*c1 + dy*s1 + 6), v = Math.floor(-dx*s1 + dy*c1 + 8);
+      if (u < 0 || v < 0 || u >= 12 || v >= 16) continue;
       var c = spr[v*12 + u]; if (!c) continue;
-      var bx = t.side ? v : u, by = t.side ? 11 - u : v;   // sideways tiles lie on their left
-      for (var yy2 = 0; yy2 < 2; yy2++) for (var xx2 = 0; xx2 < 2; xx2++){
-        var X3 = t.x + bx*2 + xx2, Y3 = t.y + by*2 + yy2;
-        if (X3 < 0 || Y3 < 0 || X3 >= W || Y3 >= H) continue;
-        var o3 = (Y3*W + X3)*4; out[o3] = c[0]; out[o3+1] = c[1]; out[o3+2] = c[2]; out[o3+3] = 255;
-      }
+      var o3 = (Y3*W + X3)*4; out[o3] = c[0]; out[o3+1] = c[1]; out[o3+2] = c[2]; out[o3+3] = 255;
     }
   });
   sparks.forEach(function(p){
@@ -1095,10 +1118,9 @@ function boot(){
     setTimeout(function(){ if (cur) paintFrame(); }, 280);
   }, 1100);
   function setUrl(u){ state.url = u; state.seed = newSeed(); syncHash(); draw(true); calm(); showSite(); }   // a new website is always a new pattern
-  function openMore(){ $('moreBtn').setAttribute('aria-expanded', 'true'); $('more').hidden = false; }
   $('site').addEventListener('change', function(){
     if (this.value === 'custom'){   // "Your website": open More and go to the address box
-      openMore(); var f = $('siteFree'); f.focus(); f.select(); f.scrollIntoView({block: 'center', behavior: reduce ? 'auto' : 'smooth'});
+      var f = $('siteFree'); f.focus(); f.select(); f.scrollIntoView({block: 'center', behavior: reduce ? 'auto' : 'smooth'});
       return;
     }
     $('siteFree').value = bare(this.value); setUrl(this.value);
@@ -1142,10 +1164,7 @@ function boot(){
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function(ev){ document.addEventListener(ev, fsMark); });
   document.addEventListener('keydown', function(e){ if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && fsBtn.classList.contains('on')){ e.preventDefault(); fsToggle(); } });
   if (window.visualViewport) window.visualViewport.addEventListener('resize', function(){ if (cur) paintFrame(); });
-  $('moreBtn').addEventListener('click', function(){
-    var open = this.getAttribute('aria-expanded') !== 'true';
-    this.setAttribute('aria-expanded', String(open)); $('more').hidden = !open;
-  });
+
   $('text').addEventListener('click', textIt);
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
     var f = $('pxBack');
@@ -1275,7 +1294,7 @@ function boot(){
   });
   var rt;
   window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if (cur) paintFrame(); }, 100); });
-  window.__qr = {render: render, encode: encode, state: state, frame: frameData, cur: function(){ return cur; }, burns: function(){ return burns; }};
+  window.__qr = {render: render, encode: encode, state: state, frame: frameData, cur: function(){ return cur; }, burns: function(){ return burns; }, load: function(sd, u, m){ state.seed = sd; state.url = u; state.mode = m; draw(false); }};
 }
 boot();
 })();
