@@ -318,6 +318,12 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
     <h2 id="saveTitle">Save <button type="button" class="icob" id="saveClose" aria-label="Close"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></h2>
     <div class="f"><label class="lab" for="outSize">Image size (long edge)</label>
       <select id="outSize" data-k="outSize"><option value="1080">1080 px</option><option value="2048">2048 px</option><option value="3000">3000 px</option><option value="4096">4096 px</option></select></div>
+    <label class="chk"><input type="checkbox" data-k="ig">Instagram size (crops the image to fit)</label>
+    <fieldset class="seg" id="igSizes"><legend>Instagram size</legend>
+      <label><input type="radio" name="igSize" value="1350" data-k="igSize"><span>1080×1350</span></label>
+      <label><input type="radio" name="igSize" value="1440" data-k="igSize"><span>1080×1440</span></label>
+      <label><input type="radio" name="igSize" value="1920" data-k="igSize"><span>1080×1920</span></label>
+    </fieldset>
     <div class="row">
       <button type="button" class="btn primary" id="savePng"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>Save image</span></button>
       <button type="button" class="btn" id="share" hidden><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></svg><span>Share</span></button>
@@ -356,7 +362,7 @@ var DEF = {
   cols: 56, reveal: 60, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7,
   htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
-  outSize: "2048", active: 0
+  outSize: "2048", ig: false, igSize: "1350", active: 0
 };
 var FONTS = {
   "Inter": [400, 600, 800], "Rubik": [400, 600, 800], "Space Grotesk": [400, 500, 700], "DM Sans": [400, 600, 800],
@@ -377,6 +383,7 @@ var $ = function (s) { return document.querySelector(s); };
 var cv = $("#cv"), pctx = cv.getContext("2d");
 var stage = $("#stage"), statusEl = $("#status");
 var src = document.createElement("canvas"), sctx = src.getContext("2d", { willReadFrequently: true });
+var orig = document.createElement("canvas");
 var scratch = document.createElement("canvas").getContext("2d");
 var cache = {};
 var pickKey = null, big = false, tab = S.look, drawMode = false, stroke = null;
@@ -810,11 +817,25 @@ function fit() {
 /* ---------- image in ---------- */
 function setImage(img, w, h) {
   var k = Math.min(1, 2000 / Math.max(w, h));
-  src.width = Math.round(w * k); src.height = Math.round(h * k);
-  sctx.fillStyle = "#fff"; sctx.fillRect(0, 0, src.width, src.height);
+  orig.width = Math.round(w * k); orig.height = Math.round(h * k);
+  var ox = orig.getContext("2d");
+  ox.fillStyle = "#fff"; ox.fillRect(0, 0, orig.width, orig.height);
+  ox.imageSmoothingQuality = "high";
+  ox.drawImage(img, 0, 0, orig.width, orig.height);
+  applyCrop();
+}
+/* Instagram size: the working image is the original center-cropped to 1080 x igSize, so preview and every save match */
+function applyCrop() {
+  var w = orig.width, h = orig.height, sx = 0, sy = 0;
+  if (S.ig) {
+    var a = 1080 / +S.igSize;
+    if (w / h > a) { sx = (w - h * a) / 2; w = h * a; } else { sy = (h - w / a) / 2; h = w / a; }
+  }
+  src.width = Math.max(1, Math.round(w)); src.height = Math.max(1, Math.round(h));
   sctx.imageSmoothingQuality = "high";
-  sctx.drawImage(img, 0, 0, src.width, src.height);
+  sctx.drawImage(orig, sx, sy, w, h, 0, 0, src.width, src.height);
   cache = {};
+  $("#igSizes").hidden = !S.ig; $("#outSize").disabled = S.ig;
   fit();
 }
 function loadFile(f) {
@@ -893,6 +914,7 @@ function snap() {
 
 /* ---------- saving ---------- */
 function outDims(long) {
+  if (S.ig) return [1080, +S.igSize];
   var w = src.width, h = src.height;
   return w >= h ? [long, Math.round(long * h / w)] : [Math.round(long * w / h), long];
 }
@@ -903,7 +925,7 @@ function makePng() {
     c.toBlob(res, "image/png");
   });
 }
-function fname(ext) { return "image-looks-" + (S.look === "half" ? "halftone" : "dot-matrix") + "." + ext; }
+function fname(ext) { return "image-looks-" + (S.look === "half" ? "halftone" : "dot-matrix") + (S.ig ? "-1080x" + S.igSize : "") + "." + ext; }
 function download(blob, name) {
   var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
@@ -1081,6 +1103,8 @@ function sync() {
   document.querySelectorAll("[data-color]").forEach(syncColor);
   document.body.dataset.ht = S.htMode;
   $("#riley").setAttribute("aria-pressed", S.htRiley ? "true" : "false");
+  $("#igSizes").hidden = !S.ig; $("#outSize").disabled = S.ig;
+  if (orig.width) applyCrop();
   syncLayer();
 }
 function onChange(el) {
@@ -1099,6 +1123,7 @@ function onChange(el) {
     document.body.dataset.path = v === "custom" && !(scope.pts && scope.pts.length > 1) ? "none" : v;
   }
   if (k === "text") renderChips();
+  if (k === "ig" || k === "igSize") applyCrop();
   saveSettings(); schedule();
 }
 document.querySelectorAll("[data-k],[data-l]").forEach(function (el) {
