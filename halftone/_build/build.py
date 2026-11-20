@@ -3,6 +3,13 @@ Edit template.html, never ../index.html, then run: python3 build.py"""
 import json, pathlib
 root = pathlib.Path(__file__).parent
 html = (root / "template.html").read_text(encoding="utf-8")
+# Phosphor icons (regular weight, from @phosphor-icons/core, MIT): {{icon:name}} becomes the inline SVG
+icons = json.loads((root / "icons.json").read_text())
+def icon(m):
+    return '<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false">' + icons[m.group(1)] + '</svg>'
+import re
+html = re.sub(r"\{\{icon:([a-z-]+)\}\}", icon, html)
+assert "{{icon:" not in html
 # Guard: a // comment pasted into the middle of a line comments out the rest of it (a lost "}" breaks the whole page).
 # Count braces through the script, skipping strings and comments; they must balance, and each top-level function
 # must start at the IIFE's depth (1).

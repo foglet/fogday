@@ -12,90 +12,100 @@ if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIn
 <meta name="apple-mobile-web-app-title" content="Image Looks">
 <link rel="apple-touch-icon" href="/px/icon-180.png">
 <title>Image Looks</title>
-<meta name="description" content="Turn a photo into a dot matrix or a halftone print, add text, save it as an image or a video.">
+<meta name="description" content="Turn a photo into a dot matrix or a halftone print, add text on a path, save it as an image or a video.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
 <style>
-:root{--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8;
+:root{--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8;--well:#ece6d9;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.35 "Rubik",system-ui,sans-serif;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
+.ico{width:16px;height:16px;flex:0 0 16px;display:block}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1180px;margin:0 auto;
   padding:calc(6px + var(--sat)) calc(2.5vw + var(--sar) - 4px) 2px calc(2.5vw + var(--sal))}
 h1{margin:0;font:400 22px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
-.bento{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:5px;color:var(--muted);border-radius:10px}
+.bento{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:5px;color:var(--muted);border-radius:8px}
 .bento svg{display:block;width:100%;height:100%}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.wrap{max-width:1180px;margin:0 auto;padding:4px calc(2.5vw + var(--sar)) calc(24px + var(--sab)) calc(2.5vw + var(--sal));display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-@media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{position:sticky;top:12px}}
+.wrap{max-width:1180px;margin:0 auto;padding:4px calc(2.5vw + var(--sar)) calc(24px + var(--sab)) calc(2.5vw + var(--sal));display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+/* phones: the image stays pinned at the top while the settings scroll under it (not in full width mode) */
+.stagecol{position:sticky;top:0;z-index:5;background:var(--paper);padding:calc(4px + var(--sat)) 0 2px;min-width:0}
+body.big .stagecol{position:static}
+@media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
 .stage{display:flex;justify-content:center}
-#cv{display:block;border-radius:12px;background:#eee8dc;box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12)}
-#cv{touch-action:manipulation}
+#cv{display:block;border-radius:12px;background:#eee8dc;box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
-#cv.picking{cursor:crosshair}
-.hint{margin:6px 0 0;text-align:center;font-size:12px;color:var(--muted);min-height:16px}
-.stagecol,.ctlcol{min-width:0}
-.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px}
-.actions .btn{min-width:0;padding:0 6px}
-@media (min-width:480px){.actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media (max-width:340px){.actions .btn svg{display:none}}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;height:32px;padding:0 10px;border-radius:8px;font-size:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500}
+#cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
+.hint{margin:4px 0 0;text-align:center;font-size:12px;color:var(--muted);min-height:16px}
+.ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
+.actions{display:flex;gap:6px}
+.actions .btn{flex:1 1 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;height:32px;padding:0 10px;border-radius:8px;font-size:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500;min-width:0;white-space:nowrap}
+.btn span{overflow:hidden;text-overflow:ellipsis}
+.actions .btn{padding:0 6px}
 .btn:hover{border-color:var(--felt)}
-.btn svg{width:16px;height:16px;flex:0 0 16px}
 .btn.primary{background:var(--felt);border-color:var(--felt);color:#fff}
 .btn.primary:hover{background:var(--felt-d)}
 .btn[disabled]{opacity:.5;cursor:default}
-.ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
-.seg{display:flex;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--card);gap:2px;height:32px;margin:0;min-width:0}
-.seg legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.seg label{flex:1 1 0;min-width:0;position:relative;display:flex}
-@media (max-width:340px){.seg span{padding:4px 2px;font-size:14px;line-height:1.15}}
-.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
-.seg span{flex:1;display:flex;align-items:center;justify-content:center;min-height:26px;padding:0 6px;border-radius:6px;font-size:13px;text-align:center;font-weight:500;color:var(--muted)}
-.seg input:checked+span{background:var(--felt);color:#fff}
-.seg input:focus-visible+span{outline:3px solid var(--red);outline-offset:1px}
-.seg.big span{min-height:26px;font-size:13px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+@media (max-width:360px){.actions .btn span{display:none}}
+/* pill slider: Dot matrix, Halftone, Text share one switch; the green pill slides to the chosen one */
+.pill{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:32px;border-radius:999px;background:var(--well);padding:2px}
+.pill .knob{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/3);border-radius:999px;background:var(--felt);transform:translateX(calc(var(--i,0) * 100%));transition:transform .25s cubic-bezier(.3,0,.2,1)}
+.pill [role=tab]{position:relative;z-index:1;border:0;background:none;border-radius:999px;font-weight:500;font-size:13px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.pill [role=tab][aria-selected=true]{color:#fff}
+.pill [role=tab].cur::after{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+.tabp{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.acc{background:var(--card);border:1px solid var(--line);border-radius:10px}
 .ph{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
-.ph svg{width:16px;height:16px;transition:transform .2s;color:var(--muted)}
-.ph[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.ph .ico{color:var(--muted);transition:transform .2s}
+.ph[aria-expanded="false"] .ico{transform:rotate(-90deg)}
 .pb{padding:0 12px 10px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
-.pb[hidden]{display:none}
 .f{display:grid;gap:0}
 .f>.lab{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
 .f>.lab output{color:var(--ink);font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;height:26px;margin:0;accent-color:var(--felt);background:transparent}
 select,textarea{width:100%;min-height:32px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px}
-textarea{resize:vertical;height:auto;padding:6px 8px;min-height:48px;line-height:1.3}
+textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height:1.3}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--card);gap:2px;margin:0;min-width:0;height:32px}
+.seg legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.seg label{flex:1 1 0;min-width:0;position:relative;display:flex}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{flex:1;display:flex;align-items:center;justify-content:center;min-height:26px;padding:0 4px;border-radius:7px;text-align:center;font-weight:500;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.seg input:checked+span{background:var(--felt);color:#fff}
+.seg input:focus-visible+span{outline:3px solid var(--red);outline-offset:1px}
 .color{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
 .color input[type=color]{width:40px;height:32px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
 .color .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
 .color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--felt)}
-.icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;padding:0}
-.icob svg{width:16px;height:16px}
+.icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;padding:0}
 .icob[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
+.icob[disabled]{opacity:.4;cursor:default}
 .chk{display:flex;align-items:center;gap:8px;min-height:32px;cursor:pointer;font-size:13px}
 .chk input{width:18px;height:18px;accent-color:var(--felt)}
-.row{display:flex;gap:8px;flex-wrap:wrap}
+.row{display:flex;gap:6px;flex-wrap:wrap}
 .row .btn{flex:1 1 auto}
+/* text layers */
+.layers{display:flex;gap:6px;align-items:center}
+.chips{display:flex;gap:4px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:none}
+.chip{flex:0 0 auto;max-width:130px;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
 .status{min-height:18px;margin:0;font-size:13px;color:var(--felt)}
-body[data-look="dot"] .only-half,body[data-look="half"] .only-dot{display:none!important}
-body[data-ht="ink"] .ht-noink,body[data-ht="image"] .ht-ink,body[data-ht="cmyk"] .ht-ink{display:none!important}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin:4px 0 0}
+body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!important}
+body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-path="circle"]) .p-circle,body:not([data-path="wave"]) .p-wave{display:none!important}
 .modal{position:fixed;inset:0;z-index:20;background:rgba(20,26,24,.72);display:flex;align-items:center;justify-content:center;padding:16px}
-.modal[hidden]{display:none}
-.sheet{background:var(--card);border-radius:16px;padding:14px;max-width:640px;width:100%;display:grid;gap:12px}
-.sheet h2{margin:0;font:400 20px/1.2 "Young Serif",Georgia,serif}
-.sheet video{width:100%;border-radius:12px;background:#000;max-height:60vh;object-fit:contain}
-.foot{text-align:center;font-size:12px;color:var(--muted);margin:8px 0 0}
-.foot a{color:var(--felt)}
-@media (prefers-reduced-motion:reduce){.ph svg{transition:none}}
+.sheet{background:var(--card);border-radius:14px;padding:12px;max-width:640px;width:100%;display:grid;gap:8px}
+.sheet h2{margin:0;font:400 18px/1.2 "Young Serif",Georgia,serif;display:flex;justify-content:space-between;align-items:center}
+.sheet video{width:100%;border-radius:10px;background:#000;max-height:60vh;object-fit:contain}
+#saveModal .sheet{max-width:380px}
+@media (prefers-reduced-motion:reduce){.ph .ico,.pill .knob{transition:none}}
 </style>
 </head>
-<body data-look="dot" data-ht="ink">
+<body data-look="dot" data-ht="rgb" data-path="none">
 <header class="top">
   <h1>Image Looks</h1>
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
@@ -105,165 +115,248 @@ body[data-ht="ink"] .ht-noink,body[data-ht="image"] .ht-ink,body[data-ht="cmyk"]
   <section class="stagecol" aria-label="Preview">
     <div class="stage" id="stage"><canvas id="cv" role="img" aria-label="Preview of the image look"></canvas></div>
     <p class="hint" id="hint"></p>
-    <div class="actions">
-      <button type="button" class="btn" id="addImg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Add image</span></button>
-      <button type="button" class="btn" id="takePhoto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Take photo</span></button>
-      <button type="button" class="btn only-dot" id="play"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><span>Play reveal</span></button>
-      <button type="button" class="btn primary" id="saveTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Save image</span></button>
-    </div>
-    <input type="file" id="fileIn" accept="image/*" hidden>
-    <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
   </section>
 
   <section class="ctlcol" aria-label="Settings">
-    <fieldset class="seg big">
-      <legend>Look</legend>
-      <label><input type="radio" name="look" value="dot" data-k="look"><span>Dot matrix</span></label>
-      <label><input type="radio" name="look" value="half" data-k="look"><span>Halftone</span></label>
-    </fieldset>
+    <div class="actions">
+      <button type="button" class="btn" id="addImg" aria-label="Add image" title="Add image">{{icon:image}}<span>Image</span></button>
+      <button type="button" class="btn" id="takePhoto" aria-label="Take photo" title="Take photo">{{icon:camera}}<span>Camera</span></button>
+      <button type="button" class="btn" id="play" aria-label="Play reveal" title="Play reveal">{{icon:play}}<span>Play</span></button>
+      <button type="button" class="btn primary" id="saveOpen">{{icon:download-simple}}<span>Save</span></button>
+    </div>
+    <input type="file" id="fileIn" accept="image/*" hidden>
+    <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
+
+    <div class="pill" role="tablist" aria-label="Edit">
+      <span class="knob" aria-hidden="true"></span>
+      <button type="button" role="tab" id="t-dot" aria-controls="p-dot" data-tab="dot">Dot matrix</button>
+      <button type="button" role="tab" id="t-half" aria-controls="p-half" data-tab="half">Halftone</button>
+      <button type="button" role="tab" id="t-text" aria-controls="p-text" data-tab="text">Text</button>
+    </div>
 
     <!-- Dot matrix -->
-    <div class="panel only-dot">
-      <button type="button" class="ph" aria-expanded="true" aria-controls="pDot">Dot matrix<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-      <div class="pb" id="pDot">
-        <div class="f"><label class="lab" for="cols">Dots across <output data-for="cols"></output></label><input type="range" id="cols" min="12" max="160" step="1" data-k="cols"></div>
-        <div class="f"><label class="lab" for="reveal">Reveal <output data-for="reveal"></output></label><input type="range" id="reveal" min="0" max="100" step="1" data-k="reveal"></div>
-        <div class="f"><label class="lab" for="dmDot">Dot size <output data-for="dmDot"></output></label><input type="range" id="dmDot" min="20" max="100" step="1" data-k="dmDot"></div>
-        <fieldset class="seg"><legend>Dot shape</legend>
-          <label><input type="radio" name="dmShape" value="circle" data-k="dmShape"><span>Circle</span></label>
-          <label><input type="radio" name="dmShape" value="square" data-k="dmShape"><span>Square</span></label>
-        </fieldset>
-        <div class="two">
+    <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-grid">Grid{{icon:caret-down}}</button>
+        <div class="pb" id="a-grid" hidden>
+          <div class="f"><label class="lab" for="cols">Dots across <output data-for="cols"></output></label><input type="range" id="cols" min="12" max="160" step="1" data-k="cols"></div>
+          <div class="f"><label class="lab" for="dmDot">Dot size <output data-for="dmDot"></output></label><input type="range" id="dmDot" min="20" max="100" step="1" data-k="dmDot"></div>
+          <fieldset class="seg"><legend>Dot shape</legend>
+            <label><input type="radio" name="dmShape" value="circle" data-k="dmShape"><span>Circle</span></label>
+            <label><input type="radio" name="dmShape" value="square" data-k="dmShape"><span>Square</span></label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-reveal">Reveal{{icon:caret-down}}</button>
+        <div class="pb" id="a-reveal" hidden>
+          <div class="f"><label class="lab" for="reveal">Reveal <output data-for="reveal"></output></label><input type="range" id="reveal" min="0" max="100" step="1" data-k="reveal"></div>
           <div class="f"><label class="lab" for="dir">Direction</label>
             <select id="dir" data-k="dir"><option value="lr">Left to right</option><option value="rl">Right to left</option><option value="tb">Top to bottom</option><option value="diag">Diagonal</option><option value="center">From center</option><option value="random">Random</option></select></div>
+          <div class="f"><label class="lab" for="band">Fade band <output data-for="band"></output></label><input type="range" id="band" min="3" max="60" step="1" data-k="band"></div>
+          <div class="f"><label class="lab" for="wash">Washout <output data-for="wash"></output></label><input type="range" id="wash" min="0" max="100" step="1" data-k="wash"></div>
+          <div class="f"><label class="lab" for="scatter">Edge scatter <output data-for="scatter"></output></label><input type="range" id="scatter" min="0" max="60" step="1" data-k="scatter"></div>
+          <div class="f"><label class="lab" for="revealTime">Reveal time <output data-for="revealTime"></output></label><input type="range" id="revealTime" min="1" max="8" step="0.5" data-k="revealTime"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-dmcolor">Color{{icon:caret-down}}</button>
+        <div class="pb" id="a-dmcolor" hidden>
           <div class="f"><label class="lab" for="palette">Start colors</label>
-            <select id="palette" data-k="palette"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select></div>
+            <div class="row"><select id="palette" data-k="palette" style="flex:1"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
+            <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors">{{icon:shuffle}}</button></div></div>
+          <div class="two">
+            <div class="f"><label class="lab" for="dmSat">Saturation <output data-for="dmSat"></output></label><input type="range" id="dmSat" min="0" max="200" step="1" data-k="dmSat"></div>
+            <div class="f"><label class="lab" for="dmCon">Contrast <output data-for="dmCon"></output></label><input type="range" id="dmCon" min="50" max="200" step="1" data-k="dmCon"></div>
+          </div>
+          <div class="f"><span class="lab" id="dmBgL">Background</span><div class="color" data-color="dmBg" data-label="dmBgL"></div></div>
         </div>
-        <div class="f"><label class="lab" for="band">Fade band <output data-for="band"></output></label><input type="range" id="band" min="3" max="60" step="1" data-k="band"></div>
-        <div class="f"><label class="lab" for="wash">Washout <output data-for="wash"></output></label><input type="range" id="wash" min="0" max="100" step="1" data-k="wash"></div>
-        <div class="f"><label class="lab" for="scatter">Edge scatter <output data-for="scatter"></output></label><input type="range" id="scatter" min="0" max="60" step="1" data-k="scatter"></div>
-        <div class="two">
-          <div class="f"><label class="lab" for="dmSat">Saturation <output data-for="dmSat"></output></label><input type="range" id="dmSat" min="0" max="200" step="1" data-k="dmSat"></div>
-          <div class="f"><label class="lab" for="dmCon">Contrast <output data-for="dmCon"></output></label><input type="range" id="dmCon" min="50" max="200" step="1" data-k="dmCon"></div>
-        </div>
-        <div class="f"><span class="lab" id="dmBgL">Background</span><div class="color" data-color="dmBg" data-label="dmBgL"></div></div>
-        <div class="f"><label class="lab" for="revealTime">Reveal time <output data-for="revealTime"></output></label><input type="range" id="revealTime" min="1" max="8" step="0.5" data-k="revealTime"></div>
-        <button type="button" class="btn" id="shuffle">Shuffle start colors</button>
       </div>
     </div>
 
     <!-- Halftone -->
-    <div class="panel only-half">
-      <button type="button" class="ph" aria-expanded="true" aria-controls="pHalf">Halftone<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-      <div class="pb" id="pHalf">
-        <fieldset class="seg"><legend>Ink</legend>
-          <label><input type="radio" name="htMode" value="ink" data-k="htMode"><span>One ink</span></label>
-          <label><input type="radio" name="htMode" value="image" data-k="htMode"><span>Image color</span></label>
-          <label><input type="radio" name="htMode" value="cmyk" data-k="htMode"><span>CMYK</span></label>
-        </fieldset>
-        <div class="f ht-ink"><span class="lab" id="htInkL">Ink color</span><div class="color" data-color="htInk" data-label="htInkL"></div></div>
-        <div class="f"><span class="lab" id="htPaperL">Paper color</span><div class="color" data-color="htPaper" data-label="htPaperL"></div></div>
-        <div class="f"><label class="lab" for="htCells">Dots across <output data-for="htCells"></output></label><input type="range" id="htCells" min="16" max="180" step="1" data-k="htCells"></div>
-        <div class="f"><label class="lab" for="htAngle">Screen angle <output data-for="htAngle"></output></label><input type="range" id="htAngle" min="0" max="90" step="1" data-k="htAngle"></div>
-        <fieldset class="seg"><legend>Dot shape</legend>
-          <label><input type="radio" name="htShape" value="dot" data-k="htShape"><span>Dot</span></label>
-          <label><input type="radio" name="htShape" value="square" data-k="htShape"><span>Square</span></label>
-          <label><input type="radio" name="htShape" value="line" data-k="htShape"><span>Line</span></label>
-        </fieldset>
-        <div class="f"><label class="lab" for="htGain">Dot gain <output data-for="htGain"></output></label><input type="range" id="htGain" min="40" max="160" step="1" data-k="htGain"></div>
-        <div class="two">
-          <div class="f"><label class="lab" for="htCon">Contrast <output data-for="htCon"></output></label><input type="range" id="htCon" min="50" max="250" step="1" data-k="htCon"></div>
-          <div class="f"><label class="lab" for="htLight">Lightness <output data-for="htLight"></output></label><input type="range" id="htLight" min="-50" max="50" step="1" data-k="htLight"></div>
+    <div class="tabp" role="tabpanel" id="p-half" aria-labelledby="t-half" hidden>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-screen">Screen{{icon:caret-down}}</button>
+        <div class="pb" id="a-screen" hidden>
+          <div class="f"><label class="lab" for="htCells">Dots across <output data-for="htCells"></output></label><input type="range" id="htCells" min="16" max="180" step="1" data-k="htCells"></div>
+          <div class="f"><label class="lab" for="htAngle">Screen angle <output data-for="htAngle"></output></label><input type="range" id="htAngle" min="0" max="90" step="1" data-k="htAngle"></div>
+          <fieldset class="seg"><legend>Dot shape</legend>
+            <label><input type="radio" name="htShape" value="dot" data-k="htShape"><span>Dot</span></label>
+            <label><input type="radio" name="htShape" value="square" data-k="htShape"><span>Square</span></label>
+            <label><input type="radio" name="htShape" value="line" data-k="htShape"><span>Line</span></label>
+          </fieldset>
+          <div class="f"><label class="lab" for="htGain">Dot gain <output data-for="htGain"></output></label><input type="range" id="htGain" min="40" max="160" step="1" data-k="htGain"></div>
         </div>
-        <label class="chk"><input type="checkbox" data-k="htInvert">Invert</label>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-tone">Tone{{icon:caret-down}}</button>
+        <div class="pb" id="a-tone" hidden>
+          <div class="two">
+            <div class="f"><label class="lab" for="htCon">Contrast <output data-for="htCon"></output></label><input type="range" id="htCon" min="50" max="250" step="1" data-k="htCon"></div>
+            <div class="f"><label class="lab" for="htLight">Lightness <output data-for="htLight"></output></label><input type="range" id="htLight" min="-50" max="50" step="1" data-k="htLight"></div>
+          </div>
+          <label class="chk"><input type="checkbox" data-k="htInvert">Invert</label>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-htcolor">Color{{icon:caret-down}}</button>
+        <div class="pb" id="a-htcolor" hidden>
+          <fieldset class="seg"><legend>Ink</legend>
+            <label><input type="radio" name="htMode" value="rgb" data-k="htMode"><span>RGB</span></label>
+            <label><input type="radio" name="htMode" value="ink" data-k="htMode"><span>One ink</span></label>
+            <label><input type="radio" name="htMode" value="image" data-k="htMode"><span>Image</span></label>
+            <label><input type="radio" name="htMode" value="cmyk" data-k="htMode"><span>CMYK</span></label>
+          </fieldset>
+          <div class="f ht-ink"><span class="lab" id="htInkL">Ink color</span><div class="color" data-color="htInk" data-label="htInkL"></div></div>
+          <div class="f ht-paper"><span class="lab" id="htPaperL">Paper color</span><div class="color" data-color="htPaper" data-label="htPaperL"></div></div>
+        </div>
       </div>
     </div>
 
     <!-- Text -->
-    <div class="panel">
-      <button type="button" class="ph" aria-expanded="true" aria-controls="pText">Text<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-      <div class="pb" id="pText">
-        <div class="f"><label class="lab" for="text">Text</label><textarea id="text" rows="2" data-k="text" placeholder="Type something"></textarea></div>
-        <div class="two">
-          <div class="f"><label class="lab" for="font">Font</label>
-            <select id="font" data-k="font">
-              <optgroup label="Sans serif"><option>Inter</option><option>Rubik</option><option>Space Grotesk</option><option>DM Sans</option><option>Archivo Black</option><option>Bebas Neue</option></optgroup>
-              <optgroup label="Serif"><option>Young Serif</option><option>Playfair Display</option></optgroup>
-              <optgroup label="Mono"><option>Space Mono</option></optgroup>
-            </select></div>
-          <div class="f"><label class="lab" for="weight">Weight</label><select id="weight" data-k="weight"></select></div>
+    <div class="tabp" role="tabpanel" id="p-text" aria-labelledby="t-text" hidden>
+      <div class="layers">
+        <div class="chips" id="chips" role="group" aria-label="Text layers"></div>
+        <button type="button" class="icob" id="lAdd" aria-label="Add a line of text" title="Add text">{{icon:plus}}</button>
+        <button type="button" class="icob" id="lDup" aria-label="Duplicate this text" title="Duplicate">{{icon:copy}}</button>
+        <button type="button" class="icob" id="lDel" aria-label="Delete this text" title="Delete">{{icon:trash}}</button>
+      </div>
+      <div class="f"><label class="lab" for="ltext">Text</label><textarea id="ltext" rows="2" data-l="text" placeholder="Type something"></textarea></div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-type">Type{{icon:caret-down}}</button>
+        <div class="pb" id="a-type" hidden>
+          <div class="two">
+            <div class="f"><label class="lab" for="font">Font</label>
+              <select id="font" data-l="font">
+                <optgroup label="Sans serif"><option>Inter</option><option>Rubik</option><option>Space Grotesk</option><option>DM Sans</option><option>Archivo Black</option><option>Bebas Neue</option><option>Anton</option></optgroup>
+                <optgroup label="Serif"><option>Young Serif</option><option>Playfair Display</option><option>DM Serif Display</option></optgroup>
+                <optgroup label="Mono"><option>Space Mono</option></optgroup>
+              </select></div>
+            <div class="f"><label class="lab" for="weight">Weight</label><select id="weight" data-l="weight"></select></div>
+          </div>
+          <div class="f"><label class="lab" for="size">Size <output data-for="size"></output></label><input type="range" id="size" min="2" max="100" step="0.5" data-l="size"></div>
+          <div class="f"><span class="lab" id="colorL">Fill color</span><div class="color" data-lcolor="color" data-label="colorL"></div></div>
+          <div class="f"><label class="lab" for="op">Opacity <output data-for="op"></output></label><input type="range" id="op" min="0" max="100" step="1" data-l="op"></div>
+          <fieldset class="seg"><legend>Text style</legend>
+            <label><input type="radio" name="mode" value="solid" data-l="mode"><span>Solid</span></label>
+            <label><input type="radio" name="mode" value="dots" data-l="mode"><span>Made of dots</span></label>
+          </fieldset>
+          <label class="chk"><input type="checkbox" data-l="upper">All caps</label>
         </div>
-        <div class="f"><span class="lab" id="textColorL">Text color</span><div class="color" data-color="textColor" data-label="textColorL"></div></div>
-        <div class="f"><label class="lab" for="textOp">Opacity <output data-for="textOp"></output></label><input type="range" id="textOp" min="0" max="100" step="1" data-k="textOp"></div>
-        <div class="f"><label class="lab" for="size">Size <output data-for="size"></output></label><input type="range" id="size" min="2" max="40" step="0.5" data-k="size"></div>
-        <fieldset class="seg"><legend>Text style</legend>
-          <label><input type="radio" name="textMode" value="solid" data-k="textMode"><span>Solid</span></label>
-          <label><input type="radio" name="textMode" value="dots" data-k="textMode"><span>Made of dots</span></label>
-        </fieldset>
-        <fieldset class="seg"><legend>Align</legend>
-          <label><input type="radio" name="align" value="left" data-k="align"><span>Left</span></label>
-          <label><input type="radio" name="align" value="center" data-k="align"><span>Center</span></label>
-          <label><input type="radio" name="align" value="right" data-k="align"><span>Right</span></label>
-        </fieldset>
-        <div class="two">
-          <div class="f"><label class="lab" for="tx">Across <output data-for="tx"></output></label><input type="range" id="tx" min="0" max="100" step="0.5" data-k="tx"></div>
-          <div class="f"><label class="lab" for="ty">Down <output data-for="ty"></output></label><input type="range" id="ty" min="0" max="100" step="0.5" data-k="ty"></div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-char">Character{{icon:caret-down}}</button>
+        <div class="pb" id="a-char" hidden>
+          <fieldset class="seg"><legend>Align</legend>
+            <label><input type="radio" name="align" value="left" data-l="align"><span>Left</span></label>
+            <label><input type="radio" name="align" value="center" data-l="align"><span>Center</span></label>
+            <label><input type="radio" name="align" value="right" data-l="align"><span>Right</span></label>
+          </fieldset>
+          <div class="two">
+            <div class="f"><label class="lab" for="track">Tracking <output data-for="track"></output></label><input type="range" id="track" min="-20" max="100" step="1" data-l="track"></div>
+            <div class="f"><label class="lab" for="lead">Leading <output data-for="lead"></output></label><input type="range" id="lead" min="60" max="200" step="5" data-l="lead"></div>
+            <div class="f"><label class="lab" for="hs">Horizontal scale <output data-for="hs"></output></label><input type="range" id="hs" min="30" max="250" step="1" data-l="hs"></div>
+            <div class="f"><label class="lab" for="vs">Vertical scale <output data-for="vs"></output></label><input type="range" id="vs" min="30" max="250" step="1" data-l="vs"></div>
+            <div class="f"><label class="lab" for="rot">Rotate <output data-for="rot"></output></label><input type="range" id="rot" min="-180" max="180" step="1" data-l="rot"></div>
+            <div class="f"><label class="lab" for="skew">Skew <output data-for="skew"></output></label><input type="range" id="skew" min="-45" max="45" step="1" data-l="skew"></div>
+            <div class="f"><label class="lab" for="shift">Baseline shift <output data-for="shift"></output></label><input type="range" id="shift" min="-100" max="100" step="1" data-l="shift"></div>
+          </div>
+          <div class="two">
+            <div class="f"><label class="lab" for="tx">Across <output data-for="tx"></output></label><input type="range" id="tx" min="0" max="100" step="0.5" data-l="tx"></div>
+            <div class="f"><label class="lab" for="ty">Down <output data-for="ty"></output></label><input type="range" id="ty" min="0" max="100" step="0.5" data-l="ty"></div>
+          </div>
         </div>
-        <div class="two">
-          <div class="f"><label class="lab" for="track">Letter spacing <output data-for="track"></output></label><input type="range" id="track" min="-10" max="40" step="1" data-k="track"></div>
-          <div class="f"><label class="lab" for="lead">Line height <output data-for="lead"></output></label><input type="range" id="lead" min="70" max="180" step="5" data-k="lead"></div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-path">Type on a path{{icon:caret-down}}</button>
+        <div class="pb" id="a-path" hidden>
+          <div class="f"><label class="lab" for="path">Path</label>
+            <select id="path" data-l="path"><option value="none">None</option><option value="arc">Arc</option><option value="circle">Circle</option><option value="wave">Wave</option><option value="custom">Drawn path</option></select></div>
+          <button type="button" class="btn" id="drawPath" aria-pressed="false">{{icon:pencil-simple-line}}<span>Draw a path on the image</span></button>
+          <div class="f p-arc"><label class="lab" for="bend">Bend <output data-for="bend"></output></label><input type="range" id="bend" min="-100" max="100" step="1" data-l="bend"></div>
+          <div class="f p-circle"><label class="lab" for="radius">Radius <output data-for="radius"></output></label><input type="range" id="radius" min="5" max="60" step="0.5" data-l="radius"></div>
+          <div class="two p-wave">
+            <div class="f"><label class="lab" for="waveA">Wave height <output data-for="waveA"></output></label><input type="range" id="waveA" min="0" max="30" step="0.5" data-l="waveA"></div>
+            <div class="f"><label class="lab" for="waveF">Waves <output data-for="waveF"></output></label><input type="range" id="waveF" min="0.5" max="8" step="0.5" data-l="waveF"></div>
+          </div>
+          <div class="f p-any"><label class="lab" for="start">Start <output data-for="start"></output></label><input type="range" id="start" min="-50" max="50" step="0.5" data-l="start"></div>
+          <div class="two p-any">
+            <div class="f"><label class="lab" for="effect">Effect</label>
+              <select id="effect" data-l="effect"><option value="rainbow">Rainbow</option><option value="skew">Skew</option><option value="ribbon">3D Ribbon</option><option value="stair">Stair Step</option></select></div>
+            <div class="f"><label class="lab" for="pathAlign">Align to path</label>
+              <select id="pathAlign" data-l="pathAlign"><option value="baseline">Baseline</option><option value="center">Center</option><option value="ascender">Ascender</option><option value="descender">Descender</option></select></div>
+          </div>
+          <label class="chk p-any"><input type="checkbox" data-l="flip">Flip to the other side</label>
         </div>
-        <label class="chk"><input type="checkbox" data-k="upper">All caps</label>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-app">Appearance{{icon:caret-down}}</button>
+        <div class="pb" id="a-app" hidden>
+          <label class="chk"><input type="checkbox" data-l="fill">Fill</label>
+          <div class="f"><label class="lab" for="strokeW">Stroke <output data-for="strokeW"></output></label><input type="range" id="strokeW" min="0" max="30" step="0.5" data-l="strokeW"></div>
+          <div class="f"><span class="lab" id="strokeL">Stroke color</span><div class="color" data-lcolor="strokeC" data-label="strokeL"></div></div>
+          <div class="f"><label class="lab" for="shadow">Drop shadow <output data-for="shadow"></output></label><input type="range" id="shadow" min="0" max="100" step="1" data-l="shadow"></div>
+          <div class="f"><label class="lab" for="blend">Blend mode</label>
+            <select id="blend" data-l="blend"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="difference">Difference</option><option value="color-dodge">Color dodge</option></select></div>
+        </div>
       </div>
     </div>
 
-    <!-- Save -->
-    <div class="panel">
-      <button type="button" class="ph" aria-expanded="false" aria-controls="pSave">Save and share<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-      <div class="pb" id="pSave" hidden>
-        <div class="f"><label class="lab" for="outSize">Image size (long edge)</label>
-          <select id="outSize" data-k="outSize"><option value="1080">1080 px</option><option value="2048">2048 px</option><option value="3000">3000 px</option><option value="4096">4096 px</option></select></div>
-        <div class="row">
-          <button type="button" class="btn primary" id="savePng">Save image</button>
-          <button type="button" class="btn" id="share" hidden>Share</button>
-        </div>
-        <button type="button" class="btn only-dot" id="saveVideo" hidden>Save reveal video</button>
-        <button type="button" class="btn" id="reset">Reset settings</button>
-      </div>
-    </div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
     <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
   </section>
 </main>
+
+<div class="modal" id="saveModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+    <h2 id="saveTitle">Save <button type="button" class="icob" id="saveClose" aria-label="Close">{{icon:x}}</button></h2>
+    <div class="f"><label class="lab" for="outSize">Image size (long edge)</label>
+      <select id="outSize" data-k="outSize"><option value="1080">1080 px</option><option value="2048">2048 px</option><option value="3000">3000 px</option><option value="4096">4096 px</option></select></div>
+    <div class="row">
+      <button type="button" class="btn primary" id="savePng">{{icon:download-simple}}<span>Save image</span></button>
+      <button type="button" class="btn" id="share" hidden>{{icon:share-network}}<span>Share</span></button>
+    </div>
+    <button type="button" class="btn" id="saveSvg">{{icon:file-svg}}<span>Save SVG (vector)</span></button>
+    <button type="button" class="btn" id="saveVideo" hidden>{{icon:film-strip}}<span>Save reveal video</span></button>
+    <button type="button" class="btn" id="reset">{{icon:arrow-counter-clockwise}}<span>Reset settings</span></button>
+  </div>
+</div>
 
 <div class="modal" id="camModal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="camTitle">
     <h2 id="camTitle">Take photo</h2>
     <video id="camVideo" playsinline muted autoplay></video>
     <div class="row">
-      <button type="button" class="btn primary" id="snap">Take photo</button>
+      <button type="button" class="btn primary" id="snap">{{icon:camera}}<span>Take photo</span></button>
       <button type="button" class="btn" id="flip" hidden>Switch camera</button>
       <button type="button" class="btn" id="camCancel">Cancel</button>
     </div>
   </div>
 </div>
+<template id="icoPick">{{icon:eyedropper}}</template>
 
 <script>
 (function () {
 "use strict";
 var KEY = "halftone:settings";
+var LDEF = {
+  text: "Image Looks", font: "Inter", weight: 800, size: 11, color: "#ffffff", op: 100, mode: "solid", upper: false,
+  align: "center", track: 0, lead: 100, hs: 100, vs: 100, rot: 0, skew: 0, shift: 0, tx: 50, ty: 86,
+  path: "none", bend: 40, radius: 30, waveA: 6, waveF: 2, start: 0, effect: "rainbow", pathAlign: "baseline", flip: false, pts: null,
+  fill: true, strokeW: 0, strokeC: "#1d2622", shadow: 0, blend: "source-over"
+};
 var DEF = {
   look: "dot",
   cols: 56, reveal: 60, dmDot: 86, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7,
-  htMode: "ink", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htCon: 120, htLight: 0, htInvert: false,
-  text: "Image Looks", font: "Inter", weight: 800, textColor: "#ffffff", textOp: 100, size: 11, textMode: "solid", align: "center",
-  tx: 50, ty: 86, track: 0, lead: 100, upper: false,
-  outSize: "2048"
+  htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htCon: 120, htLight: 0, htInvert: false,
+  outSize: "2048", active: 0
 };
 var FONTS = {
   "Inter": [400, 600, 800], "Rubik": [400, 600, 800], "Space Grotesk": [400, 500, 700], "DM Sans": [400, 600, 800],
-  "Archivo Black": [400], "Bebas Neue": [400], "Young Serif": [400], "Playfair Display": [400, 600, 800], "Space Mono": [400, 700]
+  "Archivo Black": [400], "Bebas Neue": [400], "Anton": [400], "Young Serif": [400], "Playfair Display": [400, 600, 800],
+  "DM Serif Display": [400], "Space Mono": [400, 700]
 };
 var WNAMES = { 400: "Regular", 500: "Medium", 600: "Semibold", 700: "Bold", 800: "Extra bold" };
 var PALETTES = {
@@ -274,36 +367,52 @@ var PALETTES = {
 };
 var SWATCHES = ["#1d2622", "#ffffff", "#1f5c4a", "#b8352b", "#f2b431", "#4db7e2", "#e2559b", "#7a5af0"];
 
-var S = Object.assign({}, DEF, loadSettings());
-if (!FONTS[S.font]) S.font = DEF.font;
-
+var S = loadSettings();
 var $ = function (s) { return document.querySelector(s); };
 var cv = $("#cv"), pctx = cv.getContext("2d");
 var stage = $("#stage"), statusEl = $("#status");
 var src = document.createElement("canvas"), sctx = src.getContext("2d", { willReadFrequently: true });
+var scratch = document.createElement("canvas").getContext("2d");
 var cache = {};
-var pickKey = null, big = false;
+var pickKey = null, big = false, tab = S.look, drawMode = false, stroke = null;
 var playing = 0;
 
+function newLayer(o) { return Object.assign({}, LDEF, o || {}); }
 function loadSettings() {
-  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
+  var o = {};
+  try { o = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+  var s = Object.assign({}, DEF, o);
+  if (!Array.isArray(o.layers)) {
+    /* settings from the first version had one text: carry it over as layer 1 */
+    var old = {};
+    if (typeof o.text === "string") old = { text: o.text, font: o.font, weight: o.weight, color: o.textColor, op: o.textOp, size: o.size,
+      mode: o.textMode, align: o.align, tx: o.tx, ty: o.ty, track: o.track, lead: o.lead, upper: o.upper };
+    Object.keys(old).forEach(function (k) { if (old[k] == null) delete old[k]; });
+    s.layers = [old];
+  }
+  ["text", "font", "weight", "textColor", "textOp", "size", "textMode", "align", "tx", "ty", "track", "lead", "upper"].forEach(function (k) { delete s[k]; });
+  s.layers = s.layers.map(function (l) { var n = newLayer(l); if (!FONTS[n.font]) n.font = LDEF.font; return n; });
+  if (!s.layers.length) s.layers = [newLayer()];
+  s.active = Math.min(Math.max(0, s.active | 0), s.layers.length - 1);
+  return s;
 }
 var saveT;
 function saveSettings() {
   clearTimeout(saveT);
-  saveT = setTimeout(function () { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 300);
+  saveT = setTimeout(function () {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(S, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }));
+    } catch (e) {}
+  }, 300);
 }
-function say(t) { statusEl.textContent = t; }
+var sayT;
+function say(t) { statusEl.textContent = t; clearTimeout(sayT); if (t) sayT = setTimeout(function () { statusEl.textContent = ""; }, 2500); }
+function AL() { return S.layers[S.active]; }
 
 /* ---------- helpers ---------- */
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-function rgb(hex) {
-  var n = parseInt(hex.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-function toHex(r, g, b) {
-  return "#" + [r, g, b].map(function (v) { return ("0" + Math.round(v).toString(16)).slice(-2); }).join("");
-}
+function rgb(hex) { var n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function toHex(r, g, b) { return "#" + [r, g, b].map(function (v) { return ("0" + Math.round(v).toString(16)).slice(-2); }).join(""); }
 function mulberry(a) {
   return function () {
     a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -312,21 +421,24 @@ function mulberry(a) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
-function mk(w, h) { var c = document.createElement("canvas"); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; }
+function mk(w, h) { var c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
+function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
 
-/* Downsample the source to w x h by halving steps, so every small cell is a true average of its area */
-function sample(w, h) {
-  var k = w + "x" + h;
-  if (cache[k]) return cache[k];
-  var c = src, cw = src.width, ch = src.height;
+/* Downsample by halving steps so each small cell is a true average of its area */
+function shrink(c, w, h, read) {
+  var cw = c.width, ch = c.height;
   while (cw / 2 >= w * 2 && ch / 2 >= h * 2) {
-    var n = mk(Math.round(cw / 2), Math.round(ch / 2)), x = n.getContext("2d");
+    var n = mk(cw / 2, ch / 2), x = n.getContext("2d");
     x.imageSmoothingQuality = "high"; x.drawImage(c, 0, 0, n.width, n.height);
     c = n; cw = n.width; ch = n.height;
   }
   var o = mk(w, h), ox = o.getContext("2d", { willReadFrequently: true });
   ox.imageSmoothingQuality = "high"; ox.drawImage(c, 0, 0, w, h);
-  cache[k] = ox.getImageData(0, 0, w, h).data;
+  return read ? ox.getImageData(0, 0, w, h).data : o;
+}
+function sample(w, h) {
+  var k = w + "x" + h;
+  if (!cache[k]) cache[k] = shrink(src, w, h, true);
   return cache[k];
 }
 
@@ -347,46 +459,145 @@ function ensureFont(fam, w) {
     return document.fonts && document.fonts.load ? document.fonts.load(w + " 48px \"" + fam + "\"", "AaGg") : null;
   }).catch(function () {});
 }
+function allFonts() { return Promise.all(S.layers.map(function (l) { return ensureFont(l.font, l.weight); })); }
 function fillWeights() {
-  var sel = $("#weight"), ws = FONTS[S.font];
+  var L = AL(), sel = $("#weight"), ws = FONTS[L.font];
   sel.innerHTML = "";
   ws.forEach(function (w) { var o = document.createElement("option"); o.value = w; o.textContent = WNAMES[w]; sel.appendChild(o); });
-  if (ws.indexOf(+S.weight) < 0) {
-    S.weight = ws.reduce(function (a, b) { return Math.abs(b - S.weight) < Math.abs(a - S.weight) ? b : a; });
-  }
-  sel.value = S.weight;
+  if (ws.indexOf(+L.weight) < 0) L.weight = ws.reduce(function (a, b) { return Math.abs(b - L.weight) < Math.abs(a - L.weight) ? b : a; });
+  sel.value = L.weight;
 }
 
-/* ---------- text ---------- */
-function hasText() { return S.text.trim().length > 0; }
-function drawText(ctx, W, H, color, alpha) {
-  if (!hasText()) return;
-  var px = S.size / 100 * W, lines = (S.upper ? S.text.toUpperCase() : S.text).split("\n");
-  var lh = px * S.lead / 100 * 1.1, x = S.tx / 100 * W, y = S.ty / 100 * H;
-  ctx.save();
-  ctx.font = S.weight + " " + px + "px \"" + S.font + "\", sans-serif";
-  ctx.textAlign = S.align; ctx.textBaseline = "middle";
-  if ("letterSpacing" in ctx) ctx.letterSpacing = (S.track / 100 * px).toFixed(2) + "px";
-  ctx.globalAlpha = alpha; ctx.fillStyle = color;
-  lines.forEach(function (ln, i) { ctx.fillText(ln, x, y + (i - (lines.length - 1) / 2) * lh); });
-  ctx.restore();
+/* ---------- text: paths ---------- */
+/* The path as a dense polyline in picture pixels, rotated by the layer's rotation around its anchor */
+function pathPoints(L, W, H) {
+  var ax = L.tx / 100 * W, ay = L.ty / 100 * H, p = [], i, closed = false;
+  if (L.path === "arc" || L.path === "circle") {
+    var b = L.path === "circle" ? 1 : L.bend / 100;
+    var R = L.path === "circle" ? L.radius / 100 * W : 0.12 * W / Math.max(Math.abs(b), 0.02);
+    var up = b >= 0 ? 1 : -1;
+    for (i = 0; i <= 720; i++) {
+      var t = -Math.PI + i / 720 * 2 * Math.PI;
+      p.push([ax + R * Math.sin(t), ay + up * (R - R * Math.cos(t))]);
+    }
+    closed = L.path === "circle";
+  } else if (L.path === "wave") {
+    var A = L.waveA / 100 * W;
+    for (i = 0; i <= 600; i++) {
+      var x = -1.5 * W + i / 600 * 3 * W;
+      p.push([ax + x, ay + A * Math.sin(2 * Math.PI * L.waveF * x / W)]);
+    }
+  } else if (L.path === "custom" && L.pts && L.pts.length > 1) {
+    L.pts.forEach(function (q) { p.push([ax + q[0] * W, ay + q[1] * H]); });
+  } else return null;
+  if (L.rot) {
+    var a = L.rot * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+    p = p.map(function (q) { var dx = q[0] - ax, dy = q[1] - ay; return [ax + dx * ca - dy * sa, ay + dx * sa + dy * ca]; });
+  }
+  if (L.flip) p.reverse();
+  var cum = [0];
+  for (i = 1; i < p.length; i++) cum.push(cum[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+  return { p: p, cum: cum, len: cum[cum.length - 1], closed: closed };
 }
-/* Text coverage on a w x h grid that maps to the W x H picture (alpha channel, 0 to 255) */
-function textMask(W, H, w, h) {
-  var big = mk(w * 4, h * 4), bx = big.getContext("2d");
-  bx.scale(big.width / W, big.height / H);
-  drawText(bx, W, H, "#000", 1);
-  var o = mk(w, h), ox = o.getContext("2d", { willReadFrequently: true });
-  ox.imageSmoothingQuality = "high"; ox.drawImage(big, 0, 0, w, h);
-  return ox.getImageData(0, 0, w, h).data;
+/* point and tangent angle at distance s along the path (past the ends it carries on straight) */
+function posAt(P, s) {
+  var n = P.p.length;
+  if (P.closed) s = ((s % P.len) + P.len) % P.len;
+  var i;
+  if (s <= 0) i = 1;
+  else if (s >= P.len) i = n - 1;
+  else { var lo = 1, hi = n - 1; while (lo < hi) { var m = (lo + hi) >> 1; if (P.cum[m] < s) lo = m + 1; else hi = m; } i = lo; }
+  var a = P.p[i - 1], b = P.p[i], seg = (P.cum[i] - P.cum[i - 1]) || 1e-6, t = (s - P.cum[i - 1]) / seg;
+  return { x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t, a: Math.atan2(b[1] - a[1], b[0] - a[0]) };
+}
+
+/* ---------- text: drawing ---------- */
+var BASE = { baseline: "alphabetic", center: "middle", ascender: "top", descender: "bottom" };
+/* Draws one text layer. o.mask: plain shapes only (for text made of dots). Returns its bounding box in picture pixels. */
+function drawLayer(ctx, W, H, L, o) {
+  if (!L.text.trim()) return null;
+  o = o || {};
+  var px = L.size / 100 * W, lines = (L.upper ? L.text.toUpperCase() : L.text).split("\n");
+  var lh = px * L.lead / 100 * 1.15, hs = L.hs / 100, vs = L.vs / 100, sk = Math.tan(L.skew * Math.PI / 180);
+  var shift = -L.shift / 100 * px * 0.5;
+  var bx = [Infinity, Infinity, -Infinity, -Infinity];
+  function grow(x, y) { bx[0] = Math.min(bx[0], x); bx[1] = Math.min(bx[1], y); bx[2] = Math.max(bx[2], x); bx[3] = Math.max(bx[3], y); }
+  function paint(t, x, y) {
+    if (L.strokeW > 0 && !o.mask) ctx.strokeText(t, x, y);
+    if (L.fill || o.mask) ctx.fillText(t, x, y);
+  }
+  ctx.save();
+  ctx.font = L.weight + " " + px + "px \"" + L.font + "\", sans-serif";
+  ctx.globalAlpha = L.op / 100;
+  ctx.fillStyle = L.color; ctx.strokeStyle = L.strokeC; ctx.lineWidth = px * L.strokeW / 100; ctx.lineJoin = "round";
+  if (!o.mask) {
+    ctx.globalCompositeOperation = L.blend;
+    if (L.shadow > 0) { ctx.shadowColor = "rgba(0,0,0," + (0.25 + L.shadow / 250) + ")"; ctx.shadowBlur = px * L.shadow / 250; ctx.shadowOffsetY = px * L.shadow / 900; }
+  }
+  var P = pathPoints(L, W, H);
+  if (!P) {
+    ctx.translate(L.tx / 100 * W, L.ty / 100 * H);
+    ctx.rotate(L.rot * Math.PI / 180);
+    ctx.transform(hs, 0, -sk * vs, vs, 0, 0);
+    ctx.translate(0, shift);
+    ctx.textAlign = L.align; ctx.textBaseline = "middle";
+    if ("letterSpacing" in ctx) ctx.letterSpacing = (L.track / 100 * px).toFixed(2) + "px";
+    var m = ctx.getTransform();
+    lines.forEach(function (ln, i) {
+      var y = (i - (lines.length - 1) / 2) * lh, w = ctx.measureText(ln).width;
+      var x0 = L.align === "left" ? 0 : L.align === "right" ? -w : -w / 2;
+      paint(ln, 0, y);
+      [[x0, y - lh / 2], [x0 + w, y - lh / 2], [x0, y + lh / 2], [x0 + w, y + lh / 2]].forEach(function (c) {
+        var q = m.transformPoint(new DOMPoint(c[0], c[1])); grow(q.x, q.y);
+      });
+    });
+  } else {
+    ctx.textAlign = "center"; ctx.textBaseline = BASE[L.pathAlign] || "alphabetic";
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+    var base = (L.path === "custom" ? { left: 0, center: 0.5, right: 1 }[L.align] : 0.5) * P.len + L.start / 100 * P.len;
+    var m0 = ctx.getTransform();
+    lines.forEach(function (ln, li) {
+      var ch = Array.from(ln), adv = ch.map(function (c) { return ctx.measureText(c).width * hs + L.track / 100 * px; });
+      var tot = adv.reduce(function (a, b) { return a + b; }, 0) - (adv.length ? L.track / 100 * px : 0);
+      var s = base - { left: 0, center: tot / 2, right: tot }[L.align];
+      ch.forEach(function (c, k) {
+        var q = posAt(P, s + adv[k] / 2), a = q.a;
+        s += adv[k];
+        if (c === " ") return;
+        ctx.setTransform(m0);
+        ctx.translate(q.x, q.y);
+        if (L.effect === "rainbow") ctx.rotate(a);
+        else if (L.effect === "skew") ctx.transform(1, Math.tan(clamp(a, -1.3, 1.3)), 0, 1, 0, 0);
+        else if (L.effect === "ribbon") ctx.transform(1, 0, -Math.sin(a), Math.cos(a), 0, 0);
+        ctx.transform(hs, 0, -sk * vs, vs, 0, 0);
+        ctx.translate(0, shift + li * lh);
+        paint(c, 0, 0);
+        var r = px * 0.7, mt = ctx.getTransform();
+        [[-r, -r], [r, -r], [-r, r * 0.4], [r, r * 0.4]].forEach(function (cc) {
+          var pp = mt.transformPoint(new DOMPoint(cc[0], cc[1])); grow(pp.x, pp.y);
+        });
+      });
+    });
+  }
+  ctx.restore();
+  return bx[0] === Infinity ? null : bx;
+}
+/* Every "made of dots" layer drawn in its own color on a w x h grid (RGBA, alpha = coverage x opacity), or null */
+function dotsMask(W, H, w, h) {
+  var ls = S.layers.filter(function (l) { return l.mode === "dots" && l.text.trim(); });
+  if (!ls.length) return null;
+  var bigc = mk(w * 4, h * 4), bx = bigc.getContext("2d");
+  bx.scale(bigc.width / W, bigc.height / H);
+  ls.forEach(function (l) { drawLayer(bx, W, H, l, { mask: true }); });
+  return shrink(bigc, w, h, true);
 }
 
 /* ---------- dot matrix ---------- */
 function renderDot(ctx, W, H, prog) {
   var cols = S.cols, cell = W / cols, rows = Math.max(1, Math.round(H / cell)), cellY = H / rows;
   var d = sample(cols, rows);
-  var bg = rgb(S.dmBg), pal = PALETTES[S.palette].map(rgb), tc = rgb(S.textColor);
-  var dots = S.textMode === "dots" && hasText(), m = dots ? textMask(W, H, cols, rows) : null, top = S.textOp / 100;
+  var bg = rgb(S.dmBg), pal = PALETTES[S.palette].map(rgb);
+  var m = dotsMask(W, H, cols, rows);
   var rnd = mulberry(S.seed * 7919 + cols);
   var band = S.band / 100, jit = S.scatter / 100, wash = S.wash / 100, front = prog * (1 + jit + band);
   var sat = S.dmSat / 100, con = S.dmCon / 100;
@@ -395,8 +606,8 @@ function renderDot(ctx, W, H, prog) {
   for (var j = 0; j < rows; j++) {
     for (var i = 0; i < cols; i++) {
       var pc = pal[(rnd() * pal.length) | 0], n = rnd(), q = (j * cols + i) * 4;
-      var R = d[q], G = d[q + 1], B = d[q + 2], L = 0.299 * R + 0.587 * G + 0.114 * B;
-      R = (L + (R - L) * sat - 128) * con + 128; G = (L + (G - L) * sat - 128) * con + 128; B = (L + (B - L) * sat - 128) * con + 128;
+      var R = d[q], G = d[q + 1], B = d[q + 2], Lm = 0.299 * R + 0.587 * G + 0.114 * B;
+      R = (Lm + (R - Lm) * sat - 128) * con + 128; G = (Lm + (G - Lm) * sat - 128) * con + 128; B = (Lm + (B - Lm) * sat - 128) * con + 128;
       var p;
       switch (S.dir) {
         case "rl": p = 1 - i / Math.max(1, cols - 1); break;
@@ -409,9 +620,9 @@ function renderDot(ctx, W, H, prog) {
       var t = clamp((front - (p + n * jit)) / band, 0, 1), w = wash * Math.sin(Math.PI * t);
       var cr = pc[0] + (R - pc[0]) * t, cg = pc[1] + (G - pc[1]) * t, cb = pc[2] + (B - pc[2]) * t;
       cr += (bg[0] - cr) * w; cg += (bg[1] - cg) * w; cb += (bg[2] - cb) * w;
-      if (m) {
-        var a = m[q + 3] / 255 * top;
-        cr += (tc[0] - cr) * a; cg += (tc[1] - cg) * a; cb += (tc[2] - cb) * a;
+      if (m && m[q + 3]) {
+        var a = m[q + 3] / 255;
+        cr += (m[q] - cr) * a; cg += (m[q + 1] - cg) * a; cb += (m[q + 2] - cb) * a;
       }
       ctx.fillStyle = "rgb(" + clamp(cr, 0, 255) + "," + clamp(cg, 0, 255) + "," + clamp(cb, 0, 255) + ")";
       var x = (i + 0.5) * cell, y = (j + 0.5) * cellY;
@@ -427,15 +638,28 @@ function renderHalf(ctx, W, H) {
   var sw = Math.max(2, Math.ceil(freq * 2)), sh = Math.max(2, Math.round(sw * H / W));
   var d = sample(sw, sh);
   var con = S.htCon / 100, light = S.htLight / 100, gain = S.htGain / 100, inv = S.htInvert;
-  var dots = S.textMode === "dots" && hasText(), m = dots ? textMask(W, H, sw, sh) : null;
+  var m = dotsMask(W, H, sw, sh);
   function at(x, y) { return (clamp((y / H * sh) | 0, 0, sh - 1) * sw + clamp((x / W * sw) | 0, 0, sw - 1)) * 4; }
   function adj(v) { if (inv) v = 1 - v; return clamp((v - 0.5) * con + 0.5 - light, 0, 1); }
+  function cmyk(q) {
+    var r = d[q] / 255, g = d[q + 1] / 255, b = d[q + 2] / 255, k = 1 - Math.max(r, g, b);
+    if (k >= 0.999) return [0, 0, 0, 1];
+    return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
+  }
   ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = S.htPaper; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = S.htMode === "rgb" ? "#000000" : S.htPaper; ctx.fillRect(0, 0, W, H);
   var chans;
-  if (S.htMode === "cmyk") {
+  if (S.htMode === "rgb") {
+    /* RGB: light added on black, one screen per channel (dot size follows how much of that color there is) */
     chans = [
-      { a: S.htAngle - 30, col: "#00a0e3", f: function (q) { var c = cmyk(q); return c[0]; } },
+      { a: S.htAngle - 30, col: "#ff2a1a", f: function (q) { return d[q] / 255; } },
+      { a: S.htAngle + 30, col: "#18e04a", f: function (q) { return d[q + 1] / 255; } },
+      { a: S.htAngle, col: "#2a5cff", f: function (q) { return d[q + 2] / 255; } }
+    ];
+    ctx.globalCompositeOperation = "screen";
+  } else if (S.htMode === "cmyk") {
+    chans = [
+      { a: S.htAngle - 30, col: "#00a0e3", f: function (q) { return cmyk(q)[0]; } },
       { a: S.htAngle + 30, col: "#e5007e", f: function (q) { return cmyk(q)[1]; } },
       { a: S.htAngle - 45, col: "#ffe600", f: function (q) { return cmyk(q)[2]; } },
       { a: S.htAngle, col: "#1d1d1b", f: function (q) { return cmyk(q)[3]; } }
@@ -443,11 +667,6 @@ function renderHalf(ctx, W, H) {
     ctx.globalCompositeOperation = "multiply";
   } else {
     chans = [{ a: S.htAngle, col: S.htMode === "ink" ? S.htInk : null, f: function (q) { return 1 - (0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2]) / 255; } }];
-  }
-  function cmyk(q) {
-    var r = d[q] / 255, g = d[q + 1] / 255, b = d[q + 2] / 255, k = 1 - Math.max(r, g, b);
-    if (k >= 0.999) return [0, 0, 0, 1];
-    return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
   }
   chans.forEach(function (ch) {
     var col = ch.col;
@@ -463,12 +682,12 @@ function renderHalf(ctx, W, H) {
   });
   ctx.globalCompositeOperation = "source-over";
   if (m) {
-    ctx.save(); ctx.globalAlpha = S.textOp / 100; ctx.fillStyle = S.textColor; ctx.beginPath();
     grid(W, H, cell, S.htAngle, function (x, y, ca, sa) {
-      var a = m[at(x, y) + 3] / 255;
-      if (a > 0.02) shape(ctx, x, y, cell, a * gain, ca, sa, S.htShape);
+      var q = at(x, y), a = m[q + 3] / 255;
+      if (a < 0.02) return;
+      ctx.fillStyle = "rgb(" + m[q] + "," + m[q + 1] + "," + m[q + 2] + ")"; ctx.beginPath();
+      shape(ctx, x, y, cell, a * gain, ca, sa, S.htShape); ctx.fill();
     });
-    ctx.fill(); ctx.restore();
   }
 }
 function grid(W, H, cell, deg, fn) {
@@ -482,7 +701,7 @@ function grid(W, H, cell, deg, fn) {
     }
   }
 }
-/* v is ink coverage 0..1 (more with dot gain): circle and square area follow it, lines follow it in thickness */
+/* v is ink coverage 0..1 (more with dot gain): dot and square area follow it, lines follow it in thickness */
 function shape(ctx, x, y, cell, v, ca, sa, kind) {
   if (kind === "dot") {
     var r = cell * 0.7071 * Math.sqrt(v);
@@ -492,39 +711,59 @@ function shape(ctx, x, y, cell, v, ca, sa, kind) {
   var hu, hv;
   if (kind === "square") { hu = hv = cell * Math.sqrt(Math.min(v, 2)) / 2; }
   else { hu = cell / 2 + 0.6; hv = cell * Math.min(v, 1.2) / 2; }
-  ctx.moveTo(x + (-hu) * ca - (-hv) * sa, y + (-hu) * sa + (-hv) * ca);
-  ctx.lineTo(x + hu * ca - (-hv) * sa, y + hu * sa + (-hv) * ca);
+  ctx.moveTo(x - hu * ca + hv * sa, y - hu * sa - hv * ca);
+  ctx.lineTo(x + hu * ca + hv * sa, y + hu * sa - hv * ca);
   ctx.lineTo(x + hu * ca - hv * sa, y + hu * sa + hv * ca);
-  ctx.lineTo(x + (-hu) * ca - hv * sa, y + (-hu) * sa + hv * ca);
+  ctx.lineTo(x - hu * ca - hv * sa, y - hu * sa + hv * ca);
   ctx.closePath();
 }
 
 /* ---------- render ---------- */
-function render(ctx, W, H, prog) {
+function render(ctx, W, H, prog, preview) {
   if (S.look === "half") renderHalf(ctx, W, H); else renderDot(ctx, W, H, prog);
-  if (S.textMode === "solid") drawText(ctx, W, H, S.textColor, S.textOp / 100);
+  S.layers.forEach(function (L) {
+    var b = L.mode === "solid" ? drawLayer(ctx, W, H, L) : (preview ? drawLayer(scratch, W, H, L, { mask: true }) : null);
+    if (preview) L._box = b ? [b[0] / W, b[1] / H, b[2] / W, b[3] / H] : null;
+  });
 }
 var raf = 0;
-function schedule() {
-  if (!raf) raf = requestAnimationFrame(function () { raf = 0; draw(); });
-}
+function schedule() { if (!raf) raf = requestAnimationFrame(function () { raf = 0; draw(); }); }
 function draw(prog) {
   if (!src.width) return;
-  render(pctx, cv.width, cv.height, prog == null ? S.reveal / 100 : prog);
-  cv.classList.toggle("drag", hasText());
-  $("#hint").textContent = pickKey ? "Tap the image to pick a color." : (hasText() ? "Drag to move the text. " : "") + (big ? "Double tap to fit." : "Double tap for full width.");
-  cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview" + (hasText() ? " with the text " + S.text : ""));
+  var W = cv.width, H = cv.height, L = AL();
+  render(pctx, W, H, prog == null ? S.reveal / 100 : prog, true);
+  /* the chosen text gets a dashed frame while the Text tab is open */
+  if (tab === "text" && L._box && !stroke) {
+    var b = L._box, d = Math.max(1, W / 400);
+    pctx.save(); pctx.setLineDash([5 * d, 4 * d]); pctx.lineWidth = 1.5 * d; pctx.strokeStyle = "rgba(255,255,255,.9)";
+    pctx.strokeRect(b[0] * W - 4 * d, b[1] * H - 4 * d, (b[2] - b[0]) * W + 8 * d, (b[3] - b[1]) * H + 8 * d);
+    pctx.strokeStyle = "rgba(31,92,74,.95)"; pctx.lineDashOffset = 5 * d;
+    pctx.strokeRect(b[0] * W - 4 * d, b[1] * H - 4 * d, (b[2] - b[0]) * W + 8 * d, (b[3] - b[1]) * H + 8 * d);
+    pctx.restore();
+  }
+  if (stroke && stroke.length > 1) {
+    pctx.save(); pctx.lineWidth = Math.max(2, W / 250); pctx.strokeStyle = "#b8352b"; pctx.lineCap = pctx.lineJoin = "round";
+    pctx.beginPath(); stroke.forEach(function (p, i) { pctx[i ? "lineTo" : "moveTo"](p[0] * W, p[1] * H); }); pctx.stroke(); pctx.restore();
+  }
+  var any = S.layers.some(function (l) { return l.text.trim(); });
+  cv.classList.toggle("drag", any);
+  cv.classList.toggle("drawing", drawMode);
+  $("#hint").textContent = pickKey ? "Tap the image to pick a color." : drawMode ? "Draw the path with your finger." :
+    (any ? "Drag text to move it, pinch to size and turn it. " : "") + (big ? "Double tap to fit." : "Double tap for full width.");
+  cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview" +
+    (any ? " with the text " + S.layers.map(function (l) { return l.text; }).join(", ") : ""));
 }
 function fit() {
   if (!src.width) return;
   var wide = window.innerWidth >= 900;
   var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
-  /* fitted: the image fits the screen height. Double tap: full width (95% of a phone screen), the page scrolls past a tall photo */
-  var maxH = wide ? window.innerHeight - 150 : Math.min(window.innerHeight * 0.62, 760);
+  /* fitted: pinned and short enough to edit under it. Double tap: full width (95% of a phone screen), not pinned */
+  var maxH = wide ? window.innerHeight - 150 : Math.min(window.innerHeight * 0.46, 560);
   if (!big && h > maxH) { h = maxH; w = h / ar; }
   var dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  document.body.classList.toggle("big", big);
   schedule();
 }
 
@@ -541,7 +780,7 @@ function setImage(img, w, h) {
 function loadFile(f) {
   if (!f) return;
   var url = URL.createObjectURL(f), img = new Image();
-  img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); say("Image loaded."); };
+  img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); };
   img.onerror = function () { URL.revokeObjectURL(url); say("That file could not be opened as an image."); };
   img.src = url;
 }
@@ -562,14 +801,36 @@ function demo() {
   setImage(c, 900, 1100);
 }
 
+/* ---------- modals ---------- */
+var opener = null;
+function openModal(id, focusSel) {
+  opener = document.activeElement;
+  $(id).hidden = false;
+  $(focusSel).focus();
+}
+function closeModal(id) {
+  $(id).hidden = true;
+  if (opener && opener.focus) opener.focus();
+}
+function trap(id, onClose) {
+  $(id).addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+    if (e.key !== "Tab") return;
+    var f = Array.prototype.filter.call($(id).querySelectorAll("button,select"), function (b) { return !b.hidden && b.offsetParent; });
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  $(id).addEventListener("click", function (e) { if (e.target === $(id)) onClose(); });
+}
+
 /* ---------- camera ---------- */
-var stream = null, facing = "environment", camOpener = null;
+var stream = null, facing = "environment";
 function openCamera() {
   var coarse = window.matchMedia && matchMedia("(pointer:coarse)").matches;
   if (coarse || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { $("#camIn").click(); return; }
-  camOpener = document.activeElement;
   startStream().then(function () {
-    $("#camModal").hidden = false; $("#snap").focus();
+    openModal("#camModal", "#snap");
     navigator.mediaDevices.enumerateDevices().then(function (l) {
       $("#flip").hidden = l.filter(function (d) { return d.kind === "videoinput"; }).length < 2;
     }).catch(function () {});
@@ -582,15 +843,12 @@ function startStream() {
   });
 }
 function stopStream() { if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; } }
-function closeCamera() {
-  stopStream(); $("#camModal").hidden = true;
-  if (camOpener && camOpener.focus) camOpener.focus();
-}
+function closeCamera() { stopStream(); closeModal("#camModal"); }
 function snap() {
   var v = $("#camVideo");
   if (!v.videoWidth) return;
   var c = mk(v.videoWidth, v.videoHeight); c.getContext("2d").drawImage(v, 0, 0);
-  setImage(c, c.width, c.height); closeCamera(); say("Photo taken.");
+  setImage(c, c.width, c.height); closeCamera();
 }
 
 /* ---------- saving ---------- */
@@ -601,7 +859,7 @@ function outDims(long) {
 function makePng() {
   return new Promise(function (res) {
     var dm = outDims(+S.outSize), c = mk(dm[0], dm[1]);
-    render(c.getContext("2d"), dm[0], dm[1], S.reveal / 100);
+    render(c.getContext("2d"), dm[0], dm[1], S.reveal / 100, false);
     c.toBlob(res, "image/png");
   });
 }
@@ -611,12 +869,80 @@ function download(blob, name) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
 }
-function savePng() {
-  say("Making the image.");
-  ensureFont(S.font, S.weight).then(makePng).then(function (b) { download(b, fname("png")); say("Saved " + fname("png") + "."); });
+/* ---------- SVG: the same drawing code, recorded as vector shapes and live text ---------- */
+function SvgCtx(W, H) {
+  this.W = W; this.H = H; this.out = []; this.d = ""; this.m = new DOMMatrix(); this.stack = [];
+  this.fillStyle = "#000"; this.strokeStyle = "#000"; this.lineWidth = 1; this.lineJoin = "miter"; this.globalAlpha = 1;
+  this.globalCompositeOperation = "source-over"; this.font = "16px sans-serif"; this.textAlign = "start"; this.textBaseline = "alphabetic";
+  this.letterSpacing = "0px"; this.shadowColor = "rgba(0,0,0,0)"; this.shadowBlur = 0; this.shadowOffsetY = 0; this.imageSmoothingQuality = "high";
+  this.fonts = {};
 }
+(function (P) {
+  var KEYS = ["fillStyle", "strokeStyle", "lineWidth", "lineJoin", "globalAlpha", "globalCompositeOperation", "font", "textAlign", "textBaseline",
+    "letterSpacing", "shadowColor", "shadowBlur", "shadowOffsetY"];
+  function n(v) { return Math.round(v * 100) / 100; }
+  function esc(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\x22/g, "&quot;"); }
+  P.save = function () { var st = { m: DOMMatrix.fromMatrix(this.m) }, me = this; KEYS.forEach(function (k) { st[k] = me[k]; }); this.stack.push(st); };
+  P.restore = function () { var st = this.stack.pop(), me = this; if (!st) return; this.m = st.m; KEYS.forEach(function (k) { me[k] = st[k]; }); };
+  P.translate = function (x, y) { this.m.translateSelf(x, y); };
+  P.rotate = function (a) { this.m.rotateSelf(a * 180 / Math.PI); };
+  P.scale = function (x, y) { this.m.scaleSelf(x, y); };
+  P.transform = function (a, b, c, d, e, f) { this.m.multiplySelf(new DOMMatrix([a, b, c, d, e, f])); };
+  P.setTransform = function (m) { this.m = DOMMatrix.fromMatrix(m); };
+  P.getTransform = function () { return DOMMatrix.fromMatrix(this.m); };
+  P.pt = function (x, y) { var q = this.m.transformPoint(new DOMPoint(x, y)); return n(q.x) + " " + n(q.y); };
+  P.beginPath = function () { this.d = ""; };
+  P.moveTo = function (x, y) { this.d += "M" + this.pt(x, y); };
+  P.lineTo = function (x, y) { this.d += "L" + this.pt(x, y); };
+  P.closePath = function () { this.d += "Z"; };
+  P.arc = function (x, y, r) {
+    this.d = this.d.replace(/M[-0-9. ]+$/, "");
+    var q = this.m.transformPoint(new DOMPoint(x, y)), k = Math.sqrt(Math.abs(this.m.a * this.m.d - this.m.b * this.m.c)), rr = n(r * k);
+    this.d += "M" + n(q.x + rr) + " " + n(q.y) + "a" + rr + " " + rr + " 0 1 0 " + n(-2 * rr) + " 0a" + rr + " " + rr + " 0 1 0 " + n(2 * rr) + " 0Z";
+  };
+  P.look = function () {
+    var s = "";
+    if (this.globalAlpha < 1) s += "opacity:" + n(this.globalAlpha) + ";";
+    if (this.globalCompositeOperation !== "source-over") s += "mix-blend-mode:" + this.globalCompositeOperation + ";";
+    if (this.shadowBlur > 0) s += "filter:drop-shadow(0 " + n(this.shadowOffsetY) + "px " + n(this.shadowBlur / 2) + "px " + this.shadowColor + ");";
+    return s ? " style=\"" + s + "\"" : "";
+  };
+  P.fill = function () { if (this.d) this.out.push("<path d=\"" + this.d + "\" fill=\"" + this.fillStyle + "\"" + this.look() + "/>"); };
+  P.fillRect = function (x, y, w, h) {
+    this.beginPath(); this.moveTo(x, y); this.lineTo(x + w, y); this.lineTo(x + w, y + h); this.lineTo(x, y + h); this.closePath(); this.fill();
+  };
+  P.measureText = function (t) { scratch.font = this.font; if ("letterSpacing" in scratch) scratch.letterSpacing = this.letterSpacing; return scratch.measureText(t); };
+  P.text = function (t, x, y, stroke) {
+    var m = this.m, anchor = { left: "start", start: "start", center: "middle", right: "end", end: "end" }[this.textAlign] || "start";
+    var base = { alphabetic: "alphabetic", middle: "central", top: "text-before-edge", bottom: "text-after-edge" }[this.textBaseline] || "alphabetic";
+    var fam = /\x22([^\x22]+)\x22/.exec(this.font); if (fam) this.fonts[fam[1]] = 1;
+    var paint = stroke ? "fill=\"none\" stroke=\"" + this.strokeStyle + "\" stroke-width=\"" + n(this.lineWidth) + "\" stroke-linejoin=\"" + this.lineJoin + "\"" : "fill=\"" + this.fillStyle + "\"";
+    var ls = parseFloat(this.letterSpacing) ? " letter-spacing=\"" + this.letterSpacing + "\"" : "";
+    var st = this.look().replace(" style=\"", "").replace(/\x22$/, "");
+    this.out.push("<text transform=\"matrix(" + [m.a, m.b, m.c, m.d, m.e, m.f].map(n).join(" ") + ")\" x=\"" + n(x) + "\" y=\"" + n(y) +
+      "\" text-anchor=\"" + anchor + "\" dominant-baseline=\"" + base + "\"" + ls + " " + paint +
+      " style=\"white-space:pre;font:" + this.font.replace(/\x22/g, "'") + ";" + st + "\">" + esc(t) + "</text>");
+  };
+  P.fillText = function (t, x, y) { this.text(t, x, y, false); };
+  P.strokeText = function (t, x, y) { this.text(t, x, y, true); };
+  P.toString = function () {
+    var f = Object.keys(this.fonts).map(function (k) { return "family=" + k.replace(/ /g, "+") + ":wght@" + FONTS[k].join(";"); });
+    var css = f.length ? "<style>@import url(\"https://fonts.googleapis.com/css2?" + f.join("&amp;") + "&amp;display=swap\");</style>" : "";
+    return "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + this.W + "\" height=\"" + this.H + "\" viewBox=\"0 0 " + this.W + " " + this.H + "\">" +
+      css + "<g style=\"isolation:isolate\">" + this.out.join("") + "</g></svg>";
+  };
+})(SvgCtx.prototype);
+function saveSvg() {
+  allFonts().then(function () {
+    var dm = outDims(1080), x = new SvgCtx(dm[0], dm[1]);
+    render(x, dm[0], dm[1], S.reveal / 100, false);
+    download(new Blob([x.toString()], { type: "image/svg+xml" }), fname("svg"));
+    closeModal("#saveModal");
+  });
+}
+function savePng() { allFonts().then(makePng).then(function (b) { download(b, fname("png")); closeModal("#saveModal"); }); }
 function share() {
-  ensureFont(S.font, S.weight).then(makePng).then(function (b) {
+  allFonts().then(makePng).then(function (b) {
     var f = new File([b], fname("png"), { type: "image/png" });
     if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: "Image Looks" });
     download(b, f.name);
@@ -633,110 +959,149 @@ function saveVideo() {
   var dm = outDims(1080), c = mk(dm[0] & ~1, dm[1] & ~1), x = c.getContext("2d");
   var dur = S.revealTime * 1000, hold0 = 500, hold1 = 1200, chunks = [];
   var btn = $("#saveVideo"); btn.disabled = true; say("Recording the reveal.");
-  render(x, c.width, c.height, 0);
+  render(x, c.width, c.height, 0, false);
   var rec = new MediaRecorder(c.captureStream(30), { mimeType: type, videoBitsPerSecond: 8e6 });
   rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
   rec.onstop = function () {
     var b = new Blob(chunks, { type: type.split(";")[0] });
     download(b, fname(type.indexOf("mp4") > 0 ? "mp4" : "webm"));
-    btn.disabled = false; say("Saved the reveal video.");
+    btn.disabled = false; say("");
   };
   rec.start();
   var t0 = performance.now();
   (function frame(now) {
     var t = now - t0, p = clamp((t - hold0) / dur, 0, 1);
-    render(x, c.width, c.height, ease(p));
+    render(x, c.width, c.height, ease(p), false);
     if (t < hold0 + dur + hold1) requestAnimationFrame(frame); else rec.stop();
   })(t0);
 }
-function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
 function play() {
+  if (S.look !== "dot") setTab("dot");
   cancelAnimationFrame(playing);
   var t0 = performance.now(), dur = S.revealTime * 1000, el = $("#reveal");
   (function frame(now) {
     var p = clamp((now - t0) / dur, 0, 1);
-    S.reveal = Math.round(ease(p) * 100); el.value = S.reveal; out("reveal");
+    S.reveal = Math.round(ease(p) * 100); el.value = S.reveal; out("reveal", S.reveal);
     draw(ease(p));
     if (p < 1) playing = requestAnimationFrame(frame); else { playing = 0; saveSettings(); }
   })(t0);
 }
 
-/* ---------- controls ---------- */
-var UNITS = { reveal: "%", dmDot: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", textOp: "%", size: "%", tx: "%", ty: "%", lead: "%", revealTime: " s", htAngle: "°" };
-function out(k) {
-  document.querySelectorAll("output[data-for=\"" + k + "\"]").forEach(function (o) {
-    var v = S[k];
-    o.textContent = (k === "htLight" && v > 0 ? "+" : "") + v + (UNITS[k] || "");
+/* ---------- tabs (the pill slider) ---------- */
+function setTab(t) {
+  tab = t;
+  if (t !== "text") { S.look = t; document.body.dataset.look = t; saveSettings(); }
+  var tabs = document.querySelectorAll(".pill [role=tab]");
+  tabs.forEach(function (b, i) {
+    var on = b.dataset.tab === t;
+    b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
+    b.classList.toggle("cur", t === "text" && b.dataset.tab === S.look);
+    $("#" + b.getAttribute("aria-controls")).hidden = !on;
+    if (on) $(".pill").style.setProperty("--i", i);
   });
+  $("#play").hidden = S.look !== "dot";
+  $("#saveVideo").hidden = S.look !== "dot" || !videoType();
+  schedule();
+}
+document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
+  b.addEventListener("click", function () { setTab(b.dataset.tab); });
+  b.addEventListener("keydown", function (e) {
+    var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    var n = all[(i + d + all.length) % all.length]; setTab(n.dataset.tab); n.focus();
+  });
+});
+
+/* ---------- controls ---------- */
+var UNITS = { reveal: "%", dmDot: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
+  tx: "%", ty: "%", lead: "%", hs: "%", vs: "%", revealTime: " s", htAngle: "°", rot: "°", skew: "°", bend: "%", radius: "%",
+  waveA: "%", start: "%", strokeW: "%", shadow: "%", shift: "%" };
+var SIGNED = { htLight: 1, rot: 1, skew: 1, shift: 1, bend: 1, start: 1, track: 1 };
+function out(k, v) {
+  document.querySelectorAll("output[data-for=\"" + k + "\"]").forEach(function (o) {
+    o.textContent = (SIGNED[k] && v > 0 ? "+" : "") + v + (UNITS[k] || "");
+  });
+}
+function setVal(el, v) {
+  if (el.type === "radio") el.checked = String(v) === el.value;
+  else if (el.type === "checkbox") el.checked = !!v;
+  else el.value = v;
+}
+function syncLayer() {
+  var L = AL();
+  document.querySelectorAll("[data-l]").forEach(function (el) { var k = el.dataset.l; if (k !== "weight") setVal(el, L[k]); out(k, L[k]); });
+  fillWeights();
+  document.querySelectorAll("[data-lcolor]").forEach(syncColor);
+  document.body.dataset.path = L.path === "custom" && !(L.pts && L.pts.length > 1) ? "none" : L.path;
+  renderChips();
 }
 function sync() {
-  document.querySelectorAll("[data-k]").forEach(function (el) {
-    var k = el.dataset.k;
-    if (el.type === "radio") el.checked = String(S[k]) === el.value;
-    else if (el.type === "checkbox") el.checked = !!S[k];
-    else if (k !== "weight") el.value = S[k];
-    out(k);
-  });
-  fillWeights();
+  document.querySelectorAll("[data-k]").forEach(function (el) { var k = el.dataset.k; setVal(el, S[k]); out(k, S[k]); });
   document.querySelectorAll("[data-color]").forEach(syncColor);
-  document.body.dataset.look = S.look; document.body.dataset.ht = S.htMode;
+  document.body.dataset.ht = S.htMode;
+  syncLayer();
 }
 function onChange(el) {
-  var k = el.dataset.k, v;
+  var scope = el.dataset.k ? S : AL(), k = el.dataset.k || el.dataset.l, v;
   if (el.type === "radio") { if (!el.checked) return; v = el.value; }
   else if (el.type === "checkbox") v = el.checked;
-  else if (el.type === "range") v = +el.value;
-  else if (k === "weight") v = +el.value;
+  else if (el.type === "range" || k === "weight") v = +el.value;
   else v = el.value;
-  S[k] = v; out(k);
-  if (k === "look") document.body.dataset.look = v;
+  scope[k] = v; out(k, v);
   if (k === "htMode") document.body.dataset.ht = v;
-  if (k === "font") { fillWeights(); ensureFont(S.font, S.weight).then(schedule); }
-  if (k === "weight") ensureFont(S.font, S.weight).then(schedule);
+  if (k === "font") { fillWeights(); ensureFont(scope.font, scope.weight).then(schedule); }
+  if (k === "weight") ensureFont(scope.font, scope.weight).then(schedule);
   if (k === "reveal") cancelAnimationFrame(playing);
+  if (k === "path") {
+    if (v === "custom" && !(scope.pts && scope.pts.length > 1)) { setDraw(true); }
+    document.body.dataset.path = v === "custom" && !(scope.pts && scope.pts.length > 1) ? "none" : v;
+  }
+  if (k === "text") renderChips();
   saveSettings(); schedule();
 }
-document.querySelectorAll("[data-k]").forEach(function (el) {
+document.querySelectorAll("[data-k],[data-l]").forEach(function (el) {
   el.addEventListener(el.type === "range" || el.tagName === "TEXTAREA" ? "input" : "change", function () { onChange(el); });
 });
 
-/* color fields: native picker, swatches and a pick from image button */
+/* color fields: native picker, a pick from image button and swatches. data-color = a setting, data-lcolor = the chosen text's */
+function colorGet(box) { return box.dataset.color ? S[box.dataset.color] : AL()[box.dataset.lcolor]; }
 function buildColor(box) {
-  var k = box.dataset.color, lab = box.dataset.label;
+  var lab = box.dataset.label;
   var inp = document.createElement("input"); inp.type = "color"; inp.setAttribute("aria-labelledby", lab);
-  inp.addEventListener("input", function () { setColor(k, inp.value); });
+  inp.addEventListener("input", function () { setColor(box, inp.value); });
   box.appendChild(inp);
   var pick = document.createElement("button"); pick.type = "button"; pick.className = "icob pick"; pick.setAttribute("aria-pressed", "false");
   pick.setAttribute("aria-label", "Pick " + document.getElementById(lab).textContent.toLowerCase() + " from the image"); pick.title = "Pick from image";
-  pick.innerHTML = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14.5 5.5l4 4M4 20l1-4 9.5-9.5 3 3L8 19z\"/><path d=\"M15 4.5a2.1 2.1 0 0 1 3 0l1.5 1.5a2.1 2.1 0 0 1 0 3\"/></svg>";
+  pick.appendChild($("#icoPick").content.cloneNode(true));
   pick.addEventListener("click", function () {
-    pickKey = pickKey === k ? null : k;
+    pickKey = pickKey === box ? null : box;
     document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", b === pick && pickKey ? "true" : "false"); });
     cv.classList.toggle("picking", !!pickKey);
-    if (pickKey) say("Tap the image to pick a color."); else say("");
+    if (pickKey) setDraw(false);
     draw();
   });
   box.appendChild(pick);
   SWATCHES.forEach(function (c) {
     var b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.style.background = c;
     b.dataset.c = c; b.setAttribute("aria-label", "Color " + c); b.setAttribute("aria-pressed", "false");
-    b.addEventListener("click", function () { setColor(k, c); });
+    b.addEventListener("click", function () { setColor(box, c); });
     box.appendChild(b);
   });
 }
 function syncColor(box) {
-  var v = S[box.dataset.color];
+  var v = colorGet(box);
   box.querySelector("input").value = v;
   box.querySelectorAll(".sw").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.c === v.toLowerCase() ? "true" : "false"); });
 }
-function setColor(k, v) {
-  S[k] = v.toLowerCase();
-  document.querySelectorAll("[data-color=\"" + k + "\"]").forEach(syncColor);
-  saveSettings(); schedule();
+function setColor(box, v) {
+  v = v.toLowerCase();
+  if (box.dataset.color) S[box.dataset.color] = v; else AL()[box.dataset.lcolor] = v;
+  syncColor(box); saveSettings(); schedule();
 }
-document.querySelectorAll("[data-color]").forEach(buildColor);
+document.querySelectorAll("[data-color],[data-lcolor]").forEach(buildColor);
 
-/* collapsible panels */
+/* accordions: all closed to start */
 document.querySelectorAll(".ph").forEach(function (b) {
   b.addEventListener("click", function () {
     var open = b.getAttribute("aria-expanded") !== "true";
@@ -744,39 +1109,130 @@ document.querySelectorAll(".ph").forEach(function (b) {
   });
 });
 
-/* canvas: drag moves the text (a tap does not), double tap toggles full width, or pick a color */
-var down = null, dragging = false, lastTap = 0;
-function toggleBig() { big = !big; fit(); draw(); say(big ? "Full width." : "Fitted to the screen."); }
-function moveText(e) {
-  var r = cv.getBoundingClientRect();
-  S.tx = Math.round(clamp(down.tx + (e.clientX - down.x) / r.width * 100, 0, 100) * 2) / 2;
-  S.ty = Math.round(clamp(down.ty + (e.clientY - down.y) / r.height * 100, 0, 100) * 2) / 2;
-  $("#tx").value = S.tx; $("#ty").value = S.ty; out("tx"); out("ty");
-  schedule();
+/* ---------- text layers ---------- */
+function renderChips() {
+  var box = $("#chips"); box.innerHTML = "";
+  S.layers.forEach(function (l, i) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip";
+    b.textContent = (l.text.trim().split("\n")[0] || "Empty text").slice(0, 24);
+    b.setAttribute("aria-pressed", i === S.active ? "true" : "false");
+    b.setAttribute("aria-label", "Text " + (i + 1) + ": " + b.textContent);
+    b.addEventListener("click", function () { select(i); });
+    box.appendChild(b);
+  });
+  $("#lDel").disabled = S.layers.length < 2 && !AL().text;
+  $("#lAdd").disabled = $("#lDup").disabled = S.layers.length >= 12;
 }
+function select(i) { S.active = i; syncLayer(); saveSettings(); schedule(); }
+$("#lAdd").addEventListener("click", function () {
+  var prev = AL();
+  S.layers.push(newLayer({ text: "New text", font: prev.font, weight: prev.weight, color: prev.color, size: Math.min(prev.size, 9),
+    ty: prev.ty > 50 ? Math.max(8, prev.ty - 14) : Math.min(92, prev.ty + 14) }));
+  select(S.layers.length - 1);
+  var t = $("#ltext"); t.focus(); t.select();
+});
+$("#lDup").addEventListener("click", function () {
+  var c = JSON.parse(JSON.stringify(AL(), function (k, v) { return k.charAt(0) === "_" ? undefined : v; }));
+  c.tx = Math.min(100, c.tx + 3); c.ty = Math.min(100, c.ty + 3);
+  S.layers.splice(S.active + 1, 0, newLayer(c)); select(S.active + 1);
+});
+$("#lDel").addEventListener("click", function () {
+  if (S.layers.length < 2) { S.layers[0].text = ""; select(0); return; }
+  S.layers.splice(S.active, 1); select(Math.max(0, S.active - 1));
+});
+
+/* draw a path for the chosen text */
+function setDraw(on) {
+  drawMode = on; stroke = null;
+  $("#drawPath").setAttribute("aria-pressed", on);
+  if (on && pickKey) { pickKey = null; document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", "false"); }); cv.classList.remove("picking"); }
+  draw();
+}
+$("#drawPath").addEventListener("click", function () { setDraw(!drawMode); });
+function finishPath() {
+  var p = stroke; stroke = null; setDraw(false);
+  if (!p || p.length < 4) return;
+  /* smooth, then thin to at most 200 points */
+  var sm = p.map(function (q, i) {
+    var a = p[Math.max(0, i - 2)], b = p[Math.min(p.length - 1, i + 2)];
+    return [(a[0] + q[0] * 2 + b[0]) / 4, (a[1] + q[1] * 2 + b[1]) / 4];
+  });
+  var step = Math.max(1, Math.ceil(sm.length / 200)), th = sm.filter(function (q, i) { return i % step === 0 || i === sm.length - 1; });
+  var L = AL(), o = th[0];
+  L.tx = Math.round(o[0] * 1000) / 10; L.ty = Math.round(o[1] * 1000) / 10;
+  L.pts = th.map(function (q) { return [q[0] - o[0], q[1] - o[1]]; });
+  L.path = "custom"; L.rot = 0; L.align = "left"; L.start = 0;
+  syncLayer(); saveSettings(); schedule();
+}
+
+/* ---------- canvas gestures ---------- */
+/* drag moves the text under the finger (a tap does not), two fingers size and turn it, double tap toggles full width */
+var pts = new Map(), down = null, dragging = false, pinch = null, lastTap = 0;
+function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
+function hit(p) {
+  var pad = 0.03;
+  for (var i = S.layers.length - 1; i >= 0; i--) {
+    var b = S.layers[i]._box;
+    if (b && p[0] >= b[0] - pad && p[0] <= b[2] + pad && p[1] >= b[1] - pad && p[1] <= b[3] + pad) return i;
+  }
+  return -1;
+}
+function toggleBig() { big = !big; fit(); }
 cv.addEventListener("pointerdown", function (e) {
+  var p = fr(e);
   if (pickKey) {
-    var r = cv.getBoundingClientRect();
-    var px = clamp(Math.floor((e.clientX - r.left) / r.width * src.width), 0, src.width - 1);
-    var py = clamp(Math.floor((e.clientY - r.top) / r.height * src.height), 0, src.height - 1);
-    var p = sctx.getImageData(px, py, 1, 1).data, hex = toHex(p[0], p[1], p[2]);
-    var k = pickKey; pickKey = null;
+    var px = clamp(Math.floor(p[0] * src.width), 0, src.width - 1), py = clamp(Math.floor(p[1] * src.height), 0, src.height - 1);
+    var c = sctx.getImageData(px, py, 1, 1).data, box = pickKey;
+    pickKey = null;
     document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
     cv.classList.remove("picking");
-    setColor(k, hex); say("Picked " + hex + ".");
-    draw();
+    setColor(box, toHex(c[0], c[1], c[2])); draw();
     return;
   }
-  down = { x: e.clientX, y: e.clientY, tx: S.tx, ty: S.ty };
+  cv.setPointerCapture(e.pointerId);
+  if (drawMode) { stroke = [p]; e.preventDefault(); return; }
+  pts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pts.size === 2) {
+    var a = Array.from(pts.values()), L = AL();
+    pinch = { d: Math.hypot(a[1][0] - a[0][0], a[1][1] - a[0][1]), a: Math.atan2(a[1][1] - a[0][1], a[1][0] - a[0][0]), size: L.size, rot: L.rot };
+    dragging = false; lastTap = 0;
+    e.preventDefault();
+    return;
+  }
+  var i = hit(p);
+  if (i >= 0 && i !== S.active) select(i);
+  var L2 = AL();
+  down = { x: e.clientX, y: e.clientY, tx: L2.tx, ty: L2.ty, on: i >= 0 };
   dragging = false;
-  if (hasText()) { cv.setPointerCapture(e.pointerId); e.preventDefault(); }
+  if (i >= 0) e.preventDefault();
 });
 cv.addEventListener("pointermove", function (e) {
-  if (!down || !hasText()) return;
+  if (drawMode && stroke) { stroke.push(fr(e)); draw(); return; }
+  if (!pts.has(e.pointerId)) return;
+  pts.set(e.pointerId, [e.clientX, e.clientY]);
+  var L = AL();
+  if (pinch && pts.size === 2) {
+    var a = Array.from(pts.values());
+    var d = Math.hypot(a[1][0] - a[0][0], a[1][1] - a[0][1]), an = Math.atan2(a[1][1] - a[0][1], a[1][0] - a[0][0]);
+    L.size = Math.round(clamp(pinch.size * d / pinch.d, 2, 100) * 2) / 2;
+    L.rot = Math.round(((pinch.rot + (an - pinch.a) * 180 / Math.PI + 540) % 360) - 180);
+    $("#size").value = L.size; $("#rot").value = L.rot; out("size", L.size); out("rot", L.rot);
+    schedule(); return;
+  }
+  if (!down || !down.on) return;
   if (!dragging && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) dragging = true;
-  if (dragging) moveText(e);
+  if (dragging) {
+    var r = cv.getBoundingClientRect();
+    L.tx = Math.round(clamp(down.tx + (e.clientX - down.x) / r.width * 100, 0, 100) * 2) / 2;
+    L.ty = Math.round(clamp(down.ty + (e.clientY - down.y) / r.height * 100, 0, 100) * 2) / 2;
+    $("#tx").value = L.tx; $("#ty").value = L.ty; out("tx", L.tx); out("ty", L.ty);
+    schedule();
+  }
 });
-function endDrag(e) {
+function up(e) {
+  if (drawMode && stroke) { if (e.type === "pointerup") finishPath(); else { stroke = null; draw(); } return; }
+  pts.delete(e.pointerId);
+  if (pinch) { if (pts.size < 2) { pinch = null; down = null; saveSettings(); } return; }
   if (!down) return;
   var was = dragging; down = null; dragging = false;
   if (was) { saveSettings(); lastTap = 0; return; }
@@ -784,47 +1240,44 @@ function endDrag(e) {
   var now = performance.now();
   if (now - lastTap < 350) { lastTap = 0; toggleBig(); } else lastTap = now;
 }
-cv.addEventListener("pointerup", endDrag);
-cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("pointerup", up);
+cv.addEventListener("pointercancel", up);
 cv.addEventListener("dblclick", function (e) { e.preventDefault(); });
 
-/* buttons */
+/* ---------- buttons ---------- */
 $("#addImg").addEventListener("click", function () { $("#fileIn").click(); });
 $("#takePhoto").addEventListener("click", openCamera);
 $("#fileIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#camIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#play").addEventListener("click", play);
-$("#saveTop").addEventListener("click", savePng);
+$("#saveOpen").addEventListener("click", function () { openModal("#saveModal", "#savePng"); });
+$("#saveClose").addEventListener("click", function () { closeModal("#saveModal"); });
 $("#savePng").addEventListener("click", savePng);
+$("#saveSvg").addEventListener("click", saveSvg);
 $("#share").addEventListener("click", share);
 $("#saveVideo").addEventListener("click", saveVideo);
 $("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); });
 $("#reset").addEventListener("click", function () {
-  S = Object.assign({}, DEF); sync(); saveSettings(); ensureFont(S.font, S.weight).then(schedule); say("Settings reset.");
+  S = Object.assign({}, DEF, { layers: [newLayer()] }); sync(); setTab("dot"); saveSettings(); allFonts().then(schedule);
+  closeModal("#saveModal"); say("Settings reset.");
 });
 $("#snap").addEventListener("click", snap);
 $("#camCancel").addEventListener("click", closeCamera);
 $("#flip").addEventListener("click", function () { facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
-$("#camModal").addEventListener("keydown", function (e) {
-  if (e.key === "Escape") { e.preventDefault(); closeCamera(); return; }
-  if (e.key !== "Tab") return;
-  var f = Array.prototype.filter.call($("#camModal").querySelectorAll("button"), function (b) { return !b.hidden; });
-  var first = f[0], last = f[f.length - 1];
-  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-});
+trap("#camModal", closeCamera);
+trap("#saveModal", function () { closeModal("#saveModal"); });
 
-/* start */
+/* ---------- start ---------- */
 try {
   var probe = new File([new Blob(["x"], { type: "image/png" })], "x.png", { type: "image/png" });
   $("#share").hidden = !(navigator.canShare && navigator.canShare({ files: [probe] }));
 } catch (e) {}
-$("#saveVideo").hidden = !videoType();
 sync();
+setTab(S.look);
 if (window.ResizeObserver) new ResizeObserver(function () { fit(); }).observe(stage);
 window.addEventListener("resize", fit);
 demo();
-ensureFont(S.font, S.weight).then(schedule);
+allFonts().then(schedule);
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=4" defer></script>  <!-- bento: new color + animation each load -->
