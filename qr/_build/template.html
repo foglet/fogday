@@ -1152,6 +1152,9 @@ var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElemen
 var CAP_DEFAULT = {px: '', mono: '', trees: '', mj: ''};   // no caption unless you type one (or the website has its own)
 var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'Oysters, oh my!', 'https://www.instagram.com/fogfish/': '@fogfish',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
+/* Text written on the code for a website, without filling in the caption box (a caption you type, or clear, wins) */
+var SITE_TEXT = {'https://fogday.com/mahjong': 'Bay Area Mahjong'};
+function codeText(){ return state.caption || (state.capUser ? '' : SITE_TEXT[state.url] || ''); }
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
 var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px', art: null}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1220,7 +1223,7 @@ function paint(img){
 function draw(animate){
   prev = cur;
   state.ground = null;
-  cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', null, state.mode, state.art);
+  cur = render(state.seed, state.style, codeText(), state.img, state.url, 'random', null, state.mode, state.art);
   burns = {}; nBurn = 0; sparks = [];
   makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
@@ -1755,7 +1758,7 @@ function boot(){
   window.__quiet = function(){ return quiet() && !cleared(); };   // the walker only comes out when dragons are on
   function reground(cols){   // same code, same burns and walker; only the ground's colours change
     state.ground = [cols[0], cols[2], cols[1], cols[2]];
-    cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', state.ground, state.mode);
+    cur = render(state.seed, state.style, codeText(), state.img, state.url, 'random', state.ground, state.mode);
     paintFrame();
   }
   /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
