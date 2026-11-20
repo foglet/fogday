@@ -42,6 +42,16 @@ body.big .stagecol{position:static}
 .hint{margin:4px 0 0;text-align:center;font-size:12px;color:var(--muted);min-height:16px}
 .ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
 .actions{display:flex;gap:6px}
+.imgs{display:grid;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
+.imgs .lab{display:flex;justify-content:space-between}
+.thumbs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.thumb{border:2px solid transparent;border-radius:7px;padding:0;background:none;cursor:pointer;flex:0 0 auto;line-height:0}
+.thumb[aria-pressed="true"]{border-color:var(--felt)}
+.thumb canvas{height:40px;width:auto;border-radius:5px}
+.imgctl{display:flex;gap:6px;align-items:center}
+.imgctl input[type=range]{flex:1 1 auto;min-width:50px}
+.imgctl select{width:auto;flex:0 1 112px}
+.rotl .ico{transform:rotate(90deg)}.rotr .ico{transform:rotate(-90deg)}
 .actions .btn{flex:1 1 0}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;height:32px;padding:0 10px;border-radius:8px;font-size:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500;min-width:0;white-space:nowrap}
 .btn span{overflow:hidden;text-overflow:ellipsis}
@@ -127,7 +137,18 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
       <button type="button" class="btn" id="takePhoto" aria-label="Take photo" title="Take photo">{{icon:camera}}<span>Camera</span></button>
       <button type="button" class="btn primary" id="saveOpen">{{icon:download-simple}}<span>Save</span></button>
     </div>
-    <input type="file" id="fileIn" accept="image/*" hidden>
+    <input type="file" id="fileIn" accept="image/*" multiple hidden>
+    <div class="imgs" id="imgs" hidden>
+      <span class="lab"><span>Images, bottom to top</span><span id="imgN"></span></span>
+      <div class="thumbs" id="thumbs" role="group" aria-label="Images, bottom to top"></div>
+      <div class="imgctl">
+        <button type="button" class="icob rotl" id="imgDown" aria-label="Move this image down (behind)" title="Move down">{{icon:caret-down}}</button>
+        <button type="button" class="icob rotr" id="imgUp" aria-label="Move this image up (in front)" title="Move up">{{icon:caret-down}}</button>
+        <input type="range" id="imgOp" min="0" max="100" step="1" aria-label="Image opacity" title="Opacity">
+        <select id="imgBlend" aria-label="Image blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="lighten">Lighten</option><option value="darken">Darken</option><option value="difference">Difference</option></select>
+        <button type="button" class="icob" id="imgDel" aria-label="Remove this image" title="Remove">{{icon:trash}}</button>
+      </div>
+    </div>
     <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
 
     <div class="tabrow">
@@ -959,14 +980,53 @@ function fit() {
 }
 
 /* ---------- image in ---------- */
-function setImage(img, w, h) {
-  var k = Math.min(1, 2000 / Math.max(w, h));
-  orig.width = Math.round(w * k); orig.height = Math.round(h * k);
-  var ox = orig.getContext("2d");
-  ox.fillStyle = "#fff"; ox.fillRect(0, 0, orig.width, orig.height);
+/* images are layered: imgs[0] is the bottom and sets the size; each one above is cover-fitted over it with its own
+   opacity and blend mode. They live in memory only (not saved between visits). */
+var imgs = [], selImg = 0, isDemo = false;
+function setImage(img, w, h, demoImg) {
+  var k = Math.min(1, 2000 / Math.max(w, h)), c = mk(w * k, h * k), x = c.getContext("2d");
+  x.imageSmoothingQuality = "high"; x.drawImage(img, 0, 0, c.width, c.height);
+  if (isDemo || demoImg) imgs = [];
+  isDemo = !!demoImg;
+  imgs.push({ c: c, op: imgs.length ? 50 : 100, blend: "source-over" });
+  selImg = imgs.length - 1;
+  compose(); renderImgs();
+}
+function compose() {
+  var b = imgs[0].c;
+  orig.width = b.width; orig.height = b.height;
+  var ox = orig.getContext("2d"), W = b.width, H = b.height;
+  ox.globalAlpha = 1; ox.globalCompositeOperation = "source-over";
+  ox.fillStyle = "#fff"; ox.fillRect(0, 0, W, H);
   ox.imageSmoothingQuality = "high";
-  ox.drawImage(img, 0, 0, orig.width, orig.height);
+  imgs.forEach(function (im, i) {
+    var c = im.c, s = Math.max(W / c.width, H / c.height), dw = c.width * s, dh = c.height * s;
+    ox.globalAlpha = im.op / 100; ox.globalCompositeOperation = i ? im.blend : "source-over";
+    ox.drawImage(c, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  });
+  ox.globalAlpha = 1; ox.globalCompositeOperation = "source-over";
   applyCrop();
+}
+function renderImgs() {
+  $("#imgs").hidden = imgs.length < 2;
+  var box = $("#thumbs"); box.innerHTML = "";
+  imgs.forEach(function (im, i) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "thumb";
+    b.setAttribute("aria-pressed", i === selImg ? "true" : "false"); b.setAttribute("aria-label", "Image " + (i + 1) + (i ? "" : " (bottom)"));
+    var t = mk(Math.round(40 * im.c.width / im.c.height) * 2, 80); t.getContext("2d").drawImage(im.c, 0, 0, t.width, t.height);
+    b.appendChild(t);
+    b.addEventListener("click", function () { selImg = i; renderImgs(); });
+    box.appendChild(b);
+  });
+  var im = imgs[selImg];
+  $("#imgN").textContent = (selImg + 1) + " of " + imgs.length;
+  $("#imgOp").value = im.op; $("#imgBlend").value = im.blend; $("#imgBlend").disabled = selImg === 0;
+  $("#imgDown").disabled = selImg === 0; $("#imgUp").disabled = selImg === imgs.length - 1;
+}
+function moveImg(d) {
+  var j = selImg + d; if (j < 0 || j >= imgs.length) return;
+  var a = imgs[selImg]; imgs[selImg] = imgs[j]; imgs[j] = a; selImg = j;
+  compose(); renderImgs();
 }
 /* Instagram size: the working image is the original center-cropped to 1080 x igSize, so preview and every save match */
 function applyCrop() {
@@ -983,11 +1043,17 @@ function applyCrop() {
   fit();
 }
 function loadFile(f) {
-  if (!f) return;
-  var url = URL.createObjectURL(f), img = new Image();
-  img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); };
-  img.onerror = function () { URL.revokeObjectURL(url); say("That file could not be opened as an image."); };
-  img.src = url;
+  if (!f) return Promise.resolve();
+  return new Promise(function (res) {
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); res(); };
+    img.onerror = function () { URL.revokeObjectURL(url); say("That file could not be opened as an image."); res(); };
+    img.src = url;
+  });
+}
+function loadFiles(list) {
+  var fs = Array.prototype.slice.call(list || []);
+  fs.reduce(function (p, f) { return p.then(function () { return loadFile(f); }); }, Promise.resolve());
 }
 function demo() {
   var c = mk(900, 1100), x = c.getContext("2d");
@@ -1003,7 +1069,7 @@ function demo() {
   x.beginPath(); x.moveTo(0, 880); x.quadraticCurveTo(300, 780, 560, 900); x.quadraticCurveTo(760, 990, 900, 900); x.lineTo(900, 1100); x.lineTo(0, 1100); x.fill();
   x.fillStyle = "#121c1d";
   x.beginPath(); x.moveTo(0, 1000); x.quadraticCurveTo(450, 940, 900, 1010); x.lineTo(900, 1100); x.lineTo(0, 1100); x.fill();
-  setImage(c, 900, 1100);
+  setImage(c, 900, 1100, true);
 }
 
 /* ---------- modals ---------- */
@@ -1456,7 +1522,16 @@ cv.addEventListener("dblclick", function (e) { e.preventDefault(); });
 /* ---------- buttons ---------- */
 $("#addImg").addEventListener("click", function () { $("#fileIn").click(); });
 $("#takePhoto").addEventListener("click", openCamera);
-$("#fileIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
+$("#fileIn").addEventListener("change", function (e) { loadFiles(e.target.files); e.target.value = ""; });
+$("#imgDown").addEventListener("click", function () { moveImg(-1); });
+$("#imgUp").addEventListener("click", function () { moveImg(1); });
+$("#imgOp").addEventListener("input", function () { imgs[selImg].op = +this.value; compose(); });
+$("#imgBlend").addEventListener("change", function () { imgs[selImg].blend = this.value; compose(); });
+$("#imgDel").addEventListener("click", function () {
+  if (imgs.length < 2) return;
+  imgs.splice(selImg, 1); imgs[0].op = Math.max(imgs[0].op, 0); selImg = Math.min(selImg, imgs.length - 1);
+  compose(); renderImgs();
+});
 $("#camIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#saveOpen").addEventListener("click", function () { openModal("#saveModal", "#savePng"); });
 $("#saveClose").addEventListener("click", function () { closeModal("#saveModal"); });
