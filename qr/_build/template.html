@@ -161,9 +161,6 @@ html.idle #qr{filter:none}
   <button type="button" class="btn more" id="moreBtn" aria-expanded="false" aria-controls="more">More<span class="chev" aria-hidden="true"></span></button>
   <div id="more" hidden>
     <div class="row">
-      <input type="file" id="file" class="file" accept="image/*">
-      <label for="file" class="btn" id="fileLabel">Add picture</label>
-      <button type="button" class="btn" id="unpic" disabled>Remove picture</button>
       <button type="button" class="btn wide" id="text">Text me</button>
     </div>
     <div class="field">
@@ -1041,7 +1038,7 @@ function setPicture(file){
   if (!file || !/^image\//.test(file.type)){ say('That file is not a picture'); return; }
   var u = URL.createObjectURL(file), im = new Image();
   im.onload = function(){
-    state.img = im; $('unpic').disabled = false; $('fileLabel').textContent = 'New picture';
+    state.img = im;
     draw(true); say('Picture added. Remix keeps it.');
   };
   im.onerror = function(){ URL.revokeObjectURL(u); say('Could not read that picture'); };
@@ -1253,12 +1250,6 @@ function boot(){
     var f = $('pxFront');
     if (f && f.contentWindow) f.contentWindow.postMessage({type: 'px:apply', cfg: e.data.cfg, seed: e.data.seed}, location.origin);
   });
-  $('file').addEventListener('change', function(){ setPicture(this.files[0]); this.value = ''; });
-  $('unpic').addEventListener('click', function(){
-    state.img = null; $('unpic').disabled = true; $('fileLabel').textContent = 'Add picture';
-    draw(true); $('file').focus(); say('Picture removed');
-  });
-  $('fileLabel').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
   var t;
   /* The website box too: tapping in clears it; leaving without typing puts the address back */
   var siteWas = null, siteTyped = false;
