@@ -63,3 +63,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Details line 1 is just "No. N" (the version, v.003, was removed on request).
 - Details line 2 drops level and mask (removed on request): it shows only picture, Pantone colours or the art style name, when there are any.
 - Note: commits cd622f2 to 1daf425 (border toggle, camera button, clear ground) edited ../index.html directly; template.html now carries them. Always edit template.html.
+- The New scene button reads "New" (screen readers still hear "New scene").
