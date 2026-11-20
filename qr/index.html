@@ -40,6 +40,9 @@ html.cleared .fgpx{opacity:0}
 .mtxt span{white-space:nowrap;overflow:hidden;text-overflow:clip}
 .meta #scene{padding:0 10px}
 .meta #scene{flex:0 0 auto}
+#meta{background:transparent;padding:0}   /* the panel's 50% sits behind the text only, so Dragons and New scene show at 50% like every button */
+#meta .mtxt{flex:1 1 auto;margin:0;padding:4px 10px;border-radius:10px;background:rgba(251,248,241,.5)}
+html.idle #meta .mtxt{background:transparent}
 
 .meta span{display:block}
 main .field>label{display:inline-block;margin-left:0}
