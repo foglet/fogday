@@ -432,7 +432,7 @@ var FONT = {
   T:'111 010 010 010 010',U:'101 101 101 101 111',V:'101 101 101 101 010',W:'10001 10001 10101 11011 10001',X:'101 101 010 101 101',
   Y:'101 101 111 010 010',Z:'111 001 010 100 111','0':'111 101 101 101 111','1':'010 110 010 010 111','2':'111 001 111 100 111',
   '3':'111 001 011 001 111','4':'101 101 111 001 001','5':'111 100 111 001 111','6':'111 100 111 101 111','7':'111 001 010 010 010',
-  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','自':'00011000 00110000 11111111 10000001 10000001 11111111 10000001 11111111 10000001 10000001 11111111','摸':'01000010100 01001111111 11100010100 01000111110 01000100010 01100111110 11000100010 01000111110 01001111111 01000010100 11000100010','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ì':'100 010 111 010 010 010 111','Ō':'111 000 111 101 101 101 111','(':'01 10 10 10 01',')':'10 01 01 01 10','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
+  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','自':'00011000 00110000 11111111 10000001 10000001 11111111 10000001 11111111 10000001 10000001 11111111','摸':'01000010100 01001111111 11100010100 01000111110 01000100010 01100111110 11000100010 01000111110 01001111111 01000010100 11000100010','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ì':'100 010 111 010 010 010 111','Ō':'111 000 111 101 101 101 111','(':'01 10 10 10 01',"'":'1 1 0 0 0',')':'10 01 01 01 10','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
   '-':'000 000 111 000 000',':':'0 1 0 1 0','/':'001 001 010 100 100',"'":'1 1 0 0 0','+':'000 010 111 010 000','#':'1010 1111 1010 1111 0101',
   '&':'010 101 010 101 011','@':'111 101 111 100 111',' ':'00 00 00 00 00'
 };
@@ -751,6 +751,9 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
 var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mj: '自摸 (zì mō)'};   // self-drawn win
+var SITE_CAP = {'https://ohlonesky.com': 'Bay to Sky!', 'https://oysteratlas.com': 'An oyster a day...', 'https://www.instagram.com/fogfish/': 'Beach time!',
+  'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh!', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
+function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
 var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px'}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1131,7 +1134,7 @@ function boot(){
   var st = load('style'); if (st && STYLES[st]) state.style = st;
   if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
   if (hs.m === 'mj') state.mode = 'mj';
-  var cp = load('cap'); if (cp !== null){ state.caption = cp; state.capUser = true; } else state.caption = CAP_DEFAULT[state.mode];   // default "toi toi toi !!!"; once you edit it, yours (even blank) is kept
+  var cp = load('cap'); if (cp !== null){ state.caption = cp; state.capUser = true; } else state.caption = defCap();   // default "toi toi toi !!!"; once you edit it, yours (even blank) is kept
   syncHash();
   $('siteFree').value = shown(state.url);   // the address in use, shown (and editable) under More
   $('cap').value = state.caption;
@@ -1143,7 +1146,7 @@ function boot(){
   function setMode(m){
     if (state.mode === m) return;
     state.mode = m;
-    if (!state.capUser){ state.caption = CAP_DEFAULT[m]; $('cap').value = state.caption; }
+    if (!state.capUser){ state.caption = defCap(); $('cap').value = state.caption; }
     $('remix').setAttribute('aria-pressed', String(m === 'px')); $('mj').setAttribute('aria-pressed', String(m === 'mj'));
   }
   $('remix').addEventListener('click', function(){ setMode('px'); remix(); });
@@ -1163,6 +1166,9 @@ function boot(){
       var f = $('siteFree'); f.focus(); f.select(); f.scrollIntoView({block: 'center', behavior: reduce ? 'auto' : 'smooth'});
       return;
     }
+    // a menu website brings its own caption (a fresh start: a caption you typed earlier gives way)
+    state.url = this.value; state.capUser = false; try { localStorage.removeItem(LS + 'cap'); } catch (err) {}
+    state.caption = defCap(); $('cap').value = state.caption;
     $('siteFree').value = shown(this.value); setUrl(this.value);
   });
   var ut;
