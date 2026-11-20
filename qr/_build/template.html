@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* iPhone/iPad: Safari zooms in on a 15 px field when it takes focus and never zooms back out. maximum-scale stops that auto-zoom;
+   iOS still lets you pinch-zoom. Android doesn't auto-zoom, and there maximum-scale would block pinch, so it's iOS only. */
+if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+  document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover');</script>
 <meta name="theme-color" content="#fbf8f1">
 <!-- Added to the Home Screen it opens full screen, with no browser toolbars (iPhone has no full-screen button for pages) -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -1844,6 +1848,16 @@ function boot(){
   $('siteFree').addEventListener('focus', function(){ siteWas = this.value; siteTyped = false; this.value = ''; $('site').value = 'custom'; });   // the menu shows the dash option while you type a website
   $('siteFree').addEventListener('blur', function(){ if (!siteTyped && siteWas !== null) this.value = siteWas; siteWas = null; setTimeout(showSite, 400); });
   $('siteFree').addEventListener('input', function(){ siteTyped = true; });
+  /* Enter in the website or caption box: done, so the keyboard closes and the page goes back to where it was */
+  ['siteFree', 'cap'].forEach(function(id){
+    var el = $(id), y0 = 0;
+    el.addEventListener('focus', function(){ y0 = window.scrollY; });
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.isComposing){ e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', function(){ setTimeout(function(){
+      var a = document.activeElement; if (a && a.matches && a.matches('input, select, textarea')) return;   // moved on to another box
+      window.scrollTo(0, y0); if (cur) paintFrame();
+    }, 150); });
+  });
   document.addEventListener('focusin', function(e){ if (e.target && e.target !== document.body && e.target.id !== 'dragons' && e.target.id !== 'eye') clearDragons(); });   // any button, box or menu taking focus sends the dragons away for six seconds
   /* The dragon button: green when the dragons are off (tap to let them in), red when they are on (tap to stop them all) */
   function setDragons(on){
