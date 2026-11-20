@@ -1162,10 +1162,10 @@ function draw(animate){
   }
   var when = new Float32Array(W*H), t0 = performance.now(), DUR = 900, mix = new Uint8ClampedArray(to.length);
   // clear ground: the old and the new code each keep their see-through ground all through the change (never a solid flash)
-  var toM = CLEAR ? clearMask() : null, fromM = null;
-  if (CLEAR){
-    var LL = function(a, i){ return 0.2126*a[i] + 0.7152*a[i+1] + 0.0722*a[i+2]; }, pLight = LL(pd, 0) > 140;
-    fromM = new Uint8Array(W*H); for (var fm = 0; fm < fromM.length; fm++) fromM[fm] = (LL(from, fm*4) > 140) === pLight ? 1 : 0;
+  var toM = CLEAR ? clearMask(cur) : null, fromM = null;
+  if (CLEAR){   // the old code's own mask, stretched onto the new grid like its pixels
+    var pm = clearMask(prev); fromM = new Uint8Array(W*H);
+    for (var fy = 0; fy < H; fy++) for (var fx = 0; fx < W; fx++) fromM[fy*W + fx] = pm[Math.min(ph-1, Math.floor(fy*ph/H))*pw + Math.min(pw-1, Math.floor(fx*pw/W))];
   }
   for (var i = 0; i < when.length; i++) when[i] = Math.random()*0.82;
   (function step(now){
@@ -1284,11 +1284,17 @@ function hitArt(ax, ay, water){ var P = cur.P; ignite(Math.floor(ax/P) + ',' + M
    Any tap brings the ground back for scanning. */
 var IDLE = false;
 var CLEAR = false;   // double tap on the camera: the code's ground goes see-through, whatever that does to scanning
-function clearMask(){   // ground = whatever matches the corner (quiet zone) in lightness: light codes lose their dark ground too
-  if (cur.cmask) return cur.cmask;
-  var d = cur.data, m = new Uint8Array(d.length/4), L = function(i){ return 0.2126*d[i*4] + 0.7152*d[i*4+1] + 0.0722*d[i*4+2]; }, lightGround = L(0) > 140;
-  for (var i = 0; i < m.length; i++) m[i] = (L(i) > 140) === lightGround ? 1 : 0;
-  return (cur.cmask = m);
+function clearMask(o){   // ground = every pixel that is (nearly) the code's own ground colour at that spot, read from bgAt.
+  // Not a lightness cut: gradient, sky and CMYK grounds cross any fixed threshold, which cleared half a code.
+  o = o || cur;
+  if (o.cmask) return o.cmask;
+  var d = o.data, W = o.W, m = new Uint8Array(d.length/4), T = 30*30;
+  for (var i = 0; i < m.length; i++){
+    var g = o.bgAt ? o.bgAt(i % W, Math.floor(i/W)) : null; if (!g) continue;
+    var dr = d[i*4] - g[0], dg = d[i*4+1] - g[1], db = d[i*4+2] - g[2];
+    m[i] = dr*dr + dg*dg + db*db <= T ? 1 : 0;
+  }
+  return (o.cmask = m);
 }
 function groundMask(){
   if (cur.gmask) return cur.gmask;
