@@ -49,3 +49,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Focus anywhere (any button, box or menu) sends every dragon away for six seconds, as Reset does; each new focus restarts the six seconds. Taps on the open page (no focus) still make the dragons shoot.
 - Menu captions: picking a menu website sets the caption (and forgets a typed one): Ohlone Sky "Bay to Sky!", Oyster Atlas "An oyster a day.", Instagram "Beach time!", WhatsApp "Wesh, ça va ?", LinkedIn "Let's connect!"; Fogday Studios and typed websites use the mode default. Reset, a mode switch and reload follow the same rule. (The pixel font already had an apostrophe.)
 - The pixel font has Ç with the cedilla hanging two rows below the line.
+- No full-screen icon (removed on request); on a computer the F key still toggles full screen. iPhone: Add to Home Screen.

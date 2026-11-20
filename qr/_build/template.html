@@ -146,7 +146,7 @@ html.idle #qr{filter:none}
 </header>
 <main>
   <div class="stage"><canvas id="qr" role="img" aria-label="QR code for https://fogday.com" width="1" height="1"></canvas></div>
-  <div class="meta" id="meta"><p class="mtxt" aria-live="off"><span id="meta1"></span><span id="meta2"></span></p><button type="button" class="btn" id="scene">New scene</button><button class="fs" type="button" id="fs" aria-pressed="false" aria-label="Full screen" title="Full screen (F)"><span class="fs-ico" aria-hidden="true"></span></button></div>
+  <div class="meta" id="meta"><p class="mtxt" aria-live="off"><span id="meta1"></span><span id="meta2"></span></p><button type="button" class="btn" id="scene">New scene</button></div>
 
   <div class="ctl">
   <div class="row">
@@ -1200,7 +1200,7 @@ function boot(){
     el.addEventListener('blur', function(){ clearTimeout(idleT); });
   });
   /* Full screen (hides the browser's toolbars) where the browser allows it; iPhone gets it from Add to Home Screen */
-  var fsBtn = $('fs'), DOC = document.documentElement;
+  var fsBtn = $('fs') || document.createElement('button'), DOC = document.documentElement;
   function fsNow(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
   if ((DOC.requestFullscreen || DOC.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) fsBtn.classList.add('on');
   function fsToggle(){
