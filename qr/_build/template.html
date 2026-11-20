@@ -1098,7 +1098,7 @@ function draw(animate){
   document.documentElement.style.setProperty('--tg', cur.grad);
   var c = cur.code;
   markSeen(state.seed);
-  $('meta1').textContent = 'No. ' + state.seed + ' · version ' + c.v;
+  $('meta1').textContent = 'No. ' + state.seed + ' · v.' + ('00' + c.v).slice(-3);   // version, short: v.002
   $('meta2').textContent = 'level ' + c.e + ' · mask ' + c.mask + (state.img ? ' · picture' : '') + (cur && cur.mono ? ' · Pantone ' + cur.mono.names.map(function(n){ return n.replace(/ C$/, ''); }).join(', ') + ' C' : '');
   canvas.setAttribute('aria-label', 'Pixel QR code number ' + state.seed + ' for ' + c.text);
   var full = new ImageData(cur.data, cur.W, cur.H);
