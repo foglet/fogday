@@ -964,7 +964,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mono: 'Toï Toï Toï !!', mj: '自摸'};   // self-drawn win
+var CAP_DEFAULT = {px: '', mono: '', mj: '自摸'};   // 3 px and CMYK: no caption unless you type one (or the website has its own); 中: self-drawn win
 var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'Oysters, oh my!', 'https://www.instagram.com/fogfish/': '@fogfish',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
@@ -1397,7 +1397,7 @@ function boot(){
   var st = load('style'); if (st && STYLES[st]) state.style = st;
   if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
   if (hs.m === 'mj') state.mode = 'mj'; else if (hs.m === 'cmyk' || hs.m === 'pantone' || hs.m === 'mono') state.mode = 'mono';   // CMYK (once Pantone, once MONO)
-  var cp = load('cap'); if (cp !== null){ state.caption = cp; state.capUser = true; } else state.caption = defCap();   // default "toi toi toi !!!"; once you edit it, yours (even blank) is kept
+  var cp = load('cap'); if (cp !== null){ state.caption = cp; state.capUser = true; } else state.caption = defCap();   // the mode's or website's default; once you edit it, yours (even blank) is kept
   syncHash();
   $('siteFree').value = shown(state.url);   // the address in use, shown (and editable) under More
   $('cap').value = state.caption;
