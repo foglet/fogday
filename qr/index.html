@@ -432,12 +432,13 @@ var FONT = {
   T:'111 010 010 010 010',U:'101 101 101 101 111',V:'101 101 101 101 010',W:'10001 10001 10101 11011 10001',X:'101 101 010 101 101',
   Y:'101 101 111 010 010',Z:'111 001 010 100 111','0':'111 101 101 101 111','1':'010 110 010 010 111','2':'111 001 111 100 111',
   '3':'111 001 011 001 111','4':'101 101 111 001 001','5':'111 100 111 001 111','6':'111 100 111 101 111','7':'111 001 010 010 010',
-  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','自':'00011000 00110000 11111111 10000001 10000001 11111111 10000001 11111111 10000001 10000001 11111111','摸':'01000010100 01001111111 11100010100 01000111110 01000100010 01100111110 11000100010 01000111110 01001111111 01000010100 11000100010','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ì':'100 010 111 010 010 010 111','Ō':'111 000 111 101 101 101 111','(':'01 10 10 10 01',"'":'1 1 0 0 0',')':'10 01 01 01 10','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
+  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','自':'00011000 00110000 11111111 10000001 10000001 11111111 10000001 11111111 10000001 10000001 11111111','摸':'01000010100 01001111111 11100010100 01000111110 01000100010 01100111110 11000100010 01000111110 01001111111 01000010100 11000100010','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ì':'100 010 111 010 010 010 111','Ō':'111 000 111 101 101 101 111','(':'01 10 10 10 01','Ç':'111 100 100 100 111 010 110',')':'10 01 01 01 10','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
   '-':'000 000 111 000 000',':':'0 1 0 1 0','/':'001 001 010 100 100',"'":'1 1 0 0 0','+':'000 010 111 010 000','#':'1010 1111 1010 1111 0101',
   '&':'010 101 010 101 011','@':'111 101 111 100 111',' ':'00 00 00 00 00'
 };
+var DESC = {'Ç': 2};   // rows that hang below the line (the cedilla)
 function glyphs(text){
-  return text.toUpperCase().split('').map(function(ch){ return (FONT[ch] || FONT['?']).split(' '); });
+  return text.toUpperCase().split('').map(function(ch){ var g = (FONT[ch] || FONT['?']).split(' '); if (DESC[ch]) g.desc = DESC[ch]; return g; });
 }
 function textWidth(gs){ return gs.reduce(function(s,g){ return s + g[0].length; },0) + Math.max(0,gs.length-1); }
 
@@ -692,11 +693,11 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   // caption on a light plate in the bottom margin
   if (ls){
     var tx = Math.floor((W - tw*ls)/2), ty = MJ ? (HW+N+2*QZ)*P + Math.floor((HW*P - GR*ls)/2) + (GR-5)*ls : H - 5*ls - 5;   // 2 art pixels higher (about 5 screen pixels on a phone)
-    for (var py = ty - (GR-5)*ls - 1; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
+    for (var py = ty - (GR-5)*ls - 1; py < ty + 7*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
       if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : bg(pxx,py));   // plate: the light ground
     gs.forEach(function(g){
       var gy, gx, yy, xx, X, Y;
-      var top = g.length - 5;   // accented letters and Chinese characters rise above the line
+      var top = g.length - 5 - (g.desc || 0);   // accented letters and Chinese characters rise above the line; a cedilla hangs below
       for (gy = 0; gy < g.length; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (yy = 0; yy < ls; yy++) for (xx = 0; xx < ls; xx++){
           X = tx + gx*ls + xx; Y = ty + (gy - top)*ls + yy;
@@ -752,7 +753,7 @@ var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
 var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mj: '自摸 (zì mō)'};   // self-drawn win
 var SITE_CAP = {'https://ohlonesky.com': 'Bay to Sky!', 'https://oysteratlas.com': 'An oyster a day...', 'https://www.instagram.com/fogfish/': 'Beach time!',
-  'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh!', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
+  'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
 var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px'}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
