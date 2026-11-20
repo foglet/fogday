@@ -1732,6 +1732,8 @@ function boot(){
     markCleared(); if (cur) paintFrame();
   }
   /* Green dragon: the dragons come in. Red dragon: everything stops and resets (fogday.com, the default caption) */
+  function setClear(on){ CLEAR = on; document.documentElement.classList.toggle('qrclear', on); store('qrclear', on ? '1' : '0'); if (cur) paintFrame(); }
+  setClear(load('qrclear') === '1');   // a clear ground stays (even after a reload) until the border icon is double tapped again or New scene is tapped
   (function(){   // camera: clears the scene and shows the device camera as a live background; tap again to bring the scene back
     var b = $('cam'), v = $('camVid'), stream = null;
     function stop(){
@@ -1749,13 +1751,7 @@ function boot(){
         b.setAttribute('aria-pressed', 'true'); b.title = 'Camera on: tap to bring the scene back';
       }).catch(function(){ stop(); say('Camera not allowed'); });
     }
-    var tapT = 0;   // one tap: camera on/off (after a short wait); two quick taps: the code's ground goes clear with a hairline border, or back
-    b.addEventListener('click', function(){
-      if (tapT){ clearTimeout(tapT); tapT = 0; setClear(!CLEAR); return; }
-      tapT = setTimeout(function(){ tapT = 0; if (stream) stop(); else start(); }, 300);
-    });
-    function setClear(on){ CLEAR = on; document.documentElement.classList.toggle('qrclear', on); store('qrclear', on ? '1' : '0'); if (cur) paintFrame(); }
-    setClear(load('qrclear') === '1');   // a clear ground stays (even after a reload) until you double tap again or tap New scene
+    b.addEventListener('click', function(){ if (stream) stop(); else start(); });
     $('scene').addEventListener('click', function(){ stop(); setClear(false); });   // New scene brings the scene and the code's normal ground back
     document.addEventListener('visibilitychange', function(){ if (document.hidden && stream) stop(); });
   })();
@@ -1763,7 +1759,11 @@ function boot(){
     var b = $('boxes');
     function setBoxed(on){ document.documentElement.classList.toggle('boxed', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.title = on ? 'Tap to remove box backgrounds' : 'Tap to add box backgrounds'; }
     setBoxed(load('boxed') === '1');
-    b.addEventListener('click', function(){ var on = !document.documentElement.classList.contains('boxed'); setBoxed(on); store('boxed', on ? '1' : '0'); });
+    var tapT = 0;   // one tap: box backgrounds on/off (after a short wait); two quick taps: the code's ground goes clear with a hairline border, or back
+    b.addEventListener('click', function(){
+      if (tapT){ clearTimeout(tapT); tapT = 0; setClear(!CLEAR); return; }
+      tapT = setTimeout(function(){ tapT = 0; var on = !document.documentElement.classList.contains('boxed'); setBoxed(on); store('boxed', on ? '1' : '0'); }, 300);
+    });
   })();
   $('dragons').addEventListener('click', function(){
     if (!dragonsOn){ setDragons(true); return; }
