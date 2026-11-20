@@ -106,6 +106,9 @@ html.idle #qr{filter:none}
 .duo{display:flex;gap:6px;align-items:stretch}
 .duo>select,.duo>input,.duo>.btn{flex:1 1 0;min-width:0;width:auto!important;transition:flex-grow .25s ease}
 .duo>select:focus,.duo>input:focus{flex-grow:3.5}
+.sitedu>.sitef{flex:1.5 1 0;min-width:0;transition:flex-grow .25s ease}
+.sitedu>.sitef:focus-within{flex-grow:3.5}
+.btn.wide{width:100%}
 @media (prefers-reduced-motion:reduce){.duo>*{transition:none}}
 .hint{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:44px;padding:0 14px;border-radius:10px;border:1px solid var(--felt);background:rgba(255,253,248,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:var(--felt);font:400 15px/1 var(--pixel);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;text-align:center}
@@ -154,22 +157,24 @@ html.idle #qr{filter:none}
     <button type="button" class="btn" id="text">Text me</button>
   </div>
 
-  <div class="field sitef" id="siteField">
-    <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
-    <select id="site" aria-label="Website">
-      <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
-      <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
-      <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas</option>
-      <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
-      <option value="https://wa.me/14158733873?text=Bon%20jour%21" data-cap="WHATSAPP">WhatsApp</option>
-      <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
-      <option value="custom" id="customOpt">—</option>
-    </select>
+  <div class="field duo sitedu">
+    <div class="sitef" id="siteField">
+      <canvas id="boxDragon" width="1" height="1" aria-hidden="true"></canvas>
+      <select id="site" aria-label="Website">
+        <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
+        <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
+        <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas</option>
+        <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
+        <option value="https://wa.me/14158733873?text=Bon%20jour%21" data-cap="WHATSAPP">WhatsApp</option>
+        <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
+        <option value="custom" id="customOpt">—</option>
+      </select>
+    </div>
+    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Website" aria-label="Website address (edit to use your own)" style="text-transform:none;font-size:15px">
   </div>
 
-  <div class="field duo">
-    <input id="siteFree" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="Website" aria-label="Website address (edit to use your own)" style="text-transform:none;font-size:15px">
-    <button type="button" class="btn" id="clear" title="Clear the dragons for six seconds">Clear</button>
+  <div class="field">
+    <button type="button" class="btn wide" id="clear" title="Clear the dragons for six seconds">Clear</button>
   </div>
   </div>
 
