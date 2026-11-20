@@ -80,6 +80,7 @@ main{margin:0 auto;padding:2px calc(8px + var(--sar)) calc(4px + var(--sab)) cal
 .stage{display:flex;justify-content:center;align-items:center;margin:0 0 3px}
 html.bare main>*,html.bare .status{visibility:hidden}   /* eye-slash: only the background (scene, dragons, camera) and the eye stay, as on /px */
 html.bare #eye{visibility:visible}
+html.bare #eye{background:none!important;border-color:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}   /* alone with the dragons: just the eye, no box */
 #eye .on,html.bare #eye .off{display:none}
 html.bare #eye .on{display:block}
 .duo>#eye{flex:0 0 44px;padding:0}
