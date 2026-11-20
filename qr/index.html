@@ -565,14 +565,14 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   function igAt(x, y, w, h){ var t = ((x/w) + (1 - y/h))/2; return IGM[Math.max(0, Math.min(15, Math.round(t*15)))]; }   // 0 bottom left, 1 top right
   // Sky (3 px remix only): past the quiet zone the ground is paper as before, a light gradient, night, or a night gradient.
   // The code and its quiet zone always sit on light ground (night: a lit pad), so every code scans the same way.
-  // Gradients are a hue loop, so they can flow; on night the loose blocks past the quiet zone glow instead of going dark.
+  // Gradients are straight or radial and hold still; on night the loose blocks past the quiet zone glow instead of going dark.
   var SK = null;
   if (!MJ && !IG && !ground && !img){
     var sr = rng(seed ^ 0x5bd1e995), roll = sr();
     var sk = roll < 0.25 ? null : roll < 0.5 ? 'grad' : roll < 0.72 ? 'night' : 'nightgrad';
     if (sk){
       var h1 = sr()*360, h2 = h1 + 70 + sr()*80, h3 = h2 + 70 + sr()*80, hs = [h1, h2, h3, h1];
-      SK = {grad: sk !== 'night', night: sk !== 'grad', ang: sr()*Math.PI*2, flow: sr() < 0.5 ? 1 : -1};
+      SK = {grad: sk !== 'night', night: sk !== 'grad', ang: sr()*Math.PI*2, radial: sr() < 0.45, cx: 0.2 + sr()*0.6, cy: 0.2 + sr()*0.6};   // straight or radial, from a random centre
       var lmat = function(c){ return lightMat([c.map(function(v){ return v*0.96; }), c, c.map(function(v){ return Math.min(255, v*1.03); }), c.map(function(v){ return Math.min(255, v*1.06); })]); };
       var dmat = function(c){ return [0.7, 0.82, 1, 1.12, 1.26, 1.4].map(function(k){ return c.map(function(v){ return Math.min(255, Math.round(v*k)); }); }); };
       var hueAt = function(t){ var u = t*3, i0 = Math.min(2, Math.floor(u)), f = u - i0, a = hs[i0], b = hs[i0+1]; return a + (b - a)*f; };
@@ -624,15 +624,16 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   }
   function bg(ax,ay){
     if (pic) return bgM[Math.floor(ay/P)*M + Math.floor(ax/P)];
-    if (SK) return skyAt(ax, ay, 0);
+    if (SK) return skyAt(ax, ay);
     return R.groundM[texShade(Math.floor(ax/2), Math.floor(ay/2), R.tseed)];   // ground texture, 2x2 grain
   }
   function isSky(ax, ay){ return SK && SK.night && dq(Math.floor(ax/P), Math.floor(ay/P)) >= 1; }   // night past the quiet zone
-  function skyAt(ax, ay, ph){   // ph: how far the gradient has flowed (0 to 1, a full loop)
+  function skyAt(ax, ay){   // gradients hold still
     var sh = texShade(Math.floor(ax/2), Math.floor(ay/2), R.tseed), sky = isSky(ax, ay);
     if (!SK.grad) return sky ? SK.dark[0][sh] : R.groundM[sh];
-    var c = Math.cos(SK.ang), s = Math.sin(SK.ang), t = 0.5 + ((ax/W - 0.5)*c + (ay/H - 0.5)*s)/(Math.abs(c) + Math.abs(s));
-    var k = Math.floor((((t*0.7 + SK.flow*ph) % 1) + 1) % 1 * 32) % 32;
+    var c = Math.cos(SK.ang), s = Math.sin(SK.ang), t = SK.radial ? Math.min(1, Math.hypot(ax/W - SK.cx, ay/H - SK.cy)/0.75)
+      : 0.5 + ((ax/W - 0.5)*c + (ay/H - 0.5)*s)/(Math.abs(c) + Math.abs(s));
+    var k = Math.min(31, Math.floor(t*0.7*32));
     return (sky ? SK.dark : SK.light)[k][sh];
   }
 
@@ -822,7 +823,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       tiles.push({x: x3, y: y3, w: w3, h: h3, ang: an2, sym: keys[Math.floor(tr()*keys.length)], down: tr() < 0.06, flip: 0});
     }
   }
-  // which pixels are ground (1) or ground in a block's shadow (2): the flowing gradient repaints them; idle hides them
+  // which pixels are ground (1) or ground in a block's shadow (2): idle hides them
   var G = null, gm0 = null;
   if (SK){
     G = new Uint8Array(W*H); gm0 = new Uint8Array(W*H);
@@ -834,7 +835,8 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     }
   }
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
-          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : 'px', sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0};
+          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : 'px', sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
+          moves: rng(seed ^ 0x27d4eb2f)() < 1/3};   // only about 1 code in 3 moves (the glint and twinkle); the seed decides, so a shared link looks the same
 }
 
 /* ---------- UI ---------- */
@@ -1051,8 +1053,7 @@ function groundMask(){
   for (var i = 0; i < m.length; i++) m[i] = (0.2126*d[i*4] + 0.7152*d[i*4+1] + 0.0722*d[i*4+2]) > 140 ? 1 : 0;   // light = ground; the code's dark squares stay
   return (cur.gmask = m);
 }
-/* Always moving, always scannable. Three things move:
-   - gradient grounds flow (light inside the quiet zone stays at least as light as before, so contrast never drops);
+/* About 1 code in 3 moves, always scannable. Two things move (gradient grounds hold still):
    - a glint sweeps across every 3.2 s: the code's dark squares turn toward their opposite hue (kept dark, luminance 0.10
      at most) and the light ground under the band brightens toward white;
    - the loose blocks past the quiet zone twinkle in full colour (they are not part of the code, so they may be anything). */
@@ -1072,20 +1073,11 @@ function litPrep(){
   cur.dk = dk; cur.lit = lit; cur.tw = tw;
 }
 function ambient(out, now){
-  if (reduce) return;
+  if (reduce || !cur.moves) return;
   if (!cur.dk) litPrep();
   var W = cur.W, H = cur.H, P = cur.P, dk = cur.dk, lit = cur.lit, G = cur.G, x, y, i, o;
   function toward(i, c, a){ var o = i*4; out[o] += (c[0] - out[o])*a; out[o+1] += (c[1] - out[o+1])*a; out[o+2] += (c[2] - out[o+2])*a; }
   function lift(i, a){ var o = i*4; out[o] += (lit[i*3] - out[o])*a; out[o+1] += (lit[i*3+1] - out[o+1])*a; out[o+2] += (lit[i*3+2] - out[o+2])*a; }
-  // the flow: gradient grounds drift round their hue loop, once every 16 s
-  if (cur.sky && cur.sky.grad && G){
-    var ph = (now % 16000)/16000;
-    for (y = 0; y < H; y++) for (x = 0; x < W; x++){
-      i = y*W + x; if (!G[i]) continue;
-      var c0 = cur.skyAt(x, y, ph); if (G[i] === 2) c0 = mixRgb(c0, [20,20,28], 0.18);
-      o = i*4; out[o] = c0[0]; out[o+1] = c0[1]; out[o+2] = c0[2];
-    }
-  }
   // the glint: a diagonal band crossing everything every 3.2 s, with a short pause between
   var T = 3200, phg = (now % T)/T, band = (W + H)*0.09, pos = (phg*1.4 - 0.2)*(W + H);
   if (pos > -band && pos < W + H + band) for (y = 0; y < H; y++){
