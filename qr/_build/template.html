@@ -61,6 +61,9 @@ main{margin:0 auto;padding:4px calc(8px + var(--sar)) calc(8px + var(--sab)) cal
 .row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
 .row>*{flex:1 1 calc(50% - 4px)}
 .row>.wide{flex-basis:100%}
+.ctl>.row:first-child>*{flex:1 1 0}
+.btn.zh{font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;font-size:20px;color:#b8352b}
+.btn[aria-pressed="true"]{box-shadow:inset 0 0 0 2px currentColor}
 .row .btn:not(.primary){font-size:14px;padding:0 8px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border:0;margin:6px 0 10px;padding:0}
 .seg legend{padding:0;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
@@ -133,7 +136,8 @@ html.idle #qr{filter:none}
 
   <div class="ctl">
   <div class="row">
-    <button type="button" class="btn primary" id="remix">Remix</button>
+    <button type="button" class="btn primary" id="remix" aria-pressed="true" title="Remix in 3 px">3 px</button>
+    <button type="button" class="btn primary zh" id="mj" aria-pressed="false" title="Mahjong: 12 px tiles, tap again to remix" aria-label="中 mahjong">中</button>
     <button type="button" class="btn" id="scene">New scene</button>
   </div>
 
@@ -375,6 +379,44 @@ function lightMat(m){ var t = m.map(function(c){ return lightAt(c, LT + 0.02); }
 function hash2(x,y,s){ var h = Math.imul(x*374761393 + y*668265263 + s*2246822519, 1274126177); h ^= h >>> 13; h = Math.imul(h, 1103515245); return ((h ^ h >>> 16) >>> 0) / 4294967296; }
 function texShade(x,y,s){ var t = hash2(x,y,s); return t < 0.28 ? 1 : t < 0.68 ? 2 : t < 0.9 ? 3 : 4; }
 
+/* ---------- mahjong tiles (symbols from fogday.com/mahjong's scatter_mahjong_qr.py) ---------- */
+var TPAL = {K:[120,114,104], W:[255,253,247], E:[214,212,204], R:[184,53,43], B:[38,72,182], g:[31,122,92], F:[58,196,98], f:[120,220,140]};
+function gFrom(rows){ var g = [], i, off = Math.floor((14 - rows.length)/2); for (i = 0; i < 14; i++) g.push('..........'.split('')); rows.forEach(function(r, j){ r.split('').forEach(function(c, k){ if (c !== '.' && k < 10) g[j+off][k] = c; }); }); return g; }
+function stampT(g, pat, x, y, c){ pat.forEach(function(r, j){ r.split('').forEach(function(ch, i){ if (ch === 'X' && y+j < 14 && x+i < 10) g[y+j][x+i] = c; }); }); }
+function blankT(){ var g = []; for (var i = 0; i < 14; i++) g.push('..........'.split('')); return g; }
+var RING4 = ['.XX.','X..X','X..X','.XX.'], STICK = ['XXX','.X.','.X.','.X.','XXX'];
+function circlesT(spec){ var g = blankT(); spec.forEach(function(s){ stampT(g, RING4, s[0], s[1], s[2]); }); return g; }
+function bambooT(spec){ var g = blankT(); spec.forEach(function(s){ stampT(g, STICK, s[0], s[1], s[2]); }); return g; }
+var WANT = ['RRRRRRRRRR','..R....R..','.RRRRRRR..','.R.RRR.R..','.RRRRRRR..','R..R.R..R.','RRRR.RRRRR'];
+function wanT(n){ var rows = [], k; for (k = 0; k < n; k++) rows.push('..BBBBBB..', '..........'); rows = rows.slice(0, -1).concat(['..........','..........'].slice(0, Math.max(0, 4 - 2*n + 1))); return gFrom(rows.concat(['..........'], WANT)); }
+var TILE_SYM = {
+  zhong: gFrom(['....RR....','....RR....','RRRRRRRRRR','R...RR...R','R...RR...R','R...RR...R','RRRRRRRRRR','....RR....','....RR....','....RR....','....RR....']),
+  fa: gFrom(['...g..g...','..gg..gg..','.g.gggg.g.','....gg....','gggggggggg','..g....g..','.gggg.ggg.','.g..g.g...','.gggg.ggg.','...g..g.g.','.g.g.g..g.','g..gg....g']),
+  white: gFrom(['BBBBBBBBBB','B........B','B.BBBBBB.B','B.B....B.B','B.B....B.B','B.B....B.B','B.B....B.B','B.B....B.B','B.B....B.B','B.BBBBBB.B','B........B','BBBBBBBBBB']),
+  circle1: gFrom(['..BBBBBB..','.B......B.','B..gggg..B','B.g.RR.g.B','B.gRRRRg.B','B.gRRRRg.B','B.g.RR.g.B','B..gggg..B','.B......B.','..BBBBBB..']),
+  circle2: circlesT([[3,1,'g'],[3,9,'B']]), circle3: circlesT([[0,0,'B'],[3,5,'R'],[6,10,'g']]),
+  circle4: circlesT([[0,1,'B'],[6,1,'g'],[0,9,'g'],[6,9,'B']]), circle5: circlesT([[0,0,'B'],[6,0,'g'],[3,5,'R'],[0,10,'g'],[6,10,'B']]),
+  bamboo2: bambooT([[3,1,'g'],[3,8,'g']]), bamboo3: bambooT([[3,1,'g'],[1,8,'g'],[6,8,'g']]),
+  bamboo4: bambooT([[1,1,'g'],[6,1,'B'],[1,8,'B'],[6,8,'g']]), bamboo6: bambooT([[0,1,'g'],[3,1,'R'],[6,1,'g'],[0,8,'B'],[3,8,'R'],[6,8,'B']]),
+  wan1: wanT(1), wan2: wanT(2), wan3: wanT(3),
+  east: gFrom(['....B.....','BBBBBBBBBB','....B.....','.BBBBBBBB.','.B..B...B.','.BBBBBBBB.','.B..B...B.','.BBBBBBBB.','...BBB....','..B.B.B...','.B..B..B..','B...B...B.']),
+  north: gFrom(['...B..B...','...B..B...','...B..B..B','BBBB..BBB.','...B..B...','...B..B...','..BB..B...','.B.B..B..B','B..B..BBBB'])
+};
+var TILE_CACHE = {};
+function tileSprite(sym, down){   // 12x16 tile: dark rim, ivory face (or green back), shaded right and bottom
+  var key = down ? '_down' : sym; if (TILE_CACHE[key]) return TILE_CACHE[key];
+  var g = TILE_SYM[sym] || TILE_SYM.zhong, w = 12, h = 16, out = [];
+  for (var y = 0; y < h; y++) for (var x = 0; x < w; x++){
+    var ex = x === 0 || x === w-1, ey = y === 0 || y === h-1, ch;
+    if (ex && ey){ out.push(null); continue; }
+    if (ex || ey) ch = 'K';
+    else if (down) ch = (x === 1 || y === 1) ? 'f' : 'F';
+    else { var c = g[y-1][x-1]; ch = c !== '.' ? c : ((y === h-2 || x === w-2) ? 'E' : 'W'); }
+    out.push(TPAL[ch]);
+  }
+  return (TILE_CACHE[key] = out);
+}
+
 /* ---------- 3x5 pixel font for the caption ---------- */
 var FONT = {
   A:'111 101 111 101 101',B:'110 101 110 101 110',C:'111 100 100 100 111',D:'110 101 101 101 110',E:'111 100 110 100 111',
@@ -384,7 +426,7 @@ var FONT = {
   T:'111 010 010 010 010',U:'101 101 101 101 111',V:'101 101 101 101 010',W:'10001 10001 10101 11011 10001',X:'101 101 010 101 101',
   Y:'101 101 111 010 010',Z:'111 001 010 100 111','0':'111 101 101 101 111','1':'010 110 010 010 111','2':'111 001 111 100 111',
   '3':'111 001 011 001 111','4':'101 101 111 001 001','5':'111 100 111 001 111','6':'111 100 111 101 111','7':'111 001 010 010 010',
-  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
+  '8':'111 101 111 101 111','9':'111 101 111 001 111','.':'0 0 0 0 1',',':'00 00 00 01 10','!':'1 1 1 0 1','自':'00011000 00110000 11111111 10000001 10000001 11111111 10000001 11111111 10000001 10000001 11111111','摸':'01000010100 01001111111 11100010100 01000111110 01000100010 01100111110 11000100010 01000111110 01001111111 01000010100 11000100010','Ï':'101 000 111 010 010 010 111','Ë':'101 000 111 100 110 100 111','Ä':'101 000 111 101 111 101 101','Ö':'101 000 111 101 101 101 111','Ü':'101 000 101 101 101 101 111','?':'111 001 011 000 010',
   '-':'000 000 111 000 000',':':'0 1 0 1 0','/':'001 001 010 100 100',"'":'1 1 0 0 0','+':'000 010 111 010 000','#':'1010 1111 1010 1111 0101',
   '&':'010 101 010 101 011','@':'111 101 111 100 111',' ':'00 00 00 00 00'
 };
@@ -454,22 +496,31 @@ function mixRgb(a,b,t){ return [0,1,2].map(function(i){ return Math.round(a[i] +
    No frame: past the quiet zone the code's own pattern drifts outward and thins away (the halo). */
 var P = 3, QZ = 4, OUT = [36,22,48];
 var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only: it does not scan
-function render(seed, styleId, caption, img, url, finder, ground){
+function render(seed, styleId, caption, img, url, finder, ground, mode){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
   R.shape = 'flat';   // solid blocks
+  var MJ = mode === 'mj';
+  if (MJ){   // 中: mahjong table; the code's dark squares are face-down tile backs (green, corner markers red), no loose blocks
+    R.finder = 'square'; R.dens = 0; R.oreC = null; R.body2M = null;
+    R.bodyM = darkMat([[18,70,52],[24,86,64],[30,100,74],[36,112,84]]);
+    R.accM = darkMat([[120,28,24],[140,34,28],[160,40,32],[176,48,38]]);
+    R.groundM = lightMat([[244,238,222],[248,243,230],[251,247,236],[254,251,243]]);
+  }
   if (ground) R.groundM = lightMat(ground);   // a dragon's colours as the ground, lifted to stay light enough to scan
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
-  P = Math.max(1, Math.min(3, Math.round(140 / M)));
-  HW = Math.max(HW, Math.ceil(26 / P)); M = N + 2*QZ + 2*HW; off = HW + QZ;   // room for the walking dragon, clear of the quiet zone
+  P = MJ ? 12 : Math.max(1, Math.min(3, Math.round(140 / M)));
+  var DS = MJ ? P/3 : 1;   // the walking dragon keeps its 3 px look: 4 art pixels per dragon pixel in 中
+  HW = Math.max(HW, Math.ceil(26*DS / P)); M = N + 2*QZ + 2*HW; off = HW + QZ;   // room for the walking dragon, clear of the quiet zone
   if (P < 3){   // shaded and rounded shapes need 3 px per module; the drawn corner shapes work at any size
     if (R.shape !== 'dither') R.shape = 'flat';
     if (!SUPER[R.finder] && R.finder !== 'bevel') R.finder = 'square';
   }
   var gs = glyphs(caption.trim()), tw = textWidth(gs), C = M*P;
-  var ls = caption.trim() ? Math.max(1, Math.min(2, Math.floor((C - 8)/tw))) : 0;
-  var W = C, H = C + (ls ? 5*ls + 6 : 0), Mh = Math.ceil(H/P);   // the caption gets its own rows below the dragon's path
+  var ls = caption.trim() ? Math.max(1, Math.min(MJ ? 4 : 2, Math.floor((C - 8)/tw))) : 0;
+  var GR = gs.reduce(function(m, g){ return Math.max(m, g.length); }, 5);   // tallest glyph (Chinese: 11 rows)
+  var W = C, H = C + (ls ? GR*ls + 6 : 0), Mh = Math.ceil(H/P);   // the caption gets its own rows below the dragon's path
   var data = new Uint8ClampedArray(W*H*4);
   function px(x,y,rgb){ var o = (y*W+x)*4; data[o] = rgb[0]; data[o+1] = rgb[1]; data[o+2] = rgb[2]; data[o+3] = 255; }
 
@@ -558,6 +609,18 @@ function render(seed, styleId, caption, img, url, finder, ground){
         if (!isDark(mx + (sx2 === 0 ? -1 : 1), my) && !isDark(mx, my + (sy2 === 0 ? -1 : 1))) cut = true;
       }
       if (cut){ px(ax, ay, bg(ax,ay)); continue; }
+      if (MJ){   // a face-down tile: dark grout between neighbours, lit top and left edges, thick bottom, an engraved inner line
+        var tm = (kind === 1 || kind === 2) ? R.accM : R.bodyM, e = P - 1, tc;
+        var nN = isDark(mx,my-1), nS = isDark(mx,my+1), nW = isDark(mx-1,my), nE = isDark(mx+1,my);
+        if ((sx2 === 0 && sy2 === 0 && !nN && !nW) || (sx2 === e && sy2 === 0 && !nN && !nE) || (sx2 === 0 && sy2 === e && !nS && !nW) || (sx2 === e && sy2 === e && !nS && !nE)){ px(ax, ay, bg(ax,ay)); continue; }
+        if ((sx2 === 0 && nW) || (sy2 === 0 && nN)) tc = tm[0];
+        else if (sy2 >= P-2 && !nS) tc = tm[0];
+        else if (sy2 <= 1 && !nN) tc = tm[5];
+        else if (sx2 <= 1 && !nW) tc = tm[4];
+        else if (sx2 >= 3 && sx2 <= P-4 && sy2 >= 3 && sy2 <= P-5 && (sx2 === 3 || sx2 === P-4 || sy2 === 3 || sy2 === P-5)) tc = tm[4];
+        else tc = tm[2];
+        px(ax, ay, tc); continue;
+      }
       // block: textured top, lit north edge, shadowed south edge, some ore specks
       var mat = (kind === 1 || kind === 2) ? R.accM : (R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM);
       var sh = texShade(ax, ay, R.tseed);
@@ -601,15 +664,15 @@ function render(seed, styleId, caption, img, url, finder, ground){
   // caption on a light plate in the bottom margin
   if (ls){
     var tx = Math.floor((W - tw*ls)/2), ty = H - 5*ls - 5;   // 2 art pixels higher (about 5 screen pixels on a phone)
-    for (var py = ty - 2*ls - 1; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
+    for (var py = ty - (GR-5)*ls - 1; py < ty + 6*ls + 1; py++) for (var pxx = tx - 2*ls; pxx < tx + tw*ls + 2*ls; pxx++)
       if (pxx >= 0 && pxx < W && py >= 0 && py < H) px(pxx, py, pic ? lightAt(bg(pxx,py), 0.8) : bg(pxx,py));   // plate: the light ground
     gs.forEach(function(g){
       var gy, gx, yy, xx, X, Y;
-      var top = g.length - 5;   // accented letters have their dots one row above the line
+      var top = g.length - 5;   // accented letters and Chinese characters rise above the line
       for (gy = 0; gy < g.length; gy++) for (gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
         for (yy = 0; yy < ls; yy++) for (xx = 0; xx < ls; xx++){
           X = tx + gx*ls + xx; Y = ty + (gy - top)*ls + yy;
-          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, R.bodyM[texShade(X, Y, R.tseed)]);   // letters in the code's block colours
+          if (X >= 0 && X < W && Y >= 0 && Y < H) px(X, Y, MJ ? R.accM[2] : R.bodyM[texShade(X, Y, R.tseed)]);   // letters in the code's block colours (中: tile red)
         }
       tx += (g[0].length + 1)*ls;
     });
@@ -618,14 +681,26 @@ function render(seed, styleId, caption, img, url, finder, ground){
   // the loose blocks past the quiet zone: the only pixels a dragon can burn (the code itself never burns, so it always scans)
   var halo = {};
   for (y = 0; y < Mh; y++) for (x = 0; x < M; x++) if (D[y*M+x] && dq(x,y) >= 1) halo[x + ',' + y] = 1;
+  // 中: face-up tiles scattered in the margin, never over the quiet zone, never touching each other
+  var tiles = [];
+  if (MJ){
+    var tr = rng(seed ^ 0x2545f491), ib = [HW*P - 4, HW*P - 4, (HW+N+2*QZ)*P + 4, (HW+N+2*QZ)*P + 4], keys = Object.keys(TILE_SYM);
+    for (var tries = 0; tries < 4000 && tiles.length < 16; tries++){
+      var side = tr() < 0.25, tw2 = side ? 32 : 24, th2 = side ? 24 : 32, tx2 = Math.floor(tr()*(W - tw2)), ty2 = Math.floor(tr()*(C - th2));
+      if (tx2 < ib[2] && tx2 + tw2 > ib[0] && ty2 < ib[3] && ty2 + th2 > ib[1]) continue;
+      if (tiles.some(function(t){ return tx2 < t.x + t.w + 6 && tx2 + tw2 + 6 > t.x && ty2 < t.y + t.h + 6 && ty2 + th2 + 6 > t.y; })) continue;
+      tiles.push({x: tx2, y: ty2, w: tw2, h: th2, side: side, sym: keys[Math.floor(tr()*keys.length)], flip: 0});
+    }
+  }
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
-          halo:halo, P:P, bgAt:bg};
+          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : 'px'};
 }
 
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var state = {seed: 0, style: 'px', caption: 'Toï Toï Toï !!', img: null, url: URL_TEXT}, cur = null, prev = null, anim = 0;
+var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mj: '自摸'};   // 自摸 (zì mō): self-drawn win
+var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px'}, cur = null, prev = null, anim = 0;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function store(k,v){ try { localStorage.setItem(LS+k, v); } catch (err) {} }
@@ -638,6 +713,7 @@ function newSeed(){ var n; do { n = 1 + Math.floor(Math.random()*999998); } whil
 function hashFor(){
   var h = '#' + state.seed;
   if (state.url !== URL_TEXT) h += '&u=' + encodeURIComponent(state.url.replace(/^https:\/{2}/,''));
+  if (state.mode === 'mj') h += '&m=mj';
   return h;
 }
 function shareUrl(){ return location.origin + location.pathname + hashFor(); }
@@ -684,7 +760,7 @@ function paint(img){
 function draw(animate){
   prev = cur;
   state.ground = null;
-  cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random');
+  cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', null, state.mode);
   burns = {}; nBurn = 0; sparks = [];
   makeDragons(); startFlying();
   document.documentElement.style.setProperty('--tg', cur.grad);
@@ -804,12 +880,13 @@ function makeDragons(){
 /* Where the dragon is: s runs once round the quiet-zone box (clockwise from the top left). Returns the sprite's top-left,
    its turn (0 standing on top, 1 on the right side, 2 under the bottom, 3 on the left side) */
 function walkPos(d){
+  var S = cur.ds || 1, sw = SW*S, sh = SH*S, ft = FOOT*S;   // S: art pixels per dragon pixel (4 in 中, so it looks the same)
   var b = cur.inner, x0 = b[0], y0 = b[1], x1 = b[2], y1 = b[3], w = x1 - x0, h = y1 - y0, L = 2*(w+h);
   var t = (((d.s*L) % L) + L) % L;
-  if (t < w) return [x0 + t - SW/2, y0 - 1 - FOOT, 0];
-  t -= w; if (t < h) return [x1 + FOOT - SH + 1, y0 + t - SW/2, 1];
-  t -= h; if (t < w) return [x1 - t - SW/2, y1 + FOOT - SH + 1, 2];
-  t -= w; return [x0 - 1 - FOOT, y1 - t - SW/2, 3];
+  if (t < w) return [x0 + t - sw/2, y0 - 1 - ft, 0];
+  t -= w; if (t < h) return [x1 + ft - sh + 1, y0 + t - sw/2, 1];
+  t -= h; if (t < w) return [x1 - t - sw/2, y1 + ft - sh + 1, 2];
+  t -= w; return [x0 - 1 - ft, y1 - t - sw/2, 3];
 }
 /* Burning: a block hit by fire flickers in flames, turns grey, then is gone (water: grey, then gone). New scene puts them all back. */
 var burns = {}, sparks = [], nBurn = 0;
@@ -825,7 +902,7 @@ function groundMask(){
   return (cur.gmask = m);
 }
 function frameData(){
-  if ((!dragons.length && !nBurn && !sparks.length && !IDLE) || !cur.inner) return cur.data;
+  if ((!dragons.length && !nBurn && !sparks.length && !IDLE && !(cur.tiles && cur.tiles.length)) || !cur.inner) return cur.data;
   var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H, now = performance.now(), P = cur.P;
   if (IDLE){ var gm = groundMask(); for (var gi = 0; gi < gm.length; gi++) if (gm[gi]) out[gi*4+3] = 0; }
   for (var k in burns){
@@ -838,9 +915,25 @@ function frameData(){
       out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = (IDLE && age >= (b.water ? 900 : 1700)) ? 0 : 255;
     }
   }
+  // 中: the face-up tiles (drawn here so they can flip); a flipping tile shows its green back for a moment
+  (cur.tiles || []).forEach(function(t){
+    var spr = tileSprite(t.sym, now < t.flip);
+    for (var v = 0; v < 16; v++) for (var u = 0; u < 12; u++){
+      var c = spr[v*12 + u]; if (!c) continue;
+      var bx = t.side ? v : u, by = t.side ? 11 - u : v;   // sideways tiles lie on their left
+      for (var yy2 = 0; yy2 < 2; yy2++) for (var xx2 = 0; xx2 < 2; xx2++){
+        var X3 = t.x + bx*2 + xx2, Y3 = t.y + by*2 + yy2;
+        if (X3 < 0 || Y3 < 0 || X3 >= W || Y3 >= H) continue;
+        var o3 = (Y3*W + X3)*4; out[o3] = c[0]; out[o3+1] = c[1]; out[o3+2] = c[2]; out[o3+3] = 255;
+      }
+    }
+  });
   sparks.forEach(function(p){
-    var X = Math.round(p.x), Y = Math.round(p.y);
-    if (X >= 0 && Y >= 0 && X < W && Y < H){ var pal = p.water ? WATER : FIRE, c = pal[Math.min(pal.length-1, Math.floor(p.n/p.life*pal.length))], o = (Y*W + X)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = 255; }
+    var S = cur.ds || 1, pal = p.water ? WATER : FIRE, c = pal[Math.min(pal.length-1, Math.floor(p.n/p.life*pal.length))];
+    for (var sy4 = 0; sy4 < S; sy4++) for (var sx4 = 0; sx4 < S; sx4++){
+      var X = Math.round(p.x) + sx4, Y = Math.round(p.y) + sy4;
+      if (X >= 0 && Y >= 0 && X < W && Y < H){ var o = (Y*W + X)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = 255; }
+    }
   });
   (window.__quiet && !window.__quiet() ? [] : dragons).forEach(function(d){   // the walker is away while the code is a no-fly zone
     var p = walkPos(d), ox = Math.round(p[0]), oy = Math.round(p[1]), rot = p[2];
@@ -850,10 +943,12 @@ function frameData(){
       if (ch <= 0) continue;
       var X, Y;   // facing along the walk, feet toward the code
       if (rot === 0){ X = u; Y = v; } else if (rot === 1){ X = SH - 1 - v; Y = u; } else if (rot === 2){ X = SW - 1 - u; Y = SH - 1 - v; } else { X = v; Y = SW - 1 - u; }
-      X += ox; Y += oy;
-      if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
-      var c = d.pal[ch] || d.pal[2], o = (Y*W + X)*4;
-      out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = 255;
+      var c = d.pal[ch] || d.pal[2], S = cur.ds || 1;
+      for (var sy3 = 0; sy3 < S; sy3++) for (var sx3 = 0; sx3 < S; sx3++){
+        var X2 = ox + X*S + sx3, Y2 = oy + Y*S + sy3;
+        if (X2 < 0 || Y2 < 0 || X2 >= W || Y2 >= H) continue;
+        var o = (Y2*W + X2)*4; out[o] = c[0]; out[o+1] = c[1]; out[o+2] = c[2]; out[o+3] = 255;
+      }
     }
   });
   return out;
@@ -863,7 +958,8 @@ var FWD = [[1,0],[0,1],[-1,0],[0,-1]], OUTW = [[0,-1],[1,0],[0,1],[-1,0]];
 function mouthAt(d){   // the mouth (sprite 28,6) after the walk's turn
   var p = walkPos(d), u = 28, v = 6, r = p[2], X, Y;
   if (r === 0){ X = u; Y = v; } else if (r === 1){ X = SH - 1 - v; Y = u; } else if (r === 2){ X = SW - 1 - u; Y = SH - 1 - v; } else { X = v; Y = SW - 1 - u; }
-  return [p[0] + X, p[1] + Y, r];
+  var S = cur.ds || 1;
+  return [p[0] + X*S, p[1] + Y*S, r];
 }
 function flyLoop(now){
   dAnim = 0;
@@ -877,7 +973,7 @@ function flyLoop(now){
       if (d.br > 0){   // breathing: stands still, fire (or water) streams forward and a little outward
         d.br--;
         var m = mouthAt(d), f = FWD[m[2]], ow = OUTW[m[2]];
-        for (var i = 0; i < 2; i++) sparks.push({x: m[0], y: m[1], vx: f[0]*(1.4 + Math.random()) + ow[0]*Math.random()*0.9, vy: f[1]*(1.4 + Math.random()) + ow[1]*Math.random()*0.9, n: 0, life: 10 + Math.floor(Math.random()*8), water: d.water});
+        var SS = cur.ds || 1; for (var i = 0; i < 2; i++) sparks.push({x: m[0], y: m[1], vx: SS*(f[0]*(1.4 + Math.random()) + ow[0]*Math.random()*0.9), vy: SS*(f[1]*(1.4 + Math.random()) + ow[1]*Math.random()*0.9), n: 0, life: 10 + Math.floor(Math.random()*8), water: d.water});
       } else {
         d.s += d.v / L;
         if (Math.random() < 0.025){ d.br = 10 + Math.floor(Math.random()*8); d.water = Math.random() < 0.35; }
@@ -974,7 +1070,8 @@ function boot(){
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
   if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
-  var cp = load('cap'); if (cp !== null) state.caption = cp;   // default "toi toi toi !!!"; once you edit it, yours (even blank) is kept
+  if (hs.m === 'mj') state.mode = 'mj';
+  var cp = load('cap'); if (cp !== null){ state.caption = cp; state.capUser = true; } else state.caption = CAP_DEFAULT[state.mode];   // default "toi toi toi !!!"; once you edit it, yours (even blank) is kept
   syncHash();
   $('siteFree').value = bare(state.url);   // the address in use, shown (and editable) under More
   $('cap').value = state.caption;
@@ -982,7 +1079,24 @@ function boot(){
   draw(false);
   showSite();
   calm();
-  $('remix').addEventListener('click', remix);
+  /* 3 px and 中: the first tap switches mode (with a new code), the next ones remix in that mode */
+  function setMode(m){
+    if (state.mode === m) return;
+    state.mode = m;
+    if (!state.capUser){ state.caption = CAP_DEFAULT[m]; $('cap').value = state.caption; }
+    $('remix').setAttribute('aria-pressed', String(m === 'px')); $('mj').setAttribute('aria-pressed', String(m === 'mj'));
+  }
+  $('remix').addEventListener('click', function(){ setMode('px'); remix(); });
+  $('mj').addEventListener('click', function(){ setMode('mj'); remix(); });
+  $('remix').setAttribute('aria-pressed', String(state.mode === 'px')); $('mj').setAttribute('aria-pressed', String(state.mode === 'mj'));
+  /* 中: every second or so one tile flips over (green back) and lands as a different tile */
+  setInterval(function(){
+    if (!cur || !cur.tiles || !cur.tiles.length || revealing || reduce) return;
+    var t = cur.tiles[Math.floor(Math.random()*cur.tiles.length)], keys = Object.keys(TILE_SYM), n;
+    do { n = keys[Math.floor(Math.random()*keys.length)]; } while (n === t.sym);
+    t.flip = performance.now() + 260; t.sym = n; paintFrame();
+    setTimeout(function(){ if (cur) paintFrame(); }, 280);
+  }, 1100);
   function setUrl(u){ state.url = u; state.seed = newSeed(); syncHash(); draw(true); calm(); showSite(); }   // a new website is always a new pattern
   function openMore(){ $('moreBtn').setAttribute('aria-expanded', 'true'); $('more').hidden = false; }
   $('site').addEventListener('change', function(){
@@ -1039,7 +1153,7 @@ function boot(){
   $('scene').addEventListener('click', function(){   // a new /px background: landscape, weather and dragons
     var f = $('pxBack');
     if (f && f.contentWindow) f.contentWindow.postMessage('px:new-scene', location.origin);
-    if (state.ground){ state.ground = null; cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random'); }   // the ground goes back too
+    if (state.ground){ state.ground = null; cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', null, state.mode); }   // the ground goes back too
     refreshPixels();   // burnt blocks come back and the walker returns; the website stays
     calm();
   });
@@ -1060,7 +1174,7 @@ function boot(){
   window.__quiet = quiet;
   function reground(cols){   // same code, same burns and walker; only the ground's colours change
     state.ground = [cols[0], cols[2], cols[1], cols[2]];
-    cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', state.ground);
+    cur = render(state.seed, state.style, state.caption, state.img, state.url, 'random', state.ground, state.mode);
     paintFrame();
   }
   /* A dragon flying over a button leaves its pattern on it (its body, wing and belly colours, 50% see-through)
@@ -1146,9 +1260,14 @@ function boot(){
   });
   $('fileLabel').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
   var t;
+  /* Tapping into the caption clears it for fresh typing; leaving without typing puts the old caption back */
+  var capWas = null, capTyped = false;
+  $('cap').addEventListener('focus', function(){ capWas = this.value; capTyped = false; this.value = ''; });
+  $('cap').addEventListener('blur', function(){ if (!capTyped && capWas !== null) this.value = capWas; capWas = null; });
+  $('cap').addEventListener('input', function(){ capTyped = true; });
   $('cap').addEventListener('input', function(){
     state.caption = this.value.replace(/[\u0000-\u001f]/g, '');   // any letter; ones the pixel font lacks show as ?
-    store('cap', state.caption);
+    store('cap', state.caption); state.capUser = true;
     clearTimeout(t); t = setTimeout(function(){ draw(false); }, 120);
   });
   document.addEventListener('keydown', function(e){
