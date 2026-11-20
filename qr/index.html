@@ -1021,9 +1021,26 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     }
     gm0 = new Uint8Array(W*H);   // idle keeps the night ground: light squares need it behind them to scan
   }
+  var NUMBOX = null;
+  // the code's number (as in the link, #587732) in small digits, top right, in the code's colour on a patch of its ground
+  (function(){
+    var ng = glyphs(String(seed)), nw = textWidth(ng), nl = Math.max(1, Math.round(W/270)), pad = 2*nl;
+    var x0 = W - nw*nl - pad - nl*2, y0 = pad + nl*2;
+    var gx0 = Math.min(W-1, x0 + Math.floor(nw*nl/2)), gy0 = Math.max(0, y0 - 2);
+    var go = (gy0*W + gx0)*4, gc = [data[go], data[go+1], data[go+2]];   // the ground under the number, before it is covered
+    var gr = MO ? (MO.inv ? MO.deep[2] : R.groundM[2]) : TR ? R.groundM[2] : (SK && SK.night) ? SK.dark[0][2] : pic ? lightAt(bg(gx0, gy0), 0.8) : R.groundM[2];
+    var dark = lum(gr) < 0.2, ink = MO ? MO.stops[dark ? 2 : 1] : TR ? lightAt(hsl(TRC.a, 70, 60), 0.3) : MJ ? MJG : IG ? igAt(gx0, gy0, W, H)[2] : dark ? lightAt(brightOf(R.bodyM[2]), 0.35) : R.bodyM[2];
+    NUMBOX = [Math.max(0, x0 - nl), Math.max(0, y0 - nl), Math.min(W, x0 + nw*nl + nl), Math.min(H, y0 + 6*nl)];
+    for (var yy = y0 - nl; yy < y0 + 6*nl; yy++) for (var xx = x0 - nl; xx < x0 + nw*nl + nl; xx++) if (xx >= 0 && yy >= 0 && xx < W && yy < H) px(xx, yy, gr);
+    ng.forEach(function(g){
+      for (var gy = 0; gy < g.length; gy++) for (var gx = 0; gx < g[0].length; gx++) if (g[gy][gx] === '1')
+        for (var a = 0; a < nl; a++) for (var b = 0; b < nl; b++){ var X = x0 + gx*nl + b, Y = y0 + gy*nl + a; if (X < W && Y < H) px(X, Y, ink); }
+      x0 += (g[0].length + 1)*nl;
+    });
+  })();
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
           halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : MONO ? 'mono' : mode === 'trees' ? 'trees' : 'px', mono: MO, round: RO, trees: TRC, sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
-          moves: rng(seed ^ 0x27d4eb2f)() < 1/2};   // half the codes move (the glint and twinkle); the seed decides, so a shared link looks the same
+          moves: rng(seed ^ 0x27d4eb2f)() < 1/2, numBox: NUMBOX};   // half the codes move (the glint and twinkle); the seed decides, so a shared link looks the same
 }
 
 /* ---------- UI ---------- */
@@ -1259,7 +1276,12 @@ function litPrep(){
     tw.push([mx, my, hash2(mx, my, 91)*6.283, 0.7 + hash2(my, mx, 17)*1.6, cur.mono ? hsl(cur.mono.hue, 90, 55) : cur.sky && cur.sky.night ? cur.sky.star : hsl(hash2(mx, my, 5)*360, 90, 52)]); }
   cur.dk = dk; cur.lit = lit; cur.tw = tw;
 }
-function ambient(out, now){
+function ambient(out, now){   // the effects, then the number's corner put back: it never twinkles or glints
+  ambient0(out, now);
+  var nb = cur.numBox; if (!nb || !cur.moves) return;
+  for (var y = nb[1]; y < nb[3]; y++) for (var x = nb[0]; x < nb[2]; x++){ var o = (y*cur.W + x)*4; out[o] = cur.data[o]; out[o+1] = cur.data[o+1]; out[o+2] = cur.data[o+2]; }
+}
+function ambient0(out, now){
   if (reduce || !cur.moves) return;
   if (!cur.dk) litPrep();
   var W = cur.W, H = cur.H, P = cur.P, dk = cur.dk, lit = cur.lit, G = cur.G, x, y, i, o;
