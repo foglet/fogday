@@ -1174,6 +1174,7 @@ function boot(){
     function arm(){ clearTimeout(idleT); idleT = setTimeout(function(){ if (document.activeElement === el) el.blur(); }, el.id === 'cap' ? 15000 : 2000); }   // the caption box gives you 15 s
     el.addEventListener('focus', arm);
     ['input', 'keydown', 'change', 'pointerdown'].forEach(function(ev){ el.addEventListener(ev, arm); });
+    el.addEventListener('focus', function(){ boxStop(true); });   // the menu dragon is shooed out too
     el.addEventListener('blur', function(){ clearTimeout(idleT); });
   });
   /* Full screen (hides the browser's toolbars) where the browser allows it; iPhone gets it from Add to Home Screen */
@@ -1207,7 +1208,9 @@ function boot(){
   setInterval(function(){
     var f = $('pxFront'); if (!f || !f.contentWindow || !cur) return;
     var r = canvas.getBoundingClientRect();
-    f.contentWindow.postMessage({type: 'px:nofly', rect: quiet() ? null : [r.left, r.top, r.right, r.bottom]}, location.origin);
+    var zs = quiet() ? [] : [[r.left, r.top, r.right, r.bottom]], a = document.activeElement;
+    if (a && a.matches && a.matches('.field input, .field select')){ var q = a.getBoundingClientRect(), PAD = 40; zs.push([q.left - PAD, q.top - PAD, q.right + PAD, q.bottom + PAD]); }   // a box in use: dragons are shooed off it
+    f.contentWindow.postMessage({type: 'px:nofly', rects: zs.length ? zs : null}, location.origin);
     setIdle(performance.now() - lastAct > IDLE_MS);
   }, 250);
   window.__quiet = quiet;

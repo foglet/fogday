@@ -41,3 +41,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Header: no visible title or Projects (bento) icon; "Pixel QR" stays as a screen-reader-only h1. The full-screen button sits at the right end of the No./version line. The website box text is 15 px, like the buttons and menu.
 - 中 mode: the pattern drifts past the quiet zone as in 3 px (Morse dots and dashes), and loose tiles lie scattered across the margin (about one per 100 margin squares), never in the quiet zone or on the caption. The canvas is 95% of the phone's width in both modes.
 - Caption box: stays open (wide, solid) for 15 s without typing before it lets go; other boxes and the menu still let go after 2 s.
+- A box or menu in use shoos the dragons: while it has focus, a no-fly zone 40 px around it keeps the /px front-layer dragons off (`px:nofly` now takes `rects`, a list; `rect` still works), and the menu's own dragon flies out at once.
