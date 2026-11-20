@@ -24,10 +24,10 @@ if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIn
 :root{--pixel:"Silkscreen","Pixelify Sans",monospace;--font:"Pixelify Sans",system-ui,sans-serif;--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8;--out:#241630;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
 *{box-sizing:border-box}
-/* a button that also takes a double tap: two tiny dark grey dots under its icon */
+/* a button that also takes a double tap: two tiny dots under its icon, the grey of the button text */
 .btn.dbl{position:relative}
 .btn.dbl::after{content:"";position:absolute;left:50%;bottom:4px;width:8px;height:2px;margin-left:-4px;pointer-events:none;
-  background:radial-gradient(circle,#4a4a4a 0 1px,transparent 1.2px) 0 50%/4px 2px repeat-x}
+  background:radial-gradient(circle,currentColor 0 1px,transparent 1.2px) 0 50%/4px 2px repeat-x}
 html.nopx .bgpx,html.nopx .fgpx{display:none}   /* joystick double tap: no /px background, just the plain page */
 html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 var(--font);-webkit-text-size-adjust:100%}
 .px-ink{color:transparent;background-image:var(--tg,linear-gradient(to right,#3f9e6e,#5aa0d8,#d0708a));-webkit-background-clip:text;background-clip:text}
