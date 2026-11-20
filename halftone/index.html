@@ -54,11 +54,12 @@ body.big .stagecol{position:static}
 .btn[disabled]{opacity:.5;cursor:default}
 @media (max-width:360px){.actions .btn span{display:none}}
 /* pill slider: Dot matrix, Halftone, Text share one switch; the green pill slides to the chosen one */
-.pill{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:32px;border-radius:999px;background:var(--well);padding:2px}
-.pill .knob{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/3);border-radius:999px;background:var(--felt);transform:translateX(calc(var(--i,0) * 100%));transition:transform .25s cubic-bezier(.3,0,.2,1)}
-.pill [role=tab]{position:relative;z-index:1;border:0;background:none;border-radius:999px;font-weight:500;font-size:13px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.tabrow{display:flex;gap:6px;align-items:center}.tabrow .pill{flex:1;min-width:0}
+.pill{position:relative;display:grid;grid-template-columns:repeat(4,1fr);height:32px;border-radius:999px;background:var(--well);padding:2px}
+.pill .knob{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/4);border-radius:999px;background:var(--felt);transform:translateX(calc(var(--i,0) * 100%));transition:transform .25s cubic-bezier(.3,0,.2,1)}
+.pill [role=tab]{position:relative;z-index:1;border:0;background:none;border-radius:999px;font-weight:500;font-size:13px;white-space:nowrap;padding:0 2px;min-width:0;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .pill [role=tab][aria-selected=true]{color:#fff}
-.pill [role=tab].cur::after{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+.pill [role=tab].cur::after{content:"";flex:0 0 auto;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
 .tabp{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
 .acc{background:var(--card);border:1px solid var(--line);border-radius:10px}
 .ph{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
@@ -104,6 +105,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
 .sheet h2{margin:0;font:400 18px/1.2 "Young Serif",Georgia,serif;display:flex;justify-content:space-between;align-items:center}
 .sheet video{width:100%;border-radius:10px;background:#000;max-height:60vh;object-fit:contain}
 #saveModal .sheet{max-width:380px}
+@media (max-width:420px){.pill [role=tab]{font-size:12px;gap:3px}}
 @media (prefers-reduced-motion:reduce){.ph .ico,.pill .knob{transition:none}}
 </style>
 </head>
@@ -123,17 +125,20 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
     <div class="actions">
       <button type="button" class="btn" id="addImg" aria-label="Add image" title="Add image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg><span>Image</span></button>
       <button type="button" class="btn" id="takePhoto" aria-label="Take photo" title="Take photo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg><span>Camera</span></button>
-      <button type="button" class="btn" id="play" aria-label="Play reveal" title="Play reveal"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg><span>Play</span></button>
       <button type="button" class="btn primary" id="saveOpen"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>Save</span></button>
     </div>
     <input type="file" id="fileIn" accept="image/*" hidden>
     <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
 
+    <div class="tabrow">
     <div class="pill" role="tablist" aria-label="Edit">
       <span class="knob" aria-hidden="true"></span>
       <button type="button" role="tab" id="t-dot" aria-controls="p-dot" data-tab="dot">Dot matrix</button>
       <button type="button" role="tab" id="t-half" aria-controls="p-half" data-tab="half">Halftone</button>
       <button type="button" role="tab" id="t-text" aria-controls="p-text" data-tab="text">Text</button>
+      <button type="button" role="tab" id="t-fx" aria-controls="p-fx" data-tab="fx">Effects</button>
+    </div>
+    <button type="button" class="icob" id="tabReset" aria-label="Reset this tab" title="Reset this tab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
     </div>
 
     <!-- Dot matrix -->
@@ -154,6 +159,10 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-reveal">Reveal<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-reveal" hidden>
           <div class="f"><label class="lab" for="reveal">Reveal <output data-for="reveal"></output></label><input type="range" id="reveal" min="0" max="100" step="1" data-k="reveal"></div>
+          <fieldset class="seg"><legend>Reveal from</legend>
+            <label><input type="radio" name="dmFrom" value="confetti" data-k="dmFrom"><span>Confetti colors</span></label>
+            <label><input type="radio" name="dmFrom" value="clear" data-k="dmFrom"><span>Transparent</span></label>
+          </fieldset>
           <div class="f"><label class="lab" for="dir">Direction</label>
             <select id="dir" data-k="dir"><option value="lr">Left to right</option><option value="rl">Right to left</option><option value="tb">Top to bottom</option><option value="diag">Diagonal</option><option value="center">From center</option><option value="random">Random</option></select></div>
           <div class="f"><label class="lab" for="band">Fade band <output data-for="band"></output></label><input type="range" id="band" min="3" max="60" step="1" data-k="band"></div>
@@ -228,6 +237,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
         <button type="button" class="icob" id="lDel" aria-label="Delete this text" title="Delete"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg></button>
       </div>
       <div class="f"><label class="lab" for="ltext">Text</label><textarea id="ltext" rows="2" data-l="text" placeholder="Type something"></textarea></div>
+      <div class="f"><label class="lab" for="op">Text opacity <output data-for="op"></output></label><input type="range" id="op" min="0" max="100" step="1" data-l="op"></div>
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-type">Type<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-type" hidden>
@@ -242,7 +252,6 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
           </div>
           <div class="f"><label class="lab" for="size">Size <output data-for="size"></output></label><input type="range" id="size" min="2" max="100" step="0.5" data-l="size"></div>
           <div class="f"><span class="lab" id="colorL">Fill color</span><div class="color" data-lcolor="color" data-label="colorL"></div></div>
-          <div class="f"><label class="lab" for="op">Opacity <output data-for="op"></output></label><input type="range" id="op" min="0" max="100" step="1" data-l="op"></div>
           <fieldset class="seg"><legend>Text style</legend>
             <label><input type="radio" name="mode" value="solid" data-l="mode"><span>Solid</span></label>
             <label><input type="radio" name="mode" value="dots" data-l="mode"><span>Made of dots</span></label>
@@ -308,6 +317,35 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
       </div>
     </div>
 
+    <!-- Effects: applied on top of the look and the text -->
+    <div class="tabp" role="tabpanel" id="p-fx" aria-labelledby="t-fx" hidden>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-glitch">Glitch<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-glitch" hidden>
+          <div class="f"><label class="lab" for="fxShift">Color shift <output data-for="fxShift"></output></label><input type="range" id="fxShift" min="0" max="100" step="1" data-k="fxShift"></div>
+          <div class="f"><label class="lab" for="fxGlitch">Glitch slices <output data-for="fxGlitch"></output></label><input type="range" id="fxGlitch" min="0" max="100" step="1" data-k="fxGlitch"></div>
+          <button type="button" class="btn" id="fxShuffle"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg><span>New glitch</span></button>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-light">Light leaks<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-light" hidden>
+          <div class="f"><label class="lab" for="fxLeak">Light leak <output data-for="fxLeak"></output></label><input type="range" id="fxLeak" min="0" max="100" step="1" data-k="fxLeak"></div>
+          <div class="f"><label class="lab" for="fxFlare">Lens flare <output data-for="fxFlare"></output></label><input type="range" id="fxFlare" min="0" max="100" step="1" data-k="fxFlare"></div>
+          <div class="f"><label class="lab" for="fxStreak">Glowing streaks <output data-for="fxStreak"></output></label><input type="range" id="fxStreak" min="0" max="100" step="1" data-k="fxStreak"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-grade">Color grade<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-grade" hidden>
+          <div class="f"><label class="lab" for="fxGrade">Look</label>
+            <select id="fxGrade" data-k="fxGrade"><option value="none">None</option><option value="teal">Teal and orange</option><option value="bleach">Bleach bypass</option><option value="warm">Warm film</option><option value="cool">Cool night</option><option value="fade">Faded matte</option><option value="noir">Noir</option></select></div>
+          <div class="f"><label class="lab" for="fxGradeAmt">Strength <output data-for="fxGradeAmt"></output></label><input type="range" id="fxGradeAmt" min="0" max="100" step="1" data-k="fxGradeAmt"></div>
+        </div>
+      </div>
+      <p class="foot">Effects show in saved images and video, not in SVG.</p>
+    </div>
+
     <p class="status" id="status" role="status" aria-live="polite"></p>
     <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
   </section>
@@ -360,8 +398,9 @@ var LDEF = {
 var DEF = {
   look: "dot",
   cols: 56, reveal: 60, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
-  dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7,
+  dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7, dmFrom: "confetti",
   htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
+  fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
   outSize: "2048", ig: false, igSize: "1350", active: 0
 };
 var FONTS = {
@@ -618,7 +657,8 @@ function renderDot(ctx, W, H, prog) {
   var sat = S.dmSat / 100, con = S.dmCon / 100;
   var r = Math.min(cell, cellY) / 2 * S.dmDot / 100;
   ctx.fillStyle = S.dmBg; ctx.fillRect(0, 0, W, H);
-  ctx.globalAlpha = S.dmOp / 100;
+  var op = S.dmOp / 100, clear = S.dmFrom === "clear";
+  ctx.globalAlpha = op;
   for (var j = 0; j < rows; j++) {
     for (var i = 0; i < cols; i++) {
       var pc = pal[(rnd() * pal.length) | 0], n = rnd(), q = (j * cols + i) * 4;
@@ -634,6 +674,7 @@ function renderDot(ctx, W, H, prog) {
         default: p = i / Math.max(1, cols - 1);
       }
       var t = clamp((front - (p + n * jit)) / band, 0, 1), w = wash * Math.sin(Math.PI * t);
+      if (clear) { if (t <= 0) continue; pc = [R, G, B]; ctx.globalAlpha = op * t; }
       var cr = pc[0] + (R - pc[0]) * t, cg = pc[1] + (G - pc[1]) * t, cb = pc[2] + (B - pc[2]) * t;
       cr += (bg[0] - cr) * w; cg += (bg[1] - cg) * w; cb += (bg[2] - cb) * w;
       if (m && m[q + 3]) {
@@ -765,6 +806,108 @@ function shape(ctx, x, y, cell, v, ca, sa, kind) {
   ctx.closePath();
 }
 
+/* ---------- effects: grade, color shift, glitch slices, then light (leak, flare, streaks) added with screen ---------- */
+var GRADES = {
+  teal: function (r, g, b, l) { var hi = l * l, sh = (1 - l) * (1 - l); return [r + hi * 0.14 - sh * 0.10, g + hi * 0.03 + sh * 0.04, b - hi * 0.14 + sh * 0.14]; },
+  bleach: function (r, g, b, l) { return [(r + l) / 2, (g + l) / 2, (b + l) / 2].map(function (v) { return (v - 0.5) * 1.35 + 0.5; }); },
+  warm: function (r, g, b) { return [0.05 + r * 1.02, 0.04 + g * 0.95, 0.03 + b * 0.80]; },
+  cool: function (r, g, b) { return [r * 0.82, g * 0.92 + 0.02, b * 1.05 + 0.06]; },
+  fade: function (r, g, b, l) { return [r, g, b].map(function (v) { return 0.09 + (v * 0.8 + l * 0.2) * 0.84; }); },
+  noir: function (r, g, b, l) { var v = (l - 0.5) * 1.45 + 0.45; return [v, v, v]; }
+};
+function effects(ctx, W, H) {
+  var k = W / 1080, grade = GRADES[S.fxGrade], ga = S.fxGradeAmt / 100;
+  var sh = Math.round(S.fxShift / 100 * 24 * k), gl = S.fxGlitch / 100;
+  if ((grade && ga > 0) || sh || gl > 0) {
+    var img = ctx.getImageData(0, 0, W, H), d = img.data, n = d.length, i;
+    if (grade && ga > 0) {
+      for (i = 0; i < n; i += 4) {
+        var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, l = 0.2126 * r + 0.7152 * g + 0.0722 * b, o = grade(r, g, b, l);
+        d[i] = (r + (o[0] - r) * ga) * 255; d[i + 1] = (g + (o[1] - g) * ga) * 255; d[i + 2] = (b + (o[2] - b) * ga) * 255;
+      }
+    }
+    if (sh || gl > 0) {
+      var s = new Uint8ClampedArray(d), rnd = mulberry(S.fxSeed * 31 + 5), rows = new Int32Array(H), cs = new Int32Array(H);
+      if (gl > 0) {
+        /* bands of rows pushed sideways, some with an extra channel split */
+        var bands = 3 + Math.round(gl * 14);
+        for (var q = 0; q < bands; q++) {
+          var y0 = (rnd() * H) | 0, bh = Math.max(1, (rnd() * rnd() * H * 0.12) | 0), off = Math.round((rnd() - 0.5) * 2 * gl * 160 * k), cx = rnd() < 0.5 ? Math.round(gl * 18 * k) : 0;
+          for (var yy = y0; yy < Math.min(H, y0 + bh); yy++) { rows[yy] = off; cs[yy] = cx; }
+        }
+      }
+      for (var y = 0; y < H; y++) {
+        var ro = rows[y], c = sh + cs[y], base = y * W;
+        for (var x = 0; x < W; x++) {
+          var xs = x - ro, j = (base + x) * 4;
+          xs = xs < 0 ? 0 : xs >= W ? W - 1 : xs;
+          var xr = xs - c, xb = xs + c;
+          xr = xr < 0 ? 0 : xr >= W ? W - 1 : xr; xb = xb < 0 ? 0 : xb >= W ? W - 1 : xb;
+          d[j] = s[(base + xr) * 4]; d[j + 1] = s[(base + xs) * 4 + 1]; d[j + 2] = s[(base + xb) * 4 + 2];
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  var leak = S.fxLeak / 100, flare = S.fxFlare / 100, streak = S.fxStreak / 100;
+  if (!(leak || flare || streak)) return;
+  var streakSrc = streak ? glowSource(ctx, W, H) : null;
+  ctx.save(); ctx.globalCompositeOperation = "screen";
+  if (leak) {
+    var lr = mulberry(S.fxSeed * 17 + 1), M = Math.max(W, H);
+    [["255,96,40", 0.9], ["255,40,120", 0.6], ["255,190,80", 0.5]].forEach(function (c) {
+      var side = (lr() * 4) | 0, along = lr();
+      var x = side === 0 ? 0 : side === 1 ? W : along * W, y = side === 2 ? 0 : side === 3 ? H : along * H;
+      var gr = ctx.createRadialGradient(x, y, 0, x, y, M * (0.35 + lr() * 0.35));
+      gr.addColorStop(0, "rgba(" + c[0] + "," + (leak * c[1]) + ")"); gr.addColorStop(1, "rgba(" + c[0] + ",0)");
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    });
+  }
+  if (flare) {
+    /* a source high on one side, a halo ring, ghost discs on the line through the center, and a thin horizontal flare */
+    var fx = W * 0.78, fy = H * 0.2, R = Math.min(W, H);
+    var g1 = ctx.createRadialGradient(fx, fy, 0, fx, fy, R * 0.5);
+    g1.addColorStop(0, "rgba(255,250,235," + flare + ")"); g1.addColorStop(0.08, "rgba(255,220,170," + flare * 0.7 + ")");
+    g1.addColorStop(0.3, "rgba(255,150,80," + flare * 0.18 + ")"); g1.addColorStop(1, "rgba(255,120,60,0)");
+    ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+    ctx.lineWidth = R * 0.012; ctx.strokeStyle = "rgba(140,200,255," + flare * 0.25 + ")";
+    ctx.beginPath(); ctx.arc(fx, fy, R * 0.3, 0, 6.2832); ctx.stroke();
+    var cx0 = W / 2, cy0 = H / 2;
+    [[0.35, 0.05, "120,255,200"], [0.7, 0.09, "255,120,220"], [1.2, 0.03, "255,230,120"], [1.6, 0.14, "120,160,255"], [2.0, 0.06, "255,170,90"]].forEach(function (gh) {
+      var gx = fx + (cx0 - fx) * gh[0], gy = fy + (cy0 - fy) * gh[0], gr = R * gh[1];
+      var g2 = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+      g2.addColorStop(0, "rgba(" + gh[2] + "," + flare * 0.22 + ")"); g2.addColorStop(0.8, "rgba(" + gh[2] + "," + flare * 0.12 + ")"); g2.addColorStop(1, "rgba(" + gh[2] + ",0)");
+      ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 6.2832); ctx.fill();
+    });
+    var g3 = ctx.createLinearGradient(0, fy, W, fy);
+    g3.addColorStop(0, "rgba(120,180,255,0)"); g3.addColorStop(fx / W, "rgba(170,210,255," + flare * 0.6 + ")"); g3.addColorStop(1, "rgba(120,180,255,0)");
+    ctx.fillStyle = g3; ctx.fillRect(0, fy - R * 0.004, W, R * 0.008);
+  }
+  if (streakSrc) {
+    /* the bright parts smeared sideways (anamorphic streaks), tinted blue */
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.globalAlpha = Math.min(1, streak * 1.4); ctx.drawImage(streakSrc, 0, 0, W, H);
+  }
+  ctx.restore();
+}
+function glowSource(ctx, W, H) {
+  var sw = Math.max(8, Math.round(W / 6)), sh = Math.max(8, Math.round(H / 6));
+  var a = mk(sw, sh), ax = a.getContext("2d", { willReadFrequently: true });
+  ax.drawImage(ctx.canvas, 0, 0, sw, sh);
+  var im = ax.getImageData(0, 0, sw, sh), d = im.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255, v = clamp((l - 0.72) / 0.28, 0, 1); v *= v;
+    d[i] = 120 * v + 60 * v * v; d[i + 1] = 170 * v + 60 * v * v; d[i + 2] = 255 * v; d[i + 3] = 255;
+  }
+  ax.putImageData(im, 0, 0);
+  /* squash hard sideways, then stretch back: each bright spot becomes a long soft horizontal line */
+  var b = mk(Math.max(2, Math.round(sw / 24)), sh), bx = b.getContext("2d");
+  bx.imageSmoothingQuality = "high"; bx.drawImage(a, 0, 0, b.width, sh);
+  var c = mk(sw, sh), cx = c.getContext("2d");
+  cx.imageSmoothingQuality = "high"; cx.drawImage(b, 0, 0, sw, sh);
+  return c;
+}
+
 /* ---------- render ---------- */
 function render(ctx, W, H, prog, preview) {
   if (S.look === "half") renderHalf(ctx, W, H); else renderDot(ctx, W, H, prog);
@@ -772,6 +915,7 @@ function render(ctx, W, H, prog, preview) {
     var b = L.mode === "solid" ? drawLayer(ctx, W, H, L) : (preview ? drawLayer(scratch, W, H, L, { mask: true }) : null);
     if (preview) L._box = b ? [b[0] / W, b[1] / H, b[2] / W, b[3] / H] : null;
   });
+  if (ctx.getImageData) effects(ctx, W, H);
 }
 var raf = 0;
 function schedule() { if (!raf) raf = requestAnimationFrame(function () { raf = 0; draw(); }); }
@@ -1037,31 +1181,19 @@ function saveVideo() {
     if (t < hold0 + dur + hold1) requestAnimationFrame(frame); else rec.stop();
   })(t0);
 }
-function play() {
-  if (S.look !== "dot") setTab("dot");
-  cancelAnimationFrame(playing);
-  var t0 = performance.now(), dur = S.revealTime * 1000, el = $("#reveal");
-  (function frame(now) {
-    var p = clamp((now - t0) / dur, 0, 1);
-    S.reveal = Math.round(ease(p) * 100); el.value = S.reveal; out("reveal", S.reveal);
-    draw(ease(p));
-    if (p < 1) playing = requestAnimationFrame(frame); else { playing = 0; saveSettings(); }
-  })(t0);
-}
 
 /* ---------- tabs (the pill slider) ---------- */
 function setTab(t) {
   tab = t;
-  if (t !== "text") { S.look = t; document.body.dataset.look = t; saveSettings(); }
+  if (t === "dot" || t === "half") { S.look = t; document.body.dataset.look = t; saveSettings(); }
   var tabs = document.querySelectorAll(".pill [role=tab]");
   tabs.forEach(function (b, i) {
     var on = b.dataset.tab === t;
     b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
-    b.classList.toggle("cur", t === "text" && b.dataset.tab === S.look);
+    b.classList.toggle("cur", (t === "text" || t === "fx") && b.dataset.tab === S.look);
     $("#" + b.getAttribute("aria-controls")).hidden = !on;
     if (on) $(".pill").style.setProperty("--i", i);
   });
-  $("#play").hidden = S.look !== "dot";
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
   schedule();
 }
@@ -1076,7 +1208,7 @@ document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
 });
 
 /* ---------- controls ---------- */
-var UNITS = { reveal: "%", dmDot: "%", dmOp: "%", htOp: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
+var UNITS = { fxShift: "%", fxGlitch: "%", fxLeak: "%", fxFlare: "%", fxStreak: "%", fxGradeAmt: "%", reveal: "%", dmDot: "%", dmOp: "%", htOp: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
   tx: "%", ty: "%", lead: "%", hs: "%", vs: "%", revealTime: " s", htAngle: "°", rot: "°", skew: "°", bend: "%", radius: "%",
   waveA: "%", start: "%", strokeW: "%", shadow: "%", shift: "%" };
 var SIGNED = { htLight: 1, rot: 1, skew: 1, shift: 1, bend: 1, start: 1, track: 1 };
@@ -1326,13 +1458,24 @@ $("#addImg").addEventListener("click", function () { $("#fileIn").click(); });
 $("#takePhoto").addEventListener("click", openCamera);
 $("#fileIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#camIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
-$("#play").addEventListener("click", play);
 $("#saveOpen").addEventListener("click", function () { openModal("#saveModal", "#savePng"); });
 $("#saveClose").addEventListener("click", function () { closeModal("#saveModal"); });
 $("#savePng").addEventListener("click", savePng);
 $("#saveSvg").addEventListener("click", saveSvg);
 $("#share").addEventListener("click", share);
 $("#saveVideo").addEventListener("click", saveVideo);
+var TABKEYS = {
+  dot: ["cols", "reveal", "dmDot", "dmOp", "dmShape", "dmFrom", "dir", "palette", "band", "wash", "scatter", "dmSat", "dmCon", "dmBg", "revealTime", "seed"],
+  half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
+  fx: ["fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
+};
+$("#tabReset").addEventListener("click", function () {
+  if (tab === "text") { S.layers = [newLayer()]; S.active = 0; }
+  else TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
+  sync(); renderChips(); saveSettings(); allFonts().then(schedule);
+  say({ dot: "Dot matrix", half: "Halftone", text: "Text", fx: "Effects" }[tab] + " reset.");
+});
+$("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); });
 $("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); });
 $("#reset").addEventListener("click", function () {
   S = Object.assign({}, DEF, { layers: [newLayer()] }); sync(); setTab("dot"); saveSettings(); allFonts().then(schedule);
