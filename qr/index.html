@@ -1055,7 +1055,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var CAP_DEFAULT = {px: '', mono: '', trees: '', mj: '自摸'};   // 3 px and CMYK: no caption unless you type one (or the website has its own); 中: self-drawn win
+var CAP_DEFAULT = {px: '', mono: '', trees: '', mj: ''};   // no caption unless you type one (or the website has its own)
 var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'Oysters, oh my!', 'https://www.instagram.com/fogfish/': '@fogfish',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
