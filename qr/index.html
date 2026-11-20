@@ -1260,6 +1260,11 @@ function boot(){
   });
   $('fileLabel').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
   var t;
+  /* The website box too: tapping in clears it; leaving without typing puts the address back */
+  var siteWas = null, siteTyped = false;
+  $('siteFree').addEventListener('focus', function(){ siteWas = this.value; siteTyped = false; this.value = ''; });
+  $('siteFree').addEventListener('blur', function(){ if (!siteTyped && siteWas !== null) this.value = siteWas; siteWas = null; });
+  $('siteFree').addEventListener('input', function(){ siteTyped = true; });
   /* Tapping into the caption clears it for fresh typing; leaving without typing puts the old caption back */
   var capWas = null, capTyped = false;
   $('cap').addEventListener('focus', function(){ capWas = this.value; capTyped = false; this.value = ''; });
