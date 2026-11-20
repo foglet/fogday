@@ -29,7 +29,7 @@ header,main{position:relative;z-index:1}
 /* Front layer: the /px dragons and weather fly over the fields (see-through, never takes taps); the code itself stays on top so it always scans */
 .fgpx{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2;pointer-events:none;background:transparent;transition:opacity .4s}
 html.cleared .fgpx{opacity:0}
-#siteFree:not(:focus){flex-grow:var(--fg,1)}
+#siteFree:not(:focus){flex:0 0 var(--sw,auto);min-width:0}   /* at rest: just wide enough for its text (or the placeholder); with focus it takes the rest of the row */
 .stage{position:relative;z-index:3}
 /* Controls are never wider than the code */
 .ctl{max-width:var(--qrw,440px);margin:0 auto}
@@ -1883,8 +1883,16 @@ function boot(){
   ['change', 'focus', 'blur'].forEach(function(ev){ $('site').addEventListener(ev, function(){ setTimeout(menuFit, 0); }); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(menuFit);
   setInterval(menuFit, 1000); menuFit();
-  function siteGrow(){ var n = $('siteFree').value.length; $('siteFree').style.setProperty('--fg', Math.max(1, Math.min(3.5, n/9)).toFixed(2)); }   // wide for a long address, back to half when short or empty
+  function siteGrow(){   // at rest the box is as wide as its text (or the placeholder), never wider than the room left in the row
+    var f = $('siteFree'), cs = getComputedStyle(f), t = f.value || f.placeholder;
+    mctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var w = mctx.measureText(t).width + t.length*(parseFloat(cs.letterSpacing) || 0) + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 4;
+    var row = f.parentNode, room = row ? row.clientWidth - $('siteField').offsetWidth - 6 : w;
+    f.style.setProperty('--sw', Math.ceil(Math.max(40, Math.min(w, room))) + 'px');
+  }
   ['input', 'blur', 'change'].forEach(function(ev){ $('siteFree').addEventListener(ev, function(){ setTimeout(siteGrow, 0); }); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(siteGrow);
+  window.addEventListener('resize', function(){ setTimeout(siteGrow, 0); });
   $('site').addEventListener('change', function(){ setTimeout(siteGrow, 0); });
   setInterval(siteGrow, 1000);
   /* Tapping into the caption clears it, and it stays clear even if you type nothing (a blank caption, kept like any edit) */

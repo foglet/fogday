@@ -65,3 +65,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Note: commits cd622f2 to 1daf425 (border toggle, camera button, clear ground) edited ../index.html directly; template.html now carries them. Always edit template.html.
 - The New scene button reads "New" (screen readers still hear "New scene").
 - Camera refused: the button just stays off, with no "Camera not allowed" message.
+- Website box: at rest it is just wide enough for its text (or the "Website" placeholder); while it has focus it takes the rest of the row.
