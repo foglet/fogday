@@ -768,7 +768,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mj: '自摸 (zì mō)'};   // self-drawn win
+var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mj: '自摸'};   // self-drawn win
 var SITE_CAP = {'https://ohlonesky.com': 'Bay to Sky!', 'https://oysteratlas.com': 'An oyster a day.', 'https://www.instagram.com/fogfish/': 'Beach time!',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
