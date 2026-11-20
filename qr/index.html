@@ -231,6 +231,7 @@ html.qrclear .meta,html.qrclear #meta .mtxt,html.qrclear .field>label,html.qrcle
         <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
         <option value="https://wa.me/14158733873?text=Bon%20jour%21" data-cap="WHATSAPP">WhatsApp</option>
         <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
+        <option value="https://venmo.com/u/fogfish" data-cap="@FOGFISH ON VENMO">Venmo</option>
         <option value="custom" id="customOpt">—</option>
       </select>
     </div>
@@ -1166,7 +1167,7 @@ var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
 var CAP_DEFAULT = {px: '', mono: '', trees: '', mj: ''};   // no caption unless you type one (or the website has its own)
 var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'Oysters, oh my!', 'https://www.instagram.com/fogfish/': '@fogfish',
-  'https://wa.me/14158733873?text=Bon%20jour%21': 'WhatsApp', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
+  'https://wa.me/14158733873?text=Bon%20jour%21': 'WhatsApp', 'https://www.linkedin.com/in/fogfish/': "Let's connect!", 'https://venmo.com/u/fogfish': '@fogfish'};
 /* Text written on the code for each website (SITE_TEXT, then SITE_CAP), never put in the caption box; a caption you type, or clear, wins */
 var SITE_TEXT = {'https://fogday.com': 'Fogday Studios', 'https://fogday.com/mahjong': 'Bay Area Mahjong'};
 function codeText(){ return state.caption || (state.capUser ? '' : SITE_TEXT[state.url] || SITE_CAP[state.url] || ''); }
@@ -1197,7 +1198,7 @@ function readHash(){
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
 var MJ_SITE = 'https://fogday.com/mahjong';
-var SITES = ['https://fogday.com','https://fogday.com/mahjong','https://ohlonesky.com','https://oysteratlas.com','https://makeshine.co','https://www.instagram.com/fogfish/','https://wa.me/14158733873?text=Bon%20jour%21','https://www.linkedin.com/in/fogfish/'];
+var SITES = ['https://fogday.com','https://fogday.com/mahjong','https://ohlonesky.com','https://oysteratlas.com','https://makeshine.co','https://www.instagram.com/fogfish/','https://wa.me/14158733873?text=Bon%20jour%21','https://www.linkedin.com/in/fogfish/','https://venmo.com/u/fogfish'];
 function bare(u){ return u.replace(/^https:\/{2}/,''); }   // fogday.com, not https://fogday.com
 /* Some menu addresses show a short label in the website box: @fogfish, the phone number */
 var LABELS = {'https://www.instagram.com/fogfish/': '@fogfish', 'https://wa.me/14158733873?text=Bon%20jour%21': '4158733873'};
