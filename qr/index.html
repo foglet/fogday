@@ -604,9 +604,9 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     R.body2M = null; R.oreC = null;
   }
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
-  // ROUND (about 1 in 4 of 3 px and MONO): dots and pill strokes at 9 px a square, rounded corner markers, and the loose
+  // ROUND (all of MONO, about 1 in 4 of 3 px): dots and pill strokes at 9 px a square, rounded corner markers, and the loose
   // pieces in a ring round the code, as on the Ohlone Sky code
-  var RO = !MJ && !IG && rng(seed ^ 0x2545f491)() < 0.25;
+  var RO = !MJ && !IG && (MONO || rng(seed ^ 0x2545f491)() < 0.25);   // MONO is always round, at 9 px
   if (RO && (!finder || finder === 'random')) R.finder = rng(seed ^ 0x61c88647)() < 0.5 ? 'squircle' : 'circle';
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
   if (RO){ HW = Math.max(HW, Math.ceil(0.21*N + 4.5)); M = N + 2*QZ + 2*HW; off = HW + QZ; }   // room for the ring
