@@ -167,6 +167,7 @@ html.cam .cambg{display:block}
 html.cam .bgpx,html.cam .fgpx{visibility:hidden}
 #cam{flex:0 0 44px;padding:0;color:var(--muted)}
 #cam[aria-pressed="true"]{color:var(--red)}
+html.qrclear #qr{filter:none!important;border:1px solid rgba(0,0,0,.1);border-radius:0}
 </style>
 </head>
 <body>
@@ -1273,6 +1274,13 @@ function hitArt(ax, ay, water){ var P = cur.P; ignite(Math.floor(ax/P) + ',' + M
 /* Idle (ten quiet seconds): the code's light ground turns fully transparent, so only its dark squares sit on the scene.
    Any tap brings the ground back for scanning. */
 var IDLE = false;
+var CLEAR = false;   // double tap on the camera: the code's ground goes see-through, whatever that does to scanning
+function clearMask(){   // ground = whatever matches the corner (quiet zone) in lightness: light codes lose their dark ground too
+  if (cur.cmask) return cur.cmask;
+  var d = cur.data, m = new Uint8Array(d.length/4), L = function(i){ return 0.2126*d[i*4] + 0.7152*d[i*4+1] + 0.0722*d[i*4+2]; }, lightGround = L(0) > 140;
+  for (var i = 0; i < m.length; i++) m[i] = (L(i) > 140) === lightGround ? 1 : 0;
+  return (cur.cmask = m);
+}
 function groundMask(){
   if (cur.gmask) return cur.gmask;
   var d = cur.data, m = new Uint8Array(d.length/4);
@@ -1339,10 +1347,11 @@ function ambient0(out, now){
   }
 }
 function frameData(){
-  if (!cur.inner) return cur.data;
+  if (!cur.inner){ if (!CLEAR) return cur.data; var o2 = new Uint8ClampedArray(cur.data), cm2 = clearMask(); for (var c2 = 0; c2 < cm2.length; c2++) if (cm2[c2]) o2[c2*4+3] = 0; return o2; }
   var out = new Uint8ClampedArray(cur.data), W = cur.W, H = cur.H, now = performance.now(), P = cur.P;
   ambient(out, now);
   if (IDLE){ var gm = groundMask(); for (var gi = 0; gi < gm.length; gi++) if (gm[gi]) out[gi*4+3] = 0; }
+  if (CLEAR){ var cm = clearMask(); for (var ci = 0; ci < cm.length; ci++) if (cm[ci]) out[ci*4+3] = 0; }
   for (var k in burns){
     var b = burns[k], age = now - b.t, mx = +k.split(',')[0], my = +k.split(',')[1];
     for (var yy = my*P; yy < my*P + P && yy < H; yy++) for (var xx = mx*P; xx < mx*P + P && xx < W; xx++){
@@ -1740,7 +1749,11 @@ function boot(){
         b.setAttribute('aria-pressed', 'true'); b.title = 'Camera on: tap to bring the scene back';
       }).catch(function(){ stop(); say('Camera not allowed'); });
     }
-    b.addEventListener('click', function(){ if (stream) stop(); else start(); });
+    var tapT = 0;   // one tap: camera on/off (after a short wait); two quick taps: the code's ground goes clear with a hairline border, or back
+    b.addEventListener('click', function(){
+      if (tapT){ clearTimeout(tapT); tapT = 0; CLEAR = !CLEAR; document.documentElement.classList.toggle('qrclear', CLEAR); if (cur) paintFrame(); return; }
+      tapT = setTimeout(function(){ tapT = 0; if (stream) stop(); else start(); }, 300);
+    });
     $('scene').addEventListener('click', stop);   // New scene brings the scene back
     document.addEventListener('visibilitychange', function(){ if (document.hidden && stream) stop(); });
   })();
