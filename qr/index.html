@@ -1751,10 +1751,12 @@ function boot(){
     }
     var tapT = 0;   // one tap: camera on/off (after a short wait); two quick taps: the code's ground goes clear with a hairline border, or back
     b.addEventListener('click', function(){
-      if (tapT){ clearTimeout(tapT); tapT = 0; CLEAR = !CLEAR; document.documentElement.classList.toggle('qrclear', CLEAR); if (cur) paintFrame(); return; }
+      if (tapT){ clearTimeout(tapT); tapT = 0; setClear(!CLEAR); return; }
       tapT = setTimeout(function(){ tapT = 0; if (stream) stop(); else start(); }, 300);
     });
-    $('scene').addEventListener('click', stop);   // New scene brings the scene back
+    function setClear(on){ CLEAR = on; document.documentElement.classList.toggle('qrclear', on); store('qrclear', on ? '1' : '0'); if (cur) paintFrame(); }
+    setClear(load('qrclear') === '1');   // a clear ground stays (even after a reload) until you double tap again or tap New scene
+    $('scene').addEventListener('click', function(){ stop(); setClear(false); });   // New scene brings the scene and the code's normal ground back
     document.addEventListener('visibilitychange', function(){ if (document.hidden && stream) stop(); });
   })();
   (function(){   // box toggle: hairline only, or hairline plus background
