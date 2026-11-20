@@ -344,7 +344,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
 "use strict";
 var KEY = "halftone:settings";
 var LDEF = {
-  text: "Image Looks", font: "Inter", weight: 800, size: 11, color: "#ffffff", op: 100, mode: "solid", upper: false,
+  text: "", font: "Inter", weight: 800, size: 11, color: "#ffffff", op: 100, mode: "solid", upper: false,
   align: "center", track: 0, lead: 100, hs: 100, vs: 100, rot: 0, skew: 0, shift: 0, tx: 50, ty: 86,
   path: "none", bend: 40, radius: 30, waveA: 6, waveF: 2, start: 0, effect: "rainbow", pathAlign: "baseline", flip: false, pts: null,
   fill: true, strokeW: 0, strokeC: "#1d2622", shadow: 0, blend: "source-over"
@@ -396,6 +396,9 @@ function loadSettings() {
   ["text", "font", "weight", "textColor", "textOp", "size", "textMode", "align", "tx", "ty", "track", "lead", "upper"].forEach(function (k) { delete s[k]; });
   s.layers = s.layers.map(function (l) { var n = newLayer(l); if (!FONTS[n.font]) n.font = LDEF.font; return n; });
   if (!s.layers.length) s.layers = [newLayer()];
+  /* the old default text ("Image Looks") was saved for everyone who changed any setting: clear it once if it is still the only text */
+  if (!o.v2 && s.layers.length === 1 && s.layers[0].text === "Image Looks") s.layers[0].text = "";
+  s.v2 = true;
   s.active = Math.min(Math.max(0, s.active | 0), s.layers.length - 1);
   return s;
 }
