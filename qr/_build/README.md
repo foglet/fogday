@@ -11,7 +11,7 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - No frame: past the quiet zone the code's own data texture drifts outward (wind direction, trails, value-noise clumps) and fades away over 4 to 6 modules (7 to 9 with a picture). Tested: 400 seeds (200 plain, 200 with a picture) all decode in zbar at 3x, 4x, 6x and blurred 2x.
 - Pictures: the Add picture and Remove picture buttons were removed at the owner's request (the background-picture code is still in render() if wanted again).
 - Text me: share sheet with the PNG (Web Share with files); where that is missing it saves the PNG to attach by hand.
-- Caption: 3x5 pixel font, 22 chars, saved under `qr:caption`. URL hash holds the seed (`#572228`).
+- Caption: 3x5 pixel font, 22 chars, saved under `qr:caption`. Tapping into the caption box clears it, and it stays blank even if you type nothing. URL hash holds the seed (`#572228`).
 - Styles: add an entry to `STYLES`; the Style picker shows once there are two.
 - Corner markers: random on every remix: square, round, eye, dot, bevel. Circle and morph were dropped: morph failed about 1 code in 10 in zbar. Check: 560 codes (7 websites incl. a long one, 40 seeds, with and without a picture, default caption) all decode in zbar at 2x, 3x and 4x.
 - Link format: `#SEED`, plus `&u=site` when not fogday.com.

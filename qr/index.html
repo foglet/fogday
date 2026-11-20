@@ -1729,11 +1729,12 @@ function boot(){
   ['input', 'blur', 'change'].forEach(function(ev){ $('siteFree').addEventListener(ev, function(){ setTimeout(siteGrow, 0); }); });
   $('site').addEventListener('change', function(){ setTimeout(siteGrow, 0); });
   setInterval(siteGrow, 1000);
-  /* Tapping into the caption clears it for fresh typing; leaving without typing puts the old caption back */
-  var capWas = null, capTyped = false;
-  $('cap').addEventListener('focus', function(){ capWas = this.value; capTyped = false; this.value = ''; });
-  $('cap').addEventListener('blur', function(){ if (!capTyped && capWas !== null) this.value = capWas; capWas = null; });
-  $('cap').addEventListener('input', function(){ capTyped = true; });
+  /* Tapping into the caption clears it, and it stays clear even if you type nothing (a blank caption, kept like any edit) */
+  $('cap').addEventListener('focus', function(){
+    if (this.value === '' && state.caption === '') return;
+    this.value = ''; state.caption = ''; store('cap', ''); state.capUser = true;
+    clearTimeout(t); draw(false);
+  });
   $('cap').addEventListener('input', function(){
     state.caption = this.value.replace(/[\u0000-\u001f]/g, '');   // any letter; ones the pixel font lacks show as ?
     store('cap', state.caption); state.capUser = true;
