@@ -168,6 +168,9 @@ html.cam .bgpx,html.cam .fgpx{visibility:hidden}
 #cam{flex:0 0 44px;padding:0;color:var(--muted)}
 #cam[aria-pressed="true"]{color:var(--red)}
 html.qrclear #qr{filter:none!important;border:1px solid rgba(0,0,0,.1);border-radius:0}
+/* the same double tap also clears the white glow and the paper chips behind text */
+html.qrclear *,html.qrclear *::placeholder{text-shadow:none!important}
+html.qrclear .meta,html.qrclear #meta .mtxt,html.qrclear .field>label,html.qrclear .status,html.qrclear .field .check{background-color:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 </style>
 </head>
 <body>
