@@ -169,8 +169,11 @@ html.idle #qr{filter:none}
 .field label{display:block;margin:0 0 4px;font:400 13px/1.3 var(--pixel);letter-spacing:.04em;color:var(--muted)}
 .field select{width:100%;min-height:40px;padding:0 40px 0 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,253,248,.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath fill='%2355605a' d='M0 0h2v1h1v1h1V1h1V0h2v1H6v1H5v1H4v1H3V3H2V2H1V1H0z'/%3E%3C/svg%3E") right 14px center/14px 8px no-repeat;color:var(--ink);font:400 15px/1 var(--pixel);letter-spacing:.02em;text-overflow:ellipsis;-webkit-appearance:none;appearance:none}
 .field select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-/* the menu, website, caption and Text me: in use, a 1 px ring in their own colour (as on a chosen button), not the 3 px red outline */
-#site:focus,#siteFree:focus,#cap:focus,#text:focus-visible,#text:active{outline:none!important;box-shadow:inset 0 0 0 1px currentColor!important}
+/* the menu, website, caption and Text me: in use, a 1 px #FF5500 ring, not the 3 px red outline */
+#site:focus,#siteFree:focus,#cap:focus,#text:focus-visible,#text:active{outline:none!important;box-shadow:inset 0 0 0 1px #ff5500!important}
+/* focus anywhere: the same 1 px #FF5500 ring (no 3 px red outline) */
+.btn:focus-visible,input:focus-visible,.field select:focus-visible,#meta .mtxt:focus-visible{outline:none!important;box-shadow:inset 0 0 0 1px #ff5500!important}
+.bento:focus-visible,.fs:focus-visible,h1 a:focus-visible{outline:1px solid #ff5500!important;outline-offset:0;border-radius:10px}
 .field input:not([type=checkbox]){width:100%;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,253,248,.5);color:var(--ink);font:400 17px/1 var(--pixel);letter-spacing:.06em;text-transform:uppercase}
 .styles{display:none;border:0;margin:0 0 10px;padding:0}
 .styles.on{display:block}
