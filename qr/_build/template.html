@@ -704,6 +704,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     var sx = ((Math.round(x - dirx*d2*R.streak - off) % N) + N) % N, sy = ((Math.round(y - diry*d2*R.streak - off) % N) + N) % N;
     var bit = code.fn[sy*N+sx] ? r() < 0.5 : code.mod[sy*N+sx];   // the code's data texture, not its timing rows
     if (TR) p = 0;   // trees: the city round the clearing is drawn afterwards
+    else if (MONO) p = Math.min(1, 2.2 * R.dens * Math.pow(Math.max(0, 1 - (d2-1)/(HW+2)), 0.9) * (0.35 + 1.2*noise(x,y)));   // CMYK: shapes crowd right up to the code and into its corners, thinning outward
     else if (RO){   // the ring: just past the code's corners, four squares wide
       var rc = Math.hypot(x + 0.5 - M/2, y + 0.5 - M/2), rin = N/2*Math.SQRT2 + 2;
       p = rc >= rin && rc < rin + 4 ? 0.55*(0.4 + noise(x,y)) : 0;
