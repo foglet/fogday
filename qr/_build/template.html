@@ -330,6 +330,11 @@ function toLum(rgb,y){
   return L.map(function(c){ return unlin(c + (1-c)*t); });
 }
 function darkAt(rgb,y){ return lum(rgb) <= y ? rgb : toLum(rgb,y); }
+function brightOf(c){   // a dark pixel's light twin: same hue, at least half saturated, lighter for lighter originals (texture survives)
+  var r = c[0]/255, g = c[1]/255, b = c[2]/255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn)/2, d = mx - mn, h = 0, s2 = 0;
+  if (d > 0){ s2 = d/(1 - Math.abs(2*l - 1)); h = mx === r ? ((g - b)/d) % 6 : mx === g ? (b - r)/d + 2 : (r - g)/d + 4; h *= 60; }
+  return lightAt(hsl(h, Math.max(50, Math.min(85, s2*100)), 60 + Math.min(1, l/0.35)*18), 0.32);
+}
 function lightAt(rgb,y){ return lum(rgb) >= y ? rgb : toLum(rgb,y); }
 function hsl(h,s,l){
   h = ((h%360)+360)%360; s /= 100; l /= 100;
@@ -627,7 +632,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     if (SK) return skyAt(ax, ay);
     return R.groundM[texShade(Math.floor(ax/2), Math.floor(ay/2), R.tseed)];   // ground texture, 2x2 grain
   }
-  function isSky(ax, ay){ return SK && SK.night && dq(Math.floor(ax/P), Math.floor(ay/P)) >= 1; }   // night past the quiet zone
+  function isSky(ax, ay){ return SK && SK.night && (SK.inv || dq(Math.floor(ax/P), Math.floor(ay/P)) >= 1); }   // night past the quiet zone (everywhere once inverted)
   function skyAt(ax, ay){   // gradients hold still
     var sh = texShade(Math.floor(ax/2), Math.floor(ay/2), R.tseed), sky = isSky(ax, ay);
     if (!SK.grad) return sky ? SK.dark[0][sh] : R.groundM[sh];
@@ -833,6 +838,21 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       else if (data[o9] === s9[0] && data[o9+1] === s9[1] && data[o9+2] === s9[2]) G[y*W+x] = 2;
       gm0[y*W+x] = G[y*W+x] ? 1 : 0;
     }
+  }
+  // Night inverts the code: no light pad. Inside the quiet zone the ground turns to night and every dark pixel of the code
+  // turns bright in its own hue (luminance 0.32 or more against a ground of 0.03 or less), so it reads light-on-dark.
+  if (SK && SK.night){
+    SK.inv = true;
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++){
+      var i8 = y*W + x, o8 = i8*4;
+      if (dq(Math.floor(x/P), Math.floor(y/P)) >= 1) continue;   // past the quiet zone it is already night
+      var c8;
+      var p8 = [data[o8], data[o8+1], data[o8+2]];   // the code's squares are dark (0.10 at most), its ground light: anything in between is ground
+      if (lum(p8) <= 0.2) c8 = brightOf(p8);
+      else { c8 = skyAt(x, y); if (G[i8] === 2) c8 = mixRgb(c8, [20,20,28], 0.18); }
+      data[o8] = c8[0]; data[o8+1] = c8[1]; data[o8+2] = c8[2];
+    }
+    gm0 = new Uint8Array(W*H);   // idle keeps the night ground: light squares need it behind them to scan
   }
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
           halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : 'px', sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
