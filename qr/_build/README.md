@@ -61,3 +61,5 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Round codes (round 3 px, CMYK, the seven art styles) always use the squircle corner marker: the circle failed zbar on about 6 in 13 round codes. The plain 3 px circle marker stays (19 of 19 passed). Tested after the change: 81 Remix codes, 30 CMYK, 15 art, all decode in zbar at 2x, 3x, 4x and blurred 2x.
 - Tapping the No. line also goes full screen, where the browser allows it.
 - Details line 1 is just "No. N" (the version, v.003, was removed on request).
+- Details line 2 drops level and mask (removed on request): it shows only picture, Pantone colours or the art style name, when there are any.
+- Note: commits cd622f2 to 1daf425 (border toggle, camera button, clear ground) edited ../index.html directly; template.html now carries them. Always edit template.html.
