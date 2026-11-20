@@ -110,6 +110,8 @@ html.idle #qr{filter:none}
 .duo{display:flex;gap:6px;align-items:stretch}
 .duo>select,.duo>input,.duo>.btn{flex:1 1 0;min-width:0;width:auto!important;transition:flex-grow .25s ease}
 .duo>select:focus,.duo>input:focus{flex-grow:3.5}
+#trees{flex:0 0 52px!important;padding:0}
+#trees[aria-pressed="true"]{border-color:#3a9a4c;box-shadow:inset 0 0 0 1px #3a9a4c}
 .sitedu>.sitef{flex:0 1 auto;min-width:0}
 .sitedu #site{padding-right:34px;background-position:right 12px center}
 .btn.wide{width:100%}
@@ -162,6 +164,7 @@ html.idle #qr{filter:none}
   <div class="field duo">
     <input id="cap" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Caption" aria-label="Caption under the code">
     <button type="button" class="btn" id="text">Text me</button>
+    <button type="button" class="btn" id="trees" aria-pressed="false" aria-label="Trees" title="Trees: tree dots in complementary colours, as on fogday.com/treesf; tap again to remix"><svg width="24" height="28" viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="0" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="0" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="0" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="1" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="10" y="2" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="3" width="1" height="1" fill="#e0569a"/><rect x="6" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="10" y="3" width="1" height="1" fill="#3a9a4c"/><rect x="0" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="4" width="1" height="1" fill="#e0569a"/><rect x="10" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="11" y="4" width="1" height="1" fill="#3a9a4c"/><rect x="0" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="5" width="1" height="1" fill="#e0569a"/><rect x="3" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="10" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="11" y="5" width="1" height="1" fill="#3a9a4c"/><rect x="0" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="10" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="11" y="6" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="7" width="1" height="1" fill="#e0569a"/><rect x="8" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="10" y="7" width="1" height="1" fill="#3a9a4c"/><rect x="1" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="10" y="8" width="1" height="1" fill="#3a9a4c"/><rect x="2" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="3" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="6" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="7" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="8" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="9" y="9" width="1" height="1" fill="#3a9a4c"/><rect x="4" y="10" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="10" width="1" height="1" fill="#7a5233"/><rect x="6" y="10" width="1" height="1" fill="#7a5233"/><rect x="7" y="10" width="1" height="1" fill="#3a9a4c"/><rect x="5" y="11" width="1" height="1" fill="#7a5233"/><rect x="6" y="11" width="1" height="1" fill="#7a5233"/><rect x="5" y="12" width="1" height="1" fill="#7a5233"/><rect x="6" y="12" width="1" height="1" fill="#7a5233"/><rect x="4" y="13" width="1" height="1" fill="#7a5233"/><rect x="5" y="13" width="1" height="1" fill="#7a5233"/><rect x="6" y="13" width="1" height="1" fill="#7a5233"/><rect x="7" y="13" width="1" height="1" fill="#7a5233"/></svg></button>
   </div>
 
   <div class="field duo sitedu">
@@ -616,7 +619,11 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
   R.dark = R.bodyM.slice(1,4); R.dark2 = (R.body2M || R.bodyM).slice(1,4); R.accent = R.accM.slice(1,4); R.light = R.groundM[2];
   // ROUND (all of MONO, about 1 in 4 of 3 px): dots and pill strokes at 9 px a square, rounded corner markers, and the loose
   // pieces in a ring round the code, as on the Ohlone Sky code
-  var RO = !MJ && !IG && (MONO || rng(seed ^ 0x2545f491)() < 0.25);   // MONO is always round, at 9 px
+  // TREES (about 1 in 5 of 3 px): as on fogday.com/treesf, glowing tree dots in two complementary colours on a dark street
+  // grid; the code is a clearing of tree dots, light on dark, with no streets or other trees inside its border
+  var TR = !MJ && !MONO && !IG && !img && !ground && (mode === 'trees' || rng(seed ^ 0x7f4a7c15)() < 0.2);   // the tree button, or 1 in 5 of 3 px
+  if (TR) SK = null;
+  var RO = TR || (!MJ && !IG && (MONO || rng(seed ^ 0x2545f491)() < 0.25));   // MONO is always round, at 9 px
   if (RO && (!finder || finder === 'random')) R.finder = rng(seed ^ 0x61c88647)() < 0.5 ? 'squircle' : 'circle';
   var QZ = MJ ? 4 : 2;   // clear border round the code: 3 px and CMYK keep 2 squares (scanners manage), 中 keeps the standard 4
   var N = code.size, HW = R.halo + (img ? 3 : 0), HW0 = HW, M = N + 2*QZ + 2*HW, off = HW + QZ, i, x, y;
@@ -691,7 +698,8 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     var p = R.dens * Math.pow(Math.max(0, 1 - (d2-1)/(HW0+2)), 1.1) * (1 + R.driftK*along) * (0.25 + 1.3*noise(x,y));
     var sx = ((Math.round(x - dirx*d2*R.streak - off) % N) + N) % N, sy = ((Math.round(y - diry*d2*R.streak - off) % N) + N) % N;
     var bit = code.fn[sy*N+sx] ? r() < 0.5 : code.mod[sy*N+sx];   // the code's data texture, not its timing rows
-    if (RO){   // the ring: just past the code's corners, four squares wide
+    if (TR) p = 0;   // trees: the city round the clearing is drawn afterwards
+    else if (RO){   // the ring: just past the code's corners, four squares wide
       var rc = Math.hypot(x + 0.5 - M/2, y + 0.5 - M/2), rin = N/2*Math.SQRT2 + 2;
       p = rc >= rin && rc < rin + 4 ? 0.55*(0.4 + noise(x,y)) : 0;
     }
@@ -726,7 +734,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       var hl = 1, vl = 1, t0;
       for (t0 = x-1; dk0(t0, y); t0--) hl++; for (t0 = x+1; dk0(t0, y); t0++) hl++;
       for (t0 = y-1; dk0(x, t0); t0--) vl++; for (t0 = y+1; dk0(x, t0); t0++) vl++;
-      RO_O[y*M+x] = hl >= vl && hl > 1 ? 1 : vl > 1 ? 2 : 3;
+      RO_O[y*M+x] = TR ? 3 : hl >= vl && hl > 1 ? 1 : vl > 1 ? 2 : 3;   // trees: every square is one tree
     }
     for (y = 0; y < Mh; y++) for (x = 0; x < M; x++){   // each stroke's two ends, among squares of the same direction
       var o0 = RO_O[y*M+x]; if (!o0) continue;
@@ -757,7 +765,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
         if (o1 === 1) dd = Math.hypot(Math.max(0, RO_A[my*M+mx] + 0.5 - u, u - RO_B[my*M+mx] - 0.5), v - my - 0.5);
         else if (o1 === 2) dd = Math.hypot(u - mx - 0.5, Math.max(0, RO_A[my*M+mx] + 0.5 - v, v - RO_B[my*M+mx] - 0.5));
         else dd = Math.hypot(u - mx - 0.5, v - my - 0.5);
-        if (dd > (o1 === 3 ? 0.43 : 0.37)){ px(ax, ay, bg(ax, ay)); continue; }
+        if (dd > (o1 === 3 ? (TR ? 0.47 : 0.43) : 0.37)){ px(ax, ay, bg(ax, ay)); continue; }
         var sh1 = texShade(ax, ay, R.tseed), mat1 = R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM;
         px(ax, ay, isSky(ax, ay) ? SK.glow[sh1] : mat1[sh1]); continue;
       }
@@ -941,7 +949,57 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
       txL += SWW*lsL;
     });
   }
-  if (MO && MO.inv){ gm0 = new Uint8Array(W*H); R.groundM = MO.deep; }   // light codes keep their deep ground when idle (and burns show it)
+  if (MO && MO.inv){ gm0 = new Uint8Array(W*H); R.groundM = MO.deep; }
+  var TRC = null;
+  if (TR){
+    var tr = rng(seed ^ 0x3c6ef372), th = tr()*360, tA = 60 + tr()*25, tB = 60 + tr()*25;
+    var navy = hsl(th + 180 + (tr() - 0.5)*40, 40, 7), street = hsl(215, 22, 15), ang = (tr() - 0.5)*0.5, sp = 5 + Math.floor(tr()*3), sp2 = sp + 1 + Math.floor(tr()*3);
+    TRC = {a: th, b: th + 180};
+    var treeCol = function(h0, seedA, seedB, minL){   // one tree: mostly the first colour, about 1 in 6 its complement
+      var hb = hash2(seedA, seedB, 77) < 0.17 ? th + 180 : th, c = hsl(hb + (hash2(seedB, seedA, 5) - 0.5)*28, hb === th ? tA : tB, 50 + hash2(seedA, seedB, 9)*20);
+      return minL ? lightAt(c, minL) : c;
+    };
+    var inClear = function(u0, v0){ return dq(Math.floor(u0), Math.floor(v0)) < 1 || v0*P >= C; };
+    var ca = Math.cos(ang), sa = Math.sin(ang);
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++){
+      var o6 = (y*W + x)*4, p6 = [data[o6], data[o6+1], data[o6+2]], c6, u6 = x/P, v6 = y/P;
+      var fq6 = Math.floor(u6) - off, fr6 = Math.floor(v6) - off, fnd6 = fq6 >= 0 && fr6 >= 0 && fq6 < N && fr6 < N && ((fq6 < 7 && fr6 < 7) || (fq6 >= N-7 && fr6 < 7) || (fq6 < 7 && fr6 >= N-7));
+      if (lum(p6) <= 0.2) c6 = fnd6 ? lightAt(hsl(th, tA, 60), 0.3) : treeCol(0, Math.floor(u6), Math.floor(v6), 0.3);   // corner markers: one solid colour   // the code's trees: light enough to scan on the dark
+      else {
+        var sh6 = texShade(Math.floor(x/2), Math.floor(y/2), R.tseed); c6 = navy.map(function(v){ return Math.round(v*(0.85 + sh6*0.06)); });
+        if (!inClear(u6, v6)){
+          var su = u6*ca + v6*sa, sv = -u6*sa + v6*ca, fu = ((su % sp) + sp) % sp, fv = ((sv % sp2) + sp2) % sp2;
+          if (fu < 0.5 || fv < 0.5) c6 = street;
+        }
+      }
+      data[o6] = c6[0]; data[o6+1] = c6[1]; data[o6+2] = c6[2];
+    }
+    // the city's trees: along both sides of every street, each a dot with a soft glow
+    var span = Math.ceil((W + H)/P) + sp2*2, dots = [];
+    for (var li = -span; li < span; li++) for (var side = -1; side <= 1; side += 2) for (var t6 = -span; t6 < span; t6 += 0.85){
+      for (var dir = 0; dir < 2; dir++){
+        var base6 = dir ? li*sp2 + 0.25 + side*0.55 : li*sp + 0.25 + side*0.55;   // 0.25: the middle of the street
+        var hs6 = hash2(li*7 + side*3 + dir*101, Math.round(t6*10), R.tseed);
+        if (hs6 > 0.62) continue;
+        var su6 = dir ? t6 : base6, sv6 = dir ? base6 : t6, uu = su6*ca - sv6*sa, vv = su6*sa + sv6*ca;
+        if (uu < -1 || vv < -1 || uu > W/P + 1 || vv > H/P + 1) continue;
+        dots.push([uu, vv, 0.22 + hash2(Math.round(t6*10), li, 31)*0.18, treeCol(0, li*13 + dir, Math.round(t6*10) + side, 0)]);
+      }
+    }
+    dots.forEach(function(d6){
+      var cx6 = d6[0]*P, cy6 = d6[1]*P, rr6 = d6[2]*P, gl = rr6 + 0.35*P;
+      for (var yy6 = Math.floor(cy6 - gl); yy6 <= cy6 + gl; yy6++) for (var xx6 = Math.floor(cx6 - gl); xx6 <= cx6 + gl; xx6++){
+        if (xx6 < 0 || yy6 < 0 || xx6 >= W || yy6 >= H || inClear((xx6 + 0.5)/P, (yy6 + 0.5)/P)) continue;
+        var dd6 = Math.hypot(xx6 + 0.5 - cx6, yy6 + 0.5 - cy6), o5 = (yy6*W + xx6)*4;
+        if (dd6 > gl) continue;
+        var a6 = dd6 <= rr6 ? 1 : 0.28*(1 - (dd6 - rr6)/(gl - rr6));
+        data[o5] += (d6[3][0] - data[o5])*a6; data[o5+1] += (d6[3][1] - data[o5+1])*a6; data[o5+2] += (d6[3][2] - data[o5+2])*a6;
+      }
+    });
+    TRC.dots = dots.filter(function(d){ return !inClear(d[0], d[1]); }).map(function(d){ return [d[0]*P, d[1]*P, d[2]*P, hash2(Math.round(d[0]*10), Math.round(d[1]*10), 3)*6.283, 0.6 + hash2(Math.round(d[1]*10), Math.round(d[0]*10), 4)*1.4]; });
+    gm0 = new Uint8Array(W*H);   // idle keeps the night city
+    R.groundM = [navy, navy, navy, navy, navy, navy];   // burns show the dark ground
+  }   // light codes keep their deep ground when idle (and burns show it)
   // Night inverts the code: no light pad. Inside the quiet zone the ground turns to night and every dark pixel of the code
   // turns bright in its own hue (luminance 0.32 or more against a ground of 0.03 or less), so it reads light-on-dark.
   if (SK && SK.night){
@@ -958,14 +1016,14 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
     gm0 = new Uint8Array(W*H);   // idle keeps the night ground: light squares need it behind them to scan
   }
   return {W:W, H:H, data:data, code:code, grad:grad, shape:R.shape, finder:R.finder, inner:[HW*P, HW*P, (HW+N+2*QZ)*P, (HW+N+2*QZ)*P],
-          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : MONO ? 'mono' : 'px', mono: MO, round: RO, sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
+          halo:halo, P:P, bgAt:bg, ds:DS, tiles:tiles, mode: MJ ? 'mj' : MONO ? 'mono' : mode === 'trees' ? 'trees' : 'px', mono: MO, round: RO, trees: TRC, sky: SK, skyAt: SK ? skyAt : null, G: G, gmask: gm0,
           moves: rng(seed ^ 0x27d4eb2f)() < 1/2};   // half the codes move (the glint and twinkle); the seed decides, so a shared link looks the same
 }
 
 /* ---------- UI ---------- */
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
-var CAP_DEFAULT = {px: '', mono: '', mj: '自摸'};   // 3 px and CMYK: no caption unless you type one (or the website has its own); 中: self-drawn win
+var CAP_DEFAULT = {px: '', mono: '', trees: '', mj: '自摸'};   // 3 px and CMYK: no caption unless you type one (or the website has its own); 中: self-drawn win
 var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'Oysters, oh my!', 'https://www.instagram.com/fogfish/': '@fogfish',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
@@ -1201,6 +1259,16 @@ function ambient(out, now){
   var W = cur.W, H = cur.H, P = cur.P, dk = cur.dk, lit = cur.lit, G = cur.G, x, y, i, o;
   function toward(i, c, a){ var o = i*4; out[o] += (c[0] - out[o])*a; out[o+1] += (c[1] - out[o+1])*a; out[o+2] += (c[2] - out[o+2])*a; }
   function lift(i, a){ var o = i*4; out[o] += (lit[i*3] - out[o])*a; out[o+1] += (lit[i*3+1] - out[o+1])*a; out[o+2] += (lit[i*3+2] - out[o+2])*a; }
+  if (cur.trees){   // trees: no glint; the city's trees twinkle, each on its own beat (the code's own trees stay still)
+    var tt = now/1000, td = cur.trees.dots;
+    for (var q2 = 0; q2 < td.length; q2++){
+      var e = td[q2], s3 = Math.sin(tt*e[4] + e[3]); if (s3 < 0.6) continue;
+      var a3 = (s3 - 0.6)/0.4*0.7, r3 = e[2];
+      for (y = Math.max(0, Math.floor(e[1] - r3)); y <= Math.min(H - 1, e[1] + r3); y++) for (x = Math.max(0, Math.floor(e[0] - r3)); x <= Math.min(W - 1, e[0] + r3); x++)
+        if (Math.hypot(x + 0.5 - e[0], y + 0.5 - e[1]) <= r3) toward(y*W + x, [255,255,255], a3);
+    }
+    return;
+  }
   // the glint: a diagonal band crossing everything every 3.2 s, with a short pause between
   var T = 3200, phg = (now % T)/T, band = (W + H)*0.09, pos = (phg*1.4 - 0.2)*(W + H);
   if (pos > -band && pos < W + H + band) for (y = 0; y < H; y++){
@@ -1208,7 +1276,7 @@ function ambient(out, now){
     for (x = x0; x <= x1; x++){
       i = y*W + x; var a = 1 - Math.abs(x + y - pos)/band; if (a <= 0) continue;
       if (dk[i]) lift(i, Math.min(1, a*1.6));
-      else if (!G || G[i]) toward(i, [255,255,255], a*a*0.75);   // light ground only gets lighter: contrast never drops
+      else if (!cur.trees && (!G || G[i])) toward(i, [255,255,255], a*a*0.75);   // light ground only gets lighter: contrast never drops
     }
   }
   // the twinkle: each loose block flashes its own colour on its own beat
@@ -1397,7 +1465,7 @@ function boot(){
   state.seed = h > 0 && h < 1e9 ? h : newSeed();
   var st = load('style'); if (st && STYLES[st]) state.style = st;
   if (hs.u) state.url = normUrl(hs.u);   // a shared link keeps its website; otherwise the menu starts on Fogday Studios
-  if (hs.m === 'mj') state.mode = 'mj'; else if (hs.m === 'cmyk' || hs.m === 'pantone' || hs.m === 'mono') state.mode = 'mono';   // CMYK (once Pantone, once MONO)
+  if (hs.m === 'mj') state.mode = 'mj'; else if (hs.m === 'cmyk' || hs.m === 'pantone' || hs.m === 'mono') state.mode = 'mono'; else if (hs.m === 'trees') state.mode = 'trees';   // CMYK (once Pantone, once MONO)
   var cp = load('cap'); if (cp !== null){ state.caption = cp; state.capUser = true; } else state.caption = defCap();   // the mode's or website's default; once you edit it, yours (even blank) is kept
   syncHash();
   $('siteFree').value = shown(state.url);   // the address in use, shown (and editable) under More
@@ -1411,12 +1479,13 @@ function boot(){
     if (state.mode === m) return;
     state.mode = m;
     if (!state.capUser){ state.caption = defCap(); $('cap').value = state.caption; }
-    $('remix').setAttribute('aria-pressed', String(m === 'px')); $('mj').setAttribute('aria-pressed', String(m === 'mj')); $('mono').setAttribute('aria-pressed', String(m === 'mono'));
+    $('remix').setAttribute('aria-pressed', String(m === 'px')); $('mj').setAttribute('aria-pressed', String(m === 'mj')); $('mono').setAttribute('aria-pressed', String(m === 'mono')); $('trees').setAttribute('aria-pressed', String(m === 'trees'));
   }
   $('remix').addEventListener('click', function(){ setMode('px'); remix(); });
   $('mj').addEventListener('click', function(){ setMode('mj'); remix(); });
   $('mono').addEventListener('click', function(){ setMode('mono'); remix(); });
-  $('remix').setAttribute('aria-pressed', String(state.mode === 'px')); $('mj').setAttribute('aria-pressed', String(state.mode === 'mj')); $('mono').setAttribute('aria-pressed', String(state.mode === 'mono'));
+  $('trees').addEventListener('click', function(){ setMode('trees'); remix(); });
+  $('remix').setAttribute('aria-pressed', String(state.mode === 'px')); $('mj').setAttribute('aria-pressed', String(state.mode === 'mj')); $('mono').setAttribute('aria-pressed', String(state.mode === 'mono')); $('trees').setAttribute('aria-pressed', String(state.mode === 'trees'));
   /* 中: every second or so one tile flips over (green back) and lands as a different tile */
   setInterval(function(){
     if (!cur || !cur.tiles || !cur.tiles.length || revealing || reduce) return;
