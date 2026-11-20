@@ -170,6 +170,7 @@ html.idle #qr{filter:none}
         <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
         <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
         <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas</option>
+        <option value="https://makeshine.co" data-cap="MAKESHINE.CO">makeshine.co</option>
         <option value="https://www.instagram.com/fogfish/" data-cap="@FOGFISH ON INSTAGRAM">Instagram</option>
         <option value="https://wa.me/14158733873?text=Bon%20jour%21" data-cap="WHATSAPP">WhatsApp</option>
         <option value="https://www.linkedin.com/in/fogfish/" data-cap="FOGFISH ON LINKEDIN">LinkedIn</option>
@@ -799,7 +800,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
 var $ = function(id){ return document.getElementById(id); };
 var canvas = $('qr'), ctx = canvas.getContext('2d'), art = document.createElement('canvas'), actx = art.getContext('2d');
 var CAP_DEFAULT = {px: 'Toï Toï Toï !!', mj: '自摸'};   // self-drawn win
-var SITE_CAP = {'https://ohlonesky.com': 'Bay to Sky!', 'https://oysteratlas.com': 'An oyster a day.', 'https://www.instagram.com/fogfish/': 'Beach time!',
+var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'An oyster a day.', 'https://www.instagram.com/fogfish/': 'Beach time!',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'Wesh, ça va ?', 'https://www.linkedin.com/in/fogfish/': "Let's connect!"};
 function defCap(){ return SITE_CAP[state.url] || CAP_DEFAULT[state.mode]; }   // Fogday Studios and typed websites: the mode's own
 var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px'}, cur = null, prev = null, anim = 0;
@@ -825,7 +826,7 @@ function readHash(){
   return out;
 }
 function host(u){ return u.replace(/^[a-z][a-z0-9+.-]*:\/{2}/i,'').replace(/\/$/,'').toUpperCase(); }
-var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com','https://www.instagram.com/fogfish/','https://wa.me/14158733873?text=Bon%20jour%21','https://www.linkedin.com/in/fogfish/'];
+var SITES = ['https://fogday.com','https://ohlonesky.com','https://oysteratlas.com','https://makeshine.co','https://www.instagram.com/fogfish/','https://wa.me/14158733873?text=Bon%20jour%21','https://www.linkedin.com/in/fogfish/'];
 function bare(u){ return u.replace(/^https:\/{2}/,''); }   // fogday.com, not https://fogday.com
 /* Some menu addresses show a short label in the website box: @fogfish, the phone number */
 var LABELS = {'https://www.instagram.com/fogfish/': '@fogfish', 'https://wa.me/14158733873?text=Bon%20jour%21': '4158733873'};
