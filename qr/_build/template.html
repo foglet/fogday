@@ -543,6 +543,9 @@ var SUPER = {circle:1, diamond:1, morph:1};   // diamond is kept for links only:
 function render(seed, styleId, caption, img, url, finder, ground, mode){
   var r = rng(seed), code = makeCode(r, url || URL_TEXT, mode), R = STYLES[styleId].recipe(r);
   if (finder && finder !== 'random') R.finder = finder;
+  var fr2 = rng(seed ^ 0x165667b1);   // fresh mixes, without moving each seed's other choices
+  if (mode !== 'mj' && (!finder || finder === 'random') && fr2() < 0.4) R.finder = 'circle';   // 3 px: round corner markers (ring, gap, disc), like 中's cookies, in the mix
+  R.markSame = fr2() < 0.5;   // corner markers in the code's own colour, or its accent
   R.shape = 'flat';   // solid blocks
   var MJ = mode === 'mj';
   function hueMat(hs){ return darkMat([20, 26, 32, 38].map(function(l){ return hsl(hs[0], hs[1], l); })); }
@@ -720,7 +723,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
         px(ax, ay, on ? (IG ? igAt(ax,ay,W,H)[2] : MJG) : bg(ax,ay)); continue;
       }
       // block: textured top, lit north edge, shadowed south edge, some ore specks
-      var mat = (kind === 1 || kind === 2) ? R.accM : (R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM);
+      var mat = (kind === 1 || kind === 2) && !(R.markSame && !MJ && !IG) ? R.accM : (R.body2M && hash2(mx,my,R.tseed+7) < 0.3 ? R.body2M : R.bodyM);
       var sh = texShade(ax, ay, R.tseed);
       if (sx2 === 0 && !isDark(mx-1,my)) sh = Math.min(5, sh + 1);
       if (sy2 === 0 && !isDark(mx,my-1)) sh = 5;
@@ -756,7 +759,7 @@ function render(seed, styleId, caption, img, url, finder, ground, mode){
         var dx = Math.abs((xx + 0.5)/P - c0), dy = Math.abs((yy + 0.5)/P - c0);
         var rr = Math.pow(Math.pow(dx,nr) + Math.pow(dy,nr), 1/nr), rc = Math.pow(Math.pow(dx,nc) + Math.pow(dy,nc), 1/nc);
         var ax = bx + xx, ay = by + yy;
-        if (rc < 1.5 || (rr >= 2.5 && rr < 3.5)) px(ax, ay, R.accM[texShade(ax, ay, R.tseed)]);
+        if (rc < 1.5 || (rr >= 2.5 && rr < 3.5)) px(ax, ay, (R.markSame && !MJ ? R.bodyM : R.accM)[texShade(ax, ay, R.tseed)]);   // the code's colour or its accent
         else px(ax, ay, bg(ax, ay));
       }
     });
