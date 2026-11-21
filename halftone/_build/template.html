@@ -181,9 +181,9 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 }
 /* underline tabs (Adjustments · Layers · History) */
 .tabrow{display:block;border-bottom:1px solid var(--sep)}
-.pill{display:grid;grid-template-columns:repeat(3,1fr);height:52px;padding:0;border-radius:0;background:none;position:relative}
-.pill .knob{top:auto;bottom:-1px;left:0;height:3px;width:calc(100% / 3);border-radius:0;background:var(--ink)}
-.pill [role=tab]{font-size:16px;font-weight:500;color:var(--muted);border-radius:0;letter-spacing:.01em;gap:8px}
+.pill{display:grid;grid-template-columns:repeat(4,1fr);height:52px;padding:0;border-radius:0;background:none;position:relative}
+.pill .knob{top:auto;bottom:-1px;left:0;height:3px;width:calc(100% / 4);border-radius:0;background:var(--ink)}
+.pill [role=tab]{font-size:14px;font-weight:500;color:var(--muted);border-radius:0;letter-spacing:.01em;gap:6px}
 .pill [role=tab] .ico{display:none}
 .pill [role=tab]:hover{color:var(--ink)}
 .pill [role=tab][aria-selected=true]{background:none;color:var(--ink);font-weight:500}
@@ -210,7 +210,14 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .rbtn:hover{background:var(--btnh)}
 .rbtn[disabled]{background:none;color:var(--muted);opacity:.45;cursor:default}
 .looks .rbtn{margin-left:auto}
-.pill [role=tab] .ico{display:block!important;width:20px;height:20px;flex-basis:20px}
+.surp{display:grid;gap:12px;padding:18px 20px}
+.surp .btn{height:40px;font-size:15px;justify-content:center}
+.recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.recipe li{padding:8px 10px;border-radius:6px;background:var(--btn);font-size:13px}
+.ctlcol,.tabp,.surp,.recipe{align-content:start}
+@media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
+@media (max-width:440px){.pill [role=tab]{font-size:12px;gap:4px;padding:0}.pill [role=tab] .ico{width:15px!important;height:15px!important;flex-basis:15px!important}}
+.pill [role=tab] .ico{display:block!important;width:18px;height:18px;flex-basis:18px}
 .shead .sbtn{height:28px;padding:0 10px;font-size:13px}
 .pb{padding:4px 20px 16px;gap:10px}
 .tabp>.foot,.ctlcol>.foot{padding:0 20px}
@@ -302,6 +309,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
       <button type="button" role="tab" id="t-dot" aria-controls="p-dot" data-tab="dot">{{icon:diamonds-four}}<span>Dot matrix</span></button>
       <button type="button" role="tab" id="t-half" aria-controls="p-half" data-tab="half">{{icon:drop-half}}<span>Halftone</span></button>
       <button type="button" role="tab" id="t-fx" aria-controls="p-fx" data-tab="fx">{{icon:magic-wand}}<span>Effects</span></button>
+      <button type="button" role="tab" id="t-surprise" aria-controls="p-surprise" data-tab="surprise">{{icon:gift}}<span>Surprise</span></button>
     </div>
     </div>
     <button type="button" class="rbtn" id="tabReset" aria-label="Reset this tab" title="Reset this tab">{{icon:arrow-counter-clockwise}}</button>
@@ -443,7 +451,23 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
           </fieldset>
         </div>
       </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-lego">1×1 tiles{{icon:caret-down}}</button>
+        <div class="pb" id="a-lego" hidden>
+          <div class="f"><label class="lab" for="fxLego">Tile size <output data-for="fxLego"></output></label><input type="range" id="fxLego" min="0" max="100" step="1" data-k="fxLego"></div>
+          <p class="foot" style="text-align:left;margin:0;padding:0">Flat 1×1 plates in LEGO-style colors, like a tile mosaic. 0 is off.</p>
+        </div>
+      </div>
       <p class="foot">Effects show in saved images and video, not in SVG.</p>
+    </div>
+
+    <!-- Surprise: a new random look each time, never the same one twice -->
+    <div class="tabp" role="tabpanel" id="p-surprise" aria-labelledby="t-surprise" hidden>
+      <div class="surp">
+        <button type="button" class="btn" id="surpriseBtn">{{icon:gift}}<span>Surprise me again</span></button>
+        <ul class="recipe" id="recipe" aria-live="polite"></ul>
+        <p class="foot" style="text-align:left">Each surprise mixes a dot matrix or halftone look with effects. You never get the same one twice. Back undoes it; the other tabs let you fine-tune it.</p>
+      </div>
     </div>
 
     <p class="foot">Photos stay on your device. Nothing is uploaded. Drop or paste a photo to open it.</p>
@@ -498,7 +522,7 @@ var DEF = {
   cols: 56, reveal: 80, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "center", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7, dmFrom: "confetti",
   htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
-  fxWarhol: "off", fxWarholMix: 0, fxMine: 0, fxMinePal: "mc", fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
+  fxWarhol: "off", fxWarholMix: 0, fxMine: 0, fxLego: 0, fxMinePal: "mc", fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
   outSize: "2048", ig: false, igSize: "1350"
 };
 var PALETTES = {
@@ -779,9 +803,35 @@ function minecraft(ctx, W, H) {
     ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.fillRect(x, y + bs - e, bs, e); ctx.fillRect(x + bs - e, y, e, bs);
   }
 }
+var LEGO = ["#f4f4f4", "#1b2a34", "#b40000", "#1e5aa8", "#fac80a", "#00852b", "#646e6e", "#a0a5a9", "#e4cd9e", "#5f3109", "#d67923",
+  "#a5ca18", "#36aebf", "#19325a", "#720012", "#e4adc8", "#923978", "#958a73", "#708e7c", "#5a93db", "#184632", "#f8bb3d", "#bb805a",
+  "#91501c", "#ff698f", "#cda4de", "#adc3c0"].map(rgb);
+/* 1x1: flat 1x1 plates in a grid, each snapped to the nearest brick color, with a thin dark seam, rounded corners and a soft sheen */
+function lego(ctx, W, H) {
+  var bs = (8 + S.fxLego / 100 * 52) * W / 1080, cols = Math.max(1, Math.ceil(W / bs)), rows = Math.max(1, Math.ceil(H / bs));
+  var s = mk(cols, rows), sx = s.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, cols * bs, rows * bs, 0, 0, cols, rows);
+  var d = sx.getImageData(0, 0, cols, rows).data, g = Math.max(0.6, bs * 0.05), r = bs * 0.14;
+  ctx.fillStyle = "#111417"; ctx.fillRect(0, 0, W, H);
+  for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+    var q = (j * cols + i) * 4, c = [d[q], d[q + 1], d[q + 2]], best = LEGO[0], bd = 1e9;
+    for (var k = 0; k < LEGO.length; k++) {
+      var m = LEGO[k], dd = (m[0] - c[0]) * (m[0] - c[0]) * 0.3 + (m[1] - c[1]) * (m[1] - c[1]) * 0.59 + (m[2] - c[2]) * (m[2] - c[2]) * 0.11;
+      if (dd < bd) { bd = dd; best = m; }
+    }
+    var x = i * bs + g, y = j * bs + g, w = bs - 2 * g;
+    ctx.fillStyle = "rgb(" + best[0] + "," + best[1] + "," + best[2] + ")";
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, w, r); else ctx.rect(x, y, w, w); ctx.fill();
+    if (w > 5) {
+      ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.fillRect(x + r * 0.6, y + w * 0.08, w - r * 1.2, Math.max(1, w * 0.07));
+      ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fillRect(x + r * 0.6, y + w * 0.84, w - r * 1.2, Math.max(1, w * 0.1));
+    }
+  }
+}
 function effects(ctx, W, H) {
   if (S.fxWarhol !== "off") warhol(ctx, W, H, +S.fxWarhol);
   if (S.fxMine > 0) minecraft(ctx, W, H);
+  if (S.fxLego > 0) lego(ctx, W, H);
   var k = W / 1080, grade = GRADES[S.fxGrade], ga = S.fxGradeAmt / 100;
   var sh = Math.round(S.fxShift / 100 * 24 * k), gl = S.fxGlitch / 100;
   if ((grade && ga > 0) || sh || gl > 0) {
@@ -1124,18 +1174,19 @@ function setTab(t) {
   tabs.forEach(function (b, i) {
     var on = b.dataset.tab === t;
     b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
-    b.classList.toggle("cur", t === "fx" && b.dataset.tab === S.look);
+    b.classList.toggle("cur", (t === "fx" || t === "surprise") && b.dataset.tab === S.look);
     $("#" + b.getAttribute("aria-controls")).hidden = !on;
     if (on) $(".pill").style.setProperty("--i", i);
   });
   var lk = document.querySelector("#p-" + t + " .looks"); if (lk) lk.appendChild($("#tabReset"));
-  $("#tabReset").title = "Reset " + { dot: "Dot matrix", half: "Halftone", fx: "Effects" }[t]; $("#tabReset").setAttribute("aria-label", $("#tabReset").title);
+  $("#tabReset").hidden = t === "surprise";
+  $("#tabReset").title = "Reset " + { dot: "Dot matrix", half: "Halftone", fx: "Effects", surprise: "Surprise" }[t]; $("#tabReset").setAttribute("aria-label", $("#tabReset").title);
   marks();
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
   stopPlay(); schedule();
 }
 document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
-  b.addEventListener("click", function () { setTab(b.dataset.tab); });
+  b.addEventListener("click", function () { setTab(b.dataset.tab); if (b.dataset.tab === "surprise") surprise(); });
   b.addEventListener("keydown", function (e) {
     var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (!d) return;
@@ -1312,7 +1363,7 @@ $("#saveVideo").addEventListener("click", saveVideo);
 var TABKEYS = {
   dot: ["cols", "reveal", "dmDot", "dmOp", "dmShape", "dmFrom", "dir", "palette", "band", "wash", "scatter", "dmSat", "dmCon", "dmBg", "revealTime", "seed"],
   half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
-  fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
+  fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxLego", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
 };
 $("#tabReset").addEventListener("click", function () {
   TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
@@ -1353,6 +1404,9 @@ var LOOKS = {
     ["None", {}],
     ["VHS", { fxShift: 40, fxGlitch: 35 }],
     ["Film", { fxGrade: "warm", fxGradeAmt: 70, fxLeak: 45 }],
+    ["Minecraft", { fxMine: 40 }],
+    ["Warhol", { fxWarhol: "2" }],
+    ["1×1", { fxLego: 45 }],
     ["Cinema", { fxGrade: "teal", fxGradeAmt: 80, fxStreak: 45 }],
     ["Dreamy", { fxGrade: "fade", fxGradeAmt: 70, fxFlare: 50, fxLeak: 30 }],
     ["Noir", { fxGrade: "noir", fxGradeAmt: 100 }]
@@ -1397,6 +1451,60 @@ function marks() {
 /* ---------- undo and redo: one step per finished change ---------- */
 var undoS = [], redoS = [], lastJ = null;
 function snap0() { return JSON.stringify(S, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }); }
+/* ---------- Surprise: a random dot matrix or halftone look plus effects; every recipe is remembered so none repeats ---------- */
+var SKEY = "halftone:surprises";
+function pickOne(a) { return a[(Math.random() * a.length) | 0]; }
+function rint(a, b, step) { step = step || 1; return a + Math.round(Math.random() * (b - a) / step) * step; }
+function chance(p) { return Math.random() < p; }
+function surpriseRecipe() {
+  var o = {}, sw = ["#ffffff", "#fbfbf8", "#f6f1e7", "#1d2622", "#111111", "#1f3b3a"], inks = ["#1d2622", "#b8352b", "#1f5c4a", "#35399d", "#e2559b", "#111111", "#7a5af0"];
+  o.look = chance(0.5) ? "dot" : "half";
+  if (o.look === "dot") {
+    o.palette = pickOne(Object.keys(PALETTES)); o.cols = rint(28, 120, 4); o.dmDot = rint(60, 100, 2); o.dmShape = pickOne(["circle", "square"]);
+    o.dir = pickOne(["lr", "rl", "tb", "diag", "center", "random"]); o.reveal = rint(40, 100, 5); o.band = rint(8, 50, 2); o.wash = rint(0, 80, 5);
+    o.scatter = rint(0, 50, 5); o.dmSat = rint(80, 150, 5); o.dmCon = rint(90, 150, 5); o.dmBg = pickOne(sw); o.dmFrom = pickOne(["confetti", "clear"]);
+  } else {
+    o.htMode = pickOne(["rgb", "ink", "image", "cmyk"]); o.htCells = rint(30, 120, 2); o.htAngle = rint(0, 90, 5); o.htShape = pickOne(["dot", "square", "line"]);
+    o.htGain = rint(70, 140, 5); o.htCon = rint(90, 170, 5); o.htLight = rint(-20, 20, 5); o.htInvert = chance(0.1); o.htRiley = chance(0.12);
+    o.htInk = pickOne(inks); o.htPaper = pickOne(["#ffffff", "#f6f1e7", "#fbfbf8", "#ffe600", "#f7a1c4"]);
+  }
+  var style = pickOne(["none", "none", "warhol", "mine", "lego", "vhs", "film"]);
+  o.fxWarhol = style === "warhol" ? pickOne(["2", "3"]) : "off"; o.fxWarholMix = rint(0, 8);
+  o.fxMine = style === "mine" ? rint(20, 70, 5) : 0; o.fxMinePal = pickOne(["mc", "mc", "photo"]);
+  o.fxLego = style === "lego" ? rint(25, 75, 5) : 0;
+  o.fxShift = style === "vhs" ? rint(25, 60, 5) : chance(0.15) ? rint(10, 40, 5) : 0;
+  o.fxGlitch = style === "vhs" ? rint(20, 50, 5) : chance(0.12) ? rint(10, 40, 5) : 0;
+  o.fxLeak = style === "film" ? rint(30, 70, 5) : chance(0.2) ? rint(10, 50, 5) : 0;
+  o.fxFlare = chance(0.15) ? rint(20, 70, 5) : 0; o.fxStreak = chance(0.15) ? rint(20, 70, 5) : 0;
+  o.fxGrade = style === "film" ? pickOne(["warm", "fade"]) : chance(0.45) ? pickOne(["teal", "bleach", "warm", "cool", "fade", "noir"]) : "none";
+  o.fxGradeAmt = rint(50, 100, 5);
+  o.seed = (Math.random() * 1e6) | 0; o.fxSeed = (Math.random() * 1e6) | 0;
+  return o;
+}
+function recipeKey(o) { var c = Object.assign({}, o); delete c.seed; delete c.fxSeed; return JSON.stringify(c); }
+function surprise() {
+  var seen = []; try { seen = JSON.parse(localStorage.getItem(SKEY)) || []; } catch (e) {}
+  var o, k, n = 0;
+  do { o = surpriseRecipe(); k = recipeKey(o); } while (seen.indexOf(k) >= 0 && ++n < 200);
+  seen.push(k); if (seen.length > 2000) seen = seen.slice(-2000);
+  try { localStorage.setItem(SKEY, JSON.stringify(seen)); } catch (e) {}
+  Object.assign(S, o); S.look = o.look; document.body.dataset.look = o.look;
+  sync(); saveSettings(); schedule(); commit(); marks();
+  tab = "surprise"; document.querySelectorAll(".pill [role=tab]").forEach(function (b) { b.classList.toggle("cur", b.dataset.tab === S.look); });
+  $("#saveVideo").hidden = S.look !== "dot" || !videoType();
+  var L = [];
+  L.push(o.look === "dot" ? "Dot matrix · " + o.palette + " palette · " + o.cols + " dots across · " + (o.dmShape === "square" ? "squares" : "circles")
+    : "Halftone · " + (o.htRiley ? "Bridget Riley lines" : { rgb: "RGB", ink: "one ink", image: "image color", cmyk: "CMYK" }[o.htMode] + " · " + o.htShape + "s at " + o.htAngle + "° · " + o.htCells + " across"));
+  if (o.fxWarhol !== "off") L.push("Warhol " + o.fxWarhol + " × " + o.fxWarhol);
+  if (o.fxMine) L.push("Minecraft blocks");
+  if (o.fxLego) L.push("1×1 tiles");
+  if (o.fxShift || o.fxGlitch) L.push("Glitch");
+  if (o.fxLeak || o.fxFlare || o.fxStreak) L.push("Light leaks");
+  if (o.fxGrade !== "none") L.push("Grade: " + $("#fxGrade option[value=" + o.fxGrade + "]").textContent);
+  $("#recipe").innerHTML = ""; L.forEach(function (s) { var li = document.createElement("li"); li.textContent = s; $("#recipe").appendChild(li); });
+  say("Surprise!");
+}
+$("#surpriseBtn").addEventListener("click", surprise);
 function commit() {
   var j = snap0();
   if (j === lastJ) return;
@@ -1406,7 +1514,7 @@ function commit() {
 function histBtns() { $("#undo").disabled = !undoS.length; $("#redo").disabled = !redoS.length; }
 function restore(j) {
   S = JSON.parse(j); lastJ = j; sync(); saveSettings();
-  setTab(tab === "fx" ? "fx" : S.look);
+  setTab(tab === "fx" || tab === "surprise" ? tab : S.look);
   histBtns(); schedule();
 }
 function undo() { if (!undoS.length) return; redoS.push(lastJ); restore(undoS.pop()); say("Undone."); }
