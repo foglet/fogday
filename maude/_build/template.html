@@ -16,7 +16,7 @@ if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIn
 (function () { var t = null; try { t = localStorage.getItem("fogday-theme"); } catch (e) {}
   if (t !== "dark" && t !== "light") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   document.documentElement.dataset.theme = t; })();</script>
-<meta name="description" content="Turn a photo into a dot matrix or a halftone print, add glitch and light effects, save it as an image, SVG or video.">
+<meta name="description" content="Maude: turn a photo into a dot matrix or a halftone print, add glitch and light effects, save it as an image, SVG or video.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
@@ -623,7 +623,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
 <script>
 (function () {
 "use strict";
-var KEY = "halftone:settings";
+var KEY = "maude:settings";
 var DEF = {
   look: "dot",
   cols: 56, reveal: 80, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "center", palette: "confetti", band: 22, wash: 55, scatter: 25,
@@ -1852,7 +1852,7 @@ function marks() {
 var undoS = [], redoS = [], lastJ = null;
 function snap0() { return JSON.stringify(S, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }); }
 /* ---------- Surprise: a random dot matrix or halftone look plus effects; every recipe is remembered so none repeats ---------- */
-var SKEY = "halftone:surprises";
+var SKEY = "maude:surprises";
 function pickOne(a) { return a[(Math.random() * a.length) | 0]; }
 function rint(a, b, step) { step = step || 1; return a + Math.round(Math.random() * (b - a) / step) * step; }
 function chance(p) { return Math.random() < p; }

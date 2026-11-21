@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* iPhone/iPad: Safari zooms in on a field under 16 px when it takes focus; maximum-scale stops that (pinch zoom still works on iOS) */
+if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))
+  document.querySelector("meta[name=viewport]").setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover");</script>
+<meta name="theme-color" content="#fbf8f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maude">
+<link rel="apple-touch-icon" href="/px/icon-180.png">
+<title>Maude</title>
+<script>/* light/dark, shared with the rest of fogday.com (localStorage "fogday-theme"); no saved choice = follow the system */
+(function () { var t = null; try { t = localStorage.getItem("fogday-theme"); } catch (e) {}
+  if (t !== "dark" && t !== "light") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.dataset.theme = t; })();</script>
+<meta name="description" content="Maude: turn a photo into a dot matrix or a halftone print, add glitch and light effects, save it as an image, SVG or video.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
+<style>
+:root{--paper:#ffffff;--ink:#1d1d1d;--muted:#5e5e5e;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#dcdcdc;--card:#ffffff;--well:#efefef;--field:#ffffff;--onfelt:#ffffff;--stagebg:#efefef;color-scheme:light;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+:root[data-theme="dark"]{--paper:#1e1e1e;--ink:#e6e6e6;--muted:#a3a3a3;--felt:#d0d0d0;--felt-d:#bababa;--red:#ff7a6e;--line:#444444;--card:#2b2b2b;--well:#3a3a3a;--field:#363636;--onfelt:#121212;--stagebg:#141414;color-scheme:dark}
+.topr{display:flex;align-items:center;gap:0}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:6px;margin:0;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:8px}
+.theme-toggle svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-toggle .icon-sun{display:none}
+.theme-toggle:hover .icon-moon path{fill:currentColor}
+:root[data-theme="dark"] .theme-toggle .icon-moon{display:none}
+:root[data-theme="dark"] .theme-toggle .icon-sun{display:block}
+:root[data-theme="dark"] .theme-toggle:hover{color:#ffe680}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.35 "Rubik",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+.ico{width:16px;height:16px;flex:0 0 16px;display:block}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1180px;margin:0 auto;
+  padding:calc(6px + var(--sat)) calc(2.5vw + var(--sar) - 4px) 2px calc(2.5vw + var(--sal))}
+h1{margin:0;font:400 22px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
+.bento{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:5px;color:var(--muted);border-radius:8px}
+.bento svg{display:block;width:100%;height:100%}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:4px calc(2.5vw + var(--sar)) calc(24px + var(--sab)) calc(2.5vw + var(--sal));display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+/* phones: the image stays pinned at the top while the settings scroll under it (not in full width mode) */
+.stagecol{position:sticky;top:0;z-index:5;background:var(--paper);padding:calc(4px + var(--sat)) 0 2px;min-width:0}
+body.big .stagecol{position:static}
+@media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
+.stage{display:flex;justify-content:center}
+#cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
+#cv.drag{touch-action:none;cursor:move}
+#cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
+.tools{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:6px auto 0;max-width:100%}
+.tg{display:flex;gap:4px;flex:0 0 auto}
+.tools .status{flex:1 1 auto;min-width:0;text-align:center;font-size:12px;color:var(--muted);margin:0;line-height:1.25}
+#compare{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+#compare.on{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
+body:not([data-look="dot"]) #play{display:none}
+.stage.drop #cv{outline:3px dashed var(--felt);outline-offset:4px}
+.looks{display:flex;flex-wrap:wrap;gap:6px}
+.looks::-webkit-scrollbar{display:none}
+
+.linkb{border:0;background:none;padding:6px 8px;min-height:32px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:12px;border-radius:6px}
+.linkb:hover{color:var(--ink)}
+/* touch screens: 44 px tap targets */
+@media (pointer:coarse){
+  .btn,.icob,.chip,select,.ph,.linkb{min-height:44px;height:44px}
+  .icob{width:44px;flex-basis:44px}
+  .pill,.seg{height:44px}.seg span{min-height:38px}
+  .color .sw{width:34px;height:34px}.color input[type=color]{height:44px;width:48px}
+  .chk{min-height:44px}
+  input[type=range]{height:36px}
+  .preset{width:40px;height:40px;right:44px;padding:10px}.acc>.ph>.ico{top:14px}
+}
+.ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
+.actions{display:flex;gap:6px}
+.actions .btn{flex:1 1 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;height:32px;padding:0 10px;border-radius:8px;font-size:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500;min-width:0;white-space:nowrap}
+.btn span{overflow:hidden;text-overflow:ellipsis}
+.actions .btn{padding:0 6px}
+.btn:hover{border-color:var(--felt)}
+.btn.primary{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
+.btn.primary:hover{background:var(--felt-d)}
+.btn[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
+.btn[disabled]{opacity:.5;cursor:default}
+@media (max-width:360px){.actions .btn span{display:none}}
+/* pill slider: Dot matrix, Halftone, Text share one switch; the green pill slides to the chosen one */
+.tabrow{display:flex;gap:6px;align-items:center}.tabrow .pill{flex:1;min-width:0}
+.pill{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:32px;border-radius:999px;background:var(--well);padding:2px}
+.pill .knob{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/3);border-radius:999px;background:var(--felt);transform:translateX(calc(var(--i,0) * 100%));transition:transform .25s cubic-bezier(.3,0,.2,1)}
+.pill [role=tab]{position:relative;z-index:1;border:0;background:none;border-radius:999px;font-weight:500;font-size:13px;white-space:nowrap;padding:0 2px;min-width:0;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.pill [role=tab][aria-selected=true]{color:var(--onfelt);background:var(--felt);transition:background 0s .25s}
+.pill [role=tab].cur::after{content:none}
+.tabp{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.acc{background:var(--card);border:1px solid var(--line);border-radius:10px;position:relative}
+.acc>.ph{padding-right:80px}.acc>.ph>.ico{position:absolute;right:12px;top:8px}
+.preset{position:absolute;top:2px;right:34px;width:28px;height:28px;padding:5px;border:0;background:none;color:var(--muted);border-radius:6px;cursor:pointer}
+.preset:hover{color:var(--ink);background:var(--well)}.preset .ico{width:18px;height:18px}
+.acc>.ph[aria-expanded="false"]~.preset{display:none}
+.ph{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
+.ph .ico{color:var(--muted);transition:transform .2s}
+.ph[aria-expanded="false"] .ico{transform:rotate(-90deg)}
+.ph[aria-expanded="true"]{box-shadow:inset 0 -1px 0 var(--line);border-radius:10px 10px 0 0;margin-bottom:8px}
+.pb{padding:0 12px 10px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.f{display:grid;gap:0}
+.f>.lab{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
+.f>.lab output{color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:26px;margin:0;accent-color:var(--felt);background:transparent}
+select,textarea{width:100%;min-height:32px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--field);font-size:13px}
+textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height:1.3}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--card);gap:2px;margin:0;min-width:0;height:32px}
+.seg legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.seg label{flex:1 1 0;min-width:0;position:relative;display:flex}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{flex:1;display:flex;align-items:center;justify-content:center;min-height:26px;padding:0 4px;border-radius:7px;text-align:center;font-weight:500;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.seg input:checked+span{background:var(--felt);color:var(--onfelt)}
+.seg input:focus-visible+span{outline:3px solid var(--red);outline-offset:1px}
+.color{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
+.color input[type=color]{width:40px;height:32px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
+.color .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
+.color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--felt)}
+.icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer;padding:0}
+.icob[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
+.icob[disabled]{opacity:.4;cursor:default}
+.chk{display:flex;align-items:center;gap:8px;min-height:32px;cursor:pointer;font-size:13px}
+.chk input{width:18px;height:18px;accent-color:var(--felt)}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.row .btn{flex:1 1 auto}
+/* text layers */
+.chips{display:flex;gap:4px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:none}
+.chip{flex:0 0 auto;max-width:130px;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--field);cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
+.status{min-height:18px;margin:0;font-size:13px}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin:4px 0 0}
+body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!important}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(20,26,24,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+.sheet{background:var(--card);border-radius:14px;padding:12px;box-shadow:0 24px 64px rgba(0,0,0,.35);max-width:640px;width:100%;display:grid;gap:8px}
+.sheet h2{margin:0;font:400 18px/1.2 "Young Serif",Georgia,serif;display:flex;justify-content:space-between;align-items:center}
+.sheet video{width:100%;border-radius:10px;background:#000;max-height:60vh;object-fit:contain}
+#saveModal .sheet{max-width:380px}
+@media (max-width:420px){.pill [role=tab]{font-size:12px;gap:3px}}
+@media (prefers-reduced-motion:reduce){.ph .ico,.pill .knob{transition:none}}
+/* ===== Studio skin: off-white toolbar and sidebar, warm grey canvas area, underline tabs, quiet grey buttons ===== */
+:root{--paper:#ebe9e4;--bar:#f8f7f5;--card:#f8f7f5;--well:#ebe9e4;--field:#ffffff;--btn:#e9e8e6;--btnh:#dedcd9;--sel:#ffffff;
+  --ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdad5;--sep:#d6d4cf;--felt:#1c1c1c;--felt-d:#000;--onfelt:#ffffff;--accent:#1c1c1c;
+  --track:#d6d4cf;--knob:#ffffff;--stagebg:#ffffff}
+:root[data-theme="dark"]{--paper:#1f1f1f;--bar:#2a2a2a;--card:#2a2a2a;--well:#1f1f1f;--field:#1c1c1c;--btn:#3a3a3a;--btnh:#454545;--sel:#3a3a3a;
+  --ink:#ececec;--muted:#a3a3a3;--line:#3a3a3a;--sep:#3a3a3a;--felt:#ececec;--felt-d:#fff;--onfelt:#141414;--accent:#ececec;
+  --track:#4a4a4a;--knob:#f2f2f2;--stagebg:#161616}
+html,body{font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;background:var(--paper)}
+h1,h2,h3,.ph,.sheet h2{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif}
+/* toolbar */
+.top{max-width:none;background:var(--bar);border-bottom:1px solid var(--sep);gap:8px;padding:calc(6px + var(--sat)) 12px 6px calc(16px + var(--sal));min-height:52px}
+h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
+.tb{display:flex;align-items:center;gap:2px;flex:1 1 auto;justify-content:center;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tb::-webkit-scrollbar{display:none}
+.tb .sep{width:1px;height:26px;background:var(--sep);margin:0 10px;flex:0 0 1px}
+.tb .icob{width:38px;height:38px;flex:0 0 38px;border:0;background:none;color:var(--ink);border-radius:8px}
+.tb .icob .ico{width:22px;height:22px;flex-basis:22px}
+.tb .icob:hover{background:var(--btn)}
+.tb .icob[disabled]{opacity:.3}
+.tb .icob[aria-pressed="true"]{background:var(--btn);color:var(--ink)}
+.tbtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:0;background:none;border-radius:8px;font-size:17px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tbtn .ico{width:22px;height:22px;flex-basis:22px}
+.tbtn:hover{background:var(--btn)}
+.topr .theme-toggle,.topr .bento{width:40px;height:40px;min-height:40px;flex:0 0 40px;color:var(--muted);border-radius:4px;transition:color .15s ease}
+.topr .theme-toggle{padding:12px}.topr .bento{padding:11px;margin-left:-6px}
+.topr .theme-toggle:hover{color:var(--muted)}.topr .theme-toggle:hover .icon-moon path{fill:currentColor}
+:root[data-theme="dark"] .topr .theme-toggle:hover{color:#ffe680}
+/* main: canvas area left, sidebar right */
+.wrap{max-width:none;margin:0;padding:0;gap:0;grid-template-columns:minmax(0,1fr)}
+.stagecol{background:var(--paper);padding:16px 2.5vw 8px}
+.stage{padding:8px}
+#cv{border-radius:0;box-shadow:0 1px 3px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.10)}
+.stagecol .status{text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin:6px 0 0}
+.ctlcol{background:var(--bar);gap:0;padding:0 0 calc(24px + var(--sab))}
+@media (min-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr) 380px;align-items:stretch;min-height:calc(100vh - 53px)}
+  .stagecol{position:sticky;top:0;align-self:start;padding:28px 28px 12px}
+  .ctlcol{border-left:1px solid var(--sep)}
+}
+/* underline tabs (Adjustments · Layers · History) */
+.tabrow{display:block;border-bottom:1px solid var(--sep)}
+.pill{display:grid;grid-template-columns:repeat(4,1fr);height:52px;padding:0;border-radius:0;background:none;position:relative}
+.pill .knob{top:auto;bottom:-1px;left:0;height:3px;width:calc(100% / 4);border-radius:0;background:var(--ink)}
+.pill [role=tab]{font-size:14px;font-weight:500;color:var(--muted);border-radius:0;letter-spacing:.01em;gap:6px}
+.pill [role=tab] .ico{display:none}
+.pill [role=tab]:hover{color:var(--ink)}
+.pill [role=tab][aria-selected=true]{background:none;color:var(--ink);font-weight:500}
+
+/* title row with grey Reset (History · Undo · Redo) */
+.shd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:18px 20px 12px}
+.shd h2{margin:0;font-size:20px;font-weight:500}
+.sbtn{height:34px;padding:0 14px;border:0;border-radius:6px;background:var(--btn);color:var(--ink);font-size:15px;cursor:pointer}
+.sbtn:hover{background:var(--btnh)}
+.looks{padding:16px 20px 14px;gap:6px;align-items:center}
+.chip{height:28px;min-height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--btn);font-size:13px;color:var(--ink)}
+.chip:hover{background:var(--btnh)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--onfelt)}
+/* sections: a rule above, name and Reset, then the controls */
+.tabp{gap:0}
+.acc{background:none;border:0;border-top:1px solid var(--sep);border-radius:0;position:static}
+.acc>.ph,.acc>.preset{display:none}
+.shead{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 6px}
+.shead h3{margin:0;font-size:15px;font-weight:600;position:relative}
+.shead h3{font-weight:500;color:var(--muted)}
+.acc.mod .shead h3{font-weight:700;color:var(--ink)}
+.rbtn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:5px;border:0;border-radius:6px;background:var(--btn);color:var(--ink);cursor:pointer;flex:0 0 30px}
+.rbtn .ico{width:18px;height:18px;flex-basis:18px}
+.rbtn:hover{background:var(--btnh)}
+.rbtn[disabled]{background:none;color:var(--muted);opacity:.45;cursor:default}
+.looks .rbtn{margin-left:auto}
+.surp{display:grid;gap:12px;padding:18px 20px}
+.surp .btn{height:40px;font-size:15px;justify-content:center}
+.recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.recipe{margin:0;font-size:13px;line-height:1.5}
+.plainnote{margin:0;padding:18px 20px;font-size:14px;color:var(--muted)}
+.tabrow{position:sticky;top:var(--pin,0px);z-index:6;background:var(--bar)}
+body.big .tabrow{position:static}
+.acc.flash{animation:accflash 1.2s ease-out}
+@keyframes accflash{0%{background:color-mix(in srgb,var(--ink) 10%,transparent)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.acc.flash{animation:none}}
+.htblock{border-top:1px solid var(--sep)}
+.hthead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px 4px}
+.hthead h3{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}.hthead h3 .ico{width:18px;height:18px;flex-basis:18px}
+.htonoff{width:140px;flex:0 0 140px}
+.htblock .looks{padding-top:10px}
+body:not([data-look="half"]) .htblock>.looks~.acc{display:none}
+.htnote{margin:0;padding:12px 20px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--sep)}
+.htnote .linkb{padding:0 0 0 4px;min-height:0;height:auto;font-size:13px}
+.duopairs{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.duopair{width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);padding:0;cursor:pointer}
+.duopair[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+@media (pointer:coarse){.duopair{width:40px;height:40px}}
+/* footer, as on /tides: language code (tap to cycle), INFO + that opens in place, credit flush right */
+.foot2{position:relative;padding:22px 20px 0;color:var(--muted)}
+.langbtn{float:left;background:none;border:0;padding:6px 16px 6px 0;margin:0;cursor:pointer;font-size:.75rem;font-weight:600;letter-spacing:.14em;color:var(--ink);-webkit-tap-highlight-color:transparent;line-height:1.2;min-height:28px;display:inline-flex;align-items:center}
+.langbtn .ico{width:17px;height:17px;flex-basis:17px}
+.langbtn:hover{opacity:.75}
+.notes{color:var(--muted);font-size:.85rem;line-height:1.5}
+.notes summary{list-style:none;cursor:pointer;display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:6px 0;-webkit-tap-highlight-color:transparent}
+.notes summary::-webkit-details-marker{display:none}
+.notes summary::after{content:" +"}
+.notes[open] summary::after{content:" –"}
+.notes summary:hover{color:var(--ink)}
+.notes-body{clear:both;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.notes-body p{margin:0}.notes-body a{color:inherit;text-decoration:none}
+.madeat{position:absolute;top:22px;right:20px;padding:4px 0;font-size:.85rem;line-height:1.5;color:var(--muted)}
+.madeat{display:flex;align-items:center;gap:4px}.madeat a{color:inherit;text-decoration:none}
+/* the footer row wraps: EN · INFO + on the left, the credit on the right (on its own line if it doesn't fit); open notes take the full width below */
+.foot2{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px}
+.langbtn{float:none}
+.madeat{position:static;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.notes[open]{order:3;flex-basis:100%}
+.madeat>span[data-notr],.madeat>a[data-notr]{font-size:.75rem;font-weight:600;letter-spacing:.14em}
+.madeat .bento{width:34px;height:34px;padding:9px;margin:-6px -9px -6px 0;color:var(--muted);display:inline-flex}.madeat .bento svg{width:100%;height:100%}
+:root[data-theme="dark"] .madeat .bento{color:#eaeaea}.madeat a:hover{color:var(--ink)}
+html{touch-action:manipulation}
+html.locked,html.locked body{overflow:hidden;height:100%;overscroll-behavior:none}
+body.big .stagecol{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;background:var(--paper)}
+body.big .stage{padding:0}
+body.big .stagecol .status{display:none}
+.ctlcol,.tabp,.surp,.recipe{align-content:start}
+.ctlcol{display:flex;flex-direction:column}
+.ctlcol>.foot.keep{margin-top:auto;padding-top:24px}
+.foot2{padding-bottom:calc(16px + var(--sab))}
+@media (max-width:899px){.wrap{min-height:100vh;min-height:100dvh;grid-template-rows:auto 1fr}}
+@media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
+@media (max-width:440px){.pill [role=tab]{font-size:12px;gap:4px;padding:0}.pill [role=tab] .ico{width:15px!important;height:15px!important;flex-basis:15px!important}}
+.pill [role=tab]>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pill [role=tab] .ico{display:block!important;flex-shrink:0;width:18px;height:18px;flex-basis:18px}
+.shead .sbtn{height:28px;padding:0 10px;font-size:13px}
+.pb{padding:4px 20px 16px;gap:10px}
+.tabp>.foot,.ctlcol>.foot{padding:0 20px}
+/* fields */
+.f>.lab{font-size:13px;color:var(--ink);align-items:baseline}
+.f>.lab output{color:inherit;font:inherit;font-variant-numeric:tabular-nums}
+select{background:var(--field);border:1px solid var(--line);border-radius:6px}
+.seg{background:var(--btn);border:0;border-radius:8px;padding:2px}
+.seg span{color:var(--muted)}
+.seg{height:36px;padding:3px}.seg span .ico{width:16px;height:16px;flex-basis:16px;margin-right:5px}.seg span{min-height:30px;font-size:13px}
+.seg input:checked+span{background:var(--ink);color:var(--onfelt);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.chk input{accent-color:var(--ink)}
+.btn{background:var(--btn);border:0;border-radius:6px;font-weight:500}
+.btn:hover{background:var(--btnh)}
+.icob{border:0;background:var(--btn);border-radius:6px;color:var(--ink)}
+.icob[aria-pressed="true"]{background:var(--ink);color:var(--onfelt)}
+.color input[type=color]{border:1px solid var(--line);background:var(--field)}
+.color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.sheet{background:var(--card);border:1px solid var(--sep);border-radius:10px}
+.linkb{color:var(--muted)}
+/* sliders: neutral track, dark fill up to a white knob */
+input[type=range]{-webkit-appearance:none;appearance:none;height:22px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(var(--ink),var(--ink)) 0/var(--p,50%) 100% no-repeat,var(--track)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:var(--knob);border:1px solid rgba(0,0,0,.22);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--track)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:2px;background:var(--ink)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--knob);border:1px solid rgba(0,0,0,.22);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]:focus-visible{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--red)}
+@media (pointer:coarse){
+  input[type=range]{height:36px}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-11px}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px}
+  .pill{height:48px}.chip{height:32px;min-height:32px}.sbtn{height:36px}.rbtn{width:36px;height:36px;min-height:36px;flex-basis:36px}
+  .tb .icob{width:40px;height:40px;flex-basis:40px;min-height:40px}
+  input,select,textarea{font-size:16px}
+}
+@media (max-width:640px){
+  h1{display:none}
+  .top{padding-left:calc(6px + var(--sal));padding-right:4px}
+  .tb{justify-content:flex-start}
+  .tb .sep{margin:0 4px}
+  .tbtn span{display:none}.tbtn{padding:0 8px}
+  .stagecol{padding:10px 8px 4px}
+  .tb{gap:0}.tb .sep{margin:0 2px}
+  .tb .icob,.tbtn{width:34px;height:34px;min-height:34px;flex:0 0 34px;padding:6px}
+  .tb .icob .ico,.tbtn .ico{width:20px;height:20px;flex-basis:20px}
+  .tbtn{justify-content:center}
+}
+</style>
+</head>
+<body data-look="dot" data-ht="rgb">
+<header class="top">
+  <h1 data-notr>Maude</h1>
+  <nav class="tb" aria-label="Tools">
+    <button type="button" class="icob" id="addImg" aria-label="Open image" title="Open image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg></button>
+    <button type="button" class="icob" id="takePhoto" aria-label="Take photo" title="Take photo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,16.37a86.4,86.4,0,0,1,16,3V212.67a86.4,86.4,0,0,1-16,3Zm32,9.26a87.81,87.81,0,0,1,16,10.54V195.83a87.81,87.81,0,0,1-16,10.54ZM40,128a88.11,88.11,0,0,1,80-87.63V215.63A88.11,88.11,0,0,1,40,128Zm160,50.54V77.46a87.82,87.82,0,0,1,0,101.08Z"/></svg></button>
+    <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></button>
+    <button type="button" class="icob" id="resetAll" aria-label="Reset all settings" title="Reset all settings"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="tbtn" id="saveOpen" aria-label="Export" title="Export"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg></button>
+  </nav>
+  <div class="topr">
+  <button class="theme-toggle" id="themeBtn" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+  </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="stagecol" aria-label="Preview">
+    <div class="stage" id="stage"><canvas id="cv" role="img" aria-label="Preview of the image look"></canvas></div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="ctlcol" aria-label="Settings">
+    <input type="file" id="fileIn" accept="image/*" hidden>
+    <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
+
+    <div class="tabrow">
+    <div class="pill" role="tablist" aria-label="Edit">
+      <span class="knob" aria-hidden="true"></span>
+      <button type="button" role="tab" id="t-plain" aria-controls="p-plain" data-tab="plain"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,104a56.06,56.06,0,0,0-56-56H136a24,24,0,0,1,24-24,8,8,0,0,0,0-16,40,40,0,0,0-40,40H80a56.06,56.06,0,0,0-56,56,16,16,0,0,0,8,13.83V128c0,35.53,33.12,62.12,59.74,83.49C103.66,221.07,120,234.18,120,240a8,8,0,0,0,16,0c0-5.82,16.34-18.93,28.26-28.51C190.88,190.12,224,163.53,224,128V117.83A16,16,0,0,0,232,104ZM80,64h96a40.06,40.06,0,0,1,40,40H40A40,40,0,0,1,80,64Zm74.25,135c-10.62,8.52-20,16-26.25,23.37-6.25-7.32-15.63-14.85-26.25-23.37C77.8,179.79,48,155.86,48,128v-8H208v8C208,155.86,178.2,179.79,154.25,199Z"/></svg><span>Original</span></button>
+      <button type="button" role="tab" id="t-dot" aria-controls="p-dot" data-tab="dot"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M122.34,109.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0,0-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40a8,8,0,0,0,0,11.32ZM128,35.31,156.69,64,128,92.69,99.31,64Zm5.66,111a8,8,0,0,0-11.32,0l-40,40a8,8,0,0,0,0,11.32l40,40a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0,0-11.32ZM128,220.69,99.31,192,128,163.31,156.69,192Zm109.66-98.35-40-40a8,8,0,0,0-11.32,0l-40,40a8,8,0,0,0,0,11.32l40,40a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,237.66,122.34ZM192,156.69,163.31,128,192,99.31,220.69,128Zm-82.34-34.35-40-40a8,8,0,0,0-11.32,0l-40,40a8,8,0,0,0,0,11.32l40,40a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,109.66,122.34ZM64,156.69,35.31,128,64,99.31,92.69,128Z"/></svg><span>Dot Matrix</span></button>
+      <button type="button" role="tab" id="t-fx" aria-controls="p-fx" data-tab="fx"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M48,64a8,8,0,0,1,8-8H72V40a8,8,0,0,1,16,0V56h16a8,8,0,0,1,0,16H88V88a8,8,0,0,1-16,0V72H56A8,8,0,0,1,48,64ZM184,192h-8v-8a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16Zm56-48H224V128a8,8,0,0,0-16,0v16H192a8,8,0,0,0,0,16h16v16a8,8,0,0,0,16,0V160h16a8,8,0,0,0,0-16ZM219.31,80,80,219.31a16,16,0,0,1-22.62,0L36.68,198.63a16,16,0,0,1,0-22.63L176,36.69a16,16,0,0,1,22.63,0l20.68,20.68A16,16,0,0,1,219.31,80Zm-54.63,32L144,91.31l-96,96L68.68,208ZM208,68.69,187.31,48l-32,32L176,100.69Z"/></svg><span>Effects</span></button>
+      <button type="button" role="tab" id="t-surprise" aria-controls="p-surprise" data-tab="surprise"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></svg><span>Surprise</span></button>
+    </div>
+    </div>
+
+    <!-- Dot matrix -->
+    <div class="tabp" role="tabpanel" id="p-plain" aria-labelledby="t-plain" hidden>
+      <p class="plainnote">Select a tab.</p>
+    </div>
+    <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
+      <p class="htnote" id="htNote" hidden><span>Halftone is on in Effects, so the dot matrix is hidden.</span> <button type="button" class="linkb" id="htNoteOff">Show dot matrix</button></p>
+      <div class="looks" role="group" aria-label="Dot matrix starting points" data-looks="dot"></div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-grid">Grid<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-grid" hidden>
+          <div class="f"><label class="lab" for="cols">Dots across <output data-for="cols"></output></label><input type="range" id="cols" min="12" max="160" step="1" data-k="cols"></div>
+          <div class="f"><label class="lab" for="dmDot">Dot size <output data-for="dmDot"></output></label><input type="range" id="dmDot" min="20" max="100" step="1" data-k="dmDot"></div>
+          <div class="f"><label class="lab" for="dmOp">Dot opacity <output data-for="dmOp"></output></label><input type="range" id="dmOp" min="5" max="100" step="1" data-k="dmOp"></div>
+          <fieldset class="seg"><legend>Dot shape</legend>
+            <label><input type="radio" name="dmShape" value="circle" data-k="dmShape"><span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,96a32,32,0,1,0,32,32A32,32,0,0,0,128,96Zm0,48a16,16,0,1,1,16-16A16,16,0,0,1,128,144Z"/></svg>Circle</span></label>
+            <label><input type="radio" name="dmShape" value="square" data-k="dmShape"><span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208Z"/></svg>Square</span></label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-reveal">Reveal<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-reveal" hidden>
+          <div class="f"><label class="lab" for="reveal">Reveal <output data-for="reveal"></output></label><input type="range" id="reveal" min="0" max="100" step="1" data-k="reveal"></div>
+          <fieldset class="seg"><legend>Reveal from</legend>
+            <label><input type="radio" name="dmFrom" value="confetti" data-k="dmFrom"><span>Confetti colors</span></label>
+            <label><input type="radio" name="dmFrom" value="clear" data-k="dmFrom"><span>Transparent</span></label>
+          </fieldset>
+          <div class="f"><label class="lab" for="dir">Direction</label>
+            <select id="dir" data-k="dir"><option value="lr">Left to right</option><option value="rl">Right to left</option><option value="tb">Top to bottom</option><option value="diag">Diagonal</option><option value="center">From center</option><option value="random">Random</option></select></div>
+          <div class="f"><label class="lab" for="band">Fade band <output data-for="band"></output></label><input type="range" id="band" min="3" max="60" step="1" data-k="band"></div>
+          <div class="f"><label class="lab" for="wash">Washout <output data-for="wash"></output></label><input type="range" id="wash" min="0" max="100" step="1" data-k="wash"></div>
+          <div class="f"><label class="lab" for="scatter">Edge scatter <output data-for="scatter"></output></label><input type="range" id="scatter" min="0" max="60" step="1" data-k="scatter"></div>
+          <div class="f"><label class="lab" for="revealTime">Reveal time <output data-for="revealTime"></output></label><input type="range" id="revealTime" min="1" max="8" step="0.5" data-k="revealTime"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-dmcolor">Color<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-dmcolor" hidden>
+          <div class="f"><label class="lab" for="palette">Start colors</label>
+            <div class="row"><select id="palette" data-k="palette" style="flex:1"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
+            <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg></button></div></div>
+          <div class="two">
+            <div class="f"><label class="lab" for="dmSat">Saturation <output data-for="dmSat"></output></label><input type="range" id="dmSat" min="0" max="200" step="1" data-k="dmSat"></div>
+            <div class="f"><label class="lab" for="dmCon">Contrast <output data-for="dmCon"></output></label><input type="range" id="dmCon" min="50" max="200" step="1" data-k="dmCon"></div>
+          </div>
+          <div class="f"><span class="lab" id="dmBgL">Background</span><div class="color" data-color="dmBg" data-label="dmBgL"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Text -->
+    <!-- Effects: applied on top of the look -->
+    <div class="tabp" role="tabpanel" id="p-fx" aria-labelledby="t-fx" hidden>
+      <div class="looks" role="group" aria-label="Effect starting points" data-looks="fx"></div>
+      <div class="htblock" id="htBlock">
+        <div class="hthead"><h3><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75ZM200,144a70.57,70.57,0,0,1-.46,8H136V136h63.64Q200,140,200,144ZM183.39,88H136V72h36.89A175.85,175.85,0,0,1,183.39,88ZM136,200h37.19A71.67,71.67,0,0,1,136,215.54Zm0-16V168h59.87a72,72,0,0,1-8,16Zm0-64V104h55.39a116.84,116.84,0,0,1,5.45,16Zm23.89-64H136V32.6A257.22,257.22,0,0,1,159.89,56ZM56,144c0-50,42.26-92.71,64-111.4V215.54A72.08,72.08,0,0,1,56,144Z"/></svg><span>Halftone</span></h3>
+          <fieldset class="seg htonoff"><legend>Halftone</legend>
+            <label><input type="radio" name="htOn" value="dot" id="htOff"><span>Off</span></label>
+            <label><input type="radio" name="htOn" value="half" id="htOnR"><span>On</span></label>
+          </fieldset></div>
+      <div class="looks" role="group" aria-label="Halftone starting points" data-looks="half"></div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-screen">Halftone screen<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-screen" hidden>
+          <div class="f"><label class="lab" for="htCells">Dots across <output data-for="htCells"></output></label><input type="range" id="htCells" min="16" max="180" step="1" data-k="htCells"></div>
+          <div class="f"><label class="lab" for="htAngle">Screen angle <output data-for="htAngle"></output></label><input type="range" id="htAngle" min="0" max="90" step="1" data-k="htAngle"></div>
+          <fieldset class="seg"><legend>Dot shape</legend>
+            <label><input type="radio" name="htShape" value="dot" data-k="htShape"><span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,96a32,32,0,1,0,32,32A32,32,0,0,0,128,96Zm0,48a16,16,0,1,1,16-16A16,16,0,0,1,128,144Z"/></svg>Dot</span></label>
+            <label><input type="radio" name="htShape" value="square" data-k="htShape"><span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208Z"/></svg>Square</span></label>
+            <label><input type="radio" name="htShape" value="line" data-k="htShape"><span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></svg>Line</span></label>
+          </fieldset>
+          <div class="f"><label class="lab" for="htGain">Dot gain <output data-for="htGain"></output></label><input type="range" id="htGain" min="40" max="160" step="1" data-k="htGain"></div>
+          <div class="f"><label class="lab" for="htOp">Dot opacity <output data-for="htOp"></output></label><input type="range" id="htOp" min="5" max="100" step="1" data-k="htOp"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-tone">Halftone tone<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-tone" hidden>
+          <div class="two">
+            <div class="f"><label class="lab" for="htCon">Contrast <output data-for="htCon"></output></label><input type="range" id="htCon" min="50" max="250" step="1" data-k="htCon"></div>
+            <div class="f"><label class="lab" for="htLight">Lightness <output data-for="htLight"></output></label><input type="range" id="htLight" min="-50" max="50" step="1" data-k="htLight"></div>
+          </div>
+          <label class="chk"><input type="checkbox" data-k="htInvert">Invert</label>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-htcolor">Halftone color<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-htcolor" hidden>
+          <fieldset class="seg"><legend>Ink</legend>
+            <label><input type="radio" name="htMode" value="rgb" data-k="htMode"><span>RGB</span></label>
+            <label><input type="radio" name="htMode" value="ink" data-k="htMode"><span>One ink</span></label>
+            <label><input type="radio" name="htMode" value="image" data-k="htMode"><span>Image</span></label>
+            <label><input type="radio" name="htMode" value="cmyk" data-k="htMode"><span>CMYK</span></label>
+          </fieldset>
+          <div class="f ht-ink"><span class="lab" id="htInkL">Ink color</span><div class="color" data-color="htInk" data-label="htInkL"></div></div>
+          <div class="f ht-paper"><span class="lab" id="htPaperL">Paper color</span><div class="color" data-color="htPaper" data-label="htPaperL"></div></div>
+        </div>
+      </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-glitch">Glitch<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-glitch" hidden>
+          <div class="f"><label class="lab" for="fxShift">Color shift <output data-for="fxShift"></output></label><input type="range" id="fxShift" min="0" max="100" step="1" data-k="fxShift"></div>
+          <div class="f"><label class="lab" for="fxGlitch">Glitch slices <output data-for="fxGlitch"></output></label><input type="range" id="fxGlitch" min="0" max="100" step="1" data-k="fxGlitch"></div>
+          <button type="button" class="btn" id="fxShuffle"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg><span>New glitch</span></button>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-light">Light leaks<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-light" hidden>
+          <div class="f"><label class="lab" for="fxLeak">Light leak <output data-for="fxLeak"></output></label><input type="range" id="fxLeak" min="0" max="100" step="1" data-k="fxLeak"></div>
+          <div class="f"><label class="lab" for="fxFlare">Lens flare <output data-for="fxFlare"></output></label><input type="range" id="fxFlare" min="0" max="100" step="1" data-k="fxFlare"></div>
+          <div class="f"><label class="lab" for="fxStreak">Glowing streaks <output data-for="fxStreak"></output></label><input type="range" id="fxStreak" min="0" max="100" step="1" data-k="fxStreak"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-grade">Color grade<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-grade" hidden>
+          <div class="f"><label class="lab" for="fxGrade">Look</label>
+            <select id="fxGrade" data-k="fxGrade"><option value="none">None</option><option value="teal">Teal and orange</option><option value="bleach">Bleach bypass</option><option value="warm">Warm film</option><option value="cool">Cool night</option><option value="fade">Faded matte</option><option value="noir">Noir</option></select></div>
+          <div class="f"><label class="lab" for="fxGradeAmt">Strength <output data-for="fxGradeAmt"></output></label><input type="range" id="fxGradeAmt" min="0" max="100" step="1" data-k="fxGradeAmt"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-film">Film<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-film" hidden>
+          <div class="f"><label class="lab" for="fxStock">Film type</label><select id="fxStock" data-k="fxStock"></select></div>
+          <div class="f"><label class="lab" for="fxGrain">Grain <output data-for="fxGrain"></output></label><input type="range" id="fxGrain" min="0" max="60" step="1" data-k="fxGrain"></div>
+          <div class="f"><label class="lab" for="fxFilm">Film effect</label><select id="fxFilm" data-k="fxFilm"><option value="none">None</option><option value="cross">Cross processing</option><option value="diopter">Split focus diopter</option><option value="haze">Diffusion haze</option><option value="double">Double exposure</option><option value="expired">Expired film</option><option value="soup">Film soup</option><option value="forced">Forced perspective</option><option value="infrared">Infrared</option><option value="smudge">Lens smudge</option><option value="preexposed">Pre-exposed</option><option value="sepia">Sepia</option></select></div>
+          <div class="f"><label class="lab" for="fxFilmAmt">Strength <output data-for="fxFilmAmt"></output></label><input type="range" id="fxFilmAmt" min="0" max="100" step="1" data-k="fxFilmAmt"></div>
+          <button type="button" class="btn" id="filmShuffle"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg><span>New roll (random)</span></button>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-duo">Duotone<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-duo" hidden>
+          <div class="f"><label class="lab" for="fxDuo">Strength <output data-for="fxDuo"></output></label><input type="range" id="fxDuo" min="0" max="100" step="1" data-k="fxDuo"></div>
+          <div class="f"><span class="lab" id="duoPairsL">Color pairs</span><div class="duopairs" id="duoPairs" role="group" aria-labelledby="duoPairsL"></div></div>
+          <div class="f"><span class="lab" id="fxDuoAL">Shadows</span><div class="color" data-color="fxDuoA" data-label="fxDuoAL"></div></div>
+          <div class="f"><span class="lab" id="fxDuoBL">Highlights</span><div class="color" data-color="fxDuoB" data-label="fxDuoBL"></div></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-warhol">Warhol<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-warhol" hidden>
+          <fieldset class="seg"><legend>Warhol panels</legend>
+            <label><input type="radio" name="fxWarhol" value="off" data-k="fxWarhol"><span>Off</span></label>
+            <label><input type="radio" name="fxWarhol" value="2" data-k="fxWarhol"><span>2 × 2</span></label>
+            <label><input type="radio" name="fxWarhol" value="3" data-k="fxWarhol"><span>3 × 3</span></label>
+          </fieldset>
+          <div class="f"><label class="lab" for="fxWarholMix">Colors <output data-for="fxWarholMix"></output></label><input type="range" id="fxWarholMix" min="0" max="8" step="1" data-k="fxWarholMix"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-mine">Minecraft<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-mine" hidden>
+          <div class="f"><label class="lab" for="fxMine">Block size <output data-for="fxMine"></output></label><input type="range" id="fxMine" min="0" max="100" step="1" data-k="fxMine"></div>
+          <fieldset class="seg"><legend>Block colors</legend>
+            <label><input type="radio" name="fxMinePal" value="mc" data-k="fxMinePal"><span>Minecraft blocks</span></label>
+            <label><input type="radio" name="fxMinePal" value="photo" data-k="fxMinePal"><span>Photo colors</span></label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-guil">Guilloché<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-guil" hidden>
+          <div class="f"><label class="lab" for="fxGuilPat">Pattern</label><select id="fxGuilPat" data-k="fxGuilPat"><optgroup label="Money"><option value="waves">Banknote waves</option><option value="rosette">Banknote rosette</option><option value="lattice">Security lattice</option></optgroup><optgroup label="Watch dial"><option value="clous">Clous de Paris</option><option value="flinque">Flinqué</option><option value="tapis">Grande Tapisserie</option><option value="sunburst">Sunburst</option></optgroup></select></div>
+          <div class="f"><label class="lab" for="fxGuil">Line density <output data-for="fxGuil"></output></label><input type="range" id="fxGuil" min="0" max="100" step="1" data-k="fxGuil"></div>
+          <fieldset class="seg"><legend>Guilloché ink</legend>
+            <label><input type="radio" name="fxGuilInk" value="photo" data-k="fxGuilInk"><span>Photo colors</span></label>
+            <label><input type="radio" name="fxGuilInk" value="green" data-k="fxGuilInk"><span>Banknote green</span></label>
+            <label><input type="radio" name="fxGuilInk" value="ink" data-k="fxGuilInk"><span>Black</span></label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-seurat">Seurat<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-seurat" hidden>
+          <div class="f"><label class="lab" for="fxSeurat">Dab size <output data-for="fxSeurat"></output></label><input type="range" id="fxSeurat" min="0" max="100" step="1" data-k="fxSeurat"></div>
+          <div class="f"><label class="lab" for="fxSeuratMix">Color mixing <output data-for="fxSeuratMix"></output></label><input type="range" id="fxSeuratMix" min="0" max="100" step="1" data-k="fxSeuratMix"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-px">Pixel art<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-px" hidden>
+          <div class="f"><label class="lab" for="fxPx">Pixel size <output data-for="fxPx"></output></label><input type="range" id="fxPx" min="0" max="12" step="1" data-k="fxPx"></div>
+        </div>
+      </div>
+      <p class="foot">Effects show in saved images and video, not in SVG.</p>
+    </div>
+
+    <!-- Surprise: a new random look each time, never the same one twice -->
+    <div class="tabp" role="tabpanel" id="p-surprise" aria-labelledby="t-surprise" hidden>
+      <div class="surp">
+        <p class="recipe" id="recipe" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <p class="foot keep">Photos stay on your device. Nothing is uploaded.</p>
+    <div class="foot2">
+      <button type="button" class="langbtn" id="langBtn" data-notr>EN</button>
+      <details class="notes" id="info">
+        <summary>INFO</summary>
+        <div class="notes-body">
+      <p><strong data-notr>Maude</strong> turns a photo into dot matrix, halftone and other print-inspired looks, right in your browser. © 2026 <a href="https://fogday.com/">Fogday Studios</a>. All rights reserved.</p>
+      <p><strong>Your photos.</strong> Images are processed on your device and are never uploaded. A few preferences, such as language and theme, are kept in your browser's local storage; clearing your browser data removes them.</p>
+      <p><strong>Made with Claude.</strong> Maude was designed and built with Claude, an AI model made by Anthropic.</p>
+      <p><strong>Trademarks.</strong> All trademarks, brand names, product names and artist names mentioned are the property of their respective owners. Minecraft is a trademark of Mojang Synergies AB. Claude and Anthropic are trademarks of Anthropic, PBC. Names such as Warhol, Seurat, Bridget Riley and VHS are used only to describe a visual style; their use does not imply any affiliation with, sponsorship by or endorsement from their owners, estates or rights holders.</p>
+      <p><strong>Your images.</strong> You are responsible for having the rights to the photos you use and for how you use the images you make.</p>
+      <p><strong>No warranty.</strong> This tool is provided "as is", without warranty of any kind, express or implied, including fitness for a particular purpose. Fogday Studios is not liable for any loss or damage arising from its use.</p>
+        </div>
+      </details>
+      <span class="madeat"><span data-notr>MAUDE</span> <span>is by</span> <a href="https://fogday.com/" data-notr>© FOGDAY STUDIOS</a><a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg></a></span>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="saveModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+    <h2 id="saveTitle">Save <button type="button" class="icob" id="saveClose" aria-label="Close"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></h2>
+    <div class="f"><label class="lab" for="outSize">Image size (long edge)</label>
+      <select id="outSize" data-k="outSize"><option value="1080">1080 px</option><option value="2048">2048 px</option><option value="3000">3000 px</option><option value="4096">4096 px</option></select></div>
+    <label class="chk"><input type="checkbox" data-k="ig">Instagram size (crops the image to fit)</label>
+    <fieldset class="seg" id="igSizes"><legend>Instagram size</legend>
+      <label><input type="radio" name="igSize" value="1350" data-k="igSize"><span>1080×1350</span></label>
+      <label><input type="radio" name="igSize" value="1440" data-k="igSize"><span>1080×1440</span></label>
+      <label><input type="radio" name="igSize" value="1920" data-k="igSize"><span>1080×1920</span></label>
+    </fieldset>
+    <div class="row">
+      <button type="button" class="btn primary" id="savePng"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>Save to device</span></button>
+      <button type="button" class="btn" id="share" hidden><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></svg><span>Share or save to apps</span></button>
+    </div>
+    <button type="button" class="btn" id="saveSvg"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M87.82,196.31a20.82,20.82,0,0,1-9.19,15.23C73.44,215,67,216,61.14,216A61.23,61.23,0,0,1,46,214a8,8,0,0,1,4.3-15.41c4.38,1.2,14.95,2.7,19.55-.36.88-.59,1.83-1.52,2.14-3.93.35-2.67-.71-4.1-12.78-7.59-9.35-2.7-25-7.23-23-23.11a20.55,20.55,0,0,1,9-14.95c11.84-8,30.72-3.31,32.83-2.76a8,8,0,0,1-4.07,15.48c-4.48-1.17-15.23-2.56-19.83.56a4.54,4.54,0,0,0-2,3.67c-.11.9-.14,1.09,1.12,1.9,2.31,1.49,6.44,2.68,10.45,3.84C73.5,174.17,90.06,179,87.82,196.31ZM216,88v24a8,8,0,0,1-16,0V96H152a8,8,0,0,1-8-8V40H56v72a8,8,0,1,1-16,0V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.65,2.34l56,56A8,8,0,0,1,216,88Zm-56-8h28.69L160,51.31Zm-13.3,64.47a8,8,0,0,0-10.23,4.84L124,184.21l-12.47-34.9a8,8,0,1,0-15.06,5.38l20,56a8,8,0,0,0,15.07,0l20-56A8,8,0,0,0,146.7,144.47ZM208,176h-8a8,8,0,0,0,0,16v5.29a13.38,13.38,0,0,1-8,2.71c-8.82,0-16-9-16-20s7.18-20,16-20a13.27,13.27,0,0,1,7.53,2.38,8,8,0,0,0,8.95-13.26A29.38,29.38,0,0,0,192,144c-17.64,0-32,16.15-32,36s14.36,36,32,36a30.06,30.06,0,0,0,21.78-9.6,8,8,0,0,0,2.22-5.53V184A8,8,0,0,0,208,176Z"/></svg><span>Save SVG (vector)</span></button>
+    <button type="button" class="btn" id="saveVideo" hidden><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,88h80v80H40Zm96-16V56h32V72Zm-16,0H88V56h32Zm0,112v16H88V184Zm16,0h32v16H136Zm0-16V88h80v80Zm80-96H184V56h32ZM72,56V72H40V56ZM40,184H72v16H40Zm176,16H184V184h32v16Z"/></svg><span>Save reveal video</span></button>
+  </div>
+</div>
+
+<div class="modal" id="camModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="camTitle">
+    <h2 id="camTitle">Take photo</h2>
+    <video id="camVideo" playsinline muted autoplay></video>
+    <div class="row">
+      <button type="button" class="btn primary" id="snap"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg><span>Take photo</span></button>
+      <button type="button" class="btn" id="flip" hidden>Switch camera</button>
+      <button type="button" class="btn" id="camCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+<template id="icoPick"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,67.3a35.79,35.79,0,0,0-11.26-25.66c-14-13.28-36.72-12.78-50.62,1.13L142.8,62.2a24,24,0,0,0-33.14.77l-9,9a16,16,0,0,0,0,22.64l2,2.06-51,51a39.75,39.75,0,0,0-10.53,38l-8,18.41A13.68,13.68,0,0,0,36,219.3a15.92,15.92,0,0,0,17.71,3.35L71.23,215a39.89,39.89,0,0,0,37.06-10.75l51-51,2.06,2.06a16,16,0,0,0,22.62,0l9-9a24,24,0,0,0,.74-33.18l19.75-19.87A35.75,35.75,0,0,0,224,67.3ZM97,193a24,24,0,0,1-24,6,8,8,0,0,0-5.55.31l-18.1,7.91L57,189.41a8,8,0,0,0,.25-5.75A23.88,23.88,0,0,1,63,159l51-51,33.94,34ZM202.13,82l-25.37,25.52a8,8,0,0,0,0,11.3l4.89,4.89a8,8,0,0,1,0,11.32l-9,9L112,83.26l9-9a8,8,0,0,1,11.31,0l4.89,4.89a8,8,0,0,0,11.33,0l24.94-25.09c7.81-7.82,20.5-8.18,28.29-.81a20,20,0,0,1,.39,28.7Z"/></svg></template>
+<template id="icoLang"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></template>
+<template id="icoReset"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></template>
+<template id="icoIn"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,53.66,163.31,104H192a8,8,0,0,1,0,16H144a8,8,0,0,1-8-8V64a8,8,0,0,1,16,0V92.69l50.34-50.35a8,8,0,0,1,11.32,11.32ZM112,136H64a8,8,0,0,0,0,16H92.69L42.34,202.34a8,8,0,0,0,11.32,11.32L104,163.31V192a8,8,0,0,0,16,0V144A8,8,0,0,0,112,136Z"/></svg></template>
+<template id="icoOut"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48V96a8,8,0,0,1-16,0V67.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM106.34,138.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l50.35-50.34a8,8,0,0,0-11.32-11.32Z"/></svg></template>
+<template id="icoPlay"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></template>
+<template id="icoStop"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M200,40H56A16,16,0,0,0,40,56V200a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,160H56V56H200V200Z"/></svg></template>
+
+<script>
+(function () {
+"use strict";
+var KEY = "maude:settings";
+var DEF = {
+  look: "dot",
+  cols: 56, reveal: 80, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "center", palette: "confetti", band: 22, wash: 55, scatter: 25,
+  dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7, dmFrom: "confetti",
+  htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
+  fxStock: "none", fxGrain: 0, fxFilm: "none", fxFilmAmt: 80, fxDuo: 0, fxDuoA: "#1d2a6b", fxDuoB: "#ff8a5c", fxPx: 0, fxPxDither: true, fxWarhol: "off", fxWarholMix: 0, fxMine: 0, fxGuil: 0, fxGuilPat: "waves", fxGuilInk: "photo", fxSeurat: 0, fxSeuratMix: 50, fxMinePal: "mc", fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
+  outSize: "2048", ig: false, igSize: "1350"
+};
+var PALETTES = {
+  confetti: ["#5ccfa6", "#f27b5b", "#f2b431", "#e2559b", "#7a5af0", "#4db7e2", "#2b2b2e", "#9fe0c9", "#5ccfa6", "#4db7e2"],
+  pastel: ["#a8e6cf", "#ffd3b6", "#ffaaa5", "#dcd3ff", "#bde0fe", "#fdf1a6"],
+  neon: ["#39ff14", "#ff2079", "#00e5ff", "#ffe600", "#b026ff", "#ff6b00", "#111111"],
+  mono: ["#111111", "#3a3a3a", "#6b6b6b", "#9a9a9a", "#c8c8c8", "#e6e6e6"]
+};
+var SWATCHES = ["#1d2622", "#ffffff", "#1f5c4a", "#b8352b", "#f2b431", "#00aeef", "#4db7e2", "#e2559b", "#7a5af0"];
+
+var S = loadSettings();
+var $ = function (s) { return document.querySelector(s); };
+var cv = $("#cv"), pctx = cv.getContext("2d");
+var stage = $("#stage"), statusEl = $("#status");
+var src = document.createElement("canvas"), sctx = src.getContext("2d", { willReadFrequently: true });
+var orig = document.createElement("canvas");
+var cache = {};
+var pickKey = null, big = false, tab = "dot";
+var playing = 0;
+
+function loadSettings() {
+  /* every page load starts from the defaults; nothing is restored from earlier visits */
+  var o = {};
+  var s = Object.assign({}, DEF, o);
+  /* text and layer settings from earlier versions are dropped */
+  ["layers", "active", "v2", "text", "font", "weight", "textColor", "textOp", "size", "textMode", "align", "tx", "ty", "track", "lead", "upper"].forEach(function (k) { delete s[k]; });
+  return s;
+}
+var saveT;
+function saveSettings() {
+  clearTimeout(saveT);
+  saveT = setTimeout(function () {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(S, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }));
+    } catch (e) {}
+  }, 300);
+}
+var sayT;
+/* ---------- languages: English text in the page is the key; FR, ES, ZH (simplified) and 繁 (traditional) replace it ---------- */
+var I18N = {"fr":{"Export":"Exporter","Halftone":"Similigravure","Effects":"Effets","Surprise":"Surprise","Bloom":"Éclosion","Classic":"Classique","Fine":"Fin","Full color":"Pleine couleur","Neon":"Néon","Pastel":"Pastel","Grid":"Grille","Dots across":"Points en largeur","Dot size":"Taille des points","Dot opacity":"Opacité des points","Dot shape":"Forme des points","Circle":"Cercle","Square":"Carré","Reveal":"Révélation","Reveal from":"Révéler depuis","Confetti colors":"Couleurs confettis","Transparent":"Transparent","Direction":"Direction","Left to right":"De gauche à droite","Right to left":"De droite à gauche","Top to bottom":"De haut en bas","Diagonal":"Diagonale","From center":"Depuis le centre","Random":"Aléatoire","Fade band":"Bande de fondu","Washout":"Délavé","Edge scatter":"Dispersion des bords","Reveal time":"Durée de révélation","Color":"Couleur","Start colors":"Couleurs de départ","Confetti":"Confettis","Mono":"Mono","Saturation":"Saturation","Contrast":"Contraste","Background":"Arrière-plan","Comic":"BD","Engraving":"Gravure","Newsprint":"Papier journal","Pop":"Pop","RGB screen":"Trame RVB","Screen":"Trame","Screen angle":"Angle de trame","Dot":"Point","Line":"Ligne","Dot gain":"Engraissement","Tone":"Tonalité","Lightness":"Luminosité","Invert":"Inverser","Ink":"Encre","One ink":"Une encre","Image":"Image","Ink color":"Couleur de l'encre","Paper color":"Couleur du papier","None":"Aucun","Cinema":"Cinéma","Dreamy":"Onirique","Film":"Pellicule","Noir":"Noir","Glitch":"Glitch","Color shift":"Décalage des couleurs","Glitch slices":"Tranches de glitch","New glitch":"Nouveau glitch","Light leaks":"Fuites de lumière","Light leak":"Fuite de lumière","Lens flare":"Reflet d'objectif","Glowing streaks":"Traînées lumineuses","Color grade":"Étalonnage","Look":"Style","Teal and orange":"Sarcelle et orange","Bleach bypass":"Sans blanchiment","Warm film":"Pellicule chaude","Cool night":"Nuit froide","Faded matte":"Mat délavé","Strength":"Intensité","Warhol panels":"Panneaux Warhol","Off":"Désactivé","Colors":"Couleurs","Block size":"Taille des blocs","Block colors":"Couleurs des blocs","Minecraft blocks":"Blocs Minecraft","Photo colors":"Couleurs de la photo","Line density":"Densité des lignes","Guilloché ink":"Encre du guilloché","Banknote green":"Vert billet","Black":"Noir","Dab size":"Taille des touches","Color mixing":"Mélange des couleurs","Pixel art":"Pixel art","Pixel size":"Taille des pixels","Dither, like fogday.com/px":"Tramage, comme fogday.com/px","Effects show in saved images and video, not in SVG.":"Les effets apparaissent dans les images et vidéos enregistrées, pas dans le SVG.","Photos stay on your device. Nothing is uploaded.":"Les photos restent sur votre appareil. Rien n'est envoyé.","INFO":"INFOS","Save":"Enregistrer","Image size (long edge)":"Taille de l'image (grand côté)","Instagram size (crops the image to fit)":"Format Instagram (recadre l'image)","Instagram size":"Format Instagram","Save to device":"Enregistrer sur l'appareil","Share or save to apps":"Partager ou enregistrer dans une app","Save SVG (vector)":"Enregistrer en SVG (vectoriel)","Save reveal video":"Enregistrer la vidéo de révélation","Take photo":"Prendre une photo","Switch camera":"Changer de caméra","Cancel":"Annuler","Tools":"Outils","Open image":"Ouvrir une image","Hold to see the original photo":"Maintenir pour voir la photo d'origine","Hold to see the original":"Maintenir pour voir l'original","Play the reveal":"Lire la révélation","Reset all settings":"Réinitialiser tous les réglages","Switch to dark mode":"Passer en mode sombre","Switch to light mode":"Passer en mode clair","Projects":"Projets","Preview":"Aperçu","Dot matrix preview":"Aperçu matrice de points","Halftone preview":"Aperçu similigravure","Settings":"Réglages","Edit":"Modifier","Dot matrix starting points":"Points de départ matrice de points","Halftone starting points":"Points de départ similigravure","Effect starting points":"Points de départ des effets","Shuffle start colors":"Mélanger les couleurs de départ","Pick background from the image":"Prendre l'arrière-plan dans l'image","Pick from image":"Prélever dans l'image","Pick ink color from the image":"Prendre l'encre dans l'image","Pick paper color from the image":"Prendre le papier dans l'image","Close":"Fermer","Language":"Langue","turns a photo into dot matrix, halftone and other print-inspired looks, right in your browser. © 2026":"transforme une photo en matrice de points, similigravure et autres rendus inspirés de l'imprimerie, directement dans votre navigateur. © 2026",". All rights reserved.":". Tous droits réservés.","Your photos.":"Vos photos.","Images are processed on your device and are never uploaded. A few preferences, such as language and theme, are kept in your browser's local storage; clearing your browser data removes them.":"Les images sont traitées sur votre appareil et ne sont jamais envoyées. Certaines préférences, comme la langue et le thème, sont conservées dans le stockage local du navigateur ; effacer les données du navigateur les supprime.","Made with Claude.":"Réalisé avec Claude.","Trademarks.":"Marques.","All trademarks, brand names, product names and artist names mentioned are the property of their respective owners. Minecraft is a trademark of Mojang Synergies AB. Claude and Anthropic are trademarks of Anthropic, PBC. Names such as Warhol, Seurat, Bridget Riley and VHS are used only to describe a visual style; their use does not imply any affiliation with, sponsorship by or endorsement from their owners, estates or rights holders.":"Toutes les marques, noms de marque, noms de produits et noms d'artistes cités appartiennent à leurs propriétaires respectifs. Minecraft est une marque de Mojang Synergies AB. Claude et Anthropic sont des marques d'Anthropic, PBC. Des noms comme Warhol, Seurat, Bridget Riley et VHS servent uniquement à décrire un style visuel ; leur emploi n'implique aucune affiliation, aucun parrainage ni aucune approbation de leurs propriétaires, successions ou ayants droit.","Your images.":"Vos images.","You are responsible for having the rights to the photos you use and for how you use the images you make.":"Vous êtes responsable d'avoir les droits sur les photos que vous utilisez et de l'usage que vous faites des images créées.","No warranty.":"Aucune garantie.","This tool is provided \"as is\", without warranty of any kind, express or implied, including fitness for a particular purpose. Fogday Studios is not liable for any loss or damage arising from its use.":"Cet outil est fourni « tel quel », sans garantie d'aucune sorte, expresse ou implicite, y compris d'adéquation à un usage particulier. Fogday Studios décline toute responsabilité pour toute perte ou tout dommage résultant de son utilisation.","All settings reset.":"Tous les réglages sont réinitialisés.","Color picked.":"Couleur prélevée.","No camera access. Choose a photo instead.":"Pas d'accès à la caméra. Choisissez plutôt une photo.","Opening the photo.":"Ouverture de la photo.","Original photo.":"Photo d'origine.","Photo ready.":"Photo prête.","Preparing the image.":"Préparation de l'image.","Recording the reveal.":"Enregistrement de la révélation.","Redone.":"Rétabli.","Saved.":"Enregistré.","Surprise!":"Surprise !","That file could not be opened as an image.":"Ce fichier n'a pas pu être ouvert comme image.","That file is not an image.":"Ce fichier n'est pas une image.","Undone.":"Annulé.","look.":"appliqué.","palette":"palette","dots across":"points en largeur","circles":"cercles","squares":"carrés","Bridget Riley lines":"Lignes Bridget Riley","image color":"couleur de l'image","across":"en largeur","Minecraft blocks.":"Blocs Minecraft.","Guilloché engraving":"Gravure guilloché","Seurat pointillism":"Pointillisme Seurat","Grade:":"Étalonnage :","Reset":"Réinitialiser","Tap the image to pick a color.":"Touchez l'image pour prélever une couleur.","Duotone":"Bichromie","Shadows":"Ombres","Highlights":"Hautes lumières","Color pairs":"Paires de couleurs","Halftone screen":"Trame (similigravure)","Halftone tone":"Tonalité (similigravure)","Halftone color":"Couleur (similigravure)","On":"Activé","Halftone is on in Effects, so the dot matrix is hidden.":"La similigravure est activée dans Effets : la matrice de points est masquée.","Show dot matrix":"Afficher la matrice de points","Film type":"Type de pellicule","Film effect":"Effet pellicule","Grain":"Grain","New roll":"Nouvelle pellicule","Cross processing":"Traitement croisé","Split focus diopter":"Bonnette demi-champ","Diffusion haze":"Brume de diffusion","Double exposure":"Double exposition","Expired film":"Pellicule périmée","Film soup":"Film soup","Forced perspective":"Perspective forcée","Infrared":"Infrarouge","Lens smudge":"Objectif taché","Pre-exposed":"Pré-exposée","Sepia":"Sépia","Color negative":"Négatif couleur","Slide":"Diapositive","Black and white":"Noir et blanc","Instant":"Instantané","Plain":"Original","Pattern":"Motif","Money":"Billets","Watch dial":"Cadran de montre","Banknote waves":"Vagues de billet","Banknote rosette":"Rosace de billet","Security lattice":"Treillis de sécurité","Sunburst":"Soleillé","New roll (random)":"Nouvelle pellicule (au hasard)","Maude was designed and built with Claude, an AI model made by Anthropic.":"Maude a été conçu et réalisé avec Claude, un modèle d'IA créé par Anthropic.","is by":"est une création de","Original":"Original","Select a tab.":"Choisissez un onglet."},"es":{"Export":"Exportar","Halftone":"Semitono","Effects":"Efectos","Surprise":"Sorpresa","Bloom":"Floración","Classic":"Clásico","Fine":"Fino","Full color":"Color completo","Neon":"Neón","Pastel":"Pastel","Grid":"Cuadrícula","Dots across":"Puntos a lo ancho","Dot size":"Tamaño del punto","Dot opacity":"Opacidad del punto","Dot shape":"Forma del punto","Circle":"Círculo","Square":"Cuadrado","Reveal":"Revelado","Reveal from":"Revelar desde","Confetti colors":"Colores confeti","Transparent":"Transparente","Direction":"Dirección","Left to right":"De izquierda a derecha","Right to left":"De derecha a izquierda","Top to bottom":"De arriba abajo","Diagonal":"Diagonal","From center":"Desde el centro","Random":"Aleatorio","Fade band":"Banda de fundido","Washout":"Deslavado","Edge scatter":"Dispersión del borde","Reveal time":"Duración del revelado","Color":"Color","Start colors":"Colores iniciales","Confetti":"Confeti","Mono":"Mono","Saturation":"Saturación","Contrast":"Contraste","Background":"Fondo","Comic":"Cómic","Engraving":"Grabado","Newsprint":"Papel prensa","Pop":"Pop","RGB screen":"Trama RGB","Screen":"Trama","Screen angle":"Ángulo de trama","Dot":"Punto","Line":"Línea","Dot gain":"Ganancia de punto","Tone":"Tono","Lightness":"Luminosidad","Invert":"Invertir","Ink":"Tinta","One ink":"Una tinta","Image":"Imagen","Ink color":"Color de la tinta","Paper color":"Color del papel","None":"Ninguno","Cinema":"Cine","Dreamy":"Onírico","Film":"Película","Noir":"Noir","Glitch":"Glitch","Color shift":"Desplazamiento de color","Glitch slices":"Franjas de glitch","New glitch":"Nuevo glitch","Light leaks":"Fugas de luz","Light leak":"Fuga de luz","Lens flare":"Destello de lente","Glowing streaks":"Estelas brillantes","Color grade":"Gradación de color","Look":"Estilo","Teal and orange":"Verde azulado y naranja","Bleach bypass":"Blanqueo omitido","Warm film":"Película cálida","Cool night":"Noche fría","Faded matte":"Mate desvaído","Strength":"Intensidad","Warhol panels":"Paneles Warhol","Off":"Apagado","Colors":"Colores","Block size":"Tamaño del bloque","Block colors":"Colores de bloque","Minecraft blocks":"Bloques de Minecraft","Photo colors":"Colores de la foto","Line density":"Densidad de líneas","Guilloché ink":"Tinta del guilloché","Banknote green":"Verde billete","Black":"Negro","Dab size":"Tamaño del toque","Color mixing":"Mezcla de colores","Pixel art":"Pixel art","Pixel size":"Tamaño del píxel","Dither, like fogday.com/px":"Tramado, como fogday.com/px","Effects show in saved images and video, not in SVG.":"Los efectos aparecen en las imágenes y vídeos guardados, no en SVG.","Photos stay on your device. Nothing is uploaded.":"Las fotos se quedan en tu dispositivo. No se sube nada.","INFO":"INFO","Save":"Guardar","Image size (long edge)":"Tamaño de la imagen (lado largo)","Instagram size (crops the image to fit)":"Tamaño de Instagram (recorta la imagen)","Instagram size":"Tamaño de Instagram","Save to device":"Guardar en el dispositivo","Share or save to apps":"Compartir o guardar en apps","Save SVG (vector)":"Guardar SVG (vectorial)","Save reveal video":"Guardar vídeo del revelado","Take photo":"Hacer foto","Switch camera":"Cambiar cámara","Cancel":"Cancelar","Tools":"Herramientas","Open image":"Abrir imagen","Hold to see the original photo":"Mantén pulsado para ver la foto original","Hold to see the original":"Mantén pulsado para ver el original","Play the reveal":"Reproducir el revelado","Reset all settings":"Restablecer todos los ajustes","Switch to dark mode":"Cambiar a modo oscuro","Switch to light mode":"Cambiar a modo claro","Projects":"Proyectos","Preview":"Vista previa","Dot matrix preview":"Vista previa de matriz de puntos","Halftone preview":"Vista previa de semitono","Settings":"Ajustes","Edit":"Editar","Dot matrix starting points":"Puntos de partida de matriz","Halftone starting points":"Puntos de partida de semitono","Effect starting points":"Puntos de partida de efectos","Shuffle start colors":"Mezclar colores iniciales","Pick background from the image":"Tomar el fondo de la imagen","Pick from image":"Tomar de la imagen","Pick ink color from the image":"Tomar la tinta de la imagen","Pick paper color from the image":"Tomar el papel de la imagen","Close":"Cerrar","Language":"Idioma","turns a photo into dot matrix, halftone and other print-inspired looks, right in your browser. © 2026":"convierte una foto en matriz de puntos, semitono y otros estilos inspirados en la imprenta, directamente en tu navegador. © 2026",". All rights reserved.":". Todos los derechos reservados.","Your photos.":"Tus fotos.","Images are processed on your device and are never uploaded. A few preferences, such as language and theme, are kept in your browser's local storage; clearing your browser data removes them.":"Las imágenes se procesan en tu dispositivo y nunca se suben. Algunas preferencias, como el idioma y el tema, se guardan en el almacenamiento local del navegador; al borrar los datos del navegador se eliminan.","Made with Claude.":"Hecho con Claude.","Trademarks.":"Marcas.","All trademarks, brand names, product names and artist names mentioned are the property of their respective owners. Minecraft is a trademark of Mojang Synergies AB. Claude and Anthropic are trademarks of Anthropic, PBC. Names such as Warhol, Seurat, Bridget Riley and VHS are used only to describe a visual style; their use does not imply any affiliation with, sponsorship by or endorsement from their owners, estates or rights holders.":"Todas las marcas, nombres comerciales, nombres de productos y nombres de artistas mencionados pertenecen a sus respectivos propietarios. Minecraft es una marca de Mojang Synergies AB. Claude y Anthropic son marcas de Anthropic, PBC. Nombres como Warhol, Seurat, Bridget Riley y VHS se usan solo para describir un estilo visual; su uso no implica ninguna afiliación, patrocinio ni respaldo de sus propietarios, herederos o titulares de derechos.","Your images.":"Tus imágenes.","You are responsible for having the rights to the photos you use and for how you use the images you make.":"Eres responsable de tener los derechos de las fotos que usas y del uso que hagas de las imágenes que creas.","No warranty.":"Sin garantía.","This tool is provided \"as is\", without warranty of any kind, express or implied, including fitness for a particular purpose. Fogday Studios is not liable for any loss or damage arising from its use.":"Esta herramienta se ofrece «tal cual», sin garantía de ningún tipo, expresa o implícita, incluida la idoneidad para un fin concreto. Fogday Studios no se hace responsable de ninguna pérdida o daño derivado de su uso.","All settings reset.":"Se restablecieron todos los ajustes.","Color picked.":"Color tomado.","No camera access. Choose a photo instead.":"Sin acceso a la cámara. Elige una foto.","Opening the photo.":"Abriendo la foto.","Original photo.":"Foto original.","Photo ready.":"Foto lista.","Preparing the image.":"Preparando la imagen.","Recording the reveal.":"Grabando el revelado.","Redone.":"Rehecho.","Saved.":"Guardado.","Surprise!":"¡Sorpresa!","That file could not be opened as an image.":"No se pudo abrir ese archivo como imagen.","That file is not an image.":"Ese archivo no es una imagen.","Undone.":"Deshecho.","look.":"aplicado.","palette":"paleta","dots across":"puntos a lo ancho","circles":"círculos","squares":"cuadrados","Bridget Riley lines":"Líneas Bridget Riley","image color":"color de la imagen","across":"a lo ancho","Minecraft blocks.":"Bloques de Minecraft.","Guilloché engraving":"Grabado guilloché","Seurat pointillism":"Puntillismo Seurat","Grade:":"Gradación:","Reset":"Restablecer","Tap the image to pick a color.":"Toca la imagen para tomar un color.","Duotone":"Duotono","Shadows":"Sombras","Highlights":"Luces","Color pairs":"Pares de colores","Halftone screen":"Trama de semitono","Halftone tone":"Tono de semitono","Halftone color":"Color de semitono","On":"Activado","Halftone is on in Effects, so the dot matrix is hidden.":"El semitono está activado en Efectos, así que la matriz de puntos está oculta.","Show dot matrix":"Mostrar matriz de puntos","Film type":"Tipo de película","Film effect":"Efecto de película","Grain":"Grano","New roll":"Nuevo carrete","Cross processing":"Procesado cruzado","Split focus diopter":"Dioptría de enfoque partido","Diffusion haze":"Bruma de difusión","Double exposure":"Doble exposición","Expired film":"Película caducada","Film soup":"Película en sopa","Forced perspective":"Perspectiva forzada","Infrared":"Infrarrojo","Lens smudge":"Lente manchada","Pre-exposed":"Preexpuesta","Sepia":"Sepia","Color negative":"Negativo en color","Slide":"Diapositiva","Black and white":"Blanco y negro","Instant":"Instantánea","Plain":"Original","Pattern":"Patrón","Money":"Billetes","Watch dial":"Esfera de reloj","Banknote waves":"Ondas de billete","Banknote rosette":"Roseta de billete","Security lattice":"Retícula de seguridad","Sunburst":"Rayos de sol","New roll (random)":"Nuevo carrete (al azar)","Maude was designed and built with Claude, an AI model made by Anthropic.":"Maude se diseñó y desarrolló con Claude, un modelo de IA creado por Anthropic.","is by":"es obra de","Original":"Original","Select a tab.":"Elige una pestaña."},"zh":{"Export":"导出","Dot matrix":"点阵","Halftone":"半色调","Effects":"效果","Surprise":"惊喜","Bloom":"绽放","Classic":"经典","Fine":"精细","Full color":"全彩","Neon":"霓虹","Pastel":"粉彩","Grid":"网格","Dots across":"横向点数","Dot size":"点大小","Dot opacity":"点不透明度","Dot shape":"点形状","Circle":"圆形","Square":"方形","Reveal":"显现","Reveal from":"显现自","Confetti colors":"彩纸色","Transparent":"透明","Direction":"方向","Left to right":"从左到右","Right to left":"从右到左","Top to bottom":"从上到下","Diagonal":"对角线","From center":"从中心","Random":"随机","Fade band":"渐变带","Washout":"褪色","Edge scatter":"边缘散布","Reveal time":"显现时长","Color":"颜色","Start colors":"起始颜色","Confetti":"彩纸","Mono":"单色","Saturation":"饱和度","Contrast":"对比度","Background":"背景","Comic":"漫画","Engraving":"雕版","Newsprint":"报纸","Pop":"波普","RGB screen":"RGB 网屏","Screen":"网屏","Screen angle":"网屏角度","Dot":"点","Line":"线","Dot gain":"网点扩大","Tone":"色调","Lightness":"亮度","Invert":"反相","Ink":"油墨","One ink":"单色油墨","Image":"图像","Ink color":"油墨颜色","Paper color":"纸张颜色","None":"无","Cinema":"电影感","Dreamy":"梦幻","Film":"胶片","Noir":"黑色电影","Glitch":"故障","Color shift":"色彩偏移","Glitch slices":"故障条纹","New glitch":"新故障","Light leaks":"漏光","Light leak":"漏光","Lens flare":"镜头光晕","Glowing streaks":"发光条纹","Color grade":"调色","Look":"风格","Teal and orange":"青橙","Bleach bypass":"留银","Warm film":"暖色胶片","Cool night":"冷夜","Faded matte":"褪色哑光","Strength":"强度","Warhol panels":"沃霍尔画格","Off":"关","Colors":"配色","Block size":"方块大小","Block colors":"方块颜色","Minecraft blocks":"Minecraft 方块","Photo colors":"照片颜色","Line density":"线条密度","Guilloché ink":"扭索纹油墨","Banknote green":"钞票绿","Black":"黑色","Dab size":"笔触大小","Color mixing":"色彩混合","Pixel art":"像素画","Pixel size":"像素大小","Dither, like fogday.com/px":"抖动，如 fogday.com/px","Effects show in saved images and video, not in SVG.":"效果会出现在保存的图片和视频中，不会出现在 SVG 中。","Photos stay on your device. Nothing is uploaded.":"照片保留在你的设备上，不会上传任何内容。","INFO":"信息","Save":"保存","Image size (long edge)":"图像尺寸（长边）","Instagram size (crops the image to fit)":"Instagram 尺寸（裁切图像以适应）","Instagram size":"Instagram 尺寸","Save to device":"保存到设备","Share or save to apps":"分享或保存到应用","Save SVG (vector)":"保存 SVG（矢量）","Save reveal video":"保存显现视频","Take photo":"拍照","Switch camera":"切换摄像头","Cancel":"取消","Tools":"工具","Open image":"打开图像","Hold to see the original photo":"按住查看原始照片","Hold to see the original":"按住查看原图","Play the reveal":"播放显现","Reset all settings":"重置所有设置","Switch to dark mode":"切换到深色模式","Switch to light mode":"切换到浅色模式","Projects":"项目","Preview":"预览","Dot matrix preview":"点阵预览","Halftone preview":"半色调预览","Settings":"设置","Edit":"编辑","Dot matrix starting points":"点阵预设","Halftone starting points":"半色调预设","Effect starting points":"效果预设","Shuffle start colors":"打乱起始颜色","Pick background from the image":"从图像取背景色","Pick from image":"从图像取色","Pick ink color from the image":"从图像取油墨色","Pick paper color from the image":"从图像取纸张色","Close":"关闭","Language":"语言","turns a photo into dot matrix, halftone and other print-inspired looks, right in your browser. © 2026":"在浏览器中把照片变成点阵、半色调等印刷风格效果。© 2026",". All rights reserved.":"。保留所有权利。","Your photos.":"你的照片。","Images are processed on your device and are never uploaded. A few preferences, such as language and theme, are kept in your browser's local storage; clearing your browser data removes them.":"图像在你的设备上处理，绝不会上传。语言和主题等偏好保存在浏览器的本地存储中；清除浏览器数据即可删除。","Made with Claude.":"由 Claude 打造。","Trademarks.":"商标。","All trademarks, brand names, product names and artist names mentioned are the property of their respective owners. Minecraft is a trademark of Mojang Synergies AB. Claude and Anthropic are trademarks of Anthropic, PBC. Names such as Warhol, Seurat, Bridget Riley and VHS are used only to describe a visual style; their use does not imply any affiliation with, sponsorship by or endorsement from their owners, estates or rights holders.":"文中提及的所有商标、品牌名称、产品名称和艺术家姓名均归其各自所有者所有。Minecraft 是 Mojang Synergies AB 的商标。Claude 和 Anthropic 是 Anthropic, PBC 的商标。Warhol、Seurat、Bridget Riley 和 VHS 等名称仅用于描述视觉风格，其使用并不意味着与其所有者、遗产管理方或权利人有任何关联，或获得其赞助或认可。","Your images.":"你的图像。","You are responsible for having the rights to the photos you use and for how you use the images you make.":"你需确保拥有所用照片的权利，并对所生成图像的使用负责。","No warranty.":"无担保。","This tool is provided \"as is\", without warranty of any kind, express or implied, including fitness for a particular purpose. Fogday Studios is not liable for any loss or damage arising from its use.":"本工具按“原样”提供，不附带任何明示或暗示的担保，包括适用于特定用途的担保。Fogday Studios 对因使用本工具造成的任何损失或损害不承担责任。","All settings reset.":"所有设置已重置。","Color picked.":"已取色。","No camera access. Choose a photo instead.":"无法使用摄像头，请改为选择照片。","Opening the photo.":"正在打开照片。","Original photo.":"原始照片。","Photo ready.":"照片已就绪。","Preparing the image.":"正在准备图像。","Recording the reveal.":"正在录制显现。","Redone.":"已重做。","Saved.":"已保存。","Surprise!":"惊喜！","That file could not be opened as an image.":"无法将该文件作为图像打开。","That file is not an image.":"该文件不是图像。","Undone.":"已撤销。","look.":"已应用。","palette":"调色板","dots across":"横向点数","circles":"圆点","squares":"方块","Bridget Riley lines":"Bridget Riley 线条","image color":"图像颜色","across":"横向","Minecraft blocks.":"Minecraft 方块。","Guilloché engraving":"扭索纹雕刻","Seurat pointillism":"修拉点彩","Grade:":"调色：","Reset":"重置","Tap the image to pick a color.":"点按图像以取色。","Duotone":"双色调","Shadows":"暗部","Highlights":"亮部","Color pairs":"配色组合","Halftone screen":"半色调网屏","Halftone tone":"半色调色调","Halftone color":"半色调颜色","On":"开","Halftone is on in Effects, so the dot matrix is hidden.":"效果中已开启半色调，因此点阵被隐藏。","Show dot matrix":"显示点阵","Film type":"胶片类型","Film effect":"胶片效果","Grain":"颗粒","New roll":"换一卷","Cross processing":"交叉冲洗","Split focus diopter":"分焦镜","Diffusion haze":"柔焦雾化","Double exposure":"二次曝光","Expired film":"过期胶片","Film soup":"胶片浸泡","Forced perspective":"强迫透视","Infrared":"红外","Lens smudge":"镜头污渍","Pre-exposed":"预曝光","Sepia":"棕褐色","Color negative":"彩色负片","Slide":"反转片","Black and white":"黑白","Instant":"拍立得","Plain":"原图","Dot Matrix":"点阵","Pattern":"图案","Money":"钞票","Watch dial":"表盘","Banknote waves":"钞票波纹","Banknote rosette":"钞票玫瑰纹","Security lattice":"防伪网纹","Clous de Paris":"巴黎钉纹","Flinqué":"Flinqué 波纹","Grande Tapisserie":"大格纹","Sunburst":"太阳纹","New roll (random)":"换一卷（随机）","Maude was designed and built with Claude, an AI model made by Anthropic.":"Maude 由 Anthropic 开发的 AI 模型 Claude 协助设计和构建。","is by":"出自","Original":"原图","Select a tab.":"请选择一个标签。"},"zh-Hant":{"Export":"匯出","Dot matrix":"點陣","Halftone":"半色調","Effects":"效果","Surprise":"驚喜","Bloom":"綻放","Classic":"經典","Fine":"精細","Full color":"全彩","Neon":"霓虹","Pastel":"粉彩","Grid":"網格","Dots across":"橫向點數","Dot size":"點大小","Dot opacity":"點不透明度","Dot shape":"點形狀","Circle":"圓形","Square":"方形","Reveal":"顯現","Reveal from":"顯現自","Confetti colors":"彩紙色","Transparent":"透明","Direction":"方向","Left to right":"從左到右","Right to left":"從右到左","Top to bottom":"從上到下","Diagonal":"對角線","From center":"從中心","Random":"隨機","Fade band":"漸變帶","Washout":"褪色","Edge scatter":"邊緣散佈","Reveal time":"顯現時長","Color":"顏色","Start colors":"起始顏色","Confetti":"彩紙","Mono":"單色","Saturation":"飽和度","Contrast":"對比度","Background":"背景","Comic":"漫畫","Engraving":"雕版","Newsprint":"報紙","Pop":"普普","RGB screen":"RGB 網屏","Screen":"網屏","Screen angle":"網屏角度","Dot":"點","Line":"線","Dot gain":"網點擴大","Tone":"色調","Lightness":"亮度","Invert":"反相","Ink":"油墨","One ink":"單色油墨","Image":"圖像","Ink color":"油墨顏色","Paper color":"紙張顏色","None":"無","Cinema":"電影感","Dreamy":"夢幻","Film":"膠片","Noir":"黑色電影","Glitch":"故障","Color shift":"色彩偏移","Glitch slices":"故障條紋","New glitch":"新故障","Light leaks":"漏光","Light leak":"漏光","Lens flare":"鏡頭光暈","Glowing streaks":"發光條紋","Color grade":"調色","Look":"風格","Teal and orange":"青橙","Bleach bypass":"留銀","Warm film":"暖色膠片","Cool night":"冷夜","Faded matte":"褪色霧面","Strength":"強度","Warhol panels":"沃荷畫格","Off":"關","Colors":"配色","Block size":"方塊大小","Block colors":"方塊顏色","Minecraft blocks":"Minecraft 方塊","Photo colors":"照片顏色","Line density":"線條密度","Guilloché ink":"扭索紋油墨","Banknote green":"鈔票綠","Black":"黑色","Dab size":"筆觸大小","Color mixing":"色彩混合","Pixel art":"像素畫","Pixel size":"像素大小","Dither, like fogday.com/px":"抖動，如 fogday.com/px","Effects show in saved images and video, not in SVG.":"效果會出現在儲存的圖片和影片中，不會出現在 SVG 中。","Photos stay on your device. Nothing is uploaded.":"照片保留在你的裝置上，不會上傳任何內容。","INFO":"資訊","Save":"儲存","Image size (long edge)":"圖像尺寸（長邊）","Instagram size (crops the image to fit)":"Instagram 尺寸（裁切圖像以符合）","Instagram size":"Instagram 尺寸","Save to device":"儲存到裝置","Share or save to apps":"分享或儲存到 App","Save SVG (vector)":"儲存 SVG（向量）","Save reveal video":"儲存顯現影片","Take photo":"拍照","Switch camera":"切換相機","Cancel":"取消","Tools":"工具","Open image":"開啟圖像","Hold to see the original photo":"按住查看原始照片","Hold to see the original":"按住查看原圖","Play the reveal":"播放顯現","Reset all settings":"重設所有設定","Switch to dark mode":"切換到深色模式","Switch to light mode":"切換到淺色模式","Projects":"專案","Preview":"預覽","Dot matrix preview":"點陣預覽","Halftone preview":"半色調預覽","Settings":"設定","Edit":"編輯","Dot matrix starting points":"點陣預設","Halftone starting points":"半色調預設","Effect starting points":"效果預設","Shuffle start colors":"打亂起始顏色","Pick background from the image":"從圖像取背景色","Pick from image":"從圖像取色","Pick ink color from the image":"從圖像取油墨色","Pick paper color from the image":"從圖像取紙張色","Close":"關閉","Language":"語言","turns a photo into dot matrix, halftone and other print-inspired looks, right in your browser. © 2026":"在瀏覽器中把照片變成點陣、半色調等印刷風格效果。© 2026",". All rights reserved.":"。保留所有權利。","Your photos.":"你的照片。","Images are processed on your device and are never uploaded. A few preferences, such as language and theme, are kept in your browser's local storage; clearing your browser data removes them.":"圖像在你的裝置上處理，絕不會上傳。語言和主題等偏好儲存在瀏覽器的本機儲存空間中；清除瀏覽器資料即可刪除。","Made with Claude.":"由 Claude 打造。","Trademarks.":"商標。","All trademarks, brand names, product names and artist names mentioned are the property of their respective owners. Minecraft is a trademark of Mojang Synergies AB. Claude and Anthropic are trademarks of Anthropic, PBC. Names such as Warhol, Seurat, Bridget Riley and VHS are used only to describe a visual style; their use does not imply any affiliation with, sponsorship by or endorsement from their owners, estates or rights holders.":"文中提及的所有商標、品牌名稱、產品名稱和藝術家姓名均歸其各自所有者所有。Minecraft 是 Mojang Synergies AB 的商標。Claude 和 Anthropic 是 Anthropic, PBC 的商標。Warhol、Seurat、Bridget Riley 和 VHS 等名稱僅用於描述視覺風格，其使用並不表示與其所有者、遺產管理方或權利人有任何關聯，或獲得其贊助或認可。","Your images.":"你的圖像。","You are responsible for having the rights to the photos you use and for how you use the images you make.":"你需確保擁有所用照片的權利，並對所產生圖像的使用負責。","No warranty.":"無擔保。","This tool is provided \"as is\", without warranty of any kind, express or implied, including fitness for a particular purpose. Fogday Studios is not liable for any loss or damage arising from its use.":"本工具按「原樣」提供，不附帶任何明示或暗示的擔保，包括適用於特定用途的擔保。Fogday Studios 對因使用本工具造成的任何損失或損害不承擔責任。","All settings reset.":"所有設定已重設。","Color picked.":"已取色。","No camera access. Choose a photo instead.":"無法使用相機，請改為選擇照片。","Opening the photo.":"正在開啟照片。","Original photo.":"原始照片。","Photo ready.":"照片已就緒。","Preparing the image.":"正在準備圖像。","Recording the reveal.":"正在錄製顯現。","Redone.":"已重做。","Saved.":"已儲存。","Surprise!":"驚喜！","That file could not be opened as an image.":"無法將該檔案作為圖像開啟。","That file is not an image.":"該檔案不是圖像。","Undone.":"已復原。","look.":"已套用。","palette":"調色盤","dots across":"橫向點數","circles":"圓點","squares":"方塊","Bridget Riley lines":"Bridget Riley 線條","image color":"圖像顏色","across":"橫向","Minecraft blocks.":"Minecraft 方塊。","Guilloché engraving":"扭索紋雕刻","Seurat pointillism":"秀拉點彩","Grade:":"調色：","Reset":"重設","Tap the image to pick a color.":"點按圖像以取色。","Duotone":"雙色調","Shadows":"暗部","Highlights":"亮部","Color pairs":"配色組合","Halftone screen":"半色調網屏","Halftone tone":"半色調色調","Halftone color":"半色調顏色","On":"開","Halftone is on in Effects, so the dot matrix is hidden.":"效果中已開啟半色調，因此點陣被隱藏。","Show dot matrix":"顯示點陣","Film type":"膠片類型","Film effect":"膠片效果","Grain":"顆粒","New roll":"換一捲","Cross processing":"交叉沖洗","Split focus diopter":"分焦鏡","Diffusion haze":"柔焦霧化","Double exposure":"二次曝光","Expired film":"過期膠片","Film soup":"膠片浸泡","Forced perspective":"強迫透視","Infrared":"紅外","Lens smudge":"鏡頭污漬","Pre-exposed":"預曝光","Sepia":"棕褐色","Color negative":"彩色負片","Slide":"反轉片","Black and white":"黑白","Instant":"拍立得","Plain":"原圖","Dot Matrix":"點陣","Pattern":"圖案","Money":"鈔票","Watch dial":"錶盤","Banknote waves":"鈔票波紋","Banknote rosette":"鈔票玫瑰紋","Security lattice":"防偽網紋","Clous de Paris":"巴黎釘紋","Flinqué":"Flinqué 波紋","Grande Tapisserie":"大格紋","Sunburst":"太陽紋","New roll (random)":"換一捲（隨機）","Maude was designed and built with Claude, an AI model made by Anthropic.":"Maude 由 Anthropic 開發的 AI 模型 Claude 協助設計和建構。","is by":"出自","Original":"原圖","Select a tab.":"請選擇一個標籤。"}};
+var lang = "en";
+function tr(s) {
+  if (lang === "en" || !s) return s;
+  var d = I18N[lang], k = s.trim();
+  if (d[k]) return s.replace(k, d[k]);
+  var m = /^(Reset|Color) (.+)$/.exec(k);
+  if (m) return (d[m[1]] || m[1]) + " " + (m[2].charAt(0) === "#" ? m[2] : (d[m[2]] || m[2]));
+  return s;
+}
+function applyLang(l) {
+  lang = I18N[l] ? l : "en";
+  try { localStorage.setItem("fogday-lang", lang); } catch (e) {}
+  document.documentElement.lang = { en: "en", fr: "fr", es: "es", zh: "zh-Hans", "zh-Hant": "zh-Hant" }[lang];
+  var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: function (n) {
+    var p = n.parentElement; if (!p || /^(SCRIPT|STYLE)$/.test(p.tagName) || p.closest("[data-notr]")) return 2;
+    return (n.__en || n.nodeValue).trim() ? 1 : 2; } });
+  while (w.nextNode()) { var n = w.currentNode; if (n.__en == null) n.__en = n.nodeValue; n.nodeValue = tr(n.__en); }
+  document.querySelectorAll("optgroup").forEach(function (g) { if (g.__en == null) g.__en = g.label; g.label = tr(g.__en); });
+  document.querySelectorAll("[aria-label],[title],[placeholder]").forEach(function (el) {
+    if (el.closest("[data-notr]")) return;
+    el.__en = el.__en || {};
+    ["aria-label", "title", "placeholder"].forEach(function (a) {
+      var v = el.getAttribute(a); if (v == null) return;
+      if (el.__en[a] == null || (el.__tr && el.__tr[a] !== v)) el.__en[a] = v;   /* the page changed it since: that is the new English */
+      var x = tr(el.__en[a]); el.setAttribute(a, x); (el.__tr = el.__tr || {})[a] = x;
+    });
+  });
+  var lb = $("#langBtn"), nx = LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];
+  if (lang === "zh-Hant") { lb.innerHTML = ""; lb.appendChild($("#icoLang").content.cloneNode(true)); } else lb.textContent = lang === "zh" ? "ZH" : lang.toUpperCase();
+  lb.setAttribute("aria-label", LNAME[lang] + " → " + LNAME[nx]); lb.title = LNAME[nx]; lb.__en = null;
+}
+function say(t, keep) { t = tr(t); statusEl.textContent = t; clearTimeout(sayT); if (t && !keep) sayT = setTimeout(function () { statusEl.textContent = pickKey ? tr("Tap the image to pick a color.") : ""; }, 2500); }
+
+/* ---------- helpers ---------- */
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function rgb(hex) { var n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function lum(hex) { var c = rgb(hex); return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; }
+function toHex(r, g, b) { return "#" + [r, g, b].map(function (v) { return ("0" + Math.round(v).toString(16)).slice(-2); }).join(""); }
+function mulberry(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function mk(w, h) { var c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
+function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+
+/* Downsample by halving steps so each small cell is a true average of its area */
+function shrink(c, w, h, read) {
+  var cw = c.width, ch = c.height;
+  while (cw / 2 >= w * 2 && ch / 2 >= h * 2) {
+    var n = mk(cw / 2, ch / 2), x = n.getContext("2d");
+    x.imageSmoothingQuality = "high"; x.drawImage(c, 0, 0, n.width, n.height);
+    c = n; cw = n.width; ch = n.height;
+  }
+  var o = mk(w, h), ox = o.getContext("2d", { willReadFrequently: true });
+  ox.imageSmoothingQuality = "high"; ox.drawImage(c, 0, 0, w, h);
+  return read ? ox.getImageData(0, 0, w, h).data : o;
+}
+function sample(w, h) {
+  var k = w + "x" + h;
+  if (!cache[k]) cache[k] = shrink(src, w, h, true);
+  return cache[k];
+}
+
+/* ---------- dot matrix ---------- */
+function renderDot(ctx, W, H, prog) {
+  var cols = S.cols, cell = W / cols, rows = Math.max(1, Math.round(H / cell)), cellY = H / rows;
+  var d = sample(cols, rows);
+  var bg = rgb(S.dmBg), pal = PALETTES[S.palette].map(rgb);
+  var rnd = mulberry(S.seed * 7919 + cols);
+  var band = S.band / 100, jit = S.scatter / 100, wash = S.wash / 100, front = prog * (1 + jit + band);
+  var sat = S.dmSat / 100, con = S.dmCon / 100;
+  var r = Math.min(cell, cellY) / 2 * S.dmDot / 100;
+  ctx.fillStyle = S.dmBg; ctx.fillRect(0, 0, W, H);
+  var op = S.dmOp / 100, clear = S.dmFrom === "clear";
+  ctx.globalAlpha = op;
+  for (var j = 0; j < rows; j++) {
+    for (var i = 0; i < cols; i++) {
+      var pc = pal[(rnd() * pal.length) | 0], n = rnd(), q = (j * cols + i) * 4;
+      var R = d[q], G = d[q + 1], B = d[q + 2], Lm = 0.299 * R + 0.587 * G + 0.114 * B;
+      R = (Lm + (R - Lm) * sat - 128) * con + 128; G = (Lm + (G - Lm) * sat - 128) * con + 128; B = (Lm + (B - Lm) * sat - 128) * con + 128;
+      var p;
+      switch (S.dir) {
+        case "rl": p = 1 - i / Math.max(1, cols - 1); break;
+        case "tb": p = j / Math.max(1, rows - 1); break;
+        case "diag": p = (i / Math.max(1, cols - 1) + j / Math.max(1, rows - 1)) / 2; break;
+        case "center": p = Math.min(1, Math.hypot(i / cols - 0.5, (j / rows - 0.5) * rows / cols * (cellY / cell)) / 0.71); break;
+        case "random": p = n; break;
+        default: p = i / Math.max(1, cols - 1);
+      }
+      var t = clamp((front - (p + n * jit)) / band, 0, 1), w = wash * Math.sin(Math.PI * t);
+      if (clear) { if (t <= 0) continue; pc = [R, G, B]; ctx.globalAlpha = op * t; }
+      var cr = pc[0] + (R - pc[0]) * t, cg = pc[1] + (G - pc[1]) * t, cb = pc[2] + (B - pc[2]) * t;
+      cr += (bg[0] - cr) * w; cg += (bg[1] - cg) * w; cb += (bg[2] - cb) * w;
+      ctx.fillStyle = "rgb(" + clamp(cr, 0, 255) + "," + clamp(cg, 0, 255) + "," + clamp(cb, 0, 255) + ")";
+      var x = (i + 0.5) * cell, y = (j + 0.5) * cellY;
+      if (S.dmShape === "square") ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      else { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- halftone ---------- */
+function renderHalf(ctx, W, H) {
+  var freq = S.htCells, cell = W / freq;
+  var sw = Math.max(2, Math.ceil(freq * 2)), sh = Math.max(2, Math.round(sw * H / W));
+  var d = sample(sw, sh);
+  var con = S.htCon / 100, light = S.htLight / 100, gain = S.htGain / 100, inv = S.htInvert;
+  function at(x, y) { return (clamp((y / H * sh) | 0, 0, sh - 1) * sw + clamp((x / W * sw) | 0, 0, sw - 1)) * 4; }
+  function adj(v) { if (inv) v = 1 - v; return clamp((v - 0.5) * con + 0.5 - light, 0, 1); }
+  function cmyk(q) {
+    var r = d[q] / 255, g = d[q + 1] / 255, b = d[q + 2] / 255, k = 1 - Math.max(r, g, b);
+    if (k >= 0.999) return [0, 0, 0, 1];
+    return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k];
+  }
+  ctx.globalCompositeOperation = "source-over";
+  if (S.htRiley) { riley(); } else { inks(); }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = "source-over";
+  /* Bridget Riley: black wavy lines on white, one per "Dots across" step; the wave swells and drifts down the page
+     (as in her 1960s line paintings) and each line thickens where the photo is dark */
+  function riley() {
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#111111"; ctx.globalAlpha = S.htOp / 100; ctx.beginPath();
+    var s = cell, lam = W / 5, step = Math.max(1, s / 3), Amax = s * 2;
+    function A(y) { var k = Math.sin(Math.PI * clamp(y / H, 0, 1) * 1.5); return s * 0.4 + (Amax - s * 0.4) * k * k; }
+    function ph(y) { return 2 * Math.PI * 0.75 * y / H; }
+    for (var y0 = -Amax - s; y0 <= H + Amax + s; y0 += s) {
+      var a = A(y0), p = ph(y0), top = [], bot = [];
+      for (var x = -s; x <= W + s + step; x += step) {
+        var w = 2 * Math.PI * x / lam + p, yc = y0 + a * Math.sin(w), dy = a * 2 * Math.PI / lam * Math.cos(w);
+        var q = at(clamp(x, 0, W - 1), clamp(yc, 0, H - 1));
+        var v = adj(1 - (0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2]) / 255);
+        var hw = s * clamp(v * gain, 0.07, 0.96) / 2, len = Math.hypot(1, dy), nx = -dy / len * hw, ny = 1 / len * hw;
+        top.push([x + nx, yc - ny]); bot.push([x - nx, yc + ny]);
+      }
+      if (y0 + a + s < 0 || y0 - a - s > H) continue;
+      ctx.moveTo(top[0][0], top[0][1]);
+      for (var i = 1; i < top.length; i++) ctx.lineTo(top[i][0], top[i][1]);
+      for (var j = bot.length - 1; j >= 0; j--) ctx.lineTo(bot[j][0], bot[j][1]);
+      ctx.closePath();
+    }
+    ctx.fill();
+  }
+  function inks() {
+  ctx.fillStyle = S.htMode === "rgb" ? "#000000" : S.htPaper; ctx.fillRect(0, 0, W, H);
+  var chans;
+  if (S.htMode === "rgb") {
+    /* RGB: light added on black, one screen per channel (dot size follows how much of that color there is) */
+    chans = [
+      { a: S.htAngle - 30, col: "#ff2a1a", f: function (q) { return d[q] / 255; } },
+      { a: S.htAngle + 30, col: "#18e04a", f: function (q) { return d[q + 1] / 255; } },
+      { a: S.htAngle, col: "#2a5cff", f: function (q) { return d[q + 2] / 255; } }
+    ];
+    ctx.globalCompositeOperation = "screen";
+  } else if (S.htMode === "cmyk") {
+    chans = [
+      { a: S.htAngle - 30, col: "#00a0e3", f: function (q) { return cmyk(q)[0]; } },
+      { a: S.htAngle + 30, col: "#e5007e", f: function (q) { return cmyk(q)[1]; } },
+      { a: S.htAngle - 45, col: "#ffe600", f: function (q) { return cmyk(q)[2]; } },
+      { a: S.htAngle, col: "#1d1d1b", f: function (q) { return cmyk(q)[3]; } }
+    ];
+    ctx.globalCompositeOperation = "multiply";
+  } else {
+    chans = [{ a: S.htAngle, col: S.htMode === "ink" ? S.htInk : null, f: function (q) { return 1 - (0.2126 * d[q] + 0.7152 * d[q + 1] + 0.0722 * d[q + 2]) / 255; } }];
+  }
+  ctx.globalAlpha = S.htOp / 100;
+  chans.forEach(function (ch) {
+    var col = ch.col;
+    if (col) { ctx.fillStyle = col; ctx.beginPath(); }
+    grid(W, H, cell, ch.a, function (x, y, ca, sa) {
+      var q = at(x, y), v = adj(ch.f(q));
+      if (v < 0.01) return;
+      if (!col) { ctx.fillStyle = "rgb(" + d[q] + "," + d[q + 1] + "," + d[q + 2] + ")"; ctx.beginPath(); }
+      shape(ctx, x, y, cell, v * gain, ca, sa, S.htShape);
+      if (!col) ctx.fill();
+    });
+    if (col) ctx.fill();
+  });
+  }
+}
+function grid(W, H, cell, deg, fn) {
+  var a = deg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+  var cx = W / 2, cy = H / 2, R = Math.hypot(W, H) / 2 + cell, n = Math.ceil(R / cell);
+  for (var v = -n; v <= n; v++) {
+    for (var u = -n; u <= n; u++) {
+      var x = cx + u * cell * ca - v * cell * sa, y = cy + u * cell * sa + v * cell * ca;
+      if (x < -cell || y < -cell || x > W + cell || y > H + cell) continue;
+      fn(x, y, ca, sa);
+    }
+  }
+}
+/* v is ink coverage 0..1 (more with dot gain): dot and square area follow it, lines follow it in thickness */
+function shape(ctx, x, y, cell, v, ca, sa, kind) {
+  if (kind === "dot") {
+    var r = cell * 0.7071 * Math.sqrt(v);
+    ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, 6.2832);
+    return;
+  }
+  var hu, hv;
+  if (kind === "square") { hu = hv = cell * Math.sqrt(Math.min(v, 2)) / 2; }
+  else { hu = cell / 2 + 0.6; hv = cell * Math.min(v, 1.2) / 2; }
+  ctx.moveTo(x - hu * ca + hv * sa, y - hu * sa - hv * ca);
+  ctx.lineTo(x + hu * ca + hv * sa, y + hu * sa - hv * ca);
+  ctx.lineTo(x + hu * ca - hv * sa, y + hu * sa + hv * ca);
+  ctx.lineTo(x - hu * ca - hv * sa, y - hu * sa + hv * ca);
+  ctx.closePath();
+}
+
+/* ---------- effects: grade, color shift, glitch slices, then light (leak, flare, streaks) added with screen ---------- */
+var GRADES = {
+  teal: function (r, g, b, l) { var hi = l * l, sh = (1 - l) * (1 - l); return [r + hi * 0.14 - sh * 0.10, g + hi * 0.03 + sh * 0.04, b - hi * 0.14 + sh * 0.14]; },
+  bleach: function (r, g, b, l) { return [(r + l) / 2, (g + l) / 2, (b + l) / 2].map(function (v) { return (v - 0.5) * 1.35 + 0.5; }); },
+  warm: function (r, g, b) { return [0.05 + r * 1.02, 0.04 + g * 0.95, 0.03 + b * 0.80]; },
+  cool: function (r, g, b) { return [r * 0.82, g * 0.92 + 0.02, b * 1.05 + 0.06]; },
+  fade: function (r, g, b, l) { return [r, g, b].map(function (v) { return 0.09 + (v * 0.8 + l * 0.2) * 0.84; }); },
+  noir: function (r, g, b, l) { var v = (l - 0.5) * 1.45 + 0.45; return [v, v, v]; }
+};
+var WARHOL = [
+  ["#1a1446", "#e6007e", "#f7a1c4", "#ffe600"], ["#00205b", "#00a3e0", "#ffd100", "#ff7f41"], ["#2b0a3d", "#ff3b30", "#ff9f0a", "#fff4b8"],
+  ["#003b2f", "#00c08b", "#c6ff00", "#f5f5f5"], ["#3d0c02", "#ff5e00", "#ffd23f", "#b2f7ef"], ["#120a2a", "#7b2ff7", "#f107a3", "#fefae0"],
+  ["#0b3d91", "#ff006e", "#8ac926", "#ffca3a"], ["#222222", "#ff595e", "#1982c4", "#ffca3a"], ["#4a0e4e", "#f72585", "#4cc9f0", "#fdfdfd"]
+].map(function (p) { return p.map(rgb); });
+/* Warhol: the picture repeated in a 2 x 2 or 3 x 3 grid, each panel posterized to four flat screen-print colors */
+function warhol(ctx, W, H, n) {
+  var tw = Math.max(8, Math.round(W / n)), th = Math.max(8, Math.round(H / n));
+  var s = mk(tw, th), sx = s.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, tw, th);
+  var src = sx.getImageData(0, 0, tw, th).data, L = new Float32Array(tw * th), lo = 1, hi = 0, i;
+  for (i = 0; i < L.length; i++) { var v = (0.2126 * src[i * 4] + 0.7152 * src[i * 4 + 1] + 0.0722 * src[i * 4 + 2]) / 255; L[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+  var span = Math.max(0.05, hi - lo);
+  for (var k = 0; k < n * n; k++) {
+    var pal = WARHOL[(k + S.fxWarholMix) % WARHOL.length], im = sx.createImageData(tw, th), d = im.data;
+    for (i = 0; i < L.length; i++) {
+      var c = pal[Math.min(3, ((L[i] - lo) / span * 4) | 0)];
+      d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255;
+    }
+    var t = mk(tw, th); t.getContext("2d").putImageData(im, 0, 0);
+    var x0 = Math.round((k % n) * W / n), y0 = Math.round(((k / n) | 0) * H / n), x1 = Math.round(((k % n) + 1) * W / n), y1 = Math.round((((k / n) | 0) + 1) * H / n);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(t, x0, y0, x1 - x0, y1 - y0); ctx.imageSmoothingEnabled = true;
+  }
+}
+var MC = ["#5d9c3b", "#866043", "#7d7d7d", "#6b6b6b", "#a2834f", "#6b5433", "#dbd3a0", "#3f76e4", "#d96415", "#f0fbfb", "#91b5fc", "#3b6e1f",
+  "#f9e14b", "#5decf5", "#a10f0f", "#14121d", "#6e3534", "#e9ecec", "#141519", "#a12722", "#35399d", "#f8c527", "#f07613", "#ed8dac",
+  "#7a2aad", "#158991", "#70b919", "#985e43", "#a0a6b3", "#2e2e2e"].map(rgb);
+/* Minecraft: big square blocks in block colors, each with a speckled texture and a light top-left / dark bottom-right bevel */
+function minecraft(ctx, W, H) {
+  var bs = (6 + S.fxMine / 100 * 54) * W / 1080, cols = Math.max(1, Math.ceil(W / bs)), rows = Math.max(1, Math.ceil(H / bs));
+  var s = mk(cols, rows), sx = s.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, cols * bs * (W / (cols * bs)), H, 0, 0, cols, rows);
+  var d = sx.getImageData(0, 0, cols, rows).data, sub = bs >= 16 ? 4 : bs >= 8 ? 2 : 1, ss = bs / sub, e = Math.max(1, bs / 8);
+  for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+    var q = (j * cols + i) * 4, c = [d[q], d[q + 1], d[q + 2]], g = (c[0] + c[1] + c[2]) / 3;
+    c = c.map(function (v) { return clamp(((g + (v - g) * 1.6) - 128) * 1.15 + 128, 0, 255); });   /* livelier before matching blocks */
+    if (S.fxMinePal === "mc") {
+      var best = MC[0], bd = 1e9;
+      MC.forEach(function (m) { var dd = (m[0] - c[0]) * (m[0] - c[0]) * 0.3 + (m[1] - c[1]) * (m[1] - c[1]) * 0.59 + (m[2] - c[2]) * (m[2] - c[2]) * 0.11; if (dd < bd) { bd = dd; best = m; } });
+      c = best;
+    }
+    var x = i * bs, y = j * bs;
+    for (var v = 0; v < sub; v++) for (var u = 0; u < sub; u++) {
+      var h = Math.sin((i * 12.9898 + j * 78.233 + u * 37.719 + v * 4.581) * 43758.5453), f = 1 + (h - Math.floor(h) - 0.5) * 0.24;
+      ctx.fillStyle = "rgb(" + clamp(c[0] * f, 0, 255) + "," + clamp(c[1] * f, 0, 255) + "," + clamp(c[2] * f, 0, 255) + ")";
+      ctx.fillRect(x + u * ss, y + v * ss, ss + 0.5, ss + 0.5);
+    }
+    ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fillRect(x, y, bs, e); ctx.fillRect(x, y, e, bs);
+    ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.fillRect(x, y + bs - e, bs, e); ctx.fillRect(x + bs - e, y, e, bs);
+  }
+}
+/* Guilloché: two crossing families of engraved wave lines (banknote style); each line swells where the picture is dark */
+function guilloche(ctx, W, H) {
+  var k = W / 1080, n = 30 + S.fxGuil / 100 * 90, s = H / n, step = Math.max(1.5, 4 * k), pat = S.fxGuilPat;
+  /* read the photo itself (not the dots drawn over it) so the lines swell smoothly */
+  var sw = Math.max(2, Math.round(W / 4)), sh = Math.max(2, Math.round(H / 4)), sm = mk(sw, sh), sx = sm.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(src, 0, 0, sw, sh);
+  var d = sx.getImageData(0, 0, sw, sh).data;
+  function at(x, y) { return (clamp((y / H * sh) | 0, 0, sh - 1) * sw + clamp((x / W * sw) | 0, 0, sw - 1)) * 4; }
+  var green = [24, 84, 58], paper = S.fxGuilInk === "green" ? "#f1f4ea" : "#fbf8f0";
+  ctx.fillStyle = paper; ctx.fillRect(0, 0, W, H);
+  ctx.lineCap = "butt"; ctx.lineJoin = "round";
+  /* every pattern is a set of polylines; each short segment is inked with a width that follows the picture's darkness */
+  function line(pts, gap) {
+    for (var i = 1; i < pts.length; i++) {
+      var x0 = pts[i - 1][0], y0 = pts[i - 1][1], x1 = pts[i][0], y1 = pts[i][1];
+      if ((x0 < -gap && x1 < -gap) || (x0 > W + gap && x1 > W + gap) || (y0 < -gap && y1 < -gap) || (y0 > H + gap && y1 > H + gap)) continue;
+      var q = at((x0 + x1) / 2, (y0 + y1) / 2), r = d[q], g = d[q + 1], b = d[q + 2], v = 1 - (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      ctx.lineWidth = gap * (0.05 + 0.36 * v);
+      var c = S.fxGuilInk === "green" ? green : S.fxGuilInk === "ink" ? [20, 20, 22] : [r * 0.6, g * 0.6, b * 0.6];
+      ctx.strokeStyle = "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")";
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    }
+  }
+  /* a family of parallel lines at an angle, each bent by wave(t, u) across its own direction */
+  function family(deg, gap, wave, wgap) {
+    var a = deg * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx, R = Math.hypot(W, H) / 2 + gap * 3, cx = W / 2, cy = H / 2;
+    for (var u = -R; u <= R; u += gap) {
+      var pts = [];
+      for (var t = -R; t <= R; t += step) { var o = u + (wave ? wave(t, u) : 0); pts.push([cx + t * dx + o * nx, cy + t * dy + o * ny]); }
+      line(pts, wgap || gap);
+    }
+  }
+  var cx = W / 2, cy = H / 2, Rm = Math.hypot(W, H) / 2 + s, th, R, pts, i;
+  if (pat === "rosette") {   /* banknote rosette: rings whose petals shift a little on each ring, so they interlace */
+    for (R = s; R < Rm; R += s) { pts = []; for (th = 0; th <= 6.2832 + 1e-3; th += Math.min(0.2, step / R)) { var rr = R + s * 1.6 * Math.sin(18 * th + R / s * 0.55); pts.push([cx + rr * Math.cos(th), cy + rr * Math.sin(th)]); } line(pts, s); }
+  } else if (pat === "lattice") {   /* security lattice: two wave families crossing at 60° */
+    family(30, s * 1.2, function (t, u) { return s * 0.9 * Math.sin(6.2832 * t / (W / 7) + u / s * 0.5); });
+    family(-30, s * 1.2, function (t, u) { return s * 0.9 * Math.sin(6.2832 * t / (W / 7) - u / s * 0.5); });
+  } else if (pat === "clous") {   /* Clous de Paris: fine straight grooves crossing at 90°, leaving tiny pyramids */
+    family(45, s * 1.1); family(-45, s * 1.1);
+  } else if (pat === "tapis") {   /* Grande Tapisserie: a larger square waffle; each groove is a pair of lines */
+    var g = s * 2.6; [0, 90].forEach(function (a) { family(a, g, null, s); family(a, g, function () { return s * 0.45; }, s); });
+  } else if (pat === "sunburst") {   /* sunburst: rays from the center */
+    var N = Math.round(6.2832 * Math.min(W, H) / 2 / (s * 1.1));
+    for (i = 0; i < N; i++) { th = i / N * 6.2832; pts = []; for (R = s * 0.5; R < Rm; R += step * 3) pts.push([cx + R * Math.cos(th), cy + R * Math.sin(th)]); line(pts, s * 0.8); }
+  } else if (pat === "flinque") {   /* flinqué: close wavy rings that shimmer from the center, as under enamel */
+    for (R = s * 0.6; R < Rm; R += s * 0.85) { pts = []; for (th = 0; th <= 6.2832 + 1e-3; th += Math.min(0.2, step / R)) { var r2 = R + s * 0.35 * Math.sin(40 * th) * (0.6 + 0.4 * Math.sin(R / s)); pts.push([cx + r2 * Math.cos(th), cy + r2 * Math.sin(th)]); } line(pts, s * 0.85); }
+  } else {   /* banknote waves: two families of weaving wave lines */
+    var L1 = W / 5.5, L2 = W / 1.9, A = s * 1.15;
+    for (var fam = 0; fam < 2; fam++) {
+      var sg = fam ? -1 : 1;
+      for (var y0 = -A * 2; y0 <= H + A * 2; y0 += s) {
+        pts = [];
+        var ph = y0 / H * 6.2832 * 2.2 + (fam ? Math.PI : 0);
+        for (var x = -step; x <= W + step; x += step)
+          pts.push([x, y0 + A * Math.sin(6.2832 * x / L1 + ph) + A * 0.55 * Math.sin(6.2832 * x / L2 + sg * y0 / H * 4) + A * 0.18 * Math.sin(6.2832 * x / (L1 / 4) + ph * 2)]);
+        line(pts, s);
+      }
+    }
+  }
+}
+/* Seurat: pointillism — the picture rebuilt from small round dabs of color on pale canvas, some dabs nudged toward neighboring hues
+   so colors mix in the eye; the dab grid is jittered so it never looks mechanical */
+function seurat(ctx, W, H) {
+  var k = W / 1080, r = (2.5 + S.fxSeurat / 100 * 9) * k, gap = r * 2.1, mix = S.fxSeuratMix / 100;
+  var cols = Math.ceil(W / gap) + 1, rows = Math.ceil(H / gap) + 1;
+  var sw = Math.max(2, cols), sh = Math.max(2, rows), sm = mk(sw, sh), sx = sm.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(src, 0, 0, sw, sh);   /* painted from the photo itself */
+  var d = sx.getImageData(0, 0, sw, sh).data, rnd = mulberry(S.fxSeed * 7 + 11);
+  ctx.fillStyle = "#f4efe2"; ctx.fillRect(0, 0, W, H);
+  for (var pass = 0; pass < 2; pass++) for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+    var q = (Math.min(j, sh - 1) * sw + Math.min(i, sw - 1)) * 4, c = [d[q], d[q + 1], d[q + 2]];
+    var t = rnd();
+    if (t < mix * 0.35) { var m = Math.max(c[0], c[1], c[2]), n = Math.min(c[0], c[1], c[2]); c = c.map(function (v) { return v === m ? Math.min(255, v * 1.25) : v === n ? v * 0.7 : v; }); }
+    else if (t < mix * 0.5) { c = [c[1] * 0.5 + c[0] * 0.5, c[2] * 0.6 + c[1] * 0.4, c[0] * 0.4 + c[2] * 0.6]; }
+    var j1 = rnd() - 0.5, j2 = rnd() - 0.5, rr = r * (pass ? 0.55 + rnd() * 0.3 : 0.8 + rnd() * 0.35);
+    var x = (i + (pass ? 0.5 : 0) + j1 * 0.7) * gap, y = (j + (pass ? 0.5 : 0) + j2 * 0.7) * gap;
+    ctx.fillStyle = "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")";
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
+  }
+}
+/* 3px: the low-res pixel art of fogday.com/px — big square pixels (sized at a 1080 px picture), 4 x 4 Bayer dithering,
+   a few levels per channel, drawn back up without smoothing */
+var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+function pixelArt(ctx, W, H) {
+  var p = Math.max(1, S.fxPx * W / 1080), cols = Math.max(1, Math.round(W / p)), rows = Math.max(1, Math.round(H / p));
+  var s = mk(cols, rows), sx = s.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, cols, rows);
+  var im = sx.getImageData(0, 0, cols, rows), d = im.data, lv = 5, step = 255 / (lv - 1);
+  for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+    var q = (y * cols + x) * 4, th = S.fxPxDither ? (BAYER4[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5 : 0;
+    for (var c = 0; c < 3; c++) d[q + c] = clamp(Math.round(d[q + c] / step + th) * step, 0, 255);
+  }
+  sx.putImageData(im, 0, 0);
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(s, 0, 0, W, H); ctx.restore();
+}
+/* ---------- Film: a film stock (color response, grain, halation) and a film effect ---------- */
+var STOCKS = [
+  ["none", "None"],
+  ["Color negative"],
+  ["portra160", "Kodak Portra 160", { sat: .92, con: .95, warm: .03, sh: [.01, .0, .02], hi: [.03, .015, -.01], lift: .03, grain: 10 }],
+  ["portra400", "Kodak Portra 400", { sat: .95, con: .97, warm: .045, sh: [.0, .01, .03], hi: [.04, .02, -.015], lift: .035, grain: 16 }],
+  ["portra800", "Kodak Portra 800", { sat: 1.02, con: 1.02, warm: .05, sh: [.0, .01, .04], hi: [.05, .02, -.02], lift: .04, grain: 24 }],
+  ["ektar100", "Kodak Ektar 100", { sat: 1.3, con: 1.12, warm: .02, sh: [.0, .0, .03], hi: [.03, .0, -.02], lift: .0, grain: 6 }],
+  ["gold200", "Kodak Gold 200", { sat: 1.12, con: 1.05, warm: .08, sh: [.02, .0, -.01], hi: [.06, .04, -.04], lift: .03, grain: 18 }],
+  ["colorplus", "Kodak ColorPlus 200", { sat: 1.08, con: 1.0, warm: .09, sh: [.03, .0, -.01], hi: [.06, .035, -.05], lift: .05, grain: 22 }],
+  ["ultramax", "Kodak UltraMax 400", { sat: 1.18, con: 1.08, warm: .06, sh: [.0, .0, .02], hi: [.05, .03, -.03], lift: .03, grain: 22 }],
+  ["vision500t", "Kodak Vision3 500T", { sat: .95, con: .96, warm: -.06, sh: [.0, .02, .05], hi: [.03, .01, -.01], lift: .05, grain: 20, hal: .5 }],
+  ["pro400h", "Fujifilm Pro 400H", { sat: .9, con: .94, warm: -.02, sh: [.0, .03, .04], hi: [.01, .03, .01], lift: .05, grain: 16 }],
+  ["superia400", "Fujifilm Superia X-TRA 400", { sat: 1.12, con: 1.06, warm: -.01, sh: [.0, .03, .03], hi: [.02, .03, -.01], lift: .03, grain: 22 }],
+  ["c200", "Fujicolor C200", { sat: 1.05, con: 1.03, warm: .0, sh: [.0, .03, .02], hi: [.02, .03, -.02], lift: .04, grain: 20 }],
+  ["agfavista", "Agfa Vista 200", { sat: 1.2, con: 1.08, warm: .03, sh: [.03, .0, .0], hi: [.05, .0, -.02], lift: .03, grain: 20 }],
+  ["lomo100", "Lomography Color 100", { sat: 1.3, con: 1.15, warm: .04, sh: [.0, .0, .04], hi: [.04, .02, -.04], lift: .02, grain: 16 }],
+  ["lomopurple", "LomoChrome Purple", { sat: 1.1, con: 1.08, purple: 1, lift: .03, grain: 22 }],
+  ["cinestill800t", "CineStill 800T", { sat: 1.0, con: 1.02, warm: -.08, sh: [.0, .03, .07], hi: [.05, .02, .0], lift: .04, grain: 22, hal: 1 }],
+  ["cinestill50d", "CineStill 50D", { sat: 1.05, con: 1.0, warm: .0, sh: [.0, .02, .05], hi: [.03, .02, .0], lift: .03, grain: 8, hal: .6 }],
+  ["Slide"],
+  ["e100", "Kodak Ektachrome E100", { sat: 1.15, con: 1.15, warm: -.03, sh: [.0, .0, .04], hi: [.0, .01, .02], lift: .0, grain: 8 }],
+  ["kodachrome64", "Kodachrome 64", { sat: 1.18, con: 1.2, warm: .05, sh: [.03, .0, -.02], hi: [.04, .02, -.03], lift: .0, grain: 10 }],
+  ["velvia50", "Fujifilm Velvia 50", { sat: 1.45, con: 1.22, warm: .0, sh: [.0, .0, .05], hi: [.02, .02, -.02], lift: .0, grain: 6 }],
+  ["provia100f", "Fujifilm Provia 100F", { sat: 1.15, con: 1.12, warm: -.01, sh: [.0, .01, .03], hi: [.01, .01, .0], lift: .0, grain: 6 }],
+  ["astia100f", "Fujifilm Astia 100F", { sat: 1.05, con: 1.02, warm: .02, sh: [.01, .0, .02], hi: [.03, .015, .0], lift: .02, grain: 6 }],
+  ["Black and white"],
+  ["trix400", "Kodak Tri-X 400", { mono: 1, con: 1.2, lift: .03, grain: 30 }],
+  ["tmax100", "Kodak T-Max 100", { mono: 1, con: 1.08, lift: .0, grain: 8 }],
+  ["hp5", "Ilford HP5 Plus 400", { mono: 1, con: 1.1, lift: .04, grain: 28 }],
+  ["delta3200", "Ilford Delta 3200", { mono: 1, con: 1.15, lift: .06, grain: 48 }],
+  ["panf50", "Ilford Pan F Plus 50", { mono: 1, con: 1.25, lift: .0, grain: 5 }],
+  ["fp4", "Ilford FP4 Plus 125", { mono: 1, con: 1.12, lift: .02, grain: 14 }],
+  ["acros100", "Fujifilm Neopan Acros 100", { mono: 1, con: 1.1, lift: .0, grain: 8, monoTone: [1, 1, 1.02] }],
+  ["Instant"],
+  ["polaroid600", "Polaroid 600", { sat: .85, con: .9, warm: .05, sh: [.0, .03, .06], hi: [.05, .03, -.02], lift: .09, grain: 10 }],
+  ["instaxmini", "Fujifilm Instax Mini", { sat: 1.05, con: 1.05, warm: -.02, sh: [.0, .02, .04], hi: [.02, .02, .0], lift: .05, grain: 8 }]
+];
+var STOCK = {}; STOCKS.forEach(function (s) { if (s[2]) STOCK[s[0]] = s[2]; });
+function blurOf(cv, W, H, f) {   /* a soft copy: shrink by f, grow back with smoothing (twice) */
+  var w = Math.max(2, Math.round(W / f)), h = Math.max(2, Math.round(H / f)), a = mk(w, h), x = a.getContext("2d");
+  x.imageSmoothingQuality = "high"; x.drawImage(cv, 0, 0, w, h);
+  var b = mk(Math.max(2, w >> 1), Math.max(2, h >> 1)); b.getContext("2d").drawImage(a, 0, 0, b.width, b.height);
+  x.clearRect(0, 0, w, h); x.drawImage(b, 0, 0, w, h);
+  var o = mk(W, H), ox = o.getContext("2d"); ox.imageSmoothingQuality = "high"; ox.drawImage(a, 0, 0, W, H); return o;
+}
+function copyOf(ctx, W, H) { var c = mk(W, H); c.getContext("2d").drawImage(ctx.canvas, 0, 0, W, H); return c; }
+function masked(src, W, H, paint) {   /* src kept only where the mask painted by paint(ctx) is opaque */
+  var m = mk(W, H), x = m.getContext("2d"); x.drawImage(src, 0, 0); x.globalCompositeOperation = "destination-in"; paint(x); return m;
+}
+function filmStock(ctx, W, H) {
+  var P = STOCK[S.fxStock]; if (!P) return;
+  var img = ctx.getImageData(0, 0, W, H), d = img.data, rnd = mulberry(S.fxSeed * 13 + 3);
+  var gr = (P.grain + S.fxGrain) / 100 * 0.16 * Math.max(0.6, Math.min(1.4, 1080 / W * 1.4));
+  for (var i = 0; i < d.length; i += 4) {
+    var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    if (P.mono) { var t = P.monoTone || [1, 1, 1]; r = l * t[0]; g = l * t[1]; b = l * t[2]; }
+    else if (P.purple) { var gg = g; g = r * 0.45 + g * 0.2; r = r * 0.6 + gg * 0.55; b = b * 0.7 + gg * 0.5; }
+    else {
+      r += P.warm; b -= P.warm;
+      r = l + (r - l) * P.sat; g = l + (g - l) * P.sat; b = l + (b - l) * P.sat;
+      var s2 = (1 - l) * (1 - l), h2 = l * l;
+      r += P.sh[0] * s2 + P.hi[0] * h2; g += P.sh[1] * s2 + P.hi[1] * h2; b += P.sh[2] * s2 + P.hi[2] * h2;
+    }
+    r = (r - 0.5) * P.con + 0.5; g = (g - 0.5) * P.con + 0.5; b = (b - 0.5) * P.con + 0.5;
+    r = P.lift + r * (1 - P.lift); g = P.lift + g * (1 - P.lift); b = P.lift + b * (1 - P.lift);
+    if (gr) { var n = (rnd() - 0.5) * gr * (1 - Math.abs(l - 0.5)); r += n; g += n; b += n; }
+    d[i] = r * 255; d[i + 1] = g * 255; d[i + 2] = b * 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  if (P.hal) {   /* halation: red glow bleeding round the brightest parts, as on CineStill */
+    var c = copyOf(ctx, W, H), hx = c.getContext("2d"), im = hx.getImageData(0, 0, W, H), q = im.data;
+    for (var j = 0; j < q.length; j += 4) { var v = Math.max(0, (0.2126 * q[j] + 0.7152 * q[j + 1] + 0.0722 * q[j + 2]) / 255 - 0.75) * 4; q[j] = 255 * v; q[j + 1] = 40 * v; q[j + 2] = 10 * v; }
+    hx.putImageData(im, 0, 0);
+    ctx.save(); ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = Math.min(1, P.hal * 0.9); ctx.drawImage(blurOf(c, W, H, 40), 0, 0); ctx.restore();
+  }
+}
+function pixelMap(ctx, W, H, k, fn) {
+  var img = ctx.getImageData(0, 0, W, H), d = img.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, o = fn(r, g, b, 0.2126 * r + 0.7152 * g + 0.0722 * b, i);
+    d[i] = (r + (o[0] - r) * k) * 255; d[i + 1] = (g + (o[1] - g) * k) * 255; d[i + 2] = (b + (o[2] - b) * k) * 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function sCurve(v, a) { return clamp(0.5 + (v - 0.5) * a + (v - 0.5) * (1 - Math.abs(2 * v - 1)) * (a - 1) * 0.5, 0, 1); }
+function filmEffect(ctx, W, H) {
+  var e = S.fxFilm, k = S.fxFilmAmt / 100, rnd = mulberry(S.fxSeed * 29 + 17), x, y, i;
+  if (e === "none" || !k) return;
+  if (e === "double") {   /* a second exposure of the photo, mirrored and larger, added in light */
+    ctx.save(); ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = 0.75 * k;
+    var s = 1.25, dw = W * s, dh = H * s; ctx.translate(W / 2, H / 2); ctx.scale(-1, 1); ctx.drawImage(src, -dw / 2 + W * 0.08, -dh / 2 - H * 0.05, dw, dh); ctx.restore();
+  } else if (e === "cross") {
+    pixelMap(ctx, W, H, k, function (r, g, b) { return [sCurve(r, 1.45), sCurve(g, 1.2) + 0.03, 0.16 + b * 0.62]; });
+  } else if (e === "infrared") {   /* false-color infrared: foliage turns red and pink, skies go deep */
+    pixelMap(ctx, W, H, k, function (r, g, b, l) { var f = Math.max(0, g - Math.max(r, b) * 0.85); return [clamp(g * 0.9 + r * 0.25 + f * 1.5, 0, 1), clamp(r * 0.8, 0, 1), clamp(b * 1.05 - f * 0.4, 0, 1)]; });
+  } else if (e === "soup") {   /* film soaked in liquids: blotches of shifted color and bubble rings */
+    ctx.save(); ctx.globalCompositeOperation = "overlay";
+    for (i = 0; i < 10; i++) {
+      x = rnd() * W; y = rnd() * H; var R = (0.15 + rnd() * 0.35) * Math.max(W, H), hue = (rnd() * 360) | 0;
+      var gd = ctx.createRadialGradient(x, y, 0, x, y, R); gd.addColorStop(0, "hsla(" + hue + ",90%,55%," + 0.85 * k + ")"); gd.addColorStop(1, "hsla(" + hue + ",90%,55%,0)");
+      ctx.fillStyle = gd; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.globalCompositeOperation = "screen"; ctx.lineWidth = Math.max(1, W / 500);
+    for (i = 0; i < 40; i++) { x = rnd() * W; y = rnd() * H; var rr = (2 + rnd() * 18) * W / 1080; ctx.strokeStyle = "rgba(255,240,220," + 0.5 * k + ")"; ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.stroke(); }
+    ctx.restore();
+  } else if (e === "expired") {   /* old stock: faded, low contrast, lifted blacks and a color cast */
+    var cast = rnd() < 0.5 ? [0.06, -0.03, 0.05] : [-0.02, 0.05, 0.0];
+    pixelMap(ctx, W, H, k, function (r, g, b, l) {
+      r = l + (r - l) * 0.65; g = l + (g - l) * 0.65; b = l + (b - l) * 0.65;
+      return [0.12 + ((r - 0.5) * 0.78 + 0.5) * 0.82 + cast[0], 0.12 + ((g - 0.5) * 0.78 + 0.5) * 0.82 + cast[1], 0.12 + ((b - 0.5) * 0.78 + 0.5) * 0.82 + cast[2]];
+    });
+  } else if (e === "preexposed") {   /* a roll shot once already: a faint second pattern of light under the picture */
+    ctx.save(); ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = 0.6 * k;
+    var cx = W * (0.2 + rnd() * 0.6), cy = H * (0.2 + rnd() * 0.6), hue2 = (rnd() * 360) | 0;
+    for (i = 0; i < 14; i++) { ctx.strokeStyle = "hsla(" + ((hue2 + i * 9) % 360) + ",80%,60%,.5)"; ctx.lineWidth = Math.max(W, H) / 60; ctx.beginPath(); ctx.arc(cx, cy, (i + 1) * Math.max(W, H) / 22, 0, 6.2832); ctx.stroke(); }
+    ctx.globalAlpha = 0.35 * k; ctx.fillStyle = "rgb(255,190,140)"; ctx.fillRect(0, 0, W, H); ctx.restore();
+    ctx.drawImage(blurOf(copyOf(ctx, W, H), W, H, 3), 0, 0);
+  } else if (e === "diopter") {   /* split-focus diopter: one side sharp, the other soft, meeting at a slanted seam */
+    var bl = blurOf(copyOf(ctx, W, H), W, H, 10 + 14 * k), a = 0.5 + (rnd() - 0.5) * 0.3;
+    ctx.drawImage(masked(bl, W, H, function (m) { var g2 = m.createLinearGradient(W * a - W * 0.05, H * 0.5 - W * 0.012, W * a + W * 0.05, H * 0.5 + W * 0.012); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,1)"); m.fillStyle = g2; m.fillRect(0, 0, W, H); }), 0, 0);
+  } else if (e === "forced") {   /* forced perspective, the tilt-shift way: a band in focus, top and bottom blurred, colors pushed so it reads as a miniature */
+    var bl2 = blurOf(copyOf(ctx, W, H), W, H, 8 + 12 * k);
+    ctx.drawImage(masked(bl2, W, H, function (m) { var g3 = m.createLinearGradient(0, 0, 0, H); g3.addColorStop(0, "#000"); g3.addColorStop(0.38, "rgba(0,0,0,0)"); g3.addColorStop(0.62, "rgba(0,0,0,0)"); g3.addColorStop(1, "#000"); m.fillStyle = g3; m.fillRect(0, 0, W, H); }), 0, 0);
+    pixelMap(ctx, W, H, k, function (r, g, b, l) { return [sCurve(l + (r - l) * 1.4, 1.12), sCurve(l + (g - l) * 1.4, 1.12), sCurve(l + (b - l) * 1.4, 1.12)]; });
+  } else if (e === "smudge") {   /* a fingerprint on the lens: an off-center patch goes soft and glows */
+    var c3 = copyOf(ctx, W, H), bl3 = blurOf(c3, W, H, 16), sx = W * (0.15 + rnd() * 0.7), sy = H * (0.15 + rnd() * 0.7), R3 = Math.max(W, H) * (0.3 + 0.2 * k);
+    ctx.drawImage(masked(bl3, W, H, function (m) { var g4 = m.createRadialGradient(sx, sy, 0, sx, sy, R3); g4.addColorStop(0, "rgba(0,0,0," + k + ")"); g4.addColorStop(1, "rgba(0,0,0,0)"); m.fillStyle = g4; m.fillRect(0, 0, W, H); }), 0, 0);
+    ctx.save(); ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = 0.35 * k; ctx.drawImage(blurOf(c3, W, H, 30), 0, 0); ctx.restore();
+  } else if (e === "haze") {   /* diffusion filter: highlights bloom, blacks lift a little */
+    ctx.save(); ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = 0.55 * k; ctx.drawImage(blurOf(copyOf(ctx, W, H), W, H, 24), 0, 0);
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 0.08 * k; ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.restore();
+  } else if (e === "sepia") {
+    pixelMap(ctx, W, H, k, function (r, g, b) { return [r * 0.393 + g * 0.769 + b * 0.189, r * 0.349 + g * 0.686 + b * 0.168, r * 0.272 + g * 0.534 + b * 0.131]; });
+  }
+}
+/* Duotone: brightness mapped onto a ramp from the shadow color to the highlight color (like a two-ink print), mixed in by Strength */
+var DUOS = [["#1d2a6b", "#ff8a5c"], ["#0b3d2e", "#e8f5a0"], ["#2b0a3d", "#ffd23f"], ["#1a1a1a", "#00b2e3"], ["#3d0c02", "#f7a1c4"],
+  ["#08243f", "#f5f1e6"], ["#1b1464", "#ff2d87"], ["#1d2622", "#f2b431"], ["#3a0d5c", "#3fe0c5"], ["#5a1a00", "#ffe1b5"]];
+function duotone(ctx, W, H) {
+  var a = rgb(S.fxDuoA), b = rgb(S.fxDuoB), k = S.fxDuo / 100, img = ctx.getImageData(0, 0, W, H), d = img.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+    l = l * l * (3 - 2 * l);   /* a gentle S-curve keeps the print punchy */
+    for (var c = 0; c < 3; c++) d[i + c] += ((a[c] + (b[c] - a[c]) * l) - d[i + c]) * k;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function effects(ctx, W, H) {
+  if (S.fxWarhol !== "off") warhol(ctx, W, H, +S.fxWarhol);
+  if (S.fxMine > 0) minecraft(ctx, W, H);
+  if (S.fxGuil > 0) guilloche(ctx, W, H);
+  if (S.fxSeurat > 0) seurat(ctx, W, H);
+  if (S.fxPx > 0) pixelArt(ctx, W, H);
+  if (S.fxStock !== "none") filmStock(ctx, W, H);
+  if (S.fxFilm !== "none" && S.fxFilmAmt > 0) filmEffect(ctx, W, H);
+  if (S.fxDuo > 0) duotone(ctx, W, H);
+  var k = W / 1080, grade = GRADES[S.fxGrade], ga = S.fxGradeAmt / 100;
+  var sh = Math.round(S.fxShift / 100 * 24 * k), gl = S.fxGlitch / 100;
+  if ((grade && ga > 0) || sh || gl > 0) {
+    var img = ctx.getImageData(0, 0, W, H), d = img.data, n = d.length, i;
+    if (grade && ga > 0) {
+      for (i = 0; i < n; i += 4) {
+        var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, l = 0.2126 * r + 0.7152 * g + 0.0722 * b, o = grade(r, g, b, l);
+        d[i] = (r + (o[0] - r) * ga) * 255; d[i + 1] = (g + (o[1] - g) * ga) * 255; d[i + 2] = (b + (o[2] - b) * ga) * 255;
+      }
+    }
+    if (sh || gl > 0) {
+      var s = new Uint8ClampedArray(d), rnd = mulberry(S.fxSeed * 31 + 5), rows = new Int32Array(H), cs = new Int32Array(H);
+      if (gl > 0) {
+        /* bands of rows pushed sideways, some with an extra channel split */
+        var bands = 3 + Math.round(gl * 14);
+        for (var q = 0; q < bands; q++) {
+          var y0 = (rnd() * H) | 0, bh = Math.max(1, (rnd() * rnd() * H * 0.12) | 0), off = Math.round((rnd() - 0.5) * 2 * gl * 160 * k), cx = rnd() < 0.5 ? Math.round(gl * 18 * k) : 0;
+          for (var yy = y0; yy < Math.min(H, y0 + bh); yy++) { rows[yy] = off; cs[yy] = cx; }
+        }
+      }
+      for (var y = 0; y < H; y++) {
+        var ro = rows[y], c = sh + cs[y], base = y * W;
+        for (var x = 0; x < W; x++) {
+          var xs = x - ro, j = (base + x) * 4;
+          xs = xs < 0 ? 0 : xs >= W ? W - 1 : xs;
+          var xr = xs - c, xb = xs + c;
+          xr = xr < 0 ? 0 : xr >= W ? W - 1 : xr; xb = xb < 0 ? 0 : xb >= W ? W - 1 : xb;
+          d[j] = s[(base + xr) * 4]; d[j + 1] = s[(base + xs) * 4 + 1]; d[j + 2] = s[(base + xb) * 4 + 2];
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  var leak = S.fxLeak / 100, flare = S.fxFlare / 100, streak = S.fxStreak / 100;
+  if (!(leak || flare || streak)) return;
+  var streakSrc = streak ? glowSource(ctx, W, H) : null;
+  ctx.save(); ctx.globalCompositeOperation = "screen";
+  if (leak) {
+    var lr = mulberry(S.fxSeed * 17 + 1), M = Math.max(W, H);
+    [["255,96,40", 0.9], ["255,40,120", 0.6], ["255,190,80", 0.5]].forEach(function (c) {
+      var side = (lr() * 4) | 0, along = lr();
+      var x = side === 0 ? 0 : side === 1 ? W : along * W, y = side === 2 ? 0 : side === 3 ? H : along * H;
+      var gr = ctx.createRadialGradient(x, y, 0, x, y, M * (0.35 + lr() * 0.35));
+      gr.addColorStop(0, "rgba(" + c[0] + "," + (leak * c[1]) + ")"); gr.addColorStop(1, "rgba(" + c[0] + ",0)");
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    });
+  }
+  if (flare) {
+    /* a source high on one side, a halo ring, ghost discs on the line through the center, and a thin horizontal flare */
+    var fx = W * 0.78, fy = H * 0.2, R = Math.min(W, H);
+    var g1 = ctx.createRadialGradient(fx, fy, 0, fx, fy, R * 0.5);
+    g1.addColorStop(0, "rgba(255,250,235," + flare + ")"); g1.addColorStop(0.08, "rgba(255,220,170," + flare * 0.7 + ")");
+    g1.addColorStop(0.3, "rgba(255,150,80," + flare * 0.18 + ")"); g1.addColorStop(1, "rgba(255,120,60,0)");
+    ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+    ctx.lineWidth = R * 0.012; ctx.strokeStyle = "rgba(140,200,255," + flare * 0.25 + ")";
+    ctx.beginPath(); ctx.arc(fx, fy, R * 0.3, 0, 6.2832); ctx.stroke();
+    var cx0 = W / 2, cy0 = H / 2;
+    [[0.35, 0.05, "120,255,200"], [0.7, 0.09, "255,120,220"], [1.2, 0.03, "255,230,120"], [1.6, 0.14, "120,160,255"], [2.0, 0.06, "255,170,90"]].forEach(function (gh) {
+      var gx = fx + (cx0 - fx) * gh[0], gy = fy + (cy0 - fy) * gh[0], gr = R * gh[1];
+      var g2 = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+      g2.addColorStop(0, "rgba(" + gh[2] + "," + flare * 0.22 + ")"); g2.addColorStop(0.8, "rgba(" + gh[2] + "," + flare * 0.12 + ")"); g2.addColorStop(1, "rgba(" + gh[2] + ",0)");
+      ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 6.2832); ctx.fill();
+    });
+    var g3 = ctx.createLinearGradient(0, fy, W, fy);
+    g3.addColorStop(0, "rgba(120,180,255,0)"); g3.addColorStop(fx / W, "rgba(170,210,255," + flare * 0.6 + ")"); g3.addColorStop(1, "rgba(120,180,255,0)");
+    ctx.fillStyle = g3; ctx.fillRect(0, fy - R * 0.004, W, R * 0.008);
+  }
+  if (streakSrc) {
+    /* the bright parts smeared sideways (anamorphic streaks), tinted blue */
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.globalAlpha = Math.min(1, streak * 1.4); ctx.drawImage(streakSrc, 0, 0, W, H);
+  }
+  ctx.restore();
+}
+function glowSource(ctx, W, H) {
+  var sw = Math.max(8, Math.round(W / 6)), sh = Math.max(8, Math.round(H / 6));
+  var a = mk(sw, sh), ax = a.getContext("2d", { willReadFrequently: true });
+  ax.drawImage(ctx.canvas, 0, 0, sw, sh);
+  var im = ax.getImageData(0, 0, sw, sh), d = im.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255, v = clamp((l - 0.72) / 0.28, 0, 1); v *= v;
+    d[i] = 120 * v + 60 * v * v; d[i + 1] = 170 * v + 60 * v * v; d[i + 2] = 255 * v; d[i + 3] = 255;
+  }
+  ax.putImageData(im, 0, 0);
+  /* squash hard sideways, then stretch back: each bright spot becomes a long soft horizontal line */
+  var b = mk(Math.max(2, Math.round(sw / 24)), sh), bx = b.getContext("2d");
+  bx.imageSmoothingQuality = "high"; bx.drawImage(a, 0, 0, b.width, sh);
+  var c = mk(sw, sh), cx = c.getContext("2d");
+  cx.imageSmoothingQuality = "high"; cx.drawImage(b, 0, 0, sw, sh);
+  return c;
+}
+
+/* ---------- render ---------- */
+function render(ctx, W, H, prog) {
+  if (tab === "plain") { ctx.imageSmoothingQuality = "high"; ctx.drawImage(src, 0, 0, W, H); return; }   /* Plain: the original photo */
+  if (S.look === "half") renderHalf(ctx, W, H); else renderDot(ctx, W, H, prog);
+  if (ctx.getImageData) effects(ctx, W, H);
+}
+var raf = 0;
+function schedule() { if (!raf) raf = requestAnimationFrame(function () { raf = 0; draw(); }); }
+function draw(prog) {
+  if (!src.width) return;
+  var W = cv.width, H = cv.height;
+  render(pctx, W, H, prog == null ? S.reveal / 100 : prog);
+  cv.setAttribute("aria-label", tr(S.look === "half" ? "Halftone preview" : "Dot matrix preview"));
+}
+function fit() {
+  if (!src.width) return;
+  var wide = window.innerWidth >= 900;
+  var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
+  if (big) {   /* full screen: the whole image, as large as the window allows */
+    var vw = window.innerWidth - 16, vh = window.innerHeight - 16;
+    w = vw; h = w * ar; if (h > vh) { h = vh; w = h / ar; }
+  }
+  /* fitted: pinned and short enough to edit under it. Double tap: full width (95% of a phone screen), not pinned */
+  var maxH = wide ? window.innerHeight - 140 : Math.min(window.innerHeight * 0.46, 560);
+  if (!big && h > maxH) { h = maxH; w = h / ar; }
+  document.documentElement.classList.toggle("locked", big);
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  document.body.classList.toggle("big", big);
+  pinTabs();
+  schedule();
+}
+
+/* ---------- image in ---------- */
+function setImage(img, w, h) {
+  var k = Math.min(1, 2000 / Math.max(w, h));
+  orig.width = Math.round(w * k); orig.height = Math.round(h * k);
+  var ox = orig.getContext("2d");
+  ox.fillStyle = "#fff"; ox.fillRect(0, 0, orig.width, orig.height);
+  ox.imageSmoothingQuality = "high";
+  ox.drawImage(img, 0, 0, orig.width, orig.height);
+  applyCrop();
+}
+/* Instagram size: the working image is the original center-cropped to 1080 x igSize, so preview and every save match */
+function applyCrop() {
+  var sx = 0, sy = 0, w = orig.width, h = orig.height;
+  if (S.ig) {
+    var a = 1080 / +S.igSize;
+    if (w / h > a) { sx += (w - h * a) / 2; w = h * a; } else { sy += (h - w / a) / 2; h = w / a; }
+  }
+  src.width = Math.max(1, Math.round(w)); src.height = Math.max(1, Math.round(h));
+  sctx.imageSmoothingQuality = "high";
+  sctx.drawImage(orig, sx, sy, w, h, 0, 0, src.width, src.height);
+  cache = {};
+  $("#igSizes").hidden = !S.ig; $("#outSize").disabled = S.ig;
+  fit();
+}
+function loadFile(f) {
+  if (!f) return;
+  var url = URL.createObjectURL(f), img = new Image();
+  say("Opening the photo.", true);
+  img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); say("Photo ready."); };
+  img.onerror = function () { URL.revokeObjectURL(url); say("That file could not be opened as an image."); };
+  img.src = url;
+}
+function demo() {
+  var c = mk(900, 1100), x = c.getContext("2d");
+  var g = x.createLinearGradient(0, 0, 0, 1100);
+  g.addColorStop(0, "#2f3d7a"); g.addColorStop(0.45, "#e9796b"); g.addColorStop(0.62, "#f6c38b"); g.addColorStop(1, "#f6c38b");
+  x.fillStyle = g; x.fillRect(0, 0, 900, 1100);
+  var s = x.createRadialGradient(450, 560, 20, 450, 560, 230);
+  s.addColorStop(0, "#fff3c4"); s.addColorStop(0.6, "#ffd56b"); s.addColorStop(1, "rgba(255,180,90,0)");
+  x.fillStyle = s; x.beginPath(); x.arc(450, 560, 230, 0, 7); x.fill();
+  x.fillStyle = "#3d6b63";
+  x.beginPath(); x.moveTo(0, 760); x.quadraticCurveTo(220, 600, 470, 740); x.quadraticCurveTo(700, 860, 900, 690); x.lineTo(900, 1100); x.lineTo(0, 1100); x.fill();
+  x.fillStyle = "#1f3b3a";
+  x.beginPath(); x.moveTo(0, 880); x.quadraticCurveTo(300, 780, 560, 900); x.quadraticCurveTo(760, 990, 900, 900); x.lineTo(900, 1100); x.lineTo(0, 1100); x.fill();
+  x.fillStyle = "#121c1d";
+  x.beginPath(); x.moveTo(0, 1000); x.quadraticCurveTo(450, 940, 900, 1010); x.lineTo(900, 1100); x.lineTo(0, 1100); x.fill();
+  setImage(c, 900, 1100);
+}
+
+/* ---------- modals ---------- */
+var opener = null;
+function openModal(id, focusSel) {
+  opener = document.activeElement;
+  $(id).hidden = false;
+  $(focusSel).focus();
+}
+function closeModal(id) {
+  $(id).hidden = true;
+  if (opener && opener.focus) opener.focus();
+}
+function trap(id, onClose) {
+  $(id).addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+    if (e.key !== "Tab") return;
+    var f = Array.prototype.filter.call($(id).querySelectorAll("button,select,input"), function (b) { return !b.hidden && !b.disabled && b.offsetParent; });
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  $(id).addEventListener("click", function (e) { if (e.target === $(id)) onClose(); });
+}
+
+/* ---------- camera ---------- */
+var stream = null, facing = "environment";
+function openCamera() {
+  var coarse = window.matchMedia && matchMedia("(pointer:coarse)").matches;
+  if (coarse || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { $("#camIn").click(); return; }
+  startStream().then(function () {
+    openModal("#camModal", "#snap");
+    navigator.mediaDevices.enumerateDevices().then(function (l) {
+      $("#flip").hidden = l.filter(function (d) { return d.kind === "videoinput"; }).length < 2;
+    }).catch(function () {});
+  }).catch(function () { say("No camera access. Choose a photo instead."); $("#camIn").click(); });
+}
+function startStream() {
+  stopStream();
+  return navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 } }, audio: false }).then(function (s) {
+    stream = s; var v = $("#camVideo"); v.srcObject = s; return v.play();
+  });
+}
+function stopStream() { if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; } }
+function closeCamera() { stopStream(); closeModal("#camModal"); }
+function snap() {
+  var v = $("#camVideo");
+  if (!v.videoWidth) return;
+  var c = mk(v.videoWidth, v.videoHeight); c.getContext("2d").drawImage(v, 0, 0);
+  setImage(c, c.width, c.height); closeCamera();
+}
+
+/* ---------- saving ---------- */
+function outDims(long) {
+  if (S.ig) return [1080, +S.igSize];
+  var w = src.width, h = src.height;
+  return w >= h ? [long, Math.round(long * h / w)] : [Math.round(long * w / h), long];
+}
+function makePng() {
+  return new Promise(function (res) {
+    var dm = outDims(+S.outSize), c = mk(dm[0], dm[1]);
+    render(c.getContext("2d"), dm[0], dm[1], S.reveal / 100, false);
+    c.toBlob(res, "image/png");
+  });
+}
+function fname(ext) { return "maude-" + (S.look === "half" ? "halftone" : "dot-matrix") + (S.ig ? "-1080x" + S.igSize : "") + "." + ext; }
+function download(blob, name) {
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+}
+/* ---------- SVG: the same drawing code, recorded as vector shapes and live text ---------- */
+function SvgCtx(W, H) {
+  this.W = W; this.H = H; this.out = []; this.d = ""; this.m = new DOMMatrix(); this.stack = [];
+  this.fillStyle = "#000"; this.strokeStyle = "#000"; this.lineWidth = 1; this.lineJoin = "miter"; this.globalAlpha = 1;
+  this.globalCompositeOperation = "source-over"; this.font = "16px sans-serif"; this.textAlign = "start"; this.textBaseline = "alphabetic";
+  this.letterSpacing = "0px"; this.shadowColor = "rgba(0,0,0,0)"; this.shadowBlur = 0; this.shadowOffsetY = 0; this.imageSmoothingQuality = "high";
+}
+(function (P) {
+  var KEYS = ["fillStyle", "strokeStyle", "lineWidth", "lineJoin", "globalAlpha", "globalCompositeOperation", "font", "textAlign", "textBaseline",
+    "letterSpacing", "shadowColor", "shadowBlur", "shadowOffsetY"];
+  function n(v) { return Math.round(v * 100) / 100; }
+  P.save = function () { var st = { m: DOMMatrix.fromMatrix(this.m) }, me = this; KEYS.forEach(function (k) { st[k] = me[k]; }); this.stack.push(st); };
+  P.restore = function () { var st = this.stack.pop(), me = this; if (!st) return; this.m = st.m; KEYS.forEach(function (k) { me[k] = st[k]; }); };
+  P.translate = function (x, y) { this.m.translateSelf(x, y); };
+  P.rotate = function (a) { this.m.rotateSelf(a * 180 / Math.PI); };
+  P.scale = function (x, y) { this.m.scaleSelf(x, y); };
+  P.transform = function (a, b, c, d, e, f) { this.m.multiplySelf(new DOMMatrix([a, b, c, d, e, f])); };
+  P.setTransform = function (m) { this.m = DOMMatrix.fromMatrix(m); };
+  P.getTransform = function () { return DOMMatrix.fromMatrix(this.m); };
+  P.pt = function (x, y) { var q = this.m.transformPoint(new DOMPoint(x, y)); return n(q.x) + " " + n(q.y); };
+  P.beginPath = function () { this.d = ""; };
+  P.moveTo = function (x, y) { this.d += "M" + this.pt(x, y); };
+  P.lineTo = function (x, y) { this.d += "L" + this.pt(x, y); };
+  P.closePath = function () { this.d += "Z"; };
+  P.arc = function (x, y, r) {
+    this.d = this.d.replace(/M[-0-9. ]+$/, "");
+    var q = this.m.transformPoint(new DOMPoint(x, y)), k = Math.sqrt(Math.abs(this.m.a * this.m.d - this.m.b * this.m.c)), rr = n(r * k);
+    this.d += "M" + n(q.x + rr) + " " + n(q.y) + "a" + rr + " " + rr + " 0 1 0 " + n(-2 * rr) + " 0a" + rr + " " + rr + " 0 1 0 " + n(2 * rr) + " 0Z";
+  };
+  P.look = function () {
+    var s = "";
+    if (this.globalAlpha < 1) s += "opacity:" + n(this.globalAlpha) + ";";
+    if (this.globalCompositeOperation !== "source-over") s += "mix-blend-mode:" + this.globalCompositeOperation + ";";
+    if (this.shadowBlur > 0) s += "filter:drop-shadow(0 " + n(this.shadowOffsetY) + "px " + n(this.shadowBlur / 2) + "px " + this.shadowColor + ");";
+    return s ? " style=\"" + s + "\"" : "";
+  };
+  P.fill = function () { if (this.d) this.out.push("<path d=\"" + this.d + "\" fill=\"" + this.fillStyle + "\"" + this.look() + "/>"); };
+  P.fillRect = function (x, y, w, h) {
+    this.beginPath(); this.moveTo(x, y); this.lineTo(x + w, y); this.lineTo(x + w, y + h); this.lineTo(x, y + h); this.closePath(); this.fill();
+  };
+  P.toString = function () {
+    return "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + this.W + "\" height=\"" + this.H + "\" viewBox=\"0 0 " + this.W + " " + this.H + "\">" +
+      "<g style=\"isolation:isolate\">" + this.out.join("") + "</g></svg>";
+  };
+})(SvgCtx.prototype);
+function saveSvg() {
+  var dm = outDims(1080), x = new SvgCtx(dm[0], dm[1]);
+  render(x, dm[0], dm[1], S.reveal / 100);
+  download(new Blob([x.toString()], { type: "image/svg+xml" }), fname("svg"));
+  closeModal("#saveModal");
+}
+function busy(on) {
+  ["#savePng", "#share", "#saveSvg"].forEach(function (q) { $(q).disabled = on; });
+  if (on) say("Preparing the image.", true); else say("");
+}
+function later() { return new Promise(function (r) { setTimeout(r, 30); }); }   /* let the busy state paint first */
+function savePng() {
+  busy(true);
+  later().then(makePng).then(function (b) { download(b, fname("png")); busy(false); closeModal("#saveModal"); say("Saved."); });
+}
+function share() {
+  busy(true);
+  later().then(makePng).then(function (b) {
+    busy(false);
+    var f = new File([b], fname("png"), { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: "Maude" });
+    download(b, f.name);
+  }).catch(function () { busy(false); });
+}
+function videoType() {
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
+  var l = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+  for (var i = 0; i < l.length; i++) if (MediaRecorder.isTypeSupported(l[i])) return l[i];
+  return null;
+}
+function saveVideo() {
+  var type = videoType(); if (!type) return;
+  var dm = outDims(1080), c = mk(dm[0] & ~1, dm[1] & ~1), x = c.getContext("2d");
+  var dur = S.revealTime * 1000, hold0 = 500, hold1 = 1200, chunks = [];
+  var btn = $("#saveVideo"); btn.disabled = true; say("Recording the reveal.");
+  render(x, c.width, c.height, 0, false);
+  var rec = new MediaRecorder(c.captureStream(30), { mimeType: type, videoBitsPerSecond: 8e6 });
+  rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = function () {
+    var b = new Blob(chunks, { type: type.split(";")[0] });
+    download(b, fname(type.indexOf("mp4") > 0 ? "mp4" : "webm"));
+    btn.disabled = false; say("");
+  };
+  rec.start();
+  var t0 = performance.now();
+  (function frame(now) {
+    var t = now - t0, p = clamp((t - hold0) / dur, 0, 1);
+    render(x, c.width, c.height, ease(p), false);
+    if (t < hold0 + dur + hold1) requestAnimationFrame(frame); else rec.stop();
+  })(t0);
+}
+
+/* ---------- tabs (the pill slider) ---------- */
+function setTab(t) {
+  tab = t;
+
+  var tabs = document.querySelectorAll(".pill [role=tab]");
+  tabs.forEach(function (b, i) {
+    var on = b.dataset.tab === t;
+    b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
+
+    $("#" + b.getAttribute("aria-controls")).hidden = !on;
+    if (on) $(".pill").style.setProperty("--i", i);
+  });
+  marks();
+  $("#saveVideo").hidden = S.look !== "dot" || !videoType();
+  stopPlay(); schedule();
+}
+document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
+  b.addEventListener("click", function () {
+    setTab(b.dataset.tab); if (b.dataset.tab === "surprise") surprise();
+    /* if the tabs were pinned, start the new tab at its top, right under them */
+    var tp = document.getElementById(b.getAttribute("aria-controls")), pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin")) || 0;
+    var y = tp.getBoundingClientRect().top + window.scrollY - pin - $(".tabrow").getBoundingClientRect().height;
+    if (window.scrollY > y) window.scrollTo({ top: y });
+  });
+  b.addEventListener("keydown", function (e) {
+    var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    var n = all[(i + d + all.length) % all.length]; setTab(n.dataset.tab); n.focus();
+  });
+});
+
+/* ---------- controls ---------- */
+var UNITS = { fxGrain: "%", fxFilmAmt: "%", fxDuo: "%", fxPx: " px", fxGuil: "%", fxSeurat: "%", fxSeuratMix: "%", fxShift: "%", fxGlitch: "%", fxLeak: "%", fxFlare: "%", fxStreak: "%", fxGradeAmt: "%", reveal: "%", dmDot: "%", dmOp: "%", htOp: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
+  tx: "%", ty: "%", lead: "%", hs: "%", vs: "%", revealTime: " s", htAngle: "°", rot: "°", skew: "°", bend: "%", radius: "%",
+  waveA: "%", start: "%", strokeW: "%", shadow: "%", shift: "%" };
+var SIGNED = { htLight: 1, rot: 1, skew: 1, shift: 1, bend: 1, start: 1, track: 1 };
+function out(k, v) {
+  document.querySelectorAll("output[data-for=\"" + k + "\"]").forEach(function (o) {
+    o.textContent = (SIGNED[k] && v > 0 ? "+" : "") + v + (UNITS[k] || "");
+  });
+}
+function fillRange(el) { var a = +el.min || 0, b = +el.max || 100; el.style.setProperty("--p", ((+el.value - a) / (b - a) * 100) + "%"); }
+document.addEventListener("input", function (e) { if (e.target.type === "range") fillRange(e.target); });
+function setVal(el, v) {
+  if (el.type === "radio") el.checked = String(v) === el.value;
+  else if (el.type === "checkbox") el.checked = !!v;
+  else el.value = v;
+  if (el.type === "range") fillRange(el);
+}
+function sync() {
+  document.querySelectorAll("[data-k]").forEach(function (el) { var k = el.dataset.k; setVal(el, S[k]); out(k, S[k]); });
+  document.querySelectorAll("[data-color]").forEach(syncColor);
+  document.body.dataset.ht = S.htMode;
+  marks();
+  $("#igSizes").hidden = !S.ig; $("#outSize").disabled = S.ig;
+  if (orig.width) applyCrop();
+}
+function onChange(el) {
+  var k = el.dataset.k, v;
+  if (el.type === "radio") { if (!el.checked) return; v = el.value; }
+  else if (el.type === "checkbox") v = el.checked;
+  else if (el.type === "range") v = +el.value;
+  else v = el.value;
+  S[k] = v; out(k, v);
+  if (k === "htMode") document.body.dataset.ht = v;
+  if (k === "reveal") cancelAnimationFrame(playing);
+  if (k === "ig" || k === "igSize") applyCrop();
+  if (k === "reveal") stopPlay();
+  saveSettings(); schedule(); marks();
+}
+document.querySelectorAll("[data-k]").forEach(function (el) {
+  el.addEventListener(el.type === "range" ? "input" : "change", function () { onChange(el); });
+  el.addEventListener("change", commit);   /* a slider is one undo step when it is let go */
+  /* double click a slider to put it back to its default */
+  if (el.type === "range") el.addEventListener("dblclick", function () { var k = el.dataset.k; if (k in DEF) { el.value = DEF[k]; onChange(el); commit(); } });
+});
+
+/* color fields: native picker, a pick from image button and swatches */
+function colorGet(box) { return S[box.dataset.color]; }
+function buildColor(box) {
+  var lab = box.dataset.label;
+  var inp = document.createElement("input"); inp.type = "color"; inp.setAttribute("aria-labelledby", lab);
+  inp.addEventListener("input", function () { setColor(box, inp.value); });
+  box.appendChild(inp);
+  var pick = document.createElement("button"); pick.type = "button"; pick.className = "icob pick"; pick.setAttribute("aria-pressed", "false");
+  pick.setAttribute("aria-label", "Pick " + document.getElementById(lab).textContent.toLowerCase() + " from the image"); pick.title = "Pick from image";
+  pick.appendChild($("#icoPick").content.cloneNode(true));
+  pick.addEventListener("click", function () {
+    pickKey = pickKey === box ? null : box;
+    document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", b === pick && pickKey ? "true" : "false"); });
+    cv.classList.toggle("picking", !!pickKey);
+    say(pickKey ? "Tap the image to pick a color." : "", true);
+    draw();
+  });
+  box.appendChild(pick);
+  SWATCHES.forEach(function (c) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.style.background = c;
+    b.dataset.c = c; b.style.color = lum(c) > 0.4 ? "#111111" : "#ffffff"; b.setAttribute("aria-label", "Color " + c); b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () { setColor(box, c); });
+    box.appendChild(b);
+  });
+}
+function syncColor(box) {
+  var v = colorGet(box);
+  box.querySelector("input").value = v;
+  box.querySelectorAll(".sw").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.c === v.toLowerCase() ? "true" : "false"); });
+}
+function setColor(box, v) {
+  v = v.toLowerCase();
+  S[box.dataset.color] = v;
+  syncColor(box); saveSettings(); schedule(); marks(); commit();
+}
+document.querySelectorAll("[data-color]").forEach(buildColor);
+
+/* accordions: all closed to start */
+document.querySelectorAll(".ph").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var open = b.getAttribute("aria-expanded") !== "true";
+    b.setAttribute("aria-expanded", open); document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
+  });
+});
+/* Reset: the round-arrow icon in the upper right of every open panel puts just that panel back to its defaults */
+function resetPanel(pb) {
+  var keys = {};
+  pb.querySelectorAll("[data-k]").forEach(function (el) { keys[el.dataset.k] = 1; });
+  pb.querySelectorAll("[data-color]").forEach(function (el) { keys[el.dataset.color] = 1; });
+  Object.keys(keys).forEach(function (k) { if (k in DEF) S[k] = DEF[k]; });
+  if (pb.id === "a-glitch") S.fxSeed = DEF.fxSeed;
+  sync(); saveSettings(); schedule(); commit();
+  say(pb.parentNode.querySelector(".ph").firstChild.textContent.trim() + " reset.");
+}
+document.querySelectorAll(".acc").forEach(function (acc) {
+  var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
+  var b = document.createElement("button"); b.type = "button"; b.className = "preset";
+  var name = ph.firstChild.textContent.trim();
+  b.setAttribute("aria-label", "Reset " + name); b.title = "Reset " + name;
+  b.appendChild($("#icoReset").content.cloneNode(true));
+  b.addEventListener("click", function () { resetPanel(pb); });
+  ph.after(b);
+});
+
+/* ---------- canvas gestures: a tap picks a color (when asked), a double tap toggles full width ---------- */
+var lastTap = 0;
+function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
+function toggleBig() { big = !big; fit(); }
+cv.addEventListener("pointerdown", function (e) {
+  if (!pickKey) return;
+  var p = fr(e);
+  var px = clamp(Math.floor(p[0] * src.width), 0, src.width - 1), py = clamp(Math.floor(p[1] * src.height), 0, src.height - 1);
+  var c = sctx.getImageData(px, py, 1, 1).data, box = pickKey;
+  pickKey = null;
+  document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+  cv.classList.remove("picking");
+  setColor(box, toHex(c[0], c[1], c[2])); draw(); say("Color picked.");
+  lastTap = -1;
+});
+cv.addEventListener("pointerup", function () {
+  if (lastTap < 0) { lastTap = 0; return; }
+  var now = performance.now();
+  if (now - lastTap < 350) { lastTap = 0; toggleBig(); } else lastTap = now;
+});
+cv.addEventListener("dblclick", function (e) { e.preventDefault(); });
+
+/* ---------- buttons ---------- */
+function themeSync() {
+  var dark = document.documentElement.dataset.theme === "dark", b = $("#themeBtn");
+  b.setAttribute("aria-pressed", dark ? "true" : "false");
+  b.setAttribute("aria-label", tr(dark ? "Switch to light mode" : "Switch to dark mode")); b.title = b.getAttribute("aria-label");
+  document.querySelector("meta[name=theme-color]").setAttribute("content", dark ? "#1e1e1e" : "#ffffff");
+}
+$("#themeBtn").addEventListener("click", function () {
+  var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("fogday-theme", next); } catch (e) {}
+  themeSync();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
+  var saved = null; try { saved = localStorage.getItem("fogday-theme"); } catch (x) {}
+  if (saved !== "dark" && saved !== "light") { document.documentElement.dataset.theme = e.matches ? "dark" : "light"; themeSync(); }
+});
+themeSync();
+$("#addImg").addEventListener("click", function () { $("#fileIn").click(); });
+$("#takePhoto").addEventListener("click", openCamera);
+$("#fileIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
+$("#camIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
+$("#saveOpen").addEventListener("click", function () { openModal("#saveModal", "#savePng"); });
+$("#saveClose").addEventListener("click", function () { closeModal("#saveModal"); });
+$("#savePng").addEventListener("click", savePng);
+$("#saveSvg").addEventListener("click", saveSvg);
+$("#share").addEventListener("click", share);
+$("#saveVideo").addEventListener("click", saveVideo);
+var TABKEYS = {
+  dot: ["cols", "reveal", "dmDot", "dmOp", "dmShape", "dmFrom", "dir", "palette", "band", "wash", "scatter", "dmSat", "dmCon", "dmBg", "revealTime", "seed"],
+  half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
+  fx: ["fxStock", "fxGrain", "fxFilm", "fxFilmAmt", "fxDuo", "fxDuoA", "fxDuoB", "fxPx", "fxPxDither", "fxWarhol", "fxWarholMix", "fxMine", "fxGuil", "fxGuilPat", "fxGuilInk", "fxSeurat", "fxSeuratMix", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
+};
+function setLook(l) { S.look = l; syncLook(); saveSettings(); schedule(); marks(); commit(); }
+function syncLook() {
+  document.body.dataset.look = S.look;
+  $("#htOff").checked = S.look !== "half"; $("#htOnR").checked = S.look === "half";
+  $("#htNote").hidden = S.look !== "half";
+  $("#saveVideo").hidden = S.look !== "dot" || !videoType();
+}
+$("#htOff").addEventListener("change", function () { setLook("dot"); });
+$("#htOnR").addEventListener("change", function () { setLook("half"); });
+$("#htNoteOff").addEventListener("click", function () { setLook("dot"); });
+$("#resetAll").addEventListener("click", function () {
+  var keepTab = tab === "fx" || tab === "surprise" ? tab : "dot";
+  S = Object.assign({}, DEF); sync(); syncLook(); setTab(keepTab); saveSettings(); schedule(); commit(); $("#recipe").textContent = "";
+  say("All settings reset.");
+});
+$("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
+$("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
+$("#snap").addEventListener("click", snap);
+$("#camCancel").addEventListener("click", closeCamera);
+$("#flip").addEventListener("click", function () { facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
+trap("#camModal", closeCamera);
+trap("#saveModal", function () { closeModal("#saveModal"); });
+
+
+/* ---------- starting points: one tap sets that tab's settings to a tuned look (the rest of the tab goes to defaults) ---------- */
+var LOOKS = {
+  dot: [
+    ["Bloom", { dir: "center", reveal: 50, band: 40, wash: 20 }],
+    ["Classic", {}],
+    ["Fine", { cols: 110, dmDot: 92, reveal: 100 }],
+    ["Full color", { reveal: 100 }],
+    ["Neon", { palette: "neon", dmShape: "square", dmBg: "#1d2622", cols: 40, dmDot: 80, reveal: 55 }],
+    ["Pastel", { palette: "pastel", reveal: 45, dir: "diag", dmBg: "#ffffff" }]
+  ],
+  half: [
+    ["Comic", { htMode: "cmyk", htCells: 48, htAngle: 15, htPaper: "#ffffff" }],
+    ["Engraving", { htMode: "ink", htShape: "line", htCells: 80, htAngle: 30, htInk: "#1d2622", htPaper: "#f6f1e7" }],
+    ["Newsprint", { htMode: "ink", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 90, htCon: 140 }],
+    ["Pop", { htMode: "ink", htInk: "#b8352b", htPaper: "#ffffff", htCells: 34, htCon: 160 }],
+    ["RGB screen", {}],
+    ["Riley", { htRiley: true, htCells: 60 }]
+  ],
+  fx: [
+    ["None", {}],
+    ["3px", { fxPx: 3 }],
+    ["Cinema", { fxGrade: "teal", fxGradeAmt: 80, fxStreak: 45 }],
+    ["Dreamy", { fxGrade: "fade", fxGradeAmt: 70, fxFlare: 50, fxLeak: 30 }],
+    ["Duotone", { fxDuo: 100 }],
+    ["Film", { fxStock: "portra400", fxGrain: 10, fxLeak: 25 }],
+    ["Guilloché", { fxGuil: 55 }],
+    ["Minecraft", { fxMine: 40 }],
+    ["Noir", { fxGrade: "noir", fxGradeAmt: 100 }],
+    ["Seurat", { fxSeurat: 35 }],
+    ["VHS", { fxShift: 40, fxGlitch: 35 }],
+    ["Warhol", { fxWarhol: "2" }]
+  ]
+};
+/* after picking an effect, bring its controls into view (under the pinned picture on phones) and flash them */
+var FXGO = { "3px": "a-px", Cinema: "a-grade", Dreamy: "a-light", Duotone: "a-duo", Film: "a-film", "Guilloché": "a-guil",
+  Minecraft: "a-mine", Noir: "a-grade", Seurat: "a-seurat", VHS: "a-glitch", Warhol: "a-warhol" };
+var DOTGO = { Bloom: "a-reveal", Classic: "a-grid", Fine: "a-grid", "Full color": "a-reveal", Neon: "a-dmcolor", Pastel: "a-dmcolor" };
+/* the tab row stays pinned: under the picture on phones, at the top of the sidebar on wide screens */
+function pinTabs() {
+  var sc = document.querySelector(".stagecol"), h = 0;
+  if (window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky") h = sc.getBoundingClientRect().height;
+  document.documentElement.style.setProperty("--pin", Math.round(h) + "px");
+}
+function goTo(id) {
+  var pb = id && document.getElementById(id); if (!pb) return;
+  var acc = pb.closest(".acc") || pb;
+  requestAnimationFrame(function () {
+    pinTabs();
+    var top = 8 + (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin")) || 0) + $(".tabrow").getBoundingClientRect().height;
+    var y = acc.getBoundingClientRect().top + window.scrollY - top;
+    window.scrollTo({ top: Math.max(0, y), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    acc.classList.remove("flash"); void acc.offsetWidth; acc.classList.add("flash");
+  });
+}
+function lookVals(t, o) { var v = {}; TABKEYS[t].forEach(function (k) { v[k] = k in o ? o[k] : DEF[k]; }); return v; }
+document.querySelectorAll("[data-looks]").forEach(function (row) {
+  var t = row.dataset.looks;
+  LOOKS[t].forEach(function (l) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l[0];
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () {
+      Object.assign(S, lookVals(t, l[1])); if (t === "half") S.look = "half"; else if (t === "dot") S.look = "dot"; sync(); syncLook(); saveSettings();
+      goTo(t === "half" ? "a-screen" : t === "fx" ? FXGO[l[0]] : t === "dot" ? DOTGO[l[0]] : null); schedule(); commit(); say(tr(l[0]) + " " + tr("look."));
+    });
+    row.appendChild(b);
+  });
+});
+/* marks: the chip of the look in use is pressed, and a panel with changed settings shows a dot by its name */
+function same(a, b) { return String(a).toLowerCase() === String(b).toLowerCase(); }
+function marks() {
+  syncDuo();
+  document.querySelectorAll("[data-looks]").forEach(function (row) {
+    var t = row.dataset.looks;
+    row.querySelectorAll(".chip").forEach(function (b, i) {
+      var v = lookVals(t, LOOKS[t][i][1]), on = (t !== "half" || S.look === "half") && (t !== "dot" || S.look === "dot") && TABKEYS[t].every(function (k) { return k === "seed" || k === "fxSeed" || same(S[k], v[k]); });
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  });
+  document.querySelectorAll(".acc").forEach(function (acc) {
+    var mod = false;
+    acc.querySelectorAll("[data-k]").forEach(function (el) { if (el.dataset.k in DEF && !same(S[el.dataset.k], DEF[el.dataset.k])) mod = true; });
+    acc.querySelectorAll("[data-color]").forEach(function (el) { if (!same(S[el.dataset.color], DEF[el.dataset.color])) mod = true; });
+    var ph = acc.querySelector(".ph"); ph.classList.toggle("mod", mod);
+    acc.classList.toggle("mod", mod);
+    var name = ph.firstChild.textContent.trim();
+    ph.setAttribute("aria-label", name + (mod ? ", changed" : ""));
+  });
+  var tp = document.querySelector("#p-" + tab), any = tp && tp.querySelector(".acc.mod");
+}
+
+/* ---------- undo and redo: one step per finished change ---------- */
+var undoS = [], redoS = [], lastJ = null;
+function snap0() { return JSON.stringify(S, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }); }
+/* ---------- Surprise: a random dot matrix or halftone look plus effects; every recipe is remembered so none repeats ---------- */
+var SKEY = "maude:surprises";
+function pickOne(a) { return a[(Math.random() * a.length) | 0]; }
+function rint(a, b, step) { step = step || 1; return a + Math.round(Math.random() * (b - a) / step) * step; }
+function chance(p) { return Math.random() < p; }
+function surpriseRecipe() {
+  var o = {}, sw = ["#ffffff", "#fbfbf8", "#f6f1e7", "#1d2622", "#111111", "#1f3b3a"], inks = ["#1d2622", "#b8352b", "#1f5c4a", "#35399d", "#e2559b", "#111111", "#7a5af0"];
+  o.look = chance(0.5) ? "dot" : "half";
+  if (o.look === "dot") {
+    o.palette = pickOne(Object.keys(PALETTES)); o.cols = rint(28, 120, 4); o.dmDot = rint(60, 100, 2); o.dmShape = pickOne(["circle", "square"]);
+    o.dir = pickOne(["lr", "rl", "tb", "diag", "center", "random"]); o.reveal = rint(40, 100, 5); o.band = rint(8, 50, 2); o.wash = rint(0, 80, 5);
+    o.scatter = rint(0, 50, 5); o.dmSat = rint(80, 150, 5); o.dmCon = rint(90, 150, 5); o.dmBg = pickOne(sw); o.dmFrom = pickOne(["confetti", "clear"]);
+  } else {
+    o.htMode = pickOne(["rgb", "ink", "image", "cmyk"]); o.htCells = rint(30, 120, 2); o.htAngle = rint(0, 90, 5); o.htShape = pickOne(["dot", "square", "line"]);
+    o.htGain = rint(70, 140, 5); o.htCon = rint(90, 170, 5); o.htLight = rint(-20, 20, 5); o.htInvert = chance(0.1); o.htRiley = chance(0.12);
+    o.htInk = pickOne(inks); o.htPaper = pickOne(["#ffffff", "#f6f1e7", "#fbfbf8", "#ffe600", "#f7a1c4"]);
+  }
+  var style = pickOne(["none", "none", "warhol", "mine", "guil", "seurat", "px", "duo", "vhs", "film"]);
+  o.fxWarhol = style === "warhol" ? pickOne(["2", "3"]) : "off"; o.fxWarholMix = rint(0, 8);
+  o.fxMine = style === "mine" ? rint(20, 70, 5) : 0;
+  var dp = pickOne(DUOS);
+  var sk = STOCKS.filter(function (s) { return s[2]; }).map(function (s) { return s[0]; });
+  o.fxStock = chance(0.35) ? pickOne(sk) : "none"; o.fxGrain = rint(0, 20, 5);
+  o.fxFilm = chance(0.25) ? pickOne(["cross", "diopter", "haze", "double", "expired", "soup", "forced", "infrared", "smudge", "preexposed", "sepia"]) : "none"; o.fxFilmAmt = rint(50, 100, 5);
+  o.fxDuo = style === "duo" ? rint(70, 100, 5) : 0; o.fxDuoA = dp[0]; o.fxDuoB = dp[1];
+  o.fxPx = style === "px" ? rint(2, 6) : 0; o.fxPxDither = true;
+  o.fxGuil = style === "guil" ? rint(30, 90, 5) : 0; o.fxGuilPat = pickOne(["waves", "rosette", "lattice", "clous", "flinque", "tapis", "sunburst"]); o.fxGuilInk = pickOne(["photo", "green", "ink"]);
+  o.fxSeurat = style === "seurat" ? rint(15, 70, 5) : 0; o.fxSeuratMix = rint(20, 80, 10); o.fxMinePal = pickOne(["mc", "mc", "photo"]);
+  o.fxShift = style === "vhs" ? rint(25, 60, 5) : chance(0.15) ? rint(10, 40, 5) : 0;
+  o.fxGlitch = style === "vhs" ? rint(20, 50, 5) : chance(0.12) ? rint(10, 40, 5) : 0;
+  o.fxLeak = style === "film" ? rint(30, 70, 5) : chance(0.2) ? rint(10, 50, 5) : 0;
+  o.fxFlare = chance(0.15) ? rint(20, 70, 5) : 0; o.fxStreak = chance(0.15) ? rint(20, 70, 5) : 0;
+  o.fxGrade = style === "film" ? pickOne(["warm", "fade"]) : chance(0.45) ? pickOne(["teal", "bleach", "warm", "cool", "fade", "noir"]) : "none";
+  o.fxGradeAmt = rint(50, 100, 5);
+  o.seed = (Math.random() * 1e6) | 0; o.fxSeed = (Math.random() * 1e6) | 0;
+  return o;
+}
+function recipeKey(o) { var c = Object.assign({}, o); delete c.seed; delete c.fxSeed; return JSON.stringify(c); }
+function surprise() {
+  var seen = []; try { seen = JSON.parse(localStorage.getItem(SKEY)) || []; } catch (e) {}
+  var o, k, n = 0;
+  do { o = surpriseRecipe(); k = recipeKey(o); } while (seen.indexOf(k) >= 0 && ++n < 200);
+  seen.push(k); if (seen.length > 2000) seen = seen.slice(-2000);
+  try { localStorage.setItem(SKEY, JSON.stringify(seen)); } catch (e) {}
+  Object.assign(S, o); S.look = o.look; document.body.dataset.look = o.look;
+  sync(); saveSettings(); schedule(); commit(); marks();
+  tab = "surprise"; syncLook();
+  $("#saveVideo").hidden = S.look !== "dot" || !videoType();
+  var L = [];
+  var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+  L.push(o.look === "dot" ? tr("Dot matrix") + " · " + tr(cap(o.palette)) + " " + tr("palette") + " · " + o.cols + " " + tr("dots across") + " · " + tr(o.dmShape === "square" ? "squares" : "circles")
+    : tr("Halftone") + " · " + (o.htRiley ? tr("Bridget Riley lines") : tr({ rgb: "RGB", ink: "One ink", image: "image color", cmyk: "CMYK" }[o.htMode]) + " · " + tr(cap(o.htShape)) + " " + o.htAngle + "° · " + o.htCells + " " + tr("across")));
+  if (o.fxWarhol !== "off") L.push("Warhol " + o.fxWarhol + " × " + o.fxWarhol);
+  if (o.fxMine) L.push(tr("Minecraft blocks"));
+  if (o.fxStock !== "none") L.push(STOCK[o.fxStock] ? $("#fxStock option[value=" + o.fxStock + "]").textContent : "");
+  if (o.fxFilm !== "none") L.push($("#fxFilm option[value=" + o.fxFilm + "]").textContent);
+  if (o.fxDuo) L.push(tr("Duotone"));
+  if (o.fxPx) L.push(tr("Pixel art"));
+  if (o.fxGuil) L.push(tr("Guilloché engraving"));
+  if (o.fxSeurat) L.push(tr("Seurat pointillism"));
+  if (o.fxShift || o.fxGlitch) L.push(tr("Glitch"));
+  if (o.fxLeak || o.fxFlare || o.fxStreak) L.push(tr("Light leaks"));
+  if (o.fxGrade !== "none") L.push(tr("Grade:") + " " + $("#fxGrade option[value=" + o.fxGrade + "]").textContent);
+  $("#recipe").textContent = L.join(" · ");
+  say("Surprise!");
+}
+function commit() {
+  var j = snap0();
+  if (j === lastJ) return;
+  if (lastJ !== null) { undoS.push(lastJ); if (undoS.length > 80) undoS.shift(); }
+  lastJ = j; redoS = []; histBtns();
+}
+function histBtns() {}
+function restore(j) {
+  S = JSON.parse(j); lastJ = j; sync(); saveSettings(); $("#recipe").textContent = "";
+  setTab(tab); syncLook();
+  histBtns(); schedule();
+}
+function undo() { if (!undoS.length) return; redoS.push(lastJ); restore(undoS.pop()); say("Undone."); }
+function redo() { if (!redoS.length) return; undoS.push(lastJ); restore(redoS.pop()); say("Redone."); }
+document.addEventListener("keydown", function (e) {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  var t = e.target; if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) return;
+  var k = e.key.toLowerCase();
+  if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+  else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
+});
+
+/* ---------- compare: hold the button (or press and hold Space or Enter on it) to see the photo without the look ---------- */
+var showing = false;
+function showOrig(on) {
+  if (on === showing || !src.width) return;
+  showing = on; $("#compare").classList.toggle("on", on);
+  if (on) { stopPlay(); pctx.drawImage(src, 0, 0, cv.width, cv.height); say("Original photo.", true); }
+  else { say(""); draw(); }
+}
+var cmp = $("#compare");
+cmp.addEventListener("pointerdown", function (e) { e.preventDefault(); try { cmp.setPointerCapture(e.pointerId); } catch (x) {} showOrig(true); });
+["pointerup", "pointercancel", "lostpointercapture"].forEach(function (n) { cmp.addEventListener(n, function () { showOrig(false); }); });
+cmp.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+cmp.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); showOrig(true); } });
+cmp.addEventListener("keyup", function (e) { if (e.key === " " || e.key === "Enter") showOrig(false); });
+cmp.addEventListener("blur", function () { showOrig(false); });
+
+/* ---------- play: the dot matrix reveal from confetti to the photo, then back to the slider's setting ---------- */
+function stopPlay() {
+  if (!playing) return;
+  cancelAnimationFrame(playing); playing = 0; playBtn(false); schedule();
+}
+function playBtn(on) {
+  var b = $("#play"); b.innerHTML = (on ? $("#icoStop") : $("#icoPlay")).innerHTML;
+  b.setAttribute("aria-label", on ? "Stop the reveal" : "Play the reveal"); b.title = b.getAttribute("aria-label");
+}
+$("#play").addEventListener("click", function () {
+  if (playing) { stopPlay(); return; }
+  var t0 = performance.now(), dur = S.revealTime * 1000, hold = 700;
+  playBtn(true);
+  (function frame(now) {
+    var t = now - t0;
+    if (t > dur + hold) { playing = 0; playBtn(false); draw(); return; }
+    draw(ease(clamp(t / dur, 0, 1)));
+    playing = requestAnimationFrame(frame);
+  })(t0);
+});
+
+/* ---------- drop or paste a photo ---------- */
+var dropN = 0;
+document.addEventListener("dragenter", function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, "Files") >= 0) { dropN++; stage.classList.add("drop"); } });
+document.addEventListener("dragleave", function () { if (--dropN <= 0) { dropN = 0; stage.classList.remove("drop"); } });
+document.addEventListener("dragover", function (e) { e.preventDefault(); });
+document.addEventListener("drop", function (e) {
+  e.preventDefault(); dropN = 0; stage.classList.remove("drop");
+  var f = e.dataTransfer && e.dataTransfer.files[0];
+  if (f && /^image\//.test(f.type)) loadFile(f); else if (f) say("That file is not an image.");
+});
+document.addEventListener("paste", function (e) {
+  var items = (e.clipboardData && e.clipboardData.items) || [];
+  for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
+});
+
+/* panels: every section is open, under a header row with its name (bold once anything in it has changed) */
+document.querySelectorAll(".acc").forEach(function (acc) {
+  var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
+  var name = ph.firstChild.textContent.trim();
+  var hd = document.createElement("div"); hd.className = "shead";
+  var nm = document.createElement("h3"); nm.textContent = name; nm.id = "sh-" + pb.id;
+  hd.append(nm); acc.insertBefore(hd, pb);
+  ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
+  pb.setAttribute("role", "group"); pb.setAttribute("aria-labelledby", nm.id);
+  acc.dataset.tabBtn = nm.id;
+});
+
+(function () {
+  var sel = $("#fxStock"), grp = null;
+  STOCKS.forEach(function (s) {
+    if (!s[1]) { grp = document.createElement("optgroup"); grp.label = s[0]; sel.appendChild(grp); return; }
+    var o = document.createElement("option"); o.value = s[0]; o.textContent = s[1]; (s[0] === "none" ? sel : grp).appendChild(o);
+  });
+})();
+$("#filmShuffle").addEventListener("click", function () {   /* a randomizer: a different film type and film effect, and a new roll */
+  var sk = STOCKS.filter(function (s) { return s[2] && s[0] !== S.fxStock; }).map(function (s) { return s[0]; });
+  var fe = ["none", "cross", "diopter", "haze", "double", "expired", "soup", "forced", "infrared", "smudge", "preexposed", "sepia"].filter(function (x) { return x !== S.fxFilm; });
+  S.fxStock = sk[(Math.random() * sk.length) | 0]; S.fxFilm = fe[(Math.random() * fe.length) | 0]; S.fxSeed = (Math.random() * 1e6) | 0;
+  sync(); saveSettings(); schedule(); commit();
+  say($("#fxStock option[value=" + S.fxStock + "]").textContent + (S.fxFilm !== "none" ? " · " + $("#fxFilm option[value=" + S.fxFilm + "]").textContent : ""));
+});
+/* Duotone pairs: one tap sets both inks (shadow on the left half, highlight on the right) */
+DUOS.forEach(function (d) {
+  var b = document.createElement("button"); b.type = "button"; b.className = "duopair";
+  b.style.background = "linear-gradient(135deg," + d[0] + " 50%," + d[1] + " 50%)";
+  b.setAttribute("aria-label", d[0] + " / " + d[1]); b.title = d[0] + " / " + d[1]; b.dataset.a = d[0]; b.dataset.b = d[1];
+  b.addEventListener("click", function () {
+    S.fxDuoA = d[0]; S.fxDuoB = d[1]; if (!S.fxDuo) S.fxDuo = 100;
+    sync(); saveSettings(); schedule(); marks(); commit();
+  });
+  $("#duoPairs").appendChild(b);
+});
+function syncDuo() { document.querySelectorAll(".duopair").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.a === S.fxDuoA && b.dataset.b === S.fxDuoB ? "true" : "false"); }); }
+/* ---------- start ---------- */
+var LANGS = ["en", "fr", "es", "zh", "zh-Hant"], LNAME = { en: "English", fr: "Français", es: "Español", zh: "简体中文", "zh-Hant": "繁體中文" };
+$("#langBtn").addEventListener("click", function () { applyLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]); themeSync(); draw(); });
+(function () {
+  var l = null; try { l = localStorage.getItem("fogday-lang"); } catch (e) {}
+  if (!l) { var n = (navigator.language || "en").toLowerCase(); l = /^zh-(tw|hk|mo|hant)/.test(n) ? "zh-Hant" : n.slice(0, 2) === "zh" ? "zh" : n.slice(0, 2); }
+  applyLang(l);
+})();
+try {
+  var probe = new File([new Blob(["x"], { type: "image/png" })], "x.png", { type: "image/png" });
+  $("#share").hidden = !(navigator.canShare && navigator.canShare({ files: [probe] }));
+} catch (e) {}
+sync();
+setTab("dot"); syncLook();
+commit();
+if (window.ResizeObserver) new ResizeObserver(function () { fit(); }).observe(stage);
+window.addEventListener("resize", fit);
+demo();
+})();
+</script>
+<script src="/assets/js/bento-anim.js?v=4" data-colors="none" defer></script>  <!-- bento: same color as the other icons, a new animation each load -->
+</body>
+</html>

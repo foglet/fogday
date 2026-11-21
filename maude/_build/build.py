@@ -1,4 +1,4 @@
-"""Build halftone/index.html (Image Looks) from template.html (no data to inline; the guard catches a broken script).
+"""Build maude/index.html (Maude) from template.html (no data to inline; the guard catches a broken script).
 Edit template.html, never ../index.html, then run: python3 build.py"""
 import json, pathlib
 root = pathlib.Path(__file__).parent
