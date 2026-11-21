@@ -217,6 +217,9 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .surp .btn{height:40px;font-size:15px;justify-content:center}
 .recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
 .recipe{margin:0;font-size:13px;line-height:1.5}
+.acc.flash{animation:accflash 1.2s ease-out}
+@keyframes accflash{0%{background:color-mix(in srgb,var(--ink) 10%,transparent)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.acc.flash{animation:none}}
 .htblock{border-top:1px solid var(--sep)}
 .hthead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px 4px}
 .hthead h3{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}.hthead h3 .ico{width:18px;height:18px;flex-basis:18px}
@@ -1589,6 +1592,20 @@ var LOOKS = {
     ["Warhol", { fxWarhol: "2" }]
   ]
 };
+/* after picking an effect, bring its controls into view (under the pinned picture on phones) and flash them */
+var FXGO = { "3px": "a-px", Cinema: "a-grade", Dreamy: "a-light", Duotone: "a-duo", Film: "a-grade", "Guilloché": "a-guil",
+  Minecraft: "a-mine", Noir: "a-grade", Seurat: "a-seurat", VHS: "a-glitch", Warhol: "a-warhol" };
+function goTo(id) {
+  var pb = id && document.getElementById(id); if (!pb) return;
+  var acc = pb.closest(".acc") || pb;
+  requestAnimationFrame(function () {
+    var sc = document.querySelector(".stagecol"), top = 8;
+    if (window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky") top += sc.getBoundingClientRect().height;
+    var y = acc.getBoundingClientRect().top + window.scrollY - top;
+    window.scrollTo({ top: Math.max(0, y), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    acc.classList.remove("flash"); void acc.offsetWidth; acc.classList.add("flash");
+  });
+}
 function lookVals(t, o) { var v = {}; TABKEYS[t].forEach(function (k) { v[k] = k in o ? o[k] : DEF[k]; }); return v; }
 document.querySelectorAll("[data-looks]").forEach(function (row) {
   var t = row.dataset.looks;
@@ -1596,7 +1613,8 @@ document.querySelectorAll("[data-looks]").forEach(function (row) {
     var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l[0];
     b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () {
-      Object.assign(S, lookVals(t, l[1])); if (t === "half") S.look = "half"; else if (t === "dot") S.look = "dot"; sync(); syncLook(); saveSettings(); schedule(); commit(); say(tr(l[0]) + " " + tr("look."));
+      Object.assign(S, lookVals(t, l[1])); if (t === "half") S.look = "half"; else if (t === "dot") S.look = "dot"; sync(); syncLook(); saveSettings();
+      goTo(t === "half" ? "a-screen" : t === "fx" ? FXGO[l[0]] : null); schedule(); commit(); say(tr(l[0]) + " " + tr("look."));
     });
     row.appendChild(b);
   });
