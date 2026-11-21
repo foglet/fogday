@@ -199,6 +199,18 @@ select{border:0;border-radius:5px}
 .sheet{background:var(--card);border:1px solid var(--sep)}
 @media (pointer:coarse){.pill{height:48px}.tabrow #tabReset{width:48px;height:48px}.ptab{padding:8px 12px}}
 @media (max-width:420px){.pill [role=tab] .ico{display:none}.ptab{font-size:13px;padding:4px 8px}}
+/* compact: shorter look switch and starting-point chips */
+.pill{height:30px;padding:3px;border-radius:10px}
+.pill .knob{top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/3);border-radius:8px}
+.pill [role=tab]{font-size:13px;border-radius:8px;gap:6px}.pill [role=tab] .ico{width:15px;height:15px;flex-basis:15px}
+.tabrow #tabReset{width:30px;height:30px;flex-basis:30px}
+.chip{height:24px;min-height:24px;padding:0 9px;font-size:12px}
+@media (pointer:coarse){
+  .pill{height:36px}.tabrow #tabReset{width:36px;height:36px;min-height:36px;flex-basis:36px}
+  .chip{height:30px;min-height:30px}
+  /* iOS zooms the page when a field under 16 px gets focus: keep fields at 16 px so it never does */
+  input,select,textarea{font-size:16px}
+}
 </style>
 </head>
 <body data-look="dot" data-ht="rgb">
@@ -418,7 +430,7 @@ select{border:0;border-radius:5px}
 var KEY = "halftone:settings";
 var DEF = {
   look: "dot",
-  cols: 56, reveal: 60, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "lr", palette: "confetti", band: 22, wash: 55, scatter: 25,
+  cols: 56, reveal: 80, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "center", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7, dmFrom: "confetti",
   htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
   fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
