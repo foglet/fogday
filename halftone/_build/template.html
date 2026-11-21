@@ -193,7 +193,7 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .shd h2{margin:0;font-size:20px;font-weight:500}
 .sbtn{height:34px;padding:0 14px;border:0;border-radius:6px;background:var(--btn);color:var(--ink);font-size:15px;cursor:pointer}
 .sbtn:hover{background:var(--btnh)}
-.looks{padding:0 20px 14px;gap:6px}
+.looks{padding:16px 20px 14px;gap:6px;align-items:center}
 .chip{height:28px;min-height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--btn);font-size:13px;color:var(--ink)}
 .chip:hover{background:var(--btnh)}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--onfelt)}
@@ -203,13 +203,20 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .acc>.ph,.acc>.preset{display:none}
 .shead{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 6px}
 .shead h3{margin:0;font-size:15px;font-weight:600;position:relative}
-.shead h3.mod::after{content:"";position:absolute;top:2px;right:-10px;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.shead h3{font-weight:500;color:var(--muted)}
+.acc.mod .shead h3{font-weight:700;color:var(--ink)}
+.rbtn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:5px;border:0;border-radius:6px;background:var(--btn);color:var(--ink);cursor:pointer;flex:0 0 30px}
+.rbtn .ico{width:18px;height:18px;flex-basis:18px}
+.rbtn:hover{background:var(--btnh)}
+.rbtn[disabled]{background:none;color:var(--muted);opacity:.45;cursor:default}
+.looks .rbtn{margin-left:auto}
+.pill [role=tab] .ico{display:block!important;width:20px;height:20px;flex-basis:20px}
 .shead .sbtn{height:28px;padding:0 10px;font-size:13px}
 .pb{padding:4px 20px 16px;gap:10px}
 .tabp>.foot,.ctlcol>.foot{padding:0 20px}
 /* fields */
 .f>.lab{font-size:13px;color:var(--ink);align-items:baseline}
-.f>.lab output{color:var(--muted);font-variant-numeric:tabular-nums}
+.f>.lab output{color:inherit;font:inherit;font-variant-numeric:tabular-nums}
 select{background:var(--field);border:1px solid var(--line);border-radius:6px}
 .seg{background:var(--btn);border:0;border-radius:8px;padding:2px}
 .seg span{color:var(--muted)}
@@ -236,7 +243,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
   input[type=range]{height:36px}
   input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-11px}
   input[type=range]::-moz-range-thumb{width:26px;height:26px}
-  .pill{height:48px}.chip{height:32px;min-height:32px}.sbtn{height:36px}
+  .pill{height:48px}.chip{height:32px;min-height:32px}.sbtn{height:36px}.rbtn{width:36px;height:36px;min-height:36px;flex-basis:36px}
   .tb .icob{width:40px;height:40px;flex-basis:40px;min-height:40px}
   input,select,textarea{font-size:16px}
 }
@@ -261,8 +268,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <button type="button" class="icob" id="addImg" aria-label="Open image" title="Open image">{{icon:image}}</button>
     <button type="button" class="icob" id="takePhoto" aria-label="Take photo" title="Take photo">{{icon:camera}}</button>
     <span class="sep" aria-hidden="true"></span>
-    <button type="button" class="icob" id="undo" aria-label="Undo" title="Undo" disabled>{{icon:arrow-u-up-left}}</button>
-    <button type="button" class="icob" id="redo" aria-label="Redo" title="Redo" disabled>{{icon:arrow-u-up-right}}</button>
+    <button type="button" class="icob" id="undo" aria-label="Back (undo)" title="Back: undo the last change" disabled>{{icon:arrow-u-up-left}}</button>
+    <button type="button" class="icob" id="redo" aria-label="Forward (redo)" title="Forward: redo" disabled>{{icon:arrow-u-up-right}}</button>
     <span class="sep" aria-hidden="true"></span>
     <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original">{{icon:circle-half}}</button>
     <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal">{{icon:play}}</button>
@@ -292,12 +299,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <div class="tabrow">
     <div class="pill" role="tablist" aria-label="Edit">
       <span class="knob" aria-hidden="true"></span>
-      <button type="button" role="tab" id="t-dot" aria-controls="p-dot" data-tab="dot">{{icon:dots-nine}}<span>Dot matrix</span></button>
-      <button type="button" role="tab" id="t-half" aria-controls="p-half" data-tab="half">{{icon:circle-half}}<span>Halftone</span></button>
-      <button type="button" role="tab" id="t-fx" aria-controls="p-fx" data-tab="fx">{{icon:sparkle}}<span>Effects</span></button>
+      <button type="button" role="tab" id="t-dot" aria-controls="p-dot" data-tab="dot">{{icon:diamonds-four}}<span>Dot matrix</span></button>
+      <button type="button" role="tab" id="t-half" aria-controls="p-half" data-tab="half">{{icon:drop-half}}<span>Halftone</span></button>
+      <button type="button" role="tab" id="t-fx" aria-controls="p-fx" data-tab="fx">{{icon:magic-wand}}<span>Effects</span></button>
     </div>
     </div>
-    <div class="shd"><h2 id="tabTitle">Dot matrix</h2><button type="button" class="sbtn" id="tabReset" aria-label="Reset this tab" title="Reset this tab">Reset</button></div>
+    <button type="button" class="rbtn" id="tabReset" aria-label="Reset this tab" title="Reset this tab">{{icon:arrow-counter-clockwise}}</button>
 
     <!-- Dot matrix -->
     <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
@@ -1121,7 +1128,9 @@ function setTab(t) {
     $("#" + b.getAttribute("aria-controls")).hidden = !on;
     if (on) $(".pill").style.setProperty("--i", i);
   });
-  $("#tabTitle").textContent = { dot: "Dot matrix", half: "Halftone", fx: "Effects" }[t];
+  var lk = document.querySelector("#p-" + t + " .looks"); if (lk) lk.appendChild($("#tabReset"));
+  $("#tabReset").title = "Reset " + { dot: "Dot matrix", half: "Halftone", fx: "Effects" }[t]; $("#tabReset").setAttribute("aria-label", $("#tabReset").title);
+  marks();
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
   stopPlay(); schedule();
 }
@@ -1376,10 +1385,13 @@ function marks() {
     acc.querySelectorAll("[data-k]").forEach(function (el) { if (el.dataset.k in DEF && !same(S[el.dataset.k], DEF[el.dataset.k])) mod = true; });
     acc.querySelectorAll("[data-color]").forEach(function (el) { if (!same(S[el.dataset.color], DEF[el.dataset.color])) mod = true; });
     var ph = acc.querySelector(".ph"); ph.classList.toggle("mod", mod);
-    var tb = acc.dataset.tabBtn && document.getElementById(acc.dataset.tabBtn); if (tb) tb.classList.toggle("mod", mod);
+    acc.classList.toggle("mod", mod);
+    var rb = acc.querySelector(".shead .rbtn"); if (rb) rb.disabled = !mod;
     var name = ph.firstChild.textContent.trim();
     ph.setAttribute("aria-label", name + (mod ? ", changed" : ""));
   });
+  var tp = document.querySelector("#p-" + tab), any = tp && tp.querySelector(".acc.mod");
+  $("#tabReset").disabled = !any;
 }
 
 /* ---------- undo and redo: one step per finished change ---------- */
@@ -1468,8 +1480,9 @@ document.querySelectorAll(".acc").forEach(function (acc) {
   var name = ph.firstChild.textContent.trim();
   var hd = document.createElement("div"); hd.className = "shead";
   var nm = document.createElement("h3"); nm.textContent = name; nm.id = "sh-" + pb.id;
-  var rb = document.createElement("button"); rb.type = "button"; rb.className = "sbtn"; rb.textContent = "Reset";
-  rb.setAttribute("aria-label", "Reset " + name);
+  var rb = document.createElement("button"); rb.type = "button"; rb.className = "rbtn";
+  rb.appendChild($("#icoReset").content.cloneNode(true));
+  rb.setAttribute("aria-label", "Reset " + name); rb.title = "Reset " + name;
   rb.addEventListener("click", function () { resetPanel(pb); });
   hd.append(nm, rb); acc.insertBefore(hd, pb);
   ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
