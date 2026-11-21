@@ -166,7 +166,8 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .tbtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:0;background:none;border-radius:8px;font-size:17px;color:var(--ink);cursor:pointer;white-space:nowrap}
 .tbtn .ico{width:22px;height:22px;flex-basis:22px}
 .tbtn:hover{background:var(--btn)}
-.topr .theme-toggle,.topr .bento{width:38px;height:38px;color:var(--ink)}
+.topr .theme-toggle,.topr .bento{width:40px;height:40px;color:var(--ink)}
+.topr .bento{padding:11px}
 /* main: canvas area left, sidebar right */
 .wrap{max-width:none;margin:0;padding:0;gap:0;grid-template-columns:minmax(0,1fr)}
 .stagecol{background:var(--paper);padding:16px 2.5vw 8px}
@@ -218,7 +219,7 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 #infoBtn{display:inline-flex;align-items:center;gap:4px;text-decoration:none}#infoBtn .ico{width:15px;height:15px;flex-basis:15px}
 .legal{display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--ink);max-height:60vh;overflow:auto}.legal p{margin:0}.legal a{color:inherit}
 #infoModal .sheet{max-width:520px}
-.recipe li{padding:8px 10px;border-radius:6px;background:var(--btn);font-size:13px}
+.recipe{margin:0;font-size:13px;line-height:1.5}
 .ctlcol,.tabp,.surp,.recipe{align-content:start}
 @media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
 @media (max-width:440px){.pill [role=tab]{font-size:12px;gap:4px;padding:0}.pill [role=tab] .ico{width:15px!important;height:15px!important;flex-basis:15px!important}}
@@ -280,9 +281,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <button type="button" class="icob" id="addImg" aria-label="Open image" title="Open image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg></button>
     <button type="button" class="icob" id="takePhoto" aria-label="Take photo" title="Take photo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg></button>
     <span class="sep" aria-hidden="true"></span>
-    <button type="button" class="icob" id="undo" aria-label="Back (undo)" title="Back: undo the last change" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"/></svg></button>
-    <button type="button" class="icob" id="redo" aria-label="Forward (redo)" title="Forward: redo" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M170.34,130.34,204.69,96H88a48,48,0,0,0,0,96h88a8,8,0,0,1,0,16H88A64,64,0,0,1,88,80H204.69L170.34,45.66a8,8,0,0,1,11.32-11.32l48,48a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32-11.32Z"/></svg></button>
-    <span class="sep" aria-hidden="true"></span>
     <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,16.37a86.4,86.4,0,0,1,16,3V212.67a86.4,86.4,0,0,1-16,3Zm32,9.26a87.81,87.81,0,0,1,16,10.54V195.83a87.81,87.81,0,0,1-16,10.54ZM40,128a88.11,88.11,0,0,1,80-87.63V215.63A88.11,88.11,0,0,1,40,128Zm160,50.54V77.46a87.82,87.82,0,0,1,0,101.08Z"/></svg></button>
     <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></button>
     <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48V96a8,8,0,0,1-16,0V67.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM106.34,138.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l50.35-50.34a8,8,0,0,0-11.32-11.32Z"/></svg></button>
@@ -294,7 +292,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
   </button>
-  <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
+  <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg></a>
   </div>
 </header>
 
@@ -480,15 +478,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <!-- Surprise: a new random look each time, never the same one twice -->
     <div class="tabp" role="tabpanel" id="p-surprise" aria-labelledby="t-surprise" hidden>
       <div class="surp">
-        <button type="button" class="btn" id="surpriseBtn"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></svg><span>Surprise me again</span></button>
-        <ul class="recipe" id="recipe" aria-live="polite"></ul>
-        <p class="foot" style="text-align:left">Each surprise mixes a dot matrix or halftone look with effects. You never get the same one twice. Back undoes it; the other tabs let you fine-tune it.</p>
+        <p class="recipe" id="recipe" aria-live="polite"></p>
       </div>
     </div>
 
-    <p class="foot">Photos stay on your device. Nothing is uploaded. Drop or paste a photo to open it.</p>
-    <p class="foot"><button type="button" class="linkb" id="reset">Reset all</button></p>
-    <p class="foot info"><button type="button" class="linkb" id="infoBtn"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Info</span></button> · © 2026 <a href="https://fogday.com/">Fogday Studios</a></p>
+    <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
+    <p class="foot info"><button type="button" class="linkb" id="infoBtn"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Info</span></button> · <a href="https://fogday.com/">© FOGDAY STUDIOS</a></p>
   </section>
 </main>
 
@@ -1429,10 +1424,6 @@ $("#tabReset").addEventListener("click", function () {
 });
 $("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
 $("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
-$("#reset").addEventListener("click", function () {
-  S = Object.assign({}, DEF); sync(); setTab("dot"); saveSettings(); schedule(); commit();
-  say("All settings reset. Undo brings them back.");
-});
 $("#snap").addEventListener("click", snap);
 $("#camCancel").addEventListener("click", closeCamera);
 $("#flip").addEventListener("click", function () { facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
@@ -1564,26 +1555,23 @@ function surprise() {
   if (o.fxShift || o.fxGlitch) L.push("Glitch");
   if (o.fxLeak || o.fxFlare || o.fxStreak) L.push("Light leaks");
   if (o.fxGrade !== "none") L.push("Grade: " + $("#fxGrade option[value=" + o.fxGrade + "]").textContent);
-  $("#recipe").innerHTML = ""; L.forEach(function (s) { var li = document.createElement("li"); li.textContent = s; $("#recipe").appendChild(li); });
+  $("#recipe").textContent = L.join(" · ");
   say("Surprise!");
 }
-$("#surpriseBtn").addEventListener("click", surprise);
 function commit() {
   var j = snap0();
   if (j === lastJ) return;
   if (lastJ !== null) { undoS.push(lastJ); if (undoS.length > 80) undoS.shift(); }
   lastJ = j; redoS = []; histBtns();
 }
-function histBtns() { $("#undo").disabled = !undoS.length; $("#redo").disabled = !redoS.length; }
+function histBtns() {}
 function restore(j) {
-  S = JSON.parse(j); lastJ = j; sync(); saveSettings();
+  S = JSON.parse(j); lastJ = j; sync(); saveSettings(); $("#recipe").textContent = "";
   setTab(tab === "fx" || tab === "surprise" ? tab : S.look);
   histBtns(); schedule();
 }
 function undo() { if (!undoS.length) return; redoS.push(lastJ); restore(undoS.pop()); say("Undone."); }
 function redo() { if (!redoS.length) return; undoS.push(lastJ); restore(redoS.pop()); say("Redone."); }
-$("#undo").addEventListener("click", undo);
-$("#redo").addEventListener("click", redo);
 document.addEventListener("keydown", function (e) {
   if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
   var t = e.target; if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) return;

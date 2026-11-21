@@ -166,7 +166,8 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .tbtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:0;background:none;border-radius:8px;font-size:17px;color:var(--ink);cursor:pointer;white-space:nowrap}
 .tbtn .ico{width:22px;height:22px;flex-basis:22px}
 .tbtn:hover{background:var(--btn)}
-.topr .theme-toggle,.topr .bento{width:38px;height:38px;color:var(--ink)}
+.topr .theme-toggle,.topr .bento{width:40px;height:40px;color:var(--ink)}
+.topr .bento{padding:11px}
 /* main: canvas area left, sidebar right */
 .wrap{max-width:none;margin:0;padding:0;gap:0;grid-template-columns:minmax(0,1fr)}
 .stagecol{background:var(--paper);padding:16px 2.5vw 8px}
@@ -218,7 +219,7 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 #infoBtn{display:inline-flex;align-items:center;gap:4px;text-decoration:none}#infoBtn .ico{width:15px;height:15px;flex-basis:15px}
 .legal{display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--ink);max-height:60vh;overflow:auto}.legal p{margin:0}.legal a{color:inherit}
 #infoModal .sheet{max-width:520px}
-.recipe li{padding:8px 10px;border-radius:6px;background:var(--btn);font-size:13px}
+.recipe{margin:0;font-size:13px;line-height:1.5}
 .ctlcol,.tabp,.surp,.recipe{align-content:start}
 @media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
 @media (max-width:440px){.pill [role=tab]{font-size:12px;gap:4px;padding:0}.pill [role=tab] .ico{width:15px!important;height:15px!important;flex-basis:15px!important}}
@@ -280,9 +281,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <button type="button" class="icob" id="addImg" aria-label="Open image" title="Open image">{{icon:image}}</button>
     <button type="button" class="icob" id="takePhoto" aria-label="Take photo" title="Take photo">{{icon:camera}}</button>
     <span class="sep" aria-hidden="true"></span>
-    <button type="button" class="icob" id="undo" aria-label="Back (undo)" title="Back: undo the last change" disabled>{{icon:arrow-u-up-left}}</button>
-    <button type="button" class="icob" id="redo" aria-label="Forward (redo)" title="Forward: redo" disabled>{{icon:arrow-u-up-right}}</button>
-    <span class="sep" aria-hidden="true"></span>
     <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original">{{icon:circle-half}}</button>
     <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal">{{icon:play}}</button>
     <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image">{{icon:arrows-out-simple}}</button>
@@ -294,7 +292,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
   </button>
-  <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
+  <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9.5" y="2" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><rect x="17" y="9.5" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="9.5" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/></g></svg></a>
   </div>
 </header>
 
@@ -480,15 +478,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <!-- Surprise: a new random look each time, never the same one twice -->
     <div class="tabp" role="tabpanel" id="p-surprise" aria-labelledby="t-surprise" hidden>
       <div class="surp">
-        <button type="button" class="btn" id="surpriseBtn">{{icon:gift}}<span>Surprise me again</span></button>
-        <ul class="recipe" id="recipe" aria-live="polite"></ul>
-        <p class="foot" style="text-align:left">Each surprise mixes a dot matrix or halftone look with effects. You never get the same one twice. Back undoes it; the other tabs let you fine-tune it.</p>
+        <p class="recipe" id="recipe" aria-live="polite"></p>
       </div>
     </div>
 
-    <p class="foot">Photos stay on your device. Nothing is uploaded. Drop or paste a photo to open it.</p>
-    <p class="foot"><button type="button" class="linkb" id="reset">Reset all</button></p>
-    <p class="foot info"><button type="button" class="linkb" id="infoBtn">{{icon:info}}<span>Info</span></button> · © 2026 <a href="https://fogday.com/">Fogday Studios</a></p>
+    <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
+    <p class="foot info"><button type="button" class="linkb" id="infoBtn">{{icon:info}}<span>Info</span></button> · <a href="https://fogday.com/">© FOGDAY STUDIOS</a></p>
   </section>
 </main>
 
@@ -1429,10 +1424,6 @@ $("#tabReset").addEventListener("click", function () {
 });
 $("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
 $("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
-$("#reset").addEventListener("click", function () {
-  S = Object.assign({}, DEF); sync(); setTab("dot"); saveSettings(); schedule(); commit();
-  say("All settings reset. Undo brings them back.");
-});
 $("#snap").addEventListener("click", snap);
 $("#camCancel").addEventListener("click", closeCamera);
 $("#flip").addEventListener("click", function () { facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
@@ -1564,26 +1555,23 @@ function surprise() {
   if (o.fxShift || o.fxGlitch) L.push("Glitch");
   if (o.fxLeak || o.fxFlare || o.fxStreak) L.push("Light leaks");
   if (o.fxGrade !== "none") L.push("Grade: " + $("#fxGrade option[value=" + o.fxGrade + "]").textContent);
-  $("#recipe").innerHTML = ""; L.forEach(function (s) { var li = document.createElement("li"); li.textContent = s; $("#recipe").appendChild(li); });
+  $("#recipe").textContent = L.join(" · ");
   say("Surprise!");
 }
-$("#surpriseBtn").addEventListener("click", surprise);
 function commit() {
   var j = snap0();
   if (j === lastJ) return;
   if (lastJ !== null) { undoS.push(lastJ); if (undoS.length > 80) undoS.shift(); }
   lastJ = j; redoS = []; histBtns();
 }
-function histBtns() { $("#undo").disabled = !undoS.length; $("#redo").disabled = !redoS.length; }
+function histBtns() {}
 function restore(j) {
-  S = JSON.parse(j); lastJ = j; sync(); saveSettings();
+  S = JSON.parse(j); lastJ = j; sync(); saveSettings(); $("#recipe").textContent = "";
   setTab(tab === "fx" || tab === "surprise" ? tab : S.look);
   histBtns(); schedule();
 }
 function undo() { if (!undoS.length) return; redoS.push(lastJ); restore(undoS.pop()); say("Undone."); }
 function redo() { if (!redoS.length) return; undoS.push(lastJ); restore(redoS.pop()); say("Redone."); }
-$("#undo").addEventListener("click", undo);
-$("#redo").addEventListener("click", redo);
 document.addEventListener("keydown", function (e) {
   if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
   var t = e.target; if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) return;
