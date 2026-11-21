@@ -5,7 +5,7 @@ A photo turned into a **dot matrix** (colored dots sampled from the image, with 
 - Edit `template.html`, then `python3 build.py` writes `../index.html`. Never edit `index.html`.
 - The reset button (round arrow, top bar) clears everything: the photo goes back to the starting picture, settings go to defaults, undo history is emptied.
 - Settings start fresh on every load; only the theme (`fogday-theme`), language (`fogday-lang`) and Surprise history (`maude:surprises`) are kept in localStorage. Images never leave the device.
-- Save: PNG at 1080 to 4096 px (long edge); the reveal can be saved as a video (MP4 on Safari, WebM on Chrome) where MediaRecorder exists.
+- Save: PNG at the photo's original size (capped at about 16.7 million pixels for phone browsers; the working copy stays 2000 px and is redrawn full size just for that file) or 1080 to 4096 px (long edge); the reveal can be saved as a video (MP4 on Safari, WebM on Chrome) where MediaRecorder exists.
 - Bento: `/assets/js/bento-anim.js`, as on /qr.
 
 ## Using it
