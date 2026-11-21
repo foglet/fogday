@@ -104,7 +104,12 @@ body.big .stagecol{position:static}
 .pill [role=tab][aria-selected=true]{color:var(--onfelt)}
 .pill [role=tab].cur::after{content:"";flex:0 0 auto;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
 .tabp{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
-.acc{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.acc{background:var(--card);border:1px solid var(--line);border-radius:10px;position:relative}
+.acc>.ph{padding-right:70px}.acc>.ph>.ico{position:absolute;right:12px;top:8px}
+.preset{position:absolute;top:2px;right:34px;width:28px;height:28px;padding:5px;border:0;background:none;color:var(--muted);border-radius:6px;cursor:pointer}
+.preset:hover{color:var(--ink);background:var(--well)}.preset .ico{width:18px;height:18px}
+.acc>.ph[aria-expanded="false"]~.preset{display:none}
+#cv.cropping{cursor:crosshair;touch-action:none}
 .ph{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
 .ph .ico{color:var(--muted);transition:transform .2s}
 .ph[aria-expanded="false"] .ico{transform:rotate(-90deg)}
@@ -194,7 +199,6 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
             <button type="button" class="icob xt" id="xFlipH" aria-pressed="false" aria-label="Reverse (mirror)" title="Reverse"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M107.18,24.33a15.86,15.86,0,0,0-17.92,9.45l-.06.14-64,159.93A16,16,0,0,0,40,216h64a16,16,0,0,0,16-16V40A15.85,15.85,0,0,0,107.18,24.33ZM104,200H40l.06-.15L104,40Zm126.77-6.15-64-159.93-.06-.14A16,16,0,0,0,136,40V200a16,16,0,0,0,16,16h64a16,16,0,0,0,14.78-22.15ZM152,200V40l63.93,159.84.06.15Z"/></svg></button>
             <button type="button" class="icob xt" id="xRot90" aria-label="Rotate 90°" title="Rotate 90°"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
             <button type="button" class="icob xt" id="xSkew" aria-pressed="false" aria-label="Skew" title="Skew"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,120H224V48a16,16,0,0,0-18.86-15.74l-160,29.09A16,16,0,0,0,32,77.09V120H16a8,8,0,0,0,0,16H32v42.91a16,16,0,0,0,13.14,15.74l160,29.09A16.47,16.47,0,0,0,208,224a16,16,0,0,0,16-16V136h16a8,8,0,0,0,0-16ZM48,77.09,208,48v72H48ZM208,208,48,178.91V136H208Z"/></svg></button>
-            <button type="button" class="btn xreset" id="xReset">Reset</button>
           </div>
           <div id="skewBox" hidden>
             <fieldset class="seg"><legend>Skew direction</legend>
@@ -210,11 +214,11 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-crop">Crop<span class="sub" id="cropName"></span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-crop" hidden>
           <div class="chips cropchips" id="cropChips" role="group" aria-label="Crop shape"></div>
+          <p class="foot" style="margin:0;text-align:left">Drag the corners or edges on the image; drag inside to move the crop.</p>
           <fieldset class="seg" id="cropOri"><legend>Orientation</legend>
             <label><input type="radio" name="cOri" value="p" checked><span>Portrait</span></label>
             <label><input type="radio" name="cOri" value="l"><span>Landscape</span></label>
           </fieldset>
-          <div class="f" id="cPosF"><label class="lab" for="cPos">Position <output id="cPosO"></output></label><input type="range" id="cPos" min="-100" max="100" step="1"></div>
           <div class="two" id="cFree">
           <div class="f"><label class="lab" for="cL">Left <output id="cLO"></output></label><input type="range" id="cL" min="0" max="45" step="1"></div>
           <div class="f"><label class="lab" for="cR">Right <output id="cRO"></output></label><input type="range" id="cR" min="0" max="45" step="1"></div>
@@ -482,6 +486,7 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
 <template id="icoPick"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,67.3a35.79,35.79,0,0,0-11.26-25.66c-14-13.28-36.72-12.78-50.62,1.13L142.8,62.2a24,24,0,0,0-33.14.77l-9,9a16,16,0,0,0,0,22.64l2,2.06-51,51a39.75,39.75,0,0,0-10.53,38l-8,18.41A13.68,13.68,0,0,0,36,219.3a15.92,15.92,0,0,0,17.71,3.35L71.23,215a39.89,39.89,0,0,0,37.06-10.75l51-51,2.06,2.06a16,16,0,0,0,22.62,0l9-9a24,24,0,0,0,.74-33.18l19.75-19.87A35.75,35.75,0,0,0,224,67.3ZM97,193a24,24,0,0,1-24,6,8,8,0,0,0-5.55.31l-18.1,7.91L57,189.41a8,8,0,0,0,.25-5.75A23.88,23.88,0,0,1,63,159l51-51,33.94,34ZM202.13,82l-25.37,25.52a8,8,0,0,0,0,11.3l4.89,4.89a8,8,0,0,1,0,11.32l-9,9L112,83.26l9-9a8,8,0,0,1,11.31,0l4.89,4.89a8,8,0,0,0,11.33,0l24.94-25.09c7.81-7.82,20.5-8.18,28.29-.81a20,20,0,0,1,.39,28.7Z"/></svg></template>
 <template id="icoEye"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/></svg></template>
 <template id="icoEyeOff"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M53.92,34.62A8,8,0,1,0,42.08,45.38L61.32,66.55C25,88.84,9.38,123.2,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208a127.11,127.11,0,0,0,52.07-10.83l22,24.21a8,8,0,1,0,11.84-10.76Zm47.33,75.84,41.67,45.85a32,32,0,0,1-41.67-45.85ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.16,133.16,0,0,1,25,128c4.69-8.79,19.66-33.39,47.35-49.38l18,19.75a48,48,0,0,0,63.66,70l14.73,16.2A112,112,0,0,1,128,192Zm6-95.43a8,8,0,0,1,3-15.72,48.16,48.16,0,0,1,38.77,42.64,8,8,0,0,1-7.22,8.71,6.39,6.39,0,0,1-.75,0,8,8,0,0,1-8-7.26A32.09,32.09,0,0,0,134,96.57Zm113.28,34.69c-.42.94-10.55,23.37-33.36,43.8a8,8,0,1,1-10.67-11.92A132.77,132.77,0,0,0,231.05,128a133.15,133.15,0,0,0-23.12-30.77C185.67,75.19,158.78,64,128,64a118.37,118.37,0,0,0-19.36,1.57A8,8,0,1,1,106,49.79,134,134,0,0,1,128,48c34.88,0,66.57,13.26,91.66,38.35,18.83,18.83,27.3,37.62,27.65,38.41A8,8,0,0,1,247.31,131.26Z"/></svg></template>
+<template id="icoReset"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></template>
 <template id="icoGrip"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M104,60A12,12,0,1,1,92,48,12,12,0,0,1,104,60Zm60,12a12,12,0,1,0-12-12A12,12,0,0,0,164,72ZM92,116a12,12,0,1,0,12,12A12,12,0,0,0,92,116Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,116ZM92,184a12,12,0,1,0,12,12A12,12,0,0,0,92,184Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,184Z"/></svg></template>
 <template id="icoLock"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></svg></template>
 <template id="icoUnlock"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,80H96V56a32,32,0,0,1,32-32c15.37,0,29.2,11,32.16,25.59a8,8,0,0,0,15.68-3.18C171.32,24.15,151.2,8,128,8A48.05,48.05,0,0,0,80,56V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80Zm0,128H48V96H208V208Z"/></svg></template>
@@ -1034,6 +1039,7 @@ function draw(prog) {
     pctx.strokeRect(b[0] * W - 4 * d, b[1] * H - 4 * d, (b[2] - b[0]) * W + 8 * d, (b[3] - b[1]) * H + 8 * d);
     pctx.restore();
   }
+  if (cropEdit) drawCropOverlay(W, H);
   if (stroke && stroke.length > 1) {
     pctx.save(); pctx.lineWidth = Math.max(2, W / 250); pctx.strokeStyle = "#b8352b"; pctx.lineCap = pctx.lineJoin = "round";
     pctx.beginPath(); stroke.forEach(function (p, i) { pctx[i ? "lineTo" : "moveTo"](p[0] * W, p[1] * H); }); pctx.stroke(); pctx.restore();
@@ -1041,11 +1047,70 @@ function draw(prog) {
   var any = S.layers.some(function (l) { return l.text.trim(); });
   cv.classList.toggle("drag", any);
   cv.classList.toggle("drawing", drawMode);
-  $("#hint").textContent = pickKey ? "Tap the image to pick a color." : drawMode ? "Draw the path with your finger." :
+  $("#hint").textContent = cropEdit ? "Close Crop to see the result." : pickKey ? "Tap the image to pick a color." : drawMode ? "Draw the path with your finger." :
     (any ? "Drag text to move it, pinch to size and turn it, double tap it to edit. " : "") + (big ? "Double tap the image to fit." : "Double tap the image for full width.");
   cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview" +
     (any ? " with the text " + S.layers.map(function (l) { return l.text; }).join(", ") : ""));
 }
+/* crop overlay: dim outside, a thin frame with thirds, and L-shaped corner handles like the Photos app */
+function drawCropOverlay(W, H) {
+  var x = crop.x * W, y = crop.y * H, w = crop.w * W, h = crop.h * H, d = W / cv.clientWidth, L = 18 * d, k = 3 * d;
+  pctx.save();
+  pctx.fillStyle = "rgba(0,0,0,.55)";
+  pctx.fillRect(0, 0, W, y); pctx.fillRect(0, y + h, W, H - y - h); pctx.fillRect(0, y, x, h); pctx.fillRect(x + w, y, W - x - w, h);
+  pctx.strokeStyle = "rgba(255,255,255,.9)"; pctx.lineWidth = 1 * d; pctx.strokeRect(x, y, w, h);
+  pctx.strokeStyle = "rgba(255,255,255,.45)"; pctx.beginPath();
+  for (var i = 1; i < 3; i++) { pctx.moveTo(x + w * i / 3, y); pctx.lineTo(x + w * i / 3, y + h); pctx.moveTo(x, y + h * i / 3); pctx.lineTo(x + w, y + h * i / 3); }
+  pctx.stroke();
+  pctx.strokeStyle = "#fff"; pctx.lineWidth = k; pctx.lineCap = "square"; pctx.beginPath();
+  [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]].forEach(function (c) {
+    pctx.moveTo(c[0] + c[2] * L, c[1]); pctx.lineTo(c[0], c[1]); pctx.lineTo(c[0], c[1] + c[3] * L);
+  });
+  [[x + w / 2, y, 1], [x + w / 2, y + h, 1], [x, y + h / 2, 0], [x + w, y + h / 2, 0]].forEach(function (c) {
+    if (c[2]) { pctx.moveTo(c[0] - L / 2, c[1]); pctx.lineTo(c[0] + L / 2, c[1]); } else { pctx.moveTo(c[0], c[1] - L / 2); pctx.lineTo(c[0], c[1] + L / 2); }
+  });
+  pctx.stroke(); pctx.restore();
+}
+var cdrag = null;
+function cropDown(e) {
+  var p = fr(e), r = cv.getBoundingClientRect(), tx = 24 / r.width, ty = 24 / r.height;
+  var l = crop.x, rt = crop.x + crop.w, tp = crop.y, bt = crop.y + crop.h;
+  var nl = Math.abs(p[0] - l) < tx, nr = Math.abs(p[0] - rt) < tx, nt = Math.abs(p[1] - tp) < ty, nb = Math.abs(p[1] - bt) < ty;
+  var inX = p[0] > l - tx && p[0] < rt + tx, inY = p[1] > tp - ty && p[1] < bt + ty;
+  var h = { l: nl && inY, r: nr && inX && inY && !nl, t: nt && inX, b: nb && inX && !nt };
+  if (!h.r && nr && inY) h.r = true;
+  var any = h.l || h.r || h.t || h.b;
+  if (!any && !(p[0] > l && p[0] < rt && p[1] > tp && p[1] < bt)) return false;
+  if (crop.m === "orig") crop.m = "free";
+  cdrag = { p: p, r0: { x: crop.x, y: crop.y, w: crop.w, h: crop.h }, h: h, move: !any };
+  cv.setPointerCapture(e.pointerId); e.preventDefault(); syncCrop();
+  return true;
+}
+function cropMove(e) {
+  if (!cdrag) return;
+  var p = fr(e), dx = p[0] - cdrag.p[0], dy = p[1] - cdrag.p[1], r0 = cdrag.r0, h = cdrag.h, MIN = 0.08;
+  if (cdrag.move) {
+    crop.x = clamp(r0.x + dx, 0, 1 - r0.w); crop.y = clamp(r0.y + dy, 0, 1 - r0.h);
+  } else {
+    var l = r0.x, r = r0.x + r0.w, t = r0.y, b = r0.y + r0.h;
+    if (h.l) l = clamp(l + dx, 0, r - MIN); if (h.r) r = clamp(r + dx, l + MIN, 1);
+    if (h.t) t = clamp(t + dy, 0, b - MIN); if (h.b) b = clamp(b + dy, t + MIN, 1);
+    var a = cropAspect();
+    if (a) {
+      /* keep the shape: width leads unless only a top or bottom edge moves; the opposite side (or the middle) stays put */
+      var k = (orig.width / orig.height) / a, w = r - l, hh = b - t, horiz = h.l || h.r;
+      if (horiz) hh = w * k; else w = hh / k;
+      var ax = h.l ? r0.x + r0.w : h.r ? r0.x : r0.x + r0.w / 2, ay = h.t ? r0.y + r0.h : h.b ? r0.y : r0.y + r0.h / 2;
+      var mw = h.l ? ax : h.r ? 1 - ax : 2 * Math.min(ax, 1 - ax), mh = h.t ? ay : h.b ? 1 - ay : 2 * Math.min(ay, 1 - ay);
+      var s = Math.min(1, mw / w, mh / hh); w *= s; hh *= s;
+      if (w < MIN) { hh *= MIN / w; w = MIN; }
+      l = h.l ? ax - w : h.r ? ax : ax - w / 2; t = h.t ? ay - hh : h.b ? ay : ay - hh / 2; r = l + w; b = t + hh;
+    }
+    crop.x = l; crop.y = t; crop.w = r - l; crop.h = b - t;
+  }
+  syncCrop(); draw();
+}
+function cropUp() { if (cdrag) { cdrag = null; draw(); } }
 function fit() {
   if (!src.width) return;
   var wide = window.innerWidth >= 900;
@@ -1287,7 +1352,7 @@ function syncXform() {
     var key = skMode, v = im[key] || 0;
     $("#xSk").value = v; $("#xSkO").textContent = v + (key === "st" ? "°" : "");
     $("#xSkL").textContent = { st: "Straighten", kv: "Vertical", kh: "Horizontal" }[key];
-    ["xFlipH", "xRot90", "xSkew", "xReset", "xSk"].forEach(function (id) { $("#" + id).disabled = !!im.locked; });
+    ["xFlipH", "xRot90", "xSkew", "xSk"].forEach(function (id) { $("#" + id).disabled = !!im.locked; });
   }
   syncCrop();
 }
@@ -1297,20 +1362,28 @@ function moveImg(d) {
   swapIn(sel.k, sel.i, j); sel.i = j; renderImgs();
 }
 /* Instagram size: the working image is the original center-cropped to 1080 x igSize, so preview and every save match */
-var crop = { m: "orig", land: false, pos: 0, l: 0, r: 0, t: 0, b: 0 };
+var crop = { m: "orig", land: false, x: 0, y: 0, w: 1, h: 1 };
 var CROPS = [["orig", "Original"], ["free", "Freeform"], ["1:1", "Square"], ["9:16", "9:16"], ["4:5", "4:5"], ["5:7", "5:7"], ["3:4", "3:4"], ["3:5", "3:5"], ["2:3", "2:3"]];
+function cropAspect() {   /* width / height in pixels, or 0 when free */
+  if (crop.m === "orig" || crop.m === "free") return 0;
+  var p = crop.m.split(":"), a = +p[0] / +p[1]; return crop.land && a !== 1 ? 1 / a : a;
+}
+function cropFit() {      /* the biggest rectangle of the chosen shape, centered */
+  var a = cropAspect(), W = orig.width || 1, H = orig.height || 1;
+  if (crop.m === "orig") { crop.x = crop.y = 0; crop.w = crop.h = 1; return; }
+  if (!a) return;
+  var w = 1, h = W / a / H; if (h > 1) { h = 1; w = H * a / W; }
+  crop.w = w; crop.h = h; crop.x = (1 - w) / 2; crop.y = (1 - h) / 2;
+}
+var cropEdit = false;     /* while the Crop panel is open the whole picture shows, with the crop drawn over it */
 function cropRect() {
   var W = orig.width, H = orig.height;
-  if (crop.m === "orig") return [0, 0, W, H];
-  if (crop.m === "free") return [W * crop.l / 100, H * crop.t / 100, W * (1 - (crop.l + crop.r) / 100), H * (1 - (crop.t + crop.b) / 100)];
-  var p = crop.m.split(":"), a = +p[0] / +p[1]; if (crop.land && a !== 1) a = 1 / a;
-  var w = W, h = W / a; if (h > H) { h = H; w = H * a; }
-  var k = (crop.pos + 100) / 200;   /* slide along whichever side has room */
-  return [(W - w) * k, (H - h) * k, w, h];
+  if (cropEdit || crop.m === "orig") return [0, 0, W, H];
+  return [W * crop.x, H * crop.y, W * crop.w, H * crop.h];
 }
 function applyCrop() {
   var R = cropRect(), sx = R[0], sy = R[1], w = R[2], h = R[3];
-  if (S.ig) {
+  if (S.ig && !cropEdit) {
     var a = 1080 / +S.igSize;
     if (w / h > a) { sx += (w - h * a) / 2; w = h * a; } else { sy += (h - w / a) / 2; h = w / a; }
   }
@@ -1649,7 +1722,36 @@ document.querySelectorAll(".ph").forEach(function (b) {
   b.addEventListener("click", function () {
     var open = b.getAttribute("aria-expanded") !== "true";
     b.setAttribute("aria-expanded", open); document.getElementById(b.getAttribute("aria-controls")).hidden = !open;
+    if (b.getAttribute("aria-controls") === "a-crop") setCropEdit(open);
   });
+});
+/* Reset: the round-arrow icon in the upper right of every open panel puts just that panel back to its defaults */
+function resetPanel(pb) {
+  var id = pb.id;
+  if (id === "a-xform") { var im = selImgObj(); if (im) { im.q = 0; im.st = im.kv = im.kh = 0; im.fx = false; compose(); syncXform(); } return; }
+  if (id === "a-crop") { crop = { m: "orig", land: false, x: 0, y: 0, w: 1, h: 1 }; syncCrop(); applyCrop(); draw(); return; }
+  var L = AL(), keys = {};
+  pb.querySelectorAll("[data-k]").forEach(function (el) { keys[el.dataset.k] = 1; });
+  pb.querySelectorAll("[data-color]").forEach(function (el) { keys[el.dataset.color] = 1; });
+  Object.keys(keys).forEach(function (k) { if (k in DEF) S[k] = DEF[k]; });
+  if (id === "a-glitch") S.fxSeed = DEF.fxSeed;
+  var lk = {};
+  pb.querySelectorAll("[data-l]").forEach(function (el) { lk[el.dataset.l] = 1; });
+  pb.querySelectorAll("[data-lcolor]").forEach(function (el) { lk[el.dataset.lcolor] = 1; });
+  if (id === "a-path") { lk.pts = 1; }
+  delete lk.text;
+  if (Object.keys(lk).length && !L.locked) Object.keys(lk).forEach(function (k) { if (k in LDEF) L[k] = LDEF[k]; });
+  sync(); saveSettings(); allFonts().then(schedule);
+  say((pb.previousElementSibling && pb.parentNode.querySelector(".ph").firstChild.textContent.trim() || "Panel") + " reset.");
+}
+document.querySelectorAll(".acc").forEach(function (acc) {
+  var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
+  var b = document.createElement("button"); b.type = "button"; b.className = "preset";
+  var name = ph.firstChild.textContent.trim();
+  b.setAttribute("aria-label", "Reset " + name); b.title = "Reset " + name;
+  b.appendChild($("#icoReset").content.cloneNode(true));
+  b.addEventListener("click", function () { resetPanel(pb); });
+  ph.after(b);
 });
 
 /* ---------- text layers ---------- */
@@ -1735,6 +1837,7 @@ function editText() {
   ta.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 cv.addEventListener("pointerdown", function (e) {
+  if (cropEdit) { cropDown(e); return; }
   var p = fr(e);
   if (pickKey) {
     var px = clamp(Math.floor(p[0] * src.width), 0, src.width - 1), py = clamp(Math.floor(p[1] * src.height), 0, src.height - 1);
@@ -1763,6 +1866,7 @@ cv.addEventListener("pointerdown", function (e) {
   if (i >= 0) e.preventDefault();
 });
 cv.addEventListener("pointermove", function (e) {
+  if (cdrag) { cropMove(e); return; }
   if (drawMode && stroke) { stroke.push(fr(e)); draw(); return; }
   if (!pts.has(e.pointerId)) return;
   pts.set(e.pointerId, [e.clientX, e.clientY]);
@@ -1786,6 +1890,7 @@ cv.addEventListener("pointermove", function (e) {
   }
 });
 function up(e) {
+  if (cdrag || cropEdit) { cropUp(); return; }
   if (drawMode && stroke) { if (e.type === "pointerup") finishPath(); else { stroke = null; draw(); } return; }
   pts.delete(e.pointerId);
   if (pinch) { if (pts.size < 2) { pinch = null; down = null; saveSettings(); } return; }
@@ -1848,29 +1953,36 @@ $("#xSkew").addEventListener("click", function () {
 });
 document.querySelectorAll("input[name=skMode]").forEach(function (r) { r.addEventListener("change", function () { skMode = r.value; syncXform(); }); });
 $("#xSk").addEventListener("input", function () { var v = +this.value; xset(function (im) { im[skMode] = v; }); });
-$("#xReset").addEventListener("click", function () { xset(function (im) { im.q = 0; im.st = im.kv = im.kh = 0; im.fx = false; }); });
 function syncCrop() {
   var box = $("#cropChips");
   if (!box.children.length) CROPS.forEach(function (c) {
     var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = c[1]; b.dataset.m = c[0];
-    b.addEventListener("click", function () { crop.m = c[0]; crop.pos = 0; syncCrop(); applyCrop(); draw(); });
+    b.addEventListener("click", function () { crop.m = c[0]; if (c[0] !== "free") cropFit(); syncCrop(); applyCrop(); draw(); });
     box.appendChild(b);
   });
   Array.prototype.forEach.call(box.children, function (b) { b.setAttribute("aria-pressed", b.dataset.m === crop.m ? "true" : "false"); });
-  var ratio = crop.m !== "orig" && crop.m !== "free";
-  $("#cropOri").hidden = !ratio || crop.m === "1:1"; $("#cPosF").hidden = !ratio; $("#cFree").hidden = crop.m !== "free";
+  var ratio = cropAspect() > 0;
+  $("#cropOri").hidden = !ratio || crop.m === "1:1"; $("#cFree").hidden = crop.m !== "free";
   document.querySelector("input[name=cOri][value=" + (crop.land ? "l" : "p") + "]").checked = true;
-  $("#cPos").value = crop.pos; $("#cPosO").textContent = crop.pos;
-  [["cL", "l"], ["cR", "r"], ["cT", "t"], ["cB", "b"]].forEach(function (q) { $("#" + q[0]).value = crop[q[1]]; $("#" + q[0] + "O").textContent = crop[q[1]] + "%"; });
+  var e = { cL: crop.x, cR: 1 - crop.x - crop.w, cT: crop.y, cB: 1 - crop.y - crop.h };
+  Object.keys(e).forEach(function (id) { var v = Math.round(e[id] * 100); $("#" + id).value = v; $("#" + id + "O").textContent = v + "%"; });
   var m = CROPS.filter(function (c) { return c[0] === crop.m; })[0][1];
   $("#cropName").textContent = crop.m === "orig" ? "" : m + (ratio && crop.m !== "1:1" ? (crop.land ? " landscape" : " portrait") : "");
 }
-document.querySelectorAll("input[name=cOri]").forEach(function (r) { r.addEventListener("change", function () { crop.land = r.value === "l"; crop.pos = 0; syncCrop(); applyCrop(); draw(); }); });
-$("#cPos").addEventListener("input", function () { crop.pos = +this.value; $("#cPosO").textContent = crop.pos; applyCrop(); draw(); });
-[["cL", "l", "r"], ["cR", "r", "l"], ["cT", "t", "b"], ["cB", "b", "t"]].forEach(function (q) {
+function setCropEdit(on) {
+  on = !!on && !!orig.width;
+  if (on === cropEdit) return;
+  cropEdit = on; cv.classList.toggle("cropping", on); applyCrop(); draw();
+}
+document.querySelectorAll("input[name=cOri]").forEach(function (r) { r.addEventListener("change", function () { crop.land = r.value === "l"; cropFit(); syncCrop(); applyCrop(); draw(); }); });
+[["cL", "l"], ["cR", "r"], ["cT", "t"], ["cB", "b"]].forEach(function (q) {
   $("#" + q[0]).addEventListener("input", function () {
-    crop[q[1]] = Math.min(+this.value, 90 - crop[q[2]]); this.value = crop[q[1]];   /* always keep at least 10% of the picture */
-    $("#" + q[0] + "O").textContent = crop[q[1]] + "%"; applyCrop(); draw();
+    /* Freeform sliders: inset from each side, always keeping at least 10% of the picture */
+    var l = crop.x, r = 1 - crop.x - crop.w, tp = crop.y, bt = 1 - crop.y - crop.h, v = +this.value / 100;
+    if (q[1] === "l") l = Math.min(v, 0.9 - r); if (q[1] === "r") r = Math.min(v, 0.9 - l);
+    if (q[1] === "t") tp = Math.min(v, 0.9 - bt); if (q[1] === "b") bt = Math.min(v, 0.9 - tp);
+    crop.x = l; crop.w = 1 - l - r; crop.y = tp; crop.h = 1 - tp - bt;
+    syncCrop(); applyCrop(); draw();
   });
 });
 $("#addText").addEventListener("click", function () {
