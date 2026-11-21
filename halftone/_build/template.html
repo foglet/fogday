@@ -58,12 +58,15 @@ body.big .stagecol{position:static}
 .imgs{display:grid;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
 .imgs .lab{display:flex;justify-content:space-between}
 .ilist{display:grid;gap:4px;max-height:236px;overflow-y:auto}
-.layer{display:flex;align-items:center;gap:8px;padding:3px 6px 3px 3px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
+.layer{display:flex;align-items:center;gap:8px;user-select:none;-webkit-user-select:none;padding:3px 6px 3px 3px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
 .layer[aria-current="true"]{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .layer canvas{height:40px;width:40px;object-fit:cover;border-radius:5px;flex:0 0 40px}
 .layer .nm{font-size:12px;font-weight:500;flex:0 0 52px;white-space:nowrap}
-.layer .grip{flex:0 0 20px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:grab;touch-action:none;margin-right:-4px}
-.layer .eye{flex:0 0 28px;width:28px;height:28px;border:0;background:none;color:var(--ink);padding:5px;border-radius:6px;cursor:pointer}
+.layer .grip{flex:0 0 20px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:grab;touch-action:none;margin-left:-4px}
+.layer.locked .grip{opacity:.25;cursor:default}
+.layer .eye[aria-pressed="false"].lk{color:var(--muted);opacity:.55}
+.layer .eye.lk[aria-pressed="true"]{color:var(--ink);opacity:1}
+.layer .eye{flex:0 0 28px;width:28px;height:28px;margin-right:-6px;border:0;background:none;color:var(--ink);padding:5px;border-radius:6px;cursor:pointer}
 .layer .eye .ico{width:18px;height:18px}
 .layer.off canvas,.layer.off .nm,.layer.off input,.layer.off output{opacity:.4}
 .layer.dragging{position:relative;z-index:2;cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.25)}
@@ -435,6 +438,8 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
 <template id="icoEye">{{icon:eye}}</template>
 <template id="icoEyeOff">{{icon:eye-slash}}</template>
 <template id="icoGrip">{{icon:dots-six-vertical}}</template>
+<template id="icoLock">{{icon:lock-simple}}</template>
+<template id="icoUnlock">{{icon:lock-simple-open}}</template>
 
 <script>
 (function () {
@@ -1050,20 +1055,26 @@ function renderImgs() {
     var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = i ? "Layer " + (i + 1) : "Bottom";
     var grip = document.createElement("span"); grip.className = "grip"; grip.title = "Drag to reorder"; grip.setAttribute("aria-hidden", "true");
     grip.appendChild($("#icoGrip").content.cloneNode(true));
-    grip.addEventListener("pointerdown", function (e) { startDrag(e, row, i); });
+    grip.addEventListener("pointerdown", function (e) { if (!im.locked) startDrag(e, row, i); });
     var eye = document.createElement("button"); eye.type = "button"; eye.className = "eye";
     eye.setAttribute("aria-pressed", im.hidden ? "true" : "false");
     eye.setAttribute("aria-label", (im.hidden ? "Show " : "Hide ") + (i ? "layer " + (i + 1) : "bottom layer")); eye.title = im.hidden ? "Show layer" : "Hide layer";
     eye.appendChild($(im.hidden ? "#icoEyeOff" : "#icoEye").content.cloneNode(true));
     eye.addEventListener("click", function (e) { e.stopPropagation(); im.hidden = !im.hidden; compose(); renderImgs(); });
     if (im.hidden) row.classList.add("off");
-    var r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.step = 1; r.value = im.op;
+    var lk = document.createElement("button"); lk.type = "button"; lk.className = "eye lk";
+    lk.setAttribute("aria-pressed", im.locked ? "true" : "false");
+    lk.setAttribute("aria-label", (im.locked ? "Unlock " : "Lock ") + (i ? "layer " + (i + 1) : "bottom layer")); lk.title = im.locked ? "Unlock layer" : "Lock layer";
+    lk.appendChild($(im.locked ? "#icoLock" : "#icoUnlock").content.cloneNode(true));
+    lk.addEventListener("click", function (e) { e.stopPropagation(); im.locked = !im.locked; renderImgs(); });
+    if (im.locked) row.classList.add("locked");
+    var r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.step = 1; r.value = im.op; r.disabled = !!im.locked;
     r.setAttribute("aria-label", (i ? "Layer " + (i + 1) : "Bottom layer") + " opacity");
     var o = document.createElement("output"); o.textContent = im.op + "%";
     r.addEventListener("input", function () { im.op = +r.value; o.textContent = im.op + "%"; compose(); });
     r.addEventListener("pointerdown", function () { if (selImg !== i) { selImg = i; markSel(); } });
     row.addEventListener("click", function (e) { if (e.target !== r && !dragged && selImg !== i) { selImg = i; renderImgs(); } });
-    row.append(grip, t, nm, r, o, eye); box.appendChild(row);
+    row.append(eye, lk, t, nm, r, o, grip); box.appendChild(row);
   })(i);
   markSel();
 }
@@ -1100,10 +1111,12 @@ function markSel() {
   });
   var im = imgs[selImg]; if (!im) return;
   $("#imgN").textContent = imgs.length + (imgs.length === 1 ? " image" : " images");
-  $("#imgBlend").value = im.blend; $("#imgBlend").disabled = selImg === 0;
-  $("#imgDown").disabled = selImg === 0; $("#imgUp").disabled = selImg === imgs.length - 1; $("#imgDel").disabled = imgs.length < 2;
+  var L = !!im.locked;
+  $("#imgBlend").value = im.blend; $("#imgBlend").disabled = selImg === 0 || L;
+  $("#imgDown").disabled = selImg === 0 || L; $("#imgUp").disabled = selImg === imgs.length - 1 || L; $("#imgDel").disabled = imgs.length < 2 || L;
 }
 function moveImg(d) {
+  if (imgs[selImg].locked) return;
   var j = selImg + d; if (j < 0 || j >= imgs.length) return;
   var a = imgs[selImg]; imgs[selImg] = imgs[j]; imgs[j] = a; selImg = j;
   compose(); renderImgs();
@@ -1624,6 +1637,7 @@ $("#imgDown").addEventListener("click", function () { moveImg(-1); });
 $("#imgUp").addEventListener("click", function () { moveImg(1); });
 $("#imgBlend").addEventListener("change", function () { imgs[selImg].blend = this.value; compose(); });
 $("#imgDel").addEventListener("click", function () {
+  if (imgs[selImg].locked) return;
   if (imgs.length < 2) return;
   imgs.splice(selImg, 1); imgs[0].op = Math.max(imgs[0].op, 0); selImg = Math.min(selImg, imgs.length - 1);
   compose(); renderImgs();
