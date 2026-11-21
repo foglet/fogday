@@ -215,11 +215,18 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .surp .btn{height:40px;font-size:15px;justify-content:center}
 .recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
 .foot.info{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
-.foot.info a{color:inherit}
+.foot.info{margin-top:22px;letter-spacing:.04em}
+.foot.info a{color:inherit;text-decoration:none}.foot.info a:hover{color:var(--ink)}
+#infoBtn{letter-spacing:.04em;font-size:12px}
 #infoBtn{display:inline-flex;align-items:center;gap:4px;text-decoration:none}#infoBtn .ico{width:15px;height:15px;flex-basis:15px}
 .legal{display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--ink);max-height:60vh;overflow:auto}.legal p{margin:0}.legal a{color:inherit}
 #infoModal .sheet{max-width:520px}
 .recipe{margin:0;font-size:13px;line-height:1.5}
+html{touch-action:manipulation}
+html.locked,html.locked body{overflow:hidden;height:100%;overscroll-behavior:none}
+body.big .stagecol{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;background:var(--paper)}
+body.big .stage{padding:0}
+body.big .stagecol .status{display:none}
 .ctlcol,.tabp,.surp,.recipe{align-content:start}
 @media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
 @media (max-width:440px){.pill [role=tab]{font-size:12px;gap:4px;padding:0}.pill [role=tab] .ico{width:15px!important;height:15px!important;flex-basis:15px!important}}
@@ -233,7 +240,8 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 select{background:var(--field);border:1px solid var(--line);border-radius:6px}
 .seg{background:var(--btn);border:0;border-radius:8px;padding:2px}
 .seg span{color:var(--muted)}
-.seg input:checked+span{background:var(--sel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg{height:36px;padding:3px}.seg span{min-height:30px;font-size:13px}
+.seg input:checked+span{background:var(--ink);color:var(--onfelt);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .chk input{accent-color:var(--ink)}
 .btn{background:var(--btn);border:0;border-radius:6px;font-weight:500}
 .btn:hover{background:var(--btnh)}
@@ -283,7 +291,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <span class="sep" aria-hidden="true"></span>
     <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original">{{icon:circle-half}}</button>
     <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal">{{icon:play}}</button>
-    <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image">{{icon:arrows-out-simple}}</button>
+    <button type="button" class="icob" id="resetAll" aria-label="Reset all settings" title="Reset all settings">{{icon:arrow-counter-clockwise}}</button>
     <span class="sep" aria-hidden="true"></span>
     <button type="button" class="tbtn" id="saveOpen">{{icon:download-simple}}<span>Export</span></button>
   </nav>
@@ -315,7 +323,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
       <button type="button" role="tab" id="t-surprise" aria-controls="p-surprise" data-tab="surprise">{{icon:gift}}<span>Surprise</span></button>
     </div>
     </div>
-    <button type="button" class="rbtn" id="tabReset" aria-label="Reset this tab" title="Reset this tab">{{icon:arrow-counter-clockwise}}</button>
 
     <!-- Dot matrix -->
     <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
@@ -483,7 +490,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     </div>
 
     <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
-    <p class="foot info"><button type="button" class="linkb" id="infoBtn">{{icon:info}}<span>Info</span></button> · <a href="https://fogday.com/">© FOGDAY STUDIOS</a></p>
+    <p class="foot info"><button type="button" class="linkb" id="infoBtn">INFO</button> · <a href="https://fogday.com/">© FOGDAY STUDIOS</a></p>
   </section>
 </main>
 
@@ -568,8 +575,8 @@ var pickKey = null, big = false, tab = S.look;
 var playing = 0;
 
 function loadSettings() {
+  /* every page load starts from the defaults; nothing is restored from earlier visits */
   var o = {};
-  try { o = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
   var s = Object.assign({}, DEF, o);
   /* text and layer settings from earlier versions are dropped */
   ["layers", "active", "v2", "text", "font", "weight", "textColor", "textOp", "size", "textMode", "align", "tx", "ty", "track", "lead", "upper"].forEach(function (k) { delete s[k]; });
@@ -993,9 +1000,14 @@ function fit() {
   if (!src.width) return;
   var wide = window.innerWidth >= 900;
   var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
+  if (big) {   /* full screen: the whole image, as large as the window allows */
+    var vw = window.innerWidth - 16, vh = window.innerHeight - 16;
+    w = vw; h = w * ar; if (h > vh) { h = vh; w = h / ar; }
+  }
   /* fitted: pinned and short enough to edit under it. Double tap: full width (95% of a phone screen), not pinned */
   var maxH = wide ? window.innerHeight - 140 : Math.min(window.innerHeight * 0.46, 560);
   if (!big && h > maxH) { h = maxH; w = h / ar; }
+  document.documentElement.classList.toggle("locked", big);
   var dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -1230,9 +1242,6 @@ function setTab(t) {
     $("#" + b.getAttribute("aria-controls")).hidden = !on;
     if (on) $(".pill").style.setProperty("--i", i);
   });
-  var lk = document.querySelector("#p-" + t + " .looks"); if (lk) lk.appendChild($("#tabReset"));
-  $("#tabReset").hidden = t === "surprise";
-  $("#tabReset").title = "Reset " + { dot: "Dot matrix", half: "Halftone", fx: "Effects", surprise: "Surprise" }[t]; $("#tabReset").setAttribute("aria-label", $("#tabReset").title);
   marks();
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
   stopPlay(); schedule();
@@ -1360,12 +1369,7 @@ document.querySelectorAll(".acc").forEach(function (acc) {
 /* ---------- canvas gestures: a tap picks a color (when asked), a double tap toggles full width ---------- */
 var lastTap = 0;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
-function toggleBig() {
-  big = !big; fit();
-  var b = $("#bigBtn"); b.setAttribute("aria-pressed", big ? "true" : "false");
-  b.setAttribute("aria-label", big ? "Fit image" : "Full width image"); b.title = b.getAttribute("aria-label");
-  b.innerHTML = big ? $("#icoIn").innerHTML : $("#icoOut").innerHTML;
-}
+function toggleBig() { big = !big; fit(); }
 cv.addEventListener("pointerdown", function (e) {
   if (!pickKey) return;
   var p = fr(e);
@@ -1417,10 +1421,10 @@ var TABKEYS = {
   half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
   fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxGuil", "fxGuilInk", "fxSeurat", "fxSeuratMix", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
 };
-$("#tabReset").addEventListener("click", function () {
-  TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
-  sync(); saveSettings(); schedule(); commit();
-  say({ dot: "Dot matrix", half: "Halftone", fx: "Effects" }[tab] + " reset.");
+$("#resetAll").addEventListener("click", function () {
+  var keepTab = tab === "fx" || tab === "surprise" ? tab : "dot";
+  S = Object.assign({}, DEF); sync(); setTab(keepTab); saveSettings(); schedule(); commit(); $("#recipe").textContent = "";
+  say("All settings reset.");
 });
 $("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
 $("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
@@ -1492,12 +1496,10 @@ function marks() {
     acc.querySelectorAll("[data-color]").forEach(function (el) { if (!same(S[el.dataset.color], DEF[el.dataset.color])) mod = true; });
     var ph = acc.querySelector(".ph"); ph.classList.toggle("mod", mod);
     acc.classList.toggle("mod", mod);
-    var rb = acc.querySelector(".shead .rbtn"); if (rb) rb.disabled = !mod;
     var name = ph.firstChild.textContent.trim();
     ph.setAttribute("aria-label", name + (mod ? ", changed" : ""));
   });
   var tp = document.querySelector("#p-" + tab), any = tp && tp.querySelector(".acc.mod");
-  $("#tabReset").disabled = !any;
 }
 
 /* ---------- undo and redo: one step per finished change ---------- */
@@ -1616,7 +1618,6 @@ $("#play").addEventListener("click", function () {
     playing = requestAnimationFrame(frame);
   })(t0);
 });
-$("#bigBtn").addEventListener("click", toggleBig);
 
 /* ---------- drop or paste a photo ---------- */
 var dropN = 0;
@@ -1633,17 +1634,13 @@ document.addEventListener("paste", function (e) {
   for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
 });
 
-/* panels: every section is open, under a header row with its name and a Reset button */
+/* panels: every section is open, under a header row with its name (bold once anything in it has changed) */
 document.querySelectorAll(".acc").forEach(function (acc) {
   var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
   var name = ph.firstChild.textContent.trim();
   var hd = document.createElement("div"); hd.className = "shead";
   var nm = document.createElement("h3"); nm.textContent = name; nm.id = "sh-" + pb.id;
-  var rb = document.createElement("button"); rb.type = "button"; rb.className = "rbtn";
-  rb.appendChild($("#icoReset").content.cloneNode(true));
-  rb.setAttribute("aria-label", "Reset " + name); rb.title = "Reset " + name;
-  rb.addEventListener("click", function () { resetPanel(pb); });
-  hd.append(nm, rb); acc.insertBefore(hd, pb);
+  hd.append(nm); acc.insertBefore(hd, pb);
   ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
   pb.setAttribute("role", "group"); pb.setAttribute("aria-labelledby", nm.id);
   acc.dataset.tabBtn = nm.id;

@@ -215,11 +215,18 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .surp .btn{height:40px;font-size:15px;justify-content:center}
 .recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
 .foot.info{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
-.foot.info a{color:inherit}
+.foot.info{margin-top:22px;letter-spacing:.04em}
+.foot.info a{color:inherit;text-decoration:none}.foot.info a:hover{color:var(--ink)}
+#infoBtn{letter-spacing:.04em;font-size:12px}
 #infoBtn{display:inline-flex;align-items:center;gap:4px;text-decoration:none}#infoBtn .ico{width:15px;height:15px;flex-basis:15px}
 .legal{display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--ink);max-height:60vh;overflow:auto}.legal p{margin:0}.legal a{color:inherit}
 #infoModal .sheet{max-width:520px}
 .recipe{margin:0;font-size:13px;line-height:1.5}
+html{touch-action:manipulation}
+html.locked,html.locked body{overflow:hidden;height:100%;overscroll-behavior:none}
+body.big .stagecol{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;background:var(--paper)}
+body.big .stage{padding:0}
+body.big .stagecol .status{display:none}
 .ctlcol,.tabp,.surp,.recipe{align-content:start}
 @media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
 @media (max-width:440px){.pill [role=tab]{font-size:12px;gap:4px;padding:0}.pill [role=tab] .ico{width:15px!important;height:15px!important;flex-basis:15px!important}}
@@ -233,7 +240,8 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 select{background:var(--field);border:1px solid var(--line);border-radius:6px}
 .seg{background:var(--btn);border:0;border-radius:8px;padding:2px}
 .seg span{color:var(--muted)}
-.seg input:checked+span{background:var(--sel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg{height:36px;padding:3px}.seg span{min-height:30px;font-size:13px}
+.seg input:checked+span{background:var(--ink);color:var(--onfelt);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .chk input{accent-color:var(--ink)}
 .btn{background:var(--btn);border:0;border-radius:6px;font-weight:500}
 .btn:hover{background:var(--btnh)}
@@ -283,7 +291,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <span class="sep" aria-hidden="true"></span>
     <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,16.37a86.4,86.4,0,0,1,16,3V212.67a86.4,86.4,0,0,1-16,3Zm32,9.26a87.81,87.81,0,0,1,16,10.54V195.83a87.81,87.81,0,0,1-16,10.54ZM40,128a88.11,88.11,0,0,1,80-87.63V215.63A88.11,88.11,0,0,1,40,128Zm160,50.54V77.46a87.82,87.82,0,0,1,0,101.08Z"/></svg></button>
     <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></button>
-    <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48V96a8,8,0,0,1-16,0V67.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM106.34,138.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l50.35-50.34a8,8,0,0,0-11.32-11.32Z"/></svg></button>
+    <button type="button" class="icob" id="resetAll" aria-label="Reset all settings" title="Reset all settings"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
     <span class="sep" aria-hidden="true"></span>
     <button type="button" class="tbtn" id="saveOpen"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>Export</span></button>
   </nav>
@@ -315,7 +323,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
       <button type="button" role="tab" id="t-surprise" aria-controls="p-surprise" data-tab="surprise"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></svg><span>Surprise</span></button>
     </div>
     </div>
-    <button type="button" class="rbtn" id="tabReset" aria-label="Reset this tab" title="Reset this tab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
 
     <!-- Dot matrix -->
     <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
@@ -483,7 +490,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     </div>
 
     <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
-    <p class="foot info"><button type="button" class="linkb" id="infoBtn"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Info</span></button> · <a href="https://fogday.com/">© FOGDAY STUDIOS</a></p>
+    <p class="foot info"><button type="button" class="linkb" id="infoBtn">INFO</button> · <a href="https://fogday.com/">© FOGDAY STUDIOS</a></p>
   </section>
 </main>
 
@@ -568,8 +575,8 @@ var pickKey = null, big = false, tab = S.look;
 var playing = 0;
 
 function loadSettings() {
+  /* every page load starts from the defaults; nothing is restored from earlier visits */
   var o = {};
-  try { o = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
   var s = Object.assign({}, DEF, o);
   /* text and layer settings from earlier versions are dropped */
   ["layers", "active", "v2", "text", "font", "weight", "textColor", "textOp", "size", "textMode", "align", "tx", "ty", "track", "lead", "upper"].forEach(function (k) { delete s[k]; });
@@ -993,9 +1000,14 @@ function fit() {
   if (!src.width) return;
   var wide = window.innerWidth >= 900;
   var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
+  if (big) {   /* full screen: the whole image, as large as the window allows */
+    var vw = window.innerWidth - 16, vh = window.innerHeight - 16;
+    w = vw; h = w * ar; if (h > vh) { h = vh; w = h / ar; }
+  }
   /* fitted: pinned and short enough to edit under it. Double tap: full width (95% of a phone screen), not pinned */
   var maxH = wide ? window.innerHeight - 140 : Math.min(window.innerHeight * 0.46, 560);
   if (!big && h > maxH) { h = maxH; w = h / ar; }
+  document.documentElement.classList.toggle("locked", big);
   var dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -1230,9 +1242,6 @@ function setTab(t) {
     $("#" + b.getAttribute("aria-controls")).hidden = !on;
     if (on) $(".pill").style.setProperty("--i", i);
   });
-  var lk = document.querySelector("#p-" + t + " .looks"); if (lk) lk.appendChild($("#tabReset"));
-  $("#tabReset").hidden = t === "surprise";
-  $("#tabReset").title = "Reset " + { dot: "Dot matrix", half: "Halftone", fx: "Effects", surprise: "Surprise" }[t]; $("#tabReset").setAttribute("aria-label", $("#tabReset").title);
   marks();
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
   stopPlay(); schedule();
@@ -1360,12 +1369,7 @@ document.querySelectorAll(".acc").forEach(function (acc) {
 /* ---------- canvas gestures: a tap picks a color (when asked), a double tap toggles full width ---------- */
 var lastTap = 0;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
-function toggleBig() {
-  big = !big; fit();
-  var b = $("#bigBtn"); b.setAttribute("aria-pressed", big ? "true" : "false");
-  b.setAttribute("aria-label", big ? "Fit image" : "Full width image"); b.title = b.getAttribute("aria-label");
-  b.innerHTML = big ? $("#icoIn").innerHTML : $("#icoOut").innerHTML;
-}
+function toggleBig() { big = !big; fit(); }
 cv.addEventListener("pointerdown", function (e) {
   if (!pickKey) return;
   var p = fr(e);
@@ -1417,10 +1421,10 @@ var TABKEYS = {
   half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
   fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxGuil", "fxGuilInk", "fxSeurat", "fxSeuratMix", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
 };
-$("#tabReset").addEventListener("click", function () {
-  TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
-  sync(); saveSettings(); schedule(); commit();
-  say({ dot: "Dot matrix", half: "Halftone", fx: "Effects" }[tab] + " reset.");
+$("#resetAll").addEventListener("click", function () {
+  var keepTab = tab === "fx" || tab === "surprise" ? tab : "dot";
+  S = Object.assign({}, DEF); sync(); setTab(keepTab); saveSettings(); schedule(); commit(); $("#recipe").textContent = "";
+  say("All settings reset.");
 });
 $("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
 $("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
@@ -1492,12 +1496,10 @@ function marks() {
     acc.querySelectorAll("[data-color]").forEach(function (el) { if (!same(S[el.dataset.color], DEF[el.dataset.color])) mod = true; });
     var ph = acc.querySelector(".ph"); ph.classList.toggle("mod", mod);
     acc.classList.toggle("mod", mod);
-    var rb = acc.querySelector(".shead .rbtn"); if (rb) rb.disabled = !mod;
     var name = ph.firstChild.textContent.trim();
     ph.setAttribute("aria-label", name + (mod ? ", changed" : ""));
   });
   var tp = document.querySelector("#p-" + tab), any = tp && tp.querySelector(".acc.mod");
-  $("#tabReset").disabled = !any;
 }
 
 /* ---------- undo and redo: one step per finished change ---------- */
@@ -1616,7 +1618,6 @@ $("#play").addEventListener("click", function () {
     playing = requestAnimationFrame(frame);
   })(t0);
 });
-$("#bigBtn").addEventListener("click", toggleBig);
 
 /* ---------- drop or paste a photo ---------- */
 var dropN = 0;
@@ -1633,17 +1634,13 @@ document.addEventListener("paste", function (e) {
   for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
 });
 
-/* panels: every section is open, under a header row with its name and a Reset button */
+/* panels: every section is open, under a header row with its name (bold once anything in it has changed) */
 document.querySelectorAll(".acc").forEach(function (acc) {
   var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
   var name = ph.firstChild.textContent.trim();
   var hd = document.createElement("div"); hd.className = "shead";
   var nm = document.createElement("h3"); nm.textContent = name; nm.id = "sh-" + pb.id;
-  var rb = document.createElement("button"); rb.type = "button"; rb.className = "rbtn";
-  rb.appendChild($("#icoReset").content.cloneNode(true));
-  rb.setAttribute("aria-label", "Reset " + name); rb.title = "Reset " + name;
-  rb.addEventListener("click", function () { resetPanel(pb); });
-  hd.append(nm, rb); acc.insertBefore(hd, pb);
+  hd.append(nm); acc.insertBefore(hd, pb);
   ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
   pb.setAttribute("role", "group"); pb.setAttribute("aria-labelledby", nm.id);
   acc.dataset.tabBtn = nm.id;
