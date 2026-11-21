@@ -62,6 +62,12 @@ body.big .stagecol{position:static}
 .layer[aria-current="true"]{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .layer canvas{height:40px;width:40px;object-fit:cover;border-radius:5px;flex:0 0 40px}
 .layer .nm{font-size:12px;font-weight:500;flex:0 0 52px;white-space:nowrap}
+.layer .grip{flex:0 0 20px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:grab;touch-action:none;margin-right:-4px}
+.layer .eye{flex:0 0 28px;width:28px;height:28px;border:0;background:none;color:var(--ink);padding:5px;border-radius:6px;cursor:pointer}
+.layer .eye .ico{width:18px;height:18px}
+.layer.off canvas,.layer.off .nm,.layer.off input,.layer.off output{opacity:.4}
+.layer.dragging{position:relative;z-index:2;cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ilist.drag .layer:not(.dragging){transition:transform .12s}
 .layer input[type=range]{flex:1 1 auto;min-width:40px}
 .layer output{font-size:12px;color:var(--muted);flex:0 0 34px;text-align:right}
 .imgctl{display:flex;gap:6px;align-items:center}
@@ -405,8 +411,8 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
       <label><input type="radio" name="igSize" value="1920" data-k="igSize"><span>1080×1920</span></label>
     </fieldset>
     <div class="row">
-      <button type="button" class="btn primary" id="savePng">{{icon:download-simple}}<span>Save image</span></button>
-      <button type="button" class="btn" id="share" hidden>{{icon:share-network}}<span>Share</span></button>
+      <button type="button" class="btn primary" id="savePng">{{icon:download-simple}}<span>Save to device</span></button>
+      <button type="button" class="btn" id="share" hidden>{{icon:share-network}}<span>Share or save to apps</span></button>
     </div>
     <button type="button" class="btn" id="saveSvg">{{icon:file-svg}}<span>Save SVG (vector)</span></button>
     <button type="button" class="btn" id="saveVideo" hidden>{{icon:film-strip}}<span>Save reveal video</span></button>
@@ -426,6 +432,9 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
   </div>
 </div>
 <template id="icoPick">{{icon:eyedropper}}</template>
+<template id="icoEye">{{icon:eye}}</template>
+<template id="icoEyeOff">{{icon:eye-slash}}</template>
+<template id="icoGrip">{{icon:dots-six-vertical}}</template>
 
 <script>
 (function () {
@@ -1022,6 +1031,7 @@ function compose() {
   ox.imageSmoothingQuality = "high";
   imgs.forEach(function (im, i) {
     var c = im.c, s = Math.max(W / c.width, H / c.height), dw = c.width * s, dh = c.height * s;
+    if (im.hidden) return;
     ox.globalAlpha = im.op / 100; ox.globalCompositeOperation = i ? im.blend : "source-over";
     ox.drawImage(c, (W - dw) / 2, (H - dh) / 2, dw, dh);
   });
@@ -1038,15 +1048,51 @@ function renderImgs() {
     var t = mk(80, 80), tx = t.getContext("2d"), c = im.c, s = Math.max(80 / c.width, 80 / c.height);
     tx.drawImage(c, (80 - c.width * s) / 2, (80 - c.height * s) / 2, c.width * s, c.height * s);
     var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = i ? "Layer " + (i + 1) : "Bottom";
+    var grip = document.createElement("span"); grip.className = "grip"; grip.title = "Drag to reorder"; grip.setAttribute("aria-hidden", "true");
+    grip.appendChild($("#icoGrip").content.cloneNode(true));
+    grip.addEventListener("pointerdown", function (e) { startDrag(e, row, i); });
+    var eye = document.createElement("button"); eye.type = "button"; eye.className = "eye";
+    eye.setAttribute("aria-pressed", im.hidden ? "true" : "false");
+    eye.setAttribute("aria-label", (im.hidden ? "Show " : "Hide ") + (i ? "layer " + (i + 1) : "bottom layer")); eye.title = im.hidden ? "Show layer" : "Hide layer";
+    eye.appendChild($(im.hidden ? "#icoEyeOff" : "#icoEye").content.cloneNode(true));
+    eye.addEventListener("click", function (e) { e.stopPropagation(); im.hidden = !im.hidden; compose(); renderImgs(); });
+    if (im.hidden) row.classList.add("off");
     var r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.step = 1; r.value = im.op;
     r.setAttribute("aria-label", (i ? "Layer " + (i + 1) : "Bottom layer") + " opacity");
     var o = document.createElement("output"); o.textContent = im.op + "%";
     r.addEventListener("input", function () { im.op = +r.value; o.textContent = im.op + "%"; compose(); });
     r.addEventListener("pointerdown", function () { if (selImg !== i) { selImg = i; markSel(); } });
-    row.addEventListener("click", function (e) { if (e.target !== r && selImg !== i) { selImg = i; renderImgs(); } });
-    row.append(t, nm, r, o); box.appendChild(row);
+    row.addEventListener("click", function (e) { if (e.target !== r && !dragged && selImg !== i) { selImg = i; renderImgs(); } });
+    row.append(grip, t, nm, r, o, eye); box.appendChild(row);
   })(i);
   markSel();
+}
+/* drag a layer by its grip: the row follows the finger, and passing the middle of a neighbor swaps them (live) */
+var dragged = false;
+function startDrag(e, row, i) {
+  e.preventDefault();
+  var box = $("#layers"), y0 = e.clientY, cur = i, grip = e.currentTarget;
+  selImg = i; markSel(); dragged = false;
+  grip.setPointerCapture(e.pointerId); row.classList.add("dragging"); box.classList.add("drag");
+  function move(ev) {
+    var dy = ev.clientY - y0;
+    if (Math.abs(dy) > 3) dragged = true;
+    var prev = row.previousElementSibling, next = row.nextElementSibling;
+    if (next && dy > next.offsetHeight / 2 + 4) {           /* moved down the list = behind */
+      box.insertBefore(next, row); y0 += next.offsetHeight + 4; dy = ev.clientY - y0;
+      var a = imgs[cur]; imgs[cur] = imgs[cur - 1]; imgs[cur - 1] = a; cur--; selImg = cur; compose();
+    } else if (prev && dy < -(prev.offsetHeight / 2 + 4)) { /* moved up = in front */
+      box.insertBefore(row, prev); y0 -= prev.offsetHeight + 4; dy = ev.clientY - y0;
+      var b = imgs[cur]; imgs[cur] = imgs[cur + 1]; imgs[cur + 1] = b; cur++; selImg = cur; compose();
+    }
+    row.style.transform = "translateY(" + dy + "px)";
+  }
+  function end() {
+    grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", end); grip.removeEventListener("pointercancel", end);
+    row.style.transform = ""; row.classList.remove("dragging"); box.classList.remove("drag");
+    renderImgs(); setTimeout(function () { dragged = false; }, 0);
+  }
+  grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
 }
 function markSel() {
   document.querySelectorAll("#layers .layer").forEach(function (row, k) {
