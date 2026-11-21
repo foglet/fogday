@@ -225,7 +225,7 @@ html.qrclear .meta,html.qrclear #meta .mtxt,html.qrclear .field>label,html.qrcle
       <select id="site" aria-label="Website">
         <option value="https://fogday.com" data-cap="FOGDAY.COM">Fogday Studios</option>
         <option value="https://fogday.com/mahjong" data-cap="BAY MAHJONG">Bay Mahjong</option>
-        <option value="https://fogday.com/maude/" data-cap="MAUDE PIXELS">Maude Pixels</option>
+        <option value="https://fogday.com/maude/" data-cap="MAUDE MXY">Maude Mxy</option>
         <option value="https://ohlonesky.com" data-cap="OHLONESKY.COM">Ohlone Sky</option>
         <option value="https://oysteratlas.com" data-cap="OYSTERATLAS.COM">Oyster Atlas</option>
         <option value="https://makeshine.co" data-cap="MAKESHINE.CO">makeshine.co</option>
@@ -1170,7 +1170,7 @@ var CAP_DEFAULT = {px: '', mono: '', trees: '', mj: ''};   // no caption unless 
 var SITE_CAP = {'https://ohlonesky.com': 'Ohlone Sky', 'https://makeshine.co': 'makeshine.co', 'https://oysteratlas.com': 'Oysters, oh my!', 'https://www.instagram.com/fogfish/': '@fogfish',
   'https://wa.me/14158733873?text=Bon%20jour%21': 'WhatsApp', 'https://www.linkedin.com/in/fogfish/': "Let's connect!", 'https://venmo.com/u/fogfish': '@fogfish'};
 /* Text written on the code for each website (SITE_TEXT, then SITE_CAP), never put in the caption box; a caption you type, or clear, wins */
-var SITE_TEXT = {'https://fogday.com': 'Fogday Studios', 'https://fogday.com/mahjong': 'Bay Area Mahjong', 'https://fogday.com/maude/': 'Maude Pixels'};
+var SITE_TEXT = {'https://fogday.com': 'Fogday Studios', 'https://fogday.com/mahjong': 'Bay Area Mahjong', 'https://fogday.com/maude/': 'Maude Mxy'};
 function codeText(){ return state.caption || (state.capUser ? '' : SITE_TEXT[state.url] || SITE_CAP[state.url] || ''); }
 function defCap(){ return CAP_DEFAULT[state.mode]; }   // the caption box starts empty; a website's phrase goes on the code (codeText), not in the box   // Fogday Studios and typed websites: the mode's own
 var state = {seed: 0, style: 'px', caption: CAP_DEFAULT.px, capUser: false, img: null, url: URL_TEXT, mode: 'px', art: null}, cur = null, prev = null, anim = 0;

@@ -1,4 +1,4 @@
-# Maude (fogday.com/maude)
+# Maude Mxy (fogday.com/maude)
 
 A photo turned into a **dot matrix** (colored dots sampled from the image, with a confetti-to-image reveal) or a **halftone** (one ink, image color, or CMYK screens), plus glitch, light-leak and color-grade effects.
 
