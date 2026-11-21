@@ -44,14 +44,17 @@ body.big .stagecol{position:static}
 .actions{display:flex;gap:6px}
 .imgs{display:grid;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
 .imgs .lab{display:flex;justify-content:space-between}
-.thumbs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
-.thumb{border:2px solid transparent;border-radius:7px;padding:0;background:none;cursor:pointer;flex:0 0 auto;line-height:0}
-.thumb[aria-pressed="true"]{border-color:var(--felt)}
-.thumb canvas{height:40px;width:auto;border-radius:5px}
+.ilist{display:grid;gap:4px;max-height:236px;overflow-y:auto}
+.layer{display:flex;align-items:center;gap:8px;padding:3px 6px 3px 3px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+.layer[aria-current="true"]{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
+.layer canvas{height:40px;width:40px;object-fit:cover;border-radius:5px;flex:0 0 40px}
+.layer .nm{font-size:12px;font-weight:500;flex:0 0 52px;white-space:nowrap}
+.layer input[type=range]{flex:1 1 auto;min-width:40px}
+.layer output{font-size:12px;color:var(--muted);flex:0 0 34px;text-align:right}
 .imgctl{display:flex;gap:6px;align-items:center}
 .imgctl input[type=range]{flex:1 1 auto;min-width:50px}
 .imgctl select{width:auto;flex:0 1 112px}
-.rotl .ico{transform:rotate(90deg)}.rotr .ico{transform:rotate(-90deg)}
+.rotu .ico{transform:rotate(180deg)}
 .actions .btn{flex:1 1 0}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;height:32px;padding:0 10px;border-radius:8px;font-size:13px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:500;min-width:0;white-space:nowrap}
 .btn span{overflow:hidden;text-overflow:ellipsis}
@@ -139,13 +142,12 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
     </div>
     <input type="file" id="fileIn" accept="image/*" multiple hidden>
     <div class="imgs" id="imgs" hidden>
-      <span class="lab"><span>Images, bottom to top</span><span id="imgN"></span></span>
-      <div class="thumbs" id="thumbs" role="group" aria-label="Images, bottom to top"></div>
+      <span class="lab"><span>Layers (top is in front)</span><span id="imgN"></span></span>
+      <div class="ilist" id="layers" role="list" aria-label="Image layers, top first"></div>
       <div class="imgctl">
-        <button type="button" class="icob rotl" id="imgDown" aria-label="Move this image down (behind)" title="Move down">{{icon:caret-down}}</button>
-        <button type="button" class="icob rotr" id="imgUp" aria-label="Move this image up (in front)" title="Move up">{{icon:caret-down}}</button>
-        <input type="range" id="imgOp" min="0" max="100" step="1" aria-label="Image opacity" title="Opacity">
-        <select id="imgBlend" aria-label="Image blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="lighten">Lighten</option><option value="darken">Darken</option><option value="difference">Difference</option></select>
+        <button type="button" class="icob rotu" id="imgUp" aria-label="Move this layer up (in front)" title="Move up">{{icon:caret-down}}</button>
+        <button type="button" class="icob" id="imgDown" aria-label="Move this layer down (behind)" title="Move down">{{icon:caret-down}}</button>
+        <select style="flex:1 1 auto;width:auto" id="imgBlend" aria-label="Image blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="lighten">Lighten</option><option value="darken">Darken</option><option value="difference">Difference</option></select>
         <button type="button" class="icob" id="imgDel" aria-label="Remove this image" title="Remove">{{icon:trash}}</button>
       </div>
     </div>
@@ -1008,20 +1010,33 @@ function compose() {
   applyCrop();
 }
 function renderImgs() {
-  $("#imgs").hidden = imgs.length < 2;
-  var box = $("#thumbs"); box.innerHTML = "";
-  imgs.forEach(function (im, i) {
-    var b = document.createElement("button"); b.type = "button"; b.className = "thumb";
-    b.setAttribute("aria-pressed", i === selImg ? "true" : "false"); b.setAttribute("aria-label", "Image " + (i + 1) + (i ? "" : " (bottom)"));
-    var t = mk(Math.round(40 * im.c.width / im.c.height) * 2, 80); t.getContext("2d").drawImage(im.c, 0, 0, t.width, t.height);
-    b.appendChild(t);
-    b.addEventListener("click", function () { selImg = i; renderImgs(); });
-    box.appendChild(b);
+  $("#imgs").hidden = isDemo || !imgs.length;
+  var box = $("#layers"); box.innerHTML = "";
+  for (var i = imgs.length - 1; i >= 0; i--) (function (i) {
+    var im = imgs[i], row = document.createElement("div");
+    row.className = "layer"; row.setAttribute("role", "listitem");
+    if (i === selImg) row.setAttribute("aria-current", "true");
+    var t = mk(80, 80), tx = t.getContext("2d"), c = im.c, s = Math.max(80 / c.width, 80 / c.height);
+    tx.drawImage(c, (80 - c.width * s) / 2, (80 - c.height * s) / 2, c.width * s, c.height * s);
+    var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = i ? "Layer " + (i + 1) : "Bottom";
+    var r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.step = 1; r.value = im.op;
+    r.setAttribute("aria-label", (i ? "Layer " + (i + 1) : "Bottom layer") + " opacity");
+    var o = document.createElement("output"); o.textContent = im.op + "%";
+    r.addEventListener("input", function () { im.op = +r.value; o.textContent = im.op + "%"; compose(); });
+    r.addEventListener("pointerdown", function () { if (selImg !== i) { selImg = i; markSel(); } });
+    row.addEventListener("click", function (e) { if (e.target !== r && selImg !== i) { selImg = i; renderImgs(); } });
+    row.append(t, nm, r, o); box.appendChild(row);
+  })(i);
+  markSel();
+}
+function markSel() {
+  document.querySelectorAll("#layers .layer").forEach(function (row, k) {
+    if (imgs.length - 1 - k === selImg) row.setAttribute("aria-current", "true"); else row.removeAttribute("aria-current");
   });
-  var im = imgs[selImg];
-  $("#imgN").textContent = (selImg + 1) + " of " + imgs.length;
-  $("#imgOp").value = im.op; $("#imgBlend").value = im.blend; $("#imgBlend").disabled = selImg === 0;
-  $("#imgDown").disabled = selImg === 0; $("#imgUp").disabled = selImg === imgs.length - 1;
+  var im = imgs[selImg]; if (!im) return;
+  $("#imgN").textContent = imgs.length + (imgs.length === 1 ? " image" : " images");
+  $("#imgBlend").value = im.blend; $("#imgBlend").disabled = selImg === 0;
+  $("#imgDown").disabled = selImg === 0; $("#imgUp").disabled = selImg === imgs.length - 1; $("#imgDel").disabled = imgs.length < 2;
 }
 function moveImg(d) {
   var j = selImg + d; if (j < 0 || j >= imgs.length) return;
@@ -1525,7 +1540,6 @@ $("#takePhoto").addEventListener("click", openCamera);
 $("#fileIn").addEventListener("change", function (e) { loadFiles(e.target.files); e.target.value = ""; });
 $("#imgDown").addEventListener("click", function () { moveImg(-1); });
 $("#imgUp").addEventListener("click", function () { moveImg(1); });
-$("#imgOp").addEventListener("input", function () { imgs[selImg].op = +this.value; compose(); });
 $("#imgBlend").addEventListener("change", function () { imgs[selImg].blend = this.value; compose(); });
 $("#imgDel").addEventListener("click", function () {
   if (imgs.length < 2) return;
