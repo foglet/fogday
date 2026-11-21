@@ -1850,7 +1850,10 @@ $("#htOnR").addEventListener("change", function () { setLook("half"); });
 $("#htNoteOff").addEventListener("click", function () { setLook("dot"); });
 $("#resetAll").addEventListener("click", function () {
   var keepTab = tab === "fx" || tab === "surprise" ? tab : "dot";
-  S = Object.assign({}, DEF); sync(); syncLook(); setTab(keepTab); saveSettings(); schedule(); commit(); $("#recipe").textContent = "";
+  S = Object.assign({}, DEF); sync(); syncLook(); setTab(keepTab); saveSettings();
+  /* everything goes: the user's photo (back to the starting picture), the file pickers and undo history */
+  ["#fileIn", "#camIn"].forEach(function (q) { var el = $(q); if (el) el.value = ""; });
+  demo(); undoS = []; redoS = []; lastJ = null; commit(); schedule(); $("#recipe").textContent = "";
   say("All settings reset.");
 });
 $("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
