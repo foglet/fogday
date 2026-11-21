@@ -1,4 +1,4 @@
-# Image Looks (fogday.com/halftone)
+# Halftone (fogday.com/halftone)
 
 A photo turned into a **dot matrix** (colored dots sampled from the image, with a confetti-to-image reveal) or a **halftone** (one ink, image color, or CMYK screens), with a text overlay in a Google font.
 

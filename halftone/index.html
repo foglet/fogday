@@ -9,16 +9,29 @@ if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIn
 <meta name="theme-color" content="#fbf8f1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Image Looks">
+<meta name="apple-mobile-web-app-title" content="Halftone">
 <link rel="apple-touch-icon" href="/px/icon-180.png">
-<title>Image Looks</title>
+<title>Halftone</title>
+<script>/* light/dark, shared with the rest of fogday.com (localStorage "fogday-theme"); no saved choice = follow the system */
+(function () { var t = null; try { t = localStorage.getItem("fogday-theme"); } catch (e) {}
+  if (t !== "dark" && t !== "light") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.dataset.theme = t; })();</script>
 <meta name="description" content="Turn a photo into a dot matrix or a halftone print, add text on a path, save it as an image or a video.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
 <style>
-:root{--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8;--well:#ece6d9;
+:root{--paper:#ffffff;--ink:#1d1d1d;--muted:#5e5e5e;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#dcdcdc;--card:#ffffff;--well:#efefef;--field:#ffffff;--stagebg:#ececec;color-scheme:light;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
+:root[data-theme="dark"]{--paper:#1e1e1e;--ink:#e6e6e6;--muted:#a3a3a3;--felt:#2d7d63;--felt-d:#246a53;--red:#ff7a6e;--line:#444444;--card:#2b2b2b;--well:#3a3a3a;--field:#363636;--stagebg:#141414;color-scheme:dark}
+.topr{display:flex;align-items:center;gap:2px}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:6px;margin:0;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:8px}
+.theme-toggle svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-toggle .icon-sun{display:none}
+.theme-toggle:hover .icon-moon path{fill:currentColor}
+:root[data-theme="dark"] .theme-toggle .icon-moon{display:none}
+:root[data-theme="dark"] .theme-toggle .icon-sun{display:block}
+:root[data-theme="dark"] .theme-toggle:hover{color:#ffe680}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.35 "Rubik",system-ui,sans-serif;-webkit-text-size-adjust:100%}
@@ -36,7 +49,7 @@ h1{margin:0;font:400 22px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
 body.big .stagecol{position:static}
 @media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
 .stage{display:flex;justify-content:center}
-#cv{display:block;border-radius:12px;background:#eee8dc;box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
+#cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
 .hint{margin:4px 0 0;text-align:center;font-size:12px;color:var(--muted);min-height:16px}
@@ -45,7 +58,7 @@ body.big .stagecol{position:static}
 .imgs{display:grid;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
 .imgs .lab{display:flex;justify-content:space-between}
 .ilist{display:grid;gap:4px;max-height:236px;overflow-y:auto}
-.layer{display:flex;align-items:center;gap:8px;padding:3px 6px 3px 3px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+.layer{display:flex;align-items:center;gap:8px;padding:3px 6px 3px 3px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
 .layer[aria-current="true"]{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .layer canvas{height:40px;width:40px;object-fit:cover;border-radius:5px;flex:0 0 40px}
 .layer .nm{font-size:12px;font-weight:500;flex:0 0 52px;white-space:nowrap}
@@ -83,7 +96,7 @@ body.big .stagecol{position:static}
 .f>.lab{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
 .f>.lab output{color:var(--ink);font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;height:26px;margin:0;accent-color:var(--felt);background:transparent}
-select,textarea{width:100%;min-height:32px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px}
+select,textarea{width:100%;min-height:32px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--field);font-size:13px}
 textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height:1.3}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .seg{display:flex;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--card);gap:2px;margin:0;min-width:0;height:32px}
@@ -94,10 +107,10 @@ textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height
 .seg input:checked+span{background:var(--felt);color:#fff}
 .seg input:focus-visible+span{outline:3px solid var(--red);outline-offset:1px}
 .color{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
-.color input[type=color]{width:40px;height:32px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+.color input[type=color]{width:40px;height:32px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
 .color .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
 .color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--felt)}
-.icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;padding:0}
+.icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer;padding:0}
 .icob[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
 .icob[disabled]{opacity:.4;cursor:default}
 .chk{display:flex;align-items:center;gap:8px;min-height:32px;cursor:pointer;font-size:13px}
@@ -107,7 +120,7 @@ textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height
 /* text layers */
 .layers{display:flex;gap:6px;align-items:center}
 .chips{display:flex;gap:4px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:none}
-.chip{flex:0 0 auto;max-width:130px;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{flex:0 0 auto;max-width:130px;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--field);cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
 .status{min-height:18px;margin:0;font-size:13px;color:var(--felt)}
 .foot{text-align:center;font-size:12px;color:var(--muted);margin:4px 0 0}
@@ -124,8 +137,14 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
 </head>
 <body data-look="dot" data-ht="rgb" data-path="none">
 <header class="top">
-  <h1>Image Looks</h1>
+  <h1>Halftone</h1>
+  <div class="topr">
+  <button class="theme-toggle" id="themeBtn" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+  </button>
   <a href="/works/" class="bento" aria-label="Projects" title="Projects"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
+  </div>
 </header>
 
 <main class="wrap">
@@ -1231,7 +1250,7 @@ function savePng() { allFonts().then(makePng).then(function (b) { download(b, fn
 function share() {
   allFonts().then(makePng).then(function (b) {
     var f = new File([b], fname("png"), { type: "image/png" });
-    if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: "Image Looks" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: "Halftone" });
     download(b, f.name);
   }).catch(function () {});
 }
@@ -1535,6 +1554,23 @@ cv.addEventListener("pointercancel", up);
 cv.addEventListener("dblclick", function (e) { e.preventDefault(); });
 
 /* ---------- buttons ---------- */
+function themeSync() {
+  var dark = document.documentElement.dataset.theme === "dark", b = $("#themeBtn");
+  b.setAttribute("aria-pressed", dark ? "true" : "false");
+  b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode"); b.title = b.getAttribute("aria-label");
+  document.querySelector("meta[name=theme-color]").setAttribute("content", dark ? "#1e1e1e" : "#ffffff");
+}
+$("#themeBtn").addEventListener("click", function () {
+  var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("fogday-theme", next); } catch (e) {}
+  themeSync();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
+  var saved = null; try { saved = localStorage.getItem("fogday-theme"); } catch (x) {}
+  if (saved !== "dark" && saved !== "light") { document.documentElement.dataset.theme = e.matches ? "dark" : "light"; themeSync(); }
+});
+themeSync();
 $("#addImg").addEventListener("click", function () { $("#fileIn").click(); });
 $("#takePhoto").addEventListener("click", openCamera);
 $("#fileIn").addEventListener("change", function (e) { loadFiles(e.target.files); e.target.value = ""; });
