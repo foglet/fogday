@@ -217,6 +217,8 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .surp .btn{height:40px;font-size:15px;justify-content:center}
 .recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
 .recipe{margin:0;font-size:13px;line-height:1.5}
+.tabrow{position:sticky;top:var(--pin,0px);z-index:6;background:var(--bar)}
+body.big .tabrow{position:static}
 .acc.flash{animation:accflash 1.2s ease-out}
 @keyframes accflash{0%{background:color-mix(in srgb,var(--ink) 10%,transparent)}100%{background:transparent}}
 @media (prefers-reduced-motion:reduce){.acc.flash{animation:none}}
@@ -1126,6 +1128,7 @@ function fit() {
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   document.body.classList.toggle("big", big);
+  pinTabs();
   schedule();
 }
 
@@ -1361,7 +1364,13 @@ function setTab(t) {
   stopPlay(); schedule();
 }
 document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
-  b.addEventListener("click", function () { setTab(b.dataset.tab); if (b.dataset.tab === "surprise") surprise(); });
+  b.addEventListener("click", function () {
+    setTab(b.dataset.tab); if (b.dataset.tab === "surprise") surprise();
+    /* if the tabs were pinned, start the new tab at its top, right under them */
+    var tp = document.getElementById(b.getAttribute("aria-controls")), pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin")) || 0;
+    var y = tp.getBoundingClientRect().top + window.scrollY - pin - $(".tabrow").getBoundingClientRect().height;
+    if (window.scrollY > y) window.scrollTo({ top: y });
+  });
   b.addEventListener("keydown", function (e) {
     var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (!d) return;
@@ -1595,12 +1604,19 @@ var LOOKS = {
 /* after picking an effect, bring its controls into view (under the pinned picture on phones) and flash them */
 var FXGO = { "3px": "a-px", Cinema: "a-grade", Dreamy: "a-light", Duotone: "a-duo", Film: "a-grade", "Guilloché": "a-guil",
   Minecraft: "a-mine", Noir: "a-grade", Seurat: "a-seurat", VHS: "a-glitch", Warhol: "a-warhol" };
+var DOTGO = { Bloom: "a-reveal", Classic: "a-grid", Fine: "a-grid", "Full color": "a-reveal", Neon: "a-dmcolor", Pastel: "a-dmcolor" };
+/* the tab row stays pinned: under the picture on phones, at the top of the sidebar on wide screens */
+function pinTabs() {
+  var sc = document.querySelector(".stagecol"), h = 0;
+  if (window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky") h = sc.getBoundingClientRect().height;
+  document.documentElement.style.setProperty("--pin", Math.round(h) + "px");
+}
 function goTo(id) {
   var pb = id && document.getElementById(id); if (!pb) return;
   var acc = pb.closest(".acc") || pb;
   requestAnimationFrame(function () {
-    var sc = document.querySelector(".stagecol"), top = 8;
-    if (window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky") top += sc.getBoundingClientRect().height;
+    pinTabs();
+    var top = 8 + (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin")) || 0) + $(".tabrow").getBoundingClientRect().height;
     var y = acc.getBoundingClientRect().top + window.scrollY - top;
     window.scrollTo({ top: Math.max(0, y), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     acc.classList.remove("flash"); void acc.offsetWidth; acc.classList.add("flash");
@@ -1614,7 +1630,7 @@ document.querySelectorAll("[data-looks]").forEach(function (row) {
     b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () {
       Object.assign(S, lookVals(t, l[1])); if (t === "half") S.look = "half"; else if (t === "dot") S.look = "dot"; sync(); syncLook(); saveSettings();
-      goTo(t === "half" ? "a-screen" : t === "fx" ? FXGO[l[0]] : null); schedule(); commit(); say(tr(l[0]) + " " + tr("look."));
+      goTo(t === "half" ? "a-screen" : t === "fx" ? FXGO[l[0]] : t === "dot" ? DOTGO[l[0]] : null); schedule(); commit(); say(tr(l[0]) + " " + tr("look."));
     });
     row.appendChild(b);
   });
