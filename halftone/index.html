@@ -213,6 +213,11 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .surp{display:grid;gap:12px;padding:18px 20px}
 .surp .btn{height:40px;font-size:15px;justify-content:center}
 .recipe{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.foot.info{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
+.foot.info a{color:inherit}
+#infoBtn{display:inline-flex;align-items:center;gap:4px;text-decoration:none}#infoBtn .ico{width:15px;height:15px;flex-basis:15px}
+.legal{display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--ink);max-height:60vh;overflow:auto}.legal p{margin:0}.legal a{color:inherit}
+#infoModal .sheet{max-width:520px}
 .recipe li{padding:8px 10px;border-radius:6px;background:var(--btn);font-size:13px}
 .ctlcol,.tabp,.surp,.recipe{align-content:start}
 @media (min-width:900px){.wrap{grid-template-columns:minmax(0,1fr) 420px}}
@@ -452,10 +457,21 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
         </div>
       </div>
       <div class="acc">
-        <button type="button" class="ph" aria-expanded="false" aria-controls="a-lego">1×1 tiles<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
-        <div class="pb" id="a-lego" hidden>
-          <div class="f"><label class="lab" for="fxLego">Tile size <output data-for="fxLego"></output></label><input type="range" id="fxLego" min="0" max="100" step="1" data-k="fxLego"></div>
-          <p class="foot" style="text-align:left;margin:0;padding:0">Flat 1×1 plates in LEGO-style colors, like a tile mosaic. 0 is off.</p>
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-guil">Guilloché<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-guil" hidden>
+          <div class="f"><label class="lab" for="fxGuil">Line density <output data-for="fxGuil"></output></label><input type="range" id="fxGuil" min="0" max="100" step="1" data-k="fxGuil"></div>
+          <fieldset class="seg"><legend>Guilloché ink</legend>
+            <label><input type="radio" name="fxGuilInk" value="photo" data-k="fxGuilInk"><span>Photo colors</span></label>
+            <label><input type="radio" name="fxGuilInk" value="green" data-k="fxGuilInk"><span>Banknote green</span></label>
+            <label><input type="radio" name="fxGuilInk" value="ink" data-k="fxGuilInk"><span>Black</span></label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-seurat">Seurat<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-seurat" hidden>
+          <div class="f"><label class="lab" for="fxSeurat">Dab size <output data-for="fxSeurat"></output></label><input type="range" id="fxSeurat" min="0" max="100" step="1" data-k="fxSeurat"></div>
+          <div class="f"><label class="lab" for="fxSeuratMix">Color mixing <output data-for="fxSeuratMix"></output></label><input type="range" id="fxSeuratMix" min="0" max="100" step="1" data-k="fxSeuratMix"></div>
         </div>
       </div>
       <p class="foot">Effects show in saved images and video, not in SVG.</p>
@@ -471,10 +487,23 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     </div>
 
     <p class="foot">Photos stay on your device. Nothing is uploaded. Drop or paste a photo to open it.</p>
-    <p class="foot"><button type="button" class="linkb" id="reset">Reset all settings</button></p>
+    <p class="foot"><button type="button" class="linkb" id="reset">Reset all</button></p>
+    <p class="foot info"><button type="button" class="linkb" id="infoBtn"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Info</span></button> · © 2026 <a href="https://fogday.com/">Fogday Studios</a></p>
   </section>
 </main>
 
+<div class="modal" id="infoModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <h2 id="infoTitle">Info <button type="button" class="icob" id="infoClose" aria-label="Close"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></h2>
+    <div class="legal">
+      <p><strong>Halftone</strong> turns a photo into dot matrix, halftone and other print-inspired looks, right in your browser. © 2026 <a href="https://fogday.com/">Fogday Studios</a>. All rights reserved.</p>
+      <p><strong>Your photos.</strong> Images are processed on your device and are never uploaded. Settings are kept in your browser's local storage so they are there next time; clearing your browser data removes them.</p>
+      <p><strong>Trademarks.</strong> All trademarks, brand names, product names and artist names mentioned are the property of their respective owners. Minecraft is a trademark of Mojang Synergies AB. Names such as Warhol, Seurat, Bridget Riley and VHS are used only to describe a visual style; their use does not imply any affiliation with, sponsorship by or endorsement from their owners, estates or rights holders.</p>
+      <p><strong>Your images.</strong> You are responsible for having the rights to the photos you use and for how you use the images you make.</p>
+      <p><strong>No warranty.</strong> This tool is provided "as is", without warranty of any kind, express or implied, including fitness for a particular purpose. Fogday Studios is not liable for any loss or damage arising from its use.</p>
+    </div>
+  </div>
+</div>
 <div class="modal" id="saveModal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
     <h2 id="saveTitle">Save <button type="button" class="icob" id="saveClose" aria-label="Close"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></h2>
@@ -522,7 +551,7 @@ var DEF = {
   cols: 56, reveal: 80, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "center", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7, dmFrom: "confetti",
   htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
-  fxWarhol: "off", fxWarholMix: 0, fxMine: 0, fxLego: 0, fxMinePal: "mc", fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
+  fxWarhol: "off", fxWarholMix: 0, fxMine: 0, fxGuil: 0, fxGuilInk: "photo", fxSeurat: 0, fxSeuratMix: 50, fxMinePal: "mc", fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
   outSize: "2048", ig: false, igSize: "1350"
 };
 var PALETTES = {
@@ -803,35 +832,63 @@ function minecraft(ctx, W, H) {
     ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.fillRect(x, y + bs - e, bs, e); ctx.fillRect(x + bs - e, y, e, bs);
   }
 }
-var LEGO = ["#f4f4f4", "#1b2a34", "#b40000", "#1e5aa8", "#fac80a", "#00852b", "#646e6e", "#a0a5a9", "#e4cd9e", "#5f3109", "#d67923",
-  "#a5ca18", "#36aebf", "#19325a", "#720012", "#e4adc8", "#923978", "#958a73", "#708e7c", "#5a93db", "#184632", "#f8bb3d", "#bb805a",
-  "#91501c", "#ff698f", "#cda4de", "#adc3c0"].map(rgb);
-/* 1x1: flat 1x1 plates in a grid, each snapped to the nearest brick color, with a thin dark seam, rounded corners and a soft sheen */
-function lego(ctx, W, H) {
-  var bs = (8 + S.fxLego / 100 * 52) * W / 1080, cols = Math.max(1, Math.ceil(W / bs)), rows = Math.max(1, Math.ceil(H / bs));
-  var s = mk(cols, rows), sx = s.getContext("2d", { willReadFrequently: true });
-  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, cols * bs, rows * bs, 0, 0, cols, rows);
-  var d = sx.getImageData(0, 0, cols, rows).data, g = Math.max(0.6, bs * 0.05), r = bs * 0.14;
-  ctx.fillStyle = "#111417"; ctx.fillRect(0, 0, W, H);
-  for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
-    var q = (j * cols + i) * 4, c = [d[q], d[q + 1], d[q + 2]], best = LEGO[0], bd = 1e9;
-    for (var k = 0; k < LEGO.length; k++) {
-      var m = LEGO[k], dd = (m[0] - c[0]) * (m[0] - c[0]) * 0.3 + (m[1] - c[1]) * (m[1] - c[1]) * 0.59 + (m[2] - c[2]) * (m[2] - c[2]) * 0.11;
-      if (dd < bd) { bd = dd; best = m; }
+/* Guilloché: two crossing families of engraved wave lines (banknote style); each line swells where the picture is dark */
+function guilloche(ctx, W, H) {
+  var k = W / 1080, n = 30 + S.fxGuil / 100 * 90, s = H / n, step = Math.max(1.5, 4 * k);
+  /* read the photo itself (not the dots drawn over it) so the lines swell smoothly */
+  var sw = Math.max(2, Math.round(W / 4)), sh = Math.max(2, Math.round(H / 4)), sm = mk(sw, sh), sx = sm.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(src, 0, 0, sw, sh);
+  var d = sx.getImageData(0, 0, sw, sh).data;
+  function at(x, y) { return (clamp((y / H * sh) | 0, 0, sh - 1) * sw + clamp((x / W * sw) | 0, 0, sw - 1)) * 4; }
+  var green = [24, 84, 58], paper = S.fxGuilInk === "green" ? "#f1f4ea" : "#fbf8f0";
+  ctx.fillStyle = paper; ctx.fillRect(0, 0, W, H);
+  ctx.lineCap = "butt"; ctx.lineJoin = "round";
+  var L1 = W / 5.5, L2 = W / 1.9, A = s * 1.15;
+  for (var fam = 0; fam < 2; fam++) {
+    var sg = fam ? -1 : 1;
+    for (var y0 = -A * 2; y0 <= H + A * 2; y0 += s) {
+      var px = null, py = null;
+      for (var x = -step; x <= W + step; x += step) {
+        /* each family: a main wave whose phase drifts down the page (so neighbors weave), a slow swell, and a fine ripple */
+        var ph = y0 / H * 6.2832 * 2.2 + (fam ? Math.PI : 0);
+        var y = y0 + A * Math.sin(6.2832 * x / L1 + ph) + A * 0.55 * Math.sin(6.2832 * x / L2 + sg * y0 / H * 4) + A * 0.18 * Math.sin(6.2832 * x / (L1 / 4) + ph * 2);
+        if (px !== null && y > -s && y < H + s && py > -s && py < H + s) {
+          var q = at((x + px) / 2, (y + py) / 2), r = d[q], g = d[q + 1], b = d[q + 2], v = 1 - (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          ctx.lineWidth = s * (0.05 + 0.36 * v);
+          var c = S.fxGuilInk === "green" ? green : S.fxGuilInk === "ink" ? [20, 20, 22] : [r * 0.6, g * 0.6, b * 0.6];
+          ctx.strokeStyle = "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")";
+          ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+        }
+        px = x; py = y;
+      }
     }
-    var x = i * bs + g, y = j * bs + g, w = bs - 2 * g;
-    ctx.fillStyle = "rgb(" + best[0] + "," + best[1] + "," + best[2] + ")";
-    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, w, r); else ctx.rect(x, y, w, w); ctx.fill();
-    if (w > 5) {
-      ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.fillRect(x + r * 0.6, y + w * 0.08, w - r * 1.2, Math.max(1, w * 0.07));
-      ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fillRect(x + r * 0.6, y + w * 0.84, w - r * 1.2, Math.max(1, w * 0.1));
-    }
+  }
+}
+/* Seurat: pointillism — the picture rebuilt from small round dabs of color on pale canvas, some dabs nudged toward neighboring hues
+   so colors mix in the eye; the dab grid is jittered so it never looks mechanical */
+function seurat(ctx, W, H) {
+  var k = W / 1080, r = (2.5 + S.fxSeurat / 100 * 9) * k, gap = r * 2.1, mix = S.fxSeuratMix / 100;
+  var cols = Math.ceil(W / gap) + 1, rows = Math.ceil(H / gap) + 1;
+  var sw = Math.max(2, cols), sh = Math.max(2, rows), sm = mk(sw, sh), sx = sm.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(src, 0, 0, sw, sh);   /* painted from the photo itself */
+  var d = sx.getImageData(0, 0, sw, sh).data, rnd = mulberry(S.fxSeed * 7 + 11);
+  ctx.fillStyle = "#f4efe2"; ctx.fillRect(0, 0, W, H);
+  for (var pass = 0; pass < 2; pass++) for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+    var q = (Math.min(j, sh - 1) * sw + Math.min(i, sw - 1)) * 4, c = [d[q], d[q + 1], d[q + 2]];
+    var t = rnd();
+    if (t < mix * 0.35) { var m = Math.max(c[0], c[1], c[2]), n = Math.min(c[0], c[1], c[2]); c = c.map(function (v) { return v === m ? Math.min(255, v * 1.25) : v === n ? v * 0.7 : v; }); }
+    else if (t < mix * 0.5) { c = [c[1] * 0.5 + c[0] * 0.5, c[2] * 0.6 + c[1] * 0.4, c[0] * 0.4 + c[2] * 0.6]; }
+    var j1 = rnd() - 0.5, j2 = rnd() - 0.5, rr = r * (pass ? 0.55 + rnd() * 0.3 : 0.8 + rnd() * 0.35);
+    var x = (i + (pass ? 0.5 : 0) + j1 * 0.7) * gap, y = (j + (pass ? 0.5 : 0) + j2 * 0.7) * gap;
+    ctx.fillStyle = "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")";
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
   }
 }
 function effects(ctx, W, H) {
   if (S.fxWarhol !== "off") warhol(ctx, W, H, +S.fxWarhol);
   if (S.fxMine > 0) minecraft(ctx, W, H);
-  if (S.fxLego > 0) lego(ctx, W, H);
+  if (S.fxGuil > 0) guilloche(ctx, W, H);
+  if (S.fxSeurat > 0) seurat(ctx, W, H);
   var k = W / 1080, grade = GRADES[S.fxGrade], ga = S.fxGradeAmt / 100;
   var sh = Math.round(S.fxShift / 100 * 24 * k), gl = S.fxGlitch / 100;
   if ((grade && ga > 0) || sh || gl > 0) {
@@ -1196,7 +1253,7 @@ document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
 });
 
 /* ---------- controls ---------- */
-var UNITS = { fxShift: "%", fxGlitch: "%", fxLeak: "%", fxFlare: "%", fxStreak: "%", fxGradeAmt: "%", reveal: "%", dmDot: "%", dmOp: "%", htOp: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
+var UNITS = { fxGuil: "%", fxSeurat: "%", fxSeuratMix: "%", fxShift: "%", fxGlitch: "%", fxLeak: "%", fxFlare: "%", fxStreak: "%", fxGradeAmt: "%", reveal: "%", dmDot: "%", dmOp: "%", htOp: "%", band: "%", wash: "%", scatter: "%", dmSat: "%", dmCon: "%", htGain: "%", htCon: "%", op: "%", size: "%",
   tx: "%", ty: "%", lead: "%", hs: "%", vs: "%", revealTime: " s", htAngle: "°", rot: "°", skew: "°", bend: "%", radius: "%",
   waveA: "%", start: "%", strokeW: "%", shadow: "%", shift: "%" };
 var SIGNED = { htLight: 1, rot: 1, skew: 1, shift: 1, bend: 1, start: 1, track: 1 };
@@ -1363,7 +1420,7 @@ $("#saveVideo").addEventListener("click", saveVideo);
 var TABKEYS = {
   dot: ["cols", "reveal", "dmDot", "dmOp", "dmShape", "dmFrom", "dir", "palette", "band", "wash", "scatter", "dmSat", "dmCon", "dmBg", "revealTime", "seed"],
   half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
-  fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxLego", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
+  fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxGuil", "fxGuilInk", "fxSeurat", "fxSeuratMix", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
 };
 $("#tabReset").addEventListener("click", function () {
   TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
@@ -1381,6 +1438,9 @@ $("#camCancel").addEventListener("click", closeCamera);
 $("#flip").addEventListener("click", function () { facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
 trap("#camModal", closeCamera);
 trap("#saveModal", function () { closeModal("#saveModal"); });
+$("#infoBtn").addEventListener("click", function () { openModal("#infoModal", "#infoClose"); });
+$("#infoClose").addEventListener("click", function () { closeModal("#infoModal"); });
+trap("#infoModal", function () { closeModal("#infoModal"); });
 
 /* ---------- starting points: one tap sets that tab's settings to a tuned look (the rest of the tab goes to defaults) ---------- */
 var LOOKS = {
@@ -1406,7 +1466,8 @@ var LOOKS = {
     ["Film", { fxGrade: "warm", fxGradeAmt: 70, fxLeak: 45 }],
     ["Minecraft", { fxMine: 40 }],
     ["Warhol", { fxWarhol: "2" }],
-    ["1×1", { fxLego: 45 }],
+    ["Guilloché", { fxGuil: 55 }],
+    ["Seurat", { fxSeurat: 35 }],
     ["Cinema", { fxGrade: "teal", fxGradeAmt: 80, fxStreak: 45 }],
     ["Dreamy", { fxGrade: "fade", fxGradeAmt: 70, fxFlare: 50, fxLeak: 30 }],
     ["Noir", { fxGrade: "noir", fxGradeAmt: 100 }]
@@ -1468,10 +1529,11 @@ function surpriseRecipe() {
     o.htGain = rint(70, 140, 5); o.htCon = rint(90, 170, 5); o.htLight = rint(-20, 20, 5); o.htInvert = chance(0.1); o.htRiley = chance(0.12);
     o.htInk = pickOne(inks); o.htPaper = pickOne(["#ffffff", "#f6f1e7", "#fbfbf8", "#ffe600", "#f7a1c4"]);
   }
-  var style = pickOne(["none", "none", "warhol", "mine", "lego", "vhs", "film"]);
+  var style = pickOne(["none", "none", "warhol", "mine", "guil", "seurat", "vhs", "film"]);
   o.fxWarhol = style === "warhol" ? pickOne(["2", "3"]) : "off"; o.fxWarholMix = rint(0, 8);
-  o.fxMine = style === "mine" ? rint(20, 70, 5) : 0; o.fxMinePal = pickOne(["mc", "mc", "photo"]);
-  o.fxLego = style === "lego" ? rint(25, 75, 5) : 0;
+  o.fxMine = style === "mine" ? rint(20, 70, 5) : 0;
+  o.fxGuil = style === "guil" ? rint(30, 90, 5) : 0; o.fxGuilInk = pickOne(["photo", "green", "ink"]);
+  o.fxSeurat = style === "seurat" ? rint(15, 70, 5) : 0; o.fxSeuratMix = rint(20, 80, 10); o.fxMinePal = pickOne(["mc", "mc", "photo"]);
   o.fxShift = style === "vhs" ? rint(25, 60, 5) : chance(0.15) ? rint(10, 40, 5) : 0;
   o.fxGlitch = style === "vhs" ? rint(20, 50, 5) : chance(0.12) ? rint(10, 40, 5) : 0;
   o.fxLeak = style === "film" ? rint(30, 70, 5) : chance(0.2) ? rint(10, 50, 5) : 0;
@@ -1497,7 +1559,8 @@ function surprise() {
     : "Halftone · " + (o.htRiley ? "Bridget Riley lines" : { rgb: "RGB", ink: "one ink", image: "image color", cmyk: "CMYK" }[o.htMode] + " · " + o.htShape + "s at " + o.htAngle + "° · " + o.htCells + " across"));
   if (o.fxWarhol !== "off") L.push("Warhol " + o.fxWarhol + " × " + o.fxWarhol);
   if (o.fxMine) L.push("Minecraft blocks");
-  if (o.fxLego) L.push("1×1 tiles");
+  if (o.fxGuil) L.push("Guilloché engraving");
+  if (o.fxSeurat) L.push("Seurat pointillism");
   if (o.fxShift || o.fxGlitch) L.push("Glitch");
   if (o.fxLeak || o.fxFlare || o.fxStreak) L.push("Light leaks");
   if (o.fxGrade !== "none") L.push("Grade: " + $("#fxGrade option[value=" + o.fxGrade + "]").textContent);
