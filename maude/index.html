@@ -49,7 +49,7 @@ h1{margin:0;font:400 22px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
 body.big .stagecol{position:static}
 @media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
 .stage{display:flex;justify-content:center}
-#cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
+#cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(37,37,37,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
 .tools{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:6px auto 0;max-width:100%}
@@ -120,7 +120,7 @@ textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height
 .seg input:focus-visible+span{outline:2px solid var(--muted);outline-offset:1px}
 .color{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
 .color input[type=color]{width:40px;height:32px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
-.color .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
+.color .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(37,37,37,.18);cursor:pointer;padding:0}
 .color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--felt)}
 .icob{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex:0 0 32px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer;padding:0}
 .icob[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
@@ -137,15 +137,15 @@ textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height
 .foot{text-align:center;font-size:12px;color:var(--muted);margin:4px 0 0}
 body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!important}
 .modal{position:fixed;inset:0;z-index:20;background:rgba(20,26,24,.72);display:flex;align-items:center;justify-content:center;padding:16px}
-.sheet{background:var(--card);border-radius:14px;padding:12px;box-shadow:0 24px 64px rgba(0,0,0,.35);max-width:640px;width:100%;display:grid;gap:8px}
+.sheet{background:var(--card);border-radius:14px;padding:12px;box-shadow:0 24px 64px rgba(37,37,37,.35);max-width:640px;width:100%;display:grid;gap:8px}
 .sheet h2{margin:0;font:400 18px/1.2 "Young Serif",Georgia,serif;display:flex;justify-content:space-between;align-items:center}
-.sheet video{width:100%;border-radius:10px;background:#000;max-height:60vh;object-fit:contain}
+.sheet video{width:100%;border-radius:10px;background:#252525;max-height:60vh;object-fit:contain}
 #saveModal .sheet{max-width:380px}
 @media (max-width:420px){.pill [role=tab]{font-size:12px;gap:3px}}
 @media (prefers-reduced-motion:reduce){.ph .ico,.pill .knob{transition:none}}
 /* ===== Studio skin: off-white toolbar and sidebar, warm grey canvas area, underline tabs, quiet grey buttons ===== */
 :root{--paper:#ebe9e4;--bar:#f8f7f5;--card:#f8f7f5;--well:#ebe9e4;--field:#ffffff;--btn:#e9e8e6;--btnh:#dedcd9;--sel:#ffffff;
-  --ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdad5;--sep:#d6d4cf;--felt:#1c1c1c;--felt-d:#000;--onfelt:#ffffff;--accent:#1c1c1c;
+  --ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdad5;--sep:#d6d4cf;--felt:#1c1c1c;--felt-d:#252525;--onfelt:#ffffff;--accent:#1c1c1c;
   --track:#d6d4cf;--knob:#ffffff;--stagebg:#ffffff}
 :root[data-theme="dark"]{--paper:#1f1f1f;--bar:#2a2a2a;--card:#2a2a2a;--well:#1f1f1f;--field:#1c1c1c;--btn:#3a3a3a;--btnh:#454545;--sel:#3a3a3a;
   --ink:#ececec;--muted:#a3a3a3;--line:#3a3a3a;--sep:#3a3a3a;--felt:#ececec;--felt-d:#fff;--onfelt:#141414;--accent:#ececec;
@@ -174,7 +174,7 @@ h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
 .wrap{max-width:none;margin:0;padding:0;gap:0;grid-template-columns:minmax(0,1fr)}
 .stagecol{background:var(--paper);padding:16px 2.5vw 8px}
 .stage{padding:8px}
-#cv{border-radius:0;box-shadow:0 1px 3px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.10)}
+#cv{border-radius:0;box-shadow:0 1px 3px rgba(37,37,37,.08),0 10px 30px rgba(37,37,37,.10)}
 .stagecol .status{text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin:6px 0 0}
 .ctlcol{background:var(--bar);gap:0;padding:0 0 calc(24px + var(--sab))}
 @media (min-width:900px){
@@ -237,7 +237,7 @@ body:not([data-look="half"]) .htblock>.looks~.acc{display:none}
 .htnote{margin:0;padding:12px 20px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--sep)}
 .htnote .linkb{padding:0 0 0 4px;min-height:0;height:auto;font-size:13px}
 .duopairs{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.duopair{width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);padding:0;cursor:pointer}
+.duopair{width:34px;height:34px;border-radius:50%;border:1px solid rgba(37,37,37,.18);padding:0;cursor:pointer}
 .duopair[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
 @media (pointer:coarse){.duopair{width:40px;height:40px}}
 /* footer, as on /tides: language code (tap to cycle), INFO + that opens in place, credit flush right */
@@ -289,7 +289,7 @@ select{-webkit-appearance:none;appearance:none;padding:0 34px 0 10px;border:1px 
 .seg{background:var(--btn);border:0;border-radius:8px;padding:2px}
 .seg span{color:var(--muted)}
 .seg{height:36px;padding:3px}.seg span .ico{width:16px;height:16px;flex-basis:16px;margin-right:5px}.seg span{min-height:30px;font-size:13px}
-.seg input:checked+span{background:var(--ink);color:var(--onfelt);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.seg input:checked+span{background:var(--ink);color:var(--onfelt);font-weight:600;box-shadow:0 1px 3px rgba(37,37,37,.25)}
 .chk input{accent-color:var(--ink)}
 .btn{background:var(--btn);border:0;border-radius:6px;font-weight:500}
 .btn:hover{background:var(--btnh)}
@@ -302,10 +302,10 @@ select{-webkit-appearance:none;appearance:none;padding:0 34px 0 10px;border:1px 
 /* sliders: neutral track, dark fill up to a white knob */
 input[type=range]{-webkit-appearance:none;appearance:none;height:22px;background:transparent;cursor:pointer}
 input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(var(--ink),var(--ink)) 0/var(--p,50%) 100% no-repeat,var(--track)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:var(--knob);border:1px solid rgba(0,0,0,.22);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:var(--knob);border:1px solid rgba(37,37,37,.22);box-shadow:0 1px 3px rgba(37,37,37,.25)}
 input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--track)}
 input[type=range]::-moz-range-progress{height:4px;border-radius:2px;background:var(--ink)}
-input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--knob);border:1px solid rgba(0,0,0,.22);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--knob);border:1px solid rgba(37,37,37,.22);box-shadow:0 1px 3px rgba(37,37,37,.25)}
 input[type=range]:focus-visible{outline:none}
 input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--muted)}
 @media (pointer:coarse){
@@ -824,7 +824,7 @@ function renderHalf(ctx, W, H) {
     ctx.fill();
   }
   function inks() {
-  ctx.fillStyle = S.htMode === "rgb" ? "#000000" : S.htPaper; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = S.htMode === "rgb" ? "#252525" : S.htPaper; ctx.fillRect(0, 0, W, H);
   var chans;
   if (S.htMode === "rgb") {
     /* RGB: light added on black, one screen per channel (dot size follows how much of that color there is) */
@@ -945,7 +945,7 @@ function minecraft(ctx, W, H) {
       ctx.fillRect(x + u * ss, y + v * ss, ss + 0.5, ss + 0.5);
     }
     ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fillRect(x, y, bs, e); ctx.fillRect(x, y, e, bs);
-    ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.fillRect(x, y + bs - e, bs, e); ctx.fillRect(x + bs - e, y, e, bs);
+    ctx.fillStyle = "rgba(37,37,37,.22)"; ctx.fillRect(x, y + bs - e, bs, e); ctx.fillRect(x + bs - e, y, e, bs);
   }
 }
 /* Guilloché: two crossing families of engraved wave lines (banknote style); each line swells where the picture is dark */
@@ -1167,7 +1167,7 @@ function filmEffect(ctx, W, H) {
     ctx.drawImage(masked(bl, W, H, function (m) { var g2 = m.createLinearGradient(W * a - W * 0.05, H * 0.5 - W * 0.012, W * a + W * 0.05, H * 0.5 + W * 0.012); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,1)"); m.fillStyle = g2; m.fillRect(0, 0, W, H); }), 0, 0);
   } else if (e === "forced") {   /* forced perspective, the tilt-shift way: a band in focus, top and bottom blurred, colors pushed so it reads as a miniature */
     var bl2 = blurOf(copyOf(ctx, W, H), W, H, 8 + 12 * k);
-    ctx.drawImage(masked(bl2, W, H, function (m) { var g3 = m.createLinearGradient(0, 0, 0, H); g3.addColorStop(0, "#000"); g3.addColorStop(0.38, "rgba(0,0,0,0)"); g3.addColorStop(0.62, "rgba(0,0,0,0)"); g3.addColorStop(1, "#000"); m.fillStyle = g3; m.fillRect(0, 0, W, H); }), 0, 0);
+    ctx.drawImage(masked(bl2, W, H, function (m) { var g3 = m.createLinearGradient(0, 0, 0, H); g3.addColorStop(0, "#252525"); g3.addColorStop(0.38, "rgba(0,0,0,0)"); g3.addColorStop(0.62, "rgba(0,0,0,0)"); g3.addColorStop(1, "#252525"); m.fillStyle = g3; m.fillRect(0, 0, W, H); }), 0, 0);
     pixelMap(ctx, W, H, k, function (r, g, b, l) { return [sCurve(l + (r - l) * 1.4, 1.12), sCurve(l + (g - l) * 1.4, 1.12), sCurve(l + (b - l) * 1.4, 1.12)]; });
   } else if (e === "smudge") {   /* a fingerprint on the lens: an off-center patch goes soft and glows */
     var c3 = copyOf(ctx, W, H), bl3 = blurOf(c3, W, H, 16), sx = W * (0.15 + rnd() * 0.7), sy = H * (0.15 + rnd() * 0.7), R3 = Math.max(W, H) * (0.3 + 0.2 * k);
@@ -1447,7 +1447,7 @@ function download(blob, name) {
 /* ---------- SVG: the same drawing code, recorded as vector shapes and live text ---------- */
 function SvgCtx(W, H) {
   this.W = W; this.H = H; this.out = []; this.d = ""; this.m = new DOMMatrix(); this.stack = [];
-  this.fillStyle = "#000"; this.strokeStyle = "#000"; this.lineWidth = 1; this.lineJoin = "miter"; this.globalAlpha = 1;
+  this.fillStyle = "#252525"; this.strokeStyle = "#252525"; this.lineWidth = 1; this.lineJoin = "miter"; this.globalAlpha = 1;
   this.globalCompositeOperation = "source-over"; this.font = "16px sans-serif"; this.textAlign = "start"; this.textBaseline = "alphabetic";
   this.letterSpacing = "0px"; this.shadowColor = "rgba(0,0,0,0)"; this.shadowBlur = 0; this.shadowOffsetY = 0; this.imageSmoothingQuality = "high";
 }
