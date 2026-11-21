@@ -56,12 +56,14 @@ body.big .stagecol{position:static}
 .ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
 .actions{display:flex;gap:6px}
 .imgs{display:grid;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
-.imgs .lab{display:flex;justify-content:space-between}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:6px}.lhead .lab{color:var(--muted)}
+.layer .rn{flex:0 1 110px;min-width:60px;height:26px;padding:0 6px;border:1px solid var(--felt);border-radius:6px;background:var(--field);font-size:12px}
+.layer .nm{overflow:hidden;text-overflow:ellipsis;cursor:text}
 .ilist{display:grid;gap:4px;max-height:236px;overflow-y:auto}
 .layer{display:flex;align-items:center;gap:8px;user-select:none;-webkit-user-select:none;padding:3px 6px 3px 3px;border:1px solid var(--line);border-radius:8px;background:var(--field);cursor:pointer}
 .layer[aria-current="true"]{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .layer canvas{height:40px;width:40px;object-fit:cover;border-radius:5px;flex:0 0 40px}
-.layer .nm{font-size:12px;font-weight:500;flex:0 0 52px;white-space:nowrap}
+.layer .nm{font-size:12px;font-weight:500;flex:1 1 auto;min-width:48px;white-space:nowrap}
 .layer .grip{flex:0 0 20px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:grab;touch-action:none;margin-left:-4px}
 .layer.locked .grip{opacity:.25;cursor:default}
 .layer .eye[aria-pressed="false"].lk{color:var(--muted);opacity:.55}
@@ -71,7 +73,8 @@ body.big .stagecol{position:static}
 .layer.off canvas,.layer.off .nm,.layer.off input,.layer.off output{opacity:.4}
 .layer.dragging{position:relative;z-index:2;cursor:grabbing;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .ilist.drag .layer:not(.dragging){transition:transform .12s}
-.layer input[type=range]{flex:1 1 auto;min-width:40px}
+.layer input[type=range]{flex:0 1 120px;min-width:56px}
+@media (max-width:420px){.layer output{display:none}.layer{gap:6px}}
 .layer output{font-size:12px;color:var(--muted);flex:0 0 34px;text-align:right}
 .imgctl{display:flex;gap:6px;align-items:center}
 .imgctl input[type=range]{flex:1 1 auto;min-width:50px}
@@ -170,12 +173,13 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
     </div>
     <input type="file" id="fileIn" accept="image/*" multiple hidden>
     <div class="imgs" id="imgs" hidden>
-      <span class="lab"><span>Layers (top is in front)</span><span id="imgN"></span></span>
+      <div class="lhead"><span class="lab">Layers (top is in front) <span id="imgN"></span></span>
+        <button type="button" class="btn" id="addText">{{icon:plus}}<span>Text</span></button></div>
       <div class="ilist" id="layers" role="list" aria-label="Image layers, top first"></div>
       <div class="imgctl">
         <button type="button" class="icob rotu" id="imgUp" aria-label="Move this layer up (in front)" title="Move up">{{icon:caret-down}}</button>
         <button type="button" class="icob" id="imgDown" aria-label="Move this layer down (behind)" title="Move down">{{icon:caret-down}}</button>
-        <select style="flex:1 1 auto;width:auto" id="imgBlend" aria-label="Image blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="lighten">Lighten</option><option value="darken">Darken</option><option value="difference">Difference</option></select>
+        <select style="flex:1 1 auto;width:auto" id="imgBlend" aria-label="Image blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option><option value="lighten">Lighten</option><option value="darken">Darken</option><option value="difference">Difference</option><option value="color-dodge">Color dodge</option></select>
         <button type="button" class="icob" id="imgDel" aria-label="Remove this image" title="Remove">{{icon:trash}}</button>
       </div>
     </div>
@@ -694,7 +698,7 @@ function drawLayer(ctx, W, H, L, o) {
 }
 /* Every "made of dots" layer drawn in its own color on a w x h grid (RGBA, alpha = coverage x opacity), or null */
 function dotsMask(W, H, w, h) {
-  var ls = S.layers.filter(function (l) { return l.mode === "dots" && l.text.trim(); });
+  var ls = S.layers.filter(function (l) { return l.mode === "dots" && l.text.trim() && !l.hidden; });
   if (!ls.length) return null;
   var bigc = mk(w * 4, h * 4), bx = bigc.getContext("2d");
   bx.scale(bigc.width / W, bigc.height / H);
@@ -968,6 +972,7 @@ function glowSource(ctx, W, H) {
 function render(ctx, W, H, prog, preview) {
   if (S.look === "half") renderHalf(ctx, W, H); else renderDot(ctx, W, H, prog);
   S.layers.forEach(function (L) {
+    if (L.hidden) { if (preview) L._box = null; return; }
     var b = L.mode === "solid" ? drawLayer(ctx, W, H, L) : (preview ? drawLayer(scratch, W, H, L, { mask: true }) : null);
     if (preview) L._box = b ? [b[0] / W, b[1] / H, b[2] / W, b[3] / H] : null;
   });
@@ -1017,14 +1022,14 @@ function fit() {
 /* ---------- image in ---------- */
 /* images are layered: imgs[0] is the bottom and sets the size; each one above is cover-fitted over it with its own
    opacity and blend mode. They live in memory only (not saved between visits). */
-var imgs = [], selImg = 0, isDemo = false;
-function setImage(img, w, h, demoImg) {
+var imgs = [], isDemo = false;
+function setImage(img, w, h, demoImg, name) {
   var k = Math.min(1, 2000 / Math.max(w, h)), c = mk(w * k, h * k), x = c.getContext("2d");
   x.imageSmoothingQuality = "high"; x.drawImage(img, 0, 0, c.width, c.height);
   if (isDemo || demoImg) imgs = [];
   isDemo = !!demoImg;
-  imgs.push({ c: c, op: imgs.length ? 50 : 100, blend: "source-over" });
-  selImg = imgs.length - 1;
+  imgs.push({ c: c, op: imgs.length ? 50 : 100, blend: "source-over", name: demoImg ? "Sample image" : (name || "Image " + (imgs.length + 1)) });
+  sel = { k: "img", i: imgs.length - 1 };
   compose(); renderImgs();
 }
 function compose() {
@@ -1043,58 +1048,123 @@ function compose() {
   ox.globalAlpha = 1; ox.globalCompositeOperation = "source-over";
   applyCrop();
 }
+/* ---------- layer list: text layers (always above the photo) then image layers, top row in front ----------
+   Image layers are combined into one photo that the look is applied to; text is drawn on top of the result,
+   so a text layer can be reordered among text layers and an image among images. */
+var sel = { k: "img", i: 0 };
+function lname(k, o) {
+  if (o.name) return o.name;
+  if (k === "text") return (o.text.trim().split("\n")[0] || "Text").slice(0, 40);
+  return "Image";
+}
+function rowsTopFirst() {
+  var r = [];
+  for (var j = S.layers.length - 1; j >= 0; j--) if (S.layers[j].text.trim() || S.layers[j].name) r.push({ k: "text", i: j, o: S.layers[j] });
+  for (var i = imgs.length - 1; i >= 0; i--) r.push({ k: "img", i: i, o: imgs[i] });
+  return r;
+}
+function textThumb(L) {
+  var t = mk(80, 80), x = t.getContext("2d");
+  x.fillStyle = "#8a8a8a"; x.fillRect(0, 0, 80, 80);
+  x.fillStyle = L.color || "#ffffff"; x.textAlign = "center"; x.textBaseline = "middle";
+  x.font = (L.weight || 700) + " 48px \x22" + L.font + "\x22, sans-serif"; x.fillText("T", 40, 44);
+  return t;
+}
+function afterText() { saveSettings(); schedule(); renderChips(); }
 function renderImgs() {
-  $("#imgs").hidden = isDemo || !imgs.length;
+  if (!imgs) return;
+  $("#imgs").hidden = false;
+  if (sel.k === "img" && !imgs[sel.i]) sel = { k: "img", i: imgs.length - 1 };
+  if (sel.k === "text" && !S.layers[sel.i]) sel = { k: "img", i: imgs.length - 1 };
   var box = $("#layers"); box.innerHTML = "";
-  for (var i = imgs.length - 1; i >= 0; i--) (function (i) {
-    var im = imgs[i], row = document.createElement("div");
-    row.className = "layer"; row.setAttribute("role", "listitem");
-    if (i === selImg) row.setAttribute("aria-current", "true");
-    var t = mk(80, 80), tx = t.getContext("2d"), c = im.c, s = Math.max(80 / c.width, 80 / c.height);
-    tx.drawImage(c, (80 - c.width * s) / 2, (80 - c.height * s) / 2, c.width * s, c.height * s);
-    var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = i ? "Layer " + (i + 1) : "Bottom";
+  rowsTopFirst().forEach(function (R) {
+    var o = R.o, k = R.k, i = R.i, row = document.createElement("div");
+    row.className = "layer"; row.setAttribute("role", "listitem"); row.dataset.kind = k;
+    if (sel.k === k && sel.i === i) row.setAttribute("aria-current", "true");
+    if (o.hidden) row.classList.add("off");
+    if (o.locked) row.classList.add("locked");
+    var label = lname(k, o);
+    function iconBtn(cls, on, onIco, offIco, onLab, offLab, fn) {
+      var b = document.createElement("button"); b.type = "button"; b.className = cls;
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.setAttribute("aria-label", (on ? onLab : offLab) + " " + label); b.title = on ? onLab : offLab;
+      b.appendChild($(on ? onIco : offIco).content.cloneNode(true));
+      b.addEventListener("click", function (e) { e.stopPropagation(); fn(); });
+      return b;
+    }
+    var eye = iconBtn("eye", o.hidden, "#icoEyeOff", "#icoEye", "Show", "Hide", function () {
+      o.hidden = !o.hidden; if (k === "img") compose(); else afterText(); renderImgs();
+    });
+    var lk = iconBtn("eye lk", o.locked, "#icoLock", "#icoUnlock", "Unlock", "Lock", function () {
+      o.locked = !o.locked; if (k === "text") saveSettings(); renderImgs();
+    });
+    var th;
+    if (k === "img") {
+      th = mk(80, 80); var c = o.c, s = Math.max(80 / c.width, 80 / c.height);
+      th.getContext("2d").drawImage(c, (80 - c.width * s) / 2, (80 - c.height * s) / 2, c.width * s, c.height * s);
+    } else th = textThumb(o);
+    var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = label; nm.title = label + " (double tap to rename)";
+    nm.addEventListener("dblclick", function (e) { e.stopPropagation(); rename(nm, k, o); });
+    nm.addEventListener("click", function (e) { if (sel.k === k && sel.i === i && !dragged) { e.stopPropagation(); rename(nm, k, o); } });
+    var r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.step = 1; r.value = o.op; r.disabled = !!o.locked;
+    r.setAttribute("aria-label", label + " opacity");
+    var out = document.createElement("output"); out.textContent = o.op + "%";
+    r.addEventListener("input", function () {
+      o.op = +r.value; out.textContent = o.op + "%";
+      if (k === "img") compose(); else { saveSettings(); schedule(); if (S.active === i) { $("#op").value = o.op; outv("op", o.op); } }
+    });
+    r.addEventListener("pointerdown", function () { if (!(sel.k === k && sel.i === i)) { pick(k, i, false); } });
     var grip = document.createElement("span"); grip.className = "grip"; grip.title = "Drag to reorder"; grip.setAttribute("aria-hidden", "true");
     grip.appendChild($("#icoGrip").content.cloneNode(true));
-    grip.addEventListener("pointerdown", function (e) { if (!im.locked) startDrag(e, row, i); });
-    var eye = document.createElement("button"); eye.type = "button"; eye.className = "eye";
-    eye.setAttribute("aria-pressed", im.hidden ? "true" : "false");
-    eye.setAttribute("aria-label", (im.hidden ? "Show " : "Hide ") + (i ? "layer " + (i + 1) : "bottom layer")); eye.title = im.hidden ? "Show layer" : "Hide layer";
-    eye.appendChild($(im.hidden ? "#icoEyeOff" : "#icoEye").content.cloneNode(true));
-    eye.addEventListener("click", function (e) { e.stopPropagation(); im.hidden = !im.hidden; compose(); renderImgs(); });
-    if (im.hidden) row.classList.add("off");
-    var lk = document.createElement("button"); lk.type = "button"; lk.className = "eye lk";
-    lk.setAttribute("aria-pressed", im.locked ? "true" : "false");
-    lk.setAttribute("aria-label", (im.locked ? "Unlock " : "Lock ") + (i ? "layer " + (i + 1) : "bottom layer")); lk.title = im.locked ? "Unlock layer" : "Lock layer";
-    lk.appendChild($(im.locked ? "#icoLock" : "#icoUnlock").content.cloneNode(true));
-    lk.addEventListener("click", function (e) { e.stopPropagation(); im.locked = !im.locked; renderImgs(); });
-    if (im.locked) row.classList.add("locked");
-    var r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.step = 1; r.value = im.op; r.disabled = !!im.locked;
-    r.setAttribute("aria-label", (i ? "Layer " + (i + 1) : "Bottom layer") + " opacity");
-    var o = document.createElement("output"); o.textContent = im.op + "%";
-    r.addEventListener("input", function () { im.op = +r.value; o.textContent = im.op + "%"; compose(); });
-    r.addEventListener("pointerdown", function () { if (selImg !== i) { selImg = i; markSel(); } });
-    row.addEventListener("click", function (e) { if (e.target !== r && !dragged && selImg !== i) { selImg = i; renderImgs(); } });
-    row.append(eye, lk, t, nm, r, o, grip); box.appendChild(row);
-  })(i);
+    grip.addEventListener("pointerdown", function (e) { if (!o.locked) startDrag(e, row, k, i); });
+    row.addEventListener("click", function (e) { if (e.target !== r && !dragged) pick(k, i, true); });
+    row.append(eye, lk, th, nm, r, out, grip); box.appendChild(row);
+  });
   markSel();
 }
-/* drag a layer by its grip: the row follows the finger, and passing the middle of a neighbor swaps them (live) */
+function outv(k, v) { var o = document.querySelector("output[data-for=" + k + "]"); if (o) out(k, v); }
+function pick(k, i, open) {
+  sel = { k: k, i: i };
+  if (k === "text") { if (S.active !== i) { S.active = i; syncLayer(); saveSettings(); schedule(); renderChips(); } if (open && tab !== "text") setTab("text"); }
+  renderImgs();
+}
+function rename(nm, k, o) {
+  var inp = document.createElement("input"); inp.type = "text"; inp.className = "rn"; inp.value = lname(k, o); inp.setAttribute("aria-label", "Layer name");
+  nm.replaceWith(inp); inp.focus(); inp.select();
+  var done = false;
+  function fin(ok) {
+    if (done) return; done = true;
+    if (ok) { var v = inp.value.trim(); if (v) o.name = v.slice(0, 40); else delete o.name; if (k === "text") saveSettings(); }
+    renderImgs();
+  }
+  inp.addEventListener("keydown", function (e) { if (e.key === "Enter") fin(true); else if (e.key === "Escape") fin(false); });
+  inp.addEventListener("blur", function () { fin(true); });
+  inp.addEventListener("click", function (e) { e.stopPropagation(); });
+}
+function arr(k) { return k === "img" ? imgs : S.layers; }
+function swapIn(k, a, b) {
+  var A = arr(k), t = A[a]; A[a] = A[b]; A[b] = t;
+  if (k === "img") compose();
+  else { if (S.active === a) S.active = b; else if (S.active === b) S.active = a; afterText(); }
+}
+/* drag a layer by its grip: the row follows the finger; passing the middle of a neighbor of the same kind swaps them */
 var dragged = false;
-function startDrag(e, row, i) {
+function startDrag(e, row, k, i) {
   e.preventDefault();
   var box = $("#layers"), y0 = e.clientY, cur = i, grip = e.currentTarget;
-  selImg = i; markSel(); dragged = false;
+  sel = { k: k, i: i }; markSel(); dragged = false;
   grip.setPointerCapture(e.pointerId); row.classList.add("dragging"); box.classList.add("drag");
   function move(ev) {
     var dy = ev.clientY - y0;
     if (Math.abs(dy) > 3) dragged = true;
     var prev = row.previousElementSibling, next = row.nextElementSibling;
-    if (next && dy > next.offsetHeight / 2 + 4) {           /* moved down the list = behind */
-      box.insertBefore(next, row); y0 += next.offsetHeight + 4; dy = ev.clientY - y0;
-      var a = imgs[cur]; imgs[cur] = imgs[cur - 1]; imgs[cur - 1] = a; cur--; selImg = cur; compose();
-    } else if (prev && dy < -(prev.offsetHeight / 2 + 4)) { /* moved up = in front */
-      box.insertBefore(row, prev); y0 -= prev.offsetHeight + 4; dy = ev.clientY - y0;
-      var b = imgs[cur]; imgs[cur] = imgs[cur + 1]; imgs[cur + 1] = b; cur++; selImg = cur; compose();
+    /* text rows: the visible ones are not every text layer, so step to the array index of the neighbor row */
+    if (next && next.dataset.kind === k && dy > next.offsetHeight / 2 + 4) {
+      var nj = +next.dataset.i; box.insertBefore(next, row); y0 += next.offsetHeight + 4; dy = ev.clientY - y0;
+      swapIn(k, cur, nj); next.dataset.i = cur; cur = nj; row.dataset.i = cur; sel.i = cur;
+    } else if (prev && prev.dataset.kind === k && dy < -(prev.offsetHeight / 2 + 4)) {
+      var pj = +prev.dataset.i; box.insertBefore(row, prev); y0 -= prev.offsetHeight + 4; dy = ev.clientY - y0;
+      swapIn(k, cur, pj); prev.dataset.i = cur; cur = pj; row.dataset.i = cur; sel.i = cur;
     }
     row.style.transform = "translateY(" + dy + "px)";
   }
@@ -1105,21 +1175,30 @@ function startDrag(e, row, i) {
   }
   grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
 }
+function neighbors() {
+  /* array indexes of the rows of the same kind just above and below the selected one */
+  var rows = rowsTopFirst().filter(function (R) { return R.k === sel.k; }), p = -1;
+  rows.forEach(function (R, n) { if (R.i === sel.i) p = n; });
+  return { up: p > 0 ? rows[p - 1].i : null, down: p >= 0 && p < rows.length - 1 ? rows[p + 1].i : null, n: rows.length };
+}
 function markSel() {
-  document.querySelectorAll("#layers .layer").forEach(function (row, k) {
-    if (imgs.length - 1 - k === selImg) row.setAttribute("aria-current", "true"); else row.removeAttribute("aria-current");
+  var rows = document.querySelectorAll("#layers .layer"), list = rowsTopFirst();
+  rows.forEach(function (row, n) {
+    row.dataset.i = list[n].i;
+    if (list[n].k === sel.k && list[n].i === sel.i) row.setAttribute("aria-current", "true"); else row.removeAttribute("aria-current");
   });
-  var im = imgs[selImg]; if (!im) return;
-  $("#imgN").textContent = imgs.length + (imgs.length === 1 ? " image" : " images");
-  var L = !!im.locked;
-  $("#imgBlend").value = im.blend; $("#imgBlend").disabled = selImg === 0 || L;
-  $("#imgDown").disabled = selImg === 0 || L; $("#imgUp").disabled = selImg === imgs.length - 1 || L; $("#imgDel").disabled = imgs.length < 2 || L;
+  var nt = list.filter(function (R) { return R.k === "text"; }).length;
+  $("#imgN").textContent = imgs.length + (imgs.length === 1 ? " image" : " images") + (nt ? " · " + nt + " text" : "");
+  var o = arr(sel.k)[sel.i]; if (!o) return;
+  var L = !!o.locked, nb = neighbors();
+  $("#imgBlend").value = o.blend || "source-over"; $("#imgBlend").disabled = (sel.k === "img" && sel.i === 0) || L;
+  $("#imgDown").disabled = nb.down === null || L; $("#imgUp").disabled = nb.up === null || L;
+  $("#imgDel").disabled = L || (sel.k === "img" && imgs.length < 2);
 }
 function moveImg(d) {
-  if (imgs[selImg].locked) return;
-  var j = selImg + d; if (j < 0 || j >= imgs.length) return;
-  var a = imgs[selImg]; imgs[selImg] = imgs[j]; imgs[j] = a; selImg = j;
-  compose(); renderImgs();
+  var o = arr(sel.k)[sel.i]; if (!o || o.locked) return;
+  var nb = neighbors(), j = d > 0 ? nb.up : nb.down; if (j === null) return;
+  swapIn(sel.k, sel.i, j); sel.i = j; renderImgs();
 }
 /* Instagram size: the working image is the original center-cropped to 1080 x igSize, so preview and every save match */
 function applyCrop() {
@@ -1139,7 +1218,7 @@ function loadFile(f) {
   if (!f) return Promise.resolve();
   return new Promise(function (res) {
     var url = URL.createObjectURL(f), img = new Image();
-    img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); res(); };
+    img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight, false, (f.name || "").replace(/\.[^.]+$/, "").slice(0, 40)); URL.revokeObjectURL(url); res(); };
     img.onerror = function () { URL.revokeObjectURL(url); say("That file could not be opened as an image."); res(); };
     img.src = url;
   });
@@ -1212,7 +1291,7 @@ function snap() {
   var v = $("#camVideo");
   if (!v.videoWidth) return;
   var c = mk(v.videoWidth, v.videoHeight); c.getContext("2d").drawImage(v, 0, 0);
-  setImage(c, c.width, c.height); closeCamera();
+  setImage(c, c.width, c.height, false, "Photo"); closeCamera();
 }
 
 /* ---------- saving ---------- */
@@ -1478,6 +1557,8 @@ function renderChips() {
     box.appendChild(b);
   });
   $("#lDel").disabled = S.layers.length < 2 && !AL().text;
+  if (sel && sel.k === "text") sel.i = S.active;
+  renderImgs();
   $("#lAdd").disabled = $("#lDup").disabled = S.layers.length >= 12;
 }
 function select(i) { S.active = i; syncLayer(); saveSettings(); schedule(); }
@@ -1533,7 +1614,7 @@ function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left
 function hit(p) {
   var pad = 0.03;
   for (var i = S.layers.length - 1; i >= 0; i--) {
-    var b = S.layers[i]._box;
+    var b = S.layers[i].locked ? null : S.layers[i]._box;
     if (b && p[0] >= b[0] - pad && p[0] <= b[2] + pad && p[1] >= b[1] - pad && p[1] <= b[3] + pad) return i;
   }
   return -1;
@@ -1635,12 +1716,27 @@ $("#takePhoto").addEventListener("click", openCamera);
 $("#fileIn").addEventListener("change", function (e) { loadFiles(e.target.files); e.target.value = ""; });
 $("#imgDown").addEventListener("click", function () { moveImg(-1); });
 $("#imgUp").addEventListener("click", function () { moveImg(1); });
-$("#imgBlend").addEventListener("change", function () { imgs[selImg].blend = this.value; compose(); });
+$("#imgBlend").addEventListener("change", function () {
+  var o = arr(sel.k)[sel.i]; o.blend = this.value;
+  if (sel.k === "img") compose(); else { afterText(); syncLayer(); }
+});
 $("#imgDel").addEventListener("click", function () {
-  if (imgs[selImg].locked) return;
-  if (imgs.length < 2) return;
-  imgs.splice(selImg, 1); imgs[0].op = Math.max(imgs[0].op, 0); selImg = Math.min(selImg, imgs.length - 1);
-  compose(); renderImgs();
+  var o = arr(sel.k)[sel.i]; if (!o || o.locked) return;
+  if (sel.k === "img") {
+    if (imgs.length < 2) return;
+    imgs.splice(sel.i, 1); sel.i = Math.min(sel.i, imgs.length - 1); compose(); renderImgs();
+  } else {
+    if (S.layers.length < 2) { S.layers[0].text = ""; delete S.layers[0].name; S.active = 0; }
+    else { S.layers.splice(sel.i, 1); S.active = Math.max(0, Math.min(S.active, S.layers.length - 1)); }
+    sel = { k: "img", i: imgs.length - 1 }; syncLayer(); afterText();
+  }
+});
+$("#addText").addEventListener("click", function () {
+  setTab("text");
+  if (S.layers.length === 1 && !S.layers[0].text.trim()) { S.layers[0].text = "New text"; S.active = 0; syncLayer(); afterText(); }
+  else $("#lAdd").click();
+  sel = { k: "text", i: S.active }; renderImgs();
+  var ta = $("#ltext"); ta.focus(); ta.select();
 });
 $("#camIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#saveOpen").addEventListener("click", function () { openModal("#saveModal", "#savePng"); });
