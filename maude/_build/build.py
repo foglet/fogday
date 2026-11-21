@@ -29,5 +29,11 @@ for n, line in enumerate(js.split("\n"), 1):
         elif c == "}": depth -= 1
         i += 1
 assert depth == 0 and not bad, "brace check failed (depth %d): %s" % (depth, bad[:3])
+import re as _re, shutil, subprocess, tempfile
+if shutil.which("node"):   # full syntax check of every inline script before anything is written
+    for _s in _re.findall(r"<script>(.*?)</script>", html, _re.S):
+        with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as _f: _f.write(_s)
+        _r = subprocess.run(["node", "--check", _f.name], capture_output=True, text=True)
+        assert _r.returncode == 0, "script syntax error:\n" + _r.stderr[:600]
 (root.parent / "index.html").write_text(html, encoding="utf-8")
 print("wrote", root.parent / "index.html", len(html), "bytes")
