@@ -56,7 +56,10 @@ body.big .stagecol{position:static}
 .ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
 .actions{display:flex;gap:6px}
 .imgs{display:grid;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
-.xrow .btn{flex:1 1 0}
+.xtools{display:flex;gap:8px;align-items:center}
+.xtools .xt{width:44px;height:40px;flex:0 0 44px}.xtools .xt .ico{width:22px;height:22px;flex-basis:22px}
+.xtools .xreset{margin-left:auto}
+.cropchips{flex-wrap:wrap;overflow:visible}
 .ph .sub{margin-left:6px;font:400 12px/1 system-ui,sans-serif;color:var(--muted);flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lhead{display:flex;align-items:center;justify-content:space-between;gap:6px}.lhead .lab{color:var(--muted)}
 .layer .rn{flex:0 1 110px;min-width:60px;height:26px;padding:0 6px;border:1px solid var(--felt);border-radius:6px;background:var(--field);font-size:12px}
@@ -185,29 +188,39 @@ body[data-path="none"] .p-any,body:not([data-path="arc"]) .p-arc,body:not([data-
         <button type="button" class="btn" id="imgDel" aria-label="Delete this layer" title="Delete layer"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg><span>Delete</span></button>
       </div>
       <div class="acc" id="xformAcc">
-        <button type="button" class="ph" aria-expanded="false" aria-controls="a-xform">Rotate, skew, flip<span class="sub" id="xfName"></span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-xform">Transform<span class="sub" id="xfName"></span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-xform" hidden>
-          <div class="row xrow">
-            <button type="button" class="btn" id="xRot90"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/></svg><span>90°</span></button>
-            <button type="button" class="btn" id="xFlipH" aria-pressed="false"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M107.18,24.33a15.86,15.86,0,0,0-17.92,9.45l-.06.14-64,159.93A16,16,0,0,0,40,216h64a16,16,0,0,0,16-16V40A15.85,15.85,0,0,0,107.18,24.33ZM104,200H40l.06-.15L104,40Zm126.77-6.15-64-159.93-.06-.14A16,16,0,0,0,136,40V200a16,16,0,0,0,16,16h64a16,16,0,0,0,14.78-22.15ZM152,200V40l63.93,159.84.06.15Z"/></svg><span>Reverse</span></button>
-            <button type="button" class="btn" id="xFlipV" aria-pressed="false"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M56,120H216a16,16,0,0,0,6.23-30.74l-.14-.06-159.93-64A16,16,0,0,0,40,40v64A16,16,0,0,0,56,120Zm0-80,.15.06L216,104H56l0-64Zm160,96H56a16,16,0,0,0-16,16v64a16,16,0,0,0,22.15,14.78l159.93-64,.14-.06A16,16,0,0,0,216,136ZM56.15,215.93,56,216V152H216Z"/></svg><span>Upside down</span></button>
+          <div class="xtools">
+            <button type="button" class="icob xt" id="xFlipH" aria-pressed="false" aria-label="Reverse (mirror)" title="Reverse"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M107.18,24.33a15.86,15.86,0,0,0-17.92,9.45l-.06.14-64,159.93A16,16,0,0,0,40,216h64a16,16,0,0,0,16-16V40A15.85,15.85,0,0,0,107.18,24.33ZM104,200H40l.06-.15L104,40Zm126.77-6.15-64-159.93-.06-.14A16,16,0,0,0,136,40V200a16,16,0,0,0,16,16h64a16,16,0,0,0,14.78-22.15ZM152,200V40l63.93,159.84.06.15Z"/></svg></button>
+            <button type="button" class="icob xt" id="xRot90" aria-label="Rotate 90°" title="Rotate 90°"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
+            <button type="button" class="icob xt" id="xSkew" aria-pressed="false" aria-label="Skew" title="Skew"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,120H224V48a16,16,0,0,0-18.86-15.74l-160,29.09A16,16,0,0,0,32,77.09V120H16a8,8,0,0,0,0,16H32v42.91a16,16,0,0,0,13.14,15.74l160,29.09A16.47,16.47,0,0,0,208,224a16,16,0,0,0,16-16V136h16a8,8,0,0,0,0-16ZM48,77.09,208,48v72H48ZM208,208,48,178.91V136H208Z"/></svg></button>
+            <button type="button" class="btn xreset" id="xReset">Reset</button>
           </div>
-          <div class="f"><label class="lab" for="xRot">Rotate <output id="xRotO"></output></label><input type="range" id="xRot" min="-180" max="180" step="1"></div>
-          <div class="f"><label class="lab" for="xSkX">Skew sideways <output id="xSkXO"></output></label><input type="range" id="xSkX" min="-45" max="45" step="1"></div>
-          <div class="f"><label class="lab" for="xSkY">Skew up and down <output id="xSkYO"></output></label><input type="range" id="xSkY" min="-45" max="45" step="1"></div>
-          <button type="button" class="btn" id="xReset"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg><span>Reset this image</span></button>
+          <div id="skewBox" hidden>
+            <fieldset class="seg"><legend>Skew direction</legend>
+              <label><input type="radio" name="skMode" value="st" checked><span>Straighten</span></label>
+              <label><input type="radio" name="skMode" value="kv"><span>Vertical</span></label>
+              <label><input type="radio" name="skMode" value="kh"><span>Horizontal</span></label>
+            </fieldset>
+            <div class="f"><label class="lab" for="xSk"><span id="xSkL">Straighten</span> <output id="xSkO"></output></label><input type="range" id="xSk" min="-45" max="45" step="1"></div>
+          </div>
         </div>
       </div>
       <div class="acc">
-        <button type="button" class="ph" aria-expanded="false" aria-controls="a-crop">Crop picture<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-crop">Crop<span class="sub" id="cropName"></span><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-crop" hidden>
-          <div class="two">
+          <div class="chips cropchips" id="cropChips" role="group" aria-label="Crop shape"></div>
+          <fieldset class="seg" id="cropOri"><legend>Orientation</legend>
+            <label><input type="radio" name="cOri" value="p" checked><span>Portrait</span></label>
+            <label><input type="radio" name="cOri" value="l"><span>Landscape</span></label>
+          </fieldset>
+          <div class="f" id="cPosF"><label class="lab" for="cPos">Position <output id="cPosO"></output></label><input type="range" id="cPos" min="-100" max="100" step="1"></div>
+          <div class="two" id="cFree">
           <div class="f"><label class="lab" for="cL">Left <output id="cLO"></output></label><input type="range" id="cL" min="0" max="45" step="1"></div>
           <div class="f"><label class="lab" for="cR">Right <output id="cRO"></output></label><input type="range" id="cR" min="0" max="45" step="1"></div>
           <div class="f"><label class="lab" for="cT">Top <output id="cTO"></output></label><input type="range" id="cT" min="0" max="45" step="1"></div>
           <div class="f"><label class="lab" for="cB">Bottom <output id="cBO"></output></label><input type="range" id="cB" min="0" max="45" step="1"></div>
           </div>
-          <button type="button" class="btn" id="cReset"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg><span>No crop</span></button>
         </div>
       </div>
     </div>
@@ -1060,7 +1073,36 @@ function setImage(img, w, h, demoImg, name) {
   sel = { k: "img", i: imgs.length - 1 };
   compose(); renderImgs();
 }
-function quarter(im) { return Math.abs(Math.round((im.rot || 0) / 90)) % 2 === 1; }
+function quarter(im) { return (im.q || 0) % 2 === 1; }
+/* keystone (Vertical / Horizontal skew, like the Photos app): one edge shrinks, drawn as thin strips */
+function keystone(c, kv, kh) {
+  if (!kv && !kh) return c;
+  var w = c.width, h = c.height, o = mk(w, h), x = o.getContext("2d"), n, st, i;
+  x.imageSmoothingQuality = "high";
+  if (kv) {
+    st = Math.max(1, Math.ceil(h / 600));
+    for (i = 0; i < h; i += st) {
+      var t = (i + st / 2) / h, f = kv > 0 ? 1 - kv * (1 - t) : 1 + kv * t, dw = w * f;
+      x.drawImage(c, 0, i, w, st, (w - dw) / 2, i, dw, st + 0.5);
+    }
+    if (kh) { c = o; o = mk(w, h); x = o.getContext("2d"); x.imageSmoothingQuality = "high"; }
+  }
+  if (kh) {
+    st = Math.max(1, Math.ceil(w / 600));
+    for (i = 0; i < w; i += st) {
+      var u = (i + st / 2) / w, g = kh > 0 ? 1 - kh * (1 - u) : 1 + kh * u, dh = h * g;
+      x.drawImage(c, i, 0, st, h, i, (h - dh) / 2, st + 0.5, dh);
+    }
+  }
+  return o;
+}
+/* quarter turns first, so Vertical and Horizontal skew always act on the picture as you see it */
+function turnq(c, q) {
+  if (!q) return c;
+  var o = q % 2 ? mk(c.height, c.width) : mk(c.width, c.height), x = o.getContext("2d");
+  x.translate(o.width / 2, o.height / 2); x.rotate(q * Math.PI / 2); x.drawImage(c, -c.width / 2, -c.height / 2);
+  return o;
+}
 function compose() {
   var b = imgs[0].c, side = quarter(imgs[0]);
   orig.width = side ? b.height : b.width; orig.height = side ? b.width : b.height;
@@ -1070,20 +1112,18 @@ function compose() {
   ox.imageSmoothingQuality = "high";
   imgs.forEach(function (im, i) {
     if (im.hidden) return;
-    /* cover the frame after turning: a turned picture is scaled up just enough that no corner shows */
-    /* the frame's corners, taken back through the turn and skew, must all land inside the scaled picture */
-    var c = im.c, a = (im.rot || 0) * Math.PI / 180;
-    var B = new DOMMatrix().rotateSelf((im.rot || 0)).multiplySelf(new DOMMatrix([1, Math.tan((im.sky || 0) * Math.PI / 180), Math.tan((im.skx || 0) * Math.PI / 180), 1, 0, 0])).inverse();
-    var s = 0;
+    var kv = (im.kv || 0) / 60, kh = (im.kh || 0) / 60, c = keystone(turnq(im.c, im.q || 0), kv, kh);
+    /* usable part of a keystoned image: the narrow edge's width (or height) */
+    var cw = c.width * (1 - Math.abs(kv)), chh = c.height * (1 - Math.abs(kh));
+    var deg = im.st || 0, B = new DOMMatrix().rotateSelf(deg).inverse(), s = 0;
     [[-W / 2, -H / 2], [W / 2, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]].forEach(function (p) {
-      var q = B.transformPoint(new DOMPoint(p[0], p[1]));
-      s = Math.max(s, 2 * Math.abs(q.x) / c.width, 2 * Math.abs(q.y) / c.height);
+      var q = B.transformPoint(new DOMPoint(p[0], p[1]));   /* every frame corner must land inside the picture */
+      s = Math.max(s, 2 * Math.abs(q.x) / cw, 2 * Math.abs(q.y) / chh);
     });
     var dw = c.width * s, dh = c.height * s;
     ox.globalAlpha = im.op / 100; ox.globalCompositeOperation = i ? im.blend : "source-over";
-    ox.save(); ox.translate(W / 2, H / 2); ox.rotate(a);
-    ox.transform(1, Math.tan((im.sky || 0) * Math.PI / 180), Math.tan((im.skx || 0) * Math.PI / 180), 1, 0, 0);
-    ox.scale(im.fx ? -1 : 1, im.fy ? -1 : 1);
+    ox.save(); ox.translate(W / 2, H / 2); ox.rotate(deg * Math.PI / 180);
+    ox.scale(im.fx ? -1 : 1, 1);
     ox.drawImage(c, -dw / 2, -dh / 2, dw, dh);
     ox.restore();
   });
@@ -1240,14 +1280,16 @@ function markSel() {
 }
 function syncXform() {
   var im = sel.k === "img" ? imgs[sel.i] : null;
-  $("#xformAcc").hidden = !im; if (!im) return;
-  $("#xfName").textContent = lname("img", im);
-  [["xRot", "rot", "°"], ["xSkX", "skx", "°"], ["xSkY", "sky", "°"]].forEach(function (q) {
-    $("#" + q[0]).value = im[q[1]] || 0; $("#" + q[0] + "O").textContent = (im[q[1]] || 0) + q[2]; $("#" + q[0]).disabled = !!im.locked;
-  });
-  $("#xFlipH").setAttribute("aria-pressed", im.fx ? "true" : "false"); $("#xFlipV").setAttribute("aria-pressed", im.fy ? "true" : "false");
-  ["xRot90", "xFlipH", "xFlipV", "xReset"].forEach(function (id) { $("#" + id).disabled = !!im.locked; });
-  [["cL", "l"], ["cR", "r"], ["cT", "t"], ["cB", "b"]].forEach(function (q) { $("#" + q[0]).value = crop[q[1]]; $("#" + q[0] + "O").textContent = crop[q[1]] + "%"; });
+  $("#xformAcc").hidden = !im;
+  if (im) {
+    $("#xfName").textContent = lname("img", im);
+    $("#xFlipH").setAttribute("aria-pressed", im.fx ? "true" : "false");
+    var key = skMode, v = im[key] || 0;
+    $("#xSk").value = v; $("#xSkO").textContent = v + (key === "st" ? "°" : "");
+    $("#xSkL").textContent = { st: "Straighten", kv: "Vertical", kh: "Horizontal" }[key];
+    ["xFlipH", "xRot90", "xSkew", "xReset", "xSk"].forEach(function (id) { $("#" + id).disabled = !!im.locked; });
+  }
+  syncCrop();
 }
 function moveImg(d) {
   var o = arr(sel.k)[sel.i]; if (!o || o.locked) return;
@@ -1255,10 +1297,19 @@ function moveImg(d) {
   swapIn(sel.k, sel.i, j); sel.i = j; renderImgs();
 }
 /* Instagram size: the working image is the original center-cropped to 1080 x igSize, so preview and every save match */
-var crop = { l: 0, r: 0, t: 0, b: 0 };
+var crop = { m: "orig", land: false, pos: 0, l: 0, r: 0, t: 0, b: 0 };
+var CROPS = [["orig", "Original"], ["free", "Freeform"], ["1:1", "Square"], ["9:16", "9:16"], ["4:5", "4:5"], ["5:7", "5:7"], ["3:4", "3:4"], ["3:5", "3:5"], ["2:3", "2:3"]];
+function cropRect() {
+  var W = orig.width, H = orig.height;
+  if (crop.m === "orig") return [0, 0, W, H];
+  if (crop.m === "free") return [W * crop.l / 100, H * crop.t / 100, W * (1 - (crop.l + crop.r) / 100), H * (1 - (crop.t + crop.b) / 100)];
+  var p = crop.m.split(":"), a = +p[0] / +p[1]; if (crop.land && a !== 1) a = 1 / a;
+  var w = W, h = W / a; if (h > H) { h = H; w = H * a; }
+  var k = (crop.pos + 100) / 200;   /* slide along whichever side has room */
+  return [(W - w) * k, (H - h) * k, w, h];
+}
 function applyCrop() {
-  var sx = orig.width * crop.l / 100, sy = orig.height * crop.t / 100;
-  var w = orig.width * (1 - (crop.l + crop.r) / 100), h = orig.height * (1 - (crop.t + crop.b) / 100);
+  var R = cropRect(), sx = R[0], sy = R[1], w = R[2], h = R[3];
   if (S.ig) {
     var a = 1080 / +S.igSize;
     if (w / h > a) { sx += (w - h * a) / 2; w = h * a; } else { sy += (h - w / a) / 2; h = w / a; }
@@ -1789,20 +1840,39 @@ $("#imgDel").addEventListener("click", function () {
 });
 function selImgObj() { return sel.k === "img" && imgs[sel.i] && !imgs[sel.i].locked ? imgs[sel.i] : null; }
 function xset(fn) { var im = selImgObj(); if (!im) return; fn(im); compose(); syncXform(); }
-[["xRot", "rot"], ["xSkX", "skx"], ["xSkY", "sky"]].forEach(function (q) {
-  $("#" + q[0]).addEventListener("input", function () { var v = +this.value; xset(function (im) { im[q[1]] = v; }); });
-});
-$("#xRot90").addEventListener("click", function () { xset(function (im) { var r = Math.round((im.rot || 0) / 90) * 90 + 90; im.rot = r > 180 ? r - 360 : r; }); });
+var skMode = "st";
 $("#xFlipH").addEventListener("click", function () { xset(function (im) { im.fx = !im.fx; }); });
-$("#xFlipV").addEventListener("click", function () { xset(function (im) { im.fy = !im.fy; }); });
-$("#xReset").addEventListener("click", function () { xset(function (im) { im.rot = im.skx = im.sky = 0; im.fx = im.fy = false; }); });
+$("#xRot90").addEventListener("click", function () { xset(function (im) { im.q = ((im.q || 0) + 3) % 4; }); });   /* a quarter turn to the left, as in Photos */
+$("#xSkew").addEventListener("click", function () {
+  var open = $("#skewBox").hidden; $("#skewBox").hidden = !open; this.setAttribute("aria-pressed", open ? "true" : "false");
+});
+document.querySelectorAll("input[name=skMode]").forEach(function (r) { r.addEventListener("change", function () { skMode = r.value; syncXform(); }); });
+$("#xSk").addEventListener("input", function () { var v = +this.value; xset(function (im) { im[skMode] = v; }); });
+$("#xReset").addEventListener("click", function () { xset(function (im) { im.q = 0; im.st = im.kv = im.kh = 0; im.fx = false; }); });
+function syncCrop() {
+  var box = $("#cropChips");
+  if (!box.children.length) CROPS.forEach(function (c) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = c[1]; b.dataset.m = c[0];
+    b.addEventListener("click", function () { crop.m = c[0]; crop.pos = 0; syncCrop(); applyCrop(); draw(); });
+    box.appendChild(b);
+  });
+  Array.prototype.forEach.call(box.children, function (b) { b.setAttribute("aria-pressed", b.dataset.m === crop.m ? "true" : "false"); });
+  var ratio = crop.m !== "orig" && crop.m !== "free";
+  $("#cropOri").hidden = !ratio || crop.m === "1:1"; $("#cPosF").hidden = !ratio; $("#cFree").hidden = crop.m !== "free";
+  document.querySelector("input[name=cOri][value=" + (crop.land ? "l" : "p") + "]").checked = true;
+  $("#cPos").value = crop.pos; $("#cPosO").textContent = crop.pos;
+  [["cL", "l"], ["cR", "r"], ["cT", "t"], ["cB", "b"]].forEach(function (q) { $("#" + q[0]).value = crop[q[1]]; $("#" + q[0] + "O").textContent = crop[q[1]] + "%"; });
+  var m = CROPS.filter(function (c) { return c[0] === crop.m; })[0][1];
+  $("#cropName").textContent = crop.m === "orig" ? "" : m + (ratio && crop.m !== "1:1" ? (crop.land ? " landscape" : " portrait") : "");
+}
+document.querySelectorAll("input[name=cOri]").forEach(function (r) { r.addEventListener("change", function () { crop.land = r.value === "l"; crop.pos = 0; syncCrop(); applyCrop(); draw(); }); });
+$("#cPos").addEventListener("input", function () { crop.pos = +this.value; $("#cPosO").textContent = crop.pos; applyCrop(); draw(); });
 [["cL", "l", "r"], ["cR", "r", "l"], ["cT", "t", "b"], ["cB", "b", "t"]].forEach(function (q) {
   $("#" + q[0]).addEventListener("input", function () {
     crop[q[1]] = Math.min(+this.value, 90 - crop[q[2]]); this.value = crop[q[1]];   /* always keep at least 10% of the picture */
     $("#" + q[0] + "O").textContent = crop[q[1]] + "%"; applyCrop(); draw();
   });
 });
-$("#cReset").addEventListener("click", function () { crop = { l: 0, r: 0, t: 0, b: 0 }; syncXform(); applyCrop(); draw(); });
 $("#addText").addEventListener("click", function () {
   setTab("text");
   if (S.layers.length === 1 && !S.layers[0].text.trim()) { S.layers[0].text = "New text"; S.active = 0; syncLayer(); afterText(); }
