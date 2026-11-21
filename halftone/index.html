@@ -143,79 +143,133 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
 #saveModal .sheet{max-width:380px}
 @media (max-width:420px){.pill [role=tab]{font-size:12px;gap:3px}}
 @media (prefers-reduced-motion:reduce){.ph .ico,.pill .knob{transition:none}}
-/* ===== Affinity-style skin: charcoal panels, flat grey buttons, cyan persona switch, text tabs, inset value fields ===== */
-:root{--paper:#e9e9e9;--bar:#dedede;--card:#f4f4f4;--well:#cfcfcf;--field:#ffffff;--btn:#d6d6d6;--btnh:#cbcbcb;--sel:#ffffff;
-  --ink:#1c1c1c;--muted:#5a5a5a;--line:#c6c6c6;--sep:#c2c2c2;--felt:#2fb4d3;--felt-d:#25a0bd;--onfelt:#0e0e0e;--accent:#2fb4d3;--stagebg:#d9d9d9}
-:root[data-theme="dark"]{--paper:#2b2b2b;--bar:#2f2f2f;--card:#333333;--well:#1d1d1d;--field:#1a1a1a;--btn:#5a5a5a;--btnh:#666666;--sel:#4b4b4b;
-  --ink:#ececec;--muted:#bdbdbd;--line:#1f1f1f;--sep:#1c1c1c;--felt:#5bc9e1;--felt-d:#4bb8d0;--onfelt:#0e0e0e;--accent:#5bc9e1;--stagebg:#232323}
-html,body{font:13px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif}
-h1,.ph,.sheet h2{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif}
-h1{font-weight:600;font-size:17px;letter-spacing:0}
-.top{background:var(--bar);max-width:none;border-bottom:1px solid var(--sep);padding-top:calc(6px + var(--sat));padding-bottom:6px}
-.wrap{padding-top:10px}
-#cv{border-radius:4px;box-shadow:0 0 0 1px var(--sep),0 10px 30px rgba(0,0,0,.25)}
-.stagecol{background:var(--paper)}
-/* flat grey buttons, like Document Setup… */
+/* ===== Studio skin: off-white toolbar and sidebar, warm grey canvas area, underline tabs, quiet grey buttons ===== */
+:root{--paper:#ebe9e4;--bar:#f8f7f5;--card:#f8f7f5;--well:#ebe9e4;--field:#ffffff;--btn:#e9e8e6;--btnh:#dedcd9;--sel:#ffffff;
+  --ink:#1c1c1c;--muted:#6b6b6b;--line:#dcdad5;--sep:#d6d4cf;--felt:#1c1c1c;--felt-d:#000;--onfelt:#ffffff;--accent:#1c1c1c;
+  --track:#d6d4cf;--knob:#ffffff;--stagebg:#ffffff}
+:root[data-theme="dark"]{--paper:#1f1f1f;--bar:#2a2a2a;--card:#2a2a2a;--well:#1f1f1f;--field:#1c1c1c;--btn:#3a3a3a;--btnh:#454545;--sel:#3a3a3a;
+  --ink:#ececec;--muted:#a3a3a3;--line:#3a3a3a;--sep:#3a3a3a;--felt:#ececec;--felt-d:#fff;--onfelt:#141414;--accent:#ececec;
+  --track:#4a4a4a;--knob:#f2f2f2;--stagebg:#161616}
+html,body{font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;background:var(--paper)}
+h1,h2,h3,.ph,.sheet h2{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif}
+/* toolbar */
+.top{max-width:none;background:var(--bar);border-bottom:1px solid var(--sep);gap:8px;padding:calc(6px + var(--sat)) 12px 6px calc(16px + var(--sal));min-height:52px}
+h1{font-weight:600;font-size:17px;letter-spacing:0;flex:0 0 auto}
+.tb{display:flex;align-items:center;gap:2px;flex:1 1 auto;justify-content:center;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tb::-webkit-scrollbar{display:none}
+.tb .sep{width:1px;height:26px;background:var(--sep);margin:0 10px;flex:0 0 1px}
+.tb .icob{width:38px;height:38px;flex:0 0 38px;border:0;background:none;color:var(--ink);border-radius:8px}
+.tb .icob .ico{width:22px;height:22px;flex-basis:22px}
+.tb .icob:hover{background:var(--btn)}
+.tb .icob[disabled]{opacity:.3}
+.tb .icob[aria-pressed="true"]{background:var(--btn);color:var(--ink)}
+.tbtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:0;background:none;border-radius:8px;font-size:17px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tbtn .ico{width:22px;height:22px;flex-basis:22px}
+.tbtn:hover{background:var(--btn)}
+.topr .theme-toggle,.topr .bento{width:38px;height:38px;color:var(--ink)}
+/* main: canvas area left, sidebar right */
+.wrap{max-width:none;margin:0;padding:0;gap:0;grid-template-columns:minmax(0,1fr)}
+.stagecol{background:var(--paper);padding:16px 2.5vw 8px}
+.stage{padding:8px}
+#cv{border-radius:0;box-shadow:0 1px 3px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.10)}
+.stagecol .status{text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin:6px 0 0}
+.ctlcol{background:var(--bar);gap:0;padding:0 0 calc(24px + var(--sab))}
+@media (min-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr) 380px;align-items:stretch;min-height:calc(100vh - 53px)}
+  .stagecol{position:sticky;top:0;align-self:start;padding:28px 28px 12px}
+  .ctlcol{border-left:1px solid var(--sep)}
+}
+/* underline tabs (Adjustments · Layers · History) */
+.tabrow{display:block;border-bottom:1px solid var(--sep)}
+.pill{display:grid;grid-template-columns:repeat(3,1fr);height:52px;padding:0;border-radius:0;background:none;position:relative}
+.pill .knob{top:auto;bottom:-1px;left:0;height:3px;width:calc(100% / 3);border-radius:0;background:var(--ink)}
+.pill [role=tab]{font-size:16px;font-weight:500;color:var(--muted);border-radius:0;letter-spacing:.01em;gap:8px}
+.pill [role=tab] .ico{display:none}
+.pill [role=tab]:hover{color:var(--ink)}
+.pill [role=tab][aria-selected=true]{background:none;color:var(--ink);font-weight:500}
+.pill [role=tab].cur::after{background:var(--muted)}
+/* title row with grey Reset (History · Undo · Redo) */
+.shd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:18px 20px 12px}
+.shd h2{margin:0;font-size:20px;font-weight:500}
+.sbtn{height:34px;padding:0 14px;border:0;border-radius:6px;background:var(--btn);color:var(--ink);font-size:15px;cursor:pointer}
+.sbtn:hover{background:var(--btnh)}
+.looks{padding:0 20px 14px;gap:6px}
+.chip{height:28px;min-height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--btn);font-size:13px;color:var(--ink)}
+.chip:hover{background:var(--btnh)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--onfelt)}
+/* sections: a rule above, name and Reset, then the controls */
+.tabp{gap:0}
+.acc{background:none;border:0;border-top:1px solid var(--sep);border-radius:0;position:static}
+.acc>.ph,.acc>.preset{display:none}
+.shead{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 6px}
+.shead h3{margin:0;font-size:15px;font-weight:600;position:relative}
+.shead h3.mod::after{content:"";position:absolute;top:2px;right:-10px;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.shead .sbtn{height:28px;padding:0 10px;font-size:13px}
+.pb{padding:4px 20px 16px;gap:10px}
+.tabp>.foot,.ctlcol>.foot{padding:0 20px}
+/* fields */
+.f>.lab{font-size:13px;color:var(--ink);align-items:baseline}
+.f>.lab output{color:var(--muted);font-variant-numeric:tabular-nums}
+select{background:var(--field);border:1px solid var(--line);border-radius:6px}
+.seg{background:var(--btn);border:0;border-radius:8px;padding:2px}
+.seg span{color:var(--muted)}
+.seg input:checked+span{background:var(--sel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.chk input{accent-color:var(--ink)}
 .btn{background:var(--btn);border:0;border-radius:6px;font-weight:500}
-.btn:hover{background:var(--btnh);border:0}
-.btn.primary{background:var(--btn);color:var(--ink)}
-.btn.primary:hover{background:var(--btnh)}
-.btn[aria-pressed="true"]{background:var(--accent);color:var(--onfelt)}
-.icob{background:transparent;border:0;border-radius:6px;color:var(--ink)}
-.icob:hover{background:var(--btn)}
-.icob[aria-pressed="true"]{background:var(--sel);color:var(--ink)}
-/* persona switch: dark capsule, cyan pill on the chosen look */
-.pill{height:40px;border-radius:14px;background:var(--well);padding:4px}
-.pill .knob{top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:11px;background:var(--accent)}
-.pill [role=tab]{font-size:14px;font-weight:600;color:var(--muted);border-radius:11px;gap:7px}
-.pill [role=tab] .ico{width:18px;height:18px;flex-basis:18px}
-.pill [role=tab][aria-selected=true]{color:var(--onfelt)}
-.tabrow #tabReset{width:40px;height:40px;flex-basis:40px;background:var(--well)}
-/* one panel per tab with text tabs across the top (Color · Swatches · Stroke …) */
-.panel{background:var(--card);border:1px solid var(--sep);border-radius:8px;overflow:hidden}
-.ptabs{display:flex;align-items:center;gap:2px;padding:6px 6px 6px 10px;border-bottom:1px solid var(--sep);background:var(--bar)}
-.ptabs .grip{width:4px;height:20px;border-radius:2px;background:var(--btn);margin-right:8px;flex:0 0 4px}
-.ptab{border:0;background:none;color:var(--muted);font-size:14px;font-weight:500;padding:4px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;position:relative}
-.ptab:hover{color:var(--ink)}
-.ptab[aria-selected=true]{background:var(--sel);color:var(--ink);font-weight:600}
-.ptab.mod::after{content:"";position:absolute;top:4px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
-.ptabs .pr{margin-left:auto;width:28px;height:26px;flex:0 0 28px;border:1px solid var(--muted);border-radius:6px;background:none;color:var(--ink);padding:3px;cursor:pointer;opacity:.85}
-.ptabs .pr:hover{opacity:1;background:var(--btn)}
-.panel .acc{border:0;border-radius:0;background:none}
-.panel .acc>.ph,.panel .acc>.preset{display:none}
-.panel .pb{padding:12px 12px 12px}
-/* "Opacity: [100 %]" — values in dark inset boxes */
-.f>.lab{align-items:center;font-size:13px;color:var(--ink)}
-.f>.lab output{background:var(--field);border-radius:5px;padding:3px 8px;min-width:58px;text-align:right;color:var(--ink);font-size:13px}
-input[type=range]{accent-color:var(--accent)}
-select,.icob.pick{background:var(--field)}
-select{border:0;border-radius:5px}
-.seg{background:var(--well);border:0;border-radius:8px}
-.seg input:checked+span{background:var(--sel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.25)}
-.chip{background:var(--btn);border:0;border-radius:6px}
-.chip[aria-pressed="true"]{background:var(--accent);color:var(--onfelt)}
-.chk input{accent-color:var(--accent)}
-.color input[type=color]{background:var(--field);border:0}
-.sheet{background:var(--card);border:1px solid var(--sep)}
-@media (pointer:coarse){.pill{height:48px}.tabrow #tabReset{width:48px;height:48px}.ptab{padding:8px 12px}}
-@media (max-width:420px){.pill [role=tab] .ico{display:none}.ptab{font-size:13px;padding:4px 8px}}
-/* compact: shorter look switch and starting-point chips */
-.pill{height:30px;padding:3px;border-radius:10px}
-.pill .knob{top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/3);border-radius:8px}
-.pill [role=tab]{font-size:13px;border-radius:8px;gap:6px}.pill [role=tab] .ico{width:15px;height:15px;flex-basis:15px}
-.tabrow #tabReset{width:30px;height:30px;flex-basis:30px}
-.chip{height:24px;min-height:24px;padding:0 9px;font-size:12px}
+.btn:hover{background:var(--btnh)}
+.icob{border:0;background:var(--btn);border-radius:6px;color:var(--ink)}
+.icob[aria-pressed="true"]{background:var(--ink);color:var(--onfelt)}
+.color input[type=color]{border:1px solid var(--line);background:var(--field)}
+.color .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.sheet{background:var(--card);border:1px solid var(--sep);border-radius:10px}
+.linkb{color:var(--muted)}
+/* sliders: neutral track, dark fill up to a white knob */
+input[type=range]{-webkit-appearance:none;appearance:none;height:22px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(var(--ink),var(--ink)) 0/var(--p,50%) 100% no-repeat,var(--track)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:var(--knob);border:1px solid rgba(0,0,0,.22);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--track)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:2px;background:var(--ink)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--knob);border:1px solid rgba(0,0,0,.22);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range]:focus-visible{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--red)}
 @media (pointer:coarse){
-  .pill{height:36px}.tabrow #tabReset{width:36px;height:36px;min-height:36px;flex-basis:36px}
-  .chip{height:30px;min-height:30px}
-  /* iOS zooms the page when a field under 16 px gets focus: keep fields at 16 px so it never does */
+  input[type=range]{height:36px}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-11px}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px}
+  .pill{height:48px}.chip{height:32px;min-height:32px}.sbtn{height:36px}
+  .tb .icob{width:40px;height:40px;flex-basis:40px;min-height:40px}
   input,select,textarea{font-size:16px}
+}
+@media (max-width:640px){
+  h1{display:none}
+  .top{padding-left:calc(6px + var(--sal));padding-right:4px}
+  .tb{justify-content:flex-start}
+  .tb .sep{margin:0 4px}
+  .tbtn span{display:none}.tbtn{padding:0 8px}
+  .stagecol{padding:10px 8px 4px}
+  .tb{gap:0}.tb .sep{margin:0 2px}
+  .tb .icob,.tbtn,.topr .theme-toggle,.topr .bento{width:34px;height:34px;min-height:34px;flex:0 0 34px;padding:6px}
+  .tb .icob .ico,.tbtn .ico{width:20px;height:20px;flex-basis:20px}
+  .tbtn{justify-content:center}
 }
 </style>
 </head>
 <body data-look="dot" data-ht="rgb">
 <header class="top">
   <h1>Halftone</h1>
+  <nav class="tb" aria-label="Tools">
+    <button type="button" class="icob" id="addImg" aria-label="Open image" title="Open image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg></button>
+    <button type="button" class="icob" id="takePhoto" aria-label="Take photo" title="Take photo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="icob" id="undo" aria-label="Undo" title="Undo" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"/></svg></button>
+    <button type="button" class="icob" id="redo" aria-label="Redo" title="Redo" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M170.34,130.34,204.69,96H88a48,48,0,0,0,0,96h88a8,8,0,0,1,0,16H88A64,64,0,0,1,88,80H204.69L170.34,45.66a8,8,0,0,1,11.32-11.32l48,48a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32-11.32Z"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,16.37a86.4,86.4,0,0,1,16,3V212.67a86.4,86.4,0,0,1-16,3Zm32,9.26a87.81,87.81,0,0,1,16,10.54V195.83a87.81,87.81,0,0,1-16,10.54ZM40,128a88.11,88.11,0,0,1,80-87.63V215.63A88.11,88.11,0,0,1,40,128Zm160,50.54V77.46a87.82,87.82,0,0,1,0,101.08Z"/></svg></button>
+    <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></button>
+    <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48V96a8,8,0,0,1-16,0V67.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM106.34,138.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l50.35-50.34a8,8,0,0,0-11.32-11.32Z"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="tbtn" id="saveOpen"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>Export</span></button>
+  </nav>
   <div class="topr">
   <button class="theme-toggle" id="themeBtn" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
     <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -228,26 +282,10 @@ select{border:0;border-radius:5px}
 <main class="wrap">
   <section class="stagecol" aria-label="Preview">
     <div class="stage" id="stage"><canvas id="cv" role="img" aria-label="Preview of the image look"></canvas></div>
-    <div class="tools">
-      <div class="tg">
-        <button type="button" class="icob" id="undo" aria-label="Undo" title="Undo" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"/></svg></button>
-        <button type="button" class="icob" id="redo" aria-label="Redo" title="Redo" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M170.34,130.34,204.69,96H88a48,48,0,0,0,0,96h88a8,8,0,0,1,0,16H88A64,64,0,0,1,88,80H204.69L170.34,45.66a8,8,0,0,1,11.32-11.32l48,48a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32-11.32Z"/></svg></button>
-      </div>
-      <p class="status" id="status" role="status" aria-live="polite"></p>
-      <div class="tg">
-        <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,16.37a86.4,86.4,0,0,1,16,3V212.67a86.4,86.4,0,0,1-16,3Zm32,9.26a87.81,87.81,0,0,1,16,10.54V195.83a87.81,87.81,0,0,1-16,10.54ZM40,128a88.11,88.11,0,0,1,80-87.63V215.63A88.11,88.11,0,0,1,40,128Zm160,50.54V77.46a87.82,87.82,0,0,1,0,101.08Z"/></svg></button>
-        <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg></button>
-        <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,48V96a8,8,0,0,1-16,0V67.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM106.34,138.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l50.35-50.34a8,8,0,0,0-11.32-11.32Z"/></svg></button>
-      </div>
-    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
   </section>
 
   <section class="ctlcol" aria-label="Settings">
-    <div class="actions">
-      <button type="button" class="btn" id="addImg" aria-label="Add image" title="Add image"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg><span>Image</span></button>
-      <button type="button" class="btn" id="takePhoto" aria-label="Take photo" title="Take photo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg><span>Camera</span></button>
-      <button type="button" class="btn primary" id="saveOpen"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>Save</span></button>
-    </div>
     <input type="file" id="fileIn" accept="image/*" hidden>
     <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
 
@@ -258,8 +296,8 @@ select{border:0;border-radius:5px}
       <button type="button" role="tab" id="t-half" aria-controls="p-half" data-tab="half"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,16.37a86.4,86.4,0,0,1,16,3V212.67a86.4,86.4,0,0,1-16,3Zm32,9.26a87.81,87.81,0,0,1,16,10.54V195.83a87.81,87.81,0,0,1-16,10.54ZM40,128a88.11,88.11,0,0,1,80-87.63V215.63A88.11,88.11,0,0,1,40,128Zm160,50.54V77.46a87.82,87.82,0,0,1,0,101.08Z"/></svg><span>Halftone</span></button>
       <button type="button" role="tab" id="t-fx" aria-controls="p-fx" data-tab="fx"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z"/></svg><span>Effects</span></button>
     </div>
-    <button type="button" class="icob" id="tabReset" aria-label="Reset this tab" title="Reset this tab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></button>
     </div>
+    <div class="shd"><h2 id="tabTitle">Dot matrix</h2><button type="button" class="sbtn" id="tabReset" aria-label="Reset this tab" title="Reset this tab">Reset</button></div>
 
     <!-- Dot matrix -->
     <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
@@ -313,7 +351,6 @@ select{border:0;border-radius:5px}
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-screen">Screen<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-screen" hidden>
-          <label class="chk"><input type="checkbox" data-k="htRiley">Bridget Riley wavy lines</label>
           <div class="f"><label class="lab" for="htCells">Dots across <output data-for="htCells"></output></label><input type="range" id="htCells" min="16" max="180" step="1" data-k="htCells"></div>
           <div class="f"><label class="lab" for="htAngle">Screen angle <output data-for="htAngle"></output></label><input type="range" id="htAngle" min="0" max="90" step="1" data-k="htAngle"></div>
           <fieldset class="seg"><legend>Dot shape</legend>
@@ -378,6 +415,27 @@ select{border:0;border-radius:5px}
           <div class="f"><label class="lab" for="fxGradeAmt">Strength <output data-for="fxGradeAmt"></output></label><input type="range" id="fxGradeAmt" min="0" max="100" step="1" data-k="fxGradeAmt"></div>
         </div>
       </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-warhol">Warhol<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-warhol" hidden>
+          <fieldset class="seg"><legend>Warhol panels</legend>
+            <label><input type="radio" name="fxWarhol" value="off" data-k="fxWarhol"><span>Off</span></label>
+            <label><input type="radio" name="fxWarhol" value="2" data-k="fxWarhol"><span>2 × 2</span></label>
+            <label><input type="radio" name="fxWarhol" value="3" data-k="fxWarhol"><span>3 × 3</span></label>
+          </fieldset>
+          <div class="f"><label class="lab" for="fxWarholMix">Colors <output data-for="fxWarholMix"></output></label><input type="range" id="fxWarholMix" min="0" max="8" step="1" data-k="fxWarholMix"></div>
+        </div>
+      </div>
+      <div class="acc">
+        <button type="button" class="ph" aria-expanded="false" aria-controls="a-mine">Minecraft<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+        <div class="pb" id="a-mine" hidden>
+          <div class="f"><label class="lab" for="fxMine">Block size <output data-for="fxMine"></output></label><input type="range" id="fxMine" min="0" max="100" step="1" data-k="fxMine"></div>
+          <fieldset class="seg"><legend>Block colors</legend>
+            <label><input type="radio" name="fxMinePal" value="mc" data-k="fxMinePal"><span>Minecraft blocks</span></label>
+            <label><input type="radio" name="fxMinePal" value="photo" data-k="fxMinePal"><span>Photo colors</span></label>
+          </fieldset>
+        </div>
+      </div>
       <p class="foot">Effects show in saved images and video, not in SVG.</p>
     </div>
 
@@ -433,7 +491,7 @@ var DEF = {
   cols: 56, reveal: 80, dmDot: 86, dmOp: 100, dmShape: "circle", dir: "center", palette: "confetti", band: 22, wash: 55, scatter: 25,
   dmSat: 110, dmCon: 110, dmBg: "#fbfbf8", revealTime: 3, seed: 7, dmFrom: "confetti",
   htMode: "rgb", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 70, htAngle: 45, htShape: "dot", htGain: 100, htOp: 100, htCon: 120, htLight: 0, htInvert: false, htRiley: false,
-  fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
+  fxWarhol: "off", fxWarholMix: 0, fxMine: 0, fxMinePal: "mc", fxShift: 0, fxGlitch: 0, fxSeed: 3, fxLeak: 0, fxFlare: 0, fxStreak: 0, fxGrade: "none", fxGradeAmt: 70,
   outSize: "2048", ig: false, igSize: "1350"
 };
 var PALETTES = {
@@ -663,7 +721,60 @@ var GRADES = {
   fade: function (r, g, b, l) { return [r, g, b].map(function (v) { return 0.09 + (v * 0.8 + l * 0.2) * 0.84; }); },
   noir: function (r, g, b, l) { var v = (l - 0.5) * 1.45 + 0.45; return [v, v, v]; }
 };
+var WARHOL = [
+  ["#1a1446", "#e6007e", "#f7a1c4", "#ffe600"], ["#00205b", "#00a3e0", "#ffd100", "#ff7f41"], ["#2b0a3d", "#ff3b30", "#ff9f0a", "#fff4b8"],
+  ["#003b2f", "#00c08b", "#c6ff00", "#f5f5f5"], ["#3d0c02", "#ff5e00", "#ffd23f", "#b2f7ef"], ["#120a2a", "#7b2ff7", "#f107a3", "#fefae0"],
+  ["#0b3d91", "#ff006e", "#8ac926", "#ffca3a"], ["#222222", "#ff595e", "#1982c4", "#ffca3a"], ["#4a0e4e", "#f72585", "#4cc9f0", "#fdfdfd"]
+].map(function (p) { return p.map(rgb); });
+/* Warhol: the picture repeated in a 2 x 2 or 3 x 3 grid, each panel posterized to four flat screen-print colors */
+function warhol(ctx, W, H, n) {
+  var tw = Math.max(8, Math.round(W / n)), th = Math.max(8, Math.round(H / n));
+  var s = mk(tw, th), sx = s.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, tw, th);
+  var src = sx.getImageData(0, 0, tw, th).data, L = new Float32Array(tw * th), lo = 1, hi = 0, i;
+  for (i = 0; i < L.length; i++) { var v = (0.2126 * src[i * 4] + 0.7152 * src[i * 4 + 1] + 0.0722 * src[i * 4 + 2]) / 255; L[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+  var span = Math.max(0.05, hi - lo);
+  for (var k = 0; k < n * n; k++) {
+    var pal = WARHOL[(k + S.fxWarholMix) % WARHOL.length], im = sx.createImageData(tw, th), d = im.data;
+    for (i = 0; i < L.length; i++) {
+      var c = pal[Math.min(3, ((L[i] - lo) / span * 4) | 0)];
+      d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255;
+    }
+    var t = mk(tw, th); t.getContext("2d").putImageData(im, 0, 0);
+    var x0 = Math.round((k % n) * W / n), y0 = Math.round(((k / n) | 0) * H / n), x1 = Math.round(((k % n) + 1) * W / n), y1 = Math.round((((k / n) | 0) + 1) * H / n);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(t, x0, y0, x1 - x0, y1 - y0); ctx.imageSmoothingEnabled = true;
+  }
+}
+var MC = ["#5d9c3b", "#866043", "#7d7d7d", "#6b6b6b", "#a2834f", "#6b5433", "#dbd3a0", "#3f76e4", "#d96415", "#f0fbfb", "#91b5fc", "#3b6e1f",
+  "#f9e14b", "#5decf5", "#a10f0f", "#14121d", "#6e3534", "#e9ecec", "#141519", "#a12722", "#35399d", "#f8c527", "#f07613", "#ed8dac",
+  "#7a2aad", "#158991", "#70b919", "#985e43", "#a0a6b3", "#2e2e2e"].map(rgb);
+/* Minecraft: big square blocks in block colors, each with a speckled texture and a light top-left / dark bottom-right bevel */
+function minecraft(ctx, W, H) {
+  var bs = (6 + S.fxMine / 100 * 54) * W / 1080, cols = Math.max(1, Math.ceil(W / bs)), rows = Math.max(1, Math.ceil(H / bs));
+  var s = mk(cols, rows), sx = s.getContext("2d", { willReadFrequently: true });
+  sx.imageSmoothingQuality = "high"; sx.drawImage(ctx.canvas, 0, 0, cols * bs * (W / (cols * bs)), H, 0, 0, cols, rows);
+  var d = sx.getImageData(0, 0, cols, rows).data, sub = bs >= 16 ? 4 : bs >= 8 ? 2 : 1, ss = bs / sub, e = Math.max(1, bs / 8);
+  for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+    var q = (j * cols + i) * 4, c = [d[q], d[q + 1], d[q + 2]], g = (c[0] + c[1] + c[2]) / 3;
+    c = c.map(function (v) { return clamp(((g + (v - g) * 1.6) - 128) * 1.15 + 128, 0, 255); });   /* livelier before matching blocks */
+    if (S.fxMinePal === "mc") {
+      var best = MC[0], bd = 1e9;
+      MC.forEach(function (m) { var dd = (m[0] - c[0]) * (m[0] - c[0]) * 0.3 + (m[1] - c[1]) * (m[1] - c[1]) * 0.59 + (m[2] - c[2]) * (m[2] - c[2]) * 0.11; if (dd < bd) { bd = dd; best = m; } });
+      c = best;
+    }
+    var x = i * bs, y = j * bs;
+    for (var v = 0; v < sub; v++) for (var u = 0; u < sub; u++) {
+      var h = Math.sin((i * 12.9898 + j * 78.233 + u * 37.719 + v * 4.581) * 43758.5453), f = 1 + (h - Math.floor(h) - 0.5) * 0.24;
+      ctx.fillStyle = "rgb(" + clamp(c[0] * f, 0, 255) + "," + clamp(c[1] * f, 0, 255) + "," + clamp(c[2] * f, 0, 255) + ")";
+      ctx.fillRect(x + u * ss, y + v * ss, ss + 0.5, ss + 0.5);
+    }
+    ctx.fillStyle = "rgba(255,255,255,.16)"; ctx.fillRect(x, y, bs, e); ctx.fillRect(x, y, e, bs);
+    ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.fillRect(x, y + bs - e, bs, e); ctx.fillRect(x + bs - e, y, e, bs);
+  }
+}
 function effects(ctx, W, H) {
+  if (S.fxWarhol !== "off") warhol(ctx, W, H, +S.fxWarhol);
+  if (S.fxMine > 0) minecraft(ctx, W, H);
   var k = W / 1080, grade = GRADES[S.fxGrade], ga = S.fxGradeAmt / 100;
   var sh = Math.round(S.fxShift / 100 * 24 * k), gl = S.fxGlitch / 100;
   if ((grade && ga > 0) || sh || gl > 0) {
@@ -769,17 +880,15 @@ function draw(prog) {
   render(pctx, W, H, prog == null ? S.reveal / 100 : prog);
   cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview");
 }
-/* crop overlay: dim outside, a thin frame with thirds, and L-shaped corner handles like the Photos app */
 function fit() {
   if (!src.width) return;
   var wide = window.innerWidth >= 900;
   var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
   /* fitted: pinned and short enough to edit under it. Double tap: full width (95% of a phone screen), not pinned */
-  var maxH = wide ? window.innerHeight - 150 : Math.min(window.innerHeight * 0.46, 560);
+  var maxH = wide ? window.innerHeight - 140 : Math.min(window.innerHeight * 0.46, 560);
   if (!big && h > maxH) { h = maxH; w = h / ar; }
   var dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
-  $(".tools").style.width = Math.max(Math.round(w), 280) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   document.body.classList.toggle("big", big);
   schedule();
@@ -1012,6 +1121,7 @@ function setTab(t) {
     $("#" + b.getAttribute("aria-controls")).hidden = !on;
     if (on) $(".pill").style.setProperty("--i", i);
   });
+  $("#tabTitle").textContent = { dot: "Dot matrix", half: "Halftone", fx: "Effects" }[t];
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
   stopPlay(); schedule();
 }
@@ -1035,10 +1145,13 @@ function out(k, v) {
     o.textContent = (SIGNED[k] && v > 0 ? "+" : "") + v + (UNITS[k] || "");
   });
 }
+function fillRange(el) { var a = +el.min || 0, b = +el.max || 100; el.style.setProperty("--p", ((+el.value - a) / (b - a) * 100) + "%"); }
+document.addEventListener("input", function (e) { if (e.target.type === "range") fillRange(e.target); });
 function setVal(el, v) {
   if (el.type === "radio") el.checked = String(v) === el.value;
   else if (el.type === "checkbox") el.checked = !!v;
   else el.value = v;
+  if (el.type === "range") fillRange(el);
 }
 function sync() {
   document.querySelectorAll("[data-k]").forEach(function (el) { var k = el.dataset.k; setVal(el, S[k]); out(k, S[k]); });
@@ -1190,7 +1303,7 @@ $("#saveVideo").addEventListener("click", saveVideo);
 var TABKEYS = {
   dot: ["cols", "reveal", "dmDot", "dmOp", "dmShape", "dmFrom", "dir", "palette", "band", "wash", "scatter", "dmSat", "dmCon", "dmBg", "revealTime", "seed"],
   half: ["htMode", "htInk", "htPaper", "htCells", "htAngle", "htShape", "htGain", "htOp", "htCon", "htLight", "htInvert", "htRiley"],
-  fx: ["fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
+  fx: ["fxWarhol", "fxWarholMix", "fxMine", "fxMinePal", "fxShift", "fxGlitch", "fxSeed", "fxLeak", "fxFlare", "fxStreak", "fxGrade", "fxGradeAmt"]
 };
 $("#tabReset").addEventListener("click", function () {
   TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
@@ -1349,45 +1462,19 @@ document.addEventListener("paste", function (e) {
   for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
 });
 
-/* panels: each tab's sections become one panel with text tabs across the top, like Affinity's Color · Swatches · Stroke.
-   The reset icon at the right of the tab strip resets the section that is showing. */
-document.querySelectorAll(".tabp").forEach(function (tp) {
-  var accs = Array.prototype.slice.call(tp.querySelectorAll(".acc"));
-  if (!accs.length) return;
-  var panel = document.createElement("div"); panel.className = "panel";
-  var bar = document.createElement("div"); bar.className = "ptabs"; bar.setAttribute("role", "tablist");
-  var grip = document.createElement("span"); grip.className = "grip"; grip.setAttribute("aria-hidden", "true"); bar.appendChild(grip);
-  accs[0].before(panel); panel.appendChild(bar);
-  var cur = 0, btns = [];
-  var pr = document.createElement("button"); pr.type = "button"; pr.className = "pr";
-  pr.appendChild($("#icoReset").content.cloneNode(true));
-  pr.addEventListener("click", function () { resetPanel(accs[cur].querySelector(".pb")); });
-  function show(i) {
-    cur = i;
-    accs.forEach(function (acc, k) {
-      acc.hidden = k !== i;
-      var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb");
-      ph.setAttribute("aria-expanded", k === i ? "true" : "false"); pb.hidden = k !== i;
-      btns[k].setAttribute("aria-selected", k === i ? "true" : "false"); btns[k].tabIndex = k === i ? 0 : -1;
-    });
-    var name = btns[i].textContent;
-    pr.setAttribute("aria-label", "Reset " + name); pr.title = "Reset " + name;
-  }
-  accs.forEach(function (acc, i) {
-    var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb");
-    var b = document.createElement("button"); b.type = "button"; b.className = "ptab"; b.setAttribute("role", "tab");
-    b.textContent = ph.firstChild.textContent.trim(); b.id = "pt-" + pb.id; b.setAttribute("aria-controls", pb.id);
-    pb.setAttribute("role", "tabpanel"); pb.setAttribute("aria-labelledby", b.id);
-    acc.dataset.tabBtn = b.id;
-    b.addEventListener("click", function () { show(i); });
-    b.addEventListener("keydown", function (e) {
-      var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (!d) return;
-      e.preventDefault(); var n = (i + d + accs.length) % accs.length; show(n); btns[n].focus();
-    });
-    btns.push(b); bar.appendChild(b); panel.appendChild(acc);
-  });
-  bar.appendChild(pr);
-  show(0);
+/* panels: every section is open, under a header row with its name and a Reset button */
+document.querySelectorAll(".acc").forEach(function (acc) {
+  var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
+  var name = ph.firstChild.textContent.trim();
+  var hd = document.createElement("div"); hd.className = "shead";
+  var nm = document.createElement("h3"); nm.textContent = name; nm.id = "sh-" + pb.id;
+  var rb = document.createElement("button"); rb.type = "button"; rb.className = "sbtn"; rb.textContent = "Reset";
+  rb.setAttribute("aria-label", "Reset " + name);
+  rb.addEventListener("click", function () { resetPanel(pb); });
+  hd.append(nm, rb); acc.insertBefore(hd, pb);
+  ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
+  pb.setAttribute("role", "group"); pb.setAttribute("aria-labelledby", nm.id);
+  acc.dataset.tabBtn = nm.id;
 });
 
 /* ---------- start ---------- */
