@@ -16,12 +16,12 @@ if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIn
 (function () { var t = null; try { t = localStorage.getItem("fogday-theme"); } catch (e) {}
   if (t !== "dark" && t !== "light") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   document.documentElement.dataset.theme = t; })();</script>
-<meta name="description" content="Turn a photo into a dot matrix or a halftone print, add text on a path, save it as an image or a video.">
+<meta name="description" content="Turn a photo into a dot matrix or a halftone print, add glitch and light effects, save it as an image, SVG or video.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;500;600&display=swap">
 <style>
-:root{--paper:#ffffff;--ink:#1d1d1d;--muted:#5e5e5e;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#dcdcdc;--card:#ffffff;--well:#efefef;--field:#ffffff;--onfelt:#ffffff;--stagebg:#ececec;color-scheme:light;
+:root{--paper:#ffffff;--ink:#1d1d1d;--muted:#5e5e5e;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#dcdcdc;--card:#ffffff;--well:#efefef;--field:#ffffff;--onfelt:#ffffff;--stagebg:#efefef;color-scheme:light;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px)}
 :root[data-theme="dark"]{--paper:#1e1e1e;--ink:#e6e6e6;--muted:#a3a3a3;--felt:#d0d0d0;--felt-d:#bababa;--red:#ff7a6e;--line:#444444;--card:#2b2b2b;--well:#3a3a3a;--field:#363636;--onfelt:#121212;--stagebg:#141414;color-scheme:dark}
 .topr{display:flex;align-items:center;gap:2px}
@@ -52,7 +52,28 @@ body.big .stagecol{position:static}
 #cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
-.hint{margin:4px 0 0;text-align:center;font-size:12px;color:var(--muted);min-height:16px}
+.tools{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:6px auto 0;max-width:100%}
+.tg{display:flex;gap:4px;flex:0 0 auto}
+.tools .status{flex:1 1 auto;min-width:0;text-align:center;font-size:12px;color:var(--muted);margin:0;line-height:1.25}
+#compare{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+#compare.on{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
+body:not([data-look="dot"]) #play{display:none}
+.stage.drop #cv{outline:3px dashed var(--felt);outline-offset:4px}
+.looks{display:flex;flex-wrap:wrap;gap:6px}
+.looks::-webkit-scrollbar{display:none}
+.ph.mod::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--felt);margin-left:8px;margin-right:auto}
+.linkb{border:0;background:none;padding:6px 8px;min-height:32px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:12px;border-radius:6px}
+.linkb:hover{color:var(--ink)}
+/* touch screens: 44 px tap targets */
+@media (pointer:coarse){
+  .btn,.icob,.chip,select,.ph,.linkb{min-height:44px;height:44px}
+  .icob{width:44px;flex-basis:44px}
+  .pill,.seg{height:44px}.seg span{min-height:38px}
+  .color .sw{width:34px;height:34px}.color input[type=color]{height:44px;width:48px}
+  .chk{min-height:44px}
+  input[type=range]{height:36px}
+  .preset{width:40px;height:40px;right:44px;padding:10px}.acc>.ph>.ico{top:14px}
+}
 .ctlcol{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0}
 .actions{display:flex;gap:6px}
 .actions .btn{flex:1 1 0}
@@ -63,7 +84,6 @@ body.big .stagecol{position:static}
 .btn.primary{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
 .btn.primary:hover{background:var(--felt-d)}
 .btn[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
-#riley{width:100%}
 .btn[disabled]{opacity:.5;cursor:default}
 @media (max-width:360px){.actions .btn span{display:none}}
 /* pill slider: Dot matrix, Halftone, Text share one switch; the green pill slides to the chosen one */
@@ -71,17 +91,18 @@ body.big .stagecol{position:static}
 .pill{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:32px;border-radius:999px;background:var(--well);padding:2px}
 .pill .knob{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/3);border-radius:999px;background:var(--felt);transform:translateX(calc(var(--i,0) * 100%));transition:transform .25s cubic-bezier(.3,0,.2,1)}
 .pill [role=tab]{position:relative;z-index:1;border:0;background:none;border-radius:999px;font-weight:500;font-size:13px;white-space:nowrap;padding:0 2px;min-width:0;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
-.pill [role=tab][aria-selected=true]{color:var(--onfelt)}
+.pill [role=tab][aria-selected=true]{color:var(--onfelt);background:var(--felt);transition:background 0s .25s}
 .pill [role=tab].cur::after{content:"";flex:0 0 auto;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
 .tabp{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
 .acc{background:var(--card);border:1px solid var(--line);border-radius:10px;position:relative}
-.acc>.ph{padding-right:70px}.acc>.ph>.ico{position:absolute;right:12px;top:8px}
+.acc>.ph{padding-right:80px}.acc>.ph>.ico{position:absolute;right:12px;top:8px}
 .preset{position:absolute;top:2px;right:34px;width:28px;height:28px;padding:5px;border:0;background:none;color:var(--muted);border-radius:6px;cursor:pointer}
 .preset:hover{color:var(--ink);background:var(--well)}.preset .ico{width:18px;height:18px}
 .acc>.ph[aria-expanded="false"]~.preset{display:none}
-.ph{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
+.ph{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:32px;padding:0 12px;border:0;background:none;cursor:pointer;font:400 15px/1.2 "Young Serif",Georgia,serif;text-align:left;border-radius:10px}
 .ph .ico{color:var(--muted);transition:transform .2s}
 .ph[aria-expanded="false"] .ico{transform:rotate(-90deg)}
+.ph[aria-expanded="true"]{box-shadow:inset 0 -1px 0 var(--line);border-radius:10px 10px 0 0;margin-bottom:8px}
 .pb{padding:0 12px 10px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
 .f{display:grid;gap:0}
 .f>.lab{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--muted)}
@@ -112,11 +133,11 @@ textarea{resize:vertical;height:auto;padding:6px 8px;min-height:52px;line-height
 .chips{display:flex;gap:4px;overflow-x:auto;flex:1 1 auto;min-width:0;scrollbar-width:none}
 .chip{flex:0 0 auto;max-width:130px;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--field);cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--onfelt)}
-.status{min-height:18px;margin:0;font-size:13px;color:var(--felt)}
+.status{min-height:18px;margin:0;font-size:13px}
 .foot{text-align:center;font-size:12px;color:var(--muted);margin:4px 0 0}
 body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!important}
 .modal{position:fixed;inset:0;z-index:20;background:rgba(20,26,24,.72);display:flex;align-items:center;justify-content:center;padding:16px}
-.sheet{background:var(--card);border-radius:14px;padding:12px;max-width:640px;width:100%;display:grid;gap:8px}
+.sheet{background:var(--card);border-radius:14px;padding:12px;box-shadow:0 24px 64px rgba(0,0,0,.35);max-width:640px;width:100%;display:grid;gap:8px}
 .sheet h2{margin:0;font:400 18px/1.2 "Young Serif",Georgia,serif;display:flex;justify-content:space-between;align-items:center}
 .sheet video{width:100%;border-radius:10px;background:#000;max-height:60vh;object-fit:contain}
 #saveModal .sheet{max-width:380px}
@@ -139,7 +160,18 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
 <main class="wrap">
   <section class="stagecol" aria-label="Preview">
     <div class="stage" id="stage"><canvas id="cv" role="img" aria-label="Preview of the image look"></canvas></div>
-    <p class="hint" id="hint"></p>
+    <div class="tools">
+      <div class="tg">
+        <button type="button" class="icob" id="undo" aria-label="Undo" title="Undo" disabled>{{icon:arrow-u-up-left}}</button>
+        <button type="button" class="icob" id="redo" aria-label="Redo" title="Redo" disabled>{{icon:arrow-u-up-right}}</button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <div class="tg">
+        <button type="button" class="icob" id="compare" aria-label="Hold to see the original photo" title="Hold to see the original">{{icon:circle-half}}</button>
+        <button type="button" class="icob" id="play" aria-label="Play the reveal" title="Play the reveal">{{icon:play}}</button>
+        <button type="button" class="icob" id="bigBtn" aria-pressed="false" aria-label="Full width image" title="Full width image">{{icon:arrows-out-simple}}</button>
+      </div>
+    </div>
   </section>
 
   <section class="ctlcol" aria-label="Settings">
@@ -163,6 +195,7 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
 
     <!-- Dot matrix -->
     <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
+      <div class="looks" role="group" aria-label="Dot matrix starting points" data-looks="dot"></div>
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-grid">Grid{{icon:caret-down}}</button>
         <div class="pb" id="a-grid" hidden>
@@ -208,10 +241,11 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
 
     <!-- Halftone -->
     <div class="tabp" role="tabpanel" id="p-half" aria-labelledby="t-half" hidden>
-      <button type="button" class="btn" id="riley" aria-pressed="false"><span>Bridget Riley</span></button>
+      <div class="looks" role="group" aria-label="Halftone starting points" data-looks="half"></div>
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-screen">Screen{{icon:caret-down}}</button>
         <div class="pb" id="a-screen" hidden>
+          <label class="chk"><input type="checkbox" data-k="htRiley">Bridget Riley wavy lines</label>
           <div class="f"><label class="lab" for="htCells">Dots across <output data-for="htCells"></output></label><input type="range" id="htCells" min="16" max="180" step="1" data-k="htCells"></div>
           <div class="f"><label class="lab" for="htAngle">Screen angle <output data-for="htAngle"></output></label><input type="range" id="htAngle" min="0" max="90" step="1" data-k="htAngle"></div>
           <fieldset class="seg"><legend>Dot shape</legend>
@@ -251,6 +285,7 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
     <!-- Text -->
     <!-- Effects: applied on top of the look -->
     <div class="tabp" role="tabpanel" id="p-fx" aria-labelledby="t-fx" hidden>
+      <div class="looks" role="group" aria-label="Effect starting points" data-looks="fx"></div>
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-glitch">Glitch{{icon:caret-down}}</button>
         <div class="pb" id="a-glitch" hidden>
@@ -278,8 +313,8 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
       <p class="foot">Effects show in saved images and video, not in SVG.</p>
     </div>
 
-    <p class="status" id="status" role="status" aria-live="polite"></p>
-    <p class="foot">Photos stay on your device. Nothing is uploaded.</p>
+    <p class="foot">Photos stay on your device. Nothing is uploaded. Drop or paste a photo to open it.</p>
+    <p class="foot"><button type="button" class="linkb" id="reset">Reset all settings</button></p>
   </section>
 </main>
 
@@ -300,7 +335,6 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
     </div>
     <button type="button" class="btn" id="saveSvg">{{icon:file-svg}}<span>Save SVG (vector)</span></button>
     <button type="button" class="btn" id="saveVideo" hidden>{{icon:film-strip}}<span>Save reveal video</span></button>
-    <button type="button" class="btn" id="reset">{{icon:arrow-counter-clockwise}}<span>Reset settings</span></button>
   </div>
 </div>
 
@@ -317,6 +351,10 @@ body:not([data-ht="ink"]) .ht-ink,body[data-ht="rgb"] .ht-paper{display:none!imp
 </div>
 <template id="icoPick">{{icon:eyedropper}}</template>
 <template id="icoReset">{{icon:arrow-counter-clockwise}}</template>
+<template id="icoIn">{{icon:arrows-in-simple}}</template>
+<template id="icoOut">{{icon:arrows-out-simple}}</template>
+<template id="icoPlay">{{icon:play}}</template>
+<template id="icoStop">{{icon:stop}}</template>
 
 <script>
 (function () {
@@ -366,11 +404,12 @@ function saveSettings() {
   }, 300);
 }
 var sayT;
-function say(t) { statusEl.textContent = t; clearTimeout(sayT); if (t) sayT = setTimeout(function () { statusEl.textContent = ""; }, 2500); }
+function say(t, keep) { statusEl.textContent = t; clearTimeout(sayT); if (t && !keep) sayT = setTimeout(function () { statusEl.textContent = pickKey ? "Tap the image to pick a color." : ""; }, 2500); }
 
 /* ---------- helpers ---------- */
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 function rgb(hex) { var n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function lum(hex) { var c = rgb(hex); return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255; }
 function toHex(r, g, b) { return "#" + [r, g, b].map(function (v) { return ("0" + Math.round(v).toString(16)).slice(-2); }).join(""); }
 function mulberry(a) {
   return function () {
@@ -660,7 +699,6 @@ function draw(prog) {
   if (!src.width) return;
   var W = cv.width, H = cv.height;
   render(pctx, W, H, prog == null ? S.reveal / 100 : prog);
-  $("#hint").textContent = pickKey ? "Tap the image to pick a color." : big ? "Double tap the image to fit." : "Double tap the image for full width.";
   cv.setAttribute("aria-label", (S.look === "half" ? "Halftone" : "Dot matrix") + " preview");
 }
 /* crop overlay: dim outside, a thin frame with thirds, and L-shaped corner handles like the Photos app */
@@ -673,6 +711,7 @@ function fit() {
   if (!big && h > maxH) { h = maxH; w = h / ar; }
   var dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
+  $(".tools").style.width = Math.max(Math.round(w), 280) + "px";
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   document.body.classList.toggle("big", big);
   schedule();
@@ -705,7 +744,8 @@ function applyCrop() {
 function loadFile(f) {
   if (!f) return;
   var url = URL.createObjectURL(f), img = new Image();
-  img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); };
+  say("Opening the photo.", true);
+  img.onload = function () { setImage(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); say("Photo ready."); };
   img.onerror = function () { URL.revokeObjectURL(url); say("That file could not be opened as an image."); };
   img.src = url;
 }
@@ -741,7 +781,7 @@ function trap(id, onClose) {
   $(id).addEventListener("keydown", function (e) {
     if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
     if (e.key !== "Tab") return;
-    var f = Array.prototype.filter.call($(id).querySelectorAll("button,select"), function (b) { return !b.hidden && b.offsetParent; });
+    var f = Array.prototype.filter.call($(id).querySelectorAll("button,select,input"), function (b) { return !b.hidden && !b.disabled && b.offsetParent; });
     var first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
@@ -789,7 +829,7 @@ function makePng() {
     c.toBlob(res, "image/png");
   });
 }
-function fname(ext) { return "image-looks-" + (S.look === "half" ? "halftone" : "dot-matrix") + (S.ig ? "-1080x" + S.igSize : "") + "." + ext; }
+function fname(ext) { return "halftone-" + (S.look === "half" ? "halftone" : "dot-matrix") + (S.ig ? "-1080x" + S.igSize : "") + "." + ext; }
 function download(blob, name) {
   var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
@@ -846,13 +886,23 @@ function saveSvg() {
   download(new Blob([x.toString()], { type: "image/svg+xml" }), fname("svg"));
   closeModal("#saveModal");
 }
-function savePng() { makePng().then(function (b) { download(b, fname("png")); closeModal("#saveModal"); }); }
+function busy(on) {
+  ["#savePng", "#share", "#saveSvg"].forEach(function (q) { $(q).disabled = on; });
+  if (on) say("Preparing the image.", true); else say("");
+}
+function later() { return new Promise(function (r) { setTimeout(r, 30); }); }   /* let the busy state paint first */
+function savePng() {
+  busy(true);
+  later().then(makePng).then(function (b) { download(b, fname("png")); busy(false); closeModal("#saveModal"); say("Saved."); });
+}
 function share() {
-  makePng().then(function (b) {
+  busy(true);
+  later().then(makePng).then(function (b) {
+    busy(false);
     var f = new File([b], fname("png"), { type: "image/png" });
     if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: "Halftone" });
     download(b, f.name);
-  }).catch(function () {});
+  }).catch(function () { busy(false); });
 }
 function videoType() {
   if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
@@ -895,7 +945,7 @@ function setTab(t) {
     if (on) $(".pill").style.setProperty("--i", i);
   });
   $("#saveVideo").hidden = S.look !== "dot" || !videoType();
-  schedule();
+  stopPlay(); schedule();
 }
 document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
   b.addEventListener("click", function () { setTab(b.dataset.tab); });
@@ -926,7 +976,7 @@ function sync() {
   document.querySelectorAll("[data-k]").forEach(function (el) { var k = el.dataset.k; setVal(el, S[k]); out(k, S[k]); });
   document.querySelectorAll("[data-color]").forEach(syncColor);
   document.body.dataset.ht = S.htMode;
-  $("#riley").setAttribute("aria-pressed", S.htRiley ? "true" : "false");
+  marks();
   $("#igSizes").hidden = !S.ig; $("#outSize").disabled = S.ig;
   if (orig.width) applyCrop();
 }
@@ -940,10 +990,14 @@ function onChange(el) {
   if (k === "htMode") document.body.dataset.ht = v;
   if (k === "reveal") cancelAnimationFrame(playing);
   if (k === "ig" || k === "igSize") applyCrop();
-  saveSettings(); schedule();
+  if (k === "reveal") stopPlay();
+  saveSettings(); schedule(); marks();
 }
 document.querySelectorAll("[data-k]").forEach(function (el) {
   el.addEventListener(el.type === "range" ? "input" : "change", function () { onChange(el); });
+  el.addEventListener("change", commit);   /* a slider is one undo step when it is let go */
+  /* double click a slider to put it back to its default */
+  if (el.type === "range") el.addEventListener("dblclick", function () { var k = el.dataset.k; if (k in DEF) { el.value = DEF[k]; onChange(el); commit(); } });
 });
 
 /* color fields: native picker, a pick from image button and swatches */
@@ -960,12 +1014,13 @@ function buildColor(box) {
     pickKey = pickKey === box ? null : box;
     document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", b === pick && pickKey ? "true" : "false"); });
     cv.classList.toggle("picking", !!pickKey);
+    say(pickKey ? "Tap the image to pick a color." : "", true);
     draw();
   });
   box.appendChild(pick);
   SWATCHES.forEach(function (c) {
     var b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.style.background = c;
-    b.dataset.c = c; b.setAttribute("aria-label", "Color " + c); b.setAttribute("aria-pressed", "false");
+    b.dataset.c = c; b.style.color = lum(c) > 0.4 ? "#111111" : "#ffffff"; b.setAttribute("aria-label", "Color " + c); b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () { setColor(box, c); });
     box.appendChild(b);
   });
@@ -978,7 +1033,7 @@ function syncColor(box) {
 function setColor(box, v) {
   v = v.toLowerCase();
   S[box.dataset.color] = v;
-  syncColor(box); saveSettings(); schedule();
+  syncColor(box); saveSettings(); schedule(); marks(); commit();
 }
 document.querySelectorAll("[data-color]").forEach(buildColor);
 
@@ -996,7 +1051,7 @@ function resetPanel(pb) {
   pb.querySelectorAll("[data-color]").forEach(function (el) { keys[el.dataset.color] = 1; });
   Object.keys(keys).forEach(function (k) { if (k in DEF) S[k] = DEF[k]; });
   if (pb.id === "a-glitch") S.fxSeed = DEF.fxSeed;
-  sync(); saveSettings(); schedule();
+  sync(); saveSettings(); schedule(); commit();
   say(pb.parentNode.querySelector(".ph").firstChild.textContent.trim() + " reset.");
 }
 document.querySelectorAll(".acc").forEach(function (acc) {
@@ -1012,7 +1067,12 @@ document.querySelectorAll(".acc").forEach(function (acc) {
 /* ---------- canvas gestures: a tap picks a color (when asked), a double tap toggles full width ---------- */
 var lastTap = 0;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
-function toggleBig() { big = !big; fit(); }
+function toggleBig() {
+  big = !big; fit();
+  var b = $("#bigBtn"); b.setAttribute("aria-pressed", big ? "true" : "false");
+  b.setAttribute("aria-label", big ? "Fit image" : "Full width image"); b.title = b.getAttribute("aria-label");
+  b.innerHTML = big ? $("#icoIn").innerHTML : $("#icoOut").innerHTML;
+}
 cv.addEventListener("pointerdown", function (e) {
   if (!pickKey) return;
   var p = fr(e);
@@ -1021,7 +1081,7 @@ cv.addEventListener("pointerdown", function (e) {
   pickKey = null;
   document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
   cv.classList.remove("picking");
-  setColor(box, toHex(c[0], c[1], c[2])); draw();
+  setColor(box, toHex(c[0], c[1], c[2])); draw(); say("Color picked.");
   lastTap = -1;
 });
 cv.addEventListener("pointerup", function () {
@@ -1066,23 +1126,169 @@ var TABKEYS = {
 };
 $("#tabReset").addEventListener("click", function () {
   TABKEYS[tab].forEach(function (k) { S[k] = DEF[k]; });
-  sync(); saveSettings(); schedule();
+  sync(); saveSettings(); schedule(); commit();
   say({ dot: "Dot matrix", half: "Halftone", fx: "Effects" }[tab] + " reset.");
 });
-$("#riley").addEventListener("click", function () {
-  S.htRiley = !S.htRiley; this.setAttribute("aria-pressed", S.htRiley ? "true" : "false"); saveSettings(); schedule();
-});
-$("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); });
-$("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); });
+$("#fxShuffle").addEventListener("click", function () { S.fxSeed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
+$("#shuffle").addEventListener("click", function () { S.seed = (Math.random() * 1e6) | 0; saveSettings(); schedule(); commit(); });
 $("#reset").addEventListener("click", function () {
-  S = Object.assign({}, DEF); sync(); setTab("dot"); saveSettings(); schedule();
-  closeModal("#saveModal"); say("Settings reset.");
+  S = Object.assign({}, DEF); sync(); setTab("dot"); saveSettings(); schedule(); commit();
+  say("All settings reset. Undo brings them back.");
 });
 $("#snap").addEventListener("click", snap);
 $("#camCancel").addEventListener("click", closeCamera);
 $("#flip").addEventListener("click", function () { facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
 trap("#camModal", closeCamera);
 trap("#saveModal", function () { closeModal("#saveModal"); });
+
+/* ---------- starting points: one tap sets that tab's settings to a tuned look (the rest of the tab goes to defaults) ---------- */
+var LOOKS = {
+  dot: [
+    ["Classic", {}],
+    ["Full color", { reveal: 100 }],
+    ["Fine", { cols: 110, dmDot: 92, reveal: 100 }],
+    ["Pastel", { palette: "pastel", reveal: 45, dir: "diag", dmBg: "#ffffff" }],
+    ["Neon", { palette: "neon", dmShape: "square", dmBg: "#1d2622", cols: 40, dmDot: 80, reveal: 55 }],
+    ["Bloom", { dir: "center", reveal: 50, band: 40, wash: 20 }]
+  ],
+  half: [
+    ["Newsprint", { htMode: "ink", htInk: "#1d2622", htPaper: "#f6f1e7", htCells: 90, htCon: 140 }],
+    ["Comic", { htMode: "cmyk", htCells: 48, htAngle: 15, htPaper: "#ffffff" }],
+    ["RGB screen", {}],
+    ["Pop", { htMode: "ink", htInk: "#b8352b", htPaper: "#ffffff", htCells: 34, htCon: 160 }],
+    ["Engraving", { htMode: "ink", htShape: "line", htCells: 80, htAngle: 30, htInk: "#1d2622", htPaper: "#f6f1e7" }],
+    ["Riley", { htRiley: true, htCells: 60 }]
+  ],
+  fx: [
+    ["None", {}],
+    ["VHS", { fxShift: 40, fxGlitch: 35 }],
+    ["Film", { fxGrade: "warm", fxGradeAmt: 70, fxLeak: 45 }],
+    ["Cinema", { fxGrade: "teal", fxGradeAmt: 80, fxStreak: 45 }],
+    ["Dreamy", { fxGrade: "fade", fxGradeAmt: 70, fxFlare: 50, fxLeak: 30 }],
+    ["Noir", { fxGrade: "noir", fxGradeAmt: 100 }]
+  ]
+};
+function lookVals(t, o) { var v = {}; TABKEYS[t].forEach(function (k) { v[k] = k in o ? o[k] : DEF[k]; }); return v; }
+document.querySelectorAll("[data-looks]").forEach(function (row) {
+  var t = row.dataset.looks;
+  LOOKS[t].forEach(function (l) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l[0];
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () {
+      Object.assign(S, lookVals(t, l[1])); sync(); saveSettings(); schedule(); commit(); say(l[0] + " look.");
+    });
+    row.appendChild(b);
+  });
+});
+/* marks: the chip of the look in use is pressed, and a panel with changed settings shows a dot by its name */
+function same(a, b) { return String(a).toLowerCase() === String(b).toLowerCase(); }
+function marks() {
+  document.querySelectorAll("[data-looks]").forEach(function (row) {
+    var t = row.dataset.looks;
+    row.querySelectorAll(".chip").forEach(function (b, i) {
+      var v = lookVals(t, LOOKS[t][i][1]), on = TABKEYS[t].every(function (k) { return k === "seed" || k === "fxSeed" || same(S[k], v[k]); });
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  });
+  document.querySelectorAll(".acc").forEach(function (acc) {
+    var mod = false;
+    acc.querySelectorAll("[data-k]").forEach(function (el) { if (el.dataset.k in DEF && !same(S[el.dataset.k], DEF[el.dataset.k])) mod = true; });
+    acc.querySelectorAll("[data-color]").forEach(function (el) { if (!same(S[el.dataset.color], DEF[el.dataset.color])) mod = true; });
+    var ph = acc.querySelector(".ph"); ph.classList.toggle("mod", mod);
+    var name = ph.firstChild.textContent.trim();
+    ph.setAttribute("aria-label", name + (mod ? ", changed" : ""));
+  });
+}
+
+/* ---------- undo and redo: one step per finished change ---------- */
+var undoS = [], redoS = [], lastJ = null;
+function snap0() { return JSON.stringify(S, function (k, v) { return k.charAt(0) === "_" ? undefined : v; }); }
+function commit() {
+  var j = snap0();
+  if (j === lastJ) return;
+  if (lastJ !== null) { undoS.push(lastJ); if (undoS.length > 80) undoS.shift(); }
+  lastJ = j; redoS = []; histBtns();
+}
+function histBtns() { $("#undo").disabled = !undoS.length; $("#redo").disabled = !redoS.length; }
+function restore(j) {
+  S = JSON.parse(j); lastJ = j; sync(); saveSettings();
+  setTab(tab === "fx" ? "fx" : S.look);
+  histBtns(); schedule();
+}
+function undo() { if (!undoS.length) return; redoS.push(lastJ); restore(undoS.pop()); say("Undone."); }
+function redo() { if (!redoS.length) return; undoS.push(lastJ); restore(redoS.pop()); say("Redone."); }
+$("#undo").addEventListener("click", undo);
+$("#redo").addEventListener("click", redo);
+document.addEventListener("keydown", function (e) {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  var t = e.target; if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) return;
+  var k = e.key.toLowerCase();
+  if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+  else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
+});
+
+/* ---------- compare: hold the button (or press and hold Space or Enter on it) to see the photo without the look ---------- */
+var showing = false;
+function showOrig(on) {
+  if (on === showing || !src.width) return;
+  showing = on; $("#compare").classList.toggle("on", on);
+  if (on) { stopPlay(); pctx.drawImage(src, 0, 0, cv.width, cv.height); say("Original photo.", true); }
+  else { say(""); draw(); }
+}
+var cmp = $("#compare");
+cmp.addEventListener("pointerdown", function (e) { e.preventDefault(); try { cmp.setPointerCapture(e.pointerId); } catch (x) {} showOrig(true); });
+["pointerup", "pointercancel", "lostpointercapture"].forEach(function (n) { cmp.addEventListener(n, function () { showOrig(false); }); });
+cmp.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+cmp.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); showOrig(true); } });
+cmp.addEventListener("keyup", function (e) { if (e.key === " " || e.key === "Enter") showOrig(false); });
+cmp.addEventListener("blur", function () { showOrig(false); });
+
+/* ---------- play: the dot matrix reveal from confetti to the photo, then back to the slider's setting ---------- */
+function stopPlay() {
+  if (!playing) return;
+  cancelAnimationFrame(playing); playing = 0; playBtn(false); schedule();
+}
+function playBtn(on) {
+  var b = $("#play"); b.innerHTML = (on ? $("#icoStop") : $("#icoPlay")).innerHTML;
+  b.setAttribute("aria-label", on ? "Stop the reveal" : "Play the reveal"); b.title = b.getAttribute("aria-label");
+}
+$("#play").addEventListener("click", function () {
+  if (playing) { stopPlay(); return; }
+  var t0 = performance.now(), dur = S.revealTime * 1000, hold = 700;
+  playBtn(true);
+  (function frame(now) {
+    var t = now - t0;
+    if (t > dur + hold) { playing = 0; playBtn(false); draw(); return; }
+    draw(ease(clamp(t / dur, 0, 1)));
+    playing = requestAnimationFrame(frame);
+  })(t0);
+});
+$("#bigBtn").addEventListener("click", toggleBig);
+
+/* ---------- drop or paste a photo ---------- */
+var dropN = 0;
+document.addEventListener("dragenter", function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, "Files") >= 0) { dropN++; stage.classList.add("drop"); } });
+document.addEventListener("dragleave", function () { if (--dropN <= 0) { dropN = 0; stage.classList.remove("drop"); } });
+document.addEventListener("dragover", function (e) { e.preventDefault(); });
+document.addEventListener("drop", function (e) {
+  e.preventDefault(); dropN = 0; stage.classList.remove("drop");
+  var f = e.dataTransfer && e.dataTransfer.files[0];
+  if (f && /^image\//.test(f.type)) loadFile(f); else if (f) say("That file is not an image.");
+});
+document.addEventListener("paste", function (e) {
+  var items = (e.clipboardData && e.clipboardData.items) || [];
+  for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
+});
+
+/* panels: on a wide screen all are open; on a phone the first panel of each tab is open */
+document.querySelectorAll(".tabp").forEach(function (tp) {
+  tp.querySelectorAll(".acc").forEach(function (acc, i) {
+    if (i === 0 || window.innerWidth >= 900) {
+      var ph = acc.querySelector(".ph"); ph.setAttribute("aria-expanded", "true");
+      document.getElementById(ph.getAttribute("aria-controls")).hidden = false;
+    }
+  });
+});
 
 /* ---------- start ---------- */
 try {
@@ -1091,6 +1297,7 @@ try {
 } catch (e) {}
 sync();
 setTab(S.look);
+commit();
 if (window.ResizeObserver) new ResizeObserver(function () { fit(); }).observe(stage);
 window.addEventListener("resize", fit);
 demo();

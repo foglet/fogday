@@ -6,3 +6,9 @@ A photo turned into a **dot matrix** (colored dots sampled from the image, with 
 - Settings persist in localStorage under `halftone:settings`. Images never leave the device.
 - Save: PNG at 1080 to 4096 px (long edge); the reveal can be saved as a video (MP4 on Safari, WebM on Chrome) where MediaRecorder exists.
 - Bento: `/assets/js/bento-anim.js`, as on /qr.
+
+## Using it
+- Starting points: a row of looks at the top of each tab (Dot matrix, Halftone, Effects). One tap sets that tab; a pressed chip means the settings match it.
+- Under the image: Undo and Redo (also Ctrl or Cmd+Z, Shift+Z), hold to see the original, play the reveal (dot matrix), full width.
+- A dot by a panel name means its settings differ from the defaults; the round arrow resets that panel. Double click a slider to reset it.
+- Drop a photo on the page or paste one to open it. Touch screens get 44 px targets.
