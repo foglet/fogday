@@ -63,10 +63,12 @@ body.nophoto .top h1{position:relative;z-index:51;background:transparent;color:#
 body.nophoto{overflow:hidden;background:#0b1a3a}
 /* one sphere, 70% of the screen width (kept inside 60% of the height on wide screens), in a random gradient, breathing */
 .dropper .tgt{position:relative;width:min(70vw,60vh);aspect-ratio:1;animation:dphue 9s ease-in-out infinite alternate}
-.dropper b{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.85),var(--g1,#ff5f8f) 18%,var(--g2,#ffc65c) 58%,var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g2,#ffc65c),inset -10px -14px 30px rgba(0,0,0,.25);animation:dpbeat 2.4s ease-in-out infinite}
+.dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 2.4s ease-in-out infinite}
+@property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
 .droplab{display:inline-flex;align-items:center;gap:.35em;color:#fff;letter-spacing:.08em}.dropper .droplab .ico{width:1.8em!important;height:1.8em!important;flex:0 0 auto}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
-@keyframes dpbeat{0%,100%{transform:scale(.9)}50%{transform:scale(1.06)}}
+/* the pulse comes from the center: the sphere swells while its middle color pushes outward */
+@keyframes dpbeat{0%,100%{transform:scale(.9);--p:20%}50%{transform:scale(1.06);--p:70%}}
 @keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
 @keyframes dpfade{0%,100%{opacity:.75}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt{animation:none}}
