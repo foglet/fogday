@@ -357,7 +357,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
 .seg input:checked+span{background:var(--btn);color:var(--ink);box-shadow:none}
 </style>
 </head>
-<body data-look="dot" data-ht="rgb">
+<body data-look="plain" data-ht="rgb">
 <header class="top">
   <h1 data-notr><a href="/maude/" class="home">Maude Mxy</a></h1>
   <nav class="tb" aria-label="Tools">
@@ -400,10 +400,10 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
     <div class="mylooks" id="myLooks" role="group" data-notr></div>
 
     <!-- Dot matrix -->
-    <div class="tabp" role="tabpanel" id="p-plain" aria-labelledby="t-plain" hidden>
+    <div class="tabp" role="tabpanel" id="p-plain" aria-labelledby="t-plain">
       <p class="plainnote"><span>Let's begin.</span> <span>Tap</span> <svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg> <span>(upper left corner).</span> <span>Next.</span> <span>Select an effects tab.</span></p>
     </div>
-    <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot">
+    <div class="tabp" role="tabpanel" id="p-dot" aria-labelledby="t-dot" hidden>
       <p class="htnote" id="htNote" hidden><span>Halftone is on in Effects, so the dot matrix is hidden.</span> <button type="button" class="linkb" id="htNoteOff">Show dot matrix</button></p>
       <div class="looks" role="group" aria-label="Dot matrix starting points" data-looks="dot"></div>
       <div class="acc">
@@ -682,7 +682,7 @@ var stage = $("#stage"), statusEl = $("#status");
 var src = document.createElement("canvas"), sctx = src.getContext("2d", { willReadFrequently: true });
 var orig = document.createElement("canvas");
 var cache = {};
-var pickKey = null, big = false, tab = "dot";
+var pickKey = null, big = false, tab = "plain";
 var playing = 0;
 
 function loadSettings() {
@@ -2297,8 +2297,10 @@ try {
   var probe = new File([new Blob(["x"], { type: "image/png" })], "x.png", { type: "image/png" });
   $("#share").hidden = !(navigator.canShare && navigator.canShare({ files: [probe] }));
 } catch (e) {}
+var sharedLook = /[#&]look=/.test(location.hash);
+if (!sharedLook) S = Object.assign({}, DEF, { look: "plain", base: "plain" });   /* opens on the Original tab: the photo as it is */
 sync();
-setTab("dot"); syncLook();
+setTab(sharedLook ? "dot" : "plain"); syncLook();
 fromHash();
 commit(); renderMyLooks();
 if (window.ResizeObserver) new ResizeObserver(function () { fit(); }).observe(stage);
