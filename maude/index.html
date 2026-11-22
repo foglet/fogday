@@ -451,6 +451,8 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
 .color .pick,.color .icob.pick{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.color .pick .ico{width:16px;height:16px;flex-basis:16px}
 .color input[type=color]{height:28px;width:40px}
 @media (pointer:coarse){.duopair,.color .sw{width:34px;height:34px}.color input[type=color]{height:28px;width:40px}}
+/* a changed section: a small dot after its name */
+.acc.mod .shead h3::after{content:"";display:inline-block;width:7px;height:7px;margin-left:7px;border-radius:50%;background:var(--accent,var(--ink));vertical-align:middle;position:relative;top:-1px}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -535,13 +537,13 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-dmcolor">Color<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
         <div class="pb" id="a-dmcolor" hidden>
-          <div class="f"><label class="lab" for="palette">Start colors</label>
-            <div class="row"><select id="palette" data-k="palette"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
-            <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg></button></div></div>
           <div class="two">
             <div class="f"><label class="lab" for="dmSat">Saturation <output data-for="dmSat"></output></label><input type="range" id="dmSat" min="0" max="200" step="1" data-k="dmSat"></div>
             <div class="f"><label class="lab" for="dmCon">Contrast <output data-for="dmCon"></output></label><input type="range" id="dmCon" min="50" max="200" step="1" data-k="dmCon"></div>
           </div>
+          <div class="f"><label class="lab" for="palette">Start colors</label>
+            <div class="row"><select id="palette" data-k="palette"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
+            <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg></button></div></div>
           <div class="f"><span class="lab" id="dmBgL">Background</span><div class="color" data-color="dmBg" data-label="dmBgL"></div></div>
         </div>
       </div>

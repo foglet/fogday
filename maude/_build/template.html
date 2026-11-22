@@ -451,6 +451,8 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
 .color .pick,.color .icob.pick{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.color .pick .ico{width:16px;height:16px;flex-basis:16px}
 .color input[type=color]{height:28px;width:40px}
 @media (pointer:coarse){.duopair,.color .sw{width:34px;height:34px}.color input[type=color]{height:28px;width:40px}}
+/* a changed section: a small dot after its name */
+.acc.mod .shead h3::after{content:"";display:inline-block;width:7px;height:7px;margin-left:7px;border-radius:50%;background:var(--accent,var(--ink));vertical-align:middle;position:relative;top:-1px}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -535,13 +537,13 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
       <div class="acc">
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-dmcolor">Color{{icon:caret-down}}</button>
         <div class="pb" id="a-dmcolor" hidden>
-          <div class="f"><label class="lab" for="palette">Start colors</label>
-            <div class="row"><select id="palette" data-k="palette"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
-            <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors">{{icon:shuffle}}</button></div></div>
           <div class="two">
             <div class="f"><label class="lab" for="dmSat">Saturation <output data-for="dmSat"></output></label><input type="range" id="dmSat" min="0" max="200" step="1" data-k="dmSat"></div>
             <div class="f"><label class="lab" for="dmCon">Contrast <output data-for="dmCon"></output></label><input type="range" id="dmCon" min="50" max="200" step="1" data-k="dmCon"></div>
           </div>
+          <div class="f"><label class="lab" for="palette">Start colors</label>
+            <div class="row"><select id="palette" data-k="palette"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
+            <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors">{{icon:shuffle}}</button></div></div>
           <div class="f"><span class="lab" id="dmBgL">Background</span><div class="color" data-color="dmBg" data-label="dmBgL"></div></div>
         </div>
       </div>
