@@ -401,14 +401,13 @@ body.navcut .top .tb>*,body.navcut .top h1{transition:none}   /* on load: jump s
   .btn:active,.chip:active,.icob:active,.tbtn:active,.theme-toggle:active,.pill [role=tab]:active,.seg label:active>span,.linkb:active,.duopair:active,.ph:active{transform:none}
 }
 /* phones: once the page scrolls, the pinned picture shrinks to a strip (200 px, or 30% of the screen if that is smaller)
-   so the sliders under it stay in view; back at the top it grows back. Only the shown size changes, not the canvas, so no redraw. */
+   so the sliders under it stay in view; back at the top it grows back. Only the shown size changes, not the canvas, so no redraw.
+   The page takes its new layout at once; the picture and the settings then glide there on the GPU (transform only). */
 @media (max-width:899px){
-  #cv{transition:height .25s var(--scrollease,ease)}
   html,body{overflow-anchor:none}   /* Chrome would scroll back up as the picture shrinks and undo it */
   body.mini:not(.big):not([data-tab="plain"]) #cv{height:min(200px,30vh)!important;height:min(200px,30svh)!important;width:auto!important}
   body.mini:not(.big):not([data-tab="plain"]) .wrap{margin-bottom:200px}   /* keeps the page long enough that shrinking never bounces it back to the top */
 }
-@media (prefers-reduced-motion:reduce){#cv{transition:none}}
 /* home-screen app: no browser pull-to-refresh there, so the page has its own. Pull down at the top: the name shows with a
    round arrow that turns as you pull; let go past the line to reload. */
 .ptr{position:fixed;left:0;right:0;top:0;z-index:60;height:0;overflow:visible;pointer-events:none}
@@ -2371,13 +2370,28 @@ window.addEventListener("resize", function () { fit(); });
 
 /* phones: shrink the pinned picture to a strip once the page scrolls (see body.mini in the CSS) */
 (function () {
-  var sc = $(".stagecol"), on = false;
+  var sc = $(".stagecol"), ctl = $(".ctlcol"), st = $("#status"), on = false, tidy = 0;
   function check() {
     var ok = window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky";
     var y = window.scrollY, want = ok && (on ? y > 24 : y > 80);   /* two thresholds so it does not flip back and forth */
     if (want === on) return;
+    var still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var c0 = cv.getBoundingClientRect(), k0 = ctl.getBoundingClientRect().top, s0 = st.getBoundingClientRect().top;
     on = want; document.body.classList.toggle("mini", on);
-    setTimeout(pinTabs, 280);   /* the tab row pins under the picture: move it once the picture has settled */
+    pinTabs();   /* the tab row pins under the picture: move it now, with the new size */
+    if (still || !c0.height) return;
+    /* FLIP: from where things were on screen to their new places, animating only transform (no layout per frame) */
+    var c1 = cv.getBoundingClientRect(), dk = k0 - ctl.getBoundingClientRect().top, ds = s0 - st.getBoundingClientRect().top;
+    if (!c1.height) return;
+    var sc0 = c0.height / c1.height, dy = c0.top - c1.top;
+    [[cv, "translateY(" + dy + "px) scale(" + sc0 + ")"], [ctl, "translateY(" + dk + "px)"], [st, "translateY(" + ds + "px)"]].forEach(function (a) {
+      var el = a[0]; el.style.transition = "none"; el.style.transformOrigin = "50% 0"; el.style.willChange = "transform"; el.style.transform = a[1];
+    });
+    void cv.offsetWidth;
+    [cv, ctl, st].forEach(function (el) { el.style.transition = "transform 300ms cubic-bezier(.2,.8,.2,1)"; el.style.transform = ""; });
+    clearTimeout(tidy); tidy = setTimeout(function () {
+      [cv, ctl, st].forEach(function (el) { el.style.transition = el.style.transformOrigin = el.style.willChange = ""; });
+    }, 340);
   }
   window.addEventListener("scroll", check, { passive: true });
   window.addEventListener("resize", check);
