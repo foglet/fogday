@@ -386,6 +386,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
    The light/dark button never moves. */
 :root{--scrollease:cubic-bezier(.2,.8,.2,1)}
 .top .tb>*{transition:transform 380ms var(--scrollease),background-color .15s,color .15s,box-shadow .15s}
+body.navin .top .tb>*{transition-delay:calc(var(--n,0) * 55ms)}   /* rising in: one after another, left to right, like /zhcy */
 body.navoff .top .tb>*{transform:translateY(48px);pointer-events:none;transition:transform .16s ease-in}
 body.navcut .top .tb>*,body.navcut .top h1{transition:none}   /* on load: jump straight to the start state */
 @media (max-width:640px){
@@ -2298,8 +2299,15 @@ window.addEventListener("resize", fit);
 /* phones: the tools row hides while the page scrolls up to the pinned picture, then slides in once the picture has stopped */
 (function () {
   var tb = $(".tb"), sc = $(".stagecol"), idle = 0, shown = true;
-  var ready = false;
-  function set(on) { if (on !== shown) { shown = on; document.body.classList.toggle("navoff", !on); } }
+  var ready = false, inT = 0;
+  [].slice.call(tb.children).forEach(function (el, i) { el.style.setProperty("--n", i); });
+  function set(on) {
+    if (on === shown) return;
+    shown = on; clearTimeout(inT);
+    document.body.classList.toggle("navin", on);   /* the stagger applies only while rising in, so taps stay instant */
+    document.body.classList.toggle("navoff", !on);
+    if (on) inT = setTimeout(function () { document.body.classList.remove("navin"); }, 900);
+  }
   function check(settled) {
     if (!ready) return;
     if (getComputedStyle(tb).position !== "sticky" || big) { document.body.classList.remove("navtop"); set(true); return; }
