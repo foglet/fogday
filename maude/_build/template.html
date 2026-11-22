@@ -428,6 +428,14 @@ body.navcut .top .tb>*,body.navcut .top h1{transition:none}   /* on load: jump s
 .seg span .ico{width:14px;height:14px;flex-basis:14px;margin-right:4px}
 .sbtn,.shead .sbtn{height:28px;min-height:28px;padding:0 10px;font-size:12px}
 .rbtn{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.rbtn .ico{width:16px;height:16px;flex-basis:16px}
+/* section names: all styled like a changed one (bold, ink); the Reset button beside each still shows when it has changed */
+.shead h3,.acc.mod .shead h3{font-weight:700;color:var(--ink)}
+/* drop-down menus: small, like the buttons (iOS does not zoom on them: see maximum-scale at the top) */
+select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px;background-position:right 8px center;background-size:12px 12px;border-radius:7px}
+.f .row .icob{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.f .row .icob .ico{width:16px;height:16px;flex-basis:16px}
+.f .row{align-items:center}
+/* sliders two to a row (built at start, see pairSliders) */
+.two{column-gap:14px}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -2189,6 +2197,16 @@ document.addEventListener("drop", function (e) {
 document.addEventListener("paste", function (e) {
   var items = (e.clipboardData && e.clipboardData.items) || [];
   for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
+});
+
+/* sliders two to a row: in each panel, side-by-side runs of plain slider fields are paired up; an odd one out keeps the full width */
+document.querySelectorAll(".pb").forEach(function (pb) {
+  var run = [];
+  function flush() { for (var i = 0; i + 1 < run.length; i += 2) { var two = document.createElement("div"); two.className = "two"; run[i].before(two); two.append(run[i], run[i + 1]); } run = []; }
+  [].slice.call(pb.children).forEach(function (el) {
+    if (el.className === "f" && el.children.length === 2 && el.querySelector(":scope>input[type=range]")) run.push(el); else flush();
+  });
+  flush();
 });
 
 /* panels: every section is open, under a header row with its name (bold once anything in it has changed) */
