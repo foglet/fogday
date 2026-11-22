@@ -341,9 +341,13 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
   .top{display:contents}
   /* on load: title and light/dark on top, tools centered below; on scroll the title goes and light/dark stays put while the tools rise to meet it */
   .top h1{display:block;margin:0;height:48px;line-height:48px;padding:var(--sat) 46px 0;text-align:center;background:var(--bar)}
-  .tb{position:sticky;top:0;z-index:8;height:48px;padding:var(--sat) 46px 0;box-sizing:content-box;background:var(--bar);border-bottom:1px solid var(--sep);justify-content:center}
+  /* one bar, not two: the tools row sits on the title row. At the top of the page the bar is see-through, so only the title
+     shows; once the page scrolls, the title slides away under the bar and the tools take its place */
+  .tb{position:sticky;top:0;z-index:8;height:48px;padding:var(--sat) 46px 0;box-sizing:content-box;background:var(--bar);border-bottom:1px solid var(--sep);justify-content:center;
+    margin-top:calc(-48px - var(--sat));transition:background-color .15s}
+  body.navtop .tb{background:transparent;pointer-events:none}   /* taps reach the title under it */
   .topr{position:sticky;top:0;z-index:9;height:48px;padding-top:var(--sat);width:max-content;
-    margin:calc(-97px - 2 * var(--sat)) calc(4px + var(--sar)) calc(49px + var(--sat)) auto}
+    margin:calc(-49px - var(--sat)) calc(4px + var(--sar)) 1px auto}
   .stagecol{top:var(--navh,0px)}
   .tb .sep{margin:0 4px}
   .tbtn span{display:none}.tbtn{padding:0 8px}
@@ -2307,7 +2311,8 @@ window.addEventListener("resize", fit);
   function check(settled) {
     if (!ready) return;
     if (getComputedStyle(tb).position !== "sticky" || big) { set(true); return; }
-    if (window.scrollY <= 2) { set(false); return; }   /* phones: out of sight at the top of the page, as when it opens */
+    var top = window.scrollY <= 2; document.body.classList.toggle("navtop", top);
+    if (top) { set(false); return; }   /* phones: out of sight at the top of the page, as when it opens */
     var navh = tb.getBoundingClientRect().height, pinned = getComputedStyle(sc).position === "sticky" && sc.getBoundingClientRect().top <= navh + 1;
     if (!pinned) { set(settled); return; }   /* hidden only while moving; once the page rests, the tools come back wherever it stopped */
     if (shown || settled) set(true);
@@ -2318,7 +2323,7 @@ window.addEventListener("resize", fit);
   /* on load: phones start with the tools out of sight (no animation); wider screens show them as usual */
   ready = true;
   if (getComputedStyle(tb).position === "sticky") {
-    shown = false; document.body.classList.add("navoff", "navcut"); void document.body.offsetWidth;
+    shown = false; document.body.classList.add("navoff", "navcut", "navtop"); void document.body.offsetWidth;
     requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.remove("navcut"); }); });
   }
 })();
