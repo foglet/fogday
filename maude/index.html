@@ -1601,13 +1601,24 @@ function demo() {
   setImage(c, 900, 1100, true);
   dropGrad();
 }
-/* opening screen: a new random three-color gradient (and angle) for the pulse each time it shows */
+/* opening screen: a new random three-color gradient for the sphere each time it shows, never a repeat:
+   each gradient is reduced to a key (center hue in 15° steps, direction, the two hue gaps in 15° steps); the last 200 keys are kept
+   in localStorage (maude:spheres) and skipped, and the center hue also stays 40° or more away from the last three */
 function dropGrad() {
   var t = document.querySelector("#dropper .tgt"); if (!t) return;
-  var h = Math.random() * 360, s = Math.random() < .5 ? -1 : 1, r = function (n) { return Math.round(n); };
-  var hs = [h, h + s * (50 + Math.random() * 70), h + s * (130 + Math.random() * 90)];
-  hs.forEach(function (x, i) { t.style.setProperty("--g" + (i + 1), "hsl(" + r((x % 360 + 360) % 360) + " 90% " + (58 + i * 6) + "%)"); });
-  t.style.setProperty("--ga", r(Math.random() * 360) + "deg");
+  var KEY = "maude:spheres", seen = [];
+  try { seen = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
+  var w = function (x) { return (x % 360 + 360) % 360; }, near = function (a, b) { var d = Math.abs(w(a) - w(b)); return Math.min(d, 360 - d); };
+  var pick, k, n = 0;
+  do {
+    var h = Math.random() * 360, s = Math.random() < .5 ? -1 : 1, a = 50 + Math.random() * 70, b = 130 + Math.random() * 90;
+    pick = [h, h + s * a, h + s * b];
+    k = [Math.round(w(h) / 15) % 24, s, Math.round(a / 15), Math.round(b / 15)].join(",");
+    var close = seen.slice(-3).some(function (o) { return near(+o.split(",")[0] * 15, h) < 40; });
+  } while ((seen.indexOf(k) >= 0 || close) && ++n < 200);
+  seen.push(k); if (seen.length > 200) seen = seen.slice(-200);
+  try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {}
+  pick.forEach(function (x, i) { t.style.setProperty("--g" + (i + 1), "hsl(" + Math.round(w(x)) + " 90% " + (58 + i * 6) + "%)"); });
 }
 
 /* ---------- modals ---------- */
