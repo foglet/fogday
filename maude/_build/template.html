@@ -400,6 +400,15 @@ body.navcut .top .tb>*,body.navcut .top h1{transition:none}   /* on load: jump s
   .btn,.chip,.icob,.tbtn,.theme-toggle,.pill [role=tab],.seg label>span,.ph,.ph .ico,.pill .knob,.linkb,.duopair,.tb>*,.top h1{transition:none!important}
   .btn:active,.chip:active,.icob:active,.tbtn:active,.theme-toggle:active,.pill [role=tab]:active,.seg label:active>span,.linkb:active,.duopair:active,.ph:active{transform:none}
 }
+/* phones: once the page scrolls, the pinned picture shrinks to a strip (200 px, or 30% of the screen if that is smaller)
+   so the sliders under it stay in view; back at the top it grows back. Only the shown size changes, not the canvas, so no redraw. */
+@media (max-width:899px){
+  #cv{transition:height .25s var(--scrollease,ease)}
+  html,body{overflow-anchor:none}   /* Chrome would scroll back up as the picture shrinks and undo it */
+  body.mini:not(.big):not([data-tab="plain"]) #cv{height:min(200px,30vh)!important;height:min(200px,30svh)!important;width:auto!important}
+  body.mini:not(.big):not([data-tab="plain"]) .wrap{margin-bottom:200px}   /* keeps the page long enough that shrinking never bounces it back to the top */
+}
+@media (prefers-reduced-motion:reduce){#cv{transition:none}}
 /* home-screen app: no browser pull-to-refresh there, so the page has its own. Pull down at the top: the name shows with a
    round arrow that turns as you pull; let go past the line to reload. */
 .ptr{position:fixed;left:0;right:0;top:0;z-index:60;height:0;overflow:visible;pointer-events:none}
@@ -734,7 +743,7 @@ var SWATCHES = ["#1d2622", "#ffffff", "#1f5c4a", "#b8352b", "#f2b431", "#00aeef"
 var S = loadSettings();
 var $ = function (s) { return document.querySelector(s); };
 var cv = $("#cv"), pctx = cv.getContext("2d");
-var stage = $("#stage"), statusEl = $("#status");
+var miniCheck = null, stage = $("#stage"), statusEl = $("#status");
 var src = document.createElement("canvas"), sctx = src.getContext("2d", { willReadFrequently: true });
 var orig = document.createElement("canvas");
 var cache = {};
@@ -1705,7 +1714,7 @@ function saveAll() {
 
 /* ---------- tabs (the pill slider) ---------- */
 function setTab(t) {
-  tab = t; document.body.dataset.tab = t;
+  tab = t; document.body.dataset.tab = t; if (miniCheck) miniCheck();
 
   var tabs = document.querySelectorAll(".pill [role=tab]");
   tabs.forEach(function (b, i) {
@@ -1853,7 +1862,7 @@ document.querySelectorAll(".acc").forEach(function (acc) {
 var lastTap = 0;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 var navCheck = null;   /* set by the top bar code below */
-function toggleBig() { big = !big; fit(true); if (navCheck) navCheck(true); }
+function toggleBig() { big = !big; fit(true); if (navCheck) navCheck(true); if (miniCheck) miniCheck(); }
 cv.addEventListener("pointerdown", function (e) {
   if (!pickKey) return;
   var p = fr(e);
@@ -2358,6 +2367,21 @@ window.addEventListener("resize", function () { fit(); });
     shown = false; document.body.classList.add("navoff", "navcut", "navtop"); void document.body.offsetWidth;
     requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.remove("navcut"); }); });
   }
+})();
+
+/* phones: shrink the pinned picture to a strip once the page scrolls (see body.mini in the CSS) */
+(function () {
+  var sc = $(".stagecol"), on = false;
+  function check() {
+    var ok = window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky";
+    var y = window.scrollY, want = ok && (on ? y > 24 : y > 80);   /* two thresholds so it does not flip back and forth */
+    if (want === on) return;
+    on = want; document.body.classList.toggle("mini", on);
+    setTimeout(pinTabs, 280);   /* the tab row pins under the picture: move it once the picture has settled */
+  }
+  window.addEventListener("scroll", check, { passive: true });
+  window.addEventListener("resize", check);
+  miniCheck = check;
 })();
 
 /* home-screen app and Chrome on phones: a pull-to-refresh of its own */
