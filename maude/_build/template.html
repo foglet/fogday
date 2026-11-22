@@ -465,6 +465,13 @@ select:focus,select:focus-visible{outline:none;border:0;box-shadow:none}
 .color .sw.cust input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
 .mylooks{display:none!important}   /* Favorite: off for now (code and saved looks kept; remove this line to bring it back) */
 #dmHint{display:none!important}    /* "Pick a look to turn on the dots." taken out */
+/* toggles: a borderless pill, two colors (track and the chosen part), for two, three or four choices */
+.seg,.seg.htonoff{border:0;box-shadow:none;border-radius:999px;background:var(--btn);padding:2px}
+.seg span,.seg.htonoff span{border-radius:999px}
+.seg input:checked+span{background:var(--ink);color:var(--paper);box-shadow:none}
+/* Halftone on: Effects shows only the halftone settings */
+body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:none}
+.duopair{background-clip:border-box}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -757,6 +764,7 @@ select:focus,select:focus-visible{outline:none;border:0;box-shadow:none}
   </div>
 </div>
 <template id="icoPick">{{icon:eyedropper}}</template>
+<template id="icoShuffle">{{icon:shuffle}}</template>
 <template id="icoLang">{{icon:translate}}</template>
 <template id="icoStar">{{icon:sparkle}}</template><template id="icoPlus">{{icon:plus}}</template><template id="icoX">{{icon:x}}</template>
 <template id="icoReset">{{icon:arrow-counter-clockwise}}</template>
@@ -2243,6 +2251,10 @@ document.querySelectorAll(".acc").forEach(function (acc) {
     var row = b.parentElement; b.classList.add("hshuf"); hd.append(b);
     if (row.classList.contains("row") && !row.querySelector("button")) row.replaceWith.apply(row, [].slice.call(row.childNodes));
   });
+  if (!hd.querySelector(".hshuf") && pb.querySelector("[data-k],[data-color]")) {   /* every section can be randomized */
+    var rb = document.createElement("button"); rb.type = "button"; rb.className = "icob hshuf"; rb.title = "Random " + name;
+    rb.setAttribute("aria-label", "Random " + name); rb.appendChild($("#icoShuffle").content.cloneNode(true)); hd.append(rb);
+  }
   /* sliders and drop-down menus take half the width, two to a row; everything else the full width.
      Order: toggles across the top; then the half-width ones, sliders first, paired with each other; drop-down menus last, so an odd slider
      sits beside a menu only when it has to, and menus pair with menus. They gather where the first one was;
@@ -2505,6 +2517,39 @@ window.addEventListener("resize", function () { fit(); });
   document.addEventListener("touchend", end, { passive: true });
   document.addEventListener("touchcancel", end, { passive: true });
 })();
+
+/* randomize a section: every control in it gets a new value, whatever it was (sliders between 15% and 90% of their range,
+   so the effect shows; menus and toggles skip None and Off). One undo step. The section's shuffle icon does this. */
+function randomizePanel(pb) {
+  function pick(a) { return a[(Math.random() * a.length) | 0]; }
+  var done = {}, dot = false;
+  pb.querySelectorAll("[data-k]").forEach(function (el) {
+    var k = el.dataset.k; if (done[k] || !(k in S)) return; done[k] = 1;
+    if (TABKEYS.dot.indexOf(k) >= 0) dot = true;
+    if (el.type === "range") {
+      var a = +el.min, b = +el.max, st = +el.step || 1, v = a + (b - a) * (0.15 + Math.random() * 0.75);
+      S[k] = +(Math.round(v / st) * st).toFixed(4);
+    } else if (el.type === "radio") {
+      var vals = [].map.call(pb.querySelectorAll("input[type=radio][data-k=\"" + k + "\"]"), function (x) { return x.value; })
+        .filter(function (x) { return x !== "off" && x !== "none"; });
+      if (vals.length) S[k] = typeof S[k] === "number" ? +pick(vals) : pick(vals);
+    } else if (el.type === "checkbox") S[k] = Math.random() < 0.5;
+    else if (el.tagName === "SELECT") {
+      var ops = [].filter.call(el.options, function (o) { return !o.disabled && o.value !== "none" && o.value !== "off" && o.value !== String(S[k]); });
+      if (ops.length) S[k] = pick(ops).value;
+    }
+  });
+  pb.querySelectorAll("[data-color]").forEach(function (box) { S[box.dataset.color] = pick(SWATCHES); });
+  var pairs = pb.querySelectorAll(".duopair"); if (pairs.length) { var d = pick(pairs); S.fxDuoA = d.dataset.a; S.fxDuoB = d.dataset.b; }   /* Duotone: a matched pair */
+  S.seed = (Math.random() * 1e6) | 0; S.fxSeed = (Math.random() * 1e6) | 0;   /* new confetti, glitch slices and film roll too */
+  if (dot && S.look === "plain") { S.look = S.base = "dot"; syncLook(); }
+  sync(); saveSettings(); schedule(); commit();
+  say(tr("Random") + " · " + pb.parentNode.querySelector(".shead h3").textContent);
+}
+document.querySelectorAll(".shead .hshuf").forEach(function (b) {   /* clones drop the old one-purpose shuffles */
+  var c = b.cloneNode(true); b.replaceWith(c);
+  c.addEventListener("click", function () { randomizePanel(c.closest(".acc").querySelector(".pb")); });
+});
 
 demo();
 })();

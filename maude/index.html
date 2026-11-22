@@ -465,6 +465,13 @@ select:focus,select:focus-visible{outline:none;border:0;box-shadow:none}
 .color .sw.cust input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
 .mylooks{display:none!important}   /* Favorite: off for now (code and saved looks kept; remove this line to bring it back) */
 #dmHint{display:none!important}    /* "Pick a look to turn on the dots." taken out */
+/* toggles: a borderless pill, two colors (track and the chosen part), for two, three or four choices */
+.seg,.seg.htonoff{border:0;box-shadow:none;border-radius:999px;background:var(--btn);padding:2px}
+.seg span,.seg.htonoff span{border-radius:999px}
+.seg input:checked+span{background:var(--ink);color:var(--paper);box-shadow:none}
+/* Halftone on: Effects shows only the halftone settings */
+body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:none}
+.duopair{background-clip:border-box}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -757,6 +764,7 @@ select:focus,select:focus-visible{outline:none;border:0;box-shadow:none}
   </div>
 </div>
 <template id="icoPick"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,67.3a35.79,35.79,0,0,0-11.26-25.66c-14-13.28-36.72-12.78-50.62,1.13L142.8,62.2a24,24,0,0,0-33.14.77l-9,9a16,16,0,0,0,0,22.64l2,2.06-51,51a39.75,39.75,0,0,0-10.53,38l-8,18.41A13.68,13.68,0,0,0,36,219.3a15.92,15.92,0,0,0,17.71,3.35L71.23,215a39.89,39.89,0,0,0,37.06-10.75l51-51,2.06,2.06a16,16,0,0,0,22.62,0l9-9a24,24,0,0,0,.74-33.18l19.75-19.87A35.75,35.75,0,0,0,224,67.3ZM97,193a24,24,0,0,1-24,6,8,8,0,0,0-5.55.31l-18.1,7.91L57,189.41a8,8,0,0,0,.25-5.75A23.88,23.88,0,0,1,63,159l51-51,33.94,34ZM202.13,82l-25.37,25.52a8,8,0,0,0,0,11.3l4.89,4.89a8,8,0,0,1,0,11.32l-9,9L112,83.26l9-9a8,8,0,0,1,11.31,0l4.89,4.89a8,8,0,0,0,11.33,0l24.94-25.09c7.81-7.82,20.5-8.18,28.29-.81a20,20,0,0,1,.39,28.7Z"/></svg></template>
+<template id="icoShuffle"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M237.66,178.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L212.69,192H200.94a72.12,72.12,0,0,1-58.59-30.15l-41.72-58.4A56.1,56.1,0,0,0,55.06,80H32a8,8,0,0,1,0-16H55.06a72.12,72.12,0,0,1,58.59,30.15l41.72,58.4A56.1,56.1,0,0,0,200.94,176h11.75l-10.35-10.34a8,8,0,0,1,11.32-11.32ZM143,107a8,8,0,0,0,11.16-1.86l1.2-1.67A56.1,56.1,0,0,1,200.94,80h11.75L202.34,90.34a8,8,0,0,0,11.32,11.32l24-24a8,8,0,0,0,0-11.32l-24-24a8,8,0,0,0-11.32,11.32L212.69,64H200.94a72.12,72.12,0,0,0-58.59,30.15l-1.2,1.67A8,8,0,0,0,143,107Zm-30,42a8,8,0,0,0-11.16,1.86l-1.2,1.67A56.1,56.1,0,0,1,55.06,176H32a8,8,0,0,0,0,16H55.06a72.12,72.12,0,0,0,58.59-30.15l1.2-1.67A8,8,0,0,0,113,149Z"/></svg></template>
 <template id="icoLang"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></template>
 <template id="icoStar"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z"/></svg></template><template id="icoPlus"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></template><template id="icoX"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></template>
 <template id="icoReset"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg></template>
@@ -2243,6 +2251,10 @@ document.querySelectorAll(".acc").forEach(function (acc) {
     var row = b.parentElement; b.classList.add("hshuf"); hd.append(b);
     if (row.classList.contains("row") && !row.querySelector("button")) row.replaceWith.apply(row, [].slice.call(row.childNodes));
   });
+  if (!hd.querySelector(".hshuf") && pb.querySelector("[data-k],[data-color]")) {   /* every section can be randomized */
+    var rb = document.createElement("button"); rb.type = "button"; rb.className = "icob hshuf"; rb.title = "Random " + name;
+    rb.setAttribute("aria-label", "Random " + name); rb.appendChild($("#icoShuffle").content.cloneNode(true)); hd.append(rb);
+  }
   /* sliders and drop-down menus take half the width, two to a row; everything else the full width.
      Order: toggles across the top; then the half-width ones, sliders first, paired with each other; drop-down menus last, so an odd slider
      sits beside a menu only when it has to, and menus pair with menus. They gather where the first one was;
@@ -2505,6 +2517,39 @@ window.addEventListener("resize", function () { fit(); });
   document.addEventListener("touchend", end, { passive: true });
   document.addEventListener("touchcancel", end, { passive: true });
 })();
+
+/* randomize a section: every control in it gets a new value, whatever it was (sliders between 15% and 90% of their range,
+   so the effect shows; menus and toggles skip None and Off). One undo step. The section's shuffle icon does this. */
+function randomizePanel(pb) {
+  function pick(a) { return a[(Math.random() * a.length) | 0]; }
+  var done = {}, dot = false;
+  pb.querySelectorAll("[data-k]").forEach(function (el) {
+    var k = el.dataset.k; if (done[k] || !(k in S)) return; done[k] = 1;
+    if (TABKEYS.dot.indexOf(k) >= 0) dot = true;
+    if (el.type === "range") {
+      var a = +el.min, b = +el.max, st = +el.step || 1, v = a + (b - a) * (0.15 + Math.random() * 0.75);
+      S[k] = +(Math.round(v / st) * st).toFixed(4);
+    } else if (el.type === "radio") {
+      var vals = [].map.call(pb.querySelectorAll("input[type=radio][data-k=\"" + k + "\"]"), function (x) { return x.value; })
+        .filter(function (x) { return x !== "off" && x !== "none"; });
+      if (vals.length) S[k] = typeof S[k] === "number" ? +pick(vals) : pick(vals);
+    } else if (el.type === "checkbox") S[k] = Math.random() < 0.5;
+    else if (el.tagName === "SELECT") {
+      var ops = [].filter.call(el.options, function (o) { return !o.disabled && o.value !== "none" && o.value !== "off" && o.value !== String(S[k]); });
+      if (ops.length) S[k] = pick(ops).value;
+    }
+  });
+  pb.querySelectorAll("[data-color]").forEach(function (box) { S[box.dataset.color] = pick(SWATCHES); });
+  var pairs = pb.querySelectorAll(".duopair"); if (pairs.length) { var d = pick(pairs); S.fxDuoA = d.dataset.a; S.fxDuoB = d.dataset.b; }   /* Duotone: a matched pair */
+  S.seed = (Math.random() * 1e6) | 0; S.fxSeed = (Math.random() * 1e6) | 0;   /* new confetti, glitch slices and film roll too */
+  if (dot && S.look === "plain") { S.look = S.base = "dot"; syncLook(); }
+  sync(); saveSettings(); schedule(); commit();
+  say(tr("Random") + " · " + pb.parentNode.querySelector(".shead h3").textContent);
+}
+document.querySelectorAll(".shead .hshuf").forEach(function (b) {   /* clones drop the old one-purpose shuffles */
+  var c = b.cloneNode(true); b.replaceWith(c);
+  c.addEventListener("click", function () { randomizePanel(c.closest(".acc").querySelector(".pb")); });
+});
 
 demo();
 })();
