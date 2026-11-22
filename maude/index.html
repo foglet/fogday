@@ -60,6 +60,7 @@ body.nophoto .dropper{display:flex}
 body.nophoto>.wrap,body.nophoto>.ptr,body.nophoto .top .tb,body.nophoto .top .topr{display:none!important}
 body.nophoto .top{background:transparent;border-color:transparent;position:relative;z-index:51}
 body.nophoto .top h1{position:relative;z-index:51;background:transparent;color:#f2efe8}
+body.nophoto .top,body.nophoto .top *{pointer-events:none}   /* the whole opening screen is one tap target, the title included */
 body.nophoto{overflow:hidden;background:#0b1a3a}
 /* one sphere, 70% of the screen width (kept inside 60% of the height on wide screens), in a random gradient, breathing */
 .dropper{--S:min(70vw,60vh)}
