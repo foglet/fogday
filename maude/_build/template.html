@@ -1394,24 +1394,44 @@ function draw(prog) {
   render(pctx, W, H, prog == null ? S.reveal / 100 : prog);
   cv.setAttribute("aria-label", tr(S.look === "half" ? "Halftone preview" : S.look === "plain" ? "Original" : "Dot matrix preview"));
 }
-function fit() {
+/* phones: window.innerHeight grows as the browser bars slide away on scroll and bounces on pull-to-refresh, so sizing the
+   picture from it made the picture grow while scrolling. Size from the small viewport (bars showing), which stays put. */
+var vhProbe = document.createElement("div");
+vhProbe.style.cssText = "position:fixed;left:0;top:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none";
+document.body.appendChild(vhProbe);
+var vhW = 0, vhH = 0;
+function stableVH() {
+  var h = vhProbe.offsetHeight;
+  if (h > 0 && CSS.supports && CSS.supports("height", "100svh")) return h;
+  /* older browsers: keep the first height per width, change it only on rotation or a real window resize */
+  if (window.innerWidth !== vhW) { vhW = window.innerWidth; vhH = window.innerHeight; }
+  return vhH;
+}
+var fitKey = "";
+function fit(force) {
   if (!src.width) return;
-  var wide = window.innerWidth >= 900;
+  var wide = window.innerWidth >= 900, VH = wide ? window.innerHeight : stableVH();
   var ar = src.height / src.width, w = stage.clientWidth, h = w * ar;
   if (big) {   /* full screen: the whole image, as large as the window allows */
     var vw = window.innerWidth - 16, vh = window.innerHeight - 16;
     w = vw; h = w * ar; if (h > vh) { h = vh; w = h / ar; }
   }
   /* fitted: pinned and short enough to edit under it. Double tap: full width (95% of a phone screen), not pinned */
-  var maxH = wide ? window.innerHeight - 140 : Math.min(window.innerHeight * 0.46, 560);
+  var maxH = wide ? VH - 140 : Math.min(VH * 0.46, 560);
   if (!big && h > maxH) { h = maxH; w = h / ar; }
   document.documentElement.classList.toggle("locked", big);
   var dpr = Math.min(2, window.devicePixelRatio || 1);
-  cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
-  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  var W = Math.round(w), H = Math.round(h), key = W + "x" + H + "@" + dpr + (big ? "b" : "");
+  /* resizing a canvas wipes it, even to the same size: only touch it when the size really changes (no flicker) */
+  if (key !== fitKey) {
+    fitKey = key;
+    cv.style.width = W + "px"; cv.style.height = H + "px";
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    force = true;
+  }
   document.body.classList.toggle("big", big);
   pinTabs();
-  schedule();
+  if (force) schedule();
 }
 
 /* ---------- image in ---------- */
@@ -1451,7 +1471,7 @@ function applyCrop() {
   sctx.imageSmoothingQuality = "high";
   sctx.drawImage(orig, sx, sy, w, h, 0, 0, src.width, src.height);
   cache = {};
-  fit();
+  fit(true);
 }
 function loadFile(f) {
   if (!f) return;
@@ -1833,7 +1853,7 @@ document.querySelectorAll(".acc").forEach(function (acc) {
 var lastTap = 0;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 var navCheck = null;   /* set by the top bar code below */
-function toggleBig() { big = !big; fit(); if (navCheck) navCheck(true); }
+function toggleBig() { big = !big; fit(true); if (navCheck) navCheck(true); }
 cv.addEventListener("pointerdown", function (e) {
   if (!pickKey) return;
   var p = fr(e);
@@ -2306,7 +2326,7 @@ setTab(sharedLook ? "dot" : "plain"); syncLook();
 fromHash();
 commit(); renderMyLooks();
 if (window.ResizeObserver) new ResizeObserver(function () { fit(); }).observe(stage);
-window.addEventListener("resize", fit);
+window.addEventListener("resize", function () { fit(); });
 /* phones: the tools row hides while the page scrolls up to the pinned picture, then slides in once the picture has stopped */
 (function () {
   var tb = $(".tb"), sc = $(".stagecol"), idle = 0, shown = true;
