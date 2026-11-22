@@ -10,7 +10,7 @@ A photo turned into a **dot matrix** (colored dots sampled from the image, with 
 
 ## Using it
 - My looks (row under the tabs, every tab): Save look stores every setting except the save size in localStorage (`maude:looks`, up to 12, named from the look and its first effect). Tap a chip to apply it; the chip in use shows Copy link and Delete. The share icon copies a link (`/maude/#look=` + URL-safe base64 of the settings that differ from the defaults). Opening a link applies the look to whatever photo is open; values that do not fit (type, color, menu choice, slider range) fall back to the default. Reset clears the `#look=` from the address.
-- Starting points: a row of looks at the top of each tab (Dot matrix, Halftone, Effects). One tap sets that tab; a pressed chip means the settings match it.
+- Starting points: a row of looks at the top of each tab (Dot matrix, Halftone, Effects). One tap sets that tab; a pressed chip means the settings match it. Dot matrix starts on None (the photo as it is, the default); picking another look or moving any Dot matrix control turns the dots on.
 - Under the image: Undo and Redo (also Ctrl or Cmd+Z, Shift+Z), hold to see the original, play the reveal (dot matrix), full width.
 - A dot by a panel name means its settings differ from the defaults; the round arrow resets that panel. Double click a slider to reset it.
 - Drop a photo on the page or paste one to open it. Touch screens get 44 px targets.

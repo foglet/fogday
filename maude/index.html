@@ -1647,7 +1647,7 @@ document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
     if (b.dataset.tab === "plain") {   /* Original: every setting back to zero, the unaltered photo to build on */
       S = Object.assign({}, DEF, { look: "plain", base: "plain" }); sync(); syncLook(); saveSettings(); schedule(); commit(); $("#recipe").textContent = "";
     }
-    if (b.dataset.tab === "dot" && S.look === "plain") setLook("dot");
+    /* Dot Matrix opens on None (the photo as it is) until a look is picked or a control is moved */
     /* if the tabs were pinned, start the new tab at its top, right under them */
     var tp = document.getElementById(b.getAttribute("aria-controls")), pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pin")) || 0;
     var y = tp.getBoundingClientRect().top + window.scrollY - pin - $(".tabrow").getBoundingClientRect().height;
@@ -1693,6 +1693,7 @@ function onChange(el) {
   else if (el.type === "range") v = +el.value;
   else v = el.value;
   S[k] = v; out(k, v);
+  if (S.look === "plain" && TABKEYS.dot.indexOf(k) >= 0) { S.look = S.base = "dot"; syncLook(); }
   if (k === "htMode") document.body.dataset.ht = v;
   if (k === "reveal") cancelAnimationFrame(playing);
   if (k === "reveal") stopPlay();
@@ -1853,6 +1854,7 @@ trap("#saveModal", function () { closeModal("#saveModal"); });
 /* ---------- starting points: one tap sets that tab's settings to a tuned look (the rest of the tab goes to defaults) ---------- */
 var LOOKS = {
   dot: [
+    ["None", {}],   /* the default: no dot matrix, the photo as it is; pick a look (or move a control) to turn it on */
     ["Bloom", { dir: "center", reveal: 50, band: 40, wash: 20 }],
     ["Classic", {}],
     ["Fine", { cols: 110, dmDot: 92, reveal: 100 }],
@@ -1912,7 +1914,9 @@ document.querySelectorAll("[data-looks]").forEach(function (row) {
     var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = l[0];
     b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () {
-      Object.assign(S, lookVals(t, l[1])); if (t === "half") S.look = "half"; else if (t === "dot") S.look = "dot"; sync(); syncLook(); saveSettings();
+      Object.assign(S, lookVals(t, l[1])); if (t === "half") S.look = "half";
+      else if (t === "dot") { S.base = l[0] === "None" ? "plain" : "dot"; if (S.look !== "half") S.look = S.base; }
+      sync(); syncLook(); saveSettings();
       goTo(t === "half" ? "a-screen" : t === "fx" ? FXGO[l[0]] : t === "dot" ? DOTGO[l[0]] : null); schedule(); commit(); say(tr(l[0]) + " " + tr("look."));
     });
     row.appendChild(b);
@@ -1925,7 +1929,8 @@ function marks() {
   document.querySelectorAll("[data-looks]").forEach(function (row) {
     var t = row.dataset.looks;
     row.querySelectorAll(".chip").forEach(function (b, i) {
-      var v = lookVals(t, LOOKS[t][i][1]), on = (t !== "half" || S.look === "half") && (t !== "dot" || S.look === "dot") && TABKEYS[t].every(function (k) { return k === "seed" || k === "fxSeed" || same(S[k], v[k]); });
+      var v = lookVals(t, LOOKS[t][i][1]), dotOn = S.look === "dot" || (S.look === "half" && S.base === "dot"),
+        on = (t !== "half" || S.look === "half") && (t !== "dot" || (LOOKS.dot[i][0] === "None" ? !dotOn : dotOn)) && TABKEYS[t].every(function (k) { return k === "seed" || k === "fxSeed" || same(S[k], v[k]); });
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
   });
