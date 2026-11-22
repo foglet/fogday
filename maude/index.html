@@ -376,8 +376,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
 @keyframes springin{from{transform:scale(.9) translateY(12px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes springdrop{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
 /* tool icons slide in one after another, like the characters on fogday.com/zhcy: each starts 48px to the right and
-   transparent, then springs into place (same spring, same 55ms stagger). They do this on load and, on phones, each time
-   the page comes to rest after the tools hid for a scroll. The stagger only applies while sliding in, so presses stay instant. */
+   transparent, then springs into place (same spring, same 55ms stagger). On phones they are hidden when the page opens and
+   slide in once the first scroll comes to rest, then again each time the page rests after a scroll. The stagger only applies while sliding in, so presses stay instant. */
 :root{--slide:cubic-bezier(.3,1.15,.5,1)}
 @supports (transition-timing-function:linear(0,1)){:root{--slide:linear(0,.014,.0505,.1025,.1646,.2323,.3024,.3724,.4404,.5052,.5659,.6219,.6731,.7193,.7607,.7974,.8297,.858,.8825,.9035,.9216,.9369,.9498,.9606,.9696,.977,.983,.9879,.9918,.9949,.9973,.9991,1.0004,1.0014,1.0021,1.0026,1.0028,1.003,1.003,1.0029,1)}}
 .top .tb>*,.top .topr>*{transition:transform 520ms var(--slide),opacity 380ms cubic-bezier(.22,.61,.36,1),background-color .15s,color .15s,box-shadow .15s}
@@ -2296,7 +2296,7 @@ window.addEventListener("resize", fit);
 (function () {
   var tb = $(".tb"), sc = $(".stagecol"), idle = 0, shown = true;
   [].slice.call(tb.children).concat([].slice.call($(".topr").children)).forEach(function (el, i) { el.style.setProperty("--n", i); });
-  var inT = 0, ready = false;
+  var inT = 0, ready = false, moved = false;
   function set(on) {
     if (on === shown) return;
     shown = on; clearTimeout(inT);
@@ -2305,19 +2305,23 @@ window.addEventListener("resize", fit);
     if (on) inT = setTimeout(function () { document.body.classList.remove("navin"); }, 1200);
   }
   function check(settled) {
-    if (!ready) return;   /* the load slide-in starts it */
+    if (!ready) return;
     if (getComputedStyle(tb).position !== "sticky" || big) { set(true); return; }
-    if (window.scrollY <= 2) { set(true); return; }
+    if (!moved) { set(false); return; }   /* phones: out of sight when the page opens, until the first scroll */
+    if (window.scrollY <= 2) { set(settled || shown); return; }
     var navh = tb.getBoundingClientRect().height, pinned = getComputedStyle(sc).position === "sticky" && sc.getBoundingClientRect().top <= navh + 1;
     if (!pinned) { set(settled); return; }   /* hidden only while moving; once the page rests, the tools come back wherever it stopped */
     if (shown || settled) set(true);
   }
-  window.addEventListener("scroll", function () { check(false); clearTimeout(idle); idle = setTimeout(function () { check(true); }, 120); }, { passive: true });
+  window.addEventListener("scroll", function () { if (window.scrollY > 2) moved = true; check(false); clearTimeout(idle); idle = setTimeout(function () { check(true); }, 120); }, { passive: true });
   window.addEventListener("resize", function () { check(true); });
   window.addEventListener("pageshow", function () { check(true); });   /* back/forward cache and restored scroll on load */
-  /* on load: start out of sight, then slide in on the next frames (if this script never runs, the icons simply show) */
-  shown = false; document.body.classList.add("navoff", "navcut"); void document.body.offsetWidth;
-  requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.remove("navcut"); ready = true; check(true); }); });
+  /* on load: phones start with the tools out of sight (no animation); wider screens show them as usual */
+  ready = true;
+  if (getComputedStyle(tb).position === "sticky") {
+    shown = false; document.body.classList.add("navoff", "navcut"); void document.body.offsetWidth;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.remove("navcut"); }); });
+  }
 })();
 
 demo();
