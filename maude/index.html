@@ -337,9 +337,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
   input,select,textarea{font-size:16px}
 }
 @media (max-width:640px){
-  h1{display:none}
-  .top{padding-left:calc(6px + var(--sal));padding-right:4px}
-  .tb{justify-content:flex-start}
+  /* phones: the title sits on its own row and scrolls away; the tools row below it stays pinned and centered */
+  .top{display:contents}
+  .top h1{display:block;margin:0;padding:calc(12px + var(--sat)) 16px 0;text-align:center;background:var(--bar)}
+  .tb{position:sticky;top:0;z-index:8;height:48px;padding:var(--sat) 46px 0;box-sizing:content-box;background:var(--bar);border-bottom:1px solid var(--sep);justify-content:center}
+  .topr{position:sticky;top:0;z-index:9;height:48px;padding-top:var(--sat);margin:calc(-49px - var(--sat)) calc(4px + var(--sar,0px)) 0 auto;width:max-content}
+  .stagecol{top:var(--navh,0px)}
   .tb .sep{margin:0 4px}
   .tbtn span{display:none}.tbtn{padding:0 8px}
   .stagecol{padding:10px 8px 4px}
@@ -1894,7 +1897,9 @@ var DOTGO = { Bloom: "a-reveal", Classic: "a-grid", Fine: "a-grid", "Full color"
 /* the tab row stays pinned: under the picture on phones, at the top of the sidebar on wide screens */
 function pinTabs() {
   var sc = document.querySelector(".stagecol"), h = 0;
-  if (window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky") h = sc.getBoundingClientRect().height;
+  var tb = document.querySelector(".tb"), nav = getComputedStyle(tb).position === "sticky" ? Math.round(tb.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--navh", nav + "px");   /* phones: the pinned tools row */
+  if (window.innerWidth < 900 && !big && getComputedStyle(sc).position === "sticky") h = sc.getBoundingClientRect().height + nav;
   if (document.body.classList.contains("infoopen")) h = 0;
   document.documentElement.style.setProperty("--pin", Math.round(h) + "px");
 }
