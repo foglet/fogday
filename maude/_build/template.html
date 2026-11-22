@@ -55,23 +55,24 @@ body.big .stagecol{position:static}
 @media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
 .stage{display:flex;justify-content:center;position:relative}
 /* opening screen: before a photo is opened the page is only the MAUDE MXY title and a pulsing target (tap or drop to open a photo); the app appears, on Original, once one opens */
-.dropper{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:6%;border:0;border-radius:0;background:#1c1c1e;color:#f2efe8;cursor:pointer;font:600 clamp(18px,4.5vw,26px)/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.dropper{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:6%;border:0;border-radius:0;background:#0b1a3a;color:#f2efe8;cursor:pointer;font:600 clamp(18px,4.5vw,26px)/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden}
 body.nophoto .dropper{display:flex}
 body.nophoto>.wrap,body.nophoto>.ptr,body.nophoto .top .tb,body.nophoto .top .topr{display:none!important}
 body.nophoto .top{background:transparent;border-color:transparent;position:relative;z-index:51}
 body.nophoto .top h1{position:relative;z-index:51;background:transparent;color:#f2efe8}
-body.nophoto{overflow:hidden;background:#1c1c1e}
-.dropper .tgt{position:relative;width:min(70vw,55vh);aspect-ratio:1}
+body.nophoto{overflow:hidden;background:#0b1a3a}
+.dropper .tgt{position:relative;width:min(70vw,55vh);aspect-ratio:1;--grad:linear-gradient(var(--ga,135deg),var(--g1,#ff5f8f),var(--g2,#ffc65c),var(--g3,#5ce1ff));animation:dphue 9s ease-in-out infinite alternate}
 .dropper .tgt>*{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%)}
-.dropper b{width:18%;height:18%;background:currentColor;animation:dpbeat 2.4s ease-in-out infinite}
-.dropper i{width:18%;height:18%;border:3px solid currentColor;opacity:0;animation:dpring 4.8s cubic-bezier(.2,.6,.3,1) infinite}
+.dropper b{width:18%;height:18%;background:var(--grad);box-shadow:0 0 40px -6px var(--g2,#ffc65c);animation:dpbeat 2.4s ease-in-out infinite}
+.dropper i{width:18%;height:18%;background:var(--grad);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));opacity:0;animation:dpring 4.8s cubic-bezier(.2,.6,.3,1) infinite}
 .dropper i:nth-child(2){animation-delay:1.2s}.dropper i:nth-child(3){animation-delay:2.4s}.dropper i:nth-child(4){animation-delay:3.6s}
 .droplab{animation:dpfade 2.4s ease-in-out infinite}
 body:has(.stage.drop) .dropper i{animation-duration:2.4s}body:has(.stage.drop) .dropper b{animation-duration:1.2s}
 @keyframes dpbeat{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
-@keyframes dpring{0%{width:18%;height:18%;opacity:0;border-width:4px}10%{opacity:.95}100%{width:100%;height:100%;opacity:0;border-width:1px}}
+@keyframes dpring{0%{width:18%;height:18%;opacity:0}10%{opacity:.95}100%{width:100%;height:100%;opacity:0}}
+@keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
 @keyframes dpfade{0%,100%{opacity:.75}50%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.dropper b,.dropper i,.droplab{animation:none}.dropper i{opacity:.5;width:50%;height:50%}.dropper i:nth-child(3){opacity:.35;width:75%;height:75%}.dropper i:nth-child(4){opacity:.2;width:100%;height:100%}}
+@media (prefers-reduced-motion:reduce){.dropper b,.dropper i,.droplab,.dropper .tgt{animation:none}.dropper i{opacity:.5;width:50%;height:50%}.dropper i:nth-child(3){opacity:.35;width:75%;height:75%}.dropper i:nth-child(4){opacity:.2;width:100%;height:100%}}
 #cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(37,37,37,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
@@ -1599,6 +1600,15 @@ function demo() {
   x.fillStyle = "#121c1d";
   x.beginPath(); x.moveTo(0, 1000); x.quadraticCurveTo(450, 940, 900, 1010); x.lineTo(900, 1100); x.lineTo(0, 1100); x.fill();
   setImage(c, 900, 1100, true);
+  dropGrad();
+}
+/* opening screen: a new random three-color gradient (and angle) for the pulse each time it shows */
+function dropGrad() {
+  var t = document.querySelector("#dropper .tgt"); if (!t) return;
+  var h = Math.random() * 360, s = Math.random() < .5 ? -1 : 1, r = function (n) { return Math.round(n); };
+  var hs = [h, h + s * (50 + Math.random() * 70), h + s * (130 + Math.random() * 90)];
+  hs.forEach(function (x, i) { t.style.setProperty("--g" + (i + 1), "hsl(" + r((x % 360 + 360) % 360) + " 90% " + (58 + i * 6) + "%)"); });
+  t.style.setProperty("--ga", r(Math.random() * 360) + "deg");
 }
 
 /* ---------- modals ---------- */
