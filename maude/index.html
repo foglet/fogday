@@ -341,11 +341,9 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
   .top{display:contents}
   /* on load: title and light/dark on top, tools centered below; on scroll the title goes and light/dark stays put while the tools rise to meet it */
   .top h1{display:block;margin:0;height:48px;line-height:48px;padding:var(--sat) 46px 0;text-align:center;background:var(--bar)}
-  /* one bar, not two: the tools row sits on the title row. At the top of the page the bar is see-through, so only the title
-     shows; once the page scrolls, the title slides away under the bar and the tools take its place */
+  /* one bar, not two: the tools row sits on the title row (the title rides on top of it, see below) */
   .tb{position:sticky;top:0;z-index:8;height:48px;padding:var(--sat) 46px 0;box-sizing:content-box;background:var(--bar);border-bottom:1px solid var(--sep);justify-content:center;
     margin-top:calc(-48px - var(--sat));transition:background-color .15s}
-  body.navtop .tb{background:transparent;pointer-events:none}   /* taps reach the title under it */
   .topr{position:sticky;top:0;z-index:9;height:48px;padding-top:var(--sat);width:max-content;
     margin:calc(-49px - var(--sat)) calc(4px + var(--sar)) 1px auto}
   .stagecol{top:var(--navh,0px)}
@@ -379,18 +377,23 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
 @keyframes springpop{from{transform:scale(.9)}to{transform:none}}
 @keyframes springin{from{transform:scale(.9) translateY(12px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes springdrop{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
-/* tool icons slide in one after another, like the characters on fogday.com/zhcy: each starts 48px to the right and
-   transparent, then springs into place (same spring, same 55ms stagger). On phones they are hidden at the top of the page
-   (as when it opens) and while scrolling, and slide in each time the page comes to rest below the top. The stagger only applies while sliding in, so presses stay instant. */
-:root{--slide:cubic-bezier(.3,1.15,.5,1)}
-@supports (transition-timing-function:linear(0,1)){:root{--slide:linear(0,.014,.0505,.1025,.1646,.2323,.3024,.3724,.4404,.5052,.5659,.6219,.6731,.7193,.7607,.7974,.8297,.858,.8825,.9035,.9216,.9369,.9498,.9606,.9696,.977,.983,.9879,.9918,.9949,.9973,.9991,1.0004,1.0014,1.0021,1.0026,1.0028,1.003,1.003,1.0029,1)}}
-.top .tb>*,.top .topr>*{transition:transform 520ms var(--slide),opacity 380ms cubic-bezier(.22,.61,.36,1),background-color .15s,color .15s,box-shadow .15s}
-body.navin .top .tb>*,body.navin .top .topr>*{transition-delay:calc(var(--n,0) * 55ms)}
-body.navoff .top .tb>*,body.navoff .top .topr>*{transform:translateX(48px);opacity:0;pointer-events:none;transition:transform .16s ease-in,opacity .16s ease-in}
-body.navcut .top .tb>*,body.navcut .top .topr>*{transition:none}   /* on load: jump straight to the start state */
+/* phones, one top bar: at the top of the page it shows the title; once the page scrolls, the title slides up and out and the
+   tool icons rise into the bar from below, together, as if the bar itself had scrolled down to them. While the page is
+   moving the icons drop out of sight and they rise again when it rests; back at the top the title slides back down.
+   The light/dark button never moves. */
+:root{--scrollease:cubic-bezier(.2,.8,.2,1)}
+.top .tb>*{transition:transform 380ms var(--scrollease),background-color .15s,color .15s,box-shadow .15s}
+body.navoff .top .tb>*{transform:translateY(48px);pointer-events:none;transition:transform .16s ease-in}
+body.navcut .top .tb>*,body.navcut .top h1{transition:none}   /* on load: jump straight to the start state */
+@media (max-width:640px){
+  .top h1{position:sticky;top:0;z-index:9;background:none;transition:transform 380ms var(--scrollease),opacity 380ms var(--scrollease)}
+  body:not(.navtop) .top h1{transform:translateY(-100%);opacity:0;pointer-events:none}
+  body.navtop .tb{pointer-events:none}   /* taps reach the title */
+  .tb{overflow-y:hidden;clip-path:inset(0)}   /* icons below the bar stay out of sight */
+}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important}
-  .btn,.chip,.icob,.tbtn,.theme-toggle,.pill [role=tab],.seg label>span,.ph,.ph .ico,.pill .knob,.linkb,.duopair,.tb>*,.topr>*{transition:none!important}
+  .btn,.chip,.icob,.tbtn,.theme-toggle,.pill [role=tab],.seg label>span,.ph,.ph .ico,.pill .knob,.linkb,.duopair,.tb>*,.top h1{transition:none!important}
   .btn:active,.chip:active,.icob:active,.tbtn:active,.theme-toggle:active,.pill [role=tab]:active,.seg label:active>span,.linkb:active,.duopair:active,.ph:active{transform:none}
 }
 </style>
@@ -1812,7 +1815,8 @@ document.querySelectorAll(".acc").forEach(function (acc) {
 /* ---------- canvas gestures: a tap picks a color (when asked), a double tap toggles full width ---------- */
 var lastTap = 0;
 function fr(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
-function toggleBig() { big = !big; fit(); }
+var navCheck = null;   /* set by the top bar code below */
+function toggleBig() { big = !big; fit(); if (navCheck) navCheck(true); }
 cv.addEventListener("pointerdown", function (e) {
   if (!pickKey) return;
   var p = fr(e);
@@ -2299,18 +2303,11 @@ window.addEventListener("resize", fit);
 /* phones: the tools row hides while the page scrolls up to the pinned picture, then slides in once the picture has stopped */
 (function () {
   var tb = $(".tb"), sc = $(".stagecol"), idle = 0, shown = true;
-  [].slice.call(tb.children).concat([].slice.call($(".topr").children)).forEach(function (el, i) { el.style.setProperty("--n", i); });
-  var inT = 0, ready = false;
-  function set(on) {
-    if (on === shown) return;
-    shown = on; clearTimeout(inT);
-    document.body.classList.toggle("navin", on);   /* stagger only while sliding in */
-    document.body.classList.toggle("navoff", !on);
-    if (on) inT = setTimeout(function () { document.body.classList.remove("navin"); }, 1200);
-  }
+  var ready = false;
+  function set(on) { if (on !== shown) { shown = on; document.body.classList.toggle("navoff", !on); } }
   function check(settled) {
     if (!ready) return;
-    if (getComputedStyle(tb).position !== "sticky" || big) { set(true); return; }
+    if (getComputedStyle(tb).position !== "sticky" || big) { document.body.classList.remove("navtop"); set(true); return; }
     var top = window.scrollY <= 2; document.body.classList.toggle("navtop", top);
     if (top) { set(false); return; }   /* phones: out of sight at the top of the page, as when it opens */
     var navh = tb.getBoundingClientRect().height, pinned = getComputedStyle(sc).position === "sticky" && sc.getBoundingClientRect().top <= navh + 1;
@@ -2319,7 +2316,8 @@ window.addEventListener("resize", fit);
   }
   window.addEventListener("scroll", function () { check(false); clearTimeout(idle); idle = setTimeout(function () { check(true); }, 120); }, { passive: true });
   window.addEventListener("resize", function () { check(true); });
-  window.addEventListener("pageshow", function () { check(true); });   /* back/forward cache and restored scroll on load */
+  window.addEventListener("pageshow", function () { check(true); });
+  navCheck = check;   /* back/forward cache and restored scroll on load */
   /* on load: phones start with the tools out of sight (no animation); wider screens show them as usual */
   ready = true;
   if (getComputedStyle(tb).position === "sticky") {
