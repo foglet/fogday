@@ -45,11 +45,6 @@ h1{margin:0;font:400 22px/1.1 "Young Serif",Georgia,serif;letter-spacing:.01em}
 :focus-visible{outline:2px solid var(--muted);outline-offset:2px}
 .wrap{max-width:1180px;margin:0 auto;padding:4px calc(2.5vw + var(--sar)) calc(24px + var(--sab)) calc(2.5vw + var(--sal));display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 /* phones: the image stays pinned at the top while the settings scroll under it (not in full width mode) */
-/* phones, Original tab: once the page scrolls, the picture shrinks so the welcome text fits under it; the same height is
-   added under the page so its length (and the scroll position) stays put while it shrinks */
-#cv{transition:width .32s cubic-bezier(.2,.8,.2,1),height .32s cubic-bezier(.2,.8,.2,1)}
-.wrap{transition:padding-bottom .32s cubic-bezier(.2,.8,.2,1)}
-body.shrunk .wrap{padding-bottom:calc(24px + var(--sab) + var(--shrink,0px))}
 .stagecol{position:sticky;top:0;z-index:5;background:var(--paper);padding:calc(4px + var(--sat)) 0 2px;min-width:0}
 body.big .stagecol{position:static}
 @media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
@@ -1395,32 +1390,13 @@ function fit() {
   var maxH = wide ? window.innerHeight - 140 : Math.min(window.innerHeight * 0.46, 560);
   if (!big && h > maxH) { h = maxH; w = h / ar; }
   document.documentElement.classList.toggle("locked", big);
-  var dpr = Math.min(2, window.devicePixelRatio || 1), dw = w, dh = h;
-  if (shrunk) {   /* shown smaller; drawn at the usual size so growing back is sharp at once */
-    var tr = $(".tabrow"), ml = $(".mylooks"), pp = $("#p-plain");
-    var around = $(".stagecol").getBoundingClientRect().height - cv.getBoundingClientRect().height;   /* the tools row and padding */
-    var nav = getComputedStyle($(".tb")).position === "sticky" ? $(".tb").getBoundingClientRect().height : 0;
-    var text = pp.getBoundingClientRect().bottom - ml.getBoundingClientRect().top + 16;
-    dh = Math.max(window.innerHeight * 0.18, Math.min(h, window.innerHeight - nav - around - tr.getBoundingClientRect().height - text));
-    dw = dh / ar;
-  }
-  document.documentElement.style.setProperty("--shrink", Math.round(h - dh) + "px");
-  cv.style.width = Math.round(dw) + "px"; cv.style.height = Math.round(dh) + "px";
-  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.style.width = Math.round(w) + "px"; cv.style.height = Math.round(h) + "px";
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   document.body.classList.toggle("big", big);
-  document.body.classList.toggle("shrunk", shrunk);
   pinTabs();
-  var t0 = performance.now();   /* keep the pinned tab row on the picture's edge while it changes size */
-  (function follow() { pinTabs(); if (performance.now() - t0 < 400) requestAnimationFrame(follow); })();
   schedule();
 }
-/* phones, Original tab: shrink the picture once the page has scrolled */
-var shrunk = false;
-function syncShrink() {
-  var want = tab === "plain" && !big && window.innerWidth < 900 && window.scrollY > 2 && getComputedStyle($(".stagecol")).position === "sticky";
-  if (want !== shrunk) { shrunk = want; fit(); }
-}
-window.addEventListener("scroll", syncShrink, { passive: true });
 
 /* ---------- image in ---------- */
 var full = null, fullW = 0, fullH = 0, origOut = "";   /* the photo as opened, kept so Save can use its own size */
@@ -1706,7 +1682,6 @@ function setTab(t) {
   marks();
   syncSaveOpts();
   stopPlay(); schedule();
-  syncShrink();
 }
 document.querySelectorAll(".pill [role=tab]").forEach(function (b, i, all) {
   b.addEventListener("click", function () {
