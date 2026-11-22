@@ -67,7 +67,7 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 .dropper .tgt{position:relative;width:var(--S);aspect-ratio:1;animation:dphue 9s ease-in-out infinite alternate}
 .dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 2.4s ease-in-out infinite}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
-/* flying saucer: black (#000) at 70%, 32 px, regular weight, in the center of the sphere, wobbling as it hovers */
+/* flying saucer: its own random gradient (set in dropGrad) at 70%, 32 px, regular weight, in the center of the sphere, wobbling as it hovers */
 .droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;opacity:.7;line-height:0}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto;animation:dpwobble 2.2s ease-in-out infinite}
 @keyframes dpwobble{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-3px) rotate(-12deg)}45%{transform:translateY(1px) rotate(9deg)}65%{transform:translateY(-2px) rotate(-6deg)}85%{transform:translateY(0) rotate(4deg)}}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
@@ -1623,6 +1623,18 @@ function dropGrad() {
   seen.push(k); if (seen.length > 200) seen = seen.slice(-200);
   try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {}
   pick.forEach(function (x, i) { t.style.setProperty("--g" + (i + 1), "hsl(" + Math.round(w(x)) + " 90% " + (58 + i * 6) + "%)"); });
+  /* the saucer gets a random two-color gradient of its own, from the far side of the color wheel and darker, so it stands out on the sphere */
+  var ufo = document.querySelector("#dropper .droplab svg"); if (!ufo) return;
+  var NS = "http://www.w3.org/2000/svg", g = ufo.querySelector("#ufoG");
+  if (!g) {
+    var d = document.createElementNS(NS, "defs"); g = document.createElementNS(NS, "linearGradient"); g.id = "ufoG";
+    for (var j = 0; j < 2; j++) { var st = document.createElementNS(NS, "stop"); st.setAttribute("offset", j); g.appendChild(st); }
+    d.appendChild(g); ufo.insertBefore(d, ufo.firstChild); ufo.setAttribute("fill", "url(#ufoG)");
+  }
+  var u = h + 180 + (Math.random() * 60 - 30), v = u + (Math.random() < .5 ? -1 : 1) * (35 + Math.random() * 35);
+  g.setAttribute("gradientTransform", "rotate(" + Math.round(Math.random() * 360) + " .5 .5)");
+  g.children[0].setAttribute("stop-color", "hsl(" + Math.round(w(u)) + " 90% 24%)");
+  g.children[1].setAttribute("stop-color", "hsl(" + Math.round(w(v)) + " 90% 34%)");
 }
 
 /* ---------- modals ---------- */
