@@ -436,6 +436,21 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
 .f .row{align-items:center}
 /* sliders two to a row (built at start, see pairSliders) */
 .two{column-gap:14px}
+/* settings grid: sliders and drop-down menus half width, two to a row; toggles, colors and the rest across */
+.pb{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}
+.pb>*{grid-column:1/-1}.pb>.f.half{grid-column:auto}
+.pb>.two{display:contents}.pb>.two>.f{grid-column:auto}
+.pb[hidden]{display:none}
+/* randomizers: a bare shuffle icon across from the section name, no border, no background */
+.shead{gap:6px}.shead h3{margin-right:auto}
+.shead .hshuf,.shead .btn.hshuf,.shead .icob.hshuf{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:4px;border:0;background:none;box-shadow:none;color:var(--ink)}
+.shead .hshuf:hover{background:none;color:var(--accent,var(--ink))}.shead .hshuf .ico{width:20px;height:20px;flex-basis:20px;margin:0}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Duotone color pairs: the same size as the color swatches; eyedropper and current color 28 px high */
+.duopair{width:26px;height:26px}
+.color .pick,.color .icob.pick{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.color .pick .ico{width:16px;height:16px;flex-basis:16px}
+.color input[type=color]{height:28px;width:40px}
+@media (pointer:coarse){.duopair,.color .sw{width:34px;height:34px}.color input[type=color]{height:28px;width:40px}}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -521,7 +536,7 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-dmcolor">Color{{icon:caret-down}}</button>
         <div class="pb" id="a-dmcolor" hidden>
           <div class="f"><label class="lab" for="palette">Start colors</label>
-            <div class="row"><select id="palette" data-k="palette" style="flex:1"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
+            <div class="row"><select id="palette" data-k="palette"><option value="confetti">Confetti</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="mono">Mono</option></select>
             <button type="button" class="icob" id="shuffle" aria-label="Shuffle start colors" title="Shuffle start colors">{{icon:shuffle}}</button></div></div>
           <div class="two">
             <div class="f"><label class="lab" for="dmSat">Saturation <output data-for="dmSat"></output></label><input type="range" id="dmSat" min="0" max="200" step="1" data-k="dmSat"></div>
@@ -586,7 +601,7 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
         <div class="pb" id="a-glitch" hidden>
           <div class="f"><label class="lab" for="fxShift">Color shift <output data-for="fxShift"></output></label><input type="range" id="fxShift" min="0" max="100" step="1" data-k="fxShift"></div>
           <div class="f"><label class="lab" for="fxGlitch">Glitch slices <output data-for="fxGlitch"></output></label><input type="range" id="fxGlitch" min="0" max="100" step="1" data-k="fxGlitch"></div>
-          <button type="button" class="btn" id="fxShuffle">{{icon:shuffle}}<span>Random Glitch</span></button>
+          <button type="button" class="btn" id="fxShuffle" title="Random Glitch">{{icon:shuffle}}<span class="vh">Random Glitch</span></button>
         </div>
       </div>
       <div class="acc">
@@ -609,10 +624,10 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
         <button type="button" class="ph" aria-expanded="false" aria-controls="a-film">Film{{icon:caret-down}}</button>
         <div class="pb" id="a-film" hidden>
           <div class="f"><label class="lab" for="fxStock">Film type</label><select id="fxStock" data-k="fxStock"></select></div>
-          <div class="f"><label class="lab" for="fxGrain">Grain <output data-for="fxGrain"></output></label><input type="range" id="fxGrain" min="0" max="60" step="1" data-k="fxGrain"></div>
           <div class="f"><label class="lab" for="fxFilm">Film effect</label><select id="fxFilm" data-k="fxFilm"><option value="none">None</option><option value="cross">Cross processing</option><option value="diopter">Split focus diopter</option><option value="haze">Diffusion haze</option><option value="double">Double exposure</option><option value="expired">Expired film</option><option value="soup">Film soup</option><option value="forced">Forced perspective</option><option value="infrared">Infrared</option><option value="smudge">Lens smudge</option><option value="preexposed">Pre-exposed</option><option value="sepia">Sepia</option></select></div>
+          <div class="f"><label class="lab" for="fxGrain">Grain <output data-for="fxGrain"></output></label><input type="range" id="fxGrain" min="0" max="60" step="1" data-k="fxGrain"></div>
           <div class="f"><label class="lab" for="fxFilmAmt">Strength <output data-for="fxFilmAmt"></output></label><input type="range" id="fxFilmAmt" min="0" max="100" step="1" data-k="fxFilmAmt"></div>
-          <button type="button" class="btn" id="filmShuffle">{{icon:shuffle}}<span>Random Roll</span></button>
+          <button type="button" class="btn" id="filmShuffle" title="Random Roll">{{icon:shuffle}}<span class="vh">Random Roll</span></button>
         </div>
       </div>
       <div class="acc">
@@ -2199,16 +2214,6 @@ document.addEventListener("paste", function (e) {
   for (var i = 0; i < items.length; i++) if (/^image\//.test(items[i].type)) { loadFile(items[i].getAsFile()); e.preventDefault(); return; }
 });
 
-/* sliders two to a row: in each panel, side-by-side runs of plain slider fields are paired up; an odd one out keeps the full width */
-document.querySelectorAll(".pb").forEach(function (pb) {
-  var run = [];
-  function flush() { for (var i = 0; i + 1 < run.length; i += 2) { var two = document.createElement("div"); two.className = "two"; run[i].before(two); two.append(run[i], run[i + 1]); } run = []; }
-  [].slice.call(pb.children).forEach(function (el) {
-    if (el.className === "f" && el.children.length === 2 && el.querySelector(":scope>input[type=range]")) run.push(el); else flush();
-  });
-  flush();
-});
-
 /* panels: every section is open, under a header row with its name (bold once anything in it has changed) */
 document.querySelectorAll(".acc").forEach(function (acc) {
   var ph = acc.querySelector(".ph"), pb = acc.querySelector(".pb"); if (!ph || !pb) return;
@@ -2216,6 +2221,13 @@ document.querySelectorAll(".acc").forEach(function (acc) {
   var hd = document.createElement("div"); hd.className = "shead";
   var nm = document.createElement("h3"); nm.textContent = name; nm.id = "sh-" + pb.id;
   hd.append(nm); acc.insertBefore(hd, pb);
+  /* any randomizer in the section sits across from its name: icon only (its name stays for screen readers) */
+  pb.querySelectorAll("#shuffle,#fxShuffle,#filmShuffle").forEach(function (b) {
+    var row = b.parentElement; b.classList.add("hshuf"); hd.append(b);
+    if (row.classList.contains("row") && !row.querySelector("button")) row.replaceWith.apply(row, [].slice.call(row.childNodes));
+  });
+  /* sliders and drop-down menus take half the width, two to a row; everything else the full width */
+  pb.querySelectorAll(".f").forEach(function (f) { if (f.querySelector(":scope>input[type=range],:scope>select")) f.classList.add("half"); });
   ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
   pb.setAttribute("role", "group"); pb.setAttribute("aria-labelledby", nm.id);
   acc.dataset.tabBtn = nm.id;
