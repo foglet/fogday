@@ -1833,8 +1833,7 @@ $("#htOff").addEventListener("change", function () { setLook(S.base || "dot"); }
 $("#htOnR").addEventListener("change", function () { setLook("half"); });
 $("#htNoteOff").addEventListener("click", function () { setLook("dot"); });
 $("#resetAll").addEventListener("click", function () {
-  var keepTab = tab === "fx" || tab === "surprise" ? tab : "dot";
-  S = Object.assign({}, DEF); sync(); syncLook(); setTab(keepTab); saveSettings();
+  S = Object.assign({}, DEF, { look: "plain", base: "plain" }); sync(); syncLook(); setTab("plain"); saveSettings();   /* back to the Original tab, as on load */
   /* everything goes: the user's photo (back to the starting picture), the file pickers and undo history */
   ["#fileIn", "#camIn"].forEach(function (q) { var el = $(q); if (el) el.value = ""; });
   if (/look=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);
