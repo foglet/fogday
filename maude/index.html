@@ -451,8 +451,20 @@ select,.f select{height:28px;min-height:28px;font-size:12px;padding:0 28px 0 8px
 .color .pick,.color .icob.pick{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.color .pick .ico{width:16px;height:16px;flex-basis:16px}
 .color input[type=color]{height:28px;width:40px}
 @media (pointer:coarse){.duopair,.color .sw{width:34px;height:34px}.color input[type=color]{height:28px;width:40px}}
-/* a changed section: a small dot after its name */
-.acc.mod .shead h3::after{content:"";display:inline-block;width:7px;height:7px;margin-left:7px;border-radius:50%;background:var(--accent,var(--ink));vertical-align:middle;position:relative;top:-1px}
+/* order and look, Nov 22: Title Case names (English), plain drop-downs, small round swatches, no favorites, no hint */
+html[lang^=en] .shead h3,html[lang^=en] .hthead h3,html[lang^=en] .f>.lab{text-transform:capitalize}
+html[lang^=en] .f>.lab output{text-transform:none}
+select,.f select{border:0;background-color:var(--btn);box-shadow:none}
+select:focus,select:focus-visible{outline:none;border:0;box-shadow:none}
+.color{gap:8px}
+.color .sw,.duopair{width:24px;height:24px;flex:0 0 24px;border-radius:50%;padding:0}
+@media (pointer:coarse){.color .sw,.duopair{width:24px;height:24px}}
+.color .sw[aria-pressed="true"],.color .sw.cust.on,.duopair[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.color .sw.cust{position:relative;overflow:hidden;cursor:pointer;border:1px solid rgba(37,37,37,.18);
+  background:conic-gradient(#e5484d,#f5a524,#f5d90a,#30a46c,#0091ff,#8e4ec6,#e5484d)}
+.color .sw.cust input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+.mylooks{display:none!important}   /* Favorite: off for now (code and saved looks kept; remove this line to bring it back) */
+#dmHint{display:none!important}    /* "Pick a look to turn on the dots." taken out */
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -1833,7 +1845,8 @@ function buildColor(box) {
   var lab = box.dataset.label;
   var inp = document.createElement("input"); inp.type = "color"; inp.setAttribute("aria-labelledby", lab);
   inp.addEventListener("input", function () { setColor(box, inp.value); });
-  box.appendChild(inp);
+  var cust = document.createElement("label"); cust.className = "sw cust"; cust.title = "Any color"; cust.appendChild(inp);
+  /* eyedropper (pick a color from the image) taken out; kept here, unused, in case it comes back */
   var pick = document.createElement("button"); pick.type = "button"; pick.className = "icob pick"; pick.setAttribute("aria-pressed", "false");
   pick.setAttribute("aria-label", "Pick " + document.getElementById(lab).textContent.toLowerCase() + " from the image"); pick.title = "Pick from image";
   pick.appendChild($("#icoPick").content.cloneNode(true));
@@ -1844,18 +1857,20 @@ function buildColor(box) {
     say(pickKey ? "Tap the image to pick a color." : "", true);
     draw();
   });
-  box.appendChild(pick);
   SWATCHES.forEach(function (c) {
     var b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.style.background = c;
     b.dataset.c = c; b.style.color = lum(c) > 0.4 ? "#111111" : "#ffffff"; b.setAttribute("aria-label", "Color " + c); b.setAttribute("aria-pressed", "false");
     b.addEventListener("click", function () { setColor(box, c); });
     box.appendChild(b);
   });
+  box.appendChild(cust);   /* last: any color, a rainbow circle (shows the color once one is picked there) */
 }
 function syncColor(box) {
   var v = colorGet(box);
   box.querySelector("input").value = v;
-  box.querySelectorAll(".sw").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.c === v.toLowerCase() ? "true" : "false"); });
+  var hit = false;
+  box.querySelectorAll(".sw:not(.cust)").forEach(function (b) { var on = b.dataset.c === v.toLowerCase(); hit = hit || on; b.setAttribute("aria-pressed", on ? "true" : "false"); });
+  var cu = box.querySelector(".cust"); cu.classList.toggle("on", !hit); cu.style.background = hit ? "" : v;
 }
 function setColor(box, v) {
   v = v.toLowerCase();
@@ -2228,8 +2243,23 @@ document.querySelectorAll(".acc").forEach(function (acc) {
     var row = b.parentElement; b.classList.add("hshuf"); hd.append(b);
     if (row.classList.contains("row") && !row.querySelector("button")) row.replaceWith.apply(row, [].slice.call(row.childNodes));
   });
-  /* sliders and drop-down menus take half the width, two to a row; everything else the full width */
-  pb.querySelectorAll(".f").forEach(function (f) { if (f.querySelector(":scope>input[type=range],:scope>select")) f.classList.add("half"); });
+  /* sliders and drop-down menus take half the width, two to a row; everything else the full width.
+     Order: toggles across the top; then the half-width ones, sliders first, paired with each other; drop-down menus last, so an odd slider
+     sits beside a menu only when it has to, and menus pair with menus. They gather where the first one was;
+     toggles and colors that sat between them follow the block. */
+  pb.querySelectorAll(":scope>.two").forEach(function (t) { t.replaceWith.apply(t, [].slice.call(t.children)); });
+  var tg = [], sl = [], dd = [], first = null;
+  [].slice.call(pb.children).forEach(function (f) {
+    var isT = f.matches("fieldset.seg,label.chk");
+    var isS = f.classList.contains("f") && !!f.querySelector(":scope>input[type=range]"), isD = f.classList.contains("f") && !!f.querySelector(":scope>select");
+    if (!isT && !isS && !isD) return;
+    if (!isT) f.classList.add("half"); if (!first) first = f; (isT ? tg : isS ? sl : dd).push(f);
+  });
+  if (first) {   /* in every section: toggles, then sliders, then drop-down menus; colors and the rest after */
+    var mark = document.createComment("half"); first.before(mark);
+    tg.concat(sl, dd).forEach(function (f) { mark.before(f); });
+    mark.remove();
+  }
   ph.setAttribute("aria-expanded", "true"); pb.hidden = false;
   pb.setAttribute("role", "group"); pb.setAttribute("aria-labelledby", nm.id);
   acc.dataset.tabBtn = nm.id;
