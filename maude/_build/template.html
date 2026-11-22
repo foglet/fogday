@@ -361,6 +361,30 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
 .chip[aria-pressed="true"],.icob:not(.tb .icob)[aria-pressed="true"],
 .btn.primary,.btn.primary:hover{background:var(--btn);color:var(--ink);box-shadow:inset 0 0 0 1px var(--bline)}
 .seg input:checked+span{background:var(--btn);color:var(--ink);box-shadow:none}
+/* ---------- springy: presses squash and bounce back, the tab marker, carets, chips and sheets settle with a little overshoot ---------- */
+:root{--spring:cubic-bezier(.34,1.56,.64,1);--spring-t:.5s}
+@supports (transition-timing-function:linear(0,1)){:root{--spring:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.974 53.8%,.975 57.1%,.997 69.8%,1.003 76.9%,1)}}
+.btn,.chip,.icob,.tbtn,.theme-toggle,.pill [role=tab],.seg label>span,.ph,.linkb,.duopair{transition:transform var(--spring-t) var(--spring),background-color .15s,color .15s,box-shadow .15s}
+.btn:active,.chip:active,.icob:active,.tbtn:active,.theme-toggle:active,.pill [role=tab]:active,.seg label:active>span,.linkb:active,.duopair:active{transform:scale(.9);transition-duration:.08s;transition-timing-function:ease-out}
+.ph:active{transform:scale(.98);transition-duration:.08s}
+.pill .knob{transition:transform var(--spring-t) var(--spring)}
+.ph .ico{transition:transform var(--spring-t) var(--spring)}
+.chip[aria-pressed="true"]{animation:springpop var(--spring-t) var(--spring)}
+.modal:not([hidden]) .sheet{animation:springin var(--spring-t) var(--spring)}
+.pb:not([hidden]){animation:springdrop var(--spring-t) var(--spring)}
+@keyframes springpop{from{transform:scale(.9)}to{transform:none}}
+@keyframes springin{from{transform:scale(.9) translateY(12px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes springdrop{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+/* phones: while the page scrolls toward the pinned picture the tools stay out of sight; once the picture stops, they slide in, one by one, at an even pace */
+@media (max-width:640px){
+  .tb>*,.topr>*{transition:transform .24s linear calc(var(--n,0) * 35ms),opacity .24s linear calc(var(--n,0) * 35ms)}
+  body.navoff .tb>*,body.navoff .topr>*{transform:translateY(-130%);opacity:0;pointer-events:none;transition-duration:.12s;transition-delay:0s}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important}
+  .btn,.chip,.icob,.tbtn,.theme-toggle,.pill [role=tab],.seg label>span,.ph,.ph .ico,.pill .knob,.linkb,.duopair,.tb>*,.topr>*{transition:none!important}
+  .btn:active,.chip:active,.icob:active,.tbtn:active,.theme-toggle:active,.pill [role=tab]:active,.seg label:active>span,.linkb:active,.duopair:active,.ph:active{transform:none}
+}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -2264,6 +2288,22 @@ fromHash();
 commit(); renderMyLooks();
 if (window.ResizeObserver) new ResizeObserver(function () { fit(); }).observe(stage);
 window.addEventListener("resize", fit);
+/* phones: the tools row hides while the page scrolls up to the pinned picture, then slides in once the picture has stopped */
+(function () {
+  var tb = $(".tb"), sc = $(".stagecol"), idle = 0, shown = true;
+  [].slice.call(tb.children).concat([].slice.call($(".topr").children)).forEach(function (el, i) { el.style.setProperty("--n", i); });
+  function set(on) { if (on !== shown) { shown = on; document.body.classList.toggle("navoff", !on); } }
+  function check(settled) {
+    if (getComputedStyle(tb).position !== "sticky" || big) { set(true); return; }
+    if (window.scrollY <= 2) { set(true); return; }
+    var navh = tb.getBoundingClientRect().height, pinned = getComputedStyle(sc).position === "sticky" && sc.getBoundingClientRect().top <= navh + 1;
+    if (!pinned) { set(false); return; }
+    if (shown || settled) set(true);
+  }
+  window.addEventListener("scroll", function () { check(false); clearTimeout(idle); idle = setTimeout(function () { check(true); }, 120); }, { passive: true });
+  window.addEventListener("resize", function () { check(true); });
+})();
+
 demo();
 })();
 </script>
