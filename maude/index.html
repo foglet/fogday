@@ -420,6 +420,14 @@ body.navcut .top .tb>*,body.navcut .top h1{transition:none}   /* on load: jump s
 .ptr.spin .ico{animation:ptrspin .8s linear infinite}
 .ptr.back>div{transition:transform .25s ease,opacity .25s ease}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
+/* one size for every toggle and button in the settings: the compact Halftone on/off (28 px high, 12 px text), on every screen
+   (top toolbar icons, tabs and look chips keep their own size) */
+.btn,.surp .btn,.actions .btn{height:28px;min-height:28px;padding:0 8px;font-size:12px;border-radius:7px}
+.btn .ico{width:15px;height:15px;flex-basis:15px}
+.seg,.seg.htonoff{height:28px;padding:2px}.seg span,.seg.htonoff span{min-height:22px;font-size:12px}
+.seg span .ico{width:14px;height:14px;flex-basis:14px;margin-right:4px}
+.sbtn,.shead .sbtn{height:28px;min-height:28px;padding:0 10px;font-size:12px}
+.rbtn{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:5px}.rbtn .ico{width:16px;height:16px;flex-basis:16px}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
