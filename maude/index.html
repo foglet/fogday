@@ -67,14 +67,15 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 .dropper .tgt{position:relative;width:var(--S);aspect-ratio:1;animation:dphue 9s ease-in-out infinite alternate}
 .dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 2.4s ease-in-out infinite}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
-/* rocket (launch): black (#000) at 70%, 32 px, regular weight, in the center of the sphere */
-.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;opacity:.7;line-height:0}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
+/* flying saucer: black (#000) at 70%, 32 px, regular weight, in the center of the sphere, wobbling as it hovers */
+.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;opacity:.7;line-height:0}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto;animation:dpwobble 2.2s ease-in-out infinite}
+@keyframes dpwobble{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-3px) rotate(-12deg)}45%{transform:translateY(1px) rotate(9deg)}65%{transform:translateY(-2px) rotate(-6deg)}85%{transform:translateY(0) rotate(4deg)}}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
 /* the pulse comes from the center: the sphere swells while its middle color pushes outward */
 @keyframes dpbeat{0%,100%{transform:scale(.9);--p:20%}50%{transform:scale(1.06);--p:70%}}
 @keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
 @keyframes dpfade{0%,100%{opacity:.75}50%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt{animation:none}}
+@media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt,.dropper .droplab .ico{animation:none}}
 #cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(37,37,37,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
@@ -515,7 +516,7 @@ body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:no
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
-<button type="button" class="dropper" id="dropper" aria-label="Choose a photo"><span class="tgt" aria-hidden="true"><b></b></span><span class="droplab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M223.85,47.12a16,16,0,0,0-15-15c-12.58-.75-44.73.4-71.41,27.07L132.69,64H74.36A15.91,15.91,0,0,0,63,68.68L28.7,103a16,16,0,0,0,9.07,27.16l38.47,5.37,44.21,44.21,5.37,38.49a15.94,15.94,0,0,0,10.78,12.92,16.11,16.11,0,0,0,5.1.83A15.91,15.91,0,0,0,153,227.3L187.32,193A15.91,15.91,0,0,0,192,181.64V123.31l4.77-4.77C223.45,91.86,224.6,59.71,223.85,47.12ZM74.36,80h42.33L77.16,119.52,40,114.34Zm74.41-9.45a76.65,76.65,0,0,1,59.11-22.47,76.46,76.46,0,0,1-22.42,59.16L128,164.68,91.32,128ZM176,181.64,141.67,216l-5.19-37.17L176,139.31Zm-74.16,9.5C97.34,201,82.29,224,40,224a8,8,0,0,1-8-8c0-42.29,23-57.34,32.86-61.85a8,8,0,0,1,6.64,14.56c-6.43,2.93-20.62,12.36-23.12,38.91,26.55-2.5,36-16.69,38.91-23.12a8,8,0,1,1,14.56,6.64Z"/></svg></span></button>
+<button type="button" class="dropper" id="dropper" aria-label="Choose a photo"><span class="tgt" aria-hidden="true"><b></b></span><span class="droplab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M183.59,213.47a8,8,0,0,1-15.18,5.06l-8-24a8,8,0,0,1,15.18-5.06ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184Zm-37.47.41a8,8,0,0,0-10.12,5.06l-8,24a8,8,0,0,0,15.18,5.06l8-24A8,8,0,0,0,90.53,184.41ZM248,112c0,16.22-13.37,30.89-37.65,41.29C188.22,162.78,159,168,128,168s-60.22-5.22-82.35-14.71C21.37,142.89,8,128.22,8,112c0-8.37,3.67-20.79,21.17-32.5,11.37-7.61,26.94-13.76,45.18-17.85A63.64,63.64,0,0,1,173,50.45a64.84,64.84,0,0,1,9.11,11.3C223.43,71.09,248,89.74,248,112ZM80,96.83v3a7.92,7.92,0,0,0,6.13,7.76A188.24,188.24,0,0,0,128,112a188.09,188.09,0,0,0,41.85-4.37A7.93,7.93,0,0,0,176,99.87V96a48,48,0,0,0-48.64-48C101.25,48.34,80,70.25,80,96.83ZM232,112c0-11.7-16.63-23.89-41.9-31.59A64.68,64.68,0,0,1,192,96v3.92a23.86,23.86,0,0,1-18.56,23.3A204.05,204.05,0,0,1,128,128a204.15,204.15,0,0,1-45.44-4.78A23.86,23.86,0,0,1,64,99.92h0V96.86a65.28,65.28,0,0,1,2.13-16.52C40.72,88,24,100.25,24,112c0,18.92,42.71,40,104,40S232,130.92,232,112Z"/></svg></span></button>
 <div class="ptr" aria-hidden="true"><div><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/></svg><span data-notr>MAUDE MXY</span></div></div>
 <header class="top">
   <h1 data-notr><a href="/maude/" class="home">MAUDE MXY</a></h1>

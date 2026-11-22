@@ -67,14 +67,15 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 .dropper .tgt{position:relative;width:var(--S);aspect-ratio:1;animation:dphue 9s ease-in-out infinite alternate}
 .dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 2.4s ease-in-out infinite}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
-/* rocket (launch): black (#000) at 70%, 32 px, regular weight, in the center of the sphere */
-.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;opacity:.7;line-height:0}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
+/* flying saucer: black (#000) at 70%, 32 px, regular weight, in the center of the sphere, wobbling as it hovers */
+.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;opacity:.7;line-height:0}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto;animation:dpwobble 2.2s ease-in-out infinite}
+@keyframes dpwobble{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-3px) rotate(-12deg)}45%{transform:translateY(1px) rotate(9deg)}65%{transform:translateY(-2px) rotate(-6deg)}85%{transform:translateY(0) rotate(4deg)}}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
 /* the pulse comes from the center: the sphere swells while its middle color pushes outward */
 @keyframes dpbeat{0%,100%{transform:scale(.9);--p:20%}50%{transform:scale(1.06);--p:70%}}
 @keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
 @keyframes dpfade{0%,100%{opacity:.75}50%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt{animation:none}}
+@media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt,.dropper .droplab .ico{animation:none}}
 #cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(37,37,37,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
@@ -515,7 +516,7 @@ body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:no
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
-<button type="button" class="dropper" id="dropper" aria-label="Choose a photo"><span class="tgt" aria-hidden="true"><b></b></span><span class="droplab">{{icon:rocket-launch}}</span></button>
+<button type="button" class="dropper" id="dropper" aria-label="Choose a photo"><span class="tgt" aria-hidden="true"><b></b></span><span class="droplab">{{icon:flying-saucer}}</span></button>
 <div class="ptr" aria-hidden="true"><div>{{icon:arrow-clockwise}}<span data-notr>MAUDE MXY</span></div></div>
 <header class="top">
   <h1 data-notr><a href="/maude/" class="home">MAUDE MXY</a></h1>
