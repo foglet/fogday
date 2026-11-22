@@ -472,6 +472,16 @@ select:focus,select:focus-visible{outline:none;border:0;box-shadow:none}
 /* Halftone on: Effects shows only the halftone settings */
 body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:none}
 .duopair{background-clip:border-box}
+/* swatches: the color fills the whole circle (no button chrome behind it on iPhone) */
+.color .sw,.duopair{-webkit-appearance:none;appearance:none;border:0;overflow:hidden;background-clip:padding-box;
+  box-shadow:inset 0 0 0 1px rgba(37,37,37,.18);-webkit-tap-highlight-color:transparent}
+.color .sw[aria-pressed="true"],.color .sw.cust.on,.duopair[aria-pressed="true"]{box-shadow:inset 0 0 0 1px rgba(37,37,37,.18),0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.color .sw.cust input{-webkit-appearance:none;appearance:none}
+/* toggles: no black; the chosen part is a gray a step darker than the track */
+.seg input:checked+span{background:color-mix(in srgb,var(--btn) 78%,var(--ink));color:var(--ink);font-weight:600;box-shadow:none}
+/* starting looks (Bloom, Classic, Comic...): separate borderless pills, same grays as the toggles */
+.looks .chip,.looks .chip:hover{border:0;border-radius:999px;background:var(--btn);box-shadow:none;color:var(--ink)}
+.looks .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--btn) 78%,var(--ink));color:var(--ink);font-weight:600;box-shadow:none}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -1868,7 +1878,13 @@ function buildColor(box) {
   SWATCHES.forEach(function (c) {
     var b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.style.background = c;
     b.dataset.c = c; b.style.color = lum(c) > 0.4 ? "#111111" : "#ffffff"; b.setAttribute("aria-label", "Color " + c); b.setAttribute("aria-pressed", "false");
-    b.addEventListener("click", function () { setColor(box, c); });
+    b.addEventListener("click", function () {
+      setColor(box, c);
+      /* double tap a swatch: the color picker opens, starting from that color */
+      var now = Date.now();
+      if (box._tapC === c && now - (box._tapT || 0) < 350) { box._tapT = 0; inp.value = c; try { inp.showPicker(); } catch (e) { inp.click(); } }
+      else { box._tapC = c; box._tapT = now; }
+    });
     box.appendChild(b);
   });
   box.appendChild(cust);   /* last: any color, a rainbow circle (shows the color once one is picked there) */
