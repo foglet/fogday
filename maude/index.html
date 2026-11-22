@@ -482,6 +482,15 @@ body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:no
 /* starting looks (Bloom, Classic, Comic...): separate borderless pills, same grays as the toggles */
 .looks .chip,.looks .chip:hover{border:0;border-radius:999px;background:var(--btn);box-shadow:none;color:var(--ink)}
 .looks .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--btn) 78%,var(--ink));color:var(--ink);font-weight:600;box-shadow:none}
+/* the section an effect chip jumped to: a 1 px line beside it until focus moves */
+.acc.focus{position:relative}
+.acc.focus::before{content:"";position:absolute;left:8px;top:12px;bottom:12px;width:1px;background:#bb3a0a;pointer-events:none}
+:root[data-theme="dark"] .acc.focus::before{background:#4db7e2}
+@media (min-width:900px){.acc.focus::before{left:4px}}
+/* any-color circle: its color fills the whole circle */
+.color .sw.cust{border:0}
+/* the chosen swatch (every color row and Color pairs): a fine 0.5 px ring */
+.color .sw[aria-pressed="true"],.color .sw.cust.on,.duopair[aria-pressed="true"]{box-shadow:inset 0 0 0 1px rgba(37,37,37,.18),0 0 0 2px var(--card),0 0 0 2.5px var(--ink)}
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
@@ -2069,8 +2078,14 @@ function goTo(id) {
     var y = acc.getBoundingClientRect().top + window.scrollY - top;
     window.scrollTo({ top: Math.max(0, y), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     acc.classList.remove("flash"); void acc.offsetWidth; acc.classList.add("flash");
+    document.querySelectorAll(".acc.focus").forEach(function (a) { a.classList.remove("focus"); });
+    acc.classList.add("focus");   /* a thin line beside it until the user taps somewhere else */
   });
 }
+/* the focus line goes once the user touches anything outside that section (a look chip sets a new one) */
+document.addEventListener("pointerdown", function (e) {
+  var f = document.querySelector(".acc.focus"); if (f && !f.contains(e.target)) f.classList.remove("focus");
+}, true);
 function lookVals(t, o) { var v = {}; TABKEYS[t].forEach(function (k) { v[k] = k in o ? o[k] : DEF[k]; }); return v; }
 document.querySelectorAll("[data-looks]").forEach(function (row) {
   var t = row.dataset.looks;
