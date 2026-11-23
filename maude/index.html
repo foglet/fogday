@@ -1675,28 +1675,32 @@ function ufoFly() {
     if (dp.dragged) { var b = tg.getBoundingClientRect(); guide = { x: e.clientX - (b.left + b.width / 2), y: e.clientY - (b.top + b.height / 2) - (down.touch ? 44 : 0) }; free = true; }
   });
   ["pointerup", "pointercancel"].forEach(function (n) { dp.addEventListener(n, function () { down = null; guide = null; }); });
-  /* steam: soft white puffs from under the saucer that drift down and out, swell and fade; more and faster when it moves */
-  var cv = dp.querySelector(".steam"), cx = cv.getContext("2d"), puffs = [], acc = 0;
+  /* steam: pixel steam like the /px dragons' breath: 3 px square specks snapped to a 3 px grid, shading from near-white
+     to cool grey and fading out (alpha .55 → 0) over 0.8–1.5 s; each leaves the saucer's underside in a wide spray
+     (±0.6 rad around straight down, turned with its tilt) at 35–80 px/s, slows with drag (×0.95 per 60 fps frame) and
+     rises as it cools; more of it, and blown back, when the saucer moves */
+  var cv = dp.querySelector(".steam"), cx = cv.getContext("2d"), puffs = [], acc = 0, PX = 3;
+  var STEAM = ["rgb(246,248,250)", "rgb(226,232,238)", "rgb(204,212,220)"];
   function fit() { var r = window.devicePixelRatio || 1; cv.width = Math.round(innerWidth * r); cv.height = Math.round(innerHeight * r); cx.setTransform(r, 0, 0, r, 0, 0); }
   fit(); addEventListener("resize", fit);
   function steam(dt, x, y, rot, vx, vy) {
     var sp = Math.hypot(vx, vy), a = rot * Math.PI / 180;
-    acc += dt * (14 + Math.min(sp, 600) * .06);
-    for (; acc >= 1 && puffs.length < 160; acc--) {   /* spawn at the saucer's underside, turned with its tilt */
-      var ox = (Math.random() - .5) * 14, oy = 13;
+    acc += dt * (55 + Math.min(sp, 600) * .15);
+    for (; acc >= 1 && puffs.length < 400; acc--) {
+      var ox = (Math.random() - .5) * 12, oy = 11, ang = Math.PI / 2 + a + (Math.random() - .5) * 1.2, v = 35 + Math.random() * 45;
       puffs.push({ x: x + ox * Math.cos(a) - oy * Math.sin(a), y: y + ox * Math.sin(a) + oy * Math.cos(a),
-        vx: -vx * .25 + (Math.random() - .5) * 40 - Math.sin(a) * 30, vy: -vy * .25 + 25 + Math.random() * 30 + Math.cos(a) * 10,
-        r: 2 + Math.random() * 2, g: 9 + Math.random() * 8, t: 0, life: 1 + Math.random() * .8 });
+        vx: Math.cos(ang) * v - vx * .2, vy: Math.sin(ang) * v - vy * .2, t: 0, life: .8 + Math.random() * .7 });
     }
     if (acc > 1) acc = 1;
     cx.clearRect(0, 0, cv.width, cv.height);
+    var dr = Math.pow(.95, dt * 60);
     for (var i = puffs.length - 1; i >= 0; i--) {
       var q = puffs[i]; q.t += dt;
       if (q.t >= q.life) { puffs.splice(i, 1); continue; }
-      q.vx *= 1 - dt * 1.6; q.vy = q.vy * (1 - dt * 1.6) - 18 * dt;   /* drag, then a little lift as it cools */
-      q.x += q.vx * dt; q.y += q.vy * dt; q.r += q.g * dt;
-      var k = q.t / q.life; cx.globalAlpha = .45 * (1 - k) * Math.min(1, q.t * 8);
-      cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, 6.2832); cx.fillStyle = "#fff"; cx.fill();
+      q.vx *= dr; q.vy = q.vy * dr - 45 * dt;   /* drag, then lift as it cools */
+      q.x += q.vx * dt; q.y += q.vy * dt;
+      var u = q.t / q.life; cx.globalAlpha = .55 * (1 - u); cx.fillStyle = STEAM[Math.min(2, (u * 3) | 0)];
+      cx.fillRect(Math.round(q.x / PX) * PX, Math.round(q.y / PX) * PX, PX, PX);
     }
     cx.globalAlpha = 1;
   }
