@@ -67,15 +67,15 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 .dropper .tgt{position:relative;width:var(--S);aspect-ratio:1;animation:dphue 9s ease-in-out infinite alternate}
 .dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 2.4s ease-in-out infinite}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
-/* flying saucer: its own random gradient (set in dropGrad), fully opaque, 32 px, regular weight, in the center of the sphere, wobbling as it hovers */
-.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto;animation:dpwobble 2.2s ease-in-out infinite}
-@keyframes dpwobble{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-3px) rotate(-12deg)}45%{transform:translateY(1px) rotate(9deg)}65%{transform:translateY(-2px) rotate(-6deg)}85%{transform:translateY(0) rotate(4deg)}}
+/* flying saucer: its own random gradient (set in dropGrad), fully opaque, 32 px, regular weight; starts in the center of the sphere
+   and wanders inside it (simplex noise, with random speed spikes), tilting into its moves; driven by ufoFly() */
+.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0;will-change:transform}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
 /* the pulse comes from the center: the sphere swells while its middle color pushes outward */
 @keyframes dpbeat{0%,100%{transform:scale(.9);--p:20%}50%{transform:scale(1.06);--p:70%}}
 @keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
 @keyframes dpfade{0%,100%{opacity:.75}50%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt,.dropper .droplab .ico{animation:none}}
+@media (prefers-reduced-motion:reduce){.dropper b,.dropper .tgt{animation:none}}
 #cv{display:block;border-radius:12px;background:var(--stagebg);box-shadow:0 1px 0 rgba(37,37,37,.04),0 8px 28px rgba(29,38,34,.12);touch-action:manipulation}
 #cv.drag{touch-action:none;cursor:move}
 #cv.picking,#cv.drawing{cursor:crosshair;touch-action:none}
@@ -1636,6 +1636,59 @@ function dropGrad() {
   g.children[0].setAttribute("stop-color", "hsl(" + Math.round(w(u)) + " 90% 24%)");
   g.children[1].setAttribute("stop-color", "hsl(" + Math.round(w(v)) + " 90% 34%)");
 }
+
+/* opening screen: the flying saucer wanders inside the sphere. Its path is 2D simplex noise (two octaves, a new random
+   seed each load) so it drifts smoothly; every 1.2–4.5 s a random spike speeds it along that path (3–8x, easing back over
+   about half a second) and kicks it in a random direction. A spring pulls it back to the path; it stays within 34% of the
+   sphere's width from the center and tilts with its sideways speed (±28°) plus a small noise wobble. Runs only while the
+   opening screen shows; still for reduced motion. */
+var simplex2 = (function () {
+  var p = new Uint8Array(512), g = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]], i, j, t;
+  var q = []; for (i = 0; i < 256; i++) q[i] = i;
+  for (i = 255; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); t = q[i]; q[i] = q[j]; q[j] = t; }
+  for (i = 0; i < 512; i++) p[i] = q[i & 255];
+  var F = .5 * (Math.sqrt(3) - 1), G = (3 - Math.sqrt(3)) / 6;
+  function c(h, x, y) { var a = .5 - x * x - y * y; if (a < 0) return 0; a *= a; var d = g[h & 7]; return a * a * (d[0] * x + d[1] * y); }
+  return function (x, y) {
+    var s = (x + y) * F, i = Math.floor(x + s), j = Math.floor(y + s), u = (i + j) * G;
+    var x0 = x - i + u, y0 = y - j + u, i1 = x0 > y0 ? 1 : 0, j1 = 1 - i1;
+    var x1 = x0 - i1 + G, y1 = y0 - j1 + G, x2 = x0 - 1 + 2 * G, y2 = y0 - 1 + 2 * G, ii = i & 255, jj = j & 255;
+    return 70 * (c(p[ii + p[jj]], x0, y0) + c(p[ii + i1 + p[jj + j1]], x1, y1) + c(p[ii + 1 + p[jj + 1]], x2, y2));   /* about -1..1 */
+  };
+})();
+function ufoFly() {
+  var el = document.querySelector("#dropper .droplab"), tg = document.querySelector("#dropper .tgt");
+  if (!el || !tg || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+  var sx = Math.random() * 1000, sy = sx + 317.7, sr = sx + 711.3;   /* random seeds: a new path each load */
+  var nt = 0, warp = 1, nextSpike = 1.2 + Math.random() * 3.3, px = 0, py = 0, vx = 0, vy = 0, last = 0, raf = 0;
+  var n2 = function (a, b) { return simplex2(a, b) + .35 * simplex2(a * 2.3 + 50, b * 2.3); };   /* two octaves */
+  function frame(now) {
+    if (!document.body.classList.contains("nophoto")) { raf = 0; last = 0; return; }
+    var dt = last ? Math.min((now - last) / 1000, .05) : 0; last = now;
+    var R = tg.offsetWidth * .34;
+    if ((nextSpike -= dt) <= 0) {   /* velocity spike */
+      warp = 3 + Math.random() * 5;
+      var a = Math.random() * 2 * Math.PI, k = R * (2 + Math.random() * 3);
+      vx += Math.cos(a) * k; vy += Math.sin(a) * k;
+      nextSpike = 1.2 + Math.random() * 3.3;
+    }
+    warp += (1 - warp) * Math.min(1, dt * 4);   /* spike eases back to cruising speed */
+    nt += dt * .22 * warp;
+    var tx = R * .75 * n2(nt, sx), ty = R * .75 * n2(nt, sy);   /* the noise path */
+    var w = 7;   /* spring toward the path, critically damped */
+    vx += (w * w * (tx - px) - 2 * w * vx) * dt; vy += (w * w * (ty - py) - 2 * w * vy) * dt;
+    px += vx * dt; py += vy * dt;
+    var d = Math.hypot(px, py);
+    if (d > R) { px *= R / d; py *= R / d; var r = (vx * px + vy * py) / (R * R); if (r > 0) { vx -= r * px; vy -= r * py; } }   /* stay in the sphere */
+    var rot = Math.max(-28, Math.min(28, vx / R * 9)) + 6 * simplex2(nt * 3, sr);
+    el.style.transform = "translate(-50%,-50%) translate(" + px.toFixed(1) + "px," + py.toFixed(1) + "px) rotate(" + rot.toFixed(1) + "deg)";
+    raf = requestAnimationFrame(frame);
+  }
+  function go() { if (!raf && document.body.classList.contains("nophoto")) raf = requestAnimationFrame(frame); }
+  new MutationObserver(go).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  go();
+}
+ufoFly();
 
 /* ---------- modals ---------- */
 var opener = null;
