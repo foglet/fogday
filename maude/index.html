@@ -69,8 +69,10 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
 /* flying saucer: its own random gradient (set in dropGrad), fully opaque, 32 px, regular weight; starts in the center of the sphere
    and wanders inside it (simplex noise, with random speed spikes), tilting into its moves; driven by ufoFly() */
-.droplab{position:absolute;left:50%;top:50%;z-index:1;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0;will-change:transform}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
+.droplab{position:absolute;left:50%;top:50%;z-index:2;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0;will-change:transform}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
+.dropper{touch-action:none}   /* a finger drag guides the saucer instead of scrolling */
+.dropper .steam{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 /* the pulse comes from the center: the sphere swells while its middle color pushes outward */
 @keyframes dpbeat{0%,100%{transform:scale(.9);--p:20%}50%{transform:scale(1.06);--p:70%}}
 @keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
@@ -516,7 +518,7 @@ body[data-look="half"] #p-fx>.acc,body[data-look="half"] #p-fx>.looks{display:no
 </style>
 </head>
 <body data-look="plain" data-ht="rgb">
-<button type="button" class="dropper" id="dropper" aria-label="Choose a photo"><span class="tgt" aria-hidden="true"><b></b></span><span class="droplab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M183.59,213.47a8,8,0,0,1-15.18,5.06l-8-24a8,8,0,0,1,15.18-5.06ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184Zm-37.47.41a8,8,0,0,0-10.12,5.06l-8,24a8,8,0,0,0,15.18,5.06l8-24A8,8,0,0,0,90.53,184.41ZM248,112c0,16.22-13.37,30.89-37.65,41.29C188.22,162.78,159,168,128,168s-60.22-5.22-82.35-14.71C21.37,142.89,8,128.22,8,112c0-8.37,3.67-20.79,21.17-32.5,11.37-7.61,26.94-13.76,45.18-17.85A63.64,63.64,0,0,1,173,50.45a64.84,64.84,0,0,1,9.11,11.3C223.43,71.09,248,89.74,248,112ZM80,96.83v3a7.92,7.92,0,0,0,6.13,7.76A188.24,188.24,0,0,0,128,112a188.09,188.09,0,0,0,41.85-4.37A7.93,7.93,0,0,0,176,99.87V96a48,48,0,0,0-48.64-48C101.25,48.34,80,70.25,80,96.83ZM232,112c0-11.7-16.63-23.89-41.9-31.59A64.68,64.68,0,0,1,192,96v3.92a23.86,23.86,0,0,1-18.56,23.3A204.05,204.05,0,0,1,128,128a204.15,204.15,0,0,1-45.44-4.78A23.86,23.86,0,0,1,64,99.92h0V96.86a65.28,65.28,0,0,1,2.13-16.52C40.72,88,24,100.25,24,112c0,18.92,42.71,40,104,40S232,130.92,232,112Z"/></svg></span></button>
+<button type="button" class="dropper" id="dropper" aria-label="Choose a photo"><canvas class="steam" aria-hidden="true"></canvas><span class="tgt" aria-hidden="true"><b></b></span><span class="droplab"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M183.59,213.47a8,8,0,0,1-15.18,5.06l-8-24a8,8,0,0,1,15.18-5.06ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184Zm-37.47.41a8,8,0,0,0-10.12,5.06l-8,24a8,8,0,0,0,15.18,5.06l8-24A8,8,0,0,0,90.53,184.41ZM248,112c0,16.22-13.37,30.89-37.65,41.29C188.22,162.78,159,168,128,168s-60.22-5.22-82.35-14.71C21.37,142.89,8,128.22,8,112c0-8.37,3.67-20.79,21.17-32.5,11.37-7.61,26.94-13.76,45.18-17.85A63.64,63.64,0,0,1,173,50.45a64.84,64.84,0,0,1,9.11,11.3C223.43,71.09,248,89.74,248,112ZM80,96.83v3a7.92,7.92,0,0,0,6.13,7.76A188.24,188.24,0,0,0,128,112a188.09,188.09,0,0,0,41.85-4.37A7.93,7.93,0,0,0,176,99.87V96a48,48,0,0,0-48.64-48C101.25,48.34,80,70.25,80,96.83ZM232,112c0-11.7-16.63-23.89-41.9-31.59A64.68,64.68,0,0,1,192,96v3.92a23.86,23.86,0,0,1-18.56,23.3A204.05,204.05,0,0,1,128,128a204.15,204.15,0,0,1-45.44-4.78A23.86,23.86,0,0,1,64,99.92h0V96.86a65.28,65.28,0,0,1,2.13-16.52C40.72,88,24,100.25,24,112c0,18.92,42.71,40,104,40S232,130.92,232,112Z"/></svg></span></button>
 <div class="ptr" aria-hidden="true"><div><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/></svg><span data-notr>MAUDE MXY</span></div></div>
 <header class="top">
   <h1 data-notr><a href="/maude/" class="home">MAUDE MXY</a></h1>
@@ -1662,11 +1664,47 @@ function ufoFly() {
   var sx = Math.random() * 1000, sy = sx + 317.7, sr = sx + 711.3;   /* random seeds: a new path each load */
   var nt = 0, warp = 1, nextSpike = 1.2 + Math.random() * 3.3, px = 0, py = 0, vx = 0, vy = 0, last = 0, raf = 0;
   var n2 = function (a, b) { return simplex2(a, b) + .35 * simplex2(a * 2.3 + 50, b * 2.3); };   /* two octaves */
+  /* finger guidance: press and drag anywhere and the saucer follows the finger (held a little above a fingertip so it
+     stays visible), free to leave the sphere; let go and it springs back to its wandering path. A tap with no drag still
+     opens the photo picker (see the #dropper click handler). */
+  var dp = document.getElementById("dropper"), guide = null, down = null, free = false;
+  dp.addEventListener("pointerdown", function (e) { down = { x: e.clientX, y: e.clientY, id: e.pointerId, touch: e.pointerType !== "mouse" }; dp.dragged = false; });
+  dp.addEventListener("pointermove", function (e) {
+    if (!down || e.pointerId !== down.id) return;
+    if (!dp.dragged && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { dp.dragged = true; try { dp.setPointerCapture(e.pointerId); } catch (er) {} }
+    if (dp.dragged) { var b = tg.getBoundingClientRect(); guide = { x: e.clientX - (b.left + b.width / 2), y: e.clientY - (b.top + b.height / 2) - (down.touch ? 44 : 0) }; free = true; }
+  });
+  ["pointerup", "pointercancel"].forEach(function (n) { dp.addEventListener(n, function () { down = null; guide = null; }); });
+  /* steam: soft white puffs from under the saucer that drift down and out, swell and fade; more and faster when it moves */
+  var cv = dp.querySelector(".steam"), cx = cv.getContext("2d"), puffs = [], acc = 0;
+  function fit() { var r = window.devicePixelRatio || 1; cv.width = Math.round(innerWidth * r); cv.height = Math.round(innerHeight * r); cx.setTransform(r, 0, 0, r, 0, 0); }
+  fit(); addEventListener("resize", fit);
+  function steam(dt, x, y, rot, vx, vy) {
+    var sp = Math.hypot(vx, vy), a = rot * Math.PI / 180;
+    acc += dt * (14 + Math.min(sp, 600) * .06);
+    for (; acc >= 1 && puffs.length < 160; acc--) {   /* spawn at the saucer's underside, turned with its tilt */
+      var ox = (Math.random() - .5) * 14, oy = 13;
+      puffs.push({ x: x + ox * Math.cos(a) - oy * Math.sin(a), y: y + ox * Math.sin(a) + oy * Math.cos(a),
+        vx: -vx * .25 + (Math.random() - .5) * 40 - Math.sin(a) * 30, vy: -vy * .25 + 25 + Math.random() * 30 + Math.cos(a) * 10,
+        r: 2 + Math.random() * 2, g: 9 + Math.random() * 8, t: 0, life: 1 + Math.random() * .8 });
+    }
+    if (acc > 1) acc = 1;
+    cx.clearRect(0, 0, cv.width, cv.height);
+    for (var i = puffs.length - 1; i >= 0; i--) {
+      var q = puffs[i]; q.t += dt;
+      if (q.t >= q.life) { puffs.splice(i, 1); continue; }
+      q.vx *= 1 - dt * 1.6; q.vy = q.vy * (1 - dt * 1.6) - 18 * dt;   /* drag, then a little lift as it cools */
+      q.x += q.vx * dt; q.y += q.vy * dt; q.r += q.g * dt;
+      var k = q.t / q.life; cx.globalAlpha = .45 * (1 - k) * Math.min(1, q.t * 8);
+      cx.beginPath(); cx.arc(q.x, q.y, q.r, 0, 6.2832); cx.fillStyle = "#fff"; cx.fill();
+    }
+    cx.globalAlpha = 1;
+  }
   function frame(now) {
-    if (!document.body.classList.contains("nophoto")) { raf = 0; last = 0; return; }
+    if (!document.body.classList.contains("nophoto")) { raf = 0; last = 0; puffs.length = 0; cx.clearRect(0, 0, cv.width, cv.height); return; }
     var dt = last ? Math.min((now - last) / 1000, .05) : 0; last = now;
     var R = tg.offsetWidth * .34;
-    if ((nextSpike -= dt) <= 0) {   /* velocity spike */
+    if (!guide && (nextSpike -= dt) <= 0) {   /* velocity spike */
       warp = 3 + Math.random() * 5;
       var a = Math.random() * 2 * Math.PI, k = R * (2 + Math.random() * 3);
       vx += Math.cos(a) * k; vy += Math.sin(a) * k;
@@ -1675,13 +1713,16 @@ function ufoFly() {
     warp += (1 - warp) * Math.min(1, dt * 4);   /* spike eases back to cruising speed */
     nt += dt * .22 * warp;
     var tx = R * .75 * n2(nt, sx), ty = R * .75 * n2(nt, sy);   /* the noise path */
-    var w = 7;   /* spring toward the path, critically damped */
+    if (guide) { tx = guide.x; ty = guide.y; }   /* a finger overrides the path */
+    var w = guide ? 14 : 7;   /* spring toward the path (or finger, tighter), critically damped */
     vx += (w * w * (tx - px) - 2 * w * vx) * dt; vy += (w * w * (ty - py) - 2 * w * vy) * dt;
     px += vx * dt; py += vy * dt;
     var d = Math.hypot(px, py);
-    if (d > R) { px *= R / d; py *= R / d; var r = (vx * px + vy * py) / (R * R); if (r > 0) { vx -= r * px; vy -= r * py; } }   /* stay in the sphere */
+    if (free && !guide && d <= R) free = false;   /* back home inside the sphere: the wall applies again */
+    if (d > R && !free) { px *= R / d; py *= R / d; var r = (vx * px + vy * py) / (R * R); if (r > 0) { vx -= r * px; vy -= r * py; } }   /* stay in the sphere */
     var rot = Math.max(-28, Math.min(28, vx / R * 9)) + 6 * simplex2(nt * 3, sr);
     el.style.transform = "translate(-50%,-50%) translate(" + px.toFixed(1) + "px," + py.toFixed(1) + "px) rotate(" + rot.toFixed(1) + "deg)";
+    var bb = tg.getBoundingClientRect(); steam(dt, bb.left + bb.width / 2 + px, bb.top + bb.height / 2 + py, rot, vx, vy);
     raf = requestAnimationFrame(frame);
   }
   function go() { if (!raf && document.body.classList.contains("nophoto")) raf = requestAnimationFrame(frame); }
@@ -2093,7 +2134,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (
 themeSync();
 $("#addImg").addEventListener("click", function () { $("#fileIn").click(); });
 $("#takePhoto").addEventListener("click", openCamera);
-$("#dropper").addEventListener("click", function () { $("#fileIn").click(); });
+$("#dropper").addEventListener("click", function () { if (this.dragged) { this.dragged = false; return; } $("#fileIn").click(); });   /* a drag guides the saucer; only a tap opens the picker */
 $("#fileIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#camIn").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
 $("#saveOpen").addEventListener("click", function () { syncSaveOpts(); openModal("#saveModal", "#savePng"); });
