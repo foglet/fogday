@@ -70,15 +70,15 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 /* one sphere, 70% of the screen width (kept inside 60% of the height on wide screens), in a random gradient, breathing */
 .dropper{--S:min(70vw,60vh)}
 .dropper .tgt{position:relative;width:var(--S);aspect-ratio:1;animation:dphue 9s ease-in-out infinite alternate}
-.dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 2.4s ease-in-out infinite}
+.dropper b{position:absolute;inset:0;border-radius:50%;--p:35%;background:radial-gradient(circle,var(--g1,#ff5f8f) 0%,var(--g2,#ffc65c) var(--p),var(--g3,#5ce1ff) 100%);box-shadow:0 0 60px -8px var(--g3,#5ce1ff);animation:dpbeat 4s ease-in-out infinite}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
 /* flying saucer: its own random gradient (set in dropGrad), fully opaque, 32 px, regular weight; starts in the center of the sphere
    and wanders inside it (simplex noise, with random speed spikes), tilting into its moves; driven by ufoFly() */
 .droplab{position:absolute;left:50%;top:calc(50% - var(--bb) / 2);z-index:2;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0;will-change:transform}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
-body:has(.stage.drop) .dropper b{animation-duration:1.2s}
+body:has(.stage.drop) .dropper b{animation-duration:2s}
 .dropper{touch-action:none}   /* a finger drag guides the saucer instead of scrolling */
 .dropper .steam{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-/* the pulse comes from the center: the sphere swells while its middle color pushes outward */
+/* the pulse comes from the center: the sphere swells while its middle color pushes outward; 15 breaths a minute (4 s: 2 s in, 2 s out) */
 @keyframes dpbeat{0%,100%{transform:scale(.9);--p:20%}50%{transform:scale(1.06);--p:70%}}
 @keyframes dphue{to{filter:hue-rotate(70deg)}}   /* the gradient drifts through nearby colors as it pulses */
 @keyframes dpfade{0%,100%{opacity:.75}50%{opacity:1}}
