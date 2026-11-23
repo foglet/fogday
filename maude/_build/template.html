@@ -55,8 +55,13 @@ body.big .stagecol{position:static}
 @media (min-width:900px){.top{padding-left:16px;padding-right:12px}.wrap{padding-left:16px;padding-right:16px;gap:16px;grid-template-columns:minmax(0,1fr) 380px;align-items:start}.stagecol{top:12px;padding-top:0}body.big .stagecol{position:sticky}}
 .stage{display:flex;justify-content:center;position:relative}
 /* opening screen: before a photo is opened the page is only the MAUDE MXY title and a pulsing target (tap or drop to open a photo); the app appears, on Original, once one opens */
-.dropper{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:6%;border:0;border-radius:0;background:#0b1a3a;color:#f2efe8;cursor:pointer;font:600 clamp(18px,4.5vw,26px)/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.dropper{display:none;position:absolute;top:0;left:0;right:0;height:100vh;--bb:0px;padding:0 0 var(--bb);z-index:50;flex-direction:column;align-items:center;justify-content:center;gap:6%;border:0;border-radius:0;background:#0b1a3a;color:#f2efe8;cursor:pointer;font:600 clamp(18px,4.5vw,26px)/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden}
 body.nophoto .dropper{display:flex}
+/* like /treesf: the opening screen runs under Safari's toolbars (large viewport; absolute, not fixed, since Safari 26 clips
+   fixed layers at its floating toolbar), so the sphere's glow and the steam show through the frosted bars; --bb is how much
+   the bars cover, and the sphere and saucer center in the part above them */
+@supports (height:100lvh){.dropper{height:100lvh;--bb:calc(100lvh - 100svh)}}
+html:has(body.nophoto){background:#0b1a3a;overscroll-behavior:none}
 body.nophoto>.wrap,body.nophoto>.ptr,body.nophoto .top .tb,body.nophoto .top .topr{display:none!important}
 body.nophoto .top{background:transparent;border-color:transparent;position:relative;z-index:51}
 body.nophoto .top h1{position:relative;z-index:51;background:transparent;color:#f2efe8}
@@ -69,7 +74,7 @@ body.nophoto{overflow:hidden;background:#0b1a3a}
 @property --p{syntax:"<percentage>";inherits:false;initial-value:35%}
 /* flying saucer: its own random gradient (set in dropGrad), fully opaque, 32 px, regular weight; starts in the center of the sphere
    and wanders inside it (simplex noise, with random speed spikes), tilting into its moves; driven by ufoFly() */
-.droplab{position:absolute;left:50%;top:50%;z-index:2;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0;will-change:transform}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
+.droplab{position:absolute;left:50%;top:calc(50% - var(--bb) / 2);z-index:2;transform:translate(-50%,-50%);display:flex;color:#000;line-height:0;will-change:transform}.dropper .droplab .ico{width:32px!important;height:32px!important;flex:0 0 auto}
 body:has(.stage.drop) .dropper b{animation-duration:1.2s}
 .dropper{touch-action:none}   /* a finger drag guides the saucer instead of scrolling */
 .dropper .steam{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
@@ -368,9 +373,9 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(-
   /* phones: the title sits on its own row and scrolls away; the tools row below it stays pinned and centered */
   .top{display:contents}
   /* on load: title and light/dark on top, tools centered below; on scroll the title goes and light/dark stays put while the tools rise to meet it */
-  .top h1{display:block;margin:0;height:48px;line-height:48px;padding:var(--sat) 46px 0;text-align:center;background:var(--bar)}
+  .top h1{display:block;margin:0;height:48px;line-height:48px;padding:var(--sat) 46px 0;text-align:center;background:transparent}
   /* one bar, not two: the tools row sits on the title row (the title rides on top of it, see below) */
-  .tb{position:sticky;top:0;z-index:8;height:48px;padding:var(--sat) 46px 0;box-sizing:content-box;background:var(--bar);border-bottom:1px solid var(--sep);justify-content:center;
+  .tb{position:sticky;top:0;z-index:8;height:48px;padding:var(--sat) 46px 0;box-sizing:content-box;background:color-mix(in srgb,var(--bar) 72%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--sep);justify-content:center;
     margin-top:calc(-48px - var(--sat));transition:background-color .15s}
   .topr{position:sticky;top:0;z-index:9;height:48px;padding-top:var(--sat);width:max-content;
     margin:calc(-49px - var(--sat)) calc(4px + var(--sar)) 1px auto}
@@ -1544,7 +1549,7 @@ function fit(force) {
 var full = null, fullW = 0, fullH = 0, origOut = "";   /* the photo as opened, kept so Save can use its own size */
 function setImage(img, w, h, isDemo) {
   var first = document.body.classList.contains("nophoto");
-  document.body.classList.toggle("nophoto", !!isDemo);
+  document.body.classList.toggle("nophoto", !!isDemo); if (typeof themeSync === "function" && $("#themeBtn")) themeSync();
   if (!isDemo && first) setTab("plain");   /* first photo: the app appears, on the Original tab */
   full = img; fullW = w; fullH = h;
   drawOrig(false);
@@ -1681,7 +1686,7 @@ function ufoFly() {
      rises as it cools; more of it, and blown back, when the saucer moves */
   var cv = dp.querySelector(".steam"), cx = cv.getContext("2d"), puffs = [], acc = 0, PX = 3;
   var STEAM = ["rgb(246,248,250)", "rgb(226,232,238)", "rgb(204,212,220)"];
-  function fit() { var r = window.devicePixelRatio || 1; cv.width = Math.round(innerWidth * r); cv.height = Math.round(innerHeight * r); cx.setTransform(r, 0, 0, r, 0, 0); }
+  function fit() { var r = window.devicePixelRatio || 1, w = cv.clientWidth || innerWidth, h = cv.clientHeight || innerHeight; cv.width = Math.round(w * r); cv.height = Math.round(h * r); cx.setTransform(r, 0, 0, r, 0, 0); }
   fit(); addEventListener("resize", fit);
   function steam(dt, x, y, rot, vx, vy) {
     var sp = Math.hypot(vx, vy), a = rot * Math.PI / 180;
@@ -1729,7 +1734,7 @@ function ufoFly() {
     var bb = tg.getBoundingClientRect(); steam(dt, bb.left + bb.width / 2 + px, bb.top + bb.height / 2 + py, rot, vx, vy);
     raf = requestAnimationFrame(frame);
   }
-  function go() { if (!raf && document.body.classList.contains("nophoto")) raf = requestAnimationFrame(frame); }
+  function go() { if (!raf && document.body.classList.contains("nophoto")) { fit(); raf = requestAnimationFrame(frame); } }
   new MutationObserver(go).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   go();
 }
@@ -2123,7 +2128,7 @@ function themeSync() {
   var dark = document.documentElement.dataset.theme === "dark", b = $("#themeBtn");
   b.setAttribute("aria-pressed", dark ? "true" : "false");
   b.setAttribute("aria-label", tr(dark ? "Switch to light mode" : "Switch to dark mode")); b.title = b.getAttribute("aria-label");
-  document.querySelector("meta[name=theme-color]").setAttribute("content", dark ? "#1e1e1e" : "#ffffff");
+  document.querySelector("meta[name=theme-color]").setAttribute("content", document.body.classList.contains("nophoto") ? "#0b1a3a" : dark ? "#1e1e1e" : "#ffffff");   /* Safari's bars match the opening screen */
 }
 $("#themeBtn").addEventListener("click", function () {
   var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
