@@ -21,13 +21,14 @@ layout: null
 .example-toolbar{justify-content:flex-start;margin-top:.4rem}.shuffle-hand,.shuffle-hand:hover{border:0;background:transparent;padding:.25rem;color:#1f5c4a}.shuffle-hand{min-width:40px;min-height:40px}.example-note{font-size:.83rem;color:#5f6b66;margin:.5rem 0}.example-tiles{margin:.35rem 0}
 .bonus-caption{font-size:.83rem;color:#5f6b66;margin-top:.65rem;font-weight:600}.bonus-empty{color:#5f6b66;font-size:.9rem;font-style:italic}
 .tile-back{display:block;width:29px;height:40px;border:1px solid #477553;border-radius:4px;background:#4e895b;box-shadow:inset 0 0 0 2px #a9c3a5,0 1px 1px #b4b4a7}.concealed-label{align-self:center;color:#b8352b;font-size:.85rem;font-weight:600;margin-left:.5rem}.pair-wiggle{animation:pair-wiggle 1.4s ease-in-out infinite;transform-origin:center bottom}@keyframes pair-wiggle{0%,70%,100%{transform:rotate(0)}75%,85%{transform:rotate(-8deg)}80%,90%{transform:rotate(8deg)}}@media(prefers-reduced-motion:reduce){.pair-wiggle{animation:none;outline:2px solid #b8352b;outline-offset:1px}}@media(max-width:500px){.tile-back{width:24px;height:33px}}
+.tools{position:sticky;top:0;z-index:10;background:#fbf8f1;margin:1.6rem 0 2rem;padding:.8rem 0 .7rem;box-shadow:0 0 0 100vmax #fbf8f1;clip-path:inset(0 -100vmax);border-bottom:1px solid #d9d3c4}.search-label{color:#b8352b;font-family:Rubik,system-ui,sans-serif;font-size:.875rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin:0 0 .5rem}.filters{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 2px 5px;scrollbar-width:thin}.filters button{flex:0 0 auto}.result-count{margin:.4rem 0 0}@media(max-width:700px){.tools{padding-top:max(.6rem,env(safe-area-inset-top));}.search{padding:.6rem .8rem}.filters{margin-top:.5rem}}
 </style>
 </head>
 <body>
 <header><a class="back" href="https://fogday.com/mahjong">← Bay Area Mahjong</a><div class="eyebrow">A table-side reference</div><h1>Hong Kong Mahjong<br>Fan Guide</h1><div class="chinese" lang="zh-Hant">香港麻雀正統牌型</div><p>Patterns, fan, payments, and the vocabulary you need at the table.</p><nav aria-label="Page sections"><a href="#scoring">Fan &amp; hands</a><a href="#payments">Payments</a><a href="#tiles">Tiles and Seats</a><a href="#terms">Terminology</a></nav></header>
 <main>
 <div class="intro"><h2>How to use this sheet</h2><ul><li>Add the fan scores of all matching features.</li><li>Indented features replace their parent feature: for example, Full Flush replaces Mixed Flush.</li><li>Unless stated otherwise, triplets and quadruplets are interchangeable.</li><li>Use the payment table to calculate the payout.</li></ul></div>
-<section id="scoring"><h2>Fan &amp; hands</h2><p class="section-note">Find a hand by name, Chinese characters, or description. Indented entries replace their parent feature.</p><div class="tools"><label class="search-label" for="hand-search">Search hands</label><input class="search" id="hand-search" type="search" placeholder="Try dragons, 清一色, or self-pick" autocomplete="off"><div class="filters" aria-label="Filter hands by category"><button type="button" data-filter="all" aria-pressed="true">All hands</button><button type="button" data-filter="Win Actions" aria-pressed="false">Win Actions</button><button type="button" data-filter="Single-Set Type Hands" aria-pressed="false">Set types</button><button type="button" data-filter="Special Tile Hands" aria-pressed="false">Special tiles</button><button type="button" data-filter="Flowers and Seasons" aria-pressed="false">Flowers &amp; seasons</button><button type="button" data-filter="Special Hands" aria-pressed="false">Special Hands</button></div><p class="result-count" id="result-count" aria-live="polite"></p></div><div class="grid">
+<section id="scoring"><h2>Fan &amp; hands</h2><p class="section-note">Find a hand by name, Chinese characters, or description. Indented entries replace their parent feature.</p><div class="tools"><label class="search-label" for="hand-search">Search Hands</label><input class="search" id="hand-search" type="search" placeholder="Try dragons, 清一色, or self-pick" autocomplete="off"><div class="filters" aria-label="Filter hands by category"><button type="button" data-filter="all" aria-pressed="true">All hands</button><button type="button" data-filter="Win Actions" aria-pressed="false">Win Actions</button><button type="button" data-filter="Single-Set Type Hands" aria-pressed="false">Set types</button><button type="button" data-filter="Special Tile Hands" aria-pressed="false">Special tiles</button><button type="button" data-filter="Flowers and Seasons" aria-pressed="false">Flowers &amp; seasons</button><button type="button" data-filter="Special Hands" aria-pressed="false">Special Hands</button></div><p class="result-count" id="result-count" aria-live="polite"></p></div><div class="grid">
 <div class="group green"><h3>Win Actions</h3>
 <div class="item"><span class="fan">1</span><div><strong>Self-Pick <span class="cn">自摸</span></strong><p>You select your winning tile from the wall.</p></div></div>
 <div class="item child"><span class="fan">2</span><div><strong>Win by Kong Replacement <span class="cn">槓上開花</span></strong><p>The winning tile is a replacement tile due to calling a kong.</p></div></div>
@@ -130,7 +131,7 @@ layout: null
    const row=document.createElement('div');row.className='example-tiles';example[0].forEach(x=>{const img=document.createElement('img');img.src='https://tilebuddy.app/assets/tiles/tile-'+x+'.png';img.alt=tileName(x);row.appendChild(img)});box.appendChild(row);title.parentNode.appendChild(box);
  });
  // Each stored example is a complete valid hand. Permuting the three numbered
- // suits preserves its pattern; honour tiles stay fixed.
+ // suits and honours preserves the pattern; tile order is randomized.
  document.querySelectorAll('.example-hand').forEach(details=>{
    const source=[...details.querySelectorAll('.example-tiles')].map(row=>[...row.querySelectorAll('img')].map(img=>({src:img.getAttribute('src'),alt:img.alt})));
    const suitNames={man:'characters',sticks:'bamboo',tong:'dots'}, suits=['man','sticks','tong'];
@@ -197,10 +198,11 @@ layout: null
    function draw(){
      examples.replaceChildren();choose().forEach((index,rowIndex)=>{
        const row=document.createElement('div');row.className='example-tiles';
-       let tiles=hands[index].slice();
-       if(pattern==='All Honours')tiles=randomOrder(tiles);
+       let tiles=randomOrder(hands[index]);
        if(pattern==='Thirteen Orphans'){
-         const pairTile=tiles[tiles.length-1], match=tiles.findIndex((t,i)=>i<tiles.length-1&&t.src===pairTile.src);if(match>=0){tiles.splice(match,1);tiles.splice(tiles.length-1,0,pairTile)}
+         const counts=new Map();tiles.forEach(tile=>counts.set(tile.src,(counts.get(tile.src)||0)+1));
+         const pairSrc=[...counts].find(([,count])=>count===2)?.[0];
+         if(pairSrc){const pair=tiles.filter(tile=>tile.src===pairSrc);tiles=tiles.filter(tile=>tile.src!==pairSrc);const pos=Math.floor(Math.random()*(tiles.length+1));tiles.splice(pos,0,...pair)}
        }
        if(pattern==='Round Wind / Seat Wind'){
          const matched=winds.find(wind=>tiles.filter(t=>t.src.includes('tile-'+wind+'.png')).length>=3);
@@ -208,7 +210,7 @@ layout: null
        }
        tiles.forEach((tile,tileIndex)=>{
          if(pattern==='All Concealed Triplets'&&rowIndex===2){const back=document.createElement('span');back.className='tile-back';back.setAttribute('role','img');back.setAttribute('aria-label','Concealed '+tile.alt);row.appendChild(back);return}
-         const img=document.createElement('img');img.src=tile.src;img.alt=tile.alt;img.loading='lazy';if(pattern==='Thirteen Orphans'&&tileIndex===tiles.length-1){img.className='pair-wiggle';img.alt+=' (matching tile of the pair)'}row.appendChild(img);
+         const img=document.createElement('img');img.src=tile.src;img.alt=tile.alt;img.loading='lazy';if(pattern==='Thirteen Orphans'&&tiles.filter(t=>t.src===tile.src).length===2){img.alt+=' (pair)'}row.appendChild(img);
        });
        if(pattern==='All Concealed Triplets'&&rowIndex===2){const label=document.createElement('span');label.className='concealed-label';label.textContent='Concealed';row.appendChild(label)}
        examples.appendChild(row);
@@ -216,6 +218,6 @@ layout: null
    }
    button.addEventListener('click',draw);draw();
  });
- search.addEventListener('input',update);buttons.forEach(button=>button.addEventListener('click',()=>{category=button.dataset.filter;buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));update()}));update();
+ search.addEventListener('input',update);buttons.forEach(button=>button.addEventListener('click',()=>{category=button.dataset.filter;buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));update();button.scrollIntoView({block:'nearest',inline:'nearest'});const top=document.querySelector('.tools').getBoundingClientRect().top+window.scrollY;window.scrollTo({top:Math.max(0,top),behavior:'auto'})}));update();
 })();
 </script></body></html>
