@@ -87,7 +87,7 @@ layout: null
  'Concealed Hand':[ordinary,'Complete the hand without taking tiles from other players.'],
  'Robbing the Kong':[ordinary,'Win using a tile another player adds to a pong to make a kong.'],
  'Moon Under the Sea':[ordinary,'The winning tile is the last tile in the wall or the last discard.'],
- 'All Concealed Triplets':[pung,'All four triplets are concealed; win by self-pick or on the pair. The last example is shown face down.'],
+ 'All Concealed Triplets':[pung,'All four triplets are concealed; win by self-pick or on the pair.'],
  'All Quadruplets':[hand([m(1),m(1),m(1),m(1)],[b(5),b(5),b(5),b(5)],[d(9),d(9),d(9),d(9)],[e,e,e,e],pair(r)),'Four kongs and a pair; replacement tiles account for the extra tiles.'],
  'Dragon':[hand(trip(r),chow(m,1),chow(b,4),chow(d,6),pair(e)),'A dragon triplet is the scoring feature.'],
  'Round Wind / Seat Wind':[hand(trip(e),chow(m,1),chow(b,4),chow(d,6),pair(r)),'The wind triplet scores when it matches the round wind or your seat wind.'],
@@ -103,7 +103,7 @@ layout: null
  'Eight Flowers':[ordinary,'Declare Plum, Orchid, Mum, Bamboo, Spring, Summer, Autumn and Winter to choose an immediate win. The hand shown is illustrative.'],
  'Blessing of Heaven':[ordinary,'The dealer’s initial hand is already complete.'],
  'Blessing of Earth':[ordinary,'A non-dealer completes the hand with the dealer’s first discard.'],
- 'Blessing of Man':[ordinary,'A non-dealer self-picks the winning tile on their first turn.'],
+ 'Blessing of Numbers':[ordinary,'A non-dealer self-picks the winning tile on their first turn.'],
  'Nine Gates':[hand(trip(m(1)),[m(2),m(3),m(4),m(5),m(6),m(7),m(8)],trip(m(9)),[m(5)]),'111 2345678 999 plus one tile of the same suit.'],
  'Seven Pairs':[hand(pair(m(1)),pair(m(3)),pair(b(2)),pair(b(5)),pair(d(4)),pair(d(8)),pair(e)),'Seven distinct pairs; used only in certain variants.']
  };
@@ -120,9 +120,9 @@ layout: null
    const box=document.createElement('div');box.className='bonus-examples';
    const note=document.createElement('p');note.className='example-note';note.textContent=name==='Seven Flowers'||name==='Eight Flowers'?'These declared bonus tiles permit an immediate win; a completed ordinary hand is not required.':'These bonus tiles are declared separately from the concealed hand.';box.appendChild(note);
    const examples=document.createElement('div');examples.setAttribute('aria-live','polite');box.appendChild(examples);
-   const choices=flowerExamples[name];let previous='';try{previous=sessionStorage.getItem('mj-flower-'+name)||''}catch(e){}
-   function draw(){let order=choices.map((_,i)=>i);for(let i=name==='Seat Flower or Season'?0:order.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}order=order.slice(0,Math.min(name==='Seat Flower or Season'?4:3,order.length));if(order.join(',')===previous&&choices.length>order.length)order=[...order.slice(1),choices.map((_,i)=>i).find(i=>!order.includes(i))];else if(name!=='Seat Flower or Season'&&order.join(',')===previous&&order.length>1)order.push(order.shift());previous=order.join(',');try{sessionStorage.setItem('mj-flower-'+name,previous)}catch(e){}examples.replaceChildren();order.forEach(i=>{const entry=choices[i], wrap=document.createElement('div'), caption=document.createElement('div');caption.className='bonus-caption';caption.textContent=entry.label;wrap.appendChild(caption);const row=document.createElement('div');row.className='example-tiles';entry.tiles.forEach(index=>{const [file,label]=flowers[index], img=document.createElement('img');img.src='https://tilebuddy.app/assets/tiles/tile-flower-'+file+'.png';img.alt=label;img.title=label;row.appendChild(img)});if(!entry.tiles.length){const empty=document.createElement('span');empty.className='bonus-empty';empty.textContent='No flowers or seasons';row.appendChild(empty)}wrap.appendChild(row);examples.appendChild(wrap)})}
-   draw();if(choices.length>3&&name!=='Seat Flower or Season'){const button=document.createElement('button');button.type='button';button.className='shuffle-hand';button.setAttribute('aria-label','Shuffle flower examples');button.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,176a8,8,0,0,1-2.34,5.66l-32,32a8,8,0,0,1-11.32-11.32L204.69,184H184a47.75,47.75,0,0,1-39.2-20.35L98.07,96.48A31.82,31.82,0,0,0,72,83.2H32a8,8,0,0,1,0-16H72a47.78,47.78,0,0,1,39.2,20.35l46.73,67.17A31.82,31.82,0,0,0,184,168h20.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,232,176ZM32,184H72a47.75,47.75,0,0,0,39.2-20.35l7.42-10.66a8,8,0,0,0-13.13-9.14l-7.42,10.67A31.82,31.82,0,0,1,72,168H32a8,8,0,0,0,0,16Zm120-69.34a8,8,0,0,0,6.57-3.42L157.93,96.48A31.82,31.82,0,0,1,184,83.2h20.69l-18.35,18.34a8,8,0,0,0,11.32,11.32l32-32a8,8,0,0,0,0-11.32l-32-32a8,8,0,0,0-11.32,11.32L204.69,67.2H184a47.75,47.75,0,0,0-39.2,20.35l-1.37,2A8,8,0,0,0,152,114.66Z"/></svg>';button.addEventListener('click',draw);box.appendChild(button)}item.querySelector('strong').parentNode.appendChild(box);
+   const choices=flowerExamples[name];let previous='';
+   function draw(){let order=choices.map((_,i)=>i).slice(0,name==='Seat Flower or Season'?4:3);examples.replaceChildren();order.forEach(i=>{const entry=choices[i], wrap=document.createElement('div'), caption=document.createElement('div');caption.className='bonus-caption';caption.textContent=entry.label;wrap.appendChild(caption);const row=document.createElement('div');row.className='example-tiles';entry.tiles.forEach(index=>{const [file,label]=flowers[index], img=document.createElement('img');img.src='https://tilebuddy.app/assets/tiles/tile-flower-'+file+'.png';img.alt=label;img.title=label;row.appendChild(img)});if(!entry.tiles.length){const empty=document.createElement('span');empty.className='bonus-empty';empty.textContent='No flowers or seasons';row.appendChild(empty)}wrap.appendChild(row);examples.appendChild(wrap)})}
+   draw();item.querySelector('strong').parentNode.appendChild(box);
  }
  document.querySelectorAll('#scoring .item').forEach(item=>{
    const title=item.querySelector('strong');if(!title||item.querySelector('.example-hand'))return;
@@ -130,94 +130,6 @@ layout: null
    const box=document.createElement('div');box.className='example-hand';
    const note=document.createElement('p');note.className='example-note';note.textContent=example[1];box.appendChild(note);
    const row=document.createElement('div');row.className='example-tiles';example[0].forEach(x=>{const img=document.createElement('img');img.src='https://tilebuddy.app/assets/tiles/tile-'+x+'.png';img.alt=tileName(x);row.appendChild(img)});box.appendChild(row);title.parentNode.appendChild(box);
- });
- // Each stored example is a complete valid hand. Permuting the three numbered
- // suits and honours preserves the pattern; tile order is randomized.
- document.querySelectorAll('.example-hand').forEach(details=>{
-   const source=[...details.querySelectorAll('.example-tiles')].map(row=>[...row.querySelectorAll('img')].map(img=>({src:img.getAttribute('src'),alt:img.alt})));
-   const suitNames={man:'characters',sticks:'bamboo',tong:'dots'}, suits=['man','sticks','tong'];
-   const permutations=[['man','sticks','tong'],['man','tong','sticks'],['sticks','man','tong'],['sticks','tong','man'],['tong','man','sticks'],['tong','sticks','man']];
-   const choices=new Map();
-   const pattern=details.closest('.item').querySelector('strong').firstChild.textContent.trim();
-   const winds=['direction-east','direction-south','direction-west','direction-north'],dragons=['special-reddragon','special-fatchoy','special-whitedragon'];
-   const randomOrder=arr=>{const copy=arr.slice();for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy};
-   const terminalOnly=['Mixed Terminals','All Terminals','Thirteen Orphans','Nine Gates'].includes(pattern);
-   for(let attempt=0;attempt<300;attempt++){
-     let hand=source[Math.floor(Math.random()*source.length)];
-     if(pattern==='Thirteen Orphans'){
-       const base=hand.slice(0,13), extra=base[Math.floor(Math.random()*base.length)];hand=[...base,extra];
-     }
-     if(pattern==='Blessing of Heaven'&&Math.random()<.7){
-       const suit=suits[Math.floor(Math.random()*suits.length)], rank=1+Math.floor(Math.random()*9), replacement='tile-'+suit+'-'+rank+'.png';
-       const existing=hand.filter(t=>t.src.endsWith(replacement)).length;
-       if(existing<=1)hand=hand.map(t=>t.src.endsWith('tile-special-reddragon.png')?{src:'https://tilebuddy.app/assets/tiles/'+replacement,alt:rank+' '+suitNames[suit]}:t);
-     }
-     if(pattern==='Nine Gates'){
-       const extra=Math.floor(Math.random()*9)+1;hand=hand.slice(0,13).concat({src:'https://tilebuddy.app/assets/tiles/tile-man-'+extra+'.png',alt:extra+' characters'});
-     }
-     const order=permutations[Math.floor(Math.random()*permutations.length)], windOrder=randomOrder(winds), dragonOrder=randomOrder(dragons), rankMaps={};
-     suits.forEach(suit=>{
-       const ranks=hand.map(t=>t.src.match(new RegExp('tile-'+suit+'-(\\d)\\.png$'))).filter(Boolean).map(match=>Number(match[1]));
-       if(!ranks.length)return;
-       const reflected=Math.random()<.5, transformed=ranks.map(v=>reflected?10-v:v);
-       const low=1-Math.min(...transformed),high=9-Math.max(...transformed);
-       const shift=terminalOnly?0:low+Math.floor(Math.random()*(high-low+1));
-       rankMaps[suit]=v=>(reflected?10-v:v)+shift;
-     });
-     const mapped=hand.map(tile=>{
-       const suitMatch=tile.src.match(/tile-(man|sticks|tong)-(\d)\.png$/);
-       if(suitMatch){const target=order[suits.indexOf(suitMatch[1])],rank=rankMaps[suitMatch[1]](Number(suitMatch[2]));return {src:'https://tilebuddy.app/assets/tiles/tile-'+target+'-'+rank+'.png',alt:rank+' '+suitNames[target]}}
-       const name=tile.src.match(/tile-((?:direction|special)-[^.]+)\.png$/);if(!name)return tile;
-       let target=name[1];if(winds.includes(target))target=windOrder[winds.indexOf(target)];if(dragons.includes(target))target=dragonOrder[dragons.indexOf(target)];
-       return {src:'https://tilebuddy.app/assets/tiles/tile-'+target+'.png',alt:tileName(target)};
-     });
-     const key=mapped.map(t=>t.src).sort().join('|');if(!choices.has(key))choices.set(key,mapped);
-   }
-   const hands=[...choices.values()];let remaining=[];let last=-1;
-   details.querySelector('.example-toolbar')?.remove();
-   details.querySelectorAll('.example-caption,.example-tiles').forEach(el=>el.remove());
-   const toolbar=document.createElement('div');toolbar.className='example-toolbar';
-   
-   const button=document.createElement('button');button.type='button';button.className='shuffle-hand';button.setAttribute('aria-label','Shuffle example hand');button.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232,176a8,8,0,0,1-2.34,5.66l-32,32a8,8,0,0,1-11.32-11.32L204.69,184H184a47.75,47.75,0,0,1-39.2-20.35L98.07,96.48A31.82,31.82,0,0,0,72,83.2H32a8,8,0,0,1,0-16H72a47.78,47.78,0,0,1,39.2,20.35l46.73,67.17A31.82,31.82,0,0,0,184,168h20.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,232,176ZM32,184H72a47.75,47.75,0,0,0,39.2-20.35l7.42-10.66a8,8,0,0,0-13.13-9.14l-7.42,10.67A31.82,31.82,0,0,1,72,168H32a8,8,0,0,0,0,16Zm120-69.34a8,8,0,0,0,6.57-3.42L157.93,96.48A31.82,31.82,0,0,1,184,83.2h20.69l-18.35,18.34a8,8,0,0,0,11.32,11.32l32-32a8,8,0,0,0,0-11.32l-32-32a8,8,0,0,0-11.32,11.32L204.69,67.2H184a47.75,47.75,0,0,0-39.2,20.35l-1.37,2A8,8,0,0,0,152,114.66Z"/></svg>';
-   const examples=document.createElement('div');examples.setAttribute('aria-live','polite');
-   toolbar.append(button);details.append(examples,toolbar);
-   const storageKey='mj-examples-'+details.closest('.item').querySelector('strong').firstChild.textContent.trim();
-   let previous=[];try{previous=JSON.parse(sessionStorage.getItem(storageKey)||'[]')}catch(e){}
-   function overlap(a,b){const counts=new Map();a.forEach(t=>counts.set(t.src,(counts.get(t.src)||0)+1));let shared=0;b.forEach(t=>{let count=counts.get(t.src)||0;if(count){shared++;counts.set(t.src,count-1)}});return shared}
-   function choose(){
-     const available=hands.map((_,i)=>i), selected=[];
-     if(pattern==='Round Wind / Seat Wind'){winds.forEach(wind=>{const candidates=available.filter(i=>hands[i].filter(t=>t.src.includes('tile-'+wind+'.png')).length>=3);if(candidates.length){const fresh=candidates.filter(i=>!previous.includes(i)),pool=fresh.length?fresh:candidates,pick=pool[Math.floor(Math.random()*pool.length)];selected.push(pick);available.splice(available.indexOf(pick),1)}});previous=selected;try{sessionStorage.setItem(storageKey,JSON.stringify(selected))}catch(e){}return selected}
-     while(available.length&&selected.length<3){
-       const ranked=available.map(i=>({i,overlap:selected.length?Math.max(...selected.map(j=>overlap(hands[i],hands[j]))):0,previous:previous.includes(i)?1:0}));
-       const low=Math.min(...ranked.map(x=>x.overlap));let candidates=ranked.filter(x=>x.overlap===low);
-       const fresh=candidates.filter(x=>!x.previous);if(fresh.length)candidates=fresh;
-       const pick=candidates[Math.floor(Math.random()*candidates.length)].i;selected.push(pick);available.splice(available.indexOf(pick),1);
-     }
-     if(selected.length>1&&selected.join(',')===previous.join(','))selected.push(selected.shift());
-     previous=selected;try{sessionStorage.setItem(storageKey,JSON.stringify(selected))}catch(e){}return selected;
-   }
-   function draw(){
-     examples.replaceChildren();choose().forEach((index,rowIndex)=>{
-       const row=document.createElement('div');row.className='example-tiles';
-       let tiles=randomOrder(hands[index]);
-       if(pattern==='Thirteen Orphans'){
-         const counts=new Map();tiles.forEach(tile=>counts.set(tile.src,(counts.get(tile.src)||0)+1));
-         const pairSrc=[...counts].find(([,count])=>count===2)?.[0];
-         if(pairSrc){const pair=tiles.filter(tile=>tile.src===pairSrc);tiles=tiles.filter(tile=>tile.src!==pairSrc);const pos=Math.floor(Math.random()*(tiles.length+1));tiles.splice(pos,0,...pair)}
-       }
-       if(pattern==='Round Wind / Seat Wind'){
-         const matched=winds.find(wind=>tiles.filter(t=>t.src.includes('tile-'+wind+'.png')).length>=3);
-         const caption=document.createElement('div');caption.className='bonus-caption';caption.textContent=tileName(matched)+' as round or seat wind';examples.appendChild(caption);
-       }
-       tiles.forEach((tile,tileIndex)=>{
-         if(pattern==='All Concealed Triplets'&&rowIndex===2){const back=document.createElement('span');back.className='tile-back';back.setAttribute('role','img');back.setAttribute('aria-label','Concealed '+tile.alt);row.appendChild(back);return}
-         const img=document.createElement('img');img.src=tile.src;img.alt=tile.alt;img.loading='lazy';if(pattern==='Thirteen Orphans'&&tiles.filter(t=>t.src===tile.src).length===2){img.alt+=' (pair)'}row.appendChild(img);
-       });
-       if(pattern==='All Concealed Triplets'&&rowIndex===2){const label=document.createElement('span');label.className='concealed-label';label.textContent='Concealed';row.appendChild(label)}
-       examples.appendChild(row);
-     });
-   }
-   button.addEventListener('click',draw);draw();
  });
  search.addEventListener('input',update);buttons.forEach(button=>button.addEventListener('click',()=>{category=button.dataset.filter;buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));update();button.scrollIntoView({block:'nearest',inline:'nearest'});const top=document.querySelector('.tools').getBoundingClientRect().top+window.scrollY;window.scrollTo({top:Math.max(0,top),behavior:'auto'})}));update();
 })();
