@@ -752,12 +752,15 @@ function tileGrid(fi){ let g = TGRID.get(fi); if(g) return g; g = new Uint8Array
 let TILES = [];
 /* the mahjong orange tree: a round canopy that bears small tiles for fruit; a dragon walking into the trunk shakes some down */
 let TREES = [];
+const TRX = 24, TRY = 18, TTH = 24, TCY = TTH + TRY - 5;   // canopy radii, trunk height, canopy centre above the ground (tree pixels)
 const LEAF = [[39,80,10],[59,109,17],[78,130,30],[99,153,34],[151,196,89]], BARK2 = [[92,62,40],[122,86,56],[62,42,30]];
 function treesMake(){ if(cfg.ground === 'none' && !SEA) return; const n = W > 900 ? 2 : 1;
   for(let i=0; i<n; i++){ const rd = rng(ri(1, 1e9)), cells = [], fruit = [];
-    for(let y=-12; y<=12; y++) for(let x=-15; x<=15; x++){ const e = (x/15)**2 + (y/12)**2 + (rd() - .5)*.25; if(e > 1) continue;
-      const lit = (-x - y)/27 + (rd() - .5)*.6; cells.push([x, y, lit > .45 ? 4 : lit > .1 ? 3 : lit > -.3 ? 2 : lit > -.7 ? 1 : 0]); }
-    for(const [fx, fy] of [[-8,-2],[7,-5],[0,3],[-3,-8],[10,3],[-10,6]].slice(0, ri(4, 6))) fruit.push({fx, fy, grow: rr(.6, 1), face: ri(0, TFACES.length - 1), jel: pick(TJELLO), wa: 0, wp: rr(0, 6), lean: 0, char: 0, h: 0, tile: true, fruit: true});
+    for(let y=-TRY; y<=TRY; y++) for(let x=-TRX; x<=TRX; x++){ const bump = .12*Math.sin(Math.atan2(y, x)*5 + i), e = (x/TRX)**2 + (y/TRY)**2 + (rd() - .5)*.2 - bump; if(e > 1) continue;   // a lumpy round crown
+      const lit = (-x - y)/(TRX + TRY) + (rd() - .5)*.6; cells.push([x, y, lit > .45 ? 4 : lit > .1 ? 3 : lit > -.3 ? 2 : lit > -.7 ? 1 : 0]); }
+    const spots = []; for(let k=0; k<200 && spots.length < 10; k++){ const fx = Math.round(rr(-.78, .78)*TRX), fy = Math.round(rr(-.7, .72)*TRY);
+      if((fx/TRX)**2 + (fy/TRY)**2 < .62 && spots.every(([a, b]) => Math.abs(a - fx) > 5 || Math.abs(b - fy) > 7)) spots.push([fx, fy]); }
+    for(const [fx, fy] of spots) fruit.push({fx, fy, grow: rr(.6, 1), face: ri(0, TFACES.length - 1), jel: pick(TJELLO), wa: 0, wp: rr(0, 6), lean: 0, char: 0, h: 0, tile: true, fruit: true});
     TREES.push({tree: true, x: W*(n === 1 ? rr(.25, .75) : (i + .5)/n + rr(-.1, .1)), fu: rr(.05, .3), cells, fruit, shake: 0, cool: 0}); } }
 function treeFy(r){ const [a, b] = band(); return a + r.fu*(b - a); }
 function treeS(r){ return Math.min(depthS(treeFy(r))*1.7, 6); }
@@ -765,14 +768,14 @@ function treeBump(d){ for(const r of TREES){ if(r.cool || Math.abs(d.fy - treeFy
     if(gap > 0 && gap < GW*.42*d.s + 3*s){ r.shake = 40; r.cool = 50; d.dir *= -1; d.hop = 12; d.cool = 30; sparks.push({x: r.x - d.dir*2*s, y: d.cy, n: 10, s: d.s});
       const ripe = r.fruit.filter(f => f.grow >= 1); let k = ri(1, 3);
       while(k-- > 0 && ripe.length && TILES.length < 9){ const f = ripe.splice(ri(0, ripe.length - 1), 1)[0], fs = s*.25;   // it falls off and lands as a full tile
-        const [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = treeFy(r) - 22*s + f.fy*s + TGH*fs*.5;
+        const [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = treeFy(r) - TCY*s + f.fy*s + TGH*fs*.5;
         TILES.push({x: r.x + f.fx*s, fu: (fy - a)/Math.max(1, b - a), vx: rr(-1.5, 1.5)*K, wa: 1, wp: 0, lean: 0, face: f.face, jel: f.jel, cool: 20, tile: true, h: Math.max(0, fy - by), vh: rr(0, 2)*K, burn: 0, char: 0, hp: 1, ss: fs, drop: true});
         f.grow = 0; f.face = ri(0, TFACES.length - 1); f.jel = pick(TJELLO); } } } }
 function treesTick(){ for(const r of TREES){ if(r.cool) r.cool--; if(r.shake) r.shake--;
     for(const f of r.fruit){ if(f.grow < 1) f.grow = Math.min(1, f.grow + .0012); f.wp += .4; f.wa = Math.max(f.wa*.95, r.shake/40); } } }   // fruit regrows slowly
 function drawTree(r){ const s = treeS(r), b = Math.max(1, Math.round(s)), fy = treeFy(r), sx = r.shake ? Math.round(Math.sin(r.shake*.9)*r.shake/40*2)*b : 0, x0 = Math.round(r.x/b)*b;
-  for(let y=0; y<16; y++) for(let x=-2; x<=2; x++){ const w = y < 3 ? 3 : 2; if(Math.abs(x) > w) continue; ctx.fillStyle = 'rgb(' + BARK2[x < 0 ? 2 : x > 0 ? 0 : 1].join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
-  const cy = fy - 22*b; let last = '';
+  for(let y=0; y<TTH; y++) for(let x=-4; x<=4; x++){ const w = y < 4 ? 4 : 3; if(Math.abs(x) > w) continue; ctx.fillStyle = 'rgb(' + BARK2[x < 0 ? 2 : x > 0 ? 0 : 1].join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
+  const cy = fy - TCY*b; let last = '';
   for(const [x, y, c] of r.cells){ const col = 'rgb(' + LEAF[c].join(',') + ')'; if(col !== last){ ctx.fillStyle = col; last = col; } ctx.fillRect(x0 + x*b + sx, cy + y*b, b, b); }
   for(const f of r.fruit){ if(f.grow < .15) continue; const fs = s*.25*Math.min(1, f.grow + .2);
     if(f.grow < .5){ ctx.fillStyle = 'rgb(255,252,240)'; ctx.fillRect(x0 + f.fx*b + sx, cy + f.fy*b, b, b); continue; }   // a blossom first
