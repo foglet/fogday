@@ -12,8 +12,9 @@ const BEACHES = {
   ocean:   {name: 'Ocean Beach',  st: 'ob',  lat: 37.7594, lon: -122.5107}
 };
 const STATION_LINE = {ref: 'NOAA 9414290 · San Francisco · MLLW', ob: 'NOAA 9414275 · Ocean Beach · MLLW'};
-// Tide chart: 20 hours wide, centered on the viewed moment (now, or up to 36 hours ahead once dragged)
-const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, MAX_AHEAD_MS = 36*36e5;
+// Tide chart: 20 hours wide, centered on the viewed moment (now, or any time ahead once dragged; no end date)
+// WIN_MS: how much the tide cache / chart picture covers at once; it re-anchors as you drag past it
+const HALF_MS = 10*36e5, SPAN_MS = 2*HALF_MS, WIN_MS = 36*36e5;
 /* ---- Language: EN (default), FR, ES, ZH, from i18n.js; tap the code left of Info to cycle (remembered per visitor) ---- */
 const I18N = window.TIDE_I18N;
 let lang = 'en';
@@ -246,19 +247,22 @@ let view = todayKey();
 
 /* ---- Durations in words ("in about six hours") come from i18n.js, in each language, with the same thresholds ---- */
 
-/* ---- Viewed moment: now, or a time up to 36 hours ahead picked by dragging the chart.
+/* ---- Viewed moment: now, or any time ahead picked by dragging the chart (no limit going forward; it stops at now going back).
    scrub is null while live (the chart follows the clock); otherwise the absolute time being viewed. ---- */
 let scrub = null;
-const cursor = () => scrub===null ? Date.now() : Math.min(Math.max(scrub, Date.now()), Date.now()+MAX_AHEAD_MS);
+const cursor = () => scrub===null ? Date.now() : Math.max(scrub, Date.now());
 const isLive = () => scrub===null;
 
-/* ---- Tide cache: 36 hours (plus the chart's margins) of highs, lows and the curve, rebuilt each hour (and per beach), so dragging is smooth ---- */
+/* ---- Tide cache: a 36-hour window (plus the chart's margins) of highs, lows and the curve, so dragging is smooth.
+   Live, it starts at the current hour and is rebuilt each hour (and per beach). Dragged ahead, it stays put while the
+   viewed moment is inside it, and re-anchors (12 hours behind the viewed moment) once it leaves, so there is no end date. ---- */
 let tideCache = null;
 function tideData(){
-  const hr=Math.floor(Date.now()/36e5);
-  if (tideCache && tideCache.beach===beach && tideCache.hr===hr) return tideCache;
-  const from=hr*36e5-HALF_MS-36e5, to=hr*36e5+MAX_AHEAD_MS+HALF_MS+2*36e5;
-  tideCache = {beach, hr, ex: extremes(beach, from, to), tl: timeline(beach, from, to, 600)};
+  const nowA=Math.floor(Date.now()/36e5)*36e5, c=cursor(), C=tideCache;
+  if (C && C.beach===beach && (isLive() ? C.a===nowA : C.a>=nowA && c>=C.a && c<=C.a+WIN_MS)) return C;
+  const a = isLive() ? nowA : Math.max(nowA, Math.floor(c/36e5)*36e5 - 12*36e5);
+  const from=a-HALF_MS-36e5, to=a+WIN_MS+HALF_MS+2*36e5;
+  tideCache = {beach, a, hr:a/36e5, ex: extremes(beach, from, to), tl: timeline(beach, from, to, 600)};
   return tideCache;
 }
 
@@ -1599,7 +1603,7 @@ window.TIDE_BEACH = {
   compass: COMPASS.slice(),
   set: k => { if (!BEACHES[k] || k===beach) return; beach=k; newSea(); render(); dispatchEvent(new CustomEvent('tide-beach', {detail: beach})); }
 };
-/* ---- Drag the chart sideways to look ahead, up to 36 hours; it stops at now going back.
+/* ---- Drag the chart sideways to look ahead, as far as you like; it stops at now going back.
    The tide panel, sun, moon and forecast follow the center line. ---- */
 let stripW=1, frame=0, tileAt=0, tileTimer=0, tileKey='';
 // Tiles (sun, moon, forecast) redraw at most ten times a second while sliding, and once more when it settles
@@ -1612,6 +1616,7 @@ function updateTiles(){
 }
 function redrawViewed(){
   frame=0;
+  buildStrip();   // rebuilds only when the tide window re-anchors (dragged past it)
   placeStrip();
   const wait=100-(performance.now()-tileAt);
   if (wait<=0) updateTiles(); else if (!tileTimer) tileTimer=setTimeout(updateTiles, wait);
@@ -1619,11 +1624,10 @@ function redrawViewed(){
 function setCursor(t){
   // The bird stays on the pole now, always (Oct 2026); restore the fly-off with: poleGullScare();
   const now=Date.now();
-  t=Math.min(t, now+MAX_AHEAD_MS);
   scrub = t <= now+6e4 ? null : t;   // within a minute of now is live again
   if (scrub!==null) seaAway=true;
   if (!frame) frame=requestAnimationFrame(redrawViewed);
-  return t>now && t<now+MAX_AHEAD_MS;   // false once it hits an end
+  return t>now;   // false once it hits now (the only end)
 }
 /* New sea life when the chart comes back to now (tap, Home, or a drag / fling / glide that ends at now), and on a beach change */
 let seaAway=false;
@@ -1658,7 +1662,7 @@ function glideTo(target){
   const strip=$('strip');
   strip.tabIndex=0;
   strip.setAttribute('role','slider');
-  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look up to 36 hours ahead. Tap to return to now.');
+  strip.setAttribute('aria-label','Tide chart. Drag sideways, or use the arrow keys, to look ahead. Tap to return to now.');
   let drag=null;
   strip.addEventListener('pointerdown', e=>{
     if (e.button>0) return;
@@ -1693,17 +1697,16 @@ function glideTo(target){
     clearTimeout(wheelEnd); wheelEnd=setTimeout(()=>{ if (!anim) settled(); }, 250);
   }, {passive:false});
   let wheelEnd=0;
-  // Keys: ← / → an hour, Shift for a day; Home is now, End 36 hours ahead
+  // Keys: ← / → an hour, Shift for a day; Home is now
   strip.addEventListener('keydown', e=>{
     const step=e.shiftKey?864e5:36e5, k=e.key, base=anim&&glideTarget!=null?glideTarget:cursor();
     let to;
     if (k==='ArrowRight') to=base+step;
     else if (k==='ArrowLeft') to=base-step;
     else if (k==='Home') to=Date.now();
-    else if (k==='End') to=Date.now()+MAX_AHEAD_MS;
     else return;
     e.preventDefault();
-    glideTarget=Math.min(Math.max(to, Date.now()), Date.now()+MAX_AHEAD_MS); glideTo(glideTarget);
+    glideTarget=Math.max(to, Date.now()); glideTo(glideTarget);
   });
 }
 let glideTarget=null;
