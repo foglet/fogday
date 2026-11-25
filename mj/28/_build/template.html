@@ -583,6 +583,7 @@ function flyStep(d){
   d.s += (d.sT - d.s)*.02;
   if(d.loopN){ const u = d.loopU++/d.loopN, ang = d.la0 - d.ldir*2*Math.PI*u; d.vx = Math.cos(ang)*d.lsp; d.vy = Math.sin(ang)*d.lsp;
     if(d.loopU >= d.loopN) d.loopN = 0; return; }
+  if(d.chase && chaseStep(d)) return;
   if(following()){ d.oa += .05*(d.ri > 60*K ? -1 : 1); steer(d, P0.x + Math.cos(d.oa)*d.ri, P0.y + Math.sin(d.oa)*d.ri*.6, 7*K, .08); d.ft = Math.max(d.ft, 30); return; }
   switch(d.pat){
     case 'circles': { d.ca += d.cw*(1 + .2*Math.sin(T*.01)); const tx = d.ccx + Math.cos(d.ca)*d.cr, ty = d.ccy + Math.sin(d.ca)*d.cr*.7;
@@ -787,7 +788,20 @@ function tileFy(t){ const [a, b] = band(); return a + t.fu*(b - a); }
 function tileS0(t){ return depthS(tileFy(t))*.65; }
 function tileS(t){ return t.ss || tileS0(t); }
 function tileHit(t, dir, sp, up){ t.vx = dir*sp; t.wa = 1; t.wp = 0; t.cool = 24; if(up) t.vh = rr(6, 11)*K*Math.sqrt(LOWG()); let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f; }   // a new face, straight away; up: sent flying
-function pickUp(d, t){ t.carry = d; d.carry = t; d.carryT = ri(150, 420); t.vx = t.vh = t.h = 0; d.say = 80; takeOff(d); }   // like a stork with a baby; shouts zi mo (self-drawn)
+function pickUp(d, t){ t.carry = d; d.carry = t; d.carryT = ri(150, 420); t.vx = t.vh = t.h = 0; d.say = 80; d.sayTxt = 'ZI MO!'; takeOff(d); }   // like a stork with a baby; shouts zi mo (self-drawn)
+/* thieves: an empty-mouthed flier chases a dragon carrying a tile and snatches it; the one robbed may chase it back */
+function chaseStep(d){ const v = d.chase, t = v && v.carry;
+  if(!t || d.carry || !dg.includes(v) || --d.chaseT <= 0){ d.chase = null; return false; }
+  steer(d, t.x + (v.vx || 0)*6, t.by - TGH*tileS(t) - GH*d.s*.15, 7.5*K, .12); d.ft = Math.max(d.ft, 30); return true; }
+function steal(d, v){ const t = v.carry; v.carry = null; t.carry = d; d.carry = t; d.carryT = ri(150, 400); d.chase = null; t.wa = 1;
+  let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f;   // snatched: it shows a new face
+  d.say = 80; d.sayTxt = 'QIANG GANG!'; v.say = 60; v.sayTxt = 'HEY!'; sparks.push({x: t.x, y: t.by - TGH*tileS(t), n: 12, s: d.s});   // qiang gang: robbing the kong
+  if(v.mode === 'fly' && R() < .3){ v.chase = d; v.chaseT = ri(100, 220); } }
+function thiefTick(){ const carriers = adults().filter(v => v.carry && v.mode === 'fly');
+  if(carriers.length && R() < .005){ const free = adults().filter(d => d.mode === 'fly' && !d.carry && !d.chase && !d.loopN && d.mode !== 'dizzy');
+    if(free.length){ const d = pick(free), v = carriers.reduce((a, b) => Math.hypot(a.cx - d.cx, a.cy - d.cy) < Math.hypot(b.cx - d.cx, b.cy - d.cy) ? a : b); d.chase = v; d.chaseT = ri(150, 300); } }
+  for(const d of adults()){ const v = d.chase, t = v && v.carry; if(!t || d.mode !== 'fly') continue; const [mx, my] = mouth(d);
+    if(Math.hypot(mx - t.x, my - (t.by - TGH*tileS(t))) < 18*K) steal(d, v); } }
 function dropTile(d){ const t = d.carry; if(!t) return; d.carry = null; t.carry = null; t.cool = 30;
   const [a, b] = band(); let fy = a + t.fu*(b - a); if(fy < t.by){ fy = clamp(t.by + rr(0, 30*K), a, b); t.fu = (fy - a)/Math.max(1, b - a); }
   t.h = Math.max(0, fy - t.by); t.vx = (d.vx || 0)*.8; t.vh = -(d.vy || 0)*.5; t.wa = 1; t.drop = true; }
@@ -795,6 +809,7 @@ function carryTick(t){ const d = t.carry;
   if(!dg.includes(d) || d.mode === 'walk' || d.mode === 'dive' || d.mode === 'under' || d.mode === 'off' || d.mode === 'leave' || d.mode === 'spin' || d.mode === 'dizzy' || (d.mode === 'land' && d.near) || --d.carryT <= 0){ dropTile(d); return; }
   const [mx, my] = mouth(d), s = tileS(t); t.mx = mx; t.my = my; t.x = mx - (d.yx || d.dir)*2*s; t.by = d.cy + GH*d.s*.5 + 3*s + TGH*s; t.lean += (-(d.vx || 0)*.09 - t.lean)*.15; t.wp += .3; t.wa = Math.max(t.wa, .25); }
 function tilesTick(){ for(const d of dg) if(d.say > 0) d.say--;
+  thiefTick();
   for(const t of TILES.slice()){ if(t.gone){ goneTick(t); continue; } if(t.carry){ carryTick(t); if(t.carry) continue; } if(t.ss && !t.h){ t.ss += (tileS0(t) - t.ss)*.08; if(Math.abs(t.ss - tileS0(t)) < .05) t.ss = 0; } const s = tileS(t), hw = TGW*s/2;
     t.x += t.vx; t.vx *= t.h > 0 ? .985 : .9; if(Math.abs(t.vx) < .05) t.vx = 0;
     if(t.h > 0 || t.vh > 0){ t.h += t.vh; t.vh -= .45*K/LOWG(); if(t.h <= 0){ t.h = 0; t.wa = 1; t.wp = 0; if(t.drop && t.vh < -2*K){ let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f; } t.drop = false; t.vh = t.vh < -2.5*K ? -t.vh*.3 : 0; } }   // up, down, a small bounce
@@ -835,7 +850,7 @@ function tileFire(t, s){ const hw = TGW*s/2, bot = t.carry ? t.by : tileFy(t) - 
   for(let i=0; i<(f > .5 ? 2 : 1); i++){ const e = puff('fire', t.x + rr(-hw*.8, hw*.8), top + 2*s, -Math.PI/2, s*(.6 + .5*f), t.vx, -Math.max(0, t.vh)); e.tile = true; bits.push(e); }
   if(R() < .15) bits.push(puff('steam', t.x + rr(-hw*.5, hw*.5), top, -Math.PI/2, s));   // smoke
   if(!t.burn) for(let i=0; i<4; i++) bits.push(puff('steam', t.x + rr(-hw, hw), top, -Math.PI/2, s*1.2)); }
-function drawSay(d){ if(!(d.say > 0)) return; const s = Math.max(2, Math.round(d.s*.7)), txt = 'ZI MO!', fs = Math.round(Math.max(11, 4.5*s));
+function drawSay(d){ if(!(d.say > 0)) return; const s = Math.max(2, Math.round(d.s*.7)), txt = d.sayTxt || 'ZI MO!', fs = Math.round(Math.max(11, 4.5*s));
   ctx.font = '700 ' + fs + 'px Silkscreen, "Pixelify Sans", monospace'; const w = Math.ceil(ctx.measureText(txt).width), pad = s*2, bw = w + pad*2, bh = fs + pad*2;
   const x = Math.round(clamp(d.cx - bw/2, 4, W - bw - 4)), y = Math.round(Math.max(4, d.cy - GH*d.s*.5 - bh - 4*s)), a = Math.min(1, d.say/12);
   ctx.globalAlpha = a; ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(x - s, y, bw + 2*s, bh); ctx.fillRect(x, y - s, bw, bh + 2*s);   // a block bubble, outline first
@@ -1187,7 +1202,7 @@ titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 countShow();   // each visit counts as a scene shown
-window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump};
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump, steal};
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=2" data-colors="none" defer></script>  <!-- bento: new color + animation each load -->
