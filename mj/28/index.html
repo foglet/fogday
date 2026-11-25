@@ -711,7 +711,7 @@ function tick(){ T++;
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
     else if(--d.fireT <= 0){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } }
-  tilesTick(); treesTick();
+  tilesTick(); treesTick(); leavesTick();
   weatherTick();
   bits = moveBits(bits);
   sparks = sparks.filter(s => --s.n > 0);
@@ -762,27 +762,72 @@ function treesMake(){ if(cfg.ground === 'none' && !SEA) return; const n = W > 90
     const spots = []; for(let k=0; k<200 && spots.length < 10; k++){ const fx = Math.round(rr(-.78, .78)*TRX), fy = Math.round(rr(-.7, .72)*TRY);
       if((fx/TRX)**2 + (fy/TRY)**2 < .62 && spots.every(([a, b]) => Math.abs(a - fx) > 5 || Math.abs(b - fy) > 7)) spots.push([fx, fy]); }
     for(const [fx, fy] of spots) fruit.push({fx, fy, grow: rr(.6, 1), face: ri(0, TFACES.length - 1), jel: pick(TJELLO), wa: 0, wp: rr(0, 6), lean: 0, char: 0, h: 0, tile: true, fruit: true});
-    TREES.push({tree: true, x: W*(n === 1 ? rr(.25, .75) : (i + .5)/n + rr(-.1, .1)), fu: rr(.05, .3), cells, fruit, shake: 0, cool: 0}); } }
+    TREES.push({tree: true, x: W*(n === 1 ? rr(.25, .75) : (i + .5)/n + rr(-.1, .1)), fu: rr(.05, .3), cells, alive: new Uint8Array(cells.length).fill(1), fruit, shake: 0, cool: 0, g: rr(.45, .8), burn: 0, hp: 1, scorch: 0, cold: 0, dead: 0}); } }
 function treeFy(r){ const [a, b] = band(); return a + r.fu*(b - a); }
-function treeS(r){ return Math.min(depthS(treeFy(r))*1.7, 6); }
-function treeBump(d){ for(const r of TREES){ if(r.cool || Math.abs(d.fy - treeFy(r)) > 12*K) continue; const s = treeS(r), gap = (r.x - d.cx)*d.dir;
-    if(gap > 0 && gap < GW*.42*d.s + 3*s){ r.shake = 40; r.cool = 50; d.dir *= -1; d.hop = 12; d.cool = 30; sparks.push({x: r.x - d.dir*2*s, y: d.cy, n: 10, s: d.s});
-      const ripe = r.fruit.filter(f => f.grow >= 1); let k = ri(1, 3);
+function treeS1(r){ return Math.min(depthS(treeFy(r))*1.7, 6); }   // full grown
+function treeS(r){ return treeS1(r)*r.g; }
+function treeBump(d){ for(const r of TREES){ if(r.dead || r.cool || Math.abs(d.fy - treeFy(r)) > 12*K) continue; const s = treeS(r), gap = (r.x - d.cx)*d.dir;
+    if(gap > 0 && gap < GW*.42*d.s + 3*s){ r.shake = 40; r.cool = 50; for(let k=0; k<ri(6, 14); k++) shedLeaf(r); d.dir *= -1; d.hop = 12; d.cool = 30; sparks.push({x: r.x - d.dir*2*s, y: d.cy, n: 10, s: d.s});
+      const ripe = r.fruit.filter(f => f.grow >= 1 && r.g > .5); let k = ri(1, 3);
       while(k-- > 0 && ripe.length && TILES.length < 9){ const f = ripe.splice(ri(0, ripe.length - 1), 1)[0], fs = s*.25;   // it falls off and lands as a full tile
         const [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = treeFy(r) - TCY*s + f.fy*s + TGH*fs*.5;
         TILES.push({x: r.x + f.fx*s, fu: (fy - a)/Math.max(1, b - a), vx: rr(-1.5, 1.5)*K, wa: 1, wp: 0, lean: 0, face: f.face, jel: f.jel, cool: 20, tile: true, h: Math.max(0, fy - by), vh: rr(0, 2)*K, burn: 0, char: 0, hp: 1, ss: fs, drop: true});
         f.grow = 0; f.face = ri(0, TFACES.length - 1); f.jel = pick(TJELLO); } } } }
-function treesTick(){ for(const r of TREES){ if(r.cool) r.cool--; if(r.shake) r.shake--;
-    for(const f of r.fruit){ if(f.grow < 1) f.grow = Math.min(1, f.grow + .0012); f.wp += .4; f.wa = Math.max(f.wa*.95, r.shake/40); } } }   // fruit regrows slowly
-function drawTree(r){ const s = treeS(r), b = Math.max(1, Math.round(s)), fy = treeFy(r), sx = r.shake ? Math.round(Math.sin(r.shake*.9)*r.shake/40*2)*b : 0, x0 = Math.round(r.x/b)*b;
-  for(let y=0; y<TTH; y++) for(let x=-4; x<=4; x++){ const w = y < 4 ? 4 : 3; if(Math.abs(x) > w) continue; ctx.fillStyle = 'rgb(' + BARK2[x < 0 ? 2 : x > 0 ? 0 : 1].join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
-  const cy = fy - TCY*b; let last = '';
-  for(const [x, y, c] of r.cells){ const col = 'rgb(' + LEAF[c].join(',') + ')'; if(col !== last){ ctx.fillStyle = col; last = col; } ctx.fillRect(x0 + x*b + sx, cy + y*b, b, b); }
-  for(const f of r.fruit){ if(f.grow < .15) continue; const fs = s*.25*Math.min(1, f.grow + .2);
-    if(f.grow < .5){ ctx.fillStyle = 'rgb(255,252,240)'; ctx.fillRect(x0 + f.fx*b + sx, cy + f.fy*b, b, b); continue; }   // a blossom first
-    f.x = r.x + f.fx*s + sx; f.ss = fs; f.by = cy + f.fy*b + TGH*fs*.5; f.carry = true; drawTile(f); f.carry = false; } }
+let LEAVES = [];
+function leafAt(r, i){ const [x, y] = r.cells[i], s = treeS(r); return [r.x + x*s, treeFy(r) - TCY*s + y*s]; }
+function shedLeaf(r, i, ember){ if(LEAVES.length > 320) return; const alive = []; if(i === undefined){ for(let k=0; k<8; k++){ const j = ri(0, r.cells.length - 1); if(r.alive[j]){ i = j; break; } } if(i === undefined) return; }
+  const [x, y] = leafAt(r, i), c = ember ? pick([[250,140,40],[220,70,30],[60,40,30]]) : r.scorch > .3 ? [120,90,40] : pick([LEAF[1], LEAF[2], LEAF[3], [196,170,60]]);
+  LEAVES.push({x, y, vx: rr(-.4, .4)*K, vy: rr(0, .4)*K, ph: rr(0, 6), c, ember, gy: treeFy(r) + rr(-4, 34)*K, life: 0, sz: Math.max(2, Math.round(treeS1(r)*.8))}); }
+function leavesTick(){ const w = WIND();
+  for(const L of LEAVES){ if(L.life){ L.life--; continue; }
+    L.ph += .12; L.vy = Math.min(L.vy + .03*K, 1.1*K); L.x += L.vx + Math.sin(L.ph)*.7*K + w*.35*K; L.y += L.vy;   // drifts and sways down
+    if(L.ember && R() < .006) L.life = 1;   // an ember burns out in the air
+    if(L.y >= L.gy){ L.y = L.gy; L.life = L.ember ? ri(20, 60) : ri(250, 600); } }
+  LEAVES = LEAVES.filter(L => !(L.life === 1) && L.x > -20 && L.x < W + 20); }
+function drawLeaves(){ for(const L of LEAVES){ const a = L.life ? Math.min(1, L.life/80) : 1; if(a <= 0) continue; ctx.globalAlpha = a; ctx.fillStyle = 'rgb(' + L.c.join(',') + ')';
+    ctx.fillRect(Math.round(L.x/L.sz)*L.sz, Math.round(L.y/L.sz)*L.sz, L.sz, L.sz); } ctx.globalAlpha = 1; }
+function treeFire(r){ if(r.dead) return; const s = treeS(r), cx = r.x, cy = treeFy(r) - TCY*s, rx = TRX*s, ry = TRY*s;   // fire catches in the crown; water or rain puts it out
+  let hot = false;
+  for(const e of bits){ if(e.n >= e.L || e.src === r) continue; const u = (e.x - cx)/rx, v = (e.y - cy)/ry; if(u*u + v*v > 1) continue;
+    if(e.k === 'fire' && e.n > 1 && !e.tile) hot = true;
+    else if(e.k === 'drop' && r.burn){ r.burn = 0; r.cold = 300; e.n = e.L; for(let i=0; i<8; i++) bits.push(puff('steam', cx + rr(-rx, rx)*.7, cy + rr(-ry, ry)*.5, -Math.PI/2, s*1.2)); } }
+  if(hot && !r.burn && !r.cold && r.g > .4 && R() < .006) r.burn = ri(300, 600);   // flame touching the crown: a small chance each tick that it catches
+  if(!r.burn) return;
+  if(cfg.wx === 'rain' || cfg.wx === 'snow') r.burn = Math.max(0, r.burn - 3);
+  r.burn--; r.hp -= .0016; r.scorch = Math.min(1, r.scorch + .004);
+  const heat = Math.min(1, r.scorch*3 + .3); for(let k=0; k<Math.round(9*heat); k++){ const i = ri(0, r.cells.length - 1); if(!r.alive[i] || r.cells[i][1] > TRY*.4) continue; const [x, y] = leafAt(r, i), e = puff('fire', x, y, -Math.PI/2, s*1.5); e.src = r; bits.push(e); }   // tongues of flame from the crown
+  if(R() < .3) bits.push(puff('steam', cx + rr(-rx, rx)*.5, cy - ry*.6, -Math.PI/2, s*1.4));   // smoke
+  if(R() < .5){ const i = ri(0, r.cells.length - 1); if(r.alive[i]){ r.alive[i] = 0; shedLeaf(r, i, true); } }   // leaves burn and fall as embers
+  if(R() < .01){ const f = pick(r.fruit); if(f.grow >= 1 && r.g > .5){ f.grow = 0;   // a burning fruit drops
+      if(TILES.length < 9){ const fs = s*.25, [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = cy + f.fy*s + TGH*fs*.5;
+        TILES.push({x: r.x + f.fx*s, fu: (fy - a)/Math.max(1, b - a), vx: rr(-1, 1)*K, wa: 1, wp: 0, lean: 0, face: f.face, jel: f.jel, cool: 20, tile: true, h: Math.max(0, fy - by), vh: 0, burn: ri(80, 200), char: .15, hp: .6, ss: fs, drop: true}); } } }
+  if(r.hp <= 0){ r.dead = ri(500, 900); r.burn = 0; for(const f of r.fruit) f.grow = 0; r.alive.fill(0); for(let i=0; i<12; i++) bits.push(puff('steam', cx + rr(-rx, rx)*.6, cy + rr(-ry, ry)*.6, -Math.PI/2, s*1.6)); }
+  else if(!r.burn) r.cold = 900; }
+function torch(){ for(const r of TREES){ if(r.dead || r.burn || r.cold || r.g < .6) continue; const s = treeS(r), cx = r.x, cy = treeFy(r) - TCY*s;   // a fire breather flying by the crown may breathe on it
+    for(const d of adults()) if(!d.water && !d.breath && d.mode === 'fly' && Math.abs(d.cy - cy) < TRY*s*1.2 && Math.abs(cx - d.cx) < TRX*s*1.8 && Math.sign(cx - d.cx) === d.dir && R() < .004){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } } }
+function treesTick(){ torch(); for(const r of TREES){ if(r.cool) r.cool--; if(r.shake) r.shake--; if(r.cold) r.cold--;
+    if(r.dead){ if(--r.dead <= 0){ r.dead = 0; r.g = .15; r.hp = 1; r.scorch = 0; r.alive.fill(1); } continue; }   // a sapling comes up from the stump
+    treeFire(r);
+    if(!r.burn){ r.g = Math.min(1, r.g + .00008); r.scorch = Math.max(0, r.scorch - .0008); r.hp = Math.min(1, r.hp + .0003);   // grows; leaves come back
+      if(R() < .05){ const i = ri(0, r.cells.length - 1); r.alive[i] = 1; }
+      if(R() < .012*r.g) shedLeaf(r); }   // now and then a leaf falls
+    for(const f of r.fruit){ if(f.grow < 1 && !r.burn && r.g > .5) f.grow = Math.min(1, f.grow + .0012); f.wp += .4; f.wa = Math.max(f.wa*.95, r.shake/40); } } }   // fruit regrows slowly
+function drawTree(r){ const s1 = treeS1(r), b = Math.max(1, Math.round(s1)), g = r.g, fy = treeFy(r), sx = r.shake ? Math.round(Math.sin(r.shake*.9)*r.shake/40*2)*b : 0, x0 = Math.round(r.x/b)*b;
+  const th = Math.max(4, Math.round(TTH*g)), tw = Math.max(1, Math.round(3*g)), dead = r.dead > 0, char = dead ? .75 : r.scorch*.5;
+  const th2 = dead ? Math.round(th*.45) : th;   // burnt down: a charred stump
+  for(let y=0; y<th2; y++) for(let x=-tw-1; x<=tw+1; x++){ const w = y < Math.max(2, 4*g) ? tw + 1 : tw; if(Math.abs(x) > w) continue;
+    ctx.fillStyle = 'rgb(' + BARK2[x < 0 ? 2 : x > 0 ? 0 : 1].map(v => Math.round(v*(1 - char))).join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
+  if(dead){ for(let i=-7; i<=7; i++){ ctx.fillStyle = (i & 1) ? 'rgb(84,80,86)' : 'rgb(120,114,118)'; ctx.fillRect(x0 + i*b, fy - b, b, b); } return; }   // ash round the stump
+  const cy = fy - Math.round(TCY*g)*b, sc = 1 - r.scorch*.55, seen = new Set(); let last = '';
+  for(let i=0; i<r.cells.length; i++){ if(!r.alive[i]) continue; const [x, y, c] = r.cells[i], gx = Math.round(x*g), gy = Math.round(y*g), key = gx*1000 + gy; if(seen.has(key)) continue; seen.add(key);
+    const col0 = LEAF[c], col = 'rgb(' + (r.scorch > .02 ? [col0[0]*sc + 90*r.scorch, col0[1]*sc + 40*r.scorch, col0[2]*sc].map(Math.round) : col0).join(',') + ')';   // scorched leaves turn brown
+    if(col !== last){ ctx.fillStyle = col; last = col; } ctx.fillRect(x0 + gx*b + sx, cy + gy*b, b, b); }
+  if(g <= .5) return;
+  for(const f of r.fruit){ if(f.grow < .15) continue; const fs = s1*g*.25*Math.min(1, f.grow + .2), fx = Math.round(f.fx*g), fyy = Math.round(f.fy*g);
+    if(f.grow < .5){ ctx.fillStyle = 'rgb(255,252,240)'; ctx.fillRect(x0 + fx*b + sx, cy + fyy*b, b, b); continue; }   // a blossom first
+    f.x = x0 + fx*b + sx; f.ss = fs; f.by = cy + fyy*b + TGH*fs*.5; f.carry = true; drawTile(f); f.carry = false; } }
 
-function tilesMake(){ TILES = []; TREES = []; if(EMB) return; const n = ri(3, 5); treesMake();
+function tilesMake(){ TILES = []; TREES = []; LEAVES = []; if(EMB) return; const n = ri(3, 5); treesMake();
   for(let i=0; i<n; i++) TILES.push({x: W*(i + .5)/n + rr(-30, 30), fu: rr(.1, .9), vx: 0, wa: 0, wp: 0, lean: 0, face: ri(0, TFACES.length - 1), jel: pick(TJELLO), cool: 0, tile: true, h: 0, vh: 0, burn: 0, char: 0, hp: 1}); }
 function tileFy(t){ const [a, b] = band(); return a + t.fu*(b - a); }
 function tileS0(t){ return depthS(tileFy(t))*.65; }
@@ -1033,6 +1078,7 @@ function draw(){ for(const c of [ctxA, ctxB]){ c.setTransform(DPR, 0, 0, DPR, 0,
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgb(255,226,80)';
   for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } }
   if(cfg.wx !== 'clear'){ const t = TW; TW = null; drawWeather(); TW = t; }   // rain and snow, in front
+  drawLeaves();
   for(const d of dg) if(d.say > 0 && !offScreen(d)) drawSay(d);
   ctx = ctxA; }
 
@@ -1202,7 +1248,7 @@ titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 countShow();   // each visit counts as a scene shown
-window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump, steal};
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump, steal, get leaves(){ return LEAVES; }};
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=2" data-colors="none" defer></script>  <!-- bento: new color + animation each load -->
