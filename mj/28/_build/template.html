@@ -754,30 +754,39 @@ function tileGrid(fi){ let g = TGRID.get(fi); if(g) return g; g = new Uint8Array
 let TILES = [];
 /* the mahjong orange tree: a round canopy that bears small tiles for fruit; a dragon walking into the trunk shakes some down */
 let TREES = [];
-const TRX = 24, TRY = 18, TTH = 24, TCY = TTH + TRY - 5;   // canopy radii, trunk height, canopy centre above the ground (tree pixels)
 const LEAF = [[39,80,10],[59,109,17],[78,130,30],[99,153,34],[151,196,89]], BARK2 = [[92,62,40],[122,86,56],[62,42,30]];
-function treesMake(){ if(cfg.ground === 'none' && !SEA) return; const n = W > 900 ? 2 : 1;
-  for(let i=0; i<n; i++){ const rd = rng(ri(1, 1e9)), cells = [], fruit = [];
-    for(let y=-TRY; y<=TRY; y++) for(let x=-TRX; x<=TRX; x++){ const bump = .12*Math.sin(Math.atan2(y, x)*5 + i), e = (x/TRX)**2 + (y/TRY)**2 + (rd() - .5)*.2 - bump; if(e > 1) continue;   // a lumpy round crown
-      const lit = (-x - y)/(TRX + TRY) + (rd() - .5)*.6; cells.push([x, y, lit > .45 ? 4 : lit > .1 ? 3 : lit > -.3 ? 2 : lit > -.7 ? 1 : 0]); }
-    const spots = []; for(let k=0; k<200 && spots.length < 10; k++){ const fx = Math.round(rr(-.78, .78)*TRX), fy = Math.round(rr(-.7, .72)*TRY);
-      if((fx/TRX)**2 + (fy/TRY)**2 < .62 && spots.every(([a, b]) => Math.abs(a - fx) > 5 || Math.abs(b - fy) > 7)) spots.push([fx, fy]); }
-    for(const [fx, fy] of spots) fruit.push({fx, fy, grow: rr(.6, 1), face: ri(0, TFACES.length - 1), jel: pick(TJELLO), wa: 0, wp: rr(0, 6), lean: 0, char: 0, h: 0, tile: true, fruit: true});
-    TREES.push({tree: true, x: W*(n === 1 ? rr(.25, .75) : (i + .5)/n + rr(-.1, .1)), fu: rr(.05, .3), cells, alive: new Uint8Array(cells.length).fill(1), fruit, shake: 0, cool: 0, g: rr(.45, .8), burn: 0, hp: 1, scorch: 0, cold: 0, dead: 0}); } }
-function treeFy(r){ const [a, b] = band(); return a + r.fu*(b - a); }
+const RLEAF = [[20,52,30],[30,70,40],[44,90,50],[62,112,62],[104,150,90]], RBARK = [[150,78,52],[120,58,40],[92,44,32]];
+const treeKind = () => cfg.ground === 'none' && !SEA ? 'red' : 'orange';   // only mountains, no ground: a redwood rooted below the screen
+function shapeTree(r, kind){ const rd = rng(r.seed), cells = [], fruit = []; r.kind = kind;
+  if(kind === 'red'){ const G = r.G = {rx: 15, ry: 34, th: 30, tw: 3}; G.cy = G.th + G.ry - 3;   // a tall cone in shaggy tiers
+    for(let y=-G.ry; y<=G.ry; y++){ const u = (y + G.ry)/(2*G.ry), tier = ((y + G.ry) % 10)/10, half = (1 + u*G.rx)*(.62 + .38*tier);
+      for(let x=-G.rx; x<=G.rx; x++){ if(Math.abs(x) > half + (rd() - .5)*2.2) continue; const lit = (-x*1.4 - (tier - .5)*8)/G.rx + (rd() - .5)*.7;
+        cells.push([x, y, lit > .7 ? 4 : lit > .25 ? 3 : lit > -.2 ? 2 : lit > -.65 ? 1 : 0]); } } }
+  else { const G = r.G = {rx: 24, ry: 18, th: 24, tw: 3}; G.cy = G.th + G.ry - 5;
+    for(let y=-G.ry; y<=G.ry; y++) for(let x=-G.rx; x<=G.rx; x++){ const bump = .12*Math.sin(Math.atan2(y, x)*5 + r.seed), e = (x/G.rx)**2 + (y/G.ry)**2 + (rd() - .5)*.2 - bump; if(e > 1) continue;   // a lumpy round crown
+      const lit = (-x - y)/(G.rx + G.ry) + (rd() - .5)*.6; cells.push([x, y, lit > .45 ? 4 : lit > .1 ? 3 : lit > -.3 ? 2 : lit > -.7 ? 1 : 0]); } }
+  const G = r.G, inside = (fx, fy) => kind === 'red' ? fy > -G.ry*.6 && Math.abs(fx) < (1 + (fy + G.ry)/(2*G.ry)*G.rx)*.55 : (fx/G.rx)**2 + (fy/G.ry)**2 < .62;
+  const spots = []; for(let k=0; k<300 && spots.length < 10; k++){ const fx = Math.round(rr(-.78, .78)*G.rx), fy = Math.round(rr(-.8, .8)*G.ry);
+    if(inside(fx, fy) && spots.every(([a, b]) => Math.abs(a - fx) > 5 || Math.abs(b - fy) > 7)) spots.push([fx, fy]); }
+  for(const [fx, fy] of spots) fruit.push({fx, fy, grow: rr(.6, 1), face: ri(0, TFACES.length - 1), jel: pick(TJELLO), wa: 0, wp: rr(0, 6), lean: 0, char: 0, h: 0, tile: true, fruit: true});
+  r.cells = cells; r.alive = new Uint8Array(cells.length).fill(1); r.fruit = fruit; }
+function treesMake(){ const n = W > 900 ? 2 : 1;
+  for(let i=0; i<n; i++){ const r = {tree: true, seed: ri(1, 1e9), x: W*(n === 1 ? rr(.25, .75) : (i + .5)/n + rr(-.1, .1)), fu: rr(.05, .3), shake: 0, cool: 0, g: rr(.45, .8), burn: 0, hp: 1, scorch: 0, cold: 0, dead: 0};
+    shapeTree(r, treeKind()); TREES.push(r); } }
+function treeFy(r){ const [a, b] = band(); return r.kind === 'red' ? b : a + r.fu*(b - a); }
 function treeS1(r){ return Math.min(depthS(treeFy(r))*1.7, 6); }   // full grown
 function treeS(r){ return treeS1(r)*r.g; }
 function treeBump(d){ for(const r of TREES){ if(r.dead || r.cool || Math.abs(d.fy - treeFy(r)) > 12*K) continue; const s = treeS(r), gap = (r.x - d.cx)*d.dir;
     if(gap > 0 && gap < GW*.42*d.s + 3*s){ r.shake = 40; r.cool = 50; for(let k=0; k<ri(6, 14); k++) shedLeaf(r); d.dir *= -1; d.hop = 12; d.cool = 30; sparks.push({x: r.x - d.dir*2*s, y: d.cy, n: 10, s: d.s});
       const ripe = r.fruit.filter(f => f.grow >= 1 && r.g > .5); let k = ri(1, 3);
       while(k-- > 0 && ripe.length && TILES.length < 9){ const f = ripe.splice(ri(0, ripe.length - 1), 1)[0], fs = s*.25;   // it falls off and lands as a full tile
-        const [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = treeFy(r) - TCY*s + f.fy*s + TGH*fs*.5;
+        const [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = treeFy(r) - r.G.cy*s + f.fy*s + TGH*fs*.5;
         TILES.push({x: r.x + f.fx*s, fu: (fy - a)/Math.max(1, b - a), vx: rr(-1.5, 1.5)*K, wa: 1, wp: 0, lean: 0, face: f.face, jel: f.jel, cool: 20, tile: true, h: Math.max(0, fy - by), vh: rr(0, 2)*K, burn: 0, char: 0, hp: 1, ss: fs, drop: true});
         f.grow = 0; f.face = ri(0, TFACES.length - 1); f.jel = pick(TJELLO); } } } }
 let LEAVES = [];
-function leafAt(r, i){ const [x, y] = r.cells[i], s = treeS(r); return [r.x + x*s, treeFy(r) - TCY*s + y*s]; }
+function leafAt(r, i){ const [x, y] = r.cells[i], s = treeS(r); return [r.x + x*s, treeFy(r) - r.G.cy*s + y*s]; }
 function shedLeaf(r, i, ember){ if(LEAVES.length > 320) return; const alive = []; if(i === undefined){ for(let k=0; k<8; k++){ const j = ri(0, r.cells.length - 1); if(r.alive[j]){ i = j; break; } } if(i === undefined) return; }
-  const [x, y] = leafAt(r, i), c = ember ? pick([[250,140,40],[220,70,30],[60,40,30]]) : r.scorch > .3 ? [120,90,40] : pick([LEAF[1], LEAF[2], LEAF[3], [196,170,60]]);
+  const [x, y] = leafAt(r, i), c = ember ? pick([[250,140,40],[220,70,30],[60,40,30]]) : r.scorch > .3 ? [120,90,40] : (r.kind === 'red' ? pick([RLEAF[1], RLEAF[2], RLEAF[3], [140,84,50]]) : pick([LEAF[1], LEAF[2], LEAF[3], [196,170,60]]));
   LEAVES.push({x, y, vx: rr(-.4, .4)*K, vy: rr(0, .4)*K, ph: rr(0, 6), c, ember, gy: treeFy(r) + rr(-4, 34)*K, life: 0, sz: Math.max(2, Math.round(treeS1(r)*.8))}); }
 function leavesTick(){ const w = WIND();
   for(const L of LEAVES){ if(L.life){ L.life--; continue; }
@@ -787,7 +796,7 @@ function leavesTick(){ const w = WIND();
   LEAVES = LEAVES.filter(L => !(L.life === 1) && L.x > -20 && L.x < W + 20); }
 function drawLeaves(){ for(const L of LEAVES){ const a = L.life ? Math.min(1, L.life/80) : 1; if(a <= 0) continue; ctx.globalAlpha = a; ctx.fillStyle = 'rgb(' + L.c.join(',') + ')';
     ctx.fillRect(Math.round(L.x/L.sz)*L.sz, Math.round(L.y/L.sz)*L.sz, L.sz, L.sz); } ctx.globalAlpha = 1; }
-function treeFire(r){ if(r.dead) return; const s = treeS(r), cx = r.x, cy = treeFy(r) - TCY*s, rx = TRX*s, ry = TRY*s;   // fire catches in the crown; water or rain puts it out
+function treeFire(r){ if(r.dead) return; const s = treeS(r), cx = r.x, cy = treeFy(r) - r.G.cy*s, rx = r.G.rx*s, ry = r.G.ry*s;   // fire catches in the crown; water or rain puts it out
   let hot = false;
   for(const e of bits){ if(e.n >= e.L || e.src === r) continue; const u = (e.x - cx)/rx, v = (e.y - cy)/ry; if(u*u + v*v > 1) continue;
     if(e.k === 'fire' && e.n > 1 && !e.tile) hot = true;
@@ -796,7 +805,7 @@ function treeFire(r){ if(r.dead) return; const s = treeS(r), cx = r.x, cy = tree
   if(!r.burn) return;
   if(cfg.wx === 'rain' || cfg.wx === 'snow') r.burn = Math.max(0, r.burn - 3);
   r.burn--; r.hp -= .0016; r.scorch = Math.min(1, r.scorch + .004);
-  const heat = Math.min(1, r.scorch*3 + .3); for(let k=0; k<Math.round(9*heat); k++){ const i = ri(0, r.cells.length - 1); if(!r.alive[i] || r.cells[i][1] > TRY*.4) continue; const [x, y] = leafAt(r, i), e = puff('fire', x, y, -Math.PI/2, s*1.5); e.src = r; bits.push(e); }   // tongues of flame from the crown
+  const heat = Math.min(1, r.scorch*3 + .3); for(let k=0; k<Math.round(9*heat); k++){ const i = ri(0, r.cells.length - 1); if(!r.alive[i] || r.cells[i][1] > r.G.ry*.4) continue; const [x, y] = leafAt(r, i), e = puff('fire', x, y, -Math.PI/2, s*1.5); e.src = r; bits.push(e); }   // tongues of flame from the crown
   if(R() < .3) bits.push(puff('steam', cx + rr(-rx, rx)*.5, cy - ry*.6, -Math.PI/2, s*1.4));   // smoke
   if(R() < .5){ const i = ri(0, r.cells.length - 1); if(r.alive[i]){ r.alive[i] = 0; shedLeaf(r, i, true); } }   // leaves burn and fall as embers
   if(R() < .01){ const f = pick(r.fruit); if(f.grow >= 1 && r.g > .5){ f.grow = 0;   // a burning fruit drops
@@ -804,9 +813,9 @@ function treeFire(r){ if(r.dead) return; const s = treeS(r), cx = r.x, cy = tree
         TILES.push({x: r.x + f.fx*s, fu: (fy - a)/Math.max(1, b - a), vx: rr(-1, 1)*K, wa: 1, wp: 0, lean: 0, face: f.face, jel: f.jel, cool: 20, tile: true, h: Math.max(0, fy - by), vh: 0, burn: ri(80, 200), char: .15, hp: .6, ss: fs, drop: true}); } } }
   if(r.hp <= 0){ r.dead = ri(500, 900); r.burn = 0; for(const f of r.fruit) f.grow = 0; r.alive.fill(0); for(let i=0; i<12; i++) bits.push(puff('steam', cx + rr(-rx, rx)*.6, cy + rr(-ry, ry)*.6, -Math.PI/2, s*1.6)); }
   else if(!r.burn) r.cold = 900; }
-function torch(){ for(const r of TREES){ if(r.dead || r.burn || r.cold || r.g < .6) continue; const s = treeS(r), cx = r.x, cy = treeFy(r) - TCY*s;   // a fire breather flying by the crown may breathe on it
-    for(const d of adults()) if(!d.water && !d.breath && d.mode === 'fly' && Math.abs(d.cy - cy) < TRY*s*1.2 && Math.abs(cx - d.cx) < TRX*s*1.8 && Math.sign(cx - d.cx) === d.dir && R() < .004){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } } }
-function treesTick(){ torch(); for(const r of TREES){ if(r.cool) r.cool--; if(r.shake) r.shake--; if(r.cold) r.cold--;
+function torch(){ for(const r of TREES){ if(r.dead || r.burn || r.cold || r.g < .6) continue; const s = treeS(r), cx = r.x, cy = treeFy(r) - r.G.cy*s;   // a fire breather flying by the crown may breathe on it
+    for(const d of adults()) if(!d.water && !d.breath && d.mode === 'fly' && Math.abs(d.cy - cy) < r.G.ry*s*1.2 && Math.abs(cx - d.cx) < r.G.rx*s*1.8 && Math.sign(cx - d.cx) === d.dir && R() < .004){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } } }
+function treesTick(){ torch(); for(const r of TREES){ if(r.kind !== treeKind()) shapeTree(r, treeKind());   // the scene changed: orange tree or redwood if(r.cool) r.cool--; if(r.shake) r.shake--; if(r.cold) r.cold--;
     if(r.dead){ if(--r.dead <= 0){ r.dead = 0; r.g = .15; r.hp = 1; r.scorch = 0; r.alive.fill(1); } continue; }   // a sapling comes up from the stump
     treeFire(r);
     if(!r.burn){ r.g = Math.min(1, r.g + .00008); r.scorch = Math.max(0, r.scorch - .0008); r.hp = Math.min(1, r.hp + .0003);   // grows; leaves come back
@@ -814,14 +823,16 @@ function treesTick(){ torch(); for(const r of TREES){ if(r.cool) r.cool--; if(r.
       if(R() < .012*r.g) shedLeaf(r); }   // now and then a leaf falls
     for(const f of r.fruit){ if(f.grow < 1 && !r.burn && r.g > .5) f.grow = Math.min(1, f.grow + .0012); f.wp += .4; f.wa = Math.max(f.wa*.95, r.shake/40); } } }   // fruit regrows slowly
 function drawTree(r){ const s1 = treeS1(r), b = Math.max(1, Math.round(s1)), g = r.g, fy = treeFy(r), sx = r.shake ? Math.round(Math.sin(r.shake*.9)*r.shake/40*2)*b : 0, x0 = Math.round(r.x/b)*b;
-  const th = Math.max(4, Math.round(TTH*g)), tw = Math.max(1, Math.round(3*g)), dead = r.dead > 0, char = dead ? .75 : r.scorch*.5;
+  const red = r.kind === 'red', BK = red ? RBARK : BARK2, LF = red ? RLEAF : LEAF, th = Math.max(4, Math.round(r.G.th*g)), tw = Math.max(1, Math.round(r.G.tw*g)), dead = r.dead > 0, char = dead ? .75 : r.scorch*.5;
   const th2 = dead ? Math.round(th*.45) : th;   // burnt down: a charred stump
-  for(let y=0; y<th2; y++) for(let x=-tw-1; x<=tw+1; x++){ const w = y < Math.max(2, 4*g) ? tw + 1 : tw; if(Math.abs(x) > w) continue;
-    ctx.fillStyle = 'rgb(' + BARK2[x < 0 ? 2 : x > 0 ? 0 : 1].map(v => Math.round(v*(1 - char))).join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
+  const y0 = red ? -Math.ceil((H - fy)/b) - 1 : 0;   // a redwood's trunk runs on down past the bottom of the screen
+  for(let y=y0; y<th2; y++) for(let x=-tw-1; x<=tw+1; x++){ const w = red ? tw + (y < 6 ? 1 : 0) : y < Math.max(2, 4*g) ? tw + 1 : tw; if(Math.abs(x) > w) continue;
+    const c = red ? BK[x <= -w + 1 ? 2 : (x + 9) % 3 === 0 ? 0 : 1] : BK[x < 0 ? 2 : x > 0 ? 0 : 1];   // redwood bark in long fibrous stripes
+    ctx.fillStyle = 'rgb(' + c.map(v => Math.round(v*(1 - char))).join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
   if(dead){ for(let i=-7; i<=7; i++){ ctx.fillStyle = (i & 1) ? 'rgb(84,80,86)' : 'rgb(120,114,118)'; ctx.fillRect(x0 + i*b, fy - b, b, b); } return; }   // ash round the stump
-  const cy = fy - Math.round(TCY*g)*b, sc = 1 - r.scorch*.55, seen = new Set(); let last = '';
+  const cy = fy - Math.round(r.G.cy*g)*b, sc = 1 - r.scorch*.55, seen = new Set(); let last = '';
   for(let i=0; i<r.cells.length; i++){ if(!r.alive[i]) continue; const [x, y, c] = r.cells[i], gx = Math.round(x*g), gy = Math.round(y*g), key = gx*1000 + gy; if(seen.has(key)) continue; seen.add(key);
-    const col0 = LEAF[c], col = 'rgb(' + (r.scorch > .02 ? [col0[0]*sc + 90*r.scorch, col0[1]*sc + 40*r.scorch, col0[2]*sc].map(Math.round) : col0).join(',') + ')';   // scorched leaves turn brown
+    const col0 = LF[c], col = 'rgb(' + (r.scorch > .02 ? [col0[0]*sc + 90*r.scorch, col0[1]*sc + 40*r.scorch, col0[2]*sc].map(Math.round) : col0).join(',') + ')';   // scorched leaves turn brown
     if(col !== last){ ctx.fillStyle = col; last = col; } ctx.fillRect(x0 + gx*b + sx, cy + gy*b, b, b); }
   if(g <= .5) return;
   for(const f of r.fruit){ if(f.grow < .15) continue; const fs = s1*g*.25*Math.min(1, f.grow + .2), fx = Math.round(f.fx*g), fyy = Math.round(f.fy*g);
