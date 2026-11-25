@@ -27,5 +27,21 @@ for n, line in enumerate(js.split("\n"), 1):
         elif c == "}": depth -= 1
         i += 1
 assert depth == 0 and not bad, "brace check failed (depth %d): %s" % (depth, bad[:3])
+# Guard 2: code swallowed by a comment (a // pasted mid-line leaves real code in the comment text).
+import re
+code_in_comment = []
+for n, line in enumerate(js.split("\n"), 1):
+    q = None; i = 0
+    while i < len(line):
+        c = line[i]
+        if q:
+            if c == "\\": i += 2; continue
+            if c == q: q = None
+        elif c == "/" and line[i+1:i+2] == "/":
+            if re.search(r"\b(const|let)\s+\w+\s*=|\)\s*\{|\w+\(.*\);", line[i+2:]): code_in_comment.append(f"line {n}: {line[i:i+70]}")
+            break
+        elif c in "\"'`": q = c
+        i += 1
+assert not code_in_comment, "code inside a // comment: %s" % code_in_comment[:3]
 (root.parent / "index.html").write_text(html, encoding="utf-8")
 print("wrote", root.parent / "index.html", len(html), "bytes")

@@ -170,7 +170,7 @@ const SPEEDS = [.25, .5, 1, 1.5, 2, 3];   // tops out at 3x; the default (BASE.s
 const KEY = "mj:settings";
 let cfg = Object.assign({}, BASE);
 try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch(e) {}
-Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene', act:'mix', pat:'mix', color:'any', breath:'mix', dizzy:true});   // not choices: they just happen cfg.spd = Math.min(cfg.spd, 5);   // no longer choices: always mixed
+Object.assign(cfg, {wings:'mix', body:'mix', tail:'mix', kids:'some', bg:'scene', act:'mix', pat:'mix', color:'any', breath:'mix', dizzy:true}); cfg.spd = Math.min(cfg.spd, 5);   // not choices: they just happen; the speed tops out at 3x
 if (BGM) cfg.n = 0;   // the landscape layer has no dragons (they live in the front layer)
 if (FGM) Object.assign(cfg, {n: Math.min(cfg.n, 4), spd: 1, kids: 'none', follow: true});   // front layer for /qr: at most four dragons in all (no babies), speed fixed at 0.5x
 const save = () => { if (EMB) return; try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch(e) {} };   // the background never changes the visitor's /px settings
@@ -584,6 +584,7 @@ function flyStep(d){
   if(d.loopN){ const u = d.loopU++/d.loopN, ang = d.la0 - d.ldir*2*Math.PI*u; d.vx = Math.cos(ang)*d.lsp; d.vy = Math.sin(ang)*d.lsp;
     if(d.loopU >= d.loopN) d.loopN = 0; return; }
   if(d.chase && chaseStep(d)) return;
+  if(d.fetch && fetchStep(d)) return;
   if(following()){ d.oa += .05*(d.ri > 60*K ? -1 : 1); steer(d, P0.x + Math.cos(d.oa)*d.ri, P0.y + Math.sin(d.oa)*d.ri*.6, 7*K, .08); d.ft = Math.max(d.ft, 30); return; }
   switch(d.pat){
     case 'circles': { d.ca += d.cw*(1 + .2*Math.sin(T*.01)); const tx = d.ccx + Math.cos(d.ca)*d.cr, ty = d.ccy + Math.sin(d.ca)*d.cr*.7;
@@ -833,24 +834,46 @@ function tileFy(t){ const [a, b] = band(); return a + t.fu*(b - a); }
 function tileS0(t){ return depthS(tileFy(t))*.65; }
 function tileS(t){ return t.ss || tileS0(t); }
 function tileHit(t, dir, sp, up){ t.vx = dir*sp; t.wa = 1; t.wp = 0; t.cool = 24; if(up) t.vh = rr(6, 11)*K*Math.sqrt(LOWG()); let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f; }   // a new face, straight away; up: sent flying
-function pickUp(d, t){ t.carry = d; d.carry = t; d.carryT = ri(150, 420); t.vx = t.vh = t.h = 0; d.say = 80; d.sayTxt = 'ZI MO!'; takeOff(d); }   // like a stork with a baby; shouts zi mo (self-drawn)
+function pickUp(d, t){ t.carry = d; d.carry = t; d.carryT = ri(200, 480); t.vx = t.vh = t.h = 0; d.say = 80; d.sayTxt = 'ZI MO!'; if(d.mode === 'walk') takeOff(d); }   // like a stork with a baby; shouts zi mo (self-drawn)
 /* thieves: an empty-mouthed flier chases a dragon carrying a tile and snatches it; the one robbed may chase it back */
 function chaseStep(d){ const v = d.chase, t = v && v.carry;
-  if(!t || d.carry || !dg.includes(v) || --d.chaseT <= 0){ d.chase = null; return false; }
-  steer(d, t.x + (v.vx || 0)*6, t.by - TGH*tileS(t) - GH*d.s*.15, 7.5*K, .12); d.ft = Math.max(d.ft, 30); return true; }
-function steal(d, v){ const t = v.carry; v.carry = null; t.carry = d; d.carry = t; d.carryT = ri(150, 400); d.chase = null; t.wa = 1;
+  if(!t || d.carry || !dg.includes(v) || --d.chaseT <= 0){ d.chase = null; d.hurry = false; return false; }
+  const [mx, my] = mouth(d); steer(d, t.x + (v.vx || 0)*6 - (mx - d.cx), t.by - TGH*tileS(t) - (my - d.cy), (d.hurry ? 10 : 7.5)*K, .12); d.ft = Math.max(d.ft, 30); return true; }
+function steal(d, v){ sinceSteal = 0; d.hurry = false; const t = v.carry; v.carry = null; t.carry = d; d.carry = t; d.carryT = ri(150, 400); d.chase = null; t.wa = 1;
   let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f;   // snatched: it shows a new face
   d.say = 80; d.sayTxt = 'QIANG GANG!'; v.say = 60; v.sayTxt = 'HEY!'; sparks.push({x: t.x, y: t.by - TGH*tileS(t), n: 12, s: d.s});   // qiang gang: robbing the kong
   if(v.mode === 'fly' && R() < .3){ v.chase = d; v.chaseT = ri(100, 220); } }
+function fetchStep(d){ const t = d.fetch;   // swooping down for a tile on the ground
+  if(!t || t.gone || t.carry || t.burn || t.h > 4*K || d.carry || !TILES.includes(t) || --d.fetchT <= 0){ d.fetch = null; return false; }
+  const [mx, my] = mouth(d); steer(d, t.x - (mx - d.cx), tileFy(t) - TGH*tileS(t) - (my - d.cy), 6.5*K, .12); d.ft = Math.max(d.ft, 30); return true; }
+let sinceSteal = 0; const STEAL_MAX = 2400, STEAL_PUSH = 1500;   // ticks: 2 min and 75 s at the default 0.5x
+function launchFor(job){ let d = pick(adults().filter(d => d.mode === 'fly' && !d.carry && !d.chase && !d.fetch && !d.loopN));   // a free flier, or a walker sent up
+  if(!d){ d = pick(adults().filter(d => d.mode === 'walk' && !d.carry)); if(d) takeOff(d); } return d; }
 function thiefTick(){ const carriers = adults().filter(v => v.carry && v.mode === 'fly');
-  if(carriers.length && R() < .005){ const free = adults().filter(d => d.mode === 'fly' && !d.carry && !d.chase && !d.loopN && d.mode !== 'dizzy');
+  for(const d of adults()){ if(d.mode !== 'fly' && d.mode !== 'leave' && d.mode !== 'land'){ d.chase = null; d.fetch = null; d.hurry = false; }   // a job ends if the dragon stops flying
+    else if(d.mode !== 'fly' && (d.chase || d.fetch)) plan(d); }   // a thief or fetcher about to land or leave keeps at it
+  if(++sinceSteal > STEAL_PUSH && adults().length > 1){   // overdue: make sure there is a tile in the air, then a thief after it
+    if(!carriers.length && !adults().some(d => d.fetch)){ const ground = TILES.filter(t => !t.gone && !t.carry && !t.burn && t.h < 2*K), d = ground.length && launchFor('fetch');
+      if(d){ d.fetch = ground.reduce((a, b) => Math.abs(a.x - d.cx) < Math.abs(b.x - d.cx) ? a : b); d.fetchT = 500; } }
+    else if(carriers.length && !adults().some(d => d.chase)){ const v = pick(carriers), d = launchFor('chase'); if(d && d !== v){ d.chase = v; d.chaseT = 600; d.hurry = true; v.carryT = Math.max(v.carryT, 400); } }
+    for(const v of carriers) if(adults().some(d => d.chase === v)) v.carryT = Math.max(v.carryT, 60);   // it holds on until the thief arrives
+    const near = (x, y, not) => adults().filter(d => d !== not && !d.carry && d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'dizzy' && d.mode !== 'spin').sort((a, b) => Math.hypot(a.cx - x, a.cy - y) - Math.hypot(b.cx - x, b.cy - y))[0];
+    if(sinceSteal > 2100 && !adults().some(d => d.carry)){ const t = TILES.find(u => !u.gone && !u.carry && !u.burn), d = t && near(t.x, tileFy(t)); if(d){ d.fetch = null; pickUp(d, t); if(d.mode !== 'fly') takeOff(d); } }   // last resort: someone grabs a tile now
+    if(sinceSteal > 2300){ const v = adults().find(d => d.carry), d = v && near(v.cx, v.cy, v); if(d){ if(d.mode !== 'fly') takeOff(d); d.cx = v.cx - v.dir*GW*d.s*.6; d.cy = v.cy - 6*K; steal(d, v); } } }   // and someone snatches it
+  if(R() < 1/900){   // once in a while, at random, a flier goes down to fetch a tile
+    const free = adults().filter(d => d.mode === 'fly' && !d.carry && !d.chase && !d.fetch && !d.loopN), ground = TILES.filter(t => !t.gone && !t.carry && !t.burn && t.h < 2*K);
+    if(free.length && ground.length && carriers.length < 2){ const d = pick(free); d.fetch = ground.reduce((a, b) => Math.abs(a.x - d.cx) < Math.abs(b.x - d.cx) ? a : b); d.fetchT = 400; } }
+  for(const d of adults()){ const t = d.fetch; if(!t || d.mode !== 'fly') continue; const [mx, my] = mouth(d);
+    if(Math.hypot(mx - t.x, my - (tileFy(t) - TGH*tileS(t))) < 22*K){ d.fetch = null; pickUp(d, t); } }
+  if(carriers.length && !adults().some(d => d.chase) && R() < .0012){ const free = adults().filter(d => d.mode === 'fly' && !d.carry && !d.chase && !d.fetch && !d.loopN && d.mode !== 'dizzy');   // with a tile in the air, now and then a thief sets off
     if(free.length){ const d = pick(free), v = carriers.reduce((a, b) => Math.hypot(a.cx - d.cx, a.cy - d.cy) < Math.hypot(b.cx - d.cx, b.cy - d.cy) ? a : b); d.chase = v; d.chaseT = ri(150, 300); } }
   for(const d of adults()){ const v = d.chase, t = v && v.carry; if(!t || d.mode !== 'fly') continue; const [mx, my] = mouth(d);
     if(Math.hypot(mx - t.x, my - (t.by - TGH*tileS(t))) < 18*K) steal(d, v); } }
 function dropTile(d){ const t = d.carry; if(!t) return; d.carry = null; t.carry = null; t.cool = 30;
   const [a, b] = band(); let fy = a + t.fu*(b - a); if(fy < t.by){ fy = clamp(t.by + rr(0, 30*K), a, b); t.fu = (fy - a)/Math.max(1, b - a); }
   t.h = Math.max(0, fy - t.by); t.vx = (d.vx || 0)*.8; t.vh = -(d.vy || 0)*.5; t.wa = 1; t.drop = true; }
-function carryTick(t){ const d = t.carry;
+function carryTick(t){ const d = t.carry; const chased = adults().some(c => c.chase === d);
+  if(chased && (d.mode === 'leave' || d.mode === 'land')) plan(d);   // chased: it flies on with the tile
   if(!dg.includes(d) || d.mode === 'walk' || d.mode === 'dive' || d.mode === 'under' || d.mode === 'off' || d.mode === 'leave' || d.mode === 'spin' || d.mode === 'dizzy' || (d.mode === 'land' && d.near) || --d.carryT <= 0){ dropTile(d); return; }
   const [mx, my] = mouth(d), s = tileS(t); t.mx = mx; t.my = my; t.x = mx - (d.yx || d.dir)*2*s; t.by = d.cy + GH*d.s*.5 + 3*s + TGH*s; t.lean += (-(d.vx || 0)*.09 - t.lean)*.15; t.wp += .3; t.wa = Math.max(t.wa, .25); }
 function tilesTick(){ for(const d of dg) if(d.say > 0) d.say--;
@@ -1248,7 +1271,7 @@ titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 countShow();   // each visit counts as a scene shown
-window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump, steal, get leaves(){ return LEAVES; }};
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump, steal, get leaves(){ return LEAVES; }, get sinceSteal(){ return sinceSteal; }};
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=2" data-colors="none" defer></script>  <!-- bento: new color + animation each load -->
