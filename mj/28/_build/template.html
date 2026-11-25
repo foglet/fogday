@@ -710,7 +710,7 @@ function tick(){ T++;
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
     else if(--d.fireT <= 0){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } }
-  tilesTick();
+  tilesTick(); treesTick();
   weatherTick();
   bits = moveBits(bits);
   sparks = sparks.filter(s => --s.n > 0);
@@ -750,26 +750,102 @@ function tileGrid(fi){ let g = TGRID.get(fi); if(g) return g; g = new Uint8Array
     if((x > 0 && g[i-1]) || (x < TGW-1 && g[i+1]) || (y > 0 && g[i-TGW]) || (y < TGH-1 && g[i+TGW])) o[i] = 1; }
   TGRID.set(fi, o); return o; }
 let TILES = [];
-function tilesMake(){ TILES = []; if(EMB) return; const n = ri(3, 5);
-  for(let i=0; i<n; i++) TILES.push({x: W*(i + .5)/n + rr(-30, 30), fu: rr(.1, .9), vx: 0, wa: 0, wp: 0, lean: 0, face: ri(0, TFACES.length - 1), jel: pick(TJELLO), cool: 0, tile: true}); }
+/* the mahjong orange tree: a round canopy that bears small tiles for fruit; a dragon walking into the trunk shakes some down */
+let TREES = [];
+const LEAF = [[39,80,10],[59,109,17],[78,130,30],[99,153,34],[151,196,89]], BARK2 = [[92,62,40],[122,86,56],[62,42,30]];
+function treesMake(){ if(cfg.ground === 'none' && !SEA) return; const n = W > 900 ? 2 : 1;
+  for(let i=0; i<n; i++){ const rd = rng(ri(1, 1e9)), cells = [], fruit = [];
+    for(let y=-12; y<=12; y++) for(let x=-15; x<=15; x++){ const e = (x/15)**2 + (y/12)**2 + (rd() - .5)*.25; if(e > 1) continue;
+      const lit = (-x - y)/27 + (rd() - .5)*.6; cells.push([x, y, lit > .45 ? 4 : lit > .1 ? 3 : lit > -.3 ? 2 : lit > -.7 ? 1 : 0]); }
+    for(const [fx, fy] of [[-8,-2],[7,-5],[0,3],[-3,-8],[10,3],[-10,6]].slice(0, ri(4, 6))) fruit.push({fx, fy, grow: rr(.6, 1), face: ri(0, TFACES.length - 1), jel: pick(TJELLO), wa: 0, wp: rr(0, 6), lean: 0, char: 0, h: 0, tile: true, fruit: true});
+    TREES.push({tree: true, x: W*(n === 1 ? rr(.25, .75) : (i + .5)/n + rr(-.1, .1)), fu: rr(.05, .3), cells, fruit, shake: 0, cool: 0}); } }
+function treeFy(r){ const [a, b] = band(); return a + r.fu*(b - a); }
+function treeS(r){ return Math.min(depthS(treeFy(r))*1.7, 6); }
+function treeBump(d){ for(const r of TREES){ if(r.cool || Math.abs(d.fy - treeFy(r)) > 12*K) continue; const s = treeS(r), gap = (r.x - d.cx)*d.dir;
+    if(gap > 0 && gap < GW*.42*d.s + 3*s){ r.shake = 40; r.cool = 50; d.dir *= -1; d.hop = 12; d.cool = 30; sparks.push({x: r.x - d.dir*2*s, y: d.cy, n: 10, s: d.s});
+      const ripe = r.fruit.filter(f => f.grow >= 1); let k = ri(1, 3);
+      while(k-- > 0 && ripe.length && TILES.length < 9){ const f = ripe.splice(ri(0, ripe.length - 1), 1)[0], fs = s*.25;   // it falls off and lands as a full tile
+        const [a, b] = band(), fy = clamp(treeFy(r) + rr(4, 30)*K, a, b), by = treeFy(r) - 22*s + f.fy*s + TGH*fs*.5;
+        TILES.push({x: r.x + f.fx*s, fu: (fy - a)/Math.max(1, b - a), vx: rr(-1.5, 1.5)*K, wa: 1, wp: 0, lean: 0, face: f.face, jel: f.jel, cool: 20, tile: true, h: Math.max(0, fy - by), vh: rr(0, 2)*K, burn: 0, char: 0, hp: 1, ss: fs, drop: true});
+        f.grow = 0; f.face = ri(0, TFACES.length - 1); f.jel = pick(TJELLO); } } } }
+function treesTick(){ for(const r of TREES){ if(r.cool) r.cool--; if(r.shake) r.shake--;
+    for(const f of r.fruit){ if(f.grow < 1) f.grow = Math.min(1, f.grow + .0012); f.wp += .4; f.wa = Math.max(f.wa*.95, r.shake/40); } } }   // fruit regrows slowly
+function drawTree(r){ const s = treeS(r), b = Math.max(1, Math.round(s)), fy = treeFy(r), sx = r.shake ? Math.round(Math.sin(r.shake*.9)*r.shake/40*2)*b : 0, x0 = Math.round(r.x/b)*b;
+  for(let y=0; y<16; y++) for(let x=-2; x<=2; x++){ const w = y < 3 ? 3 : 2; if(Math.abs(x) > w) continue; ctx.fillStyle = 'rgb(' + BARK2[x < 0 ? 2 : x > 0 ? 0 : 1].join(',') + ')'; ctx.fillRect(x0 + x*b, fy - (y + 1)*b, b, b); }   // trunk, with a flared foot
+  const cy = fy - 22*b; let last = '';
+  for(const [x, y, c] of r.cells){ const col = 'rgb(' + LEAF[c].join(',') + ')'; if(col !== last){ ctx.fillStyle = col; last = col; } ctx.fillRect(x0 + x*b + sx, cy + y*b, b, b); }
+  for(const f of r.fruit){ if(f.grow < .15) continue; const fs = s*.25*Math.min(1, f.grow + .2);
+    if(f.grow < .5){ ctx.fillStyle = 'rgb(255,252,240)'; ctx.fillRect(x0 + f.fx*b + sx, cy + f.fy*b, b, b); continue; }   // a blossom first
+    f.x = r.x + f.fx*s + sx; f.ss = fs; f.by = cy + f.fy*b + TGH*fs*.5; f.carry = true; drawTile(f); f.carry = false; } }
+
+function tilesMake(){ TILES = []; TREES = []; if(EMB) return; const n = ri(3, 5); treesMake();
+  for(let i=0; i<n; i++) TILES.push({x: W*(i + .5)/n + rr(-30, 30), fu: rr(.1, .9), vx: 0, wa: 0, wp: 0, lean: 0, face: ri(0, TFACES.length - 1), jel: pick(TJELLO), cool: 0, tile: true, h: 0, vh: 0, burn: 0, char: 0, hp: 1}); }
 function tileFy(t){ const [a, b] = band(); return a + t.fu*(b - a); }
-function tileS(t){ return depthS(tileFy(t))*.65; }
-function tileHit(t, dir, sp){ t.vx = dir*sp; t.wa = 1; t.wp = 0; t.cool = 24; let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f; }   // a new face, straight away
-function tilesTick(){ for(const t of TILES){ const s = tileS(t), hw = TGW*s/2;
-    t.x += t.vx; t.vx *= .9; if(Math.abs(t.vx) < .05) t.vx = 0;
+function tileS0(t){ return depthS(tileFy(t))*.65; }
+function tileS(t){ return t.ss || tileS0(t); }
+function tileHit(t, dir, sp, up){ t.vx = dir*sp; t.wa = 1; t.wp = 0; t.cool = 24; if(up) t.vh = rr(6, 11)*K*Math.sqrt(LOWG()); let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f; }   // a new face, straight away; up: sent flying
+function pickUp(d, t){ t.carry = d; d.carry = t; d.carryT = ri(150, 420); t.vx = t.vh = t.h = 0; d.say = 80; takeOff(d); }   // like a stork with a baby; shouts zi mo (self-drawn)
+function dropTile(d){ const t = d.carry; if(!t) return; d.carry = null; t.carry = null; t.cool = 30;
+  const [a, b] = band(); let fy = a + t.fu*(b - a); if(fy < t.by){ fy = clamp(t.by + rr(0, 30*K), a, b); t.fu = (fy - a)/Math.max(1, b - a); }
+  t.h = Math.max(0, fy - t.by); t.vx = (d.vx || 0)*.8; t.vh = -(d.vy || 0)*.5; t.wa = 1; t.drop = true; }
+function carryTick(t){ const d = t.carry;
+  if(!dg.includes(d) || d.mode === 'walk' || d.mode === 'dive' || d.mode === 'under' || d.mode === 'off' || d.mode === 'leave' || d.mode === 'spin' || d.mode === 'dizzy' || (d.mode === 'land' && d.near) || --d.carryT <= 0){ dropTile(d); return; }
+  const [mx, my] = mouth(d), s = tileS(t); t.mx = mx; t.my = my; t.x = mx - (d.yx || d.dir)*2*s; t.by = d.cy + GH*d.s*.5 + 3*s + TGH*s; t.lean += (-(d.vx || 0)*.09 - t.lean)*.15; t.wp += .3; t.wa = Math.max(t.wa, .25); }
+function tilesTick(){ for(const d of dg) if(d.say > 0) d.say--;
+  for(const t of TILES.slice()){ if(t.gone){ goneTick(t); continue; } if(t.carry){ carryTick(t); if(t.carry) continue; } if(t.ss && !t.h){ t.ss += (tileS0(t) - t.ss)*.08; if(Math.abs(t.ss - tileS0(t)) < .05) t.ss = 0; } const s = tileS(t), hw = TGW*s/2;
+    t.x += t.vx; t.vx *= t.h > 0 ? .985 : .9; if(Math.abs(t.vx) < .05) t.vx = 0;
+    if(t.h > 0 || t.vh > 0){ t.h += t.vh; t.vh -= .45*K/LOWG(); if(t.h <= 0){ t.h = 0; t.wa = 1; t.wp = 0; if(t.drop && t.vh < -2*K){ let f; do f = ri(0, TFACES.length - 1); while(f === t.face); t.face = f; } t.drop = false; t.vh = t.vh < -2.5*K ? -t.vh*.3 : 0; } }   // up, down, a small bounce
+    tileFire(t, s);
     if((t.x < hw && t.vx < 0) || (t.x > W - hw && t.vx > 0)){ t.vx *= -.6; t.wa = Math.max(t.wa, .6); } t.x = clamp(t.x, hw, W - hw);
     t.wp += .55; t.wa *= .95; t.lean += (-t.vx*.05 - t.lean)*.3; if(t.cool) t.cool--; }
-  for(const d of adults()){ if(d.mode !== 'walk' || d.over || d.jy < -2*d.s) continue;   // a walker reaching a tile with its snout bumps it along
-    for(const t of TILES){ if(t.cool || Math.abs(d.fy - tileFy(t)) > 10*K) continue; const s = tileS(t), gap = (t.x - d.cx)*d.dir;
-      if(gap > 0 && gap < GW*.42*d.s + TGW*s/2){ tileHit(t, d.dir, rr(3, 5.5)*K); d.hop = 12; d.cool = 20; if(R() < .5) d.dir *= -1;
+  for(const d of adults()){ if(d.mode !== 'walk' || d.over || d.carry || d.jy < -2*d.s) continue;
+    treeBump(d);   // a walker reaching a tile with its snout bumps it along
+    for(const t of TILES){ if(t.gone || t.cool || t.carry || t.h > 4*K || Math.abs(d.fy - tileFy(t)) > 10*K) continue; const s = tileS(t), gap = (t.x - d.cx)*d.dir;
+      if(gap > 0 && gap < GW*.42*d.s + TGW*s/2){ if(!d.carry && !t.burn && canFly() && airCount() < maxAir() && R() < .3){ pickUp(d, t); break; } tileHit(t, d.dir, rr(3, 5.5)*K, R() < .35); d.hop = 12; d.cool = 20; if(R() < .5) d.dir *= -1;
         sparks.push({x: t.x - d.dir*TGW*s/2, y: tileFy(t) - 12*s, n: 10, s}); } } }
   for(let i=0; i<TILES.length; i++) for(let j=i+1; j<TILES.length; j++){ const a = TILES[i], b = TILES[j];   // a sliding tile knocks into another
-    if(Math.abs(tileFy(a) - tileFy(b)) > 8*K) continue; const s = (tileS(a) + tileS(b))/2, dx = b.x - a.x;
+    if(a.gone || b.gone || a.carry || b.carry || Math.abs(tileFy(a) - tileFy(b)) > 8*K || Math.abs(a.h - b.h) > TGH*.6) continue; const s = (tileS(a) + tileS(b))/2, dx = b.x - a.x;
     if(Math.abs(dx) < TGW*s && Math.abs(a.vx - b.vx) > .8*K && (a.vx - b.vx)*dx > 0){ const v = a.vx; if(!b.cool) tileHit(b, Math.sign(dx), Math.abs(v)*.8); else b.vx = v*.8; a.vx = v*.2; a.wa = Math.max(a.wa, .6); } } }
-function drawTile(t){ const s = tileS(t), b = Math.max(1, Math.round(s)), fy = tileFy(t), g = tileGrid(t.face), w = Math.sin(t.wp)*.2*t.wa, sx = 1 + w, sy = 1 - w;
-  const pal = Object.assign({}, TCOL, {2: t.jel, 3: t.jel.map(v => Math.round(v + (255 - v)*.6))}), cw = Math.ceil(b*sx), ch = Math.ceil(b*sy);
+function burnDown(t){ t.gone = true; t.burn = 0; t.ash = 260; t.vx = t.vh = t.h = 0; t.ss = 0; if(t.carry) dropTile(t.carry);   // burnt to the ground: ash, then (if there is room) a sprout
+  for(let i=0; i<8; i++) bits.push(puff('steam', t.x + rr(-8, 8)*K, tileFy(t) - rr(0, 20)*K, -Math.PI/2, tileS0(t)*1.4));
+  t.regrow = TILES.length <= 6 ? ri(300, 800) : -1; }
+function goneTick(t){ if(t.ash > 0) t.ash--;
+  if(t.regrow > 0 && --t.regrow === 0){ t.grow = .02; t.face = ri(0, TFACES.length - 1); t.jel = pick(TJELLO); t.char = 0; t.hp = 1; }
+  else if(t.grow){ t.grow = Math.min(1, t.grow + .004); if(t.grow >= 1){ t.gone = false; t.grow = 0; t.wa = 1; t.cool = 40; t.cold = 300; } }
+  else if(t.regrow < 0 && t.ash <= 0) TILES.splice(TILES.indexOf(t), 1); }
+function drawGone(t){ const s = tileS0(t), b = Math.max(1, Math.round(s)), fy = tileFy(t), x0 = Math.round(t.x/b)*b;
+  if(t.ash > 0 || t.grow < .35){ const a = t.ash > 0 ? Math.min(1, t.ash/60) : 1; ctx.globalAlpha = a;   // a low pile of ash
+    for(let i=-5; i<=5; i++){ const hh = Math.max(1, 3 - Math.abs(i)/2|0); for(let j=0; j<hh; j++){ ctx.fillStyle = (i + j) % 3 ? 'rgb(84,80,86)' : 'rgb(130,124,128)'; ctx.fillRect(x0 + i*b, fy - (j + 1)*b, b, b); } }
+    if(t.ash > 120 && T % 6 < 3){ ctx.fillStyle = 'rgb(250,140,40)'; ctx.fillRect(x0 + ((T >> 2) % 7 - 3)*b, fy - 2*b, b, b); }   // embers
+    ctx.globalAlpha = 1; }
+  if(!t.grow) return; const g = t.grow;
+  if(g < .35){ const n = Math.max(1, Math.round(g/.35*6)); ctx.fillStyle = 'rgb(59,109,17)'; for(let j=0; j<n; j++) ctx.fillRect(x0, fy - (j + 3)*b, b, b);   // a sprout
+    ctx.fillStyle = 'rgb(151,196,89)'; if(n > 2){ ctx.fillRect(x0 - b, fy - (n + 2)*b, b, b); ctx.fillRect(x0 + b, fy - (n + 3)*b, b, b); } return; }
+  t.ss = s*Math.max(.15, (g - .35)/.65); t.h = 0; drawTile(t); t.ss = 0; }
+function tileFire(t, s){ const hw = TGW*s/2, bot = t.carry ? t.by : tileFy(t) - t.h, top = bot - TGH*s;   // fire sets a tile alight; water or rain puts it out
+  for(const e of bits){ if(e.n >= e.L || e.x < t.x - hw || e.x > t.x + hw || e.y < top || e.y > bot) continue;
+    if(e.k === 'fire' && !t.burn && !t.cold && !e.tile && e.n > 1){ t.burn = ri(160, 320); t.wa = Math.max(t.wa, .5); }
+    else if(e.k === 'drop' && t.burn){ t.burn = 0; t.cold = 200; e.n = e.L; for(let i=0; i<5; i++) bits.push(puff('steam', t.x + rr(-hw, hw), top, -Math.PI/2, s*1.3)); } }
+  if(t.cold) t.cold--; if(!t.burn){ t.char = Math.max(0, t.char - .0006); return; }
+  if(cfg.wx === 'rain' || cfg.wx === 'snow') t.burn = Math.max(0, t.burn - 2);
+  t.burn--; t.char = Math.min(.3, t.char + .001); t.hp -= .0022; if(t.hp <= 0){ burnDown(t); return; } if(!t.burn) t.cold = 200; const f = Math.min(1, t.burn/40);
+  for(let i=0; i<(f > .5 ? 2 : 1); i++){ const e = puff('fire', t.x + rr(-hw*.8, hw*.8), top + 2*s, -Math.PI/2, s*(.6 + .5*f), t.vx, -Math.max(0, t.vh)); e.tile = true; bits.push(e); }
+  if(R() < .15) bits.push(puff('steam', t.x + rr(-hw*.5, hw*.5), top, -Math.PI/2, s));   // smoke
+  if(!t.burn) for(let i=0; i<4; i++) bits.push(puff('steam', t.x + rr(-hw, hw), top, -Math.PI/2, s*1.2)); }
+function drawSay(d){ if(!(d.say > 0)) return; const s = Math.max(2, Math.round(d.s*.7)), txt = 'ZI MO!', fs = Math.round(Math.max(11, 4.5*s));
+  ctx.font = '700 ' + fs + 'px Silkscreen, "Pixelify Sans", monospace'; const w = Math.ceil(ctx.measureText(txt).width), pad = s*2, bw = w + pad*2, bh = fs + pad*2;
+  const x = Math.round(clamp(d.cx - bw/2, 4, W - bw - 4)), y = Math.round(Math.max(4, d.cy - GH*d.s*.5 - bh - 4*s)), a = Math.min(1, d.say/12);
+  ctx.globalAlpha = a; ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(x - s, y, bw + 2*s, bh); ctx.fillRect(x, y - s, bw, bh + 2*s);   // a block bubble, outline first
+  ctx.fillStyle = 'rgb(255,252,240)'; ctx.fillRect(x, y, bw, bh);
+  const tx = Math.round(clamp(d.cx, x + 2*s, x + bw - 4*s)); ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(tx - s, y + bh, 3*s, s); ctx.fillRect(tx, y + bh + s, 2*s, s); ctx.fillStyle = 'rgb(255,252,240)'; ctx.fillRect(tx, y + bh - s, s, s*2);
+  ctx.fillStyle = 'rgb(184,53,43)'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x + pad, y + bh/2 + 1); ctx.globalAlpha = 1; }
+function drawTile(t){ const s = tileS(t), b = Math.max(1, Math.round(s)), fy = t.carry ? t.by : tileFy(t), g = tileGrid(t.face), w = Math.sin(t.wp)*.2*t.wa, sx = 1 + w, sy = 1 - w;
+  const sc = c => c.map(v => Math.round(v*(1 - t.char))), pal = Object.assign({}, TCOL, {2: sc(t.jel), 3: sc(t.jel.map(v => Math.round(v + (255 - v)*.6))), 4: sc(TCOL[4]), 5: sc(TCOL[5])}), cw = Math.ceil(b*sx), ch = Math.ceil(b*sy);   // scorched a little each tick it burns
+  if(t.carry && !t.fruit){ const x0 = Math.round(t.mx), y0 = Math.round(t.my), x1 = Math.round(t.x + t.lean*TGH*b*.6), y1 = Math.round(fy - TGH*b*sy), n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0)/b));
+    ctx.fillStyle = 'rgb(36,22,48)'; for(let i=0; i<=n; i++){ const u = i/n; ctx.fillRect(Math.round((x0 + (x1 - x0)*u)/b)*b, Math.round((y0 + (y1 - y0)*u)/b)*b, b, b); } }   // the strap from its mouth
+  if(t.h > 0 && !t.carry){ const k = Math.max(.25, 1 - t.h/(160*K)); ctx.globalAlpha = .25*k; ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(Math.round(t.x - TGW*b*k/2), Math.round(fy - b), Math.round(TGW*b*k), b*2); ctx.globalAlpha = 1; }   // its shadow on the ground
   let last = '';
-  for(let y=0; y<TGH; y++){ const up = TGH - y, lx = Math.round(t.x - TGW/2*b*sx + t.lean*up*b*.6), ry = Math.round(fy - up*b*sy);   // squash from the base; the top lags when it slides
+  for(let y=0; y<TGH; y++){ const up = TGH - y, lx = Math.round(t.x - TGW/2*b*sx + t.lean*up*b*.6), ry = Math.round(fy - (t.carry ? 0 : t.h) - up*b*sy);   // squash from the base; the top lags when it slides
     for(let x=0; x<TGW; x++){ const v = g[y*TGW + x]; if(!v) continue; const jel = v === 2 || v === 3;
       ctx.globalAlpha = jel ? .82 : 1; const c = 'rgb(' + pal[v].join(',') + ')'; if(c !== last){ ctx.fillStyle = c; last = c; }
       ctx.fillRect(lx + Math.round(x*b*sx), ry, cw, ch); } }
@@ -931,14 +1007,15 @@ function draw(){ for(const c of [ctxA, ctxB]){ c.setTransform(DPR, 0, 0, DPR, 0,
   const order = dg.slice().sort((a, b) => key(a) - key(b));
   const wxSave = cfg.wx; cfg.wx = 'clear'; drawWeather(); cfg.wx = wxSave;   // the twister, behind the dragons
   const grounded = d => d.mom ? !d.air : d.mode === 'walk';
-  for(const d of order) if(!grounded(d) && d.mode !== 'off' && d.mode !== 'under' && !d.hid && !offScreen(d)) drawDragon(d);   // fliers: under the sea layer
+  for(const d of order) if(!grounded(d) && d.mode !== 'off' && d.mode !== 'under' && !d.hid && !offScreen(d)){ drawDragon(d); if(d.carry) drawTile(d.carry); }   // fliers: under the sea layer
   ctx = ctxB;
-  const gnd = order.filter(d => grounded(d) && !d.hid && !offScreen(d)).map(d => [key(d), d]).concat(TILES.map(t => [tileFy(t) - .5, t])).sort((p, q) => p[0] - q[0]);
-  for(const [, o] of gnd) if(o.tile) drawTile(o); else drawDragon(o);   // walkers and tiles on the beach or ground, nearer ones in front
+  const gnd = order.filter(d => grounded(d) && !d.hid && !offScreen(d)).map(d => [key(d), d]).concat(TILES.filter(t => !t.carry).map(t => [tileFy(t) - .5, t])).concat(TREES.map(r => [treeFy(r) - .6, r])).sort((p, q) => p[0] - q[0]);
+  for(const [, o] of gnd) if(o.tree) drawTree(o); else if(o.tile) (o.gone ? drawGone(o) : drawTile(o)); else drawDragon(o);   // walkers and tiles on the beach or ground, nearer ones in front
   for(const e of bits){ const [c, sz, a] = lookBit(e); if(a <= 0) continue; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = 'rgb(' + c.join(',') + ')'; const z = sz*e.sc; ctx.fillRect(e.x - z/2, e.y - z/2, z, z); }
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgb(255,226,80)';
   for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } }
   if(cfg.wx !== 'clear'){ const t = TW; TW = null; drawWeather(); TW = t; }   // rain and snow, in front
+  for(const d of dg) if(d.say > 0 && !offScreen(d)) drawSay(d);
   ctx = ctxA; }
 
 /* ---------- loop, resize, pointer ---------- */
@@ -1107,7 +1184,7 @@ titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 countShow();   // each visit counts as a scene shown
-window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, tileHit};
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get tiles(){ return TILES; }, get trees(){ return TREES; }, tileHit, pickUp, burnDown, treeBump};
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=2" data-colors="none" defer></script>  <!-- bento: new color + animation each load -->
