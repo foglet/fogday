@@ -1,0 +1,690 @@
+[
+ {
+  "w": "飞机",
+  "p": "fēijī",
+  "z": [
+   "ㄈㄟ",
+   "ㄐㄧ"
+  ],
+  "s": [
+   "fēi",
+   "jī"
+  ],
+  "en": "airplane",
+  "zh": "飞机",
+  "de": "Flugzeug",
+  "es": "avión",
+  "fr": "avion"
+ },
+ {
+  "w": "中国",
+  "p": "Zhōngguó",
+  "z": [
+   "ㄓㄨㄥ",
+   "ㄍㄨㄛˊ"
+  ],
+  "s": [
+   "Zhōng",
+   "guó"
+  ],
+  "en": "China",
+  "zh": "中国",
+  "de": "China",
+  "es": "China",
+  "fr": "Chine"
+ },
+ {
+  "w": "机场",
+  "p": "jīchǎng",
+  "z": [
+   "ㄐㄧ",
+   "ㄔㄤˇ"
+  ],
+  "s": [
+   "jī",
+   "chǎng"
+  ],
+  "en": "airport",
+  "zh": "机场",
+  "de": "Flughafen",
+  "es": "aeropuerto",
+  "fr": "aéroport"
+ },
+ {
+  "w": "知道",
+  "p": "zhīdào",
+  "z": [
+   "ㄓ",
+   "ㄉㄠˋ"
+  ],
+  "s": [
+   "zhī",
+   "dào"
+  ],
+  "en": "know",
+  "zh": "知道",
+  "de": "wissen",
+  "es": "saber",
+  "fr": "savoir"
+ },
+ {
+  "w": "妈妈",
+  "p": "māma",
+  "z": [
+   "ㄇㄚ",
+   "˙ㄇㄚ"
+  ],
+  "s": [
+   "mā",
+   "ma"
+  ],
+  "en": "mom",
+  "zh": "妈妈",
+  "de": "Mama",
+  "es": "mamá",
+  "fr": "maman"
+ },
+ {
+  "w": "时间",
+  "p": "shíjiān",
+  "z": [
+   "ㄕˊ",
+   "ㄐㄧㄢ"
+  ],
+  "s": [
+   "shí",
+   "jiān"
+  ],
+  "en": "time",
+  "zh": "时间",
+  "de": "Zeit",
+  "es": "tiempo",
+  "fr": "temps"
+ },
+ {
+  "w": "银行",
+  "p": "yínháng",
+  "z": [
+   "ㄧㄣˊ",
+   "ㄏㄤˊ"
+  ],
+  "s": [
+   "yín",
+   "háng"
+  ],
+  "en": "bank",
+  "zh": "银行",
+  "de": "Bank",
+  "es": "banco",
+  "fr": "banque"
+ },
+ {
+  "w": "词典",
+  "p": "cídiǎn",
+  "z": [
+   "ㄘˊ",
+   "ㄉㄧㄢˇ"
+  ],
+  "s": [
+   "cí",
+   "diǎn"
+  ],
+  "en": "dictionary",
+  "zh": "词典",
+  "de": "Wörterbuch",
+  "es": "diccionario",
+  "fr": "dictionnaire"
+ },
+ {
+  "w": "迟到",
+  "p": "chídào",
+  "z": [
+   "ㄔˊ",
+   "ㄉㄠˋ"
+  ],
+  "s": [
+   "chí",
+   "dào"
+  ],
+  "en": "late",
+  "zh": "迟到",
+  "de": "zu spät",
+  "es": "tarde",
+  "fr": "en retard"
+ },
+ {
+  "w": "什么",
+  "p": "shénme",
+  "z": [
+   "ㄕㄣˊ",
+   "˙ㄇㄜ"
+  ],
+  "s": [
+   "shén",
+   "me"
+  ],
+  "en": "what",
+  "zh": "什么",
+  "de": "was",
+  "es": "qué",
+  "fr": "quoi"
+ },
+ {
+  "w": "手机",
+  "p": "shǒujī",
+  "z": [
+   "ㄕㄡˇ",
+   "ㄐㄧ"
+  ],
+  "s": [
+   "shǒu",
+   "jī"
+  ],
+  "en": "mobile phone",
+  "zh": "手机",
+  "de": "Handy",
+  "es": "móvil",
+  "fr": "téléphone"
+ },
+ {
+  "w": "语言",
+  "p": "yǔyán",
+  "z": [
+   "ㄩˇ",
+   "ㄧㄢˊ"
+  ],
+  "s": [
+   "yǔ",
+   "yán"
+  ],
+  "en": "language",
+  "zh": "语言",
+  "de": "Sprache",
+  "es": "idioma",
+  "fr": "langue"
+ },
+ {
+  "w": "雨伞",
+  "p": "yǔsǎn",
+  "z": [
+   "ㄩˇ",
+   "ㄙㄢˇ"
+  ],
+  "s": [
+   "yǔ",
+   "sǎn"
+  ],
+  "en": "umbrella",
+  "zh": "雨伞",
+  "sandhi": [
+   "ㄩˊ ㄙㄢˇ",
+   "yú sǎn"
+  ],
+  "de": "Regenschirm",
+  "es": "paraguas",
+  "fr": "parapluie"
+ },
+ {
+  "w": "美丽",
+  "p": "měilì",
+  "z": [
+   "ㄇㄟˇ",
+   "ㄌㄧˋ"
+  ],
+  "s": [
+   "měi",
+   "lì"
+  ],
+  "en": "beautiful",
+  "zh": "美丽",
+  "de": "schön",
+  "es": "hermoso",
+  "fr": "beau"
+ },
+ {
+  "w": "我们",
+  "p": "wǒmen",
+  "z": [
+   "ㄨㄛˇ",
+   "˙ㄇㄣ"
+  ],
+  "s": [
+   "wǒ",
+   "men"
+  ],
+  "en": "we",
+  "zh": "我们",
+  "de": "wir",
+  "es": "nosotros",
+  "fr": "nous"
+ },
+ {
+  "w": "唱歌",
+  "p": "chànggē",
+  "z": [
+   "ㄔㄤˋ",
+   "ㄍㄜ"
+  ],
+  "s": [
+   "chàng",
+   "gē"
+  ],
+  "en": "sing",
+  "zh": "唱歌",
+  "de": "singen",
+  "es": "cantar",
+  "fr": "chanter"
+ },
+ {
+  "w": "地图",
+  "p": "dìtú",
+  "z": [
+   "ㄉㄧˋ",
+   "ㄊㄨˊ"
+  ],
+  "s": [
+   "dì",
+   "tú"
+  ],
+  "en": "map",
+  "zh": "地图",
+  "de": "Landkarte",
+  "es": "mapa",
+  "fr": "carte"
+ },
+ {
+  "w": "电脑",
+  "p": "diànnǎo",
+  "z": [
+   "ㄉㄧㄢˋ",
+   "ㄋㄠˇ"
+  ],
+  "s": [
+   "diàn",
+   "nǎo"
+  ],
+  "en": "computer",
+  "zh": "电脑",
+  "de": "Computer",
+  "es": "ordenador",
+  "fr": "ordinateur"
+ },
+ {
+  "w": "睡觉",
+  "p": "shuìjiào",
+  "z": [
+   "ㄕㄨㄟˋ",
+   "ㄐㄧㄠˋ"
+  ],
+  "s": [
+   "shuì",
+   "jiào"
+  ],
+  "en": "sleep",
+  "zh": "睡觉",
+  "de": "schlafen",
+  "es": "dormir",
+  "fr": "dormir"
+ },
+ {
+  "w": "谢谢",
+  "p": "xièxie",
+  "z": [
+   "ㄒㄧㄝˋ",
+   "˙ㄒㄧㄝ"
+  ],
+  "s": [
+   "xiè",
+   "xie"
+  ],
+  "en": "thank you",
+  "zh": "谢谢",
+  "de": "danke",
+  "es": "gracias",
+  "fr": "merci"
+ },
+ {
+  "w": "今天",
+  "p": "jīntiān",
+  "z": [
+   "ㄐㄧㄣ",
+   "ㄊㄧㄢ"
+  ],
+  "s": [
+   "jīn",
+   "tiān"
+  ],
+  "en": "today",
+  "zh": "今天",
+  "de": "heute",
+  "es": "hoy",
+  "fr": "aujourd’hui"
+ },
+ {
+  "w": "今年",
+  "p": "jīnnián",
+  "z": [
+   "ㄐㄧㄣ",
+   "ㄋㄧㄢˊ"
+  ],
+  "s": [
+   "jīn",
+   "nián"
+  ],
+  "en": "this year",
+  "zh": "今年",
+  "de": "dieses Jahr",
+  "es": "este año",
+  "fr": "cette année"
+ },
+ {
+  "w": "開水",
+  "p": "kāishuǐ",
+  "z": [
+   "ㄎㄞ",
+   "ㄕㄨㄟˇ"
+  ],
+  "s": [
+   "kāi",
+   "shuǐ"
+  ],
+  "en": "boiled water",
+  "zh": "开水",
+  "de": "abgekochtes Wasser",
+  "es": "agua hervida",
+  "fr": "eau bouillie"
+ },
+ {
+  "w": "工作",
+  "p": "gōngzuò",
+  "z": [
+   "ㄍㄨㄥ",
+   "ㄗㄨㄛˋ"
+  ],
+  "s": [
+   "gōng",
+   "zuò"
+  ],
+  "en": "work",
+  "zh": "工作",
+  "de": "Arbeit",
+  "es": "trabajo",
+  "fr": "travail"
+ },
+ {
+  "w": "桌子",
+  "p": "zhuōzi",
+  "z": [
+   "ㄓㄨㄛ",
+   "˙ㄗ"
+  ],
+  "s": [
+   "zhuō",
+   "zi"
+  ],
+  "en": "table",
+  "zh": "桌子",
+  "de": "Tisch",
+  "es": "mesa",
+  "fr": "table"
+ },
+ {
+  "w": "明天",
+  "p": "míngtiān",
+  "z": [
+   "ㄇㄧㄥˊ",
+   "ㄊㄧㄢ"
+  ],
+  "s": [
+   "míng",
+   "tiān"
+  ],
+  "en": "tomorrow",
+  "zh": "明天",
+  "de": "morgen",
+  "es": "mañana",
+  "fr": "demain"
+ },
+ {
+  "w": "銀行",
+  "p": "yínháng",
+  "z": [
+   "ㄧㄣˊ",
+   "ㄏㄤˊ"
+  ],
+  "s": [
+   "yín",
+   "háng"
+  ],
+  "en": "bank",
+  "zh": "银行",
+  "de": "Bank",
+  "es": "banco",
+  "fr": "banque"
+ },
+ {
+  "w": "牛奶",
+  "p": "niúnǎi",
+  "z": [
+   "ㄋㄧㄡˊ",
+   "ㄋㄞˇ"
+  ],
+  "s": [
+   "niú",
+   "nǎi"
+  ],
+  "en": "milk",
+  "zh": "牛奶",
+  "de": "Milch",
+  "es": "leche",
+  "fr": "lait"
+ },
+ {
+  "w": "學校",
+  "p": "xuéxiào",
+  "z": [
+   "ㄒㄩㄝˊ",
+   "ㄒㄧㄠˋ"
+  ],
+  "s": [
+   "xué",
+   "xiào"
+  ],
+  "en": "school",
+  "zh": "学校",
+  "de": "Schule",
+  "es": "escuela",
+  "fr": "école"
+ },
+ {
+  "w": "孩子",
+  "p": "háizi",
+  "z": [
+   "ㄏㄞˊ",
+   "˙ㄗ"
+  ],
+  "s": [
+   "hái",
+   "zi"
+  ],
+  "en": "child",
+  "zh": "孩子",
+  "de": "Kind",
+  "es": "niño",
+  "fr": "enfant"
+ },
+ {
+  "w": "老師",
+  "p": "lǎoshī",
+  "z": [
+   "ㄌㄠˇ",
+   "ㄕ"
+  ],
+  "s": [
+   "lǎo",
+   "shī"
+  ],
+  "en": "teacher",
+  "zh": "老师",
+  "de": "Lehrer",
+  "es": "profesor",
+  "fr": "professeur"
+ },
+ {
+  "w": "美國",
+  "p": "měiguó",
+  "z": [
+   "ㄇㄟˇ",
+   "ㄍㄨㄛˊ"
+  ],
+  "s": [
+   "měi",
+   "guó"
+  ],
+  "en": "United States",
+  "zh": "美国",
+  "de": "USA",
+  "es": "Estados Unidos",
+  "fr": "États-Unis"
+ },
+ {
+  "w": "水果",
+  "p": "shuǐguǒ",
+  "z": [
+   "ㄕㄨㄟˇ",
+   "ㄍㄨㄛˇ"
+  ],
+  "s": [
+   "shuǐ",
+   "guǒ"
+  ],
+  "en": "fruit",
+  "zh": "水果",
+  "sandhi": [
+   "ㄕㄨㄟˊ ㄍㄨㄛˇ",
+   "shuí guǒ"
+  ],
+  "de": "Obst",
+  "es": "fruta",
+  "fr": "fruit"
+ },
+ {
+  "w": "比賽",
+  "p": "bǐsài",
+  "z": [
+   "ㄅㄧˇ",
+   "ㄙㄞˋ"
+  ],
+  "s": [
+   "bǐ",
+   "sài"
+  ],
+  "en": "competition",
+  "zh": "比赛",
+  "de": "Wettbewerb",
+  "es": "competición",
+  "fr": "compétition"
+ },
+ {
+  "w": "椅子",
+  "p": "yǐzi",
+  "z": [
+   "ㄧˇ",
+   "˙ㄗ"
+  ],
+  "s": [
+   "yǐ",
+   "zi"
+  ],
+  "en": "chair",
+  "zh": "椅子",
+  "de": "Stuhl",
+  "es": "silla",
+  "fr": "chaise"
+ },
+ {
+  "w": "上班",
+  "p": "shàngbān",
+  "z": [
+   "ㄕㄤˋ",
+   "ㄅㄢ"
+  ],
+  "s": [
+   "shàng",
+   "bān"
+  ],
+  "en": "go to work",
+  "zh": "上班",
+  "de": "zur Arbeit gehen",
+  "es": "ir al trabajo",
+  "fr": "aller au travail"
+ },
+ {
+  "w": "問題",
+  "p": "wèntí",
+  "z": [
+   "ㄨㄣˋ",
+   "ㄊㄧˊ"
+  ],
+  "s": [
+   "wèn",
+   "tí"
+  ],
+  "en": "question, problem",
+  "zh": "问题",
+  "de": "Frage, Problem",
+  "es": "pregunta, problema",
+  "fr": "question, problème"
+ },
+ {
+  "w": "報紙",
+  "p": "bàozhǐ",
+  "z": [
+   "ㄅㄠˋ",
+   "ㄓˇ"
+  ],
+  "s": [
+   "bào",
+   "zhǐ"
+  ],
+  "en": "newspaper",
+  "zh": "报纸",
+  "de": "Zeitung",
+  "es": "periódico",
+  "fr": "journal"
+ },
+ {
+  "w": "再見",
+  "p": "zàijiàn",
+  "z": [
+   "ㄗㄞˋ",
+   "ㄐㄧㄢˋ"
+  ],
+  "s": [
+   "zài",
+   "jiàn"
+  ],
+  "en": "goodbye",
+  "zh": "再见",
+  "de": "auf Wiedersehen",
+  "es": "adiós",
+  "fr": "au revoir"
+ },
+ {
+  "w": "弟弟",
+  "p": "dìdi",
+  "z": [
+   "ㄉㄧˋ",
+   "˙ㄉㄧ"
+  ],
+  "s": [
+   "dì",
+   "di"
+  ],
+  "en": "younger brother",
+  "zh": "弟弟",
+  "de": "jüngerer Bruder",
+  "es": "hermano menor",
+  "fr": "petit frère"
+ }
+]

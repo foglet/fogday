@@ -1,6 +1,6 @@
 # 發財 tones (fogday.com/zhcy/tone)
 
-Tone Pairs wrapper copied from /zh20, one word at a time (swipe or arrow keys). Tapping the word plays a recorded MP3 from `assets/echo/zh/`, cycling voices; words with no recording fall back to speech synthesis.
+Tone Pairs: the /zh20 word card and meaning-language menu inside the /zhcy header and footer (copied from zhcy/_build/template.html at build time, so rebuild after changing zhcy). Words live in `words.json`. Tapping the word or play plays a recorded MP3 from `assets/echo/zh/`, cycling voices. In the language menu, tapping ZH again switches Simplified and Traditional.
 
 - Source: `template.html`. Do not edit `../index.html`.
 - After adding or removing MP3s run `python3 zhcy/tone/_build/build.py`, then commit.
