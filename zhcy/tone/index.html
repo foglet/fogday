@@ -335,6 +335,8 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 .tp-pairs b{display:inline-block;min-width:3.2em;font-weight:600;color:var(--primary)}
 .tp-pairs span{font-family:var(--song);font-size:1.0625rem;color:var(--ink);letter-spacing:.04em;word-spacing:.5em}
 #play[data-playing] svg{background:#c8ddd0}
+.tp-word.tp-kai,.tp-tile .hz.tp-kai{font-family:var(--kai)}
+.tp-word.tp-kai{font-weight:400}
 </style>
 </head>
 <body>
@@ -418,7 +420,15 @@ let clipPos = store.get('tone:pos', {}) || {};
 /* Font: whatever was last chosen on the chengyu / 36 page (zhcy:font2, caoshu by default). It is changed only there,
    by tapping the characters; here it is read on load and when it changes in another tab. */
 const FONT_IDS = ['cao', 'xing', 'ou', 'kai', 'song', 'hei'];
-function applyFont(){ const f = store.get('zhcy:font2', 'cao'); document.body.dataset.font = FONT_IDS.includes(f) ? f : 'cao'; }
+/* Fonts never mix inside a word: if the chosen font lacks any of its characters (the cursive fonts have no
+   traditional forms; the Ouyang subset is small), that whole word is shown in Kaiti instead. */
+const GAPS = {"cao": "問國報學師紙見賽銀開題", "xing": "問國報學師紙見賽銀開題", "ou": "么什们伞唱场奶妈孩果校桌椅睡谢賽迟銀银"};
+const mixes = text => { const g = GAPS[document.body.dataset.font]; return !!g && Array.from(text).some(c => g.includes(c)); };
+function fontFor(el, text){ el.classList.toggle('tp-kai', mixes(text)); }
+function applyFont(){
+  const f = store.get('zhcy:font2', 'cao'); document.body.dataset.font = FONT_IDS.includes(f) ? f : 'cao';
+  document.querySelectorAll('.tp-word,.tp-tile .hz').forEach(el => fontFor(el, el.textContent.replace(/[^\u3400-\u9fff]/g, '')));
+}
 applyFont();
 addEventListener('storage', e => { if(e.key === 'zhcy:font2') applyFont(); });
 
@@ -514,7 +524,7 @@ function play(k){
 /* ---------- word ---------- */
 function render(dir){
   const w = W[cur], b = $('#word');
-  b.lang = LT();
+  b.lang = LT(); fontFor(b, form(w));
   b.setAttribute('aria-label', 'Play ' + form(w) + ', ' + w.p);
   const cols = Array.from(form(w)).map((ch, i) => {
     const col = document.createElement('span'); col.className = 'tp-col';
@@ -576,7 +586,7 @@ function list(){
     const li = document.createElement('li'), b = document.createElement('button');
     b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
-    const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w);
+    const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w); fontFor(h, form(w));
     const p = document.createElement('span'); p.className = 'py'; p.lang = 'zh-Latn-pinyin'; p.textContent = w.p;
     b.append(h, p);
     b.addEventListener('click', () => {

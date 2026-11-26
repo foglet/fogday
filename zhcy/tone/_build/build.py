@@ -109,7 +109,9 @@ def main():
                .replace("<!--ZHCY_HEADER-->", header)
                .replace("<!--ZHCY_ACTIONS-->", actions)
                .replace("/*WORDS*/[]", json.dumps(words, ensure_ascii=False, separators=(",", ":")))
-               .replace("/*CLIPS*/{}", json.dumps(clip, ensure_ascii=False, separators=(",", ":"))))
+               .replace("/*CLIPS*/{}", json.dumps(clip, ensure_ascii=False, separators=(",", ":")))
+               .replace("/*GAPS*/{}", json.dumps({k: v for k, v in json.loads((HERE / "font_gaps.json").read_text(encoding="utf-8")).items()
+                                                  if not k.startswith("_")}, ensure_ascii=False)))
     OUT.write_text(html, encoding="utf-8")
     print(f"{len(words)} words, {sum(map(len, clip.values()))} clips -> {OUT.relative_to(ROOT)}")
     if missing:

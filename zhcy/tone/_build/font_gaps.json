@@ -1,0 +1,6 @@
+{
+ "_note": "Characters on the tone page that each web font lacks. A word with any of them is shown whole in Kaiti, so fonts never mix inside a word. cao/xing: Liu Jian Mao Cao and Zhi Mang Xing (checked against @fontsource 5.3.0, same as Google Fonts); ou: ../../fonts/ar-pl-ukai-cn-zhcy.woff2. Recheck when words.json changes.",
+ "cao": "問國報學師紙見賽銀開題",
+ "xing": "問國報學師紙見賽銀開題",
+ "ou": "么什们伞唱场奶妈孩果校桌椅睡谢賽迟銀银"
+}
