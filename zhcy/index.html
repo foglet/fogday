@@ -904,6 +904,9 @@ if(SS){ pickVoice(); SS.addEventListener && SS.addEventListener('voiceschanged',
 function stopSpeech(){ if(SS && (SS.speaking || SS.pending)) SS.cancel(); }
 $('#play').addEventListener('click', () => {
   if(!SS){ note(t('noSpeech')); return; }
+  // iPhone: play with the silent switch on (Safari 16.4+), and wake a speech engine left paused.
+  try{ if(navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; }catch(e){}
+  try{ if(SS.paused) SS.resume(); }catch(e){}
   stopSpeech();
   const u = new SpeechSynthesisUtterance(plain(LIST[cur].e));
   u.lang = 'zh-CN'; u.rate = .8; if(voice) u.voice = voice;

@@ -112,6 +112,7 @@ def main():
     html = (tpl.replace("/*ZHCY_STYLE*/", style)
                .replace("<!--ZHCY_HEADER-->", header)
                .replace("<!--ZHCY_ACTIONS-->", actions)
+               .replace("<!--GAME_ICON-->", '<svg class="ph tp-icon" viewBox="0 0 256 256" role="img" aria-label="(game controller icon)"><path d="' + GAME + '"/></svg>')
                .replace("/*WORDS*/[]", json.dumps(words, ensure_ascii=False, separators=(",", ":")))
                .replace("/*CLIPS*/{}", json.dumps(clip, ensure_ascii=False, separators=(",", ":")))
                .replace("/*GAPS*/{}", json.dumps({k: v for k, v in json.loads((HERE / "font_gaps.json").read_text(encoding="utf-8")).items()
