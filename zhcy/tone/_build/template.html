@@ -16,7 +16,6 @@
 /* The footer row stays on screen in every view, so 發財 can always bring back the single word. */
 main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
-.tp-progress{margin:0 0 var(--s4);color:var(--ink-2);font-size:var(--fs-sm)}
 .tp-word{display:flex;justify-content:center;gap:.04em;border:0;background:transparent;color:var(--ink);padding:var(--s3);cursor:pointer;
   font-size:clamp(5rem,23vw,8rem);line-height:1.2;border-radius:var(--r-md);-webkit-tap-highlight-color:transparent}
 .tp-col{display:flex;flex-direction:column;align-items:center;min-width:1em}
@@ -38,6 +37,7 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp-tile .hz{font-family:var(--song);font-weight:500;font-size:2.4rem;line-height:1.1}
 .tp-tile .py{color:var(--primary);font-weight:600}
 @media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
+.tp-gap{visibility:hidden}
 </style>
 </head>
 <body>
@@ -48,7 +48,6 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
   <div class="view" id="vHome">
     <h1 class="vh">Tone Pairs</h1>
     <section class="tp" id="tp" aria-label="Tone pair practice">
-      <p class="tp-progress" id="prog"></p>
       <button class="tp-word" id="word" type="button"></button>
       <p class="tp-def" id="def"></p>
       <div class="tp-sandhi" id="sandhi" hidden></div>
@@ -129,7 +128,6 @@ function render(dir){
   const d = $('#def'); d.textContent = mean(w); d.lang = isZh() ? LT() : LANG;
   const s = $('#sandhi'); s.hidden = !w.sandhi;
   s.replaceChildren(...(w.sandhi || []).map(t => { const x = document.createElement('div'); x.textContent = t; return x; }));
-  $('#prog').textContent = (cur + 1) + ' / ' + W.length;
   store.set('tone:cur', cur);
 }
 function move(delta){

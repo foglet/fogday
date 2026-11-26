@@ -60,22 +60,22 @@ def zhcy_parts():
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
     actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
                   '<a class="n36 nfc" id="b36" href="../#36-1" aria-label="Thirty-Six Stratagems">36</a>')
-    # Language switch removed for now.
+    # Language switch removed for now; its slot stays empty so the other icons keep their /zhcy positions.
     m = re.search(r'<button class="ibtn lang" id="lang".*?</button>', actions, re.S)
     if not m:
         raise SystemExit("zhcy template changed, cannot find the language button")
-    actions = actions.replace(m.group(0), '')
+    actions = actions.replace(m.group(0), '<span class="ibtn tp-gap" aria-hidden="true"></span>')
     # 發財 slot toggles: game controller (opens the word grid) or 發財 (back to the single word).
     actions = sub(actions, '<a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>',
                   '<button class="n36 nfc" id="bfc" type="button" aria-controls="vBooks" aria-label="Word grid">'
                   '<svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + GAME + '"/></svg></button>')
     actions = sub(actions, ' aria-label="Play pronunciation" data-ta="play"', ' aria-label="Play pronunciation"')
     actions = sub(actions, ' aria-label="Copy chengyu" data-ta="copy"', ' aria-label="Copy word"')
-    # Tone pairs cannot be starred. Bottom row: 36, game controller or 發財, copy.
+    # Tone pairs cannot be starred; its slot stays empty too. Visible row: 36, game controller or 發財, copy.
     m = re.search(r'<button class="ibtn star" id="star".*?</button>', actions, re.S)
     if not m:
         raise SystemExit("zhcy template changed, cannot find the star button")
-    actions = actions.replace(m.group(0), '')
+    actions = actions.replace(m.group(0), '<span class="ibtn tp-gap" aria-hidden="true"></span>')
     return style, header, actions
 
 
