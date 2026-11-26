@@ -78,7 +78,8 @@ svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:
 .seal-a{flex:none;display:grid;place-items:center;width:var(--tap);height:var(--tap);margin-left:-5px;text-decoration:none;border-radius:var(--r-md)}
 .pick{display:flex;align-items:center;gap:4px;min-width:0;min-height:var(--tap);padding:0 6px 0 var(--s1);border:0;border-radius:var(--r-md);
   background:transparent;color:var(--ink);cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
-.pick:hover,.pick[aria-expanded="true"]{background:var(--surface-2)}
+.pick:hover,.pick:focus-visible,.pick[aria-expanded="true"]{background:var(--surface-2)}
+.pick:focus-visible{outline:none}   /* no ring: the tint marks focus */
 .pick .caret{width:14px;height:14px;color:var(--ink-2);transition:transform var(--dur) var(--ease)}
 .pick[aria-expanded="true"] .caret{transform:rotate(180deg)}
 .pmenu{position:absolute;top:calc(100% + 2px);left:var(--s5);z-index:20;width:max-content;min-width:16rem;max-width:calc(100vw - 48px);padding:6px;background:var(--surface);border-radius:14px;
@@ -87,8 +88,8 @@ svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:
 .pmenu.on{animation:pmIn 240ms var(--spring-smooth)}
 @keyframes pmIn{from{opacity:0;transform:scale(.92) translateY(-6px)}}
 .pmenu a{display:flex;align-items:center;white-space:nowrap;gap:var(--s2);min-height:var(--tap);padding:0 var(--s3) 0 var(--s2);border-radius:10px;color:var(--ink);text-decoration:none;font-weight:600}
-.pmenu a:hover,.pmenu a:focus{background:var(--surface-2);outline:none}
-.pmenu a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+/* No ring on the menu items: the tinted row marks focus, as in the Maps menu. */
+.pmenu a:hover,.pmenu a:focus,.pmenu a:focus-visible{background:var(--surface-2);outline:none}
 .pmenu .ck{width:18px;height:18px;color:var(--primary);visibility:hidden}
 .pmenu a[aria-checked="true"] .ck{visibility:visible}
 .brand .pmenu small{margin-left:auto;padding-left:var(--s4);color:var(--ink-2);font-weight:400;font-family:var(--cy);font-size:1.0625rem}
@@ -348,6 +349,12 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 #vBooks>section{flex:1;display:flex;flex-direction:column}
 .tp-grid{flex:1;align-content:space-evenly}
 @media (min-width:600px) and (min-height:900px){.tp-grid{row-gap:var(--s3);padding:var(--s4) 0 var(--s5)}}
+/* Tablets (both sides at least 600px; phones in either orientation keep the strict four columns): the grid breaks
+   out of the column to 80% of the screen width, centred, and fits as many tile columns as that width holds, so in
+   landscape the words spread across the screen in fewer rows. Header and footer stay in the narrow column. */
+@media (min-width:600px) and (min-height:600px){
+  #vBooks>section{width:80vw;margin-inline:calc((100% - 80vw) / 2)}
+  .tp-grid{grid-template-columns:repeat(auto-fill,minmax(7rem,1fr));column-gap:var(--s2);row-gap:var(--s2)}}
 .tp-grid>li{display:flex;min-width:0}
 .tp-grid>li>.tp-tile{flex:1}
 /* The selected tone pair fills a 2 x 2 block; the other tiles flow around it (dense packing). */

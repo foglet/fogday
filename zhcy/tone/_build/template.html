@@ -39,6 +39,12 @@
 #vBooks>section{flex:1;display:flex;flex-direction:column}
 .tp-grid{flex:1;align-content:space-evenly}
 @media (min-width:600px) and (min-height:900px){.tp-grid{row-gap:var(--s3);padding:var(--s4) 0 var(--s5)}}
+/* Tablets (both sides at least 600px; phones in either orientation keep the strict four columns): the grid breaks
+   out of the column to 80% of the screen width, centred, and fits as many tile columns as that width holds, so in
+   landscape the words spread across the screen in fewer rows. Header and footer stay in the narrow column. */
+@media (min-width:600px) and (min-height:600px){
+  #vBooks>section{width:80vw;margin-inline:calc((100% - 80vw) / 2)}
+  .tp-grid{grid-template-columns:repeat(auto-fill,minmax(7rem,1fr));column-gap:var(--s2);row-gap:var(--s2)}}
 .tp-grid>li{display:flex;min-width:0}
 .tp-grid>li>.tp-tile{flex:1}
 /* The selected tone pair fills a 2 x 2 block; the other tiles flow around it (dense packing). */
