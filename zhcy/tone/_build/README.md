@@ -6,4 +6,5 @@ Tone Pairs: the /zh20 word card and meaning-language menu inside the /zhcy heade
 - After adding or removing MP3s run `python3 zhcy/tone/_build/build.py`, then commit.
 - Filenames: `词,pinyin.mp3`, `词,pinyin-ondoku3_DATE-TIME_Voice.mp3`, or `词.pinyin.ondoku3_DATE-TIME_Voice.mp3`. Unrecognised names are printed as skipped.
 - localStorage key `tone:pos` remembers which voice plays next per word.
+- Fonts: the chengyu page font choice (zhcy:font2) carries over. `../fonts/` subsets lack 19 tone-page characters; `fonts/lxgw-wenkai-tone.woff2` (LXGW WenKai, OFL, from the lxgw-wenkai-webfont npm package) fills them. If words.json gains characters, rebuild that subset.
 - Linked from the 發財 button in the zhcy bottom row (right of 36).
