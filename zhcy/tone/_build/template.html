@@ -13,8 +13,8 @@
 /* ---- From zhcy/_build/template.html (copied in at build time) ---- */
 /*ZHCY_STYLE*/
 /* ---- Tone Pairs ---- */
-/* The footer row stays on screen in every view, so 發財 can always bring back the single word. */
-main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
+/* Header and footer scroll with the page (not pinned), so the whole grid can scroll. */
+.top{position:static}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
 .tp-word{display:flex;justify-content:center;gap:.04em;border:0;background:transparent;color:var(--ink);padding:var(--s3);cursor:pointer;
   font-size:clamp(5rem,23vw,8rem);line-height:1.2;border-radius:var(--r-md);-webkit-tap-highlight-color:transparent}
@@ -28,13 +28,13 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 @keyframes tpNext{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
 @keyframes tpPrev{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.tp-g{animation:none!important}}
-.tp-grid{list-style:none;margin:0;padding:var(--s2) 0 var(--s4);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2)}
-.tp-tile{width:100%;min-height:var(--tap);padding:var(--s2) 2px;border:0;border-radius:var(--r-md);background:var(--surface);color:var(--ink);
+.tp-grid{list-style:none;margin:0;padding:var(--s1) 0 var(--s2);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s1)}
+.tp-tile{width:100%;min-height:var(--tap);padding:var(--s1) 2px;border:0;border-radius:var(--r-md);background:var(--surface);color:var(--ink);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform 80ms var(--ease)}
 .tp-tile:active{transform:scale(.97)}
-/* No borders, except on the word in focus. */
-.tp-tile[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent) inset}
+/* The word in focus turns red (characters and pinyin). No borders. */
+.tp-tile[aria-pressed="true"] .hz,.tp-tile[aria-pressed="true"] .py{color:var(--accent)}
 /* Sized so two characters and their pinyin fit a quarter of the width (down to 280px screens). */
 .tp-tile .hz{font-family:var(--song);font-weight:500;font-size:clamp(1.2rem,7.2vw,2.1rem);line-height:1.15;white-space:nowrap}
 .tp-tile .py{color:var(--primary);font-weight:600;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
@@ -138,13 +138,12 @@ function move(delta){
 }
 
 /* ---------- views: home, word list (books), info ---------- */
-/* Word grid (game controller): 4 x 5 tiles in random order. Tap plays; tap again for the next voice. */
+/* Word grid (game controller): all 40 words, 4 wide, in random order. Tap plays; tap again for the next voice. */
 let lit = null;
 function list(){
-  /* No set order: each time the grid opens it shows 20 of the 40 words (4 wide by 5), shuffled.
-     The word in focus is always one of them, wherever it lands, and keeps its border. */
-  const shuffle = a => { for(let k = a.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
-  const order = shuffle([cur, ...shuffle(W.map((_, i) => i).filter(i => i !== cur)).slice(0, 19)]);
+  /* No set order: all 40 words, 4 wide, shuffled each time the grid opens. The word in focus is red. */
+  const order = W.map((_, i) => i);
+  for(let k = order.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
   lit = null;
   $('#list').replaceChildren(...order.map(i => { const w = W[i];
     const li = document.createElement('li'), b = document.createElement('button');
