@@ -28,7 +28,7 @@ if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIn
 .btn.dbl{position:relative}
 .btn.dbl::after{content:"";position:absolute;left:50%;bottom:4px;width:8px;height:2px;margin-left:-4px;pointer-events:none;
   background:radial-gradient(circle,currentColor 0 1px,transparent 1.2px) 0 50%/4px 2px repeat-x}
-html.nopx .bgpx,html.nopx .fgpx{display:none}   /* default: no /px background, just the plain page; the /px background turns up at random (no control) */
+html.nopx .bgpx,html.nopx .fgpx{display:none}   /* the /px background is off for good: just the plain page */
 html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 var(--font);-webkit-text-size-adjust:100%}
 .px-ink{color:transparent;background-image:var(--tg,linear-gradient(to right,#3f9e6e,#5aa0d8,#d0708a));-webkit-background-clip:text;background-clip:text}
 .px-out{display:inline-flex;align-items:center;filter:drop-shadow(2px 0 0 var(--out)) drop-shadow(-2px 0 0 var(--out)) drop-shadow(0 2px 0 var(--out)) drop-shadow(0 -2px 0 var(--out))}
@@ -203,7 +203,7 @@ html.qrclear .meta,html.qrclear #meta .mtxt,html.qrclear .field>label,html.qrcle
 <iframe class="bgpx" id="pxBack" title="Pixel landscape background" aria-hidden="true" tabindex="-1"></iframe>
 <video class="cambg" id="camVid" autoplay muted playsinline aria-hidden="true"></video>
 <iframe class="fgpx" id="pxFront" title="Pixel dragons flying over the page" aria-hidden="true" tabindex="-1"></iframe>
-<script>/* No background by default. On about 1 load in 4 the /px background turns up (both layers share one landscape seed); there is no button for it */(function(){ var PX_CHANCE = 0.25; if (Math.random() >= PX_CHANCE){ document.documentElement.classList.add('nopx'); return; } var sd = 1 + Math.floor(Math.random()*999999998); document.getElementById('pxBack').src = '/px/?bg&seed=' + sd; document.getElementById('pxFront').src = '/px/?fg&seed=' + sd; })();</script>
+<script>/* The /px background is off for good: its two layers are never loaded (no option, no random roll) */document.documentElement.classList.add('nopx');</script>
 <header>
   <h1 class="sr">Pixel QR</h1>
 </header>
@@ -1751,7 +1751,7 @@ function boot(){
   if (window.visualViewport) window.visualViewport.addEventListener('resize', function(){ if (cur) paintFrame(); });
 
   $('text').addEventListener('click', textIt);
-  /* The joystick (New scene) was removed: no control for the /px background, which only turns up at random on load */
+  /* The joystick (New scene) was removed, and the /px background is off for good */
   var sceneFns = [];
   function onScene(f){ sceneFns.push(f); }   // kept so older hooks still register; nothing fires them now
   /* Activity: any tap, key or typing; the ground waits for six quiet seconds */
