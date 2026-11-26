@@ -38,7 +38,7 @@ header,main{position:relative;z-index:1}
 /* Front layer: the /px dragons and weather fly over the fields (see-through, never takes taps); the code itself stays on top so it always scans */
 .fgpx{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2;pointer-events:none;background:transparent;transition:opacity .4s}
 html.cleared .fgpx{opacity:0}
-#siteFree:not(:focus){flex:0 0 var(--sw,auto);min-width:0}   /* at rest: just wide enough for its text (or the placeholder); with focus it takes the rest of the row */
+#siteFree:not(:focus){flex:1 1 0;min-width:0}   /* fills the rest of the row (the eye button that sat after it was removed) */
 .stage{position:relative;z-index:3}
 /* Controls are never wider than the code */
 .ctl{max-width:var(--qrw,440px);margin:0 auto}
