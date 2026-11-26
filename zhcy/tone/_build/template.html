@@ -61,6 +61,10 @@
 .tp-tile[aria-pressed="false"] .hz{color:color-mix(in srgb,var(--ink) 80%,var(--surface))}
 .tp-tile[aria-pressed="false"] .py{color:color-mix(in srgb,var(--primary) 80%,var(--surface))}
 .tp-tile .hz,.tp-tile .py{transition:color 700ms var(--ease)}
+/* Every recorded voice of a word heard: its pinyin turns from green to light grey (the lightest grey that still
+   reads at AA). The selected tile stays red. */
+.tp-word .tp-py{transition:color 700ms var(--ease)}
+.tp-word.heard .tp-py,.tp-tile.heard[aria-pressed="false"] .py{color:#767676}
 /* Sized so two characters and their pinyin fit a quarter of the width (down to 280px screens). */
 .tp-tile .hz{font-family:var(--cy);font-weight:var(--cyw);font-size:clamp(1.2rem,7.2vw,2.1rem);line-height:1.15;white-space:nowrap}
 .tp-tile .py{color:var(--primary);font-weight:400;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
@@ -127,6 +131,15 @@ const store = {
 const LANG = 'en';
 let cur = Math.min(Math.max(+store.get('tone:cur', 0) || 0, 0), W.length - 1);
 let clipPos = store.get('tone:pos', {}) || {};
+/* tone:heard: per word, the recordings already played. Seeded from tone:pos, which counts up through the voices in order. */
+let heard = store.get('tone:heard', null);
+if(!heard){ heard = {}; Object.keys(clipPos).forEach(k => { const l = CLIPS[k] || []; if(l.length) heard[k] = l.slice(0, Math.min(+clipPos[k] || 0, l.length)); }); }
+const allHeard = w => { const l = CLIPS[w.w] || [], h = heard[w.w] || []; return l.length > 0 && l.every(f => h.includes(f)); };
+function paintHeard(w){
+  const on = allHeard(w);
+  if(W[cur] === w) $('#word').classList.toggle('heard', on);
+  document.querySelectorAll('.tp-tile').forEach(b => { if(b.dataset.w === w.w) b.classList.toggle('heard', on); });
+}
 
 /* Font: whatever was last chosen on the chengyu / 36 page (zhcy:font2, caoshu by default). It is changed only there,
    by tapping the characters; here it is read on load and when it changes in another tab. */
@@ -227,6 +240,8 @@ function play(k){
   const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
   if(!list.length){ speakTTS(w.w); return; }
   const i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
+  const f = list[i], h = heard[w.w] || (heard[w.w] = []);
+  if(!h.includes(f)){ h.push(f); store.set('tone:heard', heard); paintHeard(w); }
   const src = srcOf(w, i), t = ++token;
   stopAll();
   const c = unlock();   // inside the tap
@@ -247,7 +262,7 @@ function play(k){
 function render(dir){
   const w = W[cur], b = $('#word');
   b.lang = LT(); fontFor(b, form(w));
-  b.setAttribute('aria-label', 'Play ' + form(w) + ', ' + w.p);
+  b.setAttribute('aria-label', 'Play ' + form(w) + ', ' + w.p); b.classList.toggle('heard', allHeard(w));
   const cols = Array.from(form(w)).map((ch, i) => {
     const col = document.createElement('span'); col.className = 'tp-col';
     const g = document.createElement('span'); g.className = 'tp-g'; g.textContent = ch;
@@ -324,7 +339,7 @@ function list(){
   let start = null;
   $('#list').replaceChildren(...order.map(i => { const w = W[i];
     const li = document.createElement('li'), b = document.createElement('button'); if(w.last) li.dataset.last = '1';
-    b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
+    b.type = 'button'; b.className = 'tp-tile' + (allHeard(w) ? ' heard' : ''); b.dataset.w = w.w; b.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
     const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w); fontFor(h, form(w));
     const p = document.createElement('span'); p.className = 'py'; p.lang = 'zh-Latn-pinyin'; p.textContent = w.p;
