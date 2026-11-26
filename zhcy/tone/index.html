@@ -48,6 +48,8 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* No rubber-band bounce (jiggle) when a scroll reaches the top or bottom. */
+html,body{overscroll-behavior-y:none}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:var(--fs-body);line-height:1.5;
   display:flex;flex-direction:column;min-height:100vh;min-height:100svh}
 body[data-font="hei"]{--cy:var(--hei);--cyt:var(--hei)}
