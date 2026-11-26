@@ -59,7 +59,6 @@
 .tp-pairs li{margin:0 0 2px}
 .tp-pairs b{display:inline-block;min-width:3.2em;font-weight:600;color:var(--primary)}
 .tp-pairs span{font-family:var(--song);font-size:1.0625rem;color:var(--ink);letter-spacing:.04em;word-spacing:.5em}
-#play[data-playing] svg{background:#c8ddd0}
 .tp-word.tp-kai,.tp-tile .hz.tp-kai{font-family:var(--kai)}
 .tp-word.tp-kai{font-weight:400}
 </style>
@@ -193,8 +192,8 @@ function prefetchAll(){   // a few at a time
     live++; fetchClip(srcOf(w, nextIdx(w))).finally(() => { live--; pump(); }); } };
   pump();
 }
-/* While a clip plays, the play button is marked (data-playing) and its circle darkens a little. */
-const playing = on => { const b = $('#play'); on ? b.setAttribute('data-playing', '') : b.removeAttribute('data-playing'); };
+/* No play button on Tone Pairs (tap the word to play); nothing to mark while a clip plays. */
+const playing = () => {};
 let el = null, node = null, token = 0;
 function stopAll(){ try{ if(node) node.stop(); }catch(e){} node = null; if(el) el.pause(); playing(false); }
 function playEl(src){   // fallback: the <audio> player, started inside the tap
@@ -327,7 +326,6 @@ function applyLang(){ document.documentElement.lang = 'en'; render(0); prefetchA
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());
 
-$('#play').addEventListener('click', () => play());
 $('#copy').addEventListener('click', async () => {
   const text = form(W[cur]);
   try{ await navigator.clipboard.writeText(text); note('Copied ' + text); }catch(e){ note('Could not copy'); }

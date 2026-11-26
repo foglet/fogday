@@ -334,7 +334,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 .tp-pairs li{margin:0 0 2px}
 .tp-pairs b{display:inline-block;min-width:3.2em;font-weight:600;color:var(--primary)}
 .tp-pairs span{font-family:var(--song);font-size:1.0625rem;color:var(--ink);letter-spacing:.04em;word-spacing:.5em}
-#play[data-playing] svg{background:#c8ddd0}
 .tp-word.tp-kai,.tp-tile .hz.tp-kai{font-family:var(--kai)}
 .tp-word.tp-kai{font-weight:400}
 </style>
@@ -392,8 +391,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 
 <div class="actions">
       <p class="note" id="note" role="status"></p>
-      <button class="play" id="play" type="button" aria-label="Play pronunciation">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
       <span class="ibtn tp-gap" aria-hidden="true"></span>
       <a class="n36 nfc" id="b36" href="../#36-1" aria-label="Thirty-Six Stratagems">36</a>
       <button class="n36 nfc" id="bfc" type="button" aria-controls="vBooks" aria-label="Word grid"><svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M176,112H152a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM104,96H96V88a8,8,0,0,0-16,0v8H72a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16ZM241.48,200.65a36,36,0,0,1-54.94,4.81c-.12-.12-.24-.24-.35-.37L146.48,160h-37L69.81,205.09l-.35.37A36.08,36.08,0,0,1,44,216,36,36,0,0,1,8.56,173.75a.68.68,0,0,1,0-.14L24.93,89.52A59.88,59.88,0,0,1,83.89,40H172a60.08,60.08,0,0,1,59,49.25c0,.06,0,.12,0,.18l16.37,84.17a.68.68,0,0,1,0,.14A35.74,35.74,0,0,1,241.48,200.65ZM172,144a44,44,0,0,0,0-88H83.89A43.9,43.9,0,0,0,40.68,92.37l0,.13L24.3,176.59A20,20,0,0,0,58,194.3l41.92-47.59a8,8,0,0,1,6-2.71Zm59.7,32.59-8.74-45A60,60,0,0,1,172,160h-4.2L198,194.31a20.09,20.09,0,0,0,17.46,5.39,20,20,0,0,0,16.23-23.11Z"/></svg></button>
@@ -489,8 +486,8 @@ function prefetchAll(){   // a few at a time
     live++; fetchClip(srcOf(w, nextIdx(w))).finally(() => { live--; pump(); }); } };
   pump();
 }
-/* While a clip plays, the play button is marked (data-playing) and its circle darkens a little. */
-const playing = on => { const b = $('#play'); on ? b.setAttribute('data-playing', '') : b.removeAttribute('data-playing'); };
+/* No play button on Tone Pairs (tap the word to play); nothing to mark while a clip plays. */
+const playing = () => {};
 let el = null, node = null, token = 0;
 function stopAll(){ try{ if(node) node.stop(); }catch(e){} node = null; if(el) el.pause(); playing(false); }
 function playEl(src){   // fallback: the <audio> player, started inside the tap
@@ -623,7 +620,6 @@ function applyLang(){ document.documentElement.lang = 'en'; render(0); prefetchA
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());
 
-$('#play').addEventListener('click', () => play());
 $('#copy').addEventListener('click', async () => {
   const text = form(W[cur]);
   try{ await navigator.clipboard.writeText(text); note('Copied ' + text); }catch(e){ note('Could not copy'); }

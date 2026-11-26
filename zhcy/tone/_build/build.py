@@ -71,7 +71,11 @@ def zhcy_parts():
     actions = sub(actions, '<a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>',
                   '<button class="n36 nfc" id="bfc" type="button" aria-controls="vBooks" aria-label="Word grid">'
                   '<svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + GAME + '"/></svg></button>')
-    actions = sub(actions, ' aria-label="Play pronunciation" data-ta="play"', ' aria-label="Play pronunciation"')
+    # No play button on Tone Pairs: tapping the word (or a grid tile) plays it.
+    m = re.search(r'\s*<button class="play" id="play".*?</button>', actions, re.S)
+    if not m:
+        raise SystemExit("zhcy template changed, cannot find the play button")
+    actions = actions.replace(m.group(0), '')
     actions = sub(actions, ' aria-label="Copy chengyu" data-ta="copy"', ' aria-label="Copy word"')
     # Tone pairs cannot be starred; its slot stays empty too. Visible row: 36, game controller or 發財, copy.
     m = re.search(r'<button class="ibtn star" id="star".*?</button>', actions, re.S)
