@@ -881,6 +881,9 @@ function pickVoice(){
 }
 if(SS){ pickVoice(); SS.addEventListener && SS.addEventListener('voiceschanged', pickVoice); }
 function stopSpeech(){ if(SS && (SS.speaking || SS.pending)) SS.cancel(); }
+// Going to Tone Pairs and back can leave the iPhone speech engine stuck; clear it when leaving and on return.
+addEventListener('pagehide', () => { try{ if(SS) SS.cancel(); }catch(e){} });
+addEventListener('pageshow', () => { try{ if(SS){ SS.cancel(); if(SS.paused) SS.resume(); } }catch(e){} });
 $('#play').addEventListener('click', () => {
   if(!SS){ note(t('noSpeech')); return; }
   // iPhone: play with the silent switch on (Safari 16.4+), and wake a speech engine left paused.

@@ -458,6 +458,17 @@ function unlock(){
   return ctx;
 }
 ['touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, {capture: true, passive: true}));
+/* Leaving the page (to /zhcy or elsewhere) closes the audio context; coming back (including from the
+   back/forward cache) starts clean, and the next tap makes a fresh one. A context kept across pages
+   can come back stuck on iPhone. Fetched bytes stay; only decoded audio is dropped. */
+function resetAudio(){
+  token++; try{ if(node) node.stop(); }catch(e){} node = null;
+  if(el){ try{ el.pause(); }catch(e){} }
+  if(ctx){ try{ ctx.close(); }catch(e){} ctx = null; }
+  bufs.clear();
+}
+addEventListener('pagehide', resetAudio);
+addEventListener('pageshow', e => { if(e.persisted) resetAudio(); });
 const bytes = new Map();   // src -> Promise<ArrayBuffer|null>, fetched ahead of the tap
 const bufs = new Map();    // src -> Promise<AudioBuffer|null>, decoded once there is a context
 function fetchClip(src){
