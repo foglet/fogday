@@ -316,7 +316,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 .tp-tile:active{transform:scale(.97)}
 /* The word in focus turns red (characters and pinyin) with bold characters; the others sit 20% lighter. No borders. */
 .tp-tile[aria-pressed="true"] .hz,.tp-tile[aria-pressed="true"] .py{color:var(--accent)}
-.tp-tile[aria-pressed="true"] .hz{font-weight:700}
+.tp-tile[aria-pressed="true"] .hz{font-weight:700;color:#e34234}   /* the seal red, as in the logo at top left */
 .tp-tile[aria-pressed="false"] .hz{color:color-mix(in srgb,var(--ink) 80%,var(--surface))}
 .tp-tile[aria-pressed="false"] .py{color:color-mix(in srgb,var(--primary) 80%,var(--surface))}
 .tp-tile .hz,.tp-tile .py{transition:color 700ms var(--ease)}
