@@ -67,4 +67,4 @@ Pixel level: Pixel Waves v9 (chunky hard pixels, integer colour steps, the pictu
 - Camera refused: the button just stays off, with no "Camera not allowed" message.
 - Website box: at rest it is just wide enough for its text (or the "Website" placeholder); while it has focus it takes the rest of the row.
 
-- Background (Nov 2026): the /px background is off for good. Its two iframes stay in the page (so the message code still finds them) but are never loaded: no option, no random roll. The joystick (New scene) button was removed. Older notes here about the /px layers, New scene, and /px dragons over the page no longer apply. The 中 mahjong mode is unchanged.
+- Background (Nov 2026): the /px background is off for good. Its two iframes stay in the page (so the message code still finds them) but are never loaded: no option, no random roll. The joystick (New scene) button was removed. Older notes here about the /px layers, New scene, and /px dragons over the page no longer apply. The 中 mahjong mode is unchanged. The eye (hide the page) button was removed too.
