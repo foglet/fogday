@@ -61,10 +61,11 @@
 .tp-tile[aria-pressed="false"] .hz{color:color-mix(in srgb,var(--ink) 80%,var(--surface))}
 .tp-tile[aria-pressed="false"] .py{color:color-mix(in srgb,var(--primary) 80%,var(--surface))}
 .tp-tile .hz,.tp-tile .py{transition:color 700ms var(--ease)}
-/* Every recorded voice of a word heard: its pinyin turns from green to light grey (the lightest grey that still
-   reads at AA). The selected tile stays red. */
-.tp-word .tp-py{transition:color 700ms var(--ease)}
-.tp-word.heard .tp-py,.tp-tile.heard[aria-pressed="false"] .py{color:#767676}
+/* Once every recorded voice of a word has been heard, its characters go light grey (no bold: the calligraphy fonts
+   have one weight and faux bold smudges). Deliberately light, below AA, as a "done" mark. Pinyin stays green.
+   The selected tile stays red and bold. */
+.tp-word .tp-g{transition:color 700ms var(--ease)}
+.tp-word.heard .tp-g,.tp-tile.heard[aria-pressed="false"] .hz{color:#aaa9a4}
 /* Sized so two characters and their pinyin fit a quarter of the width (down to 280px screens). */
 .tp-tile .hz{font-family:var(--cy);font-weight:var(--cyw);font-size:clamp(1.2rem,7.2vw,2.1rem);line-height:1.15;white-space:nowrap}
 .tp-tile .py{color:var(--primary);font-weight:400;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
