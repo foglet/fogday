@@ -79,7 +79,6 @@ const store = {
 };
 const LANG = 'en';
 let cur = Math.min(Math.max(+store.get('tone:cur', 0) || 0, 0), W.length - 1);
-let stars = new Set(store.get('tone:stars', []));
 let clipPos = store.get('tone:pos', {}) || {};
 
 const FONTS = ["var(--song)", "var(--hei)", "var(--kai)", "var(--ou)", "var(--xing)", "var(--cao)"];
@@ -127,7 +126,6 @@ function render(dir){
   const s = $('#sandhi'); s.hidden = !w.sandhi;
   s.replaceChildren(...(w.sandhi || []).map(t => { const x = document.createElement('div'); x.textContent = t; return x; }));
   $('#prog').textContent = (cur + 1) + ' / ' + W.length;
-  const st = $('#star'); st.setAttribute('aria-pressed', String(stars.has(w.w)));
   store.set('tone:cur', cur);
 }
 function move(delta){
@@ -182,10 +180,6 @@ $('#play').addEventListener('click', () => play());
 $('#copy').addEventListener('click', async () => {
   const text = form(W[cur]);
   try{ await navigator.clipboard.writeText(text); note('Copied ' + text); }catch(e){ note('Could not copy'); }
-});
-$('#star').addEventListener('click', () => {
-  const k = W[cur].w; stars.has(k) ? stars.delete(k) : stars.add(k);
-  store.set('tone:stars', [...stars]); render(0); note(stars.has(k) ? 'Starred' : 'Unstarred');
 });
 
 /* ---------- swipe and arrow keys ---------- */

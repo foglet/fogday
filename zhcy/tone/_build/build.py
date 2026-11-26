@@ -71,7 +71,11 @@ def zhcy_parts():
                   '<svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + GAME + '"/></svg></button>')
     actions = sub(actions, ' aria-label="Play pronunciation" data-ta="play"', ' aria-label="Play pronunciation"')
     actions = sub(actions, ' aria-label="Copy chengyu" data-ta="copy"', ' aria-label="Copy word"')
-    actions = sub(actions, 'aria-label="Star this chengyu"', 'aria-label="Star this word"')
+    # Tone pairs cannot be starred: the star becomes an empty slot so the row keeps its /zhcy layout.
+    m = re.search(r'<button class="ibtn star" id="star".*?</button>', actions, re.S)
+    if not m:
+        raise SystemExit("zhcy template changed, cannot find the star button")
+    actions = actions.replace(m.group(0), '<span class="ibtn tp-gap" aria-hidden="true"></span>')
     return style, header, actions
 
 
