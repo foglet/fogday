@@ -314,14 +314,16 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform 80ms var(--ease)}
 .tp-tile:active{transform:scale(.97)}
-/* The word in focus turns red and bold (characters and pinyin). No borders. */
+/* The word in focus turns red (characters and pinyin) with bold characters; the others sit 20% lighter. No borders. */
 .tp-tile[aria-pressed="true"] .hz,.tp-tile[aria-pressed="true"] .py{color:var(--accent)}
 .tp-tile[aria-pressed="true"] .hz{font-weight:700}
-.tp-tile[aria-pressed="true"] .py{font-weight:600}
+.tp-tile[aria-pressed="false"] .hz{color:color-mix(in srgb,var(--ink) 80%,var(--surface))}
+.tp-tile[aria-pressed="false"] .py{color:color-mix(in srgb,var(--primary) 80%,var(--surface))}
+.tp-tile .hz,.tp-tile .py{transition:color 700ms var(--ease)}
 /* Sized so two characters and their pinyin fit a quarter of the width (down to 280px screens). */
 .tp-tile .hz{font-family:var(--song);font-weight:500;font-size:clamp(1.2rem,7.2vw,2.1rem);line-height:1.15;white-space:nowrap}
 .tp-tile .py{color:var(--primary);font-weight:400;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
-@media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
+@media (prefers-reduced-motion:reduce){.tp-tile,.tp-tile .hz,.tp-tile .py{transition:none}}
 .tp-gap{visibility:hidden}
 .tp-pairs{list-style:none;margin:0 0 var(--s2);padding:0;font-size:var(--fs-sm);color:var(--ink-2)}
 .tp-pairs li{margin:0 0 2px}
@@ -486,12 +488,12 @@ function pick(li, animate){
     e.style.zIndex = e === li ? 2 : 1;
     const run = e === li
       ? e.animate([
-          {transform: from, easing: 'cubic-bezier(.55,0,.75,.35)'},            // ease in
-          {offset: .62, transform: 'scale(1.07)', easing: 'ease-out'},         // overshoot
-          {offset: .82, transform: 'scale(.975)', easing: 'ease-in-out'},      // bounce back
-          {transform: 'none'}], {duration: 620})
+          {transform: from, easing: 'cubic-bezier(.45,0,.7,.4)'},             // ease in, slowly
+          {offset: .66, transform: 'scale(1.06)', easing: 'ease-out'},         // overshoot
+          {offset: .84, transform: 'scale(.98)', easing: 'ease-in-out'},       // bounce back
+          {transform: 'none'}], {duration: 1100})
       : e.animate([{transform: from, opacity: .7}, {transform: 'none', opacity: 1}],
-          {duration: 460, easing: 'cubic-bezier(.2,.8,.2,1)', delay: Math.random() * 60});   // quiet shuffle
+          {duration: 800, easing: 'cubic-bezier(.2,.8,.2,1)', delay: Math.random() * 90});   // quiet shuffle
     run.onfinish = run.oncancel = () => { e.style.zIndex = ''; };
   });
 }
