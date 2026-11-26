@@ -13,10 +13,6 @@
 /* ---- From zhcy/_build/template.html (copied in at build time) ---- */
 /*ZHCY_STYLE*/
 /* ---- Tone Pairs ---- */
-/* The title stays "Tone Pairs" in every language, so keep it in Rubik and keep the Chinese subtitle visible. */
-html[lang^="zh"] .brand b{font-family:var(--display);font-weight:600;font-size:var(--fs-lg);letter-spacing:.06em}
-html[lang^="zh"] .brand .sub{display:inline}
-.n36.nfc[aria-current="page"]{color:var(--accent)}
 /* The footer row stays on screen in every view, so 發財 can always bring back the single word. */
 main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
@@ -74,15 +70,6 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
     </section>
   </div>
 
-  <div class="view" id="vInfo" hidden>
-    <section class="pane info" aria-labelledby="iH">
-      <h2 class="ph2" id="iH">Info</h2>
-      <p>Tap the word to hear it. Tap again for the next voice. Swipe or use the arrow keys for the next word. The game controller shows all 40 words; 發財 brings back one word at a time.</p>
-      <p>Red lines show third-tone sandhi: the first of two third tones is spoken as a second tone.</p>
-      <p>Recordings made with ondoku3.com text to speech.</p>
-      <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
-    </section>
-  </div>
 <!--ZHCY_ACTIONS-->
   </div>
 </main>
@@ -178,16 +165,21 @@ function list(){
 }
 audio.addEventListener('ended', () => { if(lit){ lit.setAttribute('aria-pressed', 'false'); lit = null; } });
 let VIEW = 'home';
+const GAME_SVG = $('#bfc').innerHTML;
 function view(v){
   VIEW = v;
-  $('#vHome').hidden = v !== 'home'; $('#vBooks').hidden = v !== 'books'; $('#vInfo').hidden = v !== 'info';
-  document.querySelectorAll('.tab').forEach(t => t.dataset.view === v ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'));
-  const el = $('#v' + {home: 'Home', books: 'Books', info: 'Info'}[v]);
+  $('#vHome').hidden = v !== 'home'; $('#vBooks').hidden = v !== 'books';
+  const el = $(v === 'home' ? '#vHome' : '#vBooks');
   el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
-  if(v === 'books') list();
-  if(v === 'home') render(0);
+  /* The 發財 slot toggles: game controller on the single word, 發財 on the grid. */
+  const f = $('#bfc');
+  if(v === 'books'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); list(); }
+  else { f.innerHTML = GAME_SVG; f.removeAttribute('lang'); f.setAttribute('aria-label', 'Word grid'); render(0); }
+  f.setAttribute('aria-expanded', String(v === 'books'));
 }
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => view(VIEW === t.dataset.view ? 'home' : t.dataset.view)));
+$('#bfc').addEventListener('click', () => { view(VIEW === 'books' ? 'home' : 'books'); $('#bfc').focus(); });
+/* The header is the /zhcy header: its section icons open those sections on the chengyu page. */
+document.querySelectorAll('.top .tab').forEach(t => t.addEventListener('click', () => { location.href = '../#' + t.dataset.view; }));
 
 /* ---------- language: the /zh20 menu, opened from the translate button ---------- */
 const lb = $('#lang');
@@ -218,7 +210,9 @@ document.addEventListener('click', e => { if(!menu.hidden && !e.target.closest('
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !menu.hidden){ openMenu(false); lb.focus(); } });
 function applyLang(){
   document.documentElement.lang = isZh() ? LT() : LANG;
-  const sub = $('#sub'); sub.lang = LT(); sub.textContent = LANG === 'zht' ? '聲調組合' : '声调组合';
+  /* Header text as on /zhcy: English title with the Chinese subtitle, or the Chinese title alone. */
+  $('.brand b').textContent = LANG === 'zh' ? '每日成语' : LANG === 'zht' ? '每日成語' : 'Chengyu';
+  const sub = $('#sub'); sub.lang = LT(); sub.textContent = LANG === 'zht' ? '每日成語' : '每日成语';
   const label = {en: 'EN', de: 'DE', es: 'ES', fr: 'FR', zh: 'ZH', zht: '繁'}[LANG];
   code.textContent = label;
   lb.setAttribute('aria-label', 'Meaning language: ' + {en: 'English', de: 'German', es: 'Spanish', fr: 'French', zh: 'Chinese, Simplified', zht: 'Chinese, Traditional'}[LANG]);
@@ -232,8 +226,7 @@ function applyLang(){
 
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());
-/* 發財 and the game controller toggle: 發財 brings back the single word view. */
-$('#bfc').addEventListener('click', e => { e.preventDefault(); if(VIEW !== 'home'){ view('home'); $('#word').focus(); } });
+
 $('#play').addEventListener('click', () => play());
 $('#copy').addEventListener('click', async () => {
   const text = form(W[cur]);

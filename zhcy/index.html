@@ -1079,9 +1079,11 @@ $('#syncDis').addEventListener('click', () => { ['tok', 'gist'].forEach(store.de
   font = store.get('font2', 'cao'); setFont(font);
   const fromHash = () => { let h = ''; try{ h = decodeURIComponent(location.hash.slice(1)); }catch(e){} const i = h ? IDX.findIndex(x => x.c === h) : -1; return i; };
   const s36Hash = () => { const m = location.hash.match(/^#36-(\d+)$/); return m && +m[1] >= 1 && +m[1] <= 36 ? +m[1] - 1 : -1; };
+  const v0 = (location.hash.match(/^#(books|info)$/) || [])[1];   // from /zhcy/tone: open Meaning and search, or Info
   const i0 = fromHash(), k0 = s36Hash();
   if(k0 >= 0){ cyCur = today; MODE = 's36'; LIST = S; paintMode(); show(k0, 0); } else show(i0 >= 0 ? i0 : today, 0);
   centerStage();
+  if(v0) setView(v0, false, true);
   // Only re-centre when the width changes (rotation). Mobile Safari fires height-only resizes as its toolbar hides on scroll.
   let w0 = innerWidth; addEventListener('resize', () => { if(innerWidth !== w0){ w0 = innerWidth; centerStage(); } });
   Promise.race([Promise.all([document.fonts ? document.fonts.ready : 0, fontFor(effFont(font), plain(tr(LIST[cur], 'e')))]), wait(2500)])

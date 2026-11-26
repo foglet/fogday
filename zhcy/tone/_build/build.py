@@ -47,27 +47,16 @@ def zhcy_parts():
     a0 = z.index('<div class="actions">')
     actions = z[a0 : z.index("</div>", z.index('id="star"')) + 6]
 
-    # Header: Tone Pairs title, brand goes back to the chengyu page (as in 36 mode).
-    header = sub(header, '<a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home">',
-                 '<a class="brand" href="../" aria-label="Tone Pairs, back to chengyu">')
-    header = sub(header, '<span class="seal" id="seal" aria-hidden="true">成</span>',
-                 '<span class="seal" id="seal" aria-hidden="true">二</span>')
-    header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
-                 '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
-    header = header.replace(' data-ta="books"', "").replace(' data-ta="info"', "").replace(' data-ta="works"', "")
-    # Books icon becomes the Phosphor game controller (MIT): opens the 2 x 20 word grid.
-    m = re.search(r'<button class="ibtn tab" id="bBooks".*?</button>', header, re.S)
-    if not m:
-        raise SystemExit("zhcy template changed, cannot find the books button")
-    header = header.replace(m.group(0),
-        '<button class="ibtn tab" id="bBooks" type="button" data-view="books" aria-controls="vBooks" aria-label="Word grid">\n'
-        '        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + GAME + '"/></svg></button>')
+    # Header: the /zhcy header, unchanged. Its links lead back to the chengyu page (see template.html).
+    header = sub(header, '<a class="brand" href="./"', '<a class="brand" href="../"')
 
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
     actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
                   '<a class="n36 nfc" id="b36" href="../#36-1" aria-label="Thirty-Six Stratagems">36</a>')
+    # 發財 slot toggles: game controller (opens the word grid) or 發財 (back to the single word).
     actions = sub(actions, '<a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>',
-                  '<a class="n36 nfc" id="bfc" href="./" lang="zh-Hant" aria-label="Tone Pairs" aria-current="page">發財</a>')
+                  '<button class="n36 nfc" id="bfc" type="button" aria-controls="vBooks" aria-label="Word grid">'
+                  '<svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + GAME + '"/></svg></button>')
     actions = sub(actions, ' aria-label="Play pronunciation" data-ta="play"', ' aria-label="Play pronunciation"')
     actions = sub(actions, ' aria-label="Copy chengyu" data-ta="copy"', ' aria-label="Copy word"')
     actions = sub(actions, 'aria-label="Star this chengyu"', 'aria-label="Star this word"')
