@@ -72,6 +72,7 @@
 .tp-tile .py{color:var(--primary);font-weight:400;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
 @media (prefers-reduced-motion:reduce){.tp-tile,.tp-tile .hz,.tp-tile .py{transition:none}}
 .tp-gap{visibility:hidden}
+.robot[aria-pressed="true"],.robot[aria-pressed="true"]:hover{color:var(--primary)}
 .tp-word.tp-kai,.tp-tile .hz.tp-kai{font-family:var(--kai)}
 .tp-word.tp-kai{font-weight:400}
 .tp-allh{display:flex;align-items:center;gap:var(--s1);margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--primary)}
@@ -206,7 +207,7 @@ function resetAudio(){
   if(ctx){ try{ ctx.close(); }catch(e){} ctx = null; }
   bufs.clear();
 }
-addEventListener('pagehide', resetAudio);
+addEventListener('pagehide', () => { robotStop(); resetAudio(); });
 addEventListener('pageshow', e => { if(e.persisted) resetAudio(); });
 const bytes = new Map();   // src -> Promise<ArrayBuffer|null>, fetched ahead of the tap
 const bufs = new Map();    // src -> Promise<AudioBuffer|null>, decoded once there is a context
@@ -236,37 +237,41 @@ function prefetchAll(){   // a few at a time
 }
 /* No play button on Tone Pairs (tap the word to play); nothing to mark while a clip plays. */
 const playing = () => {};
-let el = null, node = null, token = 0;
-function stopAll(){ try{ if(node) node.stop(); }catch(e){} node = null; if(el) el.pause(); playing(false); }
-function playEl(src){   // fallback: the <audio> player, started inside the tap
-  if(!el){ el = new Audio(); el.addEventListener('ended', () => playing(false)); }
-  el.src = src; const p = el.play(); playing(true);
-  if(p && p.catch) p.catch(() => playing(false));
+let el = null, node = null, token = 0, elDone = null;
+function stopAll(){ elDone = null; try{ if(node) node.stop(); }catch(e){} node = null; if(el) el.pause(); playing(false); }
+function playEl(src, done){   // fallback: the <audio> player, started inside the tap
+  if(!el){ el = new Audio(); el.addEventListener('ended', () => { playing(false); const f = elDone; elDone = null; if(f) f(); }); }
+  elDone = done || null; el.src = src; const p = el.play(); playing(true);
+  if(p && p.catch) p.catch(() => { playing(false); if(elDone === done && done) robotStop(); });
 }
-function speakTTS(text){
-  const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
-  SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
+function speakTTS(text, done){
+  const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); if(done) robotStop(); return; }
+  SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; if(done) u.onend = done; SS.speak(u);
 }
-function play(k){
+/* play(k): a tap, the next voice in turn (stops the robot). play(k, {idx, onEnd}): the robot, a chosen voice, onEnd when it finishes. */
+function play(k, o){
+  if(!o) robotStop();
   const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
-  if(!list.length){ speakTTS(w.w); return; }
-  const i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
+  if(!list.length){ speakTTS(w.w, o && o.onEnd); return; }
+  let i;
+  if(o) i = o.idx; else { i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos); }
   const f = list[i], h = heard[w.w] || (heard[w.w] = []);
   if(!h.includes(f)){ h.push(f); store.set('tone:heard', heard); paintHeard(w); roundDone(); }
   const src = srcOf(w, i), t = ++token;
+  const done = () => { if(t === token && o && o.onEnd) o.onEnd(); };
   stopAll();
   const c = unlock();   // inside the tap
-  if(!c){ playEl(src); return; }
+  if(!c){ playEl(src, done); return; }
   decoded(src).then(buf => {
     if(t !== token) return;   // a newer tap won
-    if(!buf){ playEl(src); return; }
+    if(!buf){ playEl(src, done); return; }
     if(c.state !== 'running'){ try{ c.resume(); }catch(e){} }
     const n = c.createBufferSource(); n.buffer = buf; n.connect(c.destination); n.start(0); node = n; playing(true);
-    n.onended = () => { if(node === n){ node = null; playing(false); } };
+    n.onended = () => { if(node === n){ node = null; playing(false); done(); } };
     /* Safety net: if the context still is not running shortly after, it would be silent; use the <audio> player. */
-    setTimeout(() => { if(t === token && node === n && c.state !== 'running'){ try{ n.stop(); }catch(e){} node = null; playEl(src); } }, 300);
+    setTimeout(() => { if(t === token && node === n && c.state !== 'running'){ try{ n.stop(); }catch(e){} node = null; playEl(src, done); } }, 300);
   });
-  prefetch(k == null ? cur : k);   // its next voice
+  if(!o) prefetch(k == null ? cur : k);   // its next voice
 }
 
 /* ---------- word ---------- */
@@ -388,9 +393,46 @@ function applyLang(){ document.documentElement.lang = 'en'; render(0); prefetchA
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());
 
-$('#copy').addEventListener('click', async () => {
-  const text = form(W[cur]);
-  try{ await navigator.clipboard.writeText(text); note('Copied ' + text); }catch(e){ note('Could not copy'); }
+/* Robot: plays every tone pair once in random order, each in a random voice, then deals a new random order;
+   three full rounds, then it stops. Tap again to stop; tapping a word or swiping also stops it. */
+const ROUNDS = 3, GAP = 700;
+let robo = null;
+function robotPaint(on){
+  const b = $('#robot'); b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? 'Stop playing tone pairs' : 'Play all tone pairs');
+}
+function robotStop(msg){
+  if(!robo) return;
+  clearTimeout(robo.timer); robo = null; robotPaint(false); token++; stopAll();
+  if(msg) note(msg);
+}
+function deal(prev){   // a shuffled round; its first word is never the one just played
+  const o = W.map((_, k) => k);
+  for(let k = o.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [o[k], o[j]] = [o[j], o[k]]; }
+  if(o.length > 1 && o[0] === prev){ const j = 1 + Math.floor(Math.random() * (o.length - 1)); [o[0], o[j]] = [o[j], o[0]]; }
+  return o.map(k => { const n = (CLIPS[W[k].w] || []).length; return {k, idx: n ? Math.floor(Math.random() * n) : null}; });
+}
+function show(k){   // follow along: the single word, or the lit tile in the grid
+  cur = k; store.set('tone:cur', cur);
+  if(VIEW === 'home') render(1);
+  else if(VIEW === 'books'){ const b = [...document.querySelectorAll('.tp-tile')].find(x => x.dataset.w === W[k].w); if(b && b.parentNode !== lit) pick(b.parentNode, true); }
+}
+function robotNext(){
+  if(!robo) return;
+  if(robo.pos >= robo.order.length){
+    if(++robo.round >= ROUNDS){ robotStop(); note('Done: ' + ROUNDS + ' rounds'); return; }
+    robo.order = deal(robo.order[robo.order.length - 1].k); robo.pos = 0;
+  }
+  const me = robo, e = me.order[me.pos++];
+  show(e.k);
+  play(e.k, {idx: e.idx, onEnd: () => { if(robo === me) me.timer = setTimeout(robotNext, GAP); }});
+  const nx = me.order[me.pos]; if(nx && nx.idx != null) load(srcOf(W[nx.k], nx.idx));
+}
+$('#robot').addEventListener('click', () => {
+  if(robo){ robotStop('Stopped'); return; }
+  robo = {order: deal(-1), pos: 0, round: 0, timer: 0}; robotPaint(true);
+  note('Playing all ' + W.length + ' tone pairs, ' + ROUNDS + ' rounds');
+  robotNext();   // inside the tap, so iPhone lets the sound play
 });
 
 /* Info: copy every tone pair, one per line (word and pinyin). */

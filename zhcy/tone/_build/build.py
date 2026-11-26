@@ -29,6 +29,9 @@ GAME = ("M176,112H152a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM104,96H96V88a8,8,0,0,0-1
         "M172,144a44,44,0,0,0,0-88H83.89A43.9,43.9,0,0,0,40.68,92.37l0,.13L24.3,176.59A20,20,0,0,0,58,194.3l41.92-47.59a8,8,0,0,1,6-2.71Zm59.7,32.59-8.74-45A60,60,0,0,1,172,160h-4.2L198,194.31a20.09,20.09,0,0,0,17.46,5.39,20,20,0,0,0,16.23-23.11Z")
 
 
+ROBOT = ("M200,48H136V16a8,8,0,0,0-16,0V48H56A32,32,0,0,0,24,80V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32V80A32,32,0,0,0,200,48Zm16,144a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V80A16,16,0,0,1,56,64H200a16,16,0,0,1,16,16Zm-52-56H92a28,28,0,0,0,0,56h72a28,28,0,0,0,0-56Zm-24,16v24H116V152ZM80,164a12,12,0,0,1,12-12h8v24H92A12,12,0,0,1,80,164Zm84,12h-8V152h8a12,12,0,0,1,0,24ZM72,108a12,12,0,1,1,12,12A12,12,0,0,1,72,108Zm88,0a12,12,0,1,1,12,12A12,12,0,0,1,160,108Z")
+
+
 def need(s, a):
     if s.count(a) != 1:
         raise SystemExit(f"zhcy template changed, cannot find exactly one: {a[:70]!r}")
@@ -81,8 +84,14 @@ def zhcy_parts():
     if not m:
         raise SystemExit("zhcy template changed, cannot find the play button")
     actions = actions.replace(m.group(0), '')
-    actions = sub(actions, ' aria-label="Copy chengyu" data-ta="copy"', ' aria-label="Copy word"')
-    # Tone pairs cannot be starred; its slot stays empty too. Visible row: 36, game controller or 發財, copy.
+    # Copy becomes the robot (Phosphor): it plays every tone pair in random order, three rounds.
+    m = re.search(r'<button class="ibtn copy" id="copy".*?</button>', actions, re.S)
+    if not m:
+        raise SystemExit("zhcy template changed, cannot find the copy button")
+    actions = actions.replace(m.group(0),
+        '<button class="ibtn copy robot" id="robot" type="button" aria-pressed="false" aria-label="Play all tone pairs">\n'
+        '        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + ROBOT + '"/></svg></button>')
+    # Tone pairs cannot be starred; its slot stays empty too. Visible row: 36, game controller or 發財, robot.
     m = re.search(r'<button class="ibtn star" id="star".*?</button>', actions, re.S)
     if not m:
         raise SystemExit("zhcy template changed, cannot find the star button")
