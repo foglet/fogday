@@ -308,8 +308,10 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform 80ms var(--ease)}
 .tp-tile:active{transform:scale(.97)}
-/* The word in focus turns red (characters and pinyin). No borders. */
+/* The word in focus turns red and bold (characters and pinyin). No borders. */
 .tp-tile[aria-pressed="true"] .hz,.tp-tile[aria-pressed="true"] .py{color:var(--accent)}
+.tp-tile[aria-pressed="true"] .hz{font-weight:700}
+.tp-tile[aria-pressed="true"] .py{font-weight:600}
 /* Sized so two characters and their pinyin fit a quarter of the width (down to 280px screens). */
 .tp-tile .hz{font-family:var(--song);font-weight:500;font-size:clamp(1.2rem,7.2vw,2.1rem);line-height:1.15;white-space:nowrap}
 .tp-tile .py{color:var(--primary);font-weight:400;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
