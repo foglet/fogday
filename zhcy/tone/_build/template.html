@@ -136,10 +136,13 @@ function move(delta){
 }
 
 /* ---------- views: home, word list (books), info ---------- */
-/* Word grid (game controller): 2 x 20 tiles, as in the first version. Tap plays; tap again for the next voice. */
+/* Word grid (game controller): 2 x 20 tiles in random order, as in the first version. Tap plays; tap again for the next voice. */
 let lit = null;
 function list(){
-  $('#list').replaceChildren(...W.map((w, i) => {
+  /* No set order: the grid is shuffled each time it opens. */
+  const order = W.map((_, i) => i);
+  for(let k = order.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+  $('#list').replaceChildren(...order.map(i => { const w = W[i];
     const li = document.createElement('li'), b = document.createElement('button');
     b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
