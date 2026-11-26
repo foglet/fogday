@@ -61,6 +61,9 @@
 .tp-pairs span{font-family:var(--song);font-size:1.0625rem;color:var(--ink);letter-spacing:.04em;word-spacing:.5em}
 .tp-word.tp-kai,.tp-tile .hz.tp-kai{font-family:var(--kai)}
 .tp-word.tp-kai{font-weight:400}
+.tp-allh{margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--primary)}
+.tp-all{list-style:none;margin:0 0 var(--s3);padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px var(--s2);
+  font-family:var(--song);font-size:1.0625rem;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -98,7 +101,9 @@
       </ul>
       <p>Each row follows the second syllable through 1st, 2nd, 3rd, 4th and neutral tone. The other 20 words give more practice with the same pairs.</p>
       <p>Tone sandhi: when two third tones meet, the first is spoken as a second tone. 雨伞 is written yǔsǎn but said yú sǎn; red lines under such a word show how it is spoken.</p>
-      <p>Tap the word or play to hear it, and tap again for another voice. The voices are made with ondoku3.com text to speech. Swipe or use the arrow keys for the next word. The game controller shows every word in a grid; 發財 brings back one word at a time.</p>
+      <p>Tap a word to hear it, and tap again for another voice. The voices are made with ondoku3.com text to speech. Swipe or use the arrow keys for the next word. The game controller shows every word in a grid; 發財 brings back one word at a time.</p>
+      <h3 class="tp-allh" id="allH">All forty</h3>
+      <ul class="tp-all" id="all" aria-labelledby="allH"></ul>
       <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
     </section>
   </div>
@@ -343,6 +348,8 @@ tp.addEventListener('touchend', e => {
   if(Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2){ e.preventDefault(); move(dx < 0 ? 1 : -1); }
 }, {passive: false});
 
+/* Info: all forty words, in list order. */
+$('#all').replaceChildren(...W.map(w => { const li = document.createElement('li'); li.lang = 'zh'; li.textContent = w.w; li.title = w.p; return li; }));
 applyLang();
 view('books');   // Tone Pairs opens on the word grid; 發財 switches to the single word.
 })();
