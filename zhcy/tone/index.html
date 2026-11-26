@@ -95,13 +95,17 @@ svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:
 html[lang^="zh"] .brand .pmenu small{display:none}
 /* Bottom row swipe: the end icons (translate, star) and play ease out on the way to Tone Pairs and back in on return. */
 .actions{touch-action:pan-y}
-.actions.nav-out>.lang,.actions.nav-out>.star,.actions.nav-out>.play{animation:navOut 240ms var(--ease) forwards}
-.actions.nav-in>.lang,.actions.nav-in>.star,.actions.nav-in>.play{animation:navIn 460ms var(--spring-smooth) both}
-.actions.nav-in>.star{animation-delay:60ms}
-.actions.nav-in>.play{animation-delay:120ms}
-@keyframes navOut{to{opacity:0;transform:scale(.5)}}
-@keyframes navIn{from{opacity:0;transform:scale(.5)}}
-@media (prefers-reduced-motion:reduce){.pmenu.on,.actions.nav-in>*,.actions.nav-out>*{animation:none!important}}
+/* Every icon fades and drifts 5px in the swipe direction: out on a plain linear fade, in on a linear() spring
+   with a slight overshoot. html[data-navin] is set before the row is parsed, so nothing flashes first. */
+.actions{--nav-dx:5px;--nav-in:cubic-bezier(.34,1.3,.64,1)}
+@supports (animation-timing-function:linear(0,1)){
+  .actions{--nav-in:linear(0,.06 4%,.24 10%,.5 18%,.75 27%,.92 36%,1.03 46%,1.06 54%,1.04 64%,1.01 76%,.995 88%,1)}}
+.actions.nav-out>:not(.note){animation:navOut 180ms linear forwards}
+html[data-navin] .actions>:not(.note){animation:navIn 560ms var(--nav-in) both}
+html[data-navin] .actions{--nav-dx:var(--nav-from)}
+@keyframes navOut{to{opacity:0;transform:translateX(calc(var(--nav-dx) * -1))}}
+@keyframes navIn{from{opacity:0;transform:translateX(var(--nav-dx))}}
+@media (prefers-reduced-motion:reduce){.pmenu.on,html[data-navin] .actions>*,.actions.nav-out>*{animation:none!important}}
 .seal{flex:none;width:34px;height:34px;border-radius:8px;background:#e34234;color:var(--on-primary);display:grid;place-items:center;
   font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;line-height:1}
 /* Title on one line, in capitals. */
@@ -427,6 +431,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   // Leaving for the other group: remember where Chengyu or 36 was, and ease the end icons in on arrival.
   function leaving(to){
     if(PG !== 'tone') ss.set('zhcy:back', location.pathname + location.hash);
+    // Tone Pairs sits to the right: going there the icons drift left, coming back they drift right.
     if((to === 'tone') !== (PG === 'tone')) ss.set('zhcy:navin', to === 'tone' ? 'tone' : 'cy');
   }
   menu.addEventListener('click', e => {
@@ -450,7 +455,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
     if(!axis && Math.hypot(dx, dy) > 10) axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
     if(axis !== 'x' || reduce.matches) return;
-    const m = dest(dx) ? Math.max(-48, Math.min(48, dx / 4)) : dx / 12;   // a little give the wrong way
+    const c = dest(dx) ? 5 : 2, m = Math.max(-c, Math.min(c, dx / 10));   // at most 5px of follow, 2px the wrong way
     row.style.transform = `translateX(${m}px)`;
   }, {passive: true});
   const end = e => {
@@ -460,22 +465,30 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     if(url){
       leaving(PG === 'tone' ? 'cy' : 'tone');
       if(reduce.matches){ location.href = url; return; }
-      row.classList.add('nav-out'); setTimeout(() => { location.href = url; }, 260);
-    } else { row.style.transition = 'transform 320ms var(--spring-smooth)'; row.style.transform = ''; }
+      row.style.setProperty('--nav-dx', PG === 'tone' ? '-5px' : '5px');   // out: drift on with the swipe
+      row.classList.add('nav-out'); setTimeout(() => { location.href = url; }, 180);
+    } else { row.style.transition = 'transform 360ms var(--nav-in)'; row.style.transform = ''; }
   };
   document.addEventListener('touchend', end, {passive: true});
   document.addEventListener('touchcancel', end, {passive: true});
   // A swipe that ends on a button is not a tap.
   document.addEventListener('click', e => { if(eat && Date.now() - eat < 500 && e.target.closest('.actions')){ e.preventDefault(); e.stopPropagation(); } eat = 0; }, true);
   // Back from another page (bfcache): put the row back.
-  addEventListener('pageshow', () => { const r = document.querySelector('.actions'); if(r){ r.classList.remove('nav-out'); r.style.transform = ''; } });
+  addEventListener('pageshow', e => { const r = document.querySelector('.actions');
+    if(r){ r.classList.remove('nav-out'); r.style.transform = ''; r.style.removeProperty('--nav-dx'); if(e.persisted) arrive(); } });
+
+  // Arriving: Tone Pairs comes in from the right (icons drift left into place), Chengyu from the left.
+  const H = document.documentElement;
+  function arrive(){
+    if(reduce.matches) return;
+    H.style.setProperty('--nav-from', PG === 'tone' ? '5px' : '-5px');
+    delete H.dataset.navin; void H.offsetWidth; H.dataset.navin = '';
+    const done = e => { if(e.animationName !== 'navIn') return; document.removeEventListener('animationend', done); setTimeout(() => { delete H.dataset.navin; }, 60); };
+    document.addEventListener('animationend', done); setTimeout(() => { delete H.dataset.navin; }, 3000);
+  }
+  if(ss.get('zhcy:navin') === PG){ ss.del('zhcy:navin'); arrive(); }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const r = document.querySelector('.actions');
-    if(r && ss.get('zhcy:navin') === PG){
-      ss.del('zhcy:navin');
-      if(!reduce.matches){ r.classList.add('nav-in'); setTimeout(() => r.classList.remove('nav-in'), 700); }
-    }
     // Load the other page ahead of a swipe.
     const l = document.createElement('link'); l.rel = 'prefetch'; l.href = PG === 'tone' ? '../' : 'tone/'; document.head.append(l);
   });
