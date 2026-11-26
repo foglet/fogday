@@ -390,7 +390,7 @@ const isZh = () => LANG === 'zh' || LANG === 'zht';
 const LT = () => LANG === 'zht' ? 'zh-Hant' : 'zh-Hans';
 
 /* ---------- audio: recorded MP3s, cycling voices; speech synthesis if a word has none ---------- */
-const audio = new Audio(); audio.preload = 'none';
+const audio = new Audio(); audio.preload = 'auto';
 function speakTTS(text){
   const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
   SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
@@ -399,8 +399,13 @@ function play(k){
   const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
   if(!list.length){ speakTTS(w.w); return; }
   const i = (clipPos[w.w] || 0) % list.length; clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
-  audio.pause(); audio.src = BASE + encodeURIComponent(list[i]);
-  audio.play().catch(() => note('Could not play the recording.'));
+  /* Play as soon as the clip is available. No error message: if play is refused before the clip loads,
+     try again once it can play; an interrupted play (a newer tap) is simply dropped. */
+  const src = BASE + encodeURIComponent(list[i]);
+  audio.pause(); audio.src = src;
+  audio.play().catch(() => {
+    audio.addEventListener('canplay', () => { if(audio.src.endsWith(src)) audio.play().catch(() => {}); }, {once: true});
+  });
 }
 
 /* ---------- word ---------- */
