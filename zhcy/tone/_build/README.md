@@ -1,6 +1,6 @@
 # 發財 tones (fogday.com/zhcy/tone)
 
-Grid of Mandarin words. Tap a word to play its MP3 from `assets/echo/zh/`; tap again for the next voice.
+Tone Pairs wrapper copied from /zh20, one word at a time (swipe or arrow keys). Tapping the word plays a recorded MP3 from `assets/echo/zh/`, cycling voices; words with no recording fall back to speech synthesis.
 
 - Source: `template.html`. Do not edit `../index.html`.
 - After adding or removing MP3s run `python3 zhcy/tone/_build/build.py`, then commit.

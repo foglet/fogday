@@ -2,115 +2,46 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>發財 · Tones</title>
-<meta name="description" content="Tap a Mandarin word to hear it spoken.">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fbf8f1">
+<title>發財 Tone Pairs | fogday</title>
+<meta name="description" content="Practice Mandarin tones, one two-character word at a time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&family=Noto+Serif+SC:wght@500&family=Noto+Sans+SC:wght@500&family=Zhi+Mang+Xing&family=Liu+Jian+Mao+Cao&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --paper: #fbf8f1; --ink: #1d2420; --muted: #5d665f;
-    --felt: #1f5c4a; --red: #b8352b; --line: #e4dccb; --card: #fffdf8;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--paper); color: var(--ink); }
-  body { font-family: Rubik, system-ui, sans-serif; line-height: 1.4;
-         padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); }
-  header { max-width: 960px; margin: 0 auto 12px; position: sticky; top: 0; z-index: 2;
-           background: var(--paper); padding: 4px 0 8px; border-bottom: 1px solid var(--line); }
-  h1 { font-family: "Young Serif", Georgia, serif; font-weight: 400; color: var(--felt);
-       font-size: 2rem; margin: 8px 0 4px; }
-  .back { display: inline-flex; align-items: center; min-height: 44px; color: var(--felt); font-weight: 600; text-decoration: none; }
-  .back:focus-visible { outline: 3px solid var(--felt); outline-offset: 2px; border-radius: 6px; }
-  .sub { color: var(--muted); margin: 0; font-size: .95rem; }
-  .now { min-height: 1.4em; margin: 8px 0 0; color: var(--red); font-weight: 600; font-size: .95rem; }
-  .now:not(:empty) { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #f6e9e6; }
-  .grid { list-style: none; padding: 0; margin: 0 auto; max-width: 960px;
-          display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-  .tile { width: 100%; min-height: 120px; padding: 14px 8px 10px; border: 1px solid var(--line);
-          border-radius: 14px; background: var(--card); color: var(--ink); cursor: pointer;
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-          font: inherit; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease;
-          -webkit-tap-highlight-color: transparent; }
-  .tile:active { transform: scale(.97); }
-  .tile:focus-visible { outline: 3px solid var(--felt); outline-offset: 2px; }
-  .tile[aria-pressed="true"] { border-color: var(--red); box-shadow: 0 0 0 2px var(--red) inset; }
-  .hz { font-size: 2.4rem; line-height: 1.1;
-        font-family: "PingFang SC", "PingFang TC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
-  .py { color: var(--felt); font-weight: 600; }
-  .vc { color: var(--muted); font-size: .8rem; }
-  footer { max-width: 960px; margin: 24px auto 0; color: var(--muted); font-size: .85rem; }
-  @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
+@font-face{font-family:"zhcy kai";src:url(/zhcy/fonts/lxgw-wenkai-zhcy.woff2) format("woff2");font-display:swap}
+@font-face{font-family:"zhcy ou";src:url(/zhcy/fonts/ar-pl-ukai-cn-zhcy.woff2) format("woff2");font-display:swap}
+:root{color-scheme:light;--paper:#fbf8f1;--ink:#1d2421;--muted:#5f6b66;--green:#1f5c4a;--tint:#e6f0ea;--line:#d9d3c4;--red:#e34234}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:var(--paper);color:var(--ink);font:1rem/1.5 Rubik,system-ui,sans-serif}button{font:inherit;color:inherit}a{color:inherit;text-decoration:none}.wrap{width:100%;max-width:34rem;margin:auto;padding:0 16px}.top{min-height:52px;display:flex;align-items:center}.brand{display:flex;align-items:center;gap:8px;flex:1}.seal{width:34px;height:34px;border-radius:8px;background:var(--red);color:#fffdf7;display:grid;place-items:center;font:500 1.25rem 'Noto Serif SC',serif}.brand b{font-size:1.125rem;text-transform:uppercase;letter-spacing:.06em}.brand small{color:var(--muted);font-size:1rem}.projects{color:var(--muted);padding:10px}.projects svg,.icon svg{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}main{flex:1;display:flex;flex-direction:column}.stage{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px 0}.progress{text-align:center;color:var(--muted);font-size:.875rem;margin:0 0 22px}.words{display:flex;flex-direction:column;align-items:center;justify-content:center}.character-pinyin{color:var(--muted);font:1.125rem/1.5 Rubik,system-ui,sans-serif;margin-top:4px}.character-zhuyin{color:var(--muted);font:1.125rem/1.5 system-ui,sans-serif;margin-top:4px}.meaning{position:fixed;left:16px;right:16px;font-size:1rem;color:var(--muted);text-align:center;pointer-events:none}@keyframes enterNext{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:translateX(0)}}@keyframes enterPrev{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:translateX(0)}}@media(prefers-reduced-motion:reduce){.character{animation:none!important}}.sandhi{font-size:1.125rem;line-height:1.5;margin-top:12px;color:#b8352b}.character:focus,.character:active{outline:none;box-shadow:none;background:transparent}.character{-webkit-tap-highlight-color:transparent}.char-column{display:flex;flex-direction:column;align-items:center;min-width:1em}.character{display:flex;justify-content:center;align-items:flex-start;border:0;background:transparent;color:var(--ink);font-family:"Songti SC","Noto Serif SC",serif;font-size:clamp(5rem,23vw,8rem);line-height:1.2;padding:12px;cursor:pointer;border-radius:14px}.word{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:12px;width:100%;padding:9px 4px;border:0;background:transparent;text-align:left;border-radius:10px;cursor:pointer}.word:hover{background:#f3efe4}.emoji{font-size:1.4rem;text-align:center}.hanzi{font-family:'Songti SC','Noto Serif SC',serif;font-size:clamp(1.8rem,7vw,2.6rem);line-height:1.2}.pinyin{color:var(--green);font-size:1rem;text-align:right}.controls{display:flex;align-items:center;justify-content:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom));color:var(--muted)}.icon{min-width:44px;min-height:44px;display:grid;place-items:center;border:0;background:transparent;border-radius:10px;cursor:pointer}.icon:hover{background:#f3efe4;color:var(--ink)}.icon:disabled{opacity:.3;cursor:default}.play{color:var(--green)}.play svg{padding:5px;width:32px;height:32px;background:var(--tint);border-radius:50%}.hint{font-size:.875rem;text-align:center;margin:20px 0 0;color:var(--muted)}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}@media(max-width:380px){.pinyin{font-size:.875rem}.word{gap:8px}.brand small{display:none}}
+.language{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));left:max(16px,calc((100vw - 34rem)/2 + 16px));z-index:5}.language button{border:0;background:none;color:var(--muted);font:600 .875rem Rubik,system-ui,sans-serif;cursor:pointer;min-width:44px;min-height:44px;text-align:left}.language button:focus,.language button:active{outline:none;box-shadow:none;border:0;background:transparent}.language button{-webkit-tap-highlight-color:transparent}.language-menu{position:absolute;bottom:100%;left:0;display:flex;flex-direction:column}.language-menu[hidden]{display:none}.language-menu button[aria-checked="true"]{color:var(--green)}
 </style>
 </head>
 <body>
-<header>
-  <a class="back" href="../">Back to chengyu</a>
-  <h1 lang="zh-Hant">發財</h1>
-  <p class="sub">Tap a word to hear it. Tap again for the next voice.</p>
-  <p class="now" id="now" aria-live="polite"></p>
-</header>
-<main>
-  <ul class="grid" id="grid"></ul>
-</main>
-<footer id="count"></footer>
+<header class="wrap top"><a class="brand" href="/zhcy/" aria-label="Back to chengyu"><span class="seal">二</span><span><b>Tone Pairs</b> <small>声调组合</small></span></a><a class="projects" href="/works/" aria-label="Projects"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></a></header>
+<main class="wrap"><section class="stage" aria-label="Mandarin tone-pair practice"><div class="words" id="words"></div></section><nav class="controls" aria-label="Word controls"></nav><p class="sr" id="status" role="status"></p></main>
+<div class="language"><div class="language-menu" id="langMenu" role="radiogroup" aria-label="Meaning language" hidden><button role="radio" data-lang="en">EN</button><button role="radio" data-lang="de">DE</button><button role="radio" data-lang="es">ES</button><button role="radio" data-lang="fr">FR</button><button role="radio" data-lang="zh">ZH</button></div><button id="langToggle" aria-label="Meaning language" aria-expanded="false" aria-controls="langMenu">EN</button></div>
 <script>
-(() => {
-  const WORDS = /*DATA*/[];
-  const BASE = "/assets/echo/zh/";
-  const KEY = "tone:pos";
-  const grid = document.getElementById("grid");
-  const now = document.getElementById("now");
-  const audio = new Audio();
-  audio.preload = "none";
-  let pos = {};
-  try { pos = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { pos = {}; }
-  let active = null;
-
-  const clips = WORDS.reduce((n, w) => n + w.a.length, 0);
-  document.getElementById("count").textContent =
-    WORDS.length + " words, " + clips + " recordings";
-
-  for (const w of WORDS) {
-    const li = document.createElement("li");
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "tile";
-    b.setAttribute("aria-pressed", "false");
-    b.setAttribute("aria-label", w.w + ", " + w.p + ", play");
-    b.innerHTML = '<span class="hz" lang="zh"></span><span class="py"></span><span class="vc"></span>';
-    b.querySelector(".hz").textContent = w.w;
-    b.querySelector(".py").textContent = w.p;
-    b.querySelector(".vc").textContent = w.a.length === 1 ? "1 voice" : w.a.length + " voices";
-    b.addEventListener("click", () => play(w, b));
-    li.appendChild(b);
-    grid.appendChild(li);
-  }
-
-  function setActive(b) {
-    if (active && active !== b) active.setAttribute("aria-pressed", "false");
-    active = b;
-    if (b) b.setAttribute("aria-pressed", "true");
-  }
-
-  function play(w, b) {
-    const i = (pos[w.w] || 0) % w.a.length;
-    const clip = w.a[i];
-    pos[w.w] = i + 1;
-    try { localStorage.setItem(KEY, JSON.stringify(pos)); } catch (e) {}
-    audio.pause();
-    audio.src = BASE + encodeURIComponent(clip.f);
-    setActive(b);
-    now.textContent = w.w + "  " + w.p + "  ·  " + clip.v + " (" + (i + 1) + "/" + w.a.length + ")";
-    audio.play().catch(() => { now.textContent = "Could not play " + w.w + ". Tap to retry."; setActive(null); });
-  }
-
-  audio.addEventListener("ended", () => setActive(null));
-  audio.addEventListener("error", () => {
-    if (audio.src) { now.textContent = "Audio file missing for this voice. Tap again for the next one."; setActive(null); }
-  });
-})();
+const combos=[[["","飞机","fēijī"],["","中国","Zhōngguó"],["","机场","jīchǎng"],["","知道","zhīdào"],["","妈妈","māma"]],[["","时间","shíjiān"],["","银行","yínháng"],["","词典","cídiǎn"],["","迟到","chídào"],["","什么","shénme"]],[["","手机","shǒujī"],["","语言","yǔyán"],["","雨伞","yǔsǎn"],["","美丽","měilì"],["","我们","wǒmen"]],[["","唱歌","chànggē"],["","地图","dìtú"],["","电脑","diànnǎo"],["","睡觉","shuìjiào"],["","谢谢","xièxie"]]];
+const zhuyin=['ㄈㄟ ㄐㄧ','ㄓㄨㄥ ㄍㄨㄛˊ','ㄐㄧ ㄔㄤˇ','ㄓ ㄉㄠˋ','ㄇㄚ ˙ㄇㄚ','ㄕˊ ㄐㄧㄢ','ㄧㄣˊ ㄏㄤˊ','ㄘˊ ㄉㄧㄢˇ','ㄔˊ ㄉㄠˋ','ㄕㄣˊ ˙ㄇㄜ','ㄕㄡˇ ㄐㄧ','ㄩˇ ㄧㄢˊ','ㄩˇ ㄙㄢˇ','ㄇㄟˇ ㄌㄧˋ','ㄨㄛˇ ˙ㄇㄣ','ㄔㄤˋ ㄍㄜ','ㄉㄧˋ ㄊㄨˊ','ㄉㄧㄢˋ ㄋㄠˇ','ㄕㄨㄟˋ ㄐㄧㄠˋ','ㄒㄧㄝˋ ˙ㄒㄧㄝ'];
+const syllables=[['fēi','jī'],['Zhōng','guó'],['jī','chǎng'],['zhī','dào'],['mā','ma'],['shí','jiān'],['yín','háng'],['cí','diǎn'],['chí','dào'],['shén','me'],['shǒu','jī'],['yǔ','yán'],['yǔ','sǎn'],['měi','lì'],['wǒ','men'],['chàng','gē'],['dì','tú'],['diàn','nǎo'],['shuì','jiào'],['xiè','xie']];
+const meanings=['airplane','China','airport','know','mom','time','bank','dictionary','late','what','mobile phone','language','umbrella','beautiful','we','sing','map','computer','sleep','thank you'];
+const extra=[['今天','jīntiān','ㄐㄧㄣ ㄊㄧㄢ',['jīn','tiān'],'today'],['今年','jīnnián','ㄐㄧㄣ ㄋㄧㄢˊ',['jīn','nián'],'this year'],['開水','kāishuǐ','ㄎㄞ ㄕㄨㄟˇ',['kāi','shuǐ'],'boiled water'],['工作','gōngzuò','ㄍㄨㄥ ㄗㄨㄛˋ',['gōng','zuò'],'work'],['桌子','zhuōzi','ㄓㄨㄛ ˙ㄗ',['zhuō','zi'],'table'],['明天','míngtiān','ㄇㄧㄥˊ ㄊㄧㄢ',['míng','tiān'],'tomorrow'],['銀行','yínháng','ㄧㄣˊ ㄏㄤˊ',['yín','háng'],'bank'],['牛奶','niúnǎi','ㄋㄧㄡˊ ㄋㄞˇ',['niú','nǎi'],'milk'],['學校','xuéxiào','ㄒㄩㄝˊ ㄒㄧㄠˋ',['xué','xiào'],'school'],['孩子','háizi','ㄏㄞˊ ˙ㄗ',['hái','zi'],'child'],['老師','lǎoshī','ㄌㄠˇ ㄕ',['lǎo','shī'],'teacher'],['美國','měiguó','ㄇㄟˇ ㄍㄨㄛˊ',['měi','guó'],'United States'],['水果','shuǐguǒ','ㄕㄨㄟˇ ㄍㄨㄛˇ',['shuǐ','guǒ'],'fruit'],['比賽','bǐsài','ㄅㄧˇ ㄙㄞˋ',['bǐ','sài'],'competition'],['椅子','yǐzi','ㄧˇ ˙ㄗ',['yǐ','zi'],'chair'],['上班','shàngbān','ㄕㄤˋ ㄅㄢ',['shàng','bān'],'go to work'],['問題','wèntí','ㄨㄣˋ ㄊㄧˊ',['wèn','tí'],'question, problem'],['報紙','bàozhǐ','ㄅㄠˋ ㄓˇ',['bào','zhǐ'],'newspaper'],['再見','zàijiàn','ㄗㄞˋ ㄐㄧㄢˋ',['zài','jiàn'],'goodbye'],['弟弟','dìdi','ㄉㄧˋ ˙ㄉㄧ',['dì','di'],'younger brother']];
+const characters=combos.flatMap(group=>group.map(([,word,pinyin])=>[word,pinyin])).map((item,i)=>[...item,zhuyin[i],syllables[i],meanings[i]]).concat(extra);
+const sandhi={'雨伞':['ㄩˊ ㄙㄢˇ','yú sǎn'],'水果':['ㄕㄨㄟˊ ㄍㄨㄛˇ','shuí guǒ']};
+const translations={de:['Flugzeug','China','Flughafen','wissen','Mama','Zeit','Bank','Wörterbuch','zu spät','was','Handy','Sprache','Regenschirm','schön','wir','singen','Landkarte','Computer','schlafen','danke','heute','dieses Jahr','abgekochtes Wasser','Arbeit','Tisch','morgen','Bank','Milch','Schule','Kind','Lehrer','USA','Obst','Wettbewerb','Stuhl','zur Arbeit gehen','Frage, Problem','Zeitung','auf Wiedersehen','jüngerer Bruder'],es:['avión','China','aeropuerto','saber','mamá','tiempo','banco','diccionario','tarde','qué','móvil','idioma','paraguas','hermoso','nosotros','cantar','mapa','ordenador','dormir','gracias','hoy','este año','agua hervida','trabajo','mesa','mañana','banco','leche','escuela','niño','profesor','Estados Unidos','fruta','competición','silla','ir al trabajo','pregunta, problema','periódico','adiós','hermano menor'],fr:['avion','Chine','aéroport','savoir','maman','temps','banque','dictionnaire','en retard','quoi','téléphone','langue','parapluie','beau','nous','chanter','carte','ordinateur','dormir','merci','aujourd’hui','cette année','eau bouillie','travail','table','demain','banque','lait','école','enfant','professeur','États-Unis','fruit','compétition','chaise','aller au travail','question, problème','journal','au revoir','petit frère'],zh:['飞机','中国','机场','知道','妈妈','时间','银行','词典','迟到','什么','手机','语言','雨伞','美丽','我们','唱歌','地图','电脑','睡觉','谢谢','今天','今年','开水','工作','桌子','明天','银行','牛奶','学校','孩子','老师','美国','水果','比赛','椅子','上班','问题','报纸','再见','弟弟']};
+let language='en';try{language=localStorage.getItem('tonepairs:lang')||'en'}catch(e){}if(!['en','de','es','fr','zh'].includes(language))language='en';
+const fonts=["'Songti SC','Noto Serif SC',serif","'PingFang SC','Noto Sans SC',sans-serif","'Kaiti SC','STKaiti','zhcy kai',serif","'FZOuYangXunKaiShuS','zhcy ou',serif","'Zhi Mang Xing',serif","'Liu Jian Mao Cao',serif"];
+let lastFont=-1;function randomFont(){if(fonts.length<2)return 0;let i;do{i=Math.floor(Math.random()*fonts.length)}while(i===lastFont);lastFont=i;return i}
+let current=0;const words=document.querySelector('#words'),status=document.querySelector('#status');
+const CLIPS=/*CLIPS*/{};const BASE='/assets/echo/zh/';const audio=new Audio();audio.preload='none';let clipPos={};try{clipPos=JSON.parse(localStorage.getItem('tone:pos')||'{}')}catch(e){clipPos={}}
+const SS=window.speechSynthesis;let utterance=null,lastVoice='';function speakTTS(text){if(!SS){status.textContent='Pronunciation is not available in this browser.';return}if(SS.speaking||SS.pending)SS.cancel();utterance=new SpeechSynthesisUtterance(text);utterance.lang='zh-CN';utterance.rate=.8;const v=SS.getVoices(),z=x=>(x.lang||'').replace('_','-').toLowerCase();let choices=v.filter(x=>z(x)==='zh-cn'||z(x)==='zh-sg'||/^cmn/.test(z(x)));if(!choices.length)choices=v.filter(x=>z(x).startsWith('zh')&&!/hk|yue/.test(z(x)));const other=choices.filter(x=>x.voiceURI!==lastVoice);if(other.length)choices=other;if(choices.length){const voice=choices[Math.floor(Math.random()*choices.length)];utterance.voice=voice;lastVoice=voice.voiceURI}utterance.onerror=e=>{if(e.error!=='interrupted'&&e.error!=='canceled')status.textContent='Could not play pronunciation.'};SS.speak(utterance)}
+function speak(text){const list=CLIPS[text];if(!list||!list.length){speakTTS(text);return}if(SS&&(SS.speaking||SS.pending))SS.cancel();const i=(clipPos[text]||0)%list.length;clipPos[text]=i+1;try{localStorage.setItem('tone:pos',JSON.stringify(clipPos))}catch(e){}audio.pause();audio.src=BASE+encodeURIComponent(list[i]);audio.play().catch(()=>{status.textContent='Could not play recording.'})}
+function render(){const b=document.createElement('button');b.type='button';b.className='character';b.style.fontFamily=fonts[randomFont()];b.lang='zh-Hans';b.setAttribute('aria-label','Play '+characters[current][0]+', '+characters[current][1]);b.addEventListener('click',()=>speak(characters[current][0]));const zh=characters[current][2].split(' ');Array.from(characters[current][0]).forEach((char,i)=>{const col=document.createElement('span');col.className='char-column';const glyph=document.createElement('span');glyph.className='glyph';glyph.textContent=char;const z=document.createElement('span');z.className='character-zhuyin';z.lang='zh-Bopo';z.textContent=zh[i];const p=document.createElement('span');p.className='character-pinyin';p.lang='zh-Latn-pinyin';p.textContent=characters[current][3][i];col.append(glyph,z,p);b.append(col)});const meaning=document.createElement('div');meaning.className='meaning';meaning.textContent=language==='en'?characters[current][4]:translations[language][current];if(sandhi[characters[current][0]]){const note=document.createElement('div');note.className='sandhi';sandhi[characters[current][0]].forEach(text=>{const line=document.createElement('div');line.textContent=text;note.append(line)});meaning.append(note)}words.replaceChildren(b,meaning);positionMeaning();status.textContent=''}
+function positionMeaning(){const p=words.querySelector('.character-pinyin'),m=words.querySelector('.meaning');if(!p||!m)return;const bottom=p.getBoundingClientRect().bottom;m.style.top=(bottom+Math.max(0,innerHeight-bottom)*.45-m.offsetHeight/2)+'px'}
+addEventListener('resize',positionMeaning);
+function move(delta,animate=false,alreadySpoken=false){const n=current+delta;if(n<0||n>=characters.length)return;current=n;render();if(animate){const next=words.querySelector('.character');if(!matchMedia('(prefers-reduced-motion: reduce)').matches){next.querySelectorAll('.glyph').forEach((glyph,i)=>{glyph.style.display='inline-block';glyph.style.animation=(delta>0?'enterNext':'enterPrev')+' 520ms cubic-bezier(.34,1.5,.64,1) '+(i*75)+'ms both'});next.querySelectorAll('.character-zhuyin,.character-pinyin').forEach(el=>{el.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'translateY(0)'}],{duration:560,delay:190,easing:'cubic-bezier(.34,1.5,.64,1)',fill:'both'})})}if(!alreadySpoken)speak(characters[current][0])}}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1)});let startX=null,startY=0;words.addEventListener('touchstart',e=>{if(e.touches.length!==1){startX=null;return}startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});words.addEventListener('touchend',e=>{if(startX===null)return;const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;startX=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.2){e.preventDefault();move(dx<0?1:-1,true)}},{passive:false});const langToggle=document.querySelector('#langToggle'),langMenu=document.querySelector('#langMenu');function paintLanguage(){langToggle.textContent=language.toUpperCase();langMenu.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.lang===language)))}langToggle.addEventListener('click',()=>{langMenu.hidden=!langMenu.hidden;langToggle.setAttribute('aria-expanded',String(!langMenu.hidden))});langMenu.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(!b)return;language=b.dataset.lang;try{localStorage.setItem('tonepairs:lang',language)}catch(e){}langMenu.hidden=true;langToggle.setAttribute('aria-expanded','false');paintLanguage();render();langToggle.focus()});document.addEventListener('click',e=>{if(!e.target.closest('.language')){langMenu.hidden=true;langToggle.setAttribute('aria-expanded','false')}});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!langMenu.hidden){langMenu.hidden=true;langToggle.setAttribute('aria-expanded','false');langToggle.focus()}});paintLanguage();render();
 </script>
 </body>
 </html>

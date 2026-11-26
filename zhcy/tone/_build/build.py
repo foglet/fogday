@@ -18,7 +18,7 @@ OUT = HERE.parent / "index.html"
 
 PAT = re.compile(
     r"^(?P<word>[^.,\-]+)[.,\-](?P<py>[^.,\-]+?)"
-    r"(?:[.\-]ondoku3_\d{8}-\d{6}_(?P<voice>.+))?\.mp3$",
+    r"(?:[.\-]+[a-z]?ondoku3_\d{8}-\d{6}_(?P<voice>.+))?\.mp3$",
     re.IGNORECASE,
 )
 
@@ -35,12 +35,18 @@ def main():
         w = m.group("word").strip()
         entry = words.setdefault(w, {"w": w, "p": m.group("py"), "a": []})
         entry["a"].append({"f": f.name, "v": (m.group("voice") or "original").replace(".", " ")})
-    data = sorted(words.values(), key=lambda e: "".join(c for c in unicodedata.normalize("NFD", e["p"].lower()) if not unicodedata.combining(c)))
+    clips = {w: [a["f"] for a in e["a"]] for w, e in sorted(words.items())}
     tpl = (HERE / "template.html").read_text(encoding="utf-8")
-    html = tpl.replace("/*DATA*/[]", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    html = tpl.replace("/*CLIPS*/{}", json.dumps(clips, ensure_ascii=False, separators=(",", ":")))
+    # report words on the page with no recording (they fall back to speech synthesis)
+    import re as _re
+    shown = set(_re.findall(r'"([\u4e00-\u9fff]{2,})"', html.split("const CLIPS")[0]))
+    missing = sorted(shown - set(clips))
+    if missing:
+        print("no recording (uses speech):", " ".join(missing))
     OUT.write_text(html, encoding="utf-8")
-    n = sum(len(e["a"]) for e in data)
-    print(f"{len(data)} words, {n} clips -> {OUT.relative_to(ROOT)}")
+    n = sum(len(v) for v in clips.values())
+    print(f"{len(clips)} recorded words, {n} clips -> {OUT.relative_to(ROOT)}")
     if skipped:
         print("skipped (name not recognised):", *skipped, sep="\n  ")
 
