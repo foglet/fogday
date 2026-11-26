@@ -566,6 +566,16 @@ function pick(li, animate){
     li.style.gridArea = row + ' / 2 / span 2 / span 2';
     grid.insertBefore(li, grid.children[(row - 1) * 4] || null);
   }
+  else {
+    /* Keep the grid square-edged: a 2 x 2 tile that would start in the last row (it needs two) moves one place
+       earlier, so no row is left half empty and nothing hangs below the grid. */
+    const rows = Math.ceil((items.length + 3) / 4);
+    for(let guard = 0; guard < 8; guard++){
+      const i = [...grid.children].indexOf(li), r = Math.floor(i / 4) + (i % 4 === 3 ? 1 : 0);
+      if(r <= rows - 2 || i === 0) break;
+      grid.insertBefore(li, grid.children[i - 1]);
+    }
+  }
   lit = li; li.classList.add('big'); li.firstChild.setAttribute('aria-pressed', 'true');
   if(reduce) return;
   items.forEach(e => {
