@@ -343,6 +343,11 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 @keyframes tpPrev{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.tp-g{animation:none!important}}
 .tp-grid{list-style:none;margin:0;padding:var(--s1) 0 var(--s2);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row dense;gap:var(--s1)}
+/* Tall screens (iPad portrait): the grid fills the height between header and footer, its spare space shared
+   evenly above, between and below the rows, so the tiles sit lower and breathe. Phones have no spare height: no change. */
+#vBooks>section{flex:1;display:flex;flex-direction:column}
+.tp-grid{flex:1;align-content:space-evenly}
+@media (min-width:600px) and (min-height:900px){.tp-grid{row-gap:var(--s3);padding:var(--s4) 0 var(--s5)}}
 .tp-grid>li{display:flex;min-width:0}
 .tp-grid>li>.tp-tile{flex:1}
 /* The selected tone pair fills a 2 x 2 block; the other tiles flow around it (dense packing). */
