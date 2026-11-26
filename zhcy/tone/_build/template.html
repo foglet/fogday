@@ -40,6 +40,10 @@
 .tp-tile .py{color:var(--primary);font-weight:400;font-size:clamp(.625rem,2.9vw,.8125rem);line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
 @media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
 .tp-gap{visibility:hidden}
+.tp-pairs{list-style:none;margin:0 0 var(--s2);padding:0;font-size:var(--fs-sm);color:var(--ink-2)}
+.tp-pairs li{margin:0 0 2px}
+.tp-pairs b{display:inline-block;min-width:3.2em;font-weight:600;color:var(--primary)}
+.tp-pairs span{font-family:var(--song);font-size:1.0625rem;color:var(--ink);letter-spacing:.04em;word-spacing:.5em}
 </style>
 </head>
 <body>
@@ -60,6 +64,24 @@
     <section aria-labelledby="bH">
       <h2 class="vh" id="bH">Word grid</h2>
       <ul class="tp-grid" id="list"></ul>
+    </section>
+  </div>
+
+  <div class="view" id="vInfo" hidden>
+    <section class="pane info" aria-labelledby="iH">
+      <h2 class="ph2" id="iH">Tone Pairs</h2>
+      <p>Mandarin has four tones and a light, neutral tone. Many everyday words have two syllables, so tones are easiest to learn in pairs: how the first tone flows into the second.</p>
+      <p>Four first tones, each followed by one of four tones or a neutral tone, make 20 tone pairs. The first 20 words here cover each pair once:</p>
+      <ul class="tp-pairs">
+        <li><b>1st +</b> <span lang="zh-Hans">飞机 中国 机场 知道 妈妈</span></li>
+        <li><b>2nd +</b> <span lang="zh-Hans">时间 银行 词典 迟到 什么</span></li>
+        <li><b>3rd +</b> <span lang="zh-Hans">手机 语言 雨伞 美丽 我们</span></li>
+        <li><b>4th +</b> <span lang="zh-Hans">唱歌 地图 电脑 睡觉 谢谢</span></li>
+      </ul>
+      <p>Each row follows the second syllable through 1st, 2nd, 3rd, 4th and neutral tone. The other 20 words give more practice with the same pairs.</p>
+      <p>Tone sandhi: when two third tones meet, the first is spoken as a second tone. 雨伞 is written yǔsǎn but said yú sǎn; red lines under such a word show how it is spoken.</p>
+      <p>Tap the word or play to hear it, and tap again for another voice. The voices are Mandarin from mainland China and Taiwan, made with ondoku3.com text to speech. Swipe or use the arrow keys for the next word. The game controller shows every word in a grid; 發財 brings back one word at a time.</p>
+      <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
     </section>
   </div>
 
@@ -163,18 +185,21 @@ let VIEW = 'home';
 const GAME_SVG = $('#bfc').innerHTML;
 function view(v){
   VIEW = v;
-  $('#vHome').hidden = v !== 'home'; $('#vBooks').hidden = v !== 'books';
-  const el = $(v === 'home' ? '#vHome' : '#vBooks');
+  $('#vHome').hidden = v !== 'home'; $('#vBooks').hidden = v !== 'books'; $('#vInfo').hidden = v !== 'info';
+  const el = $({home: '#vHome', books: '#vBooks', info: '#vInfo'}[v]);
+  $('#bInfo').toggleAttribute('aria-current', v === 'info'); if(v === 'info') $('#bInfo').setAttribute('aria-current', 'page');
   el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
-  /* The 發財 slot toggles: game controller on the single word, 發財 on the grid. */
+  /* The 發財 slot toggles: game controller on the single word, 發財 elsewhere (grid, info). */
   const f = $('#bfc');
-  if(v === 'books'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); list(); }
+  if(v === 'info'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); }
+  else if(v === 'books'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); list(); }
   else { f.innerHTML = GAME_SVG; f.removeAttribute('lang'); f.setAttribute('aria-label', 'Word grid'); render(0); }
   f.setAttribute('aria-expanded', String(v === 'books'));
 }
-$('#bfc').addEventListener('click', () => { view(VIEW === 'books' ? 'home' : 'books'); $('#bfc').focus(); });
-/* The header is the /zhcy header: its section icons open those sections on the chengyu page. */
-document.querySelectorAll('.top .tab').forEach(t => t.addEventListener('click', () => { location.href = '../#' + t.dataset.view; }));
+$('#bfc').addEventListener('click', () => { view(VIEW === 'home' ? 'books' : 'home'); $('#bfc').focus(); });
+/* Header: Info (detective) shows Tone Pairs info here, tap again to go back; books opens Meaning and search on the chengyu page. */
+$('#bInfo').addEventListener('click', () => view(VIEW === 'info' ? 'home' : 'info'));
+$('#bBooks').addEventListener('click', () => { location.href = '../#books'; });
 
 /* ---------- language: English meanings for now (the language switch is off; may return) ---------- */
 function applyLang(){ document.documentElement.lang = 'en'; render(0); }

@@ -53,9 +53,8 @@ def zhcy_parts():
                  '<a class="brand" href="../" aria-label="Tone Pairs, back to chengyu">')
     header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
                  '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
-    # The section icons open those sections on the chengyu page, so they control nothing here.
+    # Books opens Meaning and search on the chengyu page, so it controls nothing here. Info stays (Tone Pairs info).
     header = sub(header, ' aria-controls="vBooks"', '')
-    header = sub(header, ' aria-controls="vInfo"', '')
 
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
     actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
