@@ -90,7 +90,7 @@
   <div class="view" id="vInfo" hidden>
     <section class="pane info" aria-labelledby="iH">
       <h2 class="ph2" id="iH">Tone Pairs</h2>
-      <p>We present forty tone pairs. There are a minimum of fifteen voices for each. Six are Taiwanese; the remainder are from Mainland China.</p>
+      <p>We present forty-one tone pairs. There are a minimum of fifteen voices for each. Six are Taiwanese; the remainder are from Mainland China.</p>
       <p>Mandarin has four tones and a light, neutral tone. Many everyday words have two syllables, so tones are easiest to learn in pairs: how the first tone flows into the second.</p>
       <p>Four first tones, each followed by one of four tones or a neutral tone, make 20 tone pairs. The first 20 words here cover each pair once:</p>
       <ul class="tp-pairs">
@@ -102,7 +102,7 @@
       <p>Each row follows the second syllable through 1st, 2nd, 3rd, 4th and neutral tone. The other 20 words give more practice with the same pairs.</p>
       <p>Tone sandhi: when two third tones meet, the first is spoken as a second tone. 雨伞 is written yǔsǎn but said yú sǎn; red lines under such a word show how it is spoken.</p>
       <p>Tap a word to hear it, and tap again for another voice. The voices are made with ondoku3.com text to speech. Swipe or use the arrow keys for the next word. The game controller shows every word in a grid; 發財 brings back one word at a time.</p>
-      <h3 class="tp-allh" id="allH">All forty</h3>
+      <h3 class="tp-allh" id="allH">All forty-one</h3>
       <ul class="tp-all" id="all" aria-labelledby="allH"></ul>
       <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
     </section>
@@ -286,9 +286,10 @@ function pick(li, animate){
   });
 }
 function list(){
-  /* No set order: all 40 words, 4 wide, shuffled each time the grid opens. The word in focus is red, bold and 2 x 2. */
-  const order = W.map((_, i) => i);
+  /* No set order: all the words, 4 wide, shuffled each time the grid opens (自摸 stays last). The word in focus is red, bold and 2 x 2. */
+  const order = W.map((_, i) => i).filter(i => !W[i].last);
   for(let k = order.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+  W.forEach((w, i) => { if(w.last) order.push(i); });   // 自摸 always ends the grid
   lit = null;
   let start = null;
   $('#list').replaceChildren(...order.map(i => { const w = W[i];

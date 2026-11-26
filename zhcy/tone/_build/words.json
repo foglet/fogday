@@ -686,5 +686,23 @@
   "de": "jüngerer Bruder",
   "es": "hermano menor",
   "fr": "petit frère"
+ },
+ {
+  "w": "自摸",
+  "p": "zìmō",
+  "z": [
+   "ㄗˋ",
+   "ㄇㄛ"
+  ],
+  "s": [
+   "zì",
+   "mō"
+  ],
+  "en": "self-drawn win (mahjong)",
+  "zh": "自摸",
+  "de": "selbst gezogener Gewinn (Mahjong)",
+  "es": "victoria con ficha propia (mahjong)",
+  "fr": "victoire sur sa propre pioche (mahjong)",
+  "last": true
  }
 ]
