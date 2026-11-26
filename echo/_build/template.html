@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Echo · Mandarin words</title>
+<meta name="description" content="Tap a Mandarin word to hear it spoken.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Rubik:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbf8f1; --ink: #1d2420; --muted: #5d665f;
+    --felt: #1f5c4a; --red: #b8352b; --line: #e4dccb; --card: #fffdf8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body { font-family: Rubik, system-ui, sans-serif; line-height: 1.4;
+         padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); }
+  header { max-width: 960px; margin: 0 auto 12px; position: sticky; top: 0; z-index: 2;
+           background: var(--paper); padding: 4px 0 8px; border-bottom: 1px solid var(--line); }
+  h1 { font-family: "Young Serif", Georgia, serif; font-weight: 400; color: var(--felt);
+       font-size: 2rem; margin: 8px 0 4px; }
+  .sub { color: var(--muted); margin: 0; font-size: .95rem; }
+  .now { min-height: 1.4em; margin: 8px 0 0; color: var(--red); font-weight: 600; font-size: .95rem; }
+  .now:not(:empty) { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #f6e9e6; }
+  .grid { list-style: none; padding: 0; margin: 0 auto; max-width: 960px;
+          display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .tile { width: 100%; min-height: 120px; padding: 14px 8px 10px; border: 1px solid var(--line);
+          border-radius: 14px; background: var(--card); color: var(--ink); cursor: pointer;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+          font: inherit; transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease;
+          -webkit-tap-highlight-color: transparent; }
+  .tile:active { transform: scale(.97); }
+  .tile:focus-visible { outline: 3px solid var(--felt); outline-offset: 2px; }
+  .tile[aria-pressed="true"] { border-color: var(--red); box-shadow: 0 0 0 2px var(--red) inset; }
+  .hz { font-size: 2.4rem; line-height: 1.1;
+        font-family: "PingFang SC", "PingFang TC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
+  .py { color: var(--felt); font-weight: 600; }
+  .vc { color: var(--muted); font-size: .8rem; }
+  footer { max-width: 960px; margin: 24px auto 0; color: var(--muted); font-size: .85rem; }
+  @media (prefers-reduced-motion: reduce) { .tile { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Echo</h1>
+  <p class="sub">Tap a word to hear it. Tap again for the next voice.</p>
+  <p class="now" id="now" aria-live="polite"></p>
+</header>
+<main>
+  <ul class="grid" id="grid"></ul>
+</main>
+<footer id="count"></footer>
+<script>
+(() => {
+  const WORDS = /*DATA*/[];
+  const BASE = "/assets/echo/zh/";
+  const KEY = "echo:pos";
+  const grid = document.getElementById("grid");
+  const now = document.getElementById("now");
+  const audio = new Audio();
+  audio.preload = "none";
+  let pos = {};
+  try { pos = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { pos = {}; }
+  let active = null;
+
+  const clips = WORDS.reduce((n, w) => n + w.a.length, 0);
+  document.getElementById("count").textContent =
+    WORDS.length + " words, " + clips + " recordings";
+
+  for (const w of WORDS) {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tile";
+    b.setAttribute("aria-pressed", "false");
+    b.setAttribute("aria-label", w.w + ", " + w.p + ", play");
+    b.innerHTML = '<span class="hz" lang="zh"></span><span class="py"></span><span class="vc"></span>';
+    b.querySelector(".hz").textContent = w.w;
+    b.querySelector(".py").textContent = w.p;
+    b.querySelector(".vc").textContent = w.a.length === 1 ? "1 voice" : w.a.length + " voices";
+    b.addEventListener("click", () => play(w, b));
+    li.appendChild(b);
+    grid.appendChild(li);
+  }
+
+  function setActive(b) {
+    if (active && active !== b) active.setAttribute("aria-pressed", "false");
+    active = b;
+    if (b) b.setAttribute("aria-pressed", "true");
+  }
+
+  function play(w, b) {
+    const i = (pos[w.w] || 0) % w.a.length;
+    const clip = w.a[i];
+    pos[w.w] = i + 1;
+    try { localStorage.setItem(KEY, JSON.stringify(pos)); } catch (e) {}
+    audio.pause();
+    audio.src = BASE + encodeURIComponent(clip.f);
+    setActive(b);
+    now.textContent = w.w + "  " + w.p + "  ·  " + clip.v + " (" + (i + 1) + "/" + w.a.length + ")";
+    audio.play().catch(() => { now.textContent = "Could not play " + w.w + ". Tap to retry."; setActive(null); });
+  }
+
+  audio.addEventListener("ended", () => setActive(null));
+  audio.addEventListener("error", () => {
+    if (audio.src) { now.textContent = "Audio file missing for this voice. Tap again for the next one."; setActive(null); }
+  });
+})();
+</script>
+</body>
+</html>
