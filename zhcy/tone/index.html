@@ -559,6 +559,13 @@ function pick(li, animate){
   const reduce = !animate || matchMedia('(prefers-reduced-motion: reduce)').matches;
   const first = reduce ? null : new Map(items.map(e => [e, e.getBoundingClientRect()]));
   if(lit && lit !== li){ lit.classList.remove('big'); lit.firstChild.setAttribute('aria-pressed', 'false'); }
+  /* 自摸 sits last; while it is selected it moves up to the middle of the grid, centred (columns 2 and 3). */
+  if(lit && lit !== li && lit.dataset.last){ lit.style.gridArea = ''; grid.append(lit); }
+  if(li.dataset.last){
+    const rows = Math.ceil((items.length + 3) / 4), row = Math.floor((rows - 2) / 2) + 1;
+    li.style.gridArea = row + ' / 2 / span 2 / span 2';
+    grid.insertBefore(li, grid.children[(row - 1) * 4] || null);
+  }
   lit = li; li.classList.add('big'); li.firstChild.setAttribute('aria-pressed', 'true');
   if(reduce) return;
   items.forEach(e => {
@@ -587,7 +594,7 @@ function list(){
   lit = null;
   let start = null;
   $('#list').replaceChildren(...order.map(i => { const w = W[i];
-    const li = document.createElement('li'), b = document.createElement('button');
+    const li = document.createElement('li'), b = document.createElement('button'); if(w.last) li.dataset.last = '1';
     b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
     const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w); fontFor(h, form(w));
