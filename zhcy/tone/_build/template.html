@@ -28,7 +28,13 @@
 @keyframes tpNext{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
 @keyframes tpPrev{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.tp-g{animation:none!important}}
-.tp-grid{list-style:none;margin:0;padding:var(--s1) 0 var(--s2);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s1)}
+.tp-grid{list-style:none;margin:0;padding:var(--s1) 0 var(--s2);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row dense;gap:var(--s1)}
+.tp-grid>li{display:flex;min-width:0}
+.tp-grid>li>.tp-tile{flex:1}
+/* The selected tone pair fills a 2 x 2 block; the other tiles flow around it (dense packing). */
+.tp-grid>li.big{grid-column:span 2;grid-row:span 2}
+.tp-grid>li.big .hz{font-size:clamp(2.4rem,15vw,4.4rem)}
+.tp-grid>li.big .py{font-size:clamp(.8125rem,3.8vw,1.0625rem)}
 .tp-tile{width:100%;min-height:var(--tap);padding:var(--s1) 2px;border:0;border-radius:var(--r-md);background:var(--surface);color:var(--ink);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform 80ms var(--ease)}
@@ -164,24 +170,53 @@ function move(delta){
 /* ---------- views: home, word list (books), info ---------- */
 /* Word grid (game controller): all 40 words, 4 wide, in random order. Tap plays; tap again for the next voice. */
 let lit = null;
+/* Select a tile: it grows into a 2 x 2 block (ease in, a little overshoot, a small bounce) while the
+   other tiles slide quietly to their new places (FLIP: measure, change the layout, animate from the old spot). */
+function pick(li, animate){
+  const grid = $('#list'), items = [...grid.children];
+  const reduce = !animate || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const first = reduce ? null : new Map(items.map(e => [e, e.getBoundingClientRect()]));
+  if(lit && lit !== li){ lit.classList.remove('big'); lit.firstChild.setAttribute('aria-pressed', 'false'); }
+  lit = li; li.classList.add('big'); li.firstChild.setAttribute('aria-pressed', 'true');
+  if(reduce) return;
+  items.forEach(e => {
+    const a = first.get(e), b = e.getBoundingClientRect();
+    const dx = (a.left + a.width / 2) - (b.left + b.width / 2), dy = (a.top + a.height / 2) - (b.top + b.height / 2);
+    const sx = a.width / b.width, sy = a.height / b.height;
+    if(Math.abs(dx) < .5 && Math.abs(dy) < .5 && Math.abs(sx - 1) < .01 && Math.abs(sy - 1) < .01) return;
+    const from = `translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+    e.style.zIndex = e === li ? 2 : 1;
+    const run = e === li
+      ? e.animate([
+          {transform: from, easing: 'cubic-bezier(.55,0,.75,.35)'},            // ease in
+          {offset: .62, transform: 'scale(1.07)', easing: 'ease-out'},         // overshoot
+          {offset: .82, transform: 'scale(.975)', easing: 'ease-in-out'},      // bounce back
+          {transform: 'none'}], {duration: 620})
+      : e.animate([{transform: from, opacity: .7}, {transform: 'none', opacity: 1}],
+          {duration: 460, easing: 'cubic-bezier(.2,.8,.2,1)', delay: Math.random() * 60});   // quiet shuffle
+    run.onfinish = run.oncancel = () => { e.style.zIndex = ''; };
+  });
+}
 function list(){
-  /* No set order: all 40 words, 4 wide, shuffled each time the grid opens. The word in focus is red. */
+  /* No set order: all 40 words, 4 wide, shuffled each time the grid opens. The word in focus is red, bold and 2 x 2. */
   const order = W.map((_, i) => i);
   for(let k = order.length - 1; k > 0; k--){ const j = Math.floor(Math.random() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
   lit = null;
+  let start = null;
   $('#list').replaceChildren(...order.map(i => { const w = W[i];
     const li = document.createElement('li'), b = document.createElement('button');
-    b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', String(i === cur)); if(i === cur) lit = b;
+    b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
     const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w);
     const p = document.createElement('span'); p.className = 'py'; p.lang = 'zh-Latn-pinyin'; p.textContent = w.p;
     b.append(h, p);
     b.addEventListener('click', () => {
-      if(lit && lit !== b) lit.setAttribute('aria-pressed', 'false');
-      lit = b; b.setAttribute('aria-pressed', 'true'); cur = i; store.set('tone:cur', cur); play(i);
+      if(lit !== li) pick(li, true);
+      cur = i; store.set('tone:cur', cur); play(i);
     });
-    li.append(b); return li;
+    li.append(b); if(i === cur) start = li; return li;
   }));
+  if(start) pick(start, false);
 }
 let VIEW = 'home';
 const GAME_SVG = $('#bfc').innerHTML;
