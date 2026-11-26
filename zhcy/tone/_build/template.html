@@ -40,8 +40,8 @@
   transition:transform 80ms var(--ease)}
 .tp-tile:active{transform:scale(.97)}
 /* The word in focus turns red (characters and pinyin) with bold characters; the others sit 20% lighter. No borders. */
-.tp-tile[aria-pressed="true"] .hz,.tp-tile[aria-pressed="true"] .py{color:var(--accent)}
-.tp-tile[aria-pressed="true"] .hz{font-weight:700;color:#e34234}   /* the seal red, as in the logo at top left */
+.tp-tile[aria-pressed="true"] .hz,.tp-tile[aria-pressed="true"] .py{color:#e34234}   /* the seal red, as in the logo at top left */
+.tp-tile[aria-pressed="true"] .hz{font-weight:700}
 .tp-tile[aria-pressed="false"] .hz{color:color-mix(in srgb,var(--ink) 80%,var(--surface))}
 .tp-tile[aria-pressed="false"] .py{color:color-mix(in srgb,var(--primary) 80%,var(--surface))}
 .tp-tile .hz,.tp-tile .py{transition:color 700ms var(--ease)}
@@ -127,63 +127,51 @@ const isZh = () => LANG === 'zh' || LANG === 'zht';
 const LT = () => LANG === 'zht' ? 'zh-Hant' : 'zh-Hans';
 
 /* ---------- audio: recorded MP3s, cycling voices; speech synthesis if a word has none ----------
-   Clips are fetched ahead of the tap and decoded into memory (Web Audio), so a tap plays at once.
-   Preloaded: the next voice of the current word and of its neighbours, and of every word when the grid opens.
-   If Web Audio is missing or a clip will not decode, the plain <audio> player is the fallback. */
-const AC = window.AudioContext || window.webkitAudioContext;
-let ctx = null;
-try{ if(AC) ctx = new AC(); }catch(e){ ctx = null; }
-/* iPhone: let page audio play with the ring/silent switch on, as the <audio> player did. */
-try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
-const bufs = new Map();   // src -> Promise<AudioBuffer|null>
+   One <audio> player, started inside the tap (iPhone only allows sound that starts in a tap, and the
+   <audio> player also plays with the silent switch on). For speed, clips are fetched ahead of the tap and
+   kept in memory as blob URLs: the next voice of the current word and its neighbours, and of every word
+   when the grid opens. A clip not yet in memory plays straight from the site. */
+const blobs = new Map();   // src -> blob URL (ready)
+const pending = new Map(); // src -> Promise
 function load(src){
-  if(!ctx) return Promise.resolve(null);
-  if(!bufs.has(src)) bufs.set(src, fetch(src).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
-    .then(a => new Promise((ok, no) => ctx.decodeAudioData(a, ok, no)))
-    .catch(() => { bufs.delete(src); return null; }));
-  return bufs.get(src);
+  if(blobs.has(src)) return Promise.resolve(blobs.get(src));
+  if(!pending.has(src)) pending.set(src, fetch(src).then(r => r.ok ? r.blob() : Promise.reject())
+    .then(b => { const u = URL.createObjectURL(b); blobs.set(src, u); return u; })
+    .catch(() => null).finally(() => pending.delete(src)));
+  return pending.get(src);
 }
 const srcOf = (w, i) => BASE + encodeURIComponent(CLIPS[w.w][i]);
 const nextIdx = w => (clipPos[w.w] || 0) % CLIPS[w.w].length;
 function prefetch(k){ const w = W[k]; if(w && (CLIPS[w.w] || []).length) load(srcOf(w, nextIdx(w))); }
 function prefetchAround(){ prefetch(cur); prefetch(cur + 1); prefetch(cur - 1); }
 let queued = false;
-function prefetchAll(){   // a few at a time, so the clip just tapped is never stuck behind the queue
-  if(queued || !ctx) return; queued = true;
+function prefetchAll(){   // a few at a time
+  if(queued) return; queued = true;
   const todo = W.map((_, k) => k); let live = 0;
   const pump = () => { while(live < 3 && todo.length){ const w = W[todo.shift()]; if(!(CLIPS[w.w] || []).length) continue;
     live++; load(srcOf(w, nextIdx(w))).finally(() => { live--; pump(); }); } };
   pump();
 }
 const audio = new Audio(); audio.preload = 'auto';
-let srcNode = null, token = 0;
-function speakTTS(text){
-  const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
-  SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
-}
+let token = 0;
 /* While a clip plays, the play button is marked (data-playing) and its circle darkens a little. */
 const playing = on => { const b = $('#play'); on ? b.setAttribute('data-playing', '') : b.removeAttribute('data-playing'); };
 audio.addEventListener('playing', () => playing(true));
 audio.addEventListener('ended', () => playing(false));
-function stopAll(){ try{ if(srcNode) srcNode.stop(); }catch(e){} srcNode = null; audio.pause(); playing(false); }
-function playEl(src, t){   // fallback player; plays once the clip is available
-  audio.src = src;
-  audio.play().catch(() => audio.addEventListener('canplay', () => { if(t === token) audio.play().catch(() => {}); }, {once: true}));
+audio.addEventListener('pause', () => playing(false));
+function speakTTS(text){
+  const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
+  SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
 }
 function play(k){
   const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
   if(!list.length){ speakTTS(w.w); return; }
   const i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
   const src = srcOf(w, i), t = ++token;
-  stopAll();
-  if(!ctx){ playEl(src, t); return; }
-  if(ctx.state !== 'running') ctx.resume().catch(() => {});   // unlocks audio inside the tap
-  load(src).then(buf => {
-    if(t !== token) return;   // a newer tap won
-    if(!buf){ playEl(src, t); return; }
-    const n = ctx.createBufferSource(); n.buffer = buf; n.connect(ctx.destination); n.start(); srcNode = n;
-    playing(true); n.onended = () => { if(srcNode === n) playing(false); };
-  });
+  audio.pause(); audio.src = blobs.get(src) || src; try{ audio.currentTime = 0; }catch(e){}
+  /* Started right here, inside the tap. If it is refused before the clip loads, try again once it can play. */
+  const p = audio.play();
+  if(p && p.catch) p.catch(() => audio.addEventListener('canplay', () => { if(t === token) audio.play().catch(() => {}); }, {once: true}));
   prefetch(k == null ? cur : k);   // its next voice
 }
 
