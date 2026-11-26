@@ -279,9 +279,8 @@ function view(v){
   f.setAttribute('aria-expanded', String(v === 'books'));
 }
 $('#bfc').addEventListener('click', () => { view(VIEW === 'home' ? 'books' : 'home'); $('#bfc').focus(); });
-/* Header: Info (detective) shows Tone Pairs info here, tap again to go back; books opens Meaning and search on the chengyu page. */
+/* Header: Info (detective) shows Tone Pairs info here; tap again to go back. */
 $('#bInfo').addEventListener('click', () => view(VIEW === 'info' ? 'home' : 'info'));
-$('#bBooks').addEventListener('click', () => { location.href = '../#books'; });
 
 /* ---------- language: English meanings for now (the language switch is off; may return) ---------- */
 function applyLang(){ document.documentElement.lang = 'en'; render(0); prefetchAround(); }

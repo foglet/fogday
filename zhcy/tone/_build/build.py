@@ -53,8 +53,11 @@ def zhcy_parts():
                  '<a class="brand" href="./" aria-label="Tone Pairs, refresh">')
     header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
                  '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
-    # Books opens Meaning and search on the chengyu page, so it controls nothing here. Info stays (Tone Pairs info).
-    header = sub(header, ' aria-controls="vBooks"', '')
+        # No books icon on Tone Pairs (Meaning and search belongs to the chengyu). Info and the bento stay put.
+    m = re.search(r'\s*<button class="ibtn tab" id="bBooks".*?</button>', header, re.S)
+    if not m:
+        raise SystemExit("zhcy template changed, cannot find the books button")
+    header = header.replace(m.group(0), '')
 
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
     actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
