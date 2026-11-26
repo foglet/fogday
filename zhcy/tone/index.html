@@ -423,23 +423,60 @@ const mean = w => w[LANG] || w.en;
 const isZh = () => LANG === 'zh' || LANG === 'zht';
 const LT = () => LANG === 'zht' ? 'zh-Hant' : 'zh-Hans';
 
-/* ---------- audio: recorded MP3s, cycling voices; speech synthesis if a word has none ---------- */
+/* ---------- audio: recorded MP3s, cycling voices; speech synthesis if a word has none ----------
+   Clips are fetched ahead of the tap and decoded into memory (Web Audio), so a tap plays at once.
+   Preloaded: the next voice of the current word and of its neighbours, and of every word when the grid opens.
+   If Web Audio is missing or a clip will not decode, the plain <audio> player is the fallback. */
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+try{ if(AC) ctx = new AC(); }catch(e){ ctx = null; }
+/* iPhone: let page audio play with the ring/silent switch on, as the <audio> player did. */
+try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+const bufs = new Map();   // src -> Promise<AudioBuffer|null>
+function load(src){
+  if(!ctx) return Promise.resolve(null);
+  if(!bufs.has(src)) bufs.set(src, fetch(src).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+    .then(a => new Promise((ok, no) => ctx.decodeAudioData(a, ok, no)))
+    .catch(() => { bufs.delete(src); return null; }));
+  return bufs.get(src);
+}
+const srcOf = (w, i) => BASE + encodeURIComponent(CLIPS[w.w][i]);
+const nextIdx = w => (clipPos[w.w] || 0) % CLIPS[w.w].length;
+function prefetch(k){ const w = W[k]; if(w && (CLIPS[w.w] || []).length) load(srcOf(w, nextIdx(w))); }
+function prefetchAround(){ prefetch(cur); prefetch(cur + 1); prefetch(cur - 1); }
+let queued = false;
+function prefetchAll(){   // a few at a time, so the clip just tapped is never stuck behind the queue
+  if(queued || !ctx) return; queued = true;
+  const todo = W.map((_, k) => k); let live = 0;
+  const pump = () => { while(live < 3 && todo.length){ const w = W[todo.shift()]; if(!(CLIPS[w.w] || []).length) continue;
+    live++; load(srcOf(w, nextIdx(w))).finally(() => { live--; pump(); }); } };
+  pump();
+}
 const audio = new Audio(); audio.preload = 'auto';
+let srcNode = null, token = 0;
 function speakTTS(text){
   const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
   SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
 }
+function stopAll(){ try{ if(srcNode) srcNode.stop(); }catch(e){} srcNode = null; audio.pause(); }
+function playEl(src, t){   // fallback player; plays once the clip is available
+  audio.src = src;
+  audio.play().catch(() => audio.addEventListener('canplay', () => { if(t === token) audio.play().catch(() => {}); }, {once: true}));
+}
 function play(k){
   const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
   if(!list.length){ speakTTS(w.w); return; }
-  const i = (clipPos[w.w] || 0) % list.length; clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
-  /* Play as soon as the clip is available. No error message: if play is refused before the clip loads,
-     try again once it can play; an interrupted play (a newer tap) is simply dropped. */
-  const src = BASE + encodeURIComponent(list[i]);
-  audio.pause(); audio.src = src;
-  audio.play().catch(() => {
-    audio.addEventListener('canplay', () => { if(audio.src.endsWith(src)) audio.play().catch(() => {}); }, {once: true});
+  const i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
+  const src = srcOf(w, i), t = ++token;
+  stopAll();
+  if(!ctx){ playEl(src, t); return; }
+  if(ctx.state !== 'running') ctx.resume().catch(() => {});   // unlocks audio inside the tap
+  load(src).then(buf => {
+    if(t !== token) return;   // a newer tap won
+    if(!buf){ playEl(src, t); return; }
+    const n = ctx.createBufferSource(); n.buffer = buf; n.connect(ctx.destination); n.start(); srcNode = n;
   });
+  prefetch(k == null ? cur : k);   // its next voice
 }
 
 /* ---------- word ---------- */
@@ -464,7 +501,7 @@ function render(dir){
 }
 function move(delta){
   const n = cur + delta; if(n < 0 || n >= W.length) return;
-  cur = n; render(delta); play();
+  cur = n; render(delta); play(); prefetchAround();
 }
 
 /* ---------- views: home, word list (books), info ---------- */
@@ -529,7 +566,7 @@ function view(v){
   /* The 發財 slot toggles: game controller on the single word, 發財 elsewhere (grid, info). */
   const f = $('#bfc');
   if(v === 'info'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); }
-  else if(v === 'books'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); list(); }
+  else if(v === 'books'){ f.innerHTML = '發財'; f.lang = 'zh-Hant'; f.setAttribute('aria-label', 'Single word'); list(); prefetchAll(); }
   else { f.innerHTML = GAME_SVG; f.removeAttribute('lang'); f.setAttribute('aria-label', 'Word grid'); render(0); }
   f.setAttribute('aria-expanded', String(v === 'books'));
 }
@@ -539,7 +576,7 @@ $('#bInfo').addEventListener('click', () => view(VIEW === 'info' ? 'home' : 'inf
 $('#bBooks').addEventListener('click', () => { location.href = '../#books'; });
 
 /* ---------- language: English meanings for now (the language switch is off; may return) ---------- */
-function applyLang(){ document.documentElement.lang = 'en'; render(0); }
+function applyLang(){ document.documentElement.lang = 'en'; render(0); prefetchAround(); }
 
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());
