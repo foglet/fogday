@@ -420,7 +420,7 @@ const T = {
     connecting:'Connecting...', syncing:'Syncing...', discon:'Disconnected. Stars stay on this device.',
     dtZh:'释义 Explanation', dtEn:'English', dtEn2:'Another translation', dtO:'出处 Origin', dtSyn:'近义 Similar', dtAnt:'反义 Opposite', dtTone:'感情色彩 Tone',
     tone:{pos:'褒义 Positive', neg:'贬义 Negative', neu:'中性 Neutral'},
-    b36:'Thirty-Six Stratagems', b36cy:'Chengyu, back from the stratagems', lbl36cy:'成语', bfc:'Tone practice', brand36:'Stratagems', home36:'Thirty-Six Stratagems, back to chengyu', title36:'Thirty-Six Stratagems',
+    b36:'Thirty-Six Stratagems', b36cy:'Chengyu, back from the stratagems', lbl36cy:'成语', bfc:'Tone practice', brand36:'Stratagems', home36:'Thirty-Six Stratagems, refresh', title36:'Thirty-Six Stratagems',
     chap:(c, i) => `Chapter ${c + 1} · ${CH(c).zh} · ${i} of 36`, dtChap:'Chapter', dtNote:'Meaning', dtNoteZh:'释义',
     info36A:'The Thirty-Six Stratagems (三十六计): 36 proverbs on strategy and deception, in six chapters of six.',
     info36B:'Names, readings and chapter titles follow <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">Wikipedia</a> and <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies (China Strategies, PDF)</a>. The short explanations are written for this page.'},
@@ -444,7 +444,7 @@ const T = {
     connecting:'正在连接…', syncing:'正在同步…', discon:'已断开连接。收藏仍保存在本设备。',
     dtZh:'释义', dtEn:'英文', dtEn2:'另一译法', dtO:'出处', dtSyn:'近义', dtAnt:'反义', dtTone:'感情色彩',
     tone:{pos:'褒义', neg:'贬义', neu:'中性'},
-    b36:'三十六计', b36cy:'返回成语', lbl36cy:'成语', bfc:'声调练习', brand36:'三十六计', home36:'三十六计，返回成语', title36:'三十六计',
+    b36:'三十六计', b36cy:'返回成语', lbl36cy:'成语', bfc:'声调练习', brand36:'三十六计', home36:'三十六计，刷新', title36:'三十六计',
     chap:(c, i) => `${CH(c).num} ${CH(c).zh} · 第 ${i} 计`, dtChap:'套', dtNote:'英文释义', dtNoteZh:'释义',
     info36A:'三十六计：关于谋略与计策的三十六条成语，共六套，每套六计。',
     info36B:'计名、读音与各套名称参考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">维基百科</a> 与 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。简短释义为本页所写。'}/*ZHEND*/,
@@ -468,7 +468,7 @@ const T = {
     connecting:'正在連接…', syncing:'正在同步…', discon:'已斷開連接。收藏仍保存在本設備。',
     dtZh:'釋義', dtEn:'英文', dtEn2:'另一譯法', dtO:'出處', dtSyn:'近義', dtAnt:'反義', dtTone:'感情色彩',
     tone:{pos:'褒義', neg:'貶義', neu:'中性'},
-    b36:'三十六計', b36cy:'返回成語', lbl36cy:'成語', bfc:'聲調練習', brand36:'三十六計', home36:'三十六計，返回成語', title36:'三十六計',
+    b36:'三十六計', b36cy:'返回成語', lbl36cy:'成語', bfc:'聲調練習', brand36:'三十六計', home36:'三十六計，刷新', title36:'三十六計',
     chap:(c, i) => `${CH(c).num} ${CH(c).zh} · 第 ${i} 計`, dtChap:'套', dtNote:'英文釋義', dtNoteZh:'釋義',
     info36A:'三十六計：關於謀略與計策的三十六條成語，共六套，每套六計。',
     info36B:'計名、讀音與各套名稱參考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">維基百科</a> 與 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。簡短釋義為本頁所寫。'},
@@ -888,7 +888,8 @@ function setView(v, focus, quiet){
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 // The logo returns to the card from another page; on the card it reloads today, as before.
-$('.brand').addEventListener('click', ev => { if(VIEW !== 'home'){ ev.preventDefault(); setView('home', true); } });
+// The title refreshes the page and stays where it is: chengyu stays on chengyu, the stratagems stay on the stratagems (the hash keeps the place).
+$('.brand').addEventListener('click', ev => { ev.preventDefault(); if(VIEW !== 'home'){ setView('home', true); return; } location.reload(); });
 
 /* ---------- pronunciation (the device's Mandarin voice) ---------- */
 const SS = window.speechSynthesis;

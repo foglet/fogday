@@ -48,9 +48,9 @@ def zhcy_parts():
     actions = z[a0 : z.index("</div>", z.index('id="star"')) + 6]
 
     # Header: the /zhcy header, unchanged. Its links lead back to the chengyu page (see template.html).
-    # Header: the /zhcy header with the title Tone Pairs (as 36 mode shows Stratagems).
+    # Header: the /zhcy header with the title Tone Pairs (as 36 mode shows Stratagems). The title refreshes Tone Pairs.
     header = sub(header, '<a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home">',
-                 '<a class="brand" href="../" aria-label="Tone Pairs, back to chengyu">')
+                 '<a class="brand" href="./" aria-label="Tone Pairs, refresh">')
     header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
                  '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
     # Books opens Meaning and search on the chengyu page, so it controls nothing here. Info stays (Tone Pairs info).
