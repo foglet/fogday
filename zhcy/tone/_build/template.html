@@ -127,19 +127,41 @@ const isZh = () => LANG === 'zh' || LANG === 'zht';
 const LT = () => LANG === 'zht' ? 'zh-Hant' : 'zh-Hans';
 
 /* ---------- audio: recorded MP3s, cycling voices; speech synthesis if a word has none ----------
-   One <audio> player, started inside the tap (iPhone only allows sound that starts in a tap, and the
-   <audio> player also plays with the silent switch on). For speed, clips are fetched ahead of the tap and
-   kept in memory as blob URLs: the next voice of the current word and its neighbours, and of every word
-   when the grid opens. A clip not yet in memory plays straight from the site. */
-const blobs = new Map();   // src -> blob URL (ready)
-const pending = new Map(); // src -> Promise
-function load(src){
-  if(blobs.has(src)) return Promise.resolve(blobs.get(src));
-  if(!pending.has(src)) pending.set(src, fetch(src).then(r => r.ok ? r.blob() : Promise.reject())
-    .then(b => { const u = URL.createObjectURL(b); blobs.set(src, u); return u; })
-    .catch(() => null).finally(() => pending.delete(src)));
-  return pending.get(src);
+   Played with Web Audio, not the <audio> player, so iPhone shows no media player for it.
+   iPhone rules this follows:
+   - the AudioContext is made and unlocked inside the first tap (a silent one-sample sound is started there);
+     a context made at page load can stay muted;
+   - audioSession 'playback' (Safari 16.4+) is set first, so sound plays with the silent switch on;
+   - an 'interrupted' or 'suspended' context (after the phone locks) is resumed inside each tap.
+   Clips are fetched ahead of the tap as bytes, decoded once the context exists, and kept in memory.
+   If Web Audio is missing or a clip will not decode, the <audio> player is the fallback. */
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+function unlock(){
+  if(!AC) return null;
+  try{ if(navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; }catch(e){}
+  if(!ctx){
+    try{ ctx = new AC(); }catch(e){ return null; }
+    try{ const b = ctx.createBuffer(1, 1, 22050), n = ctx.createBufferSource(); n.buffer = b; n.connect(ctx.destination); n.start(0); }catch(e){}
+  }
+  if(ctx.state !== 'running'){ try{ ctx.resume(); }catch(e){} }
+  return ctx;
 }
+['touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, {capture: true, passive: true}));
+const bytes = new Map();   // src -> Promise<ArrayBuffer|null>, fetched ahead of the tap
+const bufs = new Map();    // src -> Promise<AudioBuffer|null>, decoded once there is a context
+function fetchClip(src){
+  if(!bytes.has(src)) bytes.set(src, fetch(src).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null));
+  return bytes.get(src);
+}
+function decoded(src){
+  if(!ctx) return Promise.resolve(null);
+  if(!bufs.has(src)) bufs.set(src, fetchClip(src).then(a => a && new Promise(ok => {
+    try{ ctx.decodeAudioData(a.slice(0), ok, () => ok(null)); }catch(e){ ok(null); }
+  })).then(b => { if(!b) bufs.delete(src); return b; }));
+  return bufs.get(src);
+}
+const load = src => { fetchClip(src); if(ctx) decoded(src); };
 const srcOf = (w, i) => BASE + encodeURIComponent(CLIPS[w.w][i]);
 const nextIdx = w => (clipPos[w.w] || 0) % CLIPS[w.w].length;
 function prefetch(k){ const w = W[k]; if(w && (CLIPS[w.w] || []).length) load(srcOf(w, nextIdx(w))); }
@@ -149,16 +171,18 @@ function prefetchAll(){   // a few at a time
   if(queued) return; queued = true;
   const todo = W.map((_, k) => k); let live = 0;
   const pump = () => { while(live < 3 && todo.length){ const w = W[todo.shift()]; if(!(CLIPS[w.w] || []).length) continue;
-    live++; load(srcOf(w, nextIdx(w))).finally(() => { live--; pump(); }); } };
+    live++; fetchClip(srcOf(w, nextIdx(w))).finally(() => { live--; pump(); }); } };
   pump();
 }
-const audio = new Audio(); audio.preload = 'auto';
-let token = 0;
 /* While a clip plays, the play button is marked (data-playing) and its circle darkens a little. */
 const playing = on => { const b = $('#play'); on ? b.setAttribute('data-playing', '') : b.removeAttribute('data-playing'); };
-audio.addEventListener('playing', () => playing(true));
-audio.addEventListener('ended', () => playing(false));
-audio.addEventListener('pause', () => playing(false));
+let el = null, node = null, token = 0;
+function stopAll(){ try{ if(node) node.stop(); }catch(e){} node = null; if(el) el.pause(); playing(false); }
+function playEl(src){   // fallback: the <audio> player, started inside the tap
+  if(!el){ el = new Audio(); el.addEventListener('ended', () => playing(false)); }
+  el.src = src; const p = el.play(); playing(true);
+  if(p && p.catch) p.catch(() => playing(false));
+}
 function speakTTS(text){
   const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
   SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
@@ -168,10 +192,18 @@ function play(k){
   if(!list.length){ speakTTS(w.w); return; }
   const i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
   const src = srcOf(w, i), t = ++token;
-  audio.pause(); audio.src = blobs.get(src) || src; try{ audio.currentTime = 0; }catch(e){}
-  /* Started right here, inside the tap. If it is refused before the clip loads, try again once it can play. */
-  const p = audio.play();
-  if(p && p.catch) p.catch(() => audio.addEventListener('canplay', () => { if(t === token) audio.play().catch(() => {}); }, {once: true}));
+  stopAll();
+  const c = unlock();   // inside the tap
+  if(!c){ playEl(src); return; }
+  decoded(src).then(buf => {
+    if(t !== token) return;   // a newer tap won
+    if(!buf){ playEl(src); return; }
+    if(c.state !== 'running'){ try{ c.resume(); }catch(e){} }
+    const n = c.createBufferSource(); n.buffer = buf; n.connect(c.destination); n.start(0); node = n; playing(true);
+    n.onended = () => { if(node === n){ node = null; playing(false); } };
+    /* Safety net: if the context still is not running shortly after, it would be silent; use the <audio> player. */
+    setTimeout(() => { if(t === token && node === n && c.state !== 'running'){ try{ n.stop(); }catch(e){} node = null; playEl(src); } }, 300);
+  });
   prefetch(k == null ? cur : k);   // its next voice
 }
 
