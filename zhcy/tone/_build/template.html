@@ -38,14 +38,7 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp-tile .hz{font-family:var(--song);font-weight:500;font-size:2.4rem;line-height:1.1}
 .tp-tile .py{color:var(--primary);font-weight:600}
 @media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
-/* Meaning language menu (from /zh20), opened by the translate button, bottom left. */
-.lang{display:flex;align-items:center;gap:2px;width:auto;min-width:var(--tap);padding:0 var(--s1)}
-.tp-code{font:600 var(--fs-cap)/1 var(--font);color:var(--ink-2)}
-.tp-langs{position:absolute;bottom:100%;left:4px;display:flex;flex-direction:column;z-index:3;background:var(--paper);border-radius:var(--r-sm)}
-.tp-langs[hidden]{display:none}
-.tp-langs button{min-width:var(--tap);min-height:var(--tap);border:0;background:none;color:var(--ink-2);font:600 var(--fs-sm) var(--font);cursor:pointer;text-align:left;padding:0 var(--s2)}
-.tp-langs button:hover{color:var(--ink)}
-.tp-langs button[aria-checked="true"]{color:var(--primary)}
+.tp-gap{visibility:hidden}
 </style>
 </head>
 <body>
@@ -84,9 +77,7 @@ const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-/* Meaning language, as on /zh20 (tonepairs:lang): EN, DE, ES, FR, ZH. Tapping ZH again switches Simplified and Traditional. */
-const LANGS = ['en', 'de', 'es', 'fr', 'zh', 'zht'];
-let LANG = store.get('tonepairs:lang', 'en'); if(!LANGS.includes(LANG)) LANG = 'en';
+const LANG = 'en';
 let cur = Math.min(Math.max(+store.get('tone:cur', 0) || 0, 0), W.length - 1);
 let stars = new Set(store.get('tone:stars', []));
 let clipPos = store.get('tone:pos', {}) || {};
@@ -181,48 +172,8 @@ $('#bfc').addEventListener('click', () => { view(VIEW === 'books' ? 'home' : 'bo
 /* The header is the /zhcy header: its section icons open those sections on the chengyu page. */
 document.querySelectorAll('.top .tab').forEach(t => t.addEventListener('click', () => { location.href = '../#' + t.dataset.view; }));
 
-/* ---------- language: the /zh20 menu, opened from the translate button ---------- */
-const lb = $('#lang');
-const menu = document.createElement('div');
-menu.className = 'tp-langs'; menu.id = 'langMenu'; menu.setAttribute('role', 'radiogroup'); menu.setAttribute('aria-label', 'Meaning language'); menu.hidden = true;
-[['en', 'EN'], ['de', 'DE'], ['es', 'ES'], ['fr', 'FR'], ['zh', 'ZH']].forEach(([k, t]) => {
-  const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.lang = k; b.textContent = t; menu.append(b);
-});
-$('.actions').append(menu);
-lb.setAttribute('aria-controls', 'langMenu'); lb.setAttribute('aria-expanded', 'false'); lb.setAttribute('aria-haspopup', 'true');
-lb.removeAttribute('lang');
-const code = document.createElement('span'); code.className = 'tp-code'; code.setAttribute('aria-hidden', 'true'); lb.append(code);
-function openMenu(o){ menu.hidden = !o; lb.setAttribute('aria-expanded', String(o)); if(o) (menu.querySelector('[aria-checked="true"]') || menu.firstChild).focus(); }
-lb.addEventListener('click', () => openMenu(menu.hidden));
-menu.addEventListener('click', e => {
-  const b = e.target.closest('[data-lang]'); if(!b) return;
-  const k = b.dataset.lang;
-  LANG = k === 'zh' ? (LANG === 'zh' ? 'zht' : LANG === 'zht' ? 'zh' : 'zh') : k;   // second tap on ZH: Traditional
-  store.set('tonepairs:lang', LANG); applyLang();
-  if(k !== 'zh'){ openMenu(false); lb.focus(); }   // ZH stays open so a second tap can switch script
-});
-menu.addEventListener('keydown', e => {
-  const items = [...menu.children], i = items.indexOf(document.activeElement);
-  if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
-  if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ e.preventDefault(); items[(i + 1) % items.length].focus(); }
-});
-document.addEventListener('click', e => { if(!menu.hidden && !e.target.closest('.tp-langs,#lang')) openMenu(false); });
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && !menu.hidden){ openMenu(false); lb.focus(); } });
-function applyLang(){
-  document.documentElement.lang = isZh() ? LT() : LANG;
-  /* Header text as on /zhcy: English title with the Chinese subtitle, or the Chinese title alone. */
-  $('.brand b').textContent = LANG === 'zh' ? '每日成语' : LANG === 'zht' ? '每日成語' : 'Chengyu';
-  const sub = $('#sub'); sub.lang = LT(); sub.textContent = LANG === 'zht' ? '每日成語' : '每日成语';
-  const label = {en: 'EN', de: 'DE', es: 'ES', fr: 'FR', zh: 'ZH', zht: '繁'}[LANG];
-  code.textContent = label;
-  lb.setAttribute('aria-label', 'Meaning language: ' + {en: 'English', de: 'German', es: 'Spanish', fr: 'French', zh: 'Chinese, Simplified', zht: 'Chinese, Traditional'}[LANG]);
-  menu.querySelectorAll('[data-lang]').forEach(b => {
-    const on = b.dataset.lang === LANG || (b.dataset.lang === 'zh' && LANG === 'zht');
-    b.setAttribute('aria-checked', String(on));
-    if(b.dataset.lang === 'zh'){ b.textContent = LANG === 'zht' ? '繁' : 'ZH'; b.setAttribute('aria-label', LANG === 'zh' ? 'Chinese, Simplified. Tap again for Traditional' : LANG === 'zht' ? 'Chinese, Traditional. Tap again for Simplified' : 'Chinese'); }
-  });
-  render(0); if(VIEW === 'books') list();
-}
+/* ---------- language: English meanings for now (the language switch is off; may return) ---------- */
+function applyLang(){ document.documentElement.lang = 'en'; render(0); }
 
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());

@@ -310,21 +310,14 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp-tile .hz{font-family:var(--song);font-weight:500;font-size:2.4rem;line-height:1.1}
 .tp-tile .py{color:var(--primary);font-weight:600}
 @media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
-/* Meaning language menu (from /zh20), opened by the translate button, bottom left. */
-.lang{display:flex;align-items:center;gap:2px;width:auto;min-width:var(--tap);padding:0 var(--s1)}
-.tp-code{font:600 var(--fs-cap)/1 var(--font);color:var(--ink-2)}
-.tp-langs{position:absolute;bottom:100%;left:4px;display:flex;flex-direction:column;z-index:3;background:var(--paper);border-radius:var(--r-sm)}
-.tp-langs[hidden]{display:none}
-.tp-langs button{min-width:var(--tap);min-height:var(--tap);border:0;background:none;color:var(--ink-2);font:600 var(--fs-sm) var(--font);cursor:pointer;text-align:left;padding:0 var(--s2)}
-.tp-langs button:hover{color:var(--ink)}
-.tp-langs button[aria-checked="true"]{color:var(--primary)}
+.tp-gap{visibility:hidden}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap bar">
-    <a class="brand" href="../" aria-label="Chengyu of the day, home" data-ta="home"><span class="seal" id="seal" aria-hidden="true">成</span>
-      <span class="ttl"><b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small></span></a>
+    <a class="brand" href="../" aria-label="Tone Pairs, back to chengyu"><span class="seal" id="seal" aria-hidden="true">成</span>
+      <span class="ttl"><b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small></span></a>
     <nav class="acts" aria-label="Sections">
       <button class="ibtn tab" id="bBooks" type="button" data-view="books" aria-label="Meaning and search" data-ta="books">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></svg></button>
@@ -357,8 +350,7 @@ main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 
 <div class="actions">
       <p class="note" id="note" role="status"></p>
-      <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
-      <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
+      <span class="ibtn tp-gap" aria-hidden="true"></span>
       <a class="n36 nfc" id="b36" href="../#36-1" aria-label="Thirty-Six Stratagems">36</a>
       <button class="n36 nfc" id="bfc" type="button" aria-controls="vBooks" aria-label="Word grid"><svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M176,112H152a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM104,96H96V88a8,8,0,0,0-16,0v8H72a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16ZM241.48,200.65a36,36,0,0,1-54.94,4.81c-.12-.12-.24-.24-.35-.37L146.48,160h-37L69.81,205.09l-.35.37A36.08,36.08,0,0,1,44,216,36,36,0,0,1,8.56,173.75a.68.68,0,0,1,0-.14L24.93,89.52A59.88,59.88,0,0,1,83.89,40H172a60.08,60.08,0,0,1,59,49.25c0,.06,0,.12,0,.18l16.37,84.17a.68.68,0,0,1,0,.14A35.74,35.74,0,0,1,241.48,200.65ZM172,144a44,44,0,0,0,0-88H83.89A43.9,43.9,0,0,0,40.68,92.37l0,.13L24.3,176.59A20,20,0,0,0,58,194.3l41.92-47.59a8,8,0,0,1,6-2.71Zm59.7,32.59-8.74-45A60,60,0,0,1,172,160h-4.2L198,194.31a20.09,20.09,0,0,0,17.46,5.39,20,20,0,0,0,16.23-23.11Z"/></svg></button>
       <button class="play" id="play" type="button" aria-label="Play pronunciation">
@@ -381,9 +373,7 @@ const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-/* Meaning language, as on /zh20 (tonepairs:lang): EN, DE, ES, FR, ZH. Tapping ZH again switches Simplified and Traditional. */
-const LANGS = ['en', 'de', 'es', 'fr', 'zh', 'zht'];
-let LANG = store.get('tonepairs:lang', 'en'); if(!LANGS.includes(LANG)) LANG = 'en';
+const LANG = 'en';
 let cur = Math.min(Math.max(+store.get('tone:cur', 0) || 0, 0), W.length - 1);
 let stars = new Set(store.get('tone:stars', []));
 let clipPos = store.get('tone:pos', {}) || {};
@@ -478,48 +468,8 @@ $('#bfc').addEventListener('click', () => { view(VIEW === 'books' ? 'home' : 'bo
 /* The header is the /zhcy header: its section icons open those sections on the chengyu page. */
 document.querySelectorAll('.top .tab').forEach(t => t.addEventListener('click', () => { location.href = '../#' + t.dataset.view; }));
 
-/* ---------- language: the /zh20 menu, opened from the translate button ---------- */
-const lb = $('#lang');
-const menu = document.createElement('div');
-menu.className = 'tp-langs'; menu.id = 'langMenu'; menu.setAttribute('role', 'radiogroup'); menu.setAttribute('aria-label', 'Meaning language'); menu.hidden = true;
-[['en', 'EN'], ['de', 'DE'], ['es', 'ES'], ['fr', 'FR'], ['zh', 'ZH']].forEach(([k, t]) => {
-  const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.lang = k; b.textContent = t; menu.append(b);
-});
-$('.actions').append(menu);
-lb.setAttribute('aria-controls', 'langMenu'); lb.setAttribute('aria-expanded', 'false'); lb.setAttribute('aria-haspopup', 'true');
-lb.removeAttribute('lang');
-const code = document.createElement('span'); code.className = 'tp-code'; code.setAttribute('aria-hidden', 'true'); lb.append(code);
-function openMenu(o){ menu.hidden = !o; lb.setAttribute('aria-expanded', String(o)); if(o) (menu.querySelector('[aria-checked="true"]') || menu.firstChild).focus(); }
-lb.addEventListener('click', () => openMenu(menu.hidden));
-menu.addEventListener('click', e => {
-  const b = e.target.closest('[data-lang]'); if(!b) return;
-  const k = b.dataset.lang;
-  LANG = k === 'zh' ? (LANG === 'zh' ? 'zht' : LANG === 'zht' ? 'zh' : 'zh') : k;   // second tap on ZH: Traditional
-  store.set('tonepairs:lang', LANG); applyLang();
-  if(k !== 'zh'){ openMenu(false); lb.focus(); }   // ZH stays open so a second tap can switch script
-});
-menu.addEventListener('keydown', e => {
-  const items = [...menu.children], i = items.indexOf(document.activeElement);
-  if(e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
-  if(e.key === 'ArrowDown' || e.key === 'ArrowRight'){ e.preventDefault(); items[(i + 1) % items.length].focus(); }
-});
-document.addEventListener('click', e => { if(!menu.hidden && !e.target.closest('.tp-langs,#lang')) openMenu(false); });
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && !menu.hidden){ openMenu(false); lb.focus(); } });
-function applyLang(){
-  document.documentElement.lang = isZh() ? LT() : LANG;
-  /* Header text as on /zhcy: English title with the Chinese subtitle, or the Chinese title alone. */
-  $('.brand b').textContent = LANG === 'zh' ? '每日成语' : LANG === 'zht' ? '每日成語' : 'Chengyu';
-  const sub = $('#sub'); sub.lang = LT(); sub.textContent = LANG === 'zht' ? '每日成語' : '每日成语';
-  const label = {en: 'EN', de: 'DE', es: 'ES', fr: 'FR', zh: 'ZH', zht: '繁'}[LANG];
-  code.textContent = label;
-  lb.setAttribute('aria-label', 'Meaning language: ' + {en: 'English', de: 'German', es: 'Spanish', fr: 'French', zh: 'Chinese, Simplified', zht: 'Chinese, Traditional'}[LANG]);
-  menu.querySelectorAll('[data-lang]').forEach(b => {
-    const on = b.dataset.lang === LANG || (b.dataset.lang === 'zh' && LANG === 'zht');
-    b.setAttribute('aria-checked', String(on));
-    if(b.dataset.lang === 'zh'){ b.textContent = LANG === 'zht' ? '繁' : 'ZH'; b.setAttribute('aria-label', LANG === 'zh' ? 'Chinese, Simplified. Tap again for Traditional' : LANG === 'zht' ? 'Chinese, Traditional. Tap again for Simplified' : 'Chinese'); }
-  });
-  render(0); if(VIEW === 'books') list();
-}
+/* ---------- language: English meanings for now (the language switch is off; may return) ---------- */
+function applyLang(){ document.documentElement.lang = 'en'; render(0); }
 
 /* ---------- footer actions ---------- */
 $('#word').addEventListener('click', () => play());

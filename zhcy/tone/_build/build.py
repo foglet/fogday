@@ -48,7 +48,11 @@ def zhcy_parts():
     actions = z[a0 : z.index("</div>", z.index('id="star"')) + 6]
 
     # Header: the /zhcy header, unchanged. Its links lead back to the chengyu page (see template.html).
-    header = sub(header, '<a class="brand" href="./"', '<a class="brand" href="../"')
+    # Header: the /zhcy header with the title Tone Pairs (as 36 mode shows Stratagems).
+    header = sub(header, '<a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home">',
+                 '<a class="brand" href="../" aria-label="Tone Pairs, back to chengyu">')
+    header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
+                 '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
     # The section icons open those sections on the chengyu page, so they control nothing here.
     header = sub(header, ' aria-controls="vBooks"', '')
     header = sub(header, ' aria-controls="vInfo"', '')
@@ -56,6 +60,11 @@ def zhcy_parts():
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
     actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
                   '<a class="n36 nfc" id="b36" href="../#36-1" aria-label="Thirty-Six Stratagems">36</a>')
+    # Language switch removed for now: an empty slot keeps the other buttons where they sit on /zhcy.
+    m = re.search(r'<button class="ibtn lang" id="lang".*?</button>', actions, re.S)
+    if not m:
+        raise SystemExit("zhcy template changed, cannot find the language button")
+    actions = actions.replace(m.group(0), '<span class="ibtn tp-gap" aria-hidden="true"></span>')
     # 發財 slot toggles: game controller (opens the word grid) or 發財 (back to the single word).
     actions = sub(actions, '<a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>',
                   '<button class="n36 nfc" id="bfc" type="button" aria-controls="vBooks" aria-label="Word grid">'
