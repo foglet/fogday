@@ -17,6 +17,8 @@
 html[lang^="zh"] .brand b{font-family:var(--display);font-weight:600;font-size:var(--fs-lg);letter-spacing:.06em}
 html[lang^="zh"] .brand .sub{display:inline}
 .n36.nfc[aria-current="page"]{color:var(--accent)}
+/* The footer row stays on screen in every view, so 發財 can always bring back the single word. */
+main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
 .tp-progress{margin:0 0 var(--s4);color:var(--ink-2);font-size:var(--fs-sm)}
 .tp-word{display:flex;justify-content:center;gap:.04em;border:0;background:transparent;color:var(--ink);padding:var(--s3);cursor:pointer;
@@ -31,15 +33,15 @@ html[lang^="zh"] .brand .sub{display:inline}
 @keyframes tpNext{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
 @keyframes tpPrev{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.tp-g{animation:none!important}}
-.tp-list{list-style:none;margin:0;padding:0}
-.tp-row{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:var(--s3);width:100%;min-height:var(--tap);padding:var(--s2) var(--s1);
-  border:0;background:transparent;text-align:left;border-radius:var(--r-sm);cursor:pointer;color:var(--ink)}
-.tp-row:hover{background:var(--surface-2)}
-.tp-row b{font-family:var(--song);font-weight:500;font-size:1.5rem;line-height:1.2}
-.tp-row .p{color:var(--primary)}
-.tp-row .d{color:var(--ink-2)}
-.tp-row .s{color:var(--gold);margin-left:var(--s2);vertical-align:-3px}
-.tp-row .s svg{width:16px;height:16px;fill:currentColor}
+.tp-grid{list-style:none;margin:0;padding:var(--s2) 0 var(--s5);display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.tp-tile{width:100%;min-height:112px;padding:var(--s3) var(--s2);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s1);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform 80ms var(--ease),border-color var(--dur) var(--ease)}
+.tp-tile:active{transform:scale(.97)}
+.tp-tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.tp-tile .hz{font-family:var(--song);font-weight:500;font-size:2.4rem;line-height:1.1}
+.tp-tile .py{color:var(--primary);font-weight:600}
+@media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
 /* Meaning language menu (from /zh20), opened by the translate button, bottom left. */
 .lang{display:flex;align-items:center;gap:2px;width:auto;min-width:var(--tap);padding:0 var(--s1)}
 .tp-code{font:600 var(--fs-cap)/1 var(--font);color:var(--ink-2)}
@@ -63,26 +65,25 @@ html[lang^="zh"] .brand .sub{display:inline}
       <p class="tp-def" id="def"></p>
       <div class="tp-sandhi" id="sandhi" hidden></div>
     </section>
-<!--ZHCY_ACTIONS-->
   </div>
 
   <div class="view" id="vBooks" hidden>
-    <section class="pane" aria-labelledby="bH">
-      <h2 class="ph2" id="bH">Words</h2>
-      <ul class="tp-list" id="list"></ul>
+    <section aria-labelledby="bH">
+      <h2 class="vh" id="bH">Word grid</h2>
+      <ul class="tp-grid" id="list"></ul>
     </section>
   </div>
 
   <div class="view" id="vInfo" hidden>
     <section class="pane info" aria-labelledby="iH">
       <h2 class="ph2" id="iH">Info</h2>
-      <p id="infoA"></p>
-      <p>Tap the word to hear it. Tap again for the next voice. Swipe or use the arrow keys for the next word.</p>
+      <p>Tap the word to hear it. Tap again for the next voice. Swipe or use the arrow keys for the next word. The game controller shows all 40 words; 發財 brings back one word at a time.</p>
       <p>Red lines show third-tone sandhi: the first of two third tones is spoken as a second tone.</p>
       <p>Recordings made with ondoku3.com text to speech.</p>
       <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
     </section>
   </div>
+<!--ZHCY_ACTIONS-->
   </div>
 </main>
 
@@ -121,8 +122,8 @@ function speakTTS(text){
   const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
   SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
 }
-function play(){
-  const w = W[cur], list = CLIPS[w.w] || [];
+function play(k){
+  const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
   if(!list.length){ speakTTS(w.w); return; }
   const i = (clipPos[w.w] || 0) % list.length; clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
   audio.pause(); audio.src = BASE + encodeURIComponent(list[i]);
@@ -157,22 +158,25 @@ function move(delta){
 }
 
 /* ---------- views: home, word list (books), info ---------- */
+/* Word grid (game controller): 2 x 20 tiles, as in the first version. Tap plays; tap again for the next voice. */
+let lit = null;
 function list(){
   $('#list').replaceChildren(...W.map((w, i) => {
     const li = document.createElement('li'), b = document.createElement('button');
-    b.type = 'button'; b.className = 'tp-row';
-    const h = document.createElement('b'); h.lang = LT(); h.textContent = form(w);
-    const t = document.createElement('span');
-    const p = document.createElement('span'); p.className = 'p'; p.textContent = w.p;
-    const d = document.createElement('span'); d.className = 'd'; d.textContent = '  ' + mean(w);
-    t.append(p, d);
-    if(stars.has(w.w)){ const s = document.createElement('span'); s.className = 's'; s.setAttribute('role', 'img'); s.setAttribute('aria-label', 'starred');
-      s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>'; t.append(s); }
-    b.append(h, t);
-    b.addEventListener('click', () => { cur = i; view('home'); render(0); $('#word').focus(); });
+    b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
+    const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w);
+    const p = document.createElement('span'); p.className = 'py'; p.lang = 'zh-Latn-pinyin'; p.textContent = w.p;
+    b.append(h, p);
+    b.addEventListener('click', () => {
+      if(lit && lit !== b) lit.setAttribute('aria-pressed', 'false');
+      lit = b; b.setAttribute('aria-pressed', 'true'); cur = i; store.set('tone:cur', cur); play(i);
+    });
     li.append(b); return li;
   }));
+  lit = null;
 }
+audio.addEventListener('ended', () => { if(lit){ lit.setAttribute('aria-pressed', 'false'); lit = null; } });
 let VIEW = 'home';
 function view(v){
   VIEW = v;
@@ -181,6 +185,7 @@ function view(v){
   const el = $('#v' + {home: 'Home', books: 'Books', info: 'Info'}[v]);
   el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
   if(v === 'books') list();
+  if(v === 'home') render(0);
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => view(VIEW === t.dataset.view ? 'home' : t.dataset.view)));
 
@@ -222,13 +227,14 @@ function applyLang(){
     b.setAttribute('aria-checked', String(on));
     if(b.dataset.lang === 'zh'){ b.textContent = LANG === 'zht' ? '繁' : 'ZH'; b.setAttribute('aria-label', LANG === 'zh' ? 'Chinese, Simplified. Tap again for Traditional' : LANG === 'zht' ? 'Chinese, Traditional. Tap again for Simplified' : 'Chinese'); }
   });
-  $('#infoA').textContent = W.length + ' words, ' + Object.values(CLIPS).reduce((n, v) => n + v.length, 0) + ' recordings.';
   render(0); if(VIEW === 'books') list();
 }
 
 /* ---------- footer actions ---------- */
-$('#word').addEventListener('click', play);
-$('#play').addEventListener('click', play);
+$('#word').addEventListener('click', () => play());
+/* 發財 and the game controller toggle: 發財 brings back the single word view. */
+$('#bfc').addEventListener('click', e => { e.preventDefault(); if(VIEW !== 'home'){ view('home'); $('#word').focus(); } });
+$('#play').addEventListener('click', () => play());
 $('#copy').addEventListener('click', async () => {
   const text = form(W[cur]);
   try{ await navigator.clipboard.writeText(text); note('Copied ' + text); }catch(e){ note('Could not copy'); }

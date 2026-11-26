@@ -24,6 +24,11 @@ PAT = re.compile(
 )
 
 
+GAME = ("M176,112H152a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM104,96H96V88a8,8,0,0,0-16,0v8H72a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16Z"
+        "M241.48,200.65a36,36,0,0,1-54.94,4.81c-.12-.12-.24-.24-.35-.37L146.48,160h-37L69.81,205.09l-.35.37A36.08,36.08,0,0,1,44,216,36,36,0,0,1,8.56,173.75a.68.68,0,0,1,0-.14L24.93,89.52A59.88,59.88,0,0,1,83.89,40H172a60.08,60.08,0,0,1,59,49.25c0,.06,0,.12,0,.18l16.37,84.17a.68.68,0,0,1,0,.14A35.74,35.74,0,0,1,241.48,200.65Z"
+        "M172,144a44,44,0,0,0,0-88H83.89A43.9,43.9,0,0,0,40.68,92.37l0,.13L24.3,176.59A20,20,0,0,0,58,194.3l41.92-47.59a8,8,0,0,1,6-2.71Zm59.7,32.59-8.74-45A60,60,0,0,1,172,160h-4.2L198,194.31a20.09,20.09,0,0,0,17.46,5.39,20,20,0,0,0,16.23-23.11Z")
+
+
 def need(s, a):
     if s.count(a) != 1:
         raise SystemExit(f"zhcy template changed, cannot find exactly one: {a[:70]!r}")
@@ -50,10 +55,16 @@ def zhcy_parts():
     header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
                  '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
     header = header.replace(' data-ta="books"', "").replace(' data-ta="info"', "").replace(' data-ta="works"', "")
-    header = sub(header, 'aria-label="Meaning and search"', 'aria-label="Word list"')
+    # Books icon becomes the Phosphor game controller (MIT): opens the 2 x 20 word grid.
+    m = re.search(r'<button class="ibtn tab" id="bBooks".*?</button>', header, re.S)
+    if not m:
+        raise SystemExit("zhcy template changed, cannot find the books button")
+    header = header.replace(m.group(0),
+        '<button class="ibtn tab" id="bBooks" type="button" data-view="books" aria-controls="vBooks" aria-label="Word grid">\n'
+        '        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="' + GAME + '"/></svg></button>')
 
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
-    actions = sub(actions, '<button class="n36" id="b36" type="button" aria-pressed="false" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
+    actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
                   '<a class="n36 nfc" id="b36" href="../#36-1" aria-label="Thirty-Six Stratagems">36</a>')
     actions = sub(actions, '<a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>',
                   '<a class="n36 nfc" id="bfc" href="./" lang="zh-Hant" aria-label="Tone Pairs" aria-current="page">發財</a>')

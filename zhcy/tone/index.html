@@ -178,11 +178,11 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .actions{position:relative;display:flex;align-items:center;justify-content:space-between;margin:auto -12px 0;
   padding:var(--s2) 0 calc(var(--s2) + env(safe-area-inset-bottom))}
 .actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
-/* 36: Thirty-Six Stratagems switch, right of play. Red when on. */
+/* 36: Thirty-Six Stratagems switch. In 36 mode it reads 成语 and switches back. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
   font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}
 .n36:hover{color:var(--ink)}
-.n36[aria-pressed="true"]{color:var(--accent)}
+.n36{white-space:nowrap}
 /* 發財: link to the tone page (/zhcy/tone/), right of 36. */
 .nfc{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-family:var(--font)}
 /* Chapter line: under the definition in 36 mode. */
@@ -289,6 +289,8 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 html[lang^="zh"] .brand b{font-family:var(--display);font-weight:600;font-size:var(--fs-lg);letter-spacing:.06em}
 html[lang^="zh"] .brand .sub{display:inline}
 .n36.nfc[aria-current="page"]{color:var(--accent)}
+/* The footer row stays on screen in every view, so 發財 can always bring back the single word. */
+main>.wrap>.actions{position:sticky;bottom:0;z-index:4;background:var(--paper)}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
 .tp-progress{margin:0 0 var(--s4);color:var(--ink-2);font-size:var(--fs-sm)}
 .tp-word{display:flex;justify-content:center;gap:.04em;border:0;background:transparent;color:var(--ink);padding:var(--s3);cursor:pointer;
@@ -303,15 +305,15 @@ html[lang^="zh"] .brand .sub{display:inline}
 @keyframes tpNext{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
 @keyframes tpPrev{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.tp-g{animation:none!important}}
-.tp-list{list-style:none;margin:0;padding:0}
-.tp-row{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:var(--s3);width:100%;min-height:var(--tap);padding:var(--s2) var(--s1);
-  border:0;background:transparent;text-align:left;border-radius:var(--r-sm);cursor:pointer;color:var(--ink)}
-.tp-row:hover{background:var(--surface-2)}
-.tp-row b{font-family:var(--song);font-weight:500;font-size:1.5rem;line-height:1.2}
-.tp-row .p{color:var(--primary)}
-.tp-row .d{color:var(--ink-2)}
-.tp-row .s{color:var(--gold);margin-left:var(--s2);vertical-align:-3px}
-.tp-row .s svg{width:16px;height:16px;fill:currentColor}
+.tp-grid{list-style:none;margin:0;padding:var(--s2) 0 var(--s5);display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.tp-tile{width:100%;min-height:112px;padding:var(--s3) var(--s2);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s1);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform 80ms var(--ease),border-color var(--dur) var(--ease)}
+.tp-tile:active{transform:scale(.97)}
+.tp-tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.tp-tile .hz{font-family:var(--song);font-weight:500;font-size:2.4rem;line-height:1.1}
+.tp-tile .py{color:var(--primary);font-weight:600}
+@media (prefers-reduced-motion:reduce){.tp-tile{transition:none}}
 /* Meaning language menu (from /zh20), opened by the translate button, bottom left. */
 .lang{display:flex;align-items:center;gap:2px;width:auto;min-width:var(--tap);padding:0 var(--s1)}
 .tp-code{font:600 var(--fs-cap)/1 var(--font);color:var(--ink-2)}
@@ -328,8 +330,8 @@ html[lang^="zh"] .brand .sub{display:inline}
     <a class="brand" href="../" aria-label="Tone Pairs, back to chengyu"><span class="seal" id="seal" aria-hidden="true">二</span>
       <span class="ttl"><b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small></span></a>
     <nav class="acts" aria-label="Sections">
-      <button class="ibtn tab" id="bBooks" type="button" data-view="books" aria-controls="vBooks" aria-label="Word list">
-        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></svg></button>
+      <button class="ibtn tab" id="bBooks" type="button" data-view="books" aria-controls="vBooks" aria-label="Word grid">
+        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M176,112H152a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM104,96H96V88a8,8,0,0,0-16,0v8H72a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16ZM241.48,200.65a36,36,0,0,1-54.94,4.81c-.12-.12-.24-.24-.35-.37L146.48,160h-37L69.81,205.09l-.35.37A36.08,36.08,0,0,1,44,216,36,36,0,0,1,8.56,173.75a.68.68,0,0,1,0-.14L24.93,89.52A59.88,59.88,0,0,1,83.89,40H172a60.08,60.08,0,0,1,59,49.25c0,.06,0,.12,0,.18l16.37,84.17a.68.68,0,0,1,0,.14A35.74,35.74,0,0,1,241.48,200.65ZM172,144a44,44,0,0,0,0-88H83.89A43.9,43.9,0,0,0,40.68,92.37l0,.13L24.3,176.59A20,20,0,0,0,58,194.3l41.92-47.59a8,8,0,0,1,6-2.71Zm59.7,32.59-8.74-45A60,60,0,0,1,172,160h-4.2L198,194.31a20.09,20.09,0,0,0,17.46,5.39,20,20,0,0,0,16.23-23.11Z"/></svg></button>
       <button class="ibtn tab" id="bInfo" type="button" data-view="info" aria-controls="vInfo" aria-label="Info">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button>
 
@@ -348,6 +350,24 @@ html[lang^="zh"] .brand .sub{display:inline}
       <p class="tp-def" id="def"></p>
       <div class="tp-sandhi" id="sandhi" hidden></div>
     </section>
+  </div>
+
+  <div class="view" id="vBooks" hidden>
+    <section aria-labelledby="bH">
+      <h2 class="vh" id="bH">Word grid</h2>
+      <ul class="tp-grid" id="list"></ul>
+    </section>
+  </div>
+
+  <div class="view" id="vInfo" hidden>
+    <section class="pane info" aria-labelledby="iH">
+      <h2 class="ph2" id="iH">Info</h2>
+      <p>Tap the word to hear it. Tap again for the next voice. Swipe or use the arrow keys for the next word. The game controller shows all 40 words; 發財 brings back one word at a time.</p>
+      <p>Red lines show third-tone sandhi: the first of two third tones is spoken as a second tone.</p>
+      <p>Recordings made with ondoku3.com text to speech.</p>
+      <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
+    </section>
+  </div>
 <div class="actions">
       <p class="note" id="note" role="status"></p>
       <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
@@ -361,25 +381,6 @@ html[lang^="zh"] .brand .sub{display:inline}
       <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this word">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
     </div>
-  </div>
-
-  <div class="view" id="vBooks" hidden>
-    <section class="pane" aria-labelledby="bH">
-      <h2 class="ph2" id="bH">Words</h2>
-      <ul class="tp-list" id="list"></ul>
-    </section>
-  </div>
-
-  <div class="view" id="vInfo" hidden>
-    <section class="pane info" aria-labelledby="iH">
-      <h2 class="ph2" id="iH">Info</h2>
-      <p id="infoA"></p>
-      <p>Tap the word to hear it. Tap again for the next voice. Swipe or use the arrow keys for the next word.</p>
-      <p>Red lines show third-tone sandhi: the first of two third tones is spoken as a second tone.</p>
-      <p>Recordings made with ondoku3.com text to speech.</p>
-      <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
-    </section>
-  </div>
   </div>
 </main>
 
@@ -418,8 +419,8 @@ function speakTTS(text){
   const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); return; }
   SS.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-CN'; u.rate = .8; SS.speak(u);
 }
-function play(){
-  const w = W[cur], list = CLIPS[w.w] || [];
+function play(k){
+  const w = W[k == null ? cur : k], list = CLIPS[w.w] || [];
   if(!list.length){ speakTTS(w.w); return; }
   const i = (clipPos[w.w] || 0) % list.length; clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
   audio.pause(); audio.src = BASE + encodeURIComponent(list[i]);
@@ -454,22 +455,25 @@ function move(delta){
 }
 
 /* ---------- views: home, word list (books), info ---------- */
+/* Word grid (game controller): 2 x 20 tiles, as in the first version. Tap plays; tap again for the next voice. */
+let lit = null;
 function list(){
   $('#list').replaceChildren(...W.map((w, i) => {
     const li = document.createElement('li'), b = document.createElement('button');
-    b.type = 'button'; b.className = 'tp-row';
-    const h = document.createElement('b'); h.lang = LT(); h.textContent = form(w);
-    const t = document.createElement('span');
-    const p = document.createElement('span'); p.className = 'p'; p.textContent = w.p;
-    const d = document.createElement('span'); d.className = 'd'; d.textContent = '  ' + mean(w);
-    t.append(p, d);
-    if(stars.has(w.w)){ const s = document.createElement('span'); s.className = 's'; s.setAttribute('role', 'img'); s.setAttribute('aria-label', 'starred');
-      s.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg>'; t.append(s); }
-    b.append(h, t);
-    b.addEventListener('click', () => { cur = i; view('home'); render(0); $('#word').focus(); });
+    b.type = 'button'; b.className = 'tp-tile'; b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', form(w) + ', ' + w.p + ', play');
+    const h = document.createElement('span'); h.className = 'hz'; h.lang = LT(); h.textContent = form(w);
+    const p = document.createElement('span'); p.className = 'py'; p.lang = 'zh-Latn-pinyin'; p.textContent = w.p;
+    b.append(h, p);
+    b.addEventListener('click', () => {
+      if(lit && lit !== b) lit.setAttribute('aria-pressed', 'false');
+      lit = b; b.setAttribute('aria-pressed', 'true'); cur = i; store.set('tone:cur', cur); play(i);
+    });
     li.append(b); return li;
   }));
+  lit = null;
 }
+audio.addEventListener('ended', () => { if(lit){ lit.setAttribute('aria-pressed', 'false'); lit = null; } });
 let VIEW = 'home';
 function view(v){
   VIEW = v;
@@ -478,6 +482,7 @@ function view(v){
   const el = $('#v' + {home: 'Home', books: 'Books', info: 'Info'}[v]);
   el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
   if(v === 'books') list();
+  if(v === 'home') render(0);
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => view(VIEW === t.dataset.view ? 'home' : t.dataset.view)));
 
@@ -519,13 +524,14 @@ function applyLang(){
     b.setAttribute('aria-checked', String(on));
     if(b.dataset.lang === 'zh'){ b.textContent = LANG === 'zht' ? '繁' : 'ZH'; b.setAttribute('aria-label', LANG === 'zh' ? 'Chinese, Simplified. Tap again for Traditional' : LANG === 'zht' ? 'Chinese, Traditional. Tap again for Simplified' : 'Chinese'); }
   });
-  $('#infoA').textContent = W.length + ' words, ' + Object.values(CLIPS).reduce((n, v) => n + v.length, 0) + ' recordings.';
   render(0); if(VIEW === 'books') list();
 }
 
 /* ---------- footer actions ---------- */
-$('#word').addEventListener('click', play);
-$('#play').addEventListener('click', play);
+$('#word').addEventListener('click', () => play());
+/* 發財 and the game controller toggle: 發財 brings back the single word view. */
+$('#bfc').addEventListener('click', e => { e.preventDefault(); if(VIEW !== 'home'){ view('home'); $('#word').focus(); } });
+$('#play').addEventListener('click', () => play());
 $('#copy').addEventListener('click', async () => {
   const text = form(W[cur]);
   try{ await navigator.clipboard.writeText(text); note('Copied ' + text); }catch(e){ note('Could not copy'); }
