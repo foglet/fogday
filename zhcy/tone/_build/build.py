@@ -49,6 +49,9 @@ def zhcy_parts():
 
     # Header: the /zhcy header, unchanged. Its links lead back to the chengyu page (see template.html).
     header = sub(header, '<a class="brand" href="./"', '<a class="brand" href="../"')
+    # The section icons open those sections on the chengyu page, so they control nothing here.
+    header = sub(header, ' aria-controls="vBooks"', '')
+    header = sub(header, ' aria-controls="vInfo"', '')
 
     # Footer row: 36 opens the stratagems on the chengyu page; 發財 is the current page.
     actions = sub(actions, '<button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>',
