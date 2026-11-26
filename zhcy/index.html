@@ -171,7 +171,7 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 
 
 /* More */
-/* Bottom row: translate, 36, play, copy, star, spread edge to edge (translate and star glyphs align with the page edges).
+/* Bottom row: translate, 36, 發財, play, copy, star, spread edge to edge (translate and star glyphs align with the page edges).
    Status messages float just above the row. */
 .actions{position:relative;display:flex;align-items:center;justify-content:space-between;margin:auto -12px 0;
   padding:var(--s2) 0 calc(var(--s2) + env(safe-area-inset-bottom))}
@@ -181,6 +181,8 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
   font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}
 .n36:hover{color:var(--ink)}
 .n36[aria-pressed="true"]{color:var(--accent)}
+/* 發財: link to the tone page (/zhcy/tone/), right of 36. */
+.nfc{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-family:var(--font)}
 /* Chapter line: under the definition in 36 mode. */
 .chap{margin:0 0 var(--s2);text-align:center;font-size:var(--fs-sm);color:var(--accent);letter-spacing:.02em}
 body.m36 .def{margin-bottom:var(--s2);min-height:0}   /* chapter line sits right under the definition */
@@ -321,6 +323,7 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
       <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
       <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
       <button class="n36" id="b36" type="button" aria-pressed="false" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
+      <a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>
       <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
       <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu" data-ta="copy">
@@ -414,7 +417,7 @@ const T = {
     connecting:'Connecting...', syncing:'Syncing...', discon:'Disconnected. Stars stay on this device.',
     dtZh:'释义 Explanation', dtEn:'English', dtEn2:'Another translation', dtO:'出处 Origin', dtSyn:'近义 Similar', dtAnt:'反义 Opposite', dtTone:'感情色彩 Tone',
     tone:{pos:'褒义 Positive', neg:'贬义 Negative', neu:'中性 Neutral'},
-    b36:'Thirty-Six Stratagems', brand36:'Stratagems', home36:'Thirty-Six Stratagems, back to chengyu', title36:'Thirty-Six Stratagems',
+    b36:'Thirty-Six Stratagems', bfc:'Tone practice', brand36:'Stratagems', home36:'Thirty-Six Stratagems, back to chengyu', title36:'Thirty-Six Stratagems',
     chap:(c, i) => `Chapter ${c + 1} · ${CH(c).zh} · ${i} of 36`, dtChap:'Chapter', dtNote:'Meaning', dtNoteZh:'释义',
     info36A:'The Thirty-Six Stratagems (三十六计): 36 proverbs on strategy and deception, in six chapters of six.',
     info36B:'Names, readings and chapter titles follow <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">Wikipedia</a> and <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies (China Strategies, PDF)</a>. The short explanations are written for this page.'},
@@ -438,7 +441,7 @@ const T = {
     connecting:'正在连接…', syncing:'正在同步…', discon:'已断开连接。收藏仍保存在本设备。',
     dtZh:'释义', dtEn:'英文', dtEn2:'另一译法', dtO:'出处', dtSyn:'近义', dtAnt:'反义', dtTone:'感情色彩',
     tone:{pos:'褒义', neg:'贬义', neu:'中性'},
-    b36:'三十六计', brand36:'三十六计', home36:'三十六计，返回成语', title36:'三十六计',
+    b36:'三十六计', bfc:'声调练习', brand36:'三十六计', home36:'三十六计，返回成语', title36:'三十六计',
     chap:(c, i) => `${CH(c).num} ${CH(c).zh} · 第 ${i} 计`, dtChap:'套', dtNote:'英文释义', dtNoteZh:'释义',
     info36A:'三十六计：关于谋略与计策的三十六条成语，共六套，每套六计。',
     info36B:'计名、读音与各套名称参考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">维基百科</a> 与 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。简短释义为本页所写。'}/*ZHEND*/,
@@ -462,7 +465,7 @@ const T = {
     connecting:'正在連接…', syncing:'正在同步…', discon:'已斷開連接。收藏仍保存在本設備。',
     dtZh:'釋義', dtEn:'英文', dtEn2:'另一譯法', dtO:'出處', dtSyn:'近義', dtAnt:'反義', dtTone:'感情色彩',
     tone:{pos:'褒義', neg:'貶義', neu:'中性'},
-    b36:'三十六計', brand36:'三十六計', home36:'三十六計，返回成語', title36:'三十六計',
+    b36:'三十六計', bfc:'聲調練習', brand36:'三十六計', home36:'三十六計，返回成語', title36:'三十六計',
     chap:(c, i) => `${CH(c).num} ${CH(c).zh} · 第 ${i} 計`, dtChap:'套', dtNote:'英文釋義', dtNoteZh:'釋義',
     info36A:'三十六計：關於謀略與計策的三十六條成語，共六套，每套六計。',
     info36B:'計名、讀音與各套名稱參考 <a href="https://en.wikipedia.org/wiki/Thirty-Six_Stratagems">維基百科</a> 與 <a href="https://www.chinastrategies.com/wp-content/uploads/2017/04/The-Thirty-Six-Strategies.pdf">The Thirty-Six Strategies（China Strategies，PDF）</a>。簡短釋義為本頁所寫。'},

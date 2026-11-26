@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Build echo/index.html: scan assets/echo/zh/*.mp3, group by word, inline as JSON.
+"""Build zhcy/tone/index.html: scan assets/echo/zh/*.mp3, group by word, inline as JSON.
 
 Filename patterns handled:
   词,pinyin.mp3
   词,pinyin-ondoku3_YYYYMMDD-HHMMSS_Voice.mp3
   词.pinyin.ondoku3_YYYYMMDD-HHMMSS_Voice.mp3
   词-Pinyin-ondoku3_YYYYMMDD-HHMMSS_Voice.mp3
-Run: python3 echo/_build/build.py
+Run: python3 zhcy/tone/_build/build.py
 """
 import json, re, unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parent.parent
+ROOT = HERE.parent.parent.parent  # repo root (zhcy/tone/_build -> fogday)
 AUDIO = ROOT / "assets" / "echo" / "zh"
 OUT = HERE.parent / "index.html"
 

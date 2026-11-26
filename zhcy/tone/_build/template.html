@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Echo · Mandarin words</title>
+<title>發財 · Tones</title>
 <meta name="description" content="Tap a Mandarin word to hear it spoken.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +21,8 @@
            background: var(--paper); padding: 4px 0 8px; border-bottom: 1px solid var(--line); }
   h1 { font-family: "Young Serif", Georgia, serif; font-weight: 400; color: var(--felt);
        font-size: 2rem; margin: 8px 0 4px; }
+  .back { display: inline-flex; align-items: center; min-height: 44px; color: var(--felt); font-weight: 600; text-decoration: none; }
+  .back:focus-visible { outline: 3px solid var(--felt); outline-offset: 2px; border-radius: 6px; }
   .sub { color: var(--muted); margin: 0; font-size: .95rem; }
   .now { min-height: 1.4em; margin: 8px 0 0; color: var(--red); font-weight: 600; font-size: .95rem; }
   .now:not(:empty) { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #f6e9e6; }
@@ -44,7 +46,8 @@
 </head>
 <body>
 <header>
-  <h1>Echo</h1>
+  <a class="back" href="../">Back to chengyu</a>
+  <h1 lang="zh-Hant">發財</h1>
   <p class="sub">Tap a word to hear it. Tap again for the next voice.</p>
   <p class="now" id="now" aria-live="polite"></p>
 </header>
@@ -56,7 +59,7 @@
 (() => {
   const WORDS = /*DATA*/[];
   const BASE = "/assets/echo/zh/";
-  const KEY = "echo:pos";
+  const KEY = "tone:pos";
   const grid = document.getElementById("grid");
   const now = document.getElementById("now");
   const audio = new Audio();
