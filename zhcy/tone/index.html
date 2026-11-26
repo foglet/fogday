@@ -73,7 +73,35 @@ svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:
 .top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding-top:env(safe-area-inset-top)}
 .bar{display:flex;align-items:center;gap:var(--s3);min-height:52px}
-.brand{display:flex;align-items:center;gap:var(--s2);flex:1;min-width:0;text-decoration:none;color:var(--ink)}
+.brand{position:relative;display:flex;align-items:center;gap:var(--s1);flex:1;min-width:0;color:var(--ink)}
+/* The seal is the home link; the title beside it opens the page picker (like the Maps title menu). */
+.seal-a{flex:none;display:grid;place-items:center;width:var(--tap);height:var(--tap);margin-left:-5px;text-decoration:none;border-radius:var(--r-md)}
+.pick{display:flex;align-items:center;gap:4px;min-width:0;min-height:var(--tap);padding:0 6px 0 var(--s1);border:0;border-radius:var(--r-md);
+  background:transparent;color:var(--ink);cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
+.pick:hover,.pick[aria-expanded="true"]{background:var(--surface-2)}
+.pick .caret{width:14px;height:14px;color:var(--ink-2);transition:transform var(--dur) var(--ease)}
+.pick[aria-expanded="true"] .caret{transform:rotate(180deg)}
+.pmenu{position:absolute;top:calc(100% + 2px);left:var(--s5);z-index:20;width:max-content;min-width:16rem;max-width:calc(100vw - 48px);padding:6px;background:var(--surface);border-radius:14px;
+  box-shadow:0 0 0 1px rgba(42,36,32,.06),0 12px 40px rgba(42,36,32,.18);transform-origin:16px 0}
+.pmenu[hidden]{display:none}
+.pmenu.on{animation:pmIn 240ms var(--spring-smooth)}
+@keyframes pmIn{from{opacity:0;transform:scale(.92) translateY(-6px)}}
+.pmenu a{display:flex;align-items:center;white-space:nowrap;gap:var(--s2);min-height:var(--tap);padding:0 var(--s3) 0 var(--s2);border-radius:10px;color:var(--ink);text-decoration:none;font-weight:600}
+.pmenu a:hover,.pmenu a:focus{background:var(--surface-2);outline:none}
+.pmenu a:focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:-2px}
+.pmenu .ck{width:18px;height:18px;color:var(--primary);visibility:hidden}
+.pmenu a[aria-checked="true"] .ck{visibility:visible}
+.brand .pmenu small{margin-left:auto;padding-left:var(--s4);color:var(--ink-2);font-weight:400;font-family:var(--cy);font-size:1.0625rem}
+html[lang^="zh"] .brand .pmenu small{display:none}
+/* Bottom row swipe: the end icons (translate, star) and play ease out on the way to Tone Pairs and back in on return. */
+.actions{touch-action:pan-y}
+.actions.nav-out>.lang,.actions.nav-out>.star,.actions.nav-out>.play{animation:navOut 240ms var(--ease) forwards}
+.actions.nav-in>.lang,.actions.nav-in>.star,.actions.nav-in>.play{animation:navIn 460ms var(--spring-smooth) both}
+.actions.nav-in>.star{animation-delay:60ms}
+.actions.nav-in>.play{animation-delay:120ms}
+@keyframes navOut{to{opacity:0;transform:scale(.5)}}
+@keyframes navIn{from{opacity:0;transform:scale(.5)}}
+@media (prefers-reduced-motion:reduce){.pmenu.on,.actions.nav-in>*,.actions.nav-out>*{animation:none!important}}
 .seal{flex:none;width:34px;height:34px;border-radius:8px;background:#e34234;color:var(--on-primary);display:grid;place-items:center;
   font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;line-height:1}
 /* Title on one line, in capitals. */
@@ -341,10 +369,18 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 </style>
 </head>
 <body>
-<header class="top">
+<header class="top" data-pg="tone">
   <div class="wrap bar">
-    <a class="brand" href="./" aria-label="Tone Pairs, refresh"><span class="seal" id="seal" aria-hidden="true">成</span>
-      <span class="ttl"><b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small></span></a>
+    <div class="brand">
+      <a class="seal-a" href="./" aria-label="Tone Pairs, refresh"><span class="seal" id="seal" aria-hidden="true">成</span></a>
+      <button class="pick" id="pick" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="pmenu">
+        <span class="ttl"><b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small></span><svg class="ph caret" viewBox="0 0 256 256" aria-hidden="true"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+      <div class="pmenu" id="pmenu" role="menu" aria-label="Pages" hidden>
+        <a role="menuitemradio" data-pg="s36" href="../#36-1" aria-checked="false" tabindex="-1"><svg class="ph ck" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg><span data-t="pg36">36 Stratagems</span><small lang="zh-Hans">三十六计</small></a>
+        <a role="menuitemradio" data-pg="cy" href="../" aria-checked="false" tabindex="-1"><svg class="ph ck" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg><span data-t="pgcy">Chengyu</span><small lang="zh-Hans">成语</small></a>
+        <a role="menuitemradio" data-pg="tone" href="./" aria-checked="true" tabindex="-1"><svg class="ph ck" viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg><span data-t="pgtone">Tone Pairs</span><small lang="zh-Hans">声调组合</small></a>
+      </div>
+    </div>
     <nav class="acts" aria-label="Sections">
       <button class="ibtn tab" id="bInfo" type="button" data-view="info" aria-controls="vInfo" aria-label="Info" data-ta="info">
         <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M248,112H220.08l-47.5-65.41a16,16,0,0,0-25.31-.72l-12.85,14.9-.2.23a7.95,7.95,0,0,1-12.44,0l-.2-.23-12.85-14.9a16,16,0,0,0-25.31.72L35.92,112H8a8,8,0,0,0,0,16H248a8,8,0,0,0,0-16ZM96.34,56l.19.23,12.85,14.89a24,24,0,0,0,37.24,0l12.85-14.89c.06-.08.1-.15.17-.23l40.66,56H55.69ZM180,144a36,36,0,0,0-35.77,32H111.77a36,36,0,1,0-1.83,16h36.12A36,36,0,1,0,180,144ZM76,200a20,20,0,1,1,20-20A20,20,0,0,1,76,200Zm104,0a20,20,0,1,1,20-20A20,20,0,0,1,180,200Z"/></svg></button>
@@ -352,6 +388,99 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
       <a class="ibtn bento" href="/works/" aria-label="Projects" title="Projects" data-ta="works"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="2.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="2.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="16.75" width="4.5" height="4.5" rx="1"/><rect x="16.75" y="16.75" width="4.5" height="4.5" rx="1"/></g></svg></a>
     </nav>
   </div>
+<script>
+/* Page picker (title drop-down) and bottom-row swipe. Shared with /zhcy/tone, whose build copies this header in.
+   Pages: 36 Stratagems and Chengyu (this page, data-pg="cy") and Tone Pairs (data-pg="tone").
+   Swipe the bottom row left on Chengyu or 36 for Tone Pairs; swipe it right on Tone Pairs to come back.
+   The end icons (translate, star) and play ease out on the way to Tone Pairs and ease back in on return. */
+(() => {
+  const top = document.currentScript.closest('.top'), PG = top.dataset.pg;
+  const btn = top.querySelector('#pick'), menu = top.querySelector('#pmenu');
+  const items = () => [...menu.querySelectorAll('[role="menuitemradio"]')];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const ss = { get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }, set(k, v){ try{ sessionStorage.setItem(k, v); }catch(e){} },
+               del(k){ try{ sessionStorage.removeItem(k); }catch(e){} } };
+  const TONE = PG === 'tone' ? './' : 'tone/';
+  const backUrl = () => { const b = ss.get('zhcy:back'); return b && /^\/zhcy\/(?!tone)/.test(b) ? b : '../'; };
+
+  function openMenu(last){
+    menu.hidden = false; menu.classList.remove('on'); void menu.offsetWidth; menu.classList.add('on');
+    btn.setAttribute('aria-expanded', 'true');
+    const it = items(), c = it.find(a => a.getAttribute('aria-checked') === 'true') || it[0];
+    (last ? it[it.length - 1] : c).focus();
+  }
+  function closeMenu(ret){ if(menu.hidden) return; menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); if(ret) btn.focus(); }
+  btn.addEventListener('click', () => menu.hidden ? openMenu() : closeMenu(true));
+  btn.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown'){ e.preventDefault(); openMenu(); } else if(e.key === 'ArrowUp'){ e.preventDefault(); openMenu(true); } });
+  menu.addEventListener('keydown', e => {
+    const it = items(), k = it.indexOf(document.activeElement);
+    if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); e.stopPropagation(); it[(k + (e.key === 'ArrowDown' ? 1 : -1) + it.length) % it.length].focus(); }
+    else if(e.key === 'Home' || e.key === 'End'){ e.preventDefault(); it[e.key === 'Home' ? 0 : it.length - 1].focus(); }
+    else if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){ e.stopPropagation(); }
+    else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeMenu(true); }
+    else if(e.key === 'Tab'){ closeMenu(false); }
+    else if(e.key === ' '){ e.preventDefault(); document.activeElement.click(); }
+  });
+  document.addEventListener('pointerdown', e => { if(!menu.hidden && !top.querySelector('.brand').contains(e.target)) closeMenu(false); });
+
+  // Leaving for the other group: remember where Chengyu or 36 was, and ease the end icons in on arrival.
+  function leaving(to){
+    if(PG !== 'tone') ss.set('zhcy:back', location.pathname + location.hash);
+    if((to === 'tone') !== (PG === 'tone')) ss.set('zhcy:navin', to === 'tone' ? 'tone' : 'cy');
+  }
+  menu.addEventListener('click', e => {
+    const a = e.target.closest('a'); if(!a) return;
+    const go = document.dispatchEvent(new CustomEvent('zhcy:page', {cancelable: true, detail: a.dataset.pg}));
+    closeMenu(true);
+    if(!go || a.getAttribute('aria-checked') === 'true' && PG === 'tone'){ e.preventDefault(); return; }
+    leaving(a.dataset.pg);
+  });
+
+  // Bottom row swipe.
+  let sx = null, sy = 0, axis = '', row = null, eat = 0;
+  const dest = dx => PG === 'tone' ? (dx > 0 ? backUrl() : null) : (dx < 0 ? TONE : null);
+  document.addEventListener('touchstart', e => {
+    row = e.target.closest('.actions');
+    if(!row || e.touches.length !== 1 || !menu.hidden){ sx = null; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; axis = ''; row.style.transition = 'none';
+  }, {passive: true});
+  document.addEventListener('touchmove', e => {
+    if(sx == null) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if(!axis && Math.hypot(dx, dy) > 10) axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+    if(axis !== 'x' || reduce.matches) return;
+    const m = dest(dx) ? Math.max(-48, Math.min(48, dx / 4)) : dx / 12;   // a little give the wrong way
+    row.style.transform = `translateX(${m}px)`;
+  }, {passive: true});
+  const end = e => {
+    if(sx == null) return;
+    const dx = (e.changedTouches[0] || {}).clientX - sx, url = axis === 'x' && Math.abs(dx) > 50 ? dest(dx) : null;
+    sx = null; if(axis === 'x') eat = Date.now();
+    if(url){
+      leaving(PG === 'tone' ? 'cy' : 'tone');
+      if(reduce.matches){ location.href = url; return; }
+      row.classList.add('nav-out'); setTimeout(() => { location.href = url; }, 260);
+    } else { row.style.transition = 'transform 320ms var(--spring-smooth)'; row.style.transform = ''; }
+  };
+  document.addEventListener('touchend', end, {passive: true});
+  document.addEventListener('touchcancel', end, {passive: true});
+  // A swipe that ends on a button is not a tap.
+  document.addEventListener('click', e => { if(eat && Date.now() - eat < 500 && e.target.closest('.actions')){ e.preventDefault(); e.stopPropagation(); } eat = 0; }, true);
+  // Back from another page (bfcache): put the row back.
+  addEventListener('pageshow', () => { const r = document.querySelector('.actions'); if(r){ r.classList.remove('nav-out'); r.style.transform = ''; } });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const r = document.querySelector('.actions');
+    if(r && ss.get('zhcy:navin') === PG){
+      ss.del('zhcy:navin');
+      if(!reduce.matches){ r.classList.add('nav-in'); setTimeout(() => r.classList.remove('nav-in'), 700); }
+    }
+    // Load the other page ahead of a swipe.
+    const l = document.createElement('link'); l.rel = 'prefetch'; l.href = PG === 'tone' ? '../' : 'tone/'; document.head.append(l);
+  });
+})();
+</script>
 </header>
 
 <main id="main">

@@ -8,3 +8,4 @@ Tone Pairs: the /zh20 word card and meaning-language menu inside the /zhcy heade
 - localStorage key `tone:pos` remembers which voice plays next per word.
 - Fonts: the chengyu page font choice (zhcy:font2) carries over. `../fonts/` subsets lack 19 tone-page characters; `fonts/lxgw-wenkai-tone.woff2` (LXGW WenKai, OFL, from the lxgw-wenkai-webfont npm package) fills them. If words.json gains characters, rebuild that subset.
 - Linked from the 發財 button in the zhcy bottom row (right of 36).
+- Title menu and bottom-row swipe come with the copied /zhcy header (`data-pg="tone"` here). Swipe right on the bottom row returns to the chengyu or 36 card you left (sessionStorage `zhcy:back`); `zhcy:navin` tells the arriving page to ease its end icons in.

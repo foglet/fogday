@@ -43,14 +43,19 @@ def zhcy_parts():
     z = ZHCY.read_text(encoding="utf-8")
     style = z[z.index("<style>") + 7 : z.index("</style>")]
     style = style.replace("url(fonts/", "url(../fonts/")
-    header = z[z.index('<header class="top">') : z.index("</header>") + 9]
+    header = z[z.index('<header class="top"') : z.index("</header>") + 9]
     a0 = z.index('<div class="actions">')
     actions = z[a0 : z.index("</div>", z.index('id="star"')) + 6]
 
     # Header: the /zhcy header, unchanged. Its links lead back to the chengyu page (see template.html).
     # Header: the /zhcy header with the title Tone Pairs (as 36 mode shows Stratagems). The title refreshes Tone Pairs.
-    header = sub(header, '<a class="brand" href="./" aria-label="Chengyu of the day, home" data-ta="home">',
-                 '<a class="brand" href="./" aria-label="Tone Pairs, refresh">')
+    header = sub(header, '<a class="seal-a" href="./" aria-label="Chengyu of the day, home" data-ta="home">',
+                 '<a class="seal-a" href="./" aria-label="Tone Pairs, refresh">')
+    # Page picker and swipe script know which page they are on; menu links point back up to /zhcy.
+    header = sub(header, '<header class="top" data-pg="cy">', '<header class="top" data-pg="tone">')
+    header = sub(header, 'data-pg="s36" href="./#36-1"', 'data-pg="s36" href="../#36-1"')
+    header = sub(header, 'data-pg="cy" href="./" aria-checked="true"', 'data-pg="cy" href="../" aria-checked="false"')
+    header = sub(header, 'data-pg="tone" href="tone/" aria-checked="false"', 'data-pg="tone" href="./" aria-checked="true"')
     header = sub(header, '<b data-t="brand">Chengyu</b> <small lang="zh-Hans" class="sub" id="sub">每日成语</small>',
                  '<b>Tone Pairs</b> <small lang="zh-Hans" class="sub" id="sub">声调组合</small>')
         # No books icon on Tone Pairs (Meaning and search belongs to the chengyu). Info and the bento stay put.
