@@ -576,6 +576,14 @@ let clipPos = store.get('tone:pos', {}) || {};
 let heard = store.get('tone:heard', null);
 if(!heard){ heard = {}; Object.keys(clipPos).forEach(k => { const l = CLIPS[k] || []; if(l.length) heard[k] = l.slice(0, Math.min(+clipPos[k] || 0, l.length)); }); }
 const allHeard = w => { const l = CLIPS[w.w] || [], h = heard[w.w] || []; return l.length > 0 && l.every(f => h.includes(f)); };
+/* Every recorded word heard in every voice (自摸 aside): after a beat, everything goes back to unheard, 自摸 included. */
+function roundDone(){
+  if(!W.every(w => w.last || !(CLIPS[w.w] || []).length || allHeard(w))) return;
+  setTimeout(() => {
+    heard = {}; store.set('tone:heard', heard);
+    $('#word').classList.remove('heard'); document.querySelectorAll('.tp-tile.heard').forEach(b => b.classList.remove('heard'));
+  }, 1500);
+}
 function paintHeard(w){
   const on = allHeard(w);
   if(W[cur] === w) $('#word').classList.toggle('heard', on);
@@ -682,7 +690,7 @@ function play(k){
   if(!list.length){ speakTTS(w.w); return; }
   const i = nextIdx(w); clipPos[w.w] = i + 1; store.set('tone:pos', clipPos);
   const f = list[i], h = heard[w.w] || (heard[w.w] = []);
-  if(!h.includes(f)){ h.push(f); store.set('tone:heard', heard); paintHeard(w); }
+  if(!h.includes(f)){ h.push(f); store.set('tone:heard', heard); paintHeard(w); roundDone(); }
   const src = srcOf(w, i), t = ++token;
   stopAll();
   const c = unlock();   // inside the tap
