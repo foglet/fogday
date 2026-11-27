@@ -102,11 +102,11 @@ html[lang^="zh"] .brand .pmenu small{display:none}
 .actions{--nav-in:cubic-bezier(.34,1.56,.64,1)}
 @supports (animation-timing-function:linear(0,1)){
   .actions{--nav-in:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.974 53.8%,.975 57.1%,.997 69.8%,1.003 76.9%,1)}}
-.actions.nav-out>:not(.note){animation:navOut 160ms ease-in forwards}
-html[data-navin] .actions>:not(.note){animation:navIn 600ms var(--nav-in) both,navFade 220ms ease-out both;animation-delay:calc(var(--n,0) * 55ms)}
+.actions.nav-out>:not(.note):not(.rule){animation:navOut 160ms ease-in forwards}
+html[data-navin] .actions>:not(.note):not(.rule){animation:navIn 600ms var(--nav-in) both,navFade 220ms ease-out both;animation-delay:calc(var(--n,0) * 55ms)}
 html[data-navin] .actions{clip-path:inset(-100vh -40px 0 -40px)}   /* icons below the row stay out of sight; the note above still shows */
-.actions>:nth-child(3){--n:0}.actions>:nth-child(4){--n:1}.actions>:nth-child(5){--n:2}.actions>:nth-child(6){--n:3}
-.actions>:nth-child(7){--n:4}.actions>:nth-child(8){--n:5}.actions>:nth-child(9){--n:6}.actions>.play{--n:5}
+.actions>:nth-child(4){--n:0}.actions>:nth-child(5){--n:1}.actions>:nth-child(6){--n:2}.actions>:nth-child(7){--n:3}
+.actions>:nth-child(8){--n:4}.actions>:nth-child(9){--n:5}.actions>:nth-child(10){--n:6}.actions>.play{--n:5}
 @keyframes navOut{to{opacity:0;transform:translateY(48px)}}
 @keyframes navIn{from{transform:translateY(48px)}}
 @keyframes navFade{from{opacity:0}}
@@ -217,7 +217,10 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
    Status messages float just above play. */
 .actions{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;row-gap:var(--s1);margin:auto -12px 0;
   padding:var(--s2) 0 calc(var(--s2) + env(safe-area-inset-bottom))}
-.actions>.play{order:-1;margin:0 calc(50% - var(--tap) / 2) 20px}   /* 20px of extra space below play lifts it off the row */
+.actions>.play{order:-1;margin:0 calc(50% - var(--tap) / 2)}
+/* The footer rule sits between play and the icon row (play above it), 5px clear above and below, inset to the page column. */
+.actions{row-gap:0}
+.actions>.rule{order:-1;flex-basis:calc(100% - 24px);margin:5px 12px}
 .actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
 /* 36: Thirty-Six Stratagems switch. In 36 mode it reads 成语 and switches back. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
@@ -470,11 +473,11 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
 
     </div>
 
-    <hr class="rule">
     <div class="actions">
       <p class="note" id="note" role="status"></p>
       <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
+      <hr class="rule">
       <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
       <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
       <button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
