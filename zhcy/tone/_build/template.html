@@ -78,6 +78,12 @@ html,body{overscroll-behavior-y:auto}
 @media (prefers-reduced-motion:reduce){.tp-tile,.tp-tile .hz,.tp-tile .py{transition:none}}
 .tp-gap{visibility:hidden}
 .robot[aria-pressed="true"],.robot[aria-pressed="true"]:hover,.robot[aria-pressed="true"]:active{color:var(--accent)}
+/* Robot look: a grey gradient (stop colors set by script) and a motion, both new on every load and every tap.
+   While it plays, the stops turn accent red. */
+.robot svg{transform-box:fill-box;transform-origin:var(--ro,50% 50%)}
+.robot.go svg{animation:var(--ra) both}
+.robot[aria-pressed="true"] stop{stop-color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.robot.go svg{animation:none}}
 .tp-word.tp-kai,.tp-tile .hz.tp-kai{font-family:var(--kai)}
 .tp-word.tp-kai{font-weight:400}
 .tp-allh{display:flex;align-items:center;gap:var(--s1);margin:var(--s3) 0 var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--primary)}
@@ -488,7 +494,55 @@ function robotNext(){
   play(e.k, {idx: e.idx, onEnd: () => { if(robo === me) me.timer = setTimeout(robotNext, GAP); }});
   const nx = me.order[me.pos]; if(nx && nx.idx != null) load(srcOf(W[nx.k], nx.idx));
 }
+/* Robot look, like the bento: every load and every tap deals a new grey gradient (depths and direction)
+   and a new motion (a preset or fresh random params), then plays it once. */
+const RLOOK = (() => {
+  const b = $('#robot'), svg = b.querySelector('svg'), NS = 'http://www.w3.org/2000/svg', R = Math.random;
+  const pick = a => a[(R() * a.length) | 0], between = (x, y) => +(x + R() * (y - x)).toFixed(2);
+  const grey = L => { let v = L * L * L; v = v <= .0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - .055;   // OKLCH L, chroma 0 -> sRGB
+    const h = ('0' + Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16)).slice(-2); return '#' + h + h + h; };
+  const g = document.createElementNS(NS, 'linearGradient'), defs = document.createElementNS(NS, 'defs');
+  g.id = 'robot-grad'; g.setAttribute('gradientUnits', 'userSpaceOnUse');
+  const stops = ['0', '.5', '1'].map(o => { const s = document.createElementNS(NS, 'stop'); s.setAttribute('offset', o); g.appendChild(s); return s; });
+  defs.appendChild(g); svg.insertBefore(defs, svg.firstChild); svg.querySelector('path').setAttribute('fill', 'url(#robot-grad)');
+  const PRESETS = {
+    hop:    {o: '50% 100%', k: a => `0%,100%{transform:none}30%{transform:translateY(-${a}%) scaleY(1.06)}55%{transform:none}70%{transform:scale(1.08,.9)}85%{transform:translateY(-${a / 4}%)}`},
+    wiggle: {o: '50% 100%', k: a => `0%,100%{transform:none}20%{transform:rotate(-${a}deg)}40%{transform:rotate(${a}deg)}60%{transform:rotate(-${a / 2}deg)}80%{transform:rotate(${a / 3}deg)}`},
+    nod:    {o: '50% 90%',  k: a => `0%,100%{transform:none}30%{transform:rotate(0) translateY(${a / 3}%) scaleY(.9)}60%{transform:translateY(-${a / 4}%)}`},
+    spin:   {o: '50% 50%',  k: a => `0%{transform:rotate(0)}60%{transform:rotate(${a}deg) scale(.85)}100%{transform:rotate(${a}deg)}`},
+    jello:  {o: '50% 50%',  k: a => `0%,100%{transform:none}25%{transform:scale(${1 + a / 100},${1 - a / 100})}50%{transform:scale(${1 - a / 140},${1 + a / 140})}75%{transform:scale(${1 + a / 300},${1 - a / 300})}`},
+    beep:   {o: '50% 50%',  k: a => `0%,100%{transform:scale(1)}20%{transform:scale(${1 + a / 100})}40%{transform:scale(1)}60%{transform:scale(${1 + a / 160})}`},
+    shake:  {o: '50% 50%',  k: a => `0%,100%{transform:none}15%,45%,75%{transform:translateX(-${a / 3}%)}30%,60%,90%{transform:translateX(${a / 3}%)}`}
+  };
+  const AMP = {hop: [14, 26], wiggle: [10, 22], nod: [10, 20], spin: [360, 360], jello: [16, 30], beep: [18, 34], shake: [6, 12]};
+  const style = document.createElement('style'); document.head.appendChild(style);
+  let last = '', t = 0;
+  function deal(){
+    /* Grey gradient: light to dark (or the other way), along a random direction through the 24 x 24 box. */
+    const L = [between(.66, .76), between(.3, .42)]; if(R() < .5) L.reverse();
+    [L[0], (L[0] + L[1]) / 2, L[1]].forEach((l, i) => stops[i].setAttribute('stop-color', grey(l)));
+    const ang = R() * Math.PI * 2, cx = 128, r = 120;   // the icon's own viewBox is 256
+    g.setAttribute('x1', (cx - r * Math.cos(ang)).toFixed(1)); g.setAttribute('y1', (cx - r * Math.sin(ang)).toFixed(1));
+    g.setAttribute('x2', (cx + r * Math.cos(ang)).toFixed(1)); g.setAttribute('y2', (cx + r * Math.sin(ang)).toFixed(1));
+    /* Motion: never the same move twice in a row. */
+    let m; do { m = pick(Object.keys(PRESETS)); } while(m === last); last = m;
+    const a = between(...AMP[m]), dur = (between(520, 900)) | 0, name = 'robo' + ((R() * 1e6) | 0);
+    const ease = pick(['cubic-bezier(.3,0,.3,1)', 'ease-in-out', 'cubic-bezier(.34,1.56,.64,1)']);
+    style.textContent = `@keyframes ${name}{${PRESETS[m].k(a)}}`;
+    b.style.setProperty('--ra', `${name} ${dur}ms ${ease}`); b.style.setProperty('--ro', PRESETS[m].o);
+    return dur;
+  }
+  function go(){
+    const dur = deal();
+    b.classList.remove('go'); void b.getBoundingClientRect(); b.classList.add('go');
+    clearTimeout(t); t = setTimeout(() => b.classList.remove('go'), dur + 60);
+  }
+  deal(); setTimeout(go, 400);   // page load: a new look, played once
+  addEventListener('pageshow', e => { if(e.persisted) go(); });   // back from the bfcache counts as a load
+  return {go};
+})();
 $('#robot').addEventListener('click', () => {
+  RLOOK.go();   // every tap: a new look
   if(robo){ robotStop('Stopped'); return; }
   robo = {order: deal(-1), pos: 0, round: 0, timer: 0}; robotPaint(true);
   note('Playing all ' + W.length + ' tone pairs, ' + ROUNDS + ' rounds');
