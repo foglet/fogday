@@ -333,6 +333,11 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
    jumped as Safari's toolbar hid and showed at the end of a scroll. Same frosted paper as the header. */
 .actions{position:sticky;bottom:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+/* Smooth scrolling: let Safari's own momentum and edge bounce finish a scroll here. With bounce off, a fling stopped
+   dead at the end of the grid. */
+html,body{overscroll-behavior-y:auto}
+/* Grid entry: the tiles come in themselves (staggered, see enterTiles), so the view does not slide in as a block. */
+#vBooks.in{animation:none}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
 .tp-word{display:flex;justify-content:center;gap:.04em;border:0;background:transparent;color:var(--ink);padding:var(--s3);cursor:pointer;
   font-family:var(--cy);font-weight:var(--cyw);
@@ -810,6 +815,34 @@ function list(){
     li.append(b); if(i === cur) start = li; return li;
   }));
   if(start) pick(start, false);
+  enterTiles();
+}
+/* Staggered entry: each tile (background, characters and pinyin together) rises and fades in with an ease-in-out
+   curve, row by row and left to right. Tiles below the screen wait and come in the same way as they scroll into view. */
+let tileIO = null;
+function enterTiles(){
+  if(tileIO){ tileIO.disconnect(); tileIO = null; }
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  const tiles = [...document.querySelectorAll('#list .tp-tile')];
+  tiles.forEach(t => { t.style.opacity = '0'; });
+  let queue = [], timer = 0;
+  const run = () => {
+    timer = 0;
+    const batch = queue.splice(0).map(t => [t, t.getBoundingClientRect()]).sort((a, b) => (a[1].top - b[1].top) || (a[1].left - b[1].left));
+    const top0 = batch.length ? batch[0][1].top : 0, g = document.querySelector('#list').getBoundingClientRect();
+    batch.forEach(([t, r]) => {
+      const row = Math.round((r.top - top0) / 60), col = Math.round((r.left - g.left) / (g.width / 4));
+      const delay = row * 55 + col * 30;
+      const a = t.animate([{opacity: 0, transform: 'translateY(16px) scale(.94)'}, {opacity: 1, transform: 'none'}],
+        {duration: 560, delay: Math.min(delay, 900), easing: 'cubic-bezier(.45,0,.25,1)', fill: 'backwards'});
+      t.style.opacity = '';
+    });
+  };
+  tileIO = new IntersectionObserver(es => {
+    es.forEach(e => { if(!e.isIntersecting) return; tileIO.unobserve(e.target); queue.push(e.target); });
+    if(queue.length && !timer) timer = requestAnimationFrame(run);
+  }, {rootMargin: '0px 0px -40px 0px'});
+  tiles.forEach(t => tileIO.observe(t));
 }
 let VIEW = 'home';
 const GAME_SVG = $('#bfc').innerHTML;
