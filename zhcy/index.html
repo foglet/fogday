@@ -94,18 +94,22 @@ svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:
 .pmenu a[aria-checked="true"] .ck{visibility:visible}
 .brand .pmenu small{margin-left:auto;padding-left:var(--s4);color:var(--ink-2);font-weight:400;font-family:var(--cy);font-size:1.0625rem}
 html[lang^="zh"] .brand .pmenu small{display:none}
-/* Bottom row swipe: the end icons (translate, star) and play ease out on the way to Tone Pairs and back in on return. */
+/* Bottom row swipe: swipe the row left on Chengyu or 36 for Tone Pairs, right on Tone Pairs to come back. */
 .actions{touch-action:pan-y}
-/* Every icon fades and drifts 5px in the swipe direction: out on a plain linear fade, in on a linear() spring
-   with a slight overshoot. html[data-navin] is set before the row is parsed, so nothing flashes first. */
-.actions{--nav-dx:5px;--nav-in:cubic-bezier(.34,1.3,.64,1)}
+/* Roll in (as on /maude): on every load, and on arrival from a swipe, each icon rises from below into the row, one
+   after another left to right (55ms apart), on a spring that overshoots a little and settles; play comes last.
+   Leaving by swipe, they all drop out together. html[data-navin] is set before the row is parsed, so nothing flashes. */
+.actions{--nav-in:cubic-bezier(.34,1.56,.64,1)}
 @supports (animation-timing-function:linear(0,1)){
-  .actions{--nav-in:linear(0,.06 4%,.24 10%,.5 18%,.75 27%,.92 36%,1.03 46%,1.06 54%,1.04 64%,1.01 76%,.995 88%,1)}}
-.actions.nav-out>:not(.note){animation:navOut 180ms linear forwards}
-html[data-navin] .actions>:not(.note){animation:navIn 560ms var(--nav-in) both}
-html[data-navin] .actions{--nav-dx:var(--nav-from)}
-@keyframes navOut{to{opacity:0;transform:translateX(calc(var(--nav-dx) * -1))}}
-@keyframes navIn{from{opacity:0;transform:translateX(var(--nav-dx))}}
+  .actions{--nav-in:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.974 53.8%,.975 57.1%,.997 69.8%,1.003 76.9%,1)}}
+.actions.nav-out>:not(.note){animation:navOut 160ms ease-in forwards}
+html[data-navin] .actions>:not(.note){animation:navIn 600ms var(--nav-in) both,navFade 220ms ease-out both;animation-delay:calc(var(--n,0) * 55ms)}
+html[data-navin] .actions{clip-path:inset(-100vh -40px 0 -40px)}   /* icons below the row stay out of sight; the note above still shows */
+.actions>:nth-child(3){--n:0}.actions>:nth-child(4){--n:1}.actions>:nth-child(5){--n:2}.actions>:nth-child(6){--n:3}
+.actions>:nth-child(7){--n:4}.actions>:nth-child(8){--n:5}.actions>:nth-child(9){--n:6}.actions>.play{--n:5}
+@keyframes navOut{to{opacity:0;transform:translateY(48px)}}
+@keyframes navIn{from{transform:translateY(48px)}}
+@keyframes navFade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){.pmenu.on,html[data-navin] .actions>*,.actions.nav-out>*{animation:none!important}}
 .seal{flex:none;width:34px;height:34px;border-radius:8px;background:#e34234;color:var(--on-primary);display:grid;place-items:center;
   font-family:var(--cy);font-weight:var(--cyw);font-size:1.25rem;line-height:1}
@@ -418,7 +422,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     if(url){
       leaving(PG === 'tone' ? 'cy' : 'tone');
       if(reduce.matches){ location.href = url; return; }
-      row.style.setProperty('--nav-dx', PG === 'tone' ? '-5px' : '5px');   // out: drift on with the swipe
       row.classList.add('nav-out'); setTimeout(() => { location.href = url; }, 180);
     } else { row.style.transition = 'transform 360ms var(--nav-in)'; row.style.transform = ''; }
   };
@@ -430,16 +433,14 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   addEventListener('pageshow', e => { const r = document.querySelector('.actions');
     if(r){ r.classList.remove('nav-out'); r.style.transform = ''; r.style.removeProperty('--nav-dx'); if(e.persisted) arrive(); } });
 
-  // Arriving: Tone Pairs comes in from the right (icons drift left into place), Chengyu from the left.
+  // Arriving (every load, and back from the bfcache): the bottom row rolls in.
   const H = document.documentElement;
   function arrive(){
     if(reduce.matches) return;
-    H.style.setProperty('--nav-from', PG === 'tone' ? '5px' : '-5px');
     delete H.dataset.navin; void H.offsetWidth; H.dataset.navin = '';
-    const done = e => { if(e.animationName !== 'navIn') return; document.removeEventListener('animationend', done); setTimeout(() => { delete H.dataset.navin; }, 60); };
-    document.addEventListener('animationend', done); setTimeout(() => { delete H.dataset.navin; }, 3000);
+    clearTimeout(arrive.t); arrive.t = setTimeout(() => { delete H.dataset.navin; }, 1300);   // the last icon: 6 x 55ms delay + 600ms
   }
-  if(ss.get('zhcy:navin') === PG){ ss.del('zhcy:navin'); arrive(); }
+  ss.del('zhcy:navin'); arrive();   // every load rolls the row in
 
   document.addEventListener('DOMContentLoaded', () => {
     // Load the other page ahead of a swipe.
