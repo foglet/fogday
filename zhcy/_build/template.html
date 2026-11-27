@@ -220,7 +220,14 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .actions>.play{order:-1;margin:0 calc(50% - var(--tap) / 2)}
 /* The footer rule sits between play and the icon row (play above it), 5px clear above and below, inset to the page column. */
 .actions{row-gap:0}
-.actions>.rule{order:-1;flex-basis:calc(100% - 24px);margin:5px 12px}
+.actions>.rule{order:-1;flex-basis:calc(100% + 19.5px);margin:5px -11.5px 5px -8px}
+/* Five equal slots, like the iOS Safari toolbar: the row's slot band is the page column inset 8px a side, so on an
+   iPhone the icon centres line up with back, forward, share, bookmarks and tabs below. Tone Pairs' empty end slots keep its icons over the middle three.
+   The padding centres the glyph in its slot; hover tints only the 44px button, not the whole slot. */
+.actions{padding-left:20px;padding-right:23.5px}   /* measured from Safari on iPhone: slot centres 58, 128, 193, 262, 332 (393pt screen) */
+.actions>:not(.note):not(.rule):not(.play){flex:0 0 20%;box-sizing:border-box;min-width:0;
+  padding-left:max(0px,calc((20% - var(--tap)) / 2));padding-right:max(0px,calc((20% - var(--tap)) / 2));background-clip:content-box}
+.actions>.n36{padding-left:0;padding-right:0}
 .actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
 /* Pinned: the row stays at the screen bottom while Meaning or Info scrolls; at the end of the page it sits where it
    always does, so it matches Tone Pairs exactly. Tone Pairs (copied stylesheet) keeps it in the flow: it shows when the bottom is reached. */
