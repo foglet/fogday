@@ -480,8 +480,8 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
     for(let y=0; y<c.h; y++){ const yy = y0 + y; if(yy < 0 || yy >= gh) continue; const row = c.m[y];
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
         const col = v === 3 ? sk.cloud[1].map(c => c*.68) : v === 4 ? sk.cloud[0] : sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
-  for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
-  if(cfg.bg === 'scene' && !SEA && cfg.ground !== 'none'){ const sk2 = SKIES[cfg.sky], dim = gdim(sk2), tn = sk2.tint;
+  if(PAN.on) panFg(d); else for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
+  if(cfg.bg === 'scene' && !SEA && cfg.ground !== 'none' && !PAN.on){ const sk2 = SKIES[cfg.sky], dim = gdim(sk2), tn = sk2.tint;
     const put3 = (i, c) => { i *= 4; d[i] = clamp(c[0]*dim + tn[0], 0, 255); d[i+1] = clamp(c[1]*dim + tn[1], 0, 255); d[i+2] = clamp(c[2]*dim + tn[2], 0, 255); };
     if(COVER > .01 && cfg.ground !== 'snow'){ for(let y=gTopA; y<gh; y++){ const u = (y - gTopA)/Math.max(1, gh - gTopA);   // snow settling in patches
         for(let x=0; x<gw; x++){ const h = hash(x >> 1, y >> 1)*.7 + hash(x, y)*.3; if(h < COVER*1.15 - .08*(1 - u)) put3(y*gw + x, hash(x + 7, y) < .15 ? [206,218,234] : [240,244,250]); } }
@@ -503,11 +503,64 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
   if(!qframe || qframe.width !== gw || qframe.height !== gh) qframe = qctx.createImageData(gw, gh);
   const d2 = qframe.data; d2.fill(0);
   if(SEA){ const d = d2, S = SEA, F = .4, dim = sk.dim, tint = sk.tint;   // the sea, thicker white caps as on /waves, over the fliers
+    const so = seaOff();
     for(let y=0; y<S.H; y++){ const row = S.top + y; if(row < 0 || row >= gh) continue;
-      for(let x=0; x<gw; x++){ const v = S.px[y*gw + x]; if(!v) continue; const idx = Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2))), c = SEA_PAL[idx], i = (row*gw + x)*4;
+      for(let x=0; x<gw; x++){ const sx = x + so; if(sx < 0 || sx >= gw) continue; const v = S.px[y*gw + sx]; if(!v) continue; const idx = Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2))), c = SEA_PAL[idx], i = (row*gw + x)*4;
         d[i] = clamp(c[0]*dim + tint[0], 0, 255); d[i+1] = clamp(c[1]*dim + tint[1], 0, 255); d[i+2] = clamp(c[2]*dim + tint[2], 0, 255); d[i+3] = 255; } } }
   { const dk = eclDark(); if(dk > 0) for(let i=0; i<d2.length; i+=4){ d2[i] *= 1 - .55*dk; d2[i+1] *= 1 - .55*dk; d2[i+2] *= 1 - .45*dk; } }
   qctx.putImageData(qframe, 0, 0); }
+
+/* ---------- panning: hold a finger at the far right or far left, in the middle third of the height, and the view pans
+   that way through an endless strip of landscapes. Each screen-width is its own scene (ground, mountains, rocks, river),
+   made on first visit and kept, so panning back finds it again; the sky and weather stay. Neighbours never share a ground.
+   On the moon it stays the moon. Let go and it glides to the nearest whole scene, which becomes the scene. */
+const PAN = {cam: 0, v: 0, dir: 0, last: 0, at: 0, tiles: new Map(), on: false};
+const PAN_KEYS = ['ground', 'mtn', 'rocks', 'river'];
+const panZone = (x, y) => !EMB && y > VH/3 && y < VH*2/3 ? (x > W*.82 ? 1 : x < W*.18 ? -1 : 0) : 0;
+function keepGlobals(){ return {seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A}; }
+function putGlobals(G){ ({seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A} = G); }
+function homeTile(){ if(!PAN.tiles.has(PAN.at)) PAN.tiles.set(PAN.at, {fg: fgBuf.slice(), riv: RIV, sc: Object.fromEntries(PAN_KEYS.map(k => [k, cfg[k]])), seed, sea: !!SEA}); }
+function tileAt(i){ let t = PAN.tiles.get(i); if(t) return t;
+  const nb = [PAN.tiles.get(i - 1), PAN.tiles.get(i + 1)].filter(Boolean).map(t => t.sc.ground), moon = cfg.ground === 'moon';
+  const opts = moon ? ['moon'] : ['grass', 'sand', 'snow', 'desert'].filter(g => !nb.includes(g)), sc = {ground: pick(opts), mtn: R() < .8, rocks: R() < .75, river: !moon && R() < .4};
+  const G = keepGlobals(), was = Object.fromEntries(PAN_KEYS.map(k => [k, cfg[k]])), sd = (R()*1e9)|0;
+  Object.assign(cfg, sc); seed = sd; buildScene(); t = {fg: fgBuf, riv: RIV, sc, seed: sd, sea: false};
+  Object.assign(cfg, was); putGlobals(G); PAN.tiles.set(i, t); return t; }
+function startPan(dir){ if(!press || PAN.dir) return; homeTile(); press.pan = dir; PAN.dir = dir; PAN.last = dir; PAN.on = true;
+  for(const d of dg) if(d.aim && d.aim.p === press) d.aim = null; }   // no flames while panning
+function endPan(){ PAN.dir = 0; }
+function settleOn(i){ PAN.on = false; PAN.v = 0; PAN.cam = i*gw; if(i === PAN.at) return; PAN.at = i; const t = tileAt(i);
+  const keep = {skyBuf, stars, clouds, ORB}; Object.assign(cfg, t.sc); seed = t.seed; buildScene(); ({skyBuf, stars, clouds, ORB} = keep);   // the same sky
+  RIP = []; save(); const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } }
+function panStep(dt){ if(!PAN.on) return 0; const vmax = gw*.5/1000;   // half a screen a second at full pace
+  if(PAN.dir){ PAN.v += (PAN.dir*vmax - PAN.v)*Math.min(1, dt*.004); }
+  else { const f = PAN.cam/gw - Math.floor(PAN.cam/gw), i = PAN.last > 0 ? (f > .15 ? Math.ceil(PAN.cam/gw) : Math.floor(PAN.cam/gw)) : (f < .85 ? Math.floor(PAN.cam/gw) : Math.ceil(PAN.cam/gw));
+    const to = i*gw, e = to - PAN.cam; if(Math.abs(e) < .4){ const dx = e; PAN.cam = to; settleOn(i); return dx; }
+    PAN.v = clamp(e*.004, -vmax, vmax); if(Math.abs(PAN.v) < .01) PAN.v = Math.sign(e)*.01; }
+  const dx = PAN.v*dt; PAN.cam += dx; return dx; }
+function panWorld(dx){ if(!dx) return; const px = dx*P;   // the ground and everything standing on it slides; fliers fly on
+  for(const d of dg){ const ground = d.mom ? !d.air : d.mode === 'walk';
+    if(d.mode === 'land' && d.tx !== undefined) d.tx -= px;
+    if(!ground) continue; d.cx -= px; d.lx = d.cx; if(d.cx < -40) d.cx += W + 80; else if(d.cx > W + 40) d.cx -= W + 80; }
+  for(const c of clouds) c.x -= dx*.3; }   // clouds drift by more slowly
+function panFg(d){ const cam = PAN.cam, i0 = Math.floor(cam/gw), off = Math.round(cam - i0*gw), A = tileAt(i0), B = tileAt(i0 + 1), SEAM = 16, sk = SKIES[cfg.sky], dim = gdim(sk), tn = sk.tint;
+  for(let x=0; x<gw; x++){ const wx = x + off, e = wx - gw;
+    for(let y=0; y<gh; y++){ let T0 = e < 0 ? A : B; if(Math.abs(e) < SEAM/2 && BAYER[(y&3)*4 + (x&3)]/16 < (e + SEAM/2)/SEAM) T0 = B; else if(Math.abs(e) < SEAM/2) T0 = A;   // a dithered seam between scenes
+      const sx = clamp(T0 === A ? wx : wx - gw, 0, gw - 1), si = (y*gw + sx)*4, di = (y*gw + x)*4;
+      if(T0.fg[si + 3]){ d[di] = T0.fg[si]; d[di+1] = T0.fg[si+1]; d[di+2] = T0.fg[si+2]; } } }
+  for(const [T0, base] of [[A, -off], [B, gw - off]]){ if(!T0.riv) continue; const G = RIV; RIV = T0.riv;   // each scene's river, sliding with it
+    for(let y=gTopA; y<gh; y++){ const cx = riverX(y), hw = riverW(y)/2, u = (y - gTopA)/Math.max(1, gh - gTopA);
+      for(let sx=Math.max(0, Math.floor(cx - hw - 1)); sx<=Math.min(gw - 1, Math.ceil(cx + hw + 1)); sx++){ const x = sx + base; if(x < 0 || x >= gw) continue; const ee = Math.abs(sx - cx) - hw; if(ee > 1) continue;
+        const f = Math.sin(y*.55 - T*.09 + sx*.18) + .6*Math.sin(y*.21 - T*.05 - sx*.11), c = ee > 0 ? [104,90,66] : f > 1.25 ? SEA_PAL[3] : SEA_PAL[clamp(Math.round(11 + 7*u + 3*f), 6, 30)], i = (y*gw + x)*4;
+        d[i] = clamp(c[0]*dim + tn[0], 0, 255); d[i+1] = clamp(c[1]*dim + tn[1], 0, 255); d[i+2] = clamp(c[2]*dim + tn[2], 0, 255); } }
+    RIV = G; } }
+const seaOff = () => { if(!PAN.on) return 0; const at = [...PAN.tiles].find(([, t]) => t.sea); return at ? Math.round(PAN.cam - at[0]*gw) : 0; };   // the sea slides with its own scene
+function drawPanArrow(){ if(!PAN.dir) return; const q = ballQ(), cx = PAN.dir > 0 ? W - 6*q : 6*q, cy = VH/2, a = .55 + .35*Math.sin(performance.now()/150);
+  ctx.globalAlpha = a;
+  for(const k of [0, 1]) for(let j=-3; j<=3; j++){ const x = cx + PAN.dir*(k*4 - 3 + (3 - Math.abs(j)))*q, y = cy + j*q;   // two chevrons
+    ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(x - q, y - q, q*3, q*3); }
+  for(const k of [0, 1]) for(let j=-3; j<=3; j++){ const x = cx + PAN.dir*(k*4 - 3 + (3 - Math.abs(j)))*q, y = cy + j*q; ctx.fillStyle = '#fff6dc'; ctx.fillRect(x, y, q, q); }
+  ctx.globalAlpha = 1; }
 
 /* ---------- dragons ---------- */
 let dg = [], T = 0, nextGroup = 200, nextColor = 300, P0 = {x:0, y:0, t:-1e9};
@@ -897,10 +950,10 @@ function loop(now){ raf = 0; if(!playing){ return; }
   const dt = Math.min(200, now - (last || now)); last = now; acc += dt*SPEEDS[cfg.spd];
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
   let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= SEA_MS && k < 4){ seaStep(); seaAcc -= SEA_MS; k++; } }   // the sea keeps real time, at 35% of /waves
-  ballPops(); ballStep(dt);
-  if(n || balls.length || booms.length || charge(press) >= 5000) draw();
+  ballPops(); ballStep(dt); const pdx = panStep(dt); panWorld(pdx);
+  if(n || balls.length || booms.length || charge(press) >= 5000 || PAN.on) draw();
   if(ECL){ ECL.t += dt; if(ECL.t >= ECL_MS) ECL = null; }   // two minutes of real time, whatever the dragon speed
-  if((n && (++sceneDirty % 2 === 0 || stars.length)) || k || ECL) drawScene();
+  if((n && (++sceneDirty % 2 === 0 || stars.length)) || k || ECL || PAN.on) drawScene();
   raf = requestAnimationFrame(loop); }
 function start(){ if(!raf && playing && !document.hidden){ last = 0; raf = requestAnimationFrame(loop); } }
 function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = innerWidth; VH = innerHeight; H = Math.max(VH, document.getElementById('lvh').offsetHeight || 0); DPR = Math.min(3, devicePixelRatio || 1);
@@ -909,6 +962,7 @@ function resize(){ const oW = W || innerWidth, oH = VH || innerHeight; W = inner
   qcv.width = gw; qcv.height = gh; qcv.style.width = gw*P + 'px'; qcv.style.height = gh*P + 'px'; qframe = null;
   for(const c of [fcv, fcv2]){ c.width = Math.round(W*DPR); c.height = Math.round(H*DPR); c.style.width = W + 'px'; c.style.height = H + 'px'; }
   sNear = clamp(Math.min(W/120, H/150), 2.6, Math.min(6, MAXS)); sFar = sNear*.62; K = sNear/3;
+  PAN.tiles.clear(); PAN.on = false; PAN.dir = 0; PAN.v = 0; PAN.cam = PAN.at*gw;   // new size: the strip is made again
   buildScene();
   for(const d of dg){ d.cx *= W/oW; d.cy *= VH/oH; if(d.mode === 'walk'){ const [a, b] = band(); d.fy = d.fyT = clamp(d.fy*VH/oH, a, b); } d.trail = []; d.lx = d.cx; d.ly = d.cy; }
   drawScene(); draw(); }
@@ -920,7 +974,7 @@ const inUI = e => e.target && e.target.closest && e.target.closest('.sheet,.dock
    dragons are redirected: they follow the finger, as before. A mouse just moving does nothing. */
 const HOLD = 2500;
 let press = null, holdT = 0;
-function hold(){ if(!press) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
+function hold(){ if(!press || press.pan) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
   for(const d of dg) if(d.aim && d.aim.p === press) d.aim.n = 0; }   // redirect: the flames stop
 function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'dizzy' && !offScreen(d))
     .sort((a, b) => Math.hypot(a.cx - p.x, a.cy - p.y) - Math.hypot(b.cx - p.x, b.cy - p.y)).slice(0, Math.min(3, ri(1, 3) + 1));
@@ -928,11 +982,12 @@ function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !
   who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
 function pDown(x, y){ press = {x, y, t: performance.now(), held: false, down: true, wasOpen: !sheet.hidden, hist: [[x, y, performance.now()]], st: 0};
   if(!press.wasOpen && !tapped(x, y)) shoot(press);
+  const pz = press.wasOpen ? 0 : panZone(x, y), me = press; if(pz) setTimeout(() => { if(press === me && me.down) startPan(pz); }, 250);   // tap and hold an edge: pan
   clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }
 function pMove(x, y){ if(!press) return; press.x = x; press.y = y; press.hist.push([x, y, performance.now()]); if(press.hist.length > 10) press.hist.shift(); if(press.held) P0 = {x, y, t: performance.now()}; }
 addEventListener('pointerdown', e => { if(inUI(e)) return; pDown(e.clientX, e.clientY); }, {passive: true});
 addEventListener('pointermove', e => { if(inUI(e)) return; pMove(e.clientX, e.clientY); }, {passive: true});
-const lift = () => { clearTimeout(holdT); if(press){ release(press); press.down = false; } press = null; };
+const lift = () => { clearTimeout(holdT); if(press){ if(press.pan) endPan(); else release(press); press.down = false; } press = null; };
 addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
 setInterval(() => { if(press && press.held) P0.t = performance.now(); }, 200);   // holding still keeps them coming
 addEventListener('pointerout', e => { if(!e.relatedTarget) P0.t = -1e9; });
@@ -943,7 +998,7 @@ addEventListener('pointerout', e => { if(!e.relatedTarget) P0.t = -1e9; });
 const BALL_WET = 15000, BALL_UP = 46, BALL_SP = .75, CM = 96/2.54, FB_R = CM/2, TAP2 = 320;   // BALL_SP: px a millisecond
 let balls = [], booms = [], thrown = 0, lastTap = null;
 const ballQ = () => Math.max(2, Math.round(sNear));   // one water-ball block, about a dragon pixel
-const charge = p => p && p.down && !p.wasOpen ? performance.now() - p.t : 0;
+const charge = p => p && p.down && !p.wasOpen && !p.pan ? performance.now() - p.t : 0;
 const wetR = ms => 1 + 4.5*Math.min(1, ms/BALL_WET);
 const canHit = d => !d.mom && !d.hid && d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'spin' && !offScreen(d);
 const nearest = (x, y) => dg.filter(canHit).sort((a, b) => Math.hypot(a.cx - x, a.cy - y) - Math.hypot(b.cx - x, b.cy - y))[0] || null;
@@ -1031,7 +1086,7 @@ function drawBooms(){ for(const o of booms){ const u = o.age/600, r = CM*3*(.25 
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, r, 0, 2*Math.PI); ctx.fill();
   ctx.globalAlpha = a*.8; ctx.strokeStyle = '#fff1b0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(o.x, o.y, r*1.15, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1; } }   // the shock ring
 function drawBalls(){ ctx = ctxB;
-  drawBooms();
+  drawPanArrow(); drawBooms();
   for(const b of balls) if(b.wet) drawWet(b.x, b.y, b.r, 1); else drawFireball(b);
   const ms = charge(press);
   if(ms >= 5000){ const ready = ms >= BALL_WET; drawWet(press.x, press.y - BALL_UP, wetR(ms)*ballQ() + (ready ? Math.sin(performance.now()/120)*.5*ballQ() : 0), ready ? 1 : .35 + .5*ms/BALL_WET); }
@@ -1099,7 +1154,7 @@ $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, 
   if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});
   else if(cfg.wx !== 'clear') cfg.clouds = 'many';   // rain and snow come with a cloudy sky   // the moon: black sky, stars, no weather
   PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;   // always a visibly different one
-  seed = (R()*1e9)|0; save(); buildScene(); ECL = null; countShow(); drawScene();
+  seed = (R()*1e9)|0; save(); PAN.tiles.clear(); PAN.on = false; PAN.dir = 0; PAN.v = 0; PAN.cam = PAN.at*gw; buildScene(); ECL = null; countShow(); drawScene();
   const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } });
 RM.addEventListener && RM.addEventListener('change', () => setPlay(!RM.matches));
 /* /qr's "New scene" button: a new landscape and new dragons (same origin only) */
@@ -1157,7 +1212,7 @@ titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 countShow();   // each visit counts as a scene shown
-window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get balls(){ return balls; }};
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get balls(){ return balls; }, PAN};
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=2" data-colors="none" defer></script>  <!-- bento: new color + animation each load -->
