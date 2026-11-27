@@ -375,7 +375,7 @@ function list(){
   enterTiles();
 }
 /* Staggered entry: each tile (background, characters and pinyin together) rises and fades in with an ease-in-out
-   curve, row by row and left to right. Tiles below the screen wait and come in the same way as they scroll into view. */
+   curve, row by row, in random order within each row. Tiles below the screen wait and come in the same way as they scroll into view. */
 let tileIO = null;
 function enterTiles(){
   if(tileIO){ tileIO.disconnect(); tileIO = null; }
@@ -386,10 +386,10 @@ function enterTiles(){
   const run = () => {
     timer = 0;
     const batch = queue.splice(0).map(t => [t, t.getBoundingClientRect()]).sort((a, b) => (a[1].top - b[1].top) || (a[1].left - b[1].left));
-    const top0 = batch.length ? batch[0][1].top : 0, g = document.querySelector('#list').getBoundingClientRect();
+    const top0 = batch.length ? batch[0][1].top : 0;
     batch.forEach(([t, r]) => {
-      const row = Math.round((r.top - top0) / 60), col = Math.round((r.left - g.left) / (g.width / 4));
-      const delay = row * 55 + col * 30;
+      const row = Math.round((r.top - top0) / 60);
+      const delay = row * 55 + Math.random() * 140;   // rows in order; within a row, tiles land in random order
       const a = t.animate([{opacity: 0, transform: 'translateY(16px) scale(.94)'}, {opacity: 1, transform: 'none'}],
         {duration: 560, delay: Math.min(delay, 900), easing: 'cubic-bezier(.45,0,.25,1)', fill: 'backwards'});
       t.style.opacity = '';
