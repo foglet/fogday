@@ -13,4 +13,4 @@ Scene controls: background (landscape or plain paper), sky (day, sunset, night),
 
 Reduced motion: a still frame until Play is pressed.
 
-Fireballs: hold a finger on the scene and a ball grows just above it. From 5 s it is a fireball; let go to throw it (the way you flick, or at the nearest dragon if you don't). Held past 15 s it turns to water. Let go before 5 s and it fizzles. A dragon it hits goes dizzy. Timed in real time, whatever the speed setting. Taps still make the nearest dragons fire at your finger.
+Fireballs: double-tap the scene to throw one, a gradient sphere 1 cm across in flames, at the nearest dragon. Every other fireball (1st, 3rd, 5th...) explodes, knocking every dragon within about 3 cm dizzy; the rest just burst on the dragon they hit, which goes dizzy. Water: keep a finger down and a water ball grows above it from 5 s, full at 15 s; let go to throw it (the way you flick, or at the nearest dragon). Let go before 15 s and it fizzles. Single taps still make the nearest dragons fire at your finger.

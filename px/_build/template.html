@@ -898,7 +898,7 @@ function loop(now){ raf = 0; if(!playing){ return; }
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
   let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= SEA_MS && k < 4){ seaStep(); seaAcc -= SEA_MS; k++; } }   // the sea keeps real time, at 35% of /waves
   ballPops(); ballStep(dt);
-  if(n || balls.length || charge(press) >= 300) draw();
+  if(n || balls.length || booms.length || charge(press) >= 5000) draw();
   if(ECL){ ECL.t += dt; if(ECL.t >= ECL_MS) ECL = null; }   // two minutes of real time, whatever the dragon speed
   if((n && (++sceneDirty % 2 === 0 || stars.length)) || k || ECL) drawScene();
   raf = requestAnimationFrame(loop); }
@@ -927,7 +927,7 @@ function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !
   const wet = R() < .35 ? pick(who) : null;
   who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
 function pDown(x, y){ press = {x, y, t: performance.now(), held: false, down: true, wasOpen: !sheet.hidden, hist: [[x, y, performance.now()]], st: 0};
-  if(!press.wasOpen) shoot(press);
+  if(!press.wasOpen && !tapped(x, y)) shoot(press);
   clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }
 function pMove(x, y){ if(!press) return; press.x = x; press.y = y; press.hist.push([x, y, performance.now()]); if(press.hist.length > 10) press.hist.shift(); if(press.held) P0 = {x, y, t: performance.now()}; }
 addEventListener('pointerdown', e => { if(inUI(e)) return; pDown(e.clientX, e.clientY); }, {passive: true});
@@ -936,68 +936,105 @@ const lift = () => { clearTimeout(holdT); if(press){ release(press); press.down 
 addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
 setInterval(() => { if(press && press.held) P0.t = performance.now(); }, 200);   // holding still keeps them coming
 addEventListener('pointerout', e => { if(!e.relatedTarget) P0.t = -1e9; });
-/* Fireballs: keep a finger down and a ball grows just above it. From 5 s it is a full fireball; let go and it is thrown,
-   the way you flick, or with no flick at the nearest dragon. Held past 15 s it turns to water. Let go before 5 s and it
-   fizzles out. Timed in real time, whatever the speed setting. A dragon it hits goes dizzy. */
-const BALL_MIN = 5000, BALL_WET = 15000, BALL_UP = 46, BALL_SP = .75;   // BALL_SP: px a millisecond
-let balls = [];
-const ballQ = () => Math.max(2, Math.round(sNear));   // one ball block, about a dragon pixel
+/* Fireballs: double-tap the scene to throw one: a gradient sphere 1 cm across, in flames, at the nearest dragon.
+   Every other fireball (the 1st, 3rd, 5th...) explodes where it lands, knocking every dragon near it dizzy; the others
+   just burst on the one they hit. Water: keep a finger down and a water ball grows above it, full at 15 s; let go to
+   throw it (the way you flick, or at the nearest dragon). Let go before 15 s and it fizzles. Real time, whatever the speed. */
+const BALL_WET = 15000, BALL_UP = 46, BALL_SP = .75, CM = 96/2.54, FB_R = CM/2, TAP2 = 320;   // BALL_SP: px a millisecond
+let balls = [], booms = [], thrown = 0, lastTap = null;
+const ballQ = () => Math.max(2, Math.round(sNear));   // one water-ball block, about a dragon pixel
 const charge = p => p && p.down && !p.wasOpen ? performance.now() - p.t : 0;
-const ballR = ms => ms < BALL_MIN ? 1 + 3*ms/BALL_MIN : ms < BALL_WET ? 5 : 5.5;
+const wetR = ms => 1 + 4.5*Math.min(1, ms/BALL_WET);
 const canHit = d => !d.mom && !d.hid && d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'spin' && !offScreen(d);
-function ballPops(){ const ms = charge(press); if(!ms) return; const x = press.x, y = press.y - BALL_UP, q = ballQ();
-  if(press.st === 0 && ms >= BALL_MIN){ press.st = 1; sparks.push({x, y, n: 14, s: q}); }   // ready
-  if(press.st === 1 && ms >= BALL_WET){ press.st = 2; sparks.push({x, y, n: 14, s: q});   // turns to water, in a puff of steam
+const nearest = (x, y) => dg.filter(canHit).sort((a, b) => Math.hypot(a.cx - x, a.cy - y) - Math.hypot(b.cx - x, b.cy - y))[0] || null;
+function aimAt(x, y, tgt, sp){ const tx = tgt ? tgt.cx : x, ty = tgt ? tgt.cy : -100, D = Math.hypot(tx - x, ty - y) || 1; return [(tx - x)/D*sp, (ty - y)/D*sp]; }
+function tapped(x, y){ const now = performance.now();   // a second tap close in time and place: throw a fireball
+  if(lastTap && now - lastTap.t < TAP2 && Math.hypot(x - lastTap.x, y - lastTap.y) < 50){ lastTap = null;
+    const tgt = nearest(x, y), [vx, vy] = aimAt(x, y, tgt, BALL_SP);
+    balls.push({x, y, vx, vy, tgt, wet: false, boom: thrown++ % 2 === 0, r: FB_R, age: 0, sp: R()*6}); return true; }
+  lastTap = {x, y, t: now}; return false; }
+function ballPops(){ const ms = charge(press); if(!ms) return;
+  if(press.st === 0 && ms >= BALL_WET){ press.st = 1; const x = press.x, y = press.y - BALL_UP, q = ballQ(); sparks.push({x, y, n: 14, s: q});   // ready
     for(let i=0; i<8; i++) bits.push(puff('steam', x, y, R()*2*Math.PI, q)); } }
-function release(p){ const ms = charge(p); if(ms < 300) return; const x = p.x, y = p.y - BALL_UP, q = ballQ();
-  if(ms < BALL_MIN){ for(let i=0; i<5; i++) bits.push(puff('steam', x, y, -Math.PI/2 + (R()-.5), q*.8)); return; }   // not ready: fizzles
+function release(p){ const ms = charge(p); if(ms < 2500) return; const x = p.x, y = p.y - BALL_UP, q = ballQ();
+  if(ms < BALL_WET){ for(let i=0; i<5; i++) bits.push(puff('steam', x, y, -Math.PI/2 + (R()-.5), q*.8)); return; }   // not ready: fizzles
   const now = performance.now(), h = p.hist.filter(s => now - s[2] < 120);
   let vx = 0, vy = 0, tgt = null;
   if(h.length > 1){ const a = h[0], b = h[h.length - 1], dt = Math.max(16, b[2] - a[2]); vx = (b[0] - a[0])/dt; vy = (b[1] - a[1])/dt; }
   const fs = Math.hypot(vx, vy);
   if(fs > .3){ const sp = clamp(fs, BALL_SP, 1.6); vx *= sp/fs; vy *= sp/fs; }   // a flick: that way
-  else { tgt = dg.filter(canHit).sort((a, b) => Math.hypot(a.cx - x, a.cy - y) - Math.hypot(b.cx - x, b.cy - y))[0] || null;
-    const tx = tgt ? tgt.cx : x, ty = tgt ? tgt.cy : -100, D = Math.hypot(tx - x, ty - y) || 1; vx = (tx - x)/D*BALL_SP; vy = (ty - y)/D*BALL_SP; }
-  balls.push({x, y, vx, vy, tgt, wet: ms >= BALL_WET, r: ballR(ms), age: 0}); }
+  else { tgt = nearest(x, y); [vx, vy] = aimAt(x, y, tgt, BALL_SP); }
+  balls.push({x, y, vx, vy, tgt, wet: true, r: wetR(ms)*q, age: 0}); }
+function dizzyHit(d, vx, vy){ d.aim = null; d.loopN = 0; d.jump = 0; d.hop = 0; d.jy = 0; d.over = 0; d.wade = false; d.near = false;
+  d.mode = 'dizzy'; d.dz = 0; d.dz1 = ri(25, 40); d.dz2 = d.dz1 + ri(70, 120); d.vx = vx; d.vy = vy; d.dir = vx > 0 ? -1 : 1; }   // knocked dizzy, facing back the way it came from
+function explode(x, y){ const q = ballQ(), RB = CM*3;   // a 6 cm blast
+  booms.push({x, y, age: 0});
+  for(let i=0; i<70; i++) bits.push(puff('fire', x, y, R()*2*Math.PI, q*(1 + R()*1.6)));
+  for(let i=0; i<16; i++) bits.push(puff('steam', x, y, R()*2*Math.PI, q*2));
+  for(let k=0; k<3; k++) sparks.push({x: x + (R()-.5)*RB*.6, y: y + (R()-.5)*RB*.6, n: 14, s: q*1.5});
+  for(const d of dg) if(canHit(d)){ const dx = d.cx - x, dy = d.cy - y, D = Math.hypot(dx, dy);
+    if(D < RB + GW*d.s*.4){ const f = 10*K*(1 - D/(RB*1.5)), u = D || 1; dizzyHit(d, dx/u*f, dy/u*f - 2*K); } } }   // thrown outward
 function ballHit(b, d){ const q = ballQ();
+  if(!b.wet && b.boom){ explode(b.x, b.y); return; }
   if(b.wet){ for(let i=0; i<18; i++) bits.push(puff('drop', b.x, b.y, R()*2*Math.PI, q)); for(let i=0; i<(d && !d.water ? 12 : 5); i++) bits.push(puff('steam', b.x, b.y, R()*2*Math.PI, q*1.3)); }
-  else { for(let i=0; i<26; i++) bits.push(puff('fire', b.x, b.y, R()*2*Math.PI, q*1.2)); if(d && d.water) for(let i=0; i<12; i++) bits.push(puff('steam', b.x, b.y, R()*2*Math.PI, q*1.3)); }
+  else { for(let i=0; i<30; i++) bits.push(puff('fire', b.x, b.y, R()*2*Math.PI, q*1.3)); if(d && d.water) for(let i=0; i<12; i++) bits.push(puff('steam', b.x, b.y, R()*2*Math.PI, q*1.3)); }
   sparks.push({x: b.x, y: b.y, n: 14, s: q});
-  if(!d) return;
-  d.aim = null; d.loopN = 0; d.jump = 0; d.hop = 0; d.jy = 0; d.over = 0; d.wade = false; d.near = false;
-  d.mode = 'dizzy'; d.dz = 0; d.dz1 = ri(25, 40); d.dz2 = d.dz1 + ri(70, 120); d.vx = b.vx*12; d.vy = b.vy*12; d.dir = b.vx > 0 ? -1 : 1; }   // knocked dizzy, facing the thrower's way
-function ballStep(dt){ if(!balls.length) return; const q = ballQ(), out = [];
+  if(d) dizzyHit(d, b.vx*12, b.vy*12); }
+function ballStep(dt){ booms = booms.filter(o => (o.age += dt) < 600);
+  if(!balls.length) return; const q = ballQ(), out = [];
   for(const b of balls){ b.age += dt; let gone = false;
-    const d0 = b.tgt; if(d0 && !canHit(d0)) b.tgt = null;
+    if(b.tgt && !canHit(b.tgt)) b.tgt = null;
     if(b.tgt){ const dx = b.tgt.cx - b.x, dy = b.tgt.cy - b.y, D = Math.hypot(dx, dy) || 1, sp = Math.hypot(b.vx, b.vy), k = Math.min(1, dt*.008);
       b.vx += (dx/D*sp - b.vx)*k; b.vy += (dy/D*sp - b.vy)*k; }   // homes in on the one it was thrown at
     else b.vy += .0007*dt/LOWG();   // otherwise it arcs down a little
     const steps = Math.max(1, Math.ceil(Math.hypot(b.vx, b.vy)*dt/q));
     for(let i=0; i<steps && !gone; i++){ b.x += b.vx*dt/steps; b.y += b.vy*dt/steps;
-      for(const d of dg) if(canHit(d) && Math.hypot(d.cx - b.x, d.cy - b.y) < GW*d.s*.38 + b.r*q){ ballHit(b, d); gone = true; break; }
+      if(b.age < 60) continue;   // clear of the thrower's own spot first
+      for(const d of dg) if(canHit(d) && Math.hypot(d.cx - b.x, d.cy - b.y) < GW*d.s*.38 + b.r){ ballHit(b, d); gone = true; break; }
       if(!gone && b.y > VH*.97){ b.y = VH*.97; ballHit(b, null); gone = true; } }   // hits the ground
     if(gone) continue;
     if(b.x < -80 || b.x > W + 80 || b.y < -300 || b.age > 5000) continue;   // gone off the screen
-    if(R() < .7){ const ang = Math.atan2(-b.vy, -b.vx); bits.push(b.wet ? puff('drop', b.x, b.y, ang, q*.6) : puff('fire', b.x, b.y, ang, q*.8)); }   // its trail
+    const ang = Math.atan2(-b.vy, -b.vx);
+    if(b.wet){ if(R() < .7) bits.push(puff('drop', b.x, b.y, ang, q*.6)); }
+    else for(let i=0; i<2; i++) bits.push(puff('fire', b.x - Math.cos(ang + Math.PI)*b.r*.6, b.y - Math.sin(ang + Math.PI)*b.r*.6, ang + (R()-.5)*.8, q*1.1));   // a tail of flames
     out.push(b); }
   balls = out; }
-function drawBall(x, y, r, wet, a){ const q = ballQ(), gx = Math.round(x/q)*q, gy = Math.round(y/q)*q, Rr = Math.ceil(r) + 1, t = performance.now();
-  const C = wet ? WATER : FIRE; ctx.globalAlpha = a;
-  for(let j=-Rr; j<=Rr; j++) for(let i=-Rr; i<=Rr; i++){ const d = Math.hypot(i, j); if(d > r + 1) continue;
+function drawWet(x, y, r, a){ const q = ballQ(), gx = Math.round(x/q)*q, gy = Math.round(y/q)*q, rb = r/q, Rr = Math.ceil(rb) + 1;
+  ctx.globalAlpha = a;
+  for(let j=-Rr; j<=Rr; j++) for(let i=-Rr; i<=Rr; i++){ const d = Math.hypot(i, j); if(d > rb + 1) continue;
     let c;
-    if(d > r) c = [36,22,48];   // the dark outline the dragons have
-    else { const u = d/r; c = u < .35 ? C[0] : u < .65 ? C[1] : u < .9 ? C[2] : C[3];
-      if(!wet && u > .7 && R() < .25) c = C[1];   // fire flickers at the edge
-      if(wet && i === -1 && j === -Math.round(r*.5) && r > 2) c = [255,255,255]; }   // a highlight on the water
+    if(d > rb) c = [36,22,48];   // the dark outline the dragons have
+    else { const u = d/rb; c = u < .35 ? WATER[0] : u < .65 ? WATER[1] : u < .9 ? WATER[2] : WATER[3];
+      if(i === -1 && j === -Math.round(rb*.5) && rb > 2) c = [255,255,255]; }   // a highlight
     ctx.fillStyle = 'rgb(' + c.join(',') + ')'; ctx.fillRect(gx + i*q - q/2, gy + j*q - q/2, q, q); }
-  if(!wet && r >= 5) for(let k=0; k<3; k++){ const ang = t/180 + k*2.1, rx = Math.round(Math.cos(ang)*(r + 2)), ry = Math.round(Math.sin(ang)*(r + 2));   // licks of flame round a ready fireball
-    ctx.fillStyle = 'rgb(' + FIRE[1].join(',') + ')'; ctx.fillRect(gx + rx*q - q/2, gy + ry*q - q/2, q, q); }
   ctx.globalAlpha = 1; }
+function drawFireball(b){ const t = performance.now()/1000, r = b.r, sp = Math.hypot(b.vx, b.vy) || 1, bx = -b.vx/sp, by = -b.vy/sp;
+  for(let k=0; k<9; k++){ const a = Math.atan2(by, bx) + (k - 4)*.32 + Math.sin(t*14 + k*1.7 + b.sp)*.18,   // flames, licking back from the way it flies
+      L = r*(.9 + .55*Math.cos((k - 4)*.38)*(1 + .35*Math.sin(t*18 + k*2.3 + b.sp))), w = r*.42;
+    const tx = b.x + Math.cos(a)*(r + L), ty = b.y + Math.sin(a)*(r + L), nx = -Math.sin(a)*w, ny = Math.cos(a)*w,
+      cx0 = b.x + Math.cos(a)*r*.55, cy0 = b.y + Math.sin(a)*r*.55;
+    const g = ctx.createLinearGradient(cx0, cy0, tx, ty);
+    g.addColorStop(0, 'rgba(255,220,90,.95)'); g.addColorStop(.5, 'rgba(250,120,30,.8)'); g.addColorStop(1, 'rgba(200,40,20,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx0 + nx, cy0 + ny);
+    ctx.quadraticCurveTo(b.x + Math.cos(a)*(r + L*.5) + nx*.8, b.y + Math.sin(a)*(r + L*.5) + ny*.8, tx, ty);
+    ctx.quadraticCurveTo(b.x + Math.cos(a)*(r + L*.5) - nx*.8, b.y + Math.sin(a)*(r + L*.5) - ny*.8, cx0 - nx, cy0 - ny); ctx.fill(); }
+  const glow = ctx.createRadialGradient(b.x, b.y, r*.6, b.x, b.y, r*2);   // heat glow
+  glow.addColorStop(0, 'rgba(255,170,60,.45)'); glow.addColorStop(1, 'rgba(255,120,40,0)');
+  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(b.x, b.y, r*2, 0, 2*Math.PI); ctx.fill();
+  const g = ctx.createRadialGradient(b.x - r*.35, b.y - r*.4, r*.05, b.x, b.y, r);   // the sphere, lit from the upper left
+  g.addColorStop(0, '#fffbe0'); g.addColorStop(.25, '#ffe27a'); g.addColorStop(.55, '#ff9a2e'); g.addColorStop(.85, '#e0461c'); g.addColorStop(1, '#8a1d10');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 2*Math.PI); ctx.fill();
+  if(b.boom){ ctx.globalAlpha = .5 + .5*Math.sin(t*20); ctx.strokeStyle = '#fff6c8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(b.x, b.y, r - 1, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1; } }   // the one that will explode throbs
+function drawBooms(){ for(const o of booms){ const u = o.age/600, r = CM*3*(.25 + .75*Math.sqrt(u)), a = 1 - u;
+  const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, r);
+  g.addColorStop(0, 'rgba(255,255,235,' + a + ')'); g.addColorStop(.3, 'rgba(255,214,90,' + a*.9 + ')'); g.addColorStop(.7, 'rgba(240,100,30,' + a*.6 + ')'); g.addColorStop(1, 'rgba(160,40,20,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, r, 0, 2*Math.PI); ctx.fill();
+  ctx.globalAlpha = a*.8; ctx.strokeStyle = '#fff1b0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(o.x, o.y, r*1.15, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1; } }   // the shock ring
 function drawBalls(){ ctx = ctxB;
-  for(const b of balls) drawBall(b.x, b.y, b.r, b.wet, 1);
+  drawBooms();
+  for(const b of balls) if(b.wet) drawWet(b.x, b.y, b.r, 1); else drawFireball(b);
   const ms = charge(press);
-  if(ms >= 300){ const ready = ms >= BALL_MIN, pulse = ready ? Math.sin(performance.now()/120)*.5 : 0;
-    drawBall(press.x, press.y - BALL_UP, ballR(ms) + pulse, ms >= BALL_WET, ready ? 1 : .45 + .55*ms/BALL_MIN*(.8 + R()*.2)); }
+  if(ms >= 5000){ const ready = ms >= BALL_WET; drawWet(press.x, press.y - BALL_UP, wetR(ms)*ballQ() + (ready ? Math.sin(performance.now()/120)*.5*ballQ() : 0), ready ? 1 : .35 + .5*ms/BALL_WET); }
   ctx = ctxA; }
 
 /* ---------- controls ---------- */
