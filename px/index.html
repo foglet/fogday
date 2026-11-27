@@ -475,9 +475,15 @@ function mkCloud(rand, x, kind){ const m = [], grid = (w, h) => { for(let y=0; y
       if(!inn) continue; const u = y/h; set(x, y, storm && u > .78 ? 3 : u > .62 ? 2 : (hash(x, y) < .08 && u > .4) ? 2 : 1); }
     y0 = 1 + rand()*Math.max(4, gTopA*(storm ? .3 : .42)); v = (storm ? .01 : .015) + rand()*.025; }
   return {x, y: y0, m, w: m[0].length, h: m.length, v}; }
-function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
+function panSkies(){ if(!PAN.on) return null; const i0 = Math.floor(PAN.cam/gw), A = tileAt(i0), B = tileAt(i0 + 1);
+  return A.sc.sky === cfg.sky && B.sc.sky === cfg.sky ? null : [A, B, Math.round(PAN.cam - i0*gw)]; }
+function panSky(d, [A, B, off]){ const SEAM = 24;   // two skies side by side, dithered where they meet
+  for(let x=0; x<gw; x++){ const wx = x + off, e = wx - gw;
+    for(let y=0; y<gh; y++){ const T0 = Math.abs(e) < SEAM/2 ? (BAYER[(y&3)*4 + (x&3)]/16 < (e + SEAM/2)/SEAM ? B : A) : e < 0 ? A : B, sx = clamp(T0 === A ? wx : wx - gw, 0, gw - 1), si = (y*gw + sx)*4, di = (y*gw + x)*4;
+      d[di] = T0.sky[si]; d[di+1] = T0.sky[si+1]; d[di+2] = T0.sky[si+2]; d[di+3] = 255; } } }
+function drawScene(){ if(!frame) return; const d = frame.data, ps = panSkies(); if(ps) panSky(d, ps); else d.set(skyBuf);
   const sk = SKIES[cfg.sky];
-  for(const [x, y, big, ph] of stars){ const tw = ((T + ph*7) % 90) < 6; const c = tw ? [120,130,170] : [236,238,255];
+  if(!ps) for(const [x, y, big, ph] of stars){ const tw = ((T + ph*7) % 90) < 6; const c = tw ? [120,130,170] : [236,238,255];
     let i = (y*gw + x)*4; d[i] = c[0]; d[i+1] = c[1]; d[i+2] = c[2];
     if(big && !tw) for(const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const xx = x+dx, yy = y+dy; if(xx<0||yy<0||xx>=gw||yy>=gh) continue; i = (yy*gw+xx)*4; d[i] = 150; d[i+1] = 156; d[i+2] = 200; } }
   drawEclipse(d);
@@ -649,22 +655,36 @@ function drawLava(){ const q = ballQ(); for(const o of lava){ const r = Math.rou
    made on first visit and kept, so panning back finds it again; the sky and weather stay. Neighbours never share a ground.
    On the moon it stays the moon. Let go and it glides to the nearest whole scene, which becomes the scene. */
 const PAN = {cam: 0, v: 0, dir: 0, last: 0, at: 0, tiles: new Map(), on: false};
-const PAN_KEYS = ['ground', 'mtn', 'rocks', 'river'];
+const PAN_KEYS = ['ground', 'sky', 'mtn', 'rocks', 'river'];
+let sceneN = 0; try { sceneN = +localStorage.getItem('px:scenes') || 0; } catch(e) {}
+function volcanoTurn(){ if(EMB) return false; sceneN++; try { localStorage.setItem('px:scenes', sceneN); } catch(e) {} return sceneN % 5 === 0; }   // every fifth new scene (Random or a new one panned to) is a volcano
+function bakeSea(fg){ const S = SEA, sk = SKIES[cfg.sky], F = .4;   // a still of the sea, for scenes seen while panning
+  for(let y=0; y<S.H; y++){ const row = S.top + y; if(row < 0 || row >= gh) continue;
+    for(let x=0; x<gw; x++){ const v = S.px[y*gw + x]; if(!v) continue; const c = SEA_PAL[Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2)))], i = (row*gw + x)*4;
+      fg[i] = clamp(c[0]*sk.dim + sk.tint[0], 0, 255); fg[i+1] = clamp(c[1]*sk.dim + sk.tint[1], 0, 255); fg[i+2] = clamp(c[2]*sk.dim + sk.tint[2], 0, 255); fg[i+3] = 255; } } }
+function skyStill(){ const b = skyBuf.slice(); for(const [x, y, big] of stars){ let i = (y*gw + x)*4; b[i] = 236; b[i+1] = 238; b[i+2] = 255;
+    if(big) for(const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const xx = x + dx, yy = y + dy; if(xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue; i = (yy*gw + xx)*4; b[i] = 150; b[i+1] = 156; b[i+2] = 200; } }
+  return b; }
 const panZone = (x, y) => !EMB && y > VH/3 && y < VH*2/3 ? (x > W*.82 ? 1 : x < W*.18 ? -1 : 0) : 0;
 function keepGlobals(){ return {seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A, VOL}; }
 function putGlobals(G){ ({seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A, VOL} = G); }
-function homeTile(){ if(!PAN.tiles.has(PAN.at)) PAN.tiles.set(PAN.at, {fg: fgBuf.slice(), riv: RIV, sc: Object.fromEntries(PAN_KEYS.map(k => [k, cfg[k]])), seed, sea: !!SEA}); }
+function homeTile(){ if(PAN.tiles.has(PAN.at)) return; if(!PAN.tiles.size) PAN.sky = cfg.ground === 'volcano' ? 'night' : cfg.sky;   // the strip's sky (a volcano's own is always night)
+  const fg = fgBuf.slice(); if(SEA) bakeSea(fg); PAN.tiles.set(PAN.at, {fg, sky: skyStill(), riv: RIV, sc: Object.fromEntries(PAN_KEYS.map(k => [k, cfg[k]])), seed, sea: !!SEA}); }
 function tileAt(i){ let t = PAN.tiles.get(i); if(t) return t;
   const nb = [PAN.tiles.get(i - 1), PAN.tiles.get(i + 1)].filter(Boolean).map(t => t.sc.ground), moon = cfg.ground === 'moon';
-  const opts = moon ? ['moon'] : ['grass', 'sand', 'snow', 'desert'].filter(g => !nb.includes(g)), sc = {ground: pick(opts), mtn: R() < .8, rocks: R() < .75, river: !moon && R() < .4};
+  const opts = moon ? ['moon'] : ['grass', 'sand', 'snow', 'desert'].filter(g => !nb.includes(g)), volc = !moon && volcanoTurn();
+  const sc = volc ? {ground: 'volcano', sky: 'night', mtn: R() < .8, rocks: true, river: false} : {ground: pick(opts), sky: PAN.sky || cfg.sky, mtn: R() < .8, rocks: R() < .75, river: !moon && R() < .4};
   const G = keepGlobals(), was = Object.fromEntries(PAN_KEYS.map(k => [k, cfg[k]])), sd = (R()*1e9)|0;
-  Object.assign(cfg, sc); seed = sd; buildScene(); t = {fg: fgBuf, riv: RIV, sc, seed: sd, sea: false};
-  Object.assign(cfg, was); putGlobals(G); PAN.tiles.set(i, t); return t; }
+  Object.assign(cfg, sc); seed = sd; buildScene(); if(SEA) for(let k=0; k<80; k++) seaStep();
+  t = {fg: fgBuf, sky: skyStill(), riv: RIV, sc, seed: sd, sea: !!SEA}; if(SEA) bakeSea(t.fg);
+  Object.assign(cfg, was); putGlobals(G); if(themeMeta) themeMeta.content = 'rgb(' + SKIES[cfg.sky].stops[0][1].join(',') + ')';
+  PAN.tiles.set(i, t); return t; }
 function startPan(dir){ if(!press || PAN.dir) return; homeTile(); press.pan = dir; PAN.dir = dir; PAN.last = dir; PAN.on = true;
   for(const d of dg) if(d.aim && d.aim.p === press) d.aim = null; }   // no flames while panning
 function endPan(){ PAN.dir = 0; }
 function settleOn(i){ PAN.on = false; PAN.v = 0; PAN.cam = i*gw; if(i === PAN.at) return; PAN.at = i; const t = tileAt(i);
-  const keep = {skyBuf, stars, clouds, ORB}; Object.assign(cfg, t.sc); seed = t.seed; buildScene(); ({skyBuf, stars, clouds, ORB} = keep);   // the same sky
+  const same = t.sc.sky === cfg.sky, keep = {skyBuf, stars, clouds, ORB}; Object.assign(cfg, t.sc); seed = t.seed; buildScene();
+  if(same) ({skyBuf, stars, clouds, ORB} = keep); else clouds = keep.clouds;   // the same sky, unless this scene has its own (a volcano's night)
   RIP = []; save(); const [a, b] = band(); for(const d of adults()) if(d.mode === 'walk'){ d.fy = d.fyT = clamp(d.fy, a, b); } }
 function panStep(dt){ if(!PAN.on) return 0; const vmax = gw*.5/1000;   // half a screen a second at full pace
   if(PAN.dir){ PAN.v += (PAN.dir*vmax - PAN.v)*Math.min(1, dt*.004); }
@@ -689,7 +709,7 @@ function panFg(d){ const cam = PAN.cam, i0 = Math.floor(cam/gw), off = Math.roun
         const f = Math.sin(y*.55 - T*.09 + sx*.18) + .6*Math.sin(y*.21 - T*.05 - sx*.11), c = ee > 0 ? [104,90,66] : f > 1.25 ? SEA_PAL[3] : SEA_PAL[clamp(Math.round(11 + 7*u + 3*f), 6, 30)], i = (y*gw + x)*4;
         d[i] = clamp(c[0]*dim + tn[0], 0, 255); d[i+1] = clamp(c[1]*dim + tn[1], 0, 255); d[i+2] = clamp(c[2]*dim + tn[2], 0, 255); } }
     RIV = G; } }
-const seaOff = () => { if(!PAN.on) return 0; const at = [...PAN.tiles].find(([, t]) => t.sea); return at ? Math.round(PAN.cam - at[0]*gw) : 0; };   // the sea slides with its own scene
+const seaOff = () => { if(!PAN.on || !SEA) return 0; return Math.round(PAN.cam - PAN.at*gw); };   // the live sea slides with its own scene
 function drawPanArrow(){ if(!PAN.dir) return; const q = ballQ(), cx = PAN.dir > 0 ? W - 6*q : 6*q, cy = VH/2, a = .55 + .35*Math.sin(performance.now()/150);
   ctx.globalAlpha = a;
   for(const k of [0, 1]) for(let j=-3; j<=3; j++){ const x = cx + PAN.dir*(k*4 - 3 + (3 - Math.abs(j)))*q, y = cy + j*q;   // two chevrons
@@ -1087,7 +1107,7 @@ function loop(now){ raf = 0; if(!playing){ return; }
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
   let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= SEA_MS && k < 4){ seaStep(); seaAcc -= SEA_MS; k++; } }   // the sea keeps real time, at 35% of /waves
   ballPops(); ballStep(dt); const pdx = panStep(dt); panWorld(pdx);
-  if(n || balls.length || booms.length || charge(press) >= 5000 || PAN.on) draw();
+  if(n || balls.length || booms.length || charge(press) >= 5000 || PAN.on || (press && press.fb)) draw();
   if(ECL){ ECL.t += dt; if(ECL.t >= ECL_MS) ECL = null; }   // two minutes of real time, whatever the dragon speed
   if((n && (++sceneDirty % 2 === 0 || stars.length)) || k || ECL || PAN.on) drawScene();
   raf = requestAnimationFrame(loop); }
@@ -1110,43 +1130,46 @@ const inUI = e => e.target && e.target.closest && e.target.closest('.sheet,.dock
    dragons are redirected: they follow the finger, as before. A mouse just moving does nothing. */
 const HOLD = 2500;
 let press = null, holdT = 0;
-function hold(){ if(!press || press.pan) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
+function hold(){ if(!press || press.pan || press.fb) return; press.held = true; P0 = {x: press.x, y: press.y, t: performance.now()};
   for(const d of dg) if(d.aim && d.aim.p === press) d.aim.n = 0; }   // redirect: the flames stop
 function shoot(p){ const who = adults().filter(d => d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'dizzy' && !offScreen(d))
     .sort((a, b) => Math.hypot(a.cx - p.x, a.cy - p.y) - Math.hypot(b.cx - p.x, b.cy - p.y)).slice(0, Math.min(3, ri(1, 3) + 1));
   const wet = R() < .35 ? pick(who) : null;
   who.forEach((d, i) => { d.aim = {p, tx: p.x, ty: p.y, n: ri(14, 22), wait: i*ri(2, 6), water: d === wet}; }); }
 function pDown(x, y){ press = {x, y, t: performance.now(), held: false, down: true, wasOpen: !sheet.hidden, hist: [[x, y, performance.now()]], st: 0};
-  if(!press.wasOpen && !tapped(x, y)) shoot(press);
-  const pz = press.wasOpen ? 0 : panZone(x, y), me = press; if(pz) setTimeout(() => { if(press === me && me.down) startPan(pz); }, 250);   // tap and hold an edge: pan
+  const t2 = !press.wasOpen && tapped(x, y);
+  if(t2) press.fb = {x, y, sp: R()*6}; else if(!press.wasOpen) shoot(press);   // the second tap holds a fireball; let go to throw it
+  const pz = press.wasOpen || t2 ? 0 : panZone(x, y), me = press; if(pz) setTimeout(() => { if(press === me && me.down) startPan(pz); }, 250);   // tap and hold an edge: pan
   clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }
 function pMove(x, y){ if(!press) return; press.x = x; press.y = y; press.hist.push([x, y, performance.now()]); if(press.hist.length > 10) press.hist.shift(); if(press.held) P0 = {x, y, t: performance.now()}; }
 addEventListener('pointerdown', e => { if(inUI(e)) return; pDown(e.clientX, e.clientY); }, {passive: true});
 addEventListener('pointermove', e => { if(inUI(e)) return; pMove(e.clientX, e.clientY); }, {passive: true});
-const lift = () => { clearTimeout(holdT); if(press){ if(press.pan) endPan(); else release(press); press.down = false; } press = null; };
+const lift = () => { clearTimeout(holdT); if(press){ if(press.pan) endPan(); else if(press.fb) throwFb(press); else release(press); press.down = false; } press = null; };
 addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
 setInterval(() => { if(press && press.held) P0.t = performance.now(); }, 200);   // holding still keeps them coming
 addEventListener('pointerout', e => { if(!e.relatedTarget) P0.t = -1e9; });
-/* Fireballs: double-tap the scene to throw one: a gradient sphere 1 cm across, in flames, at the nearest dragon.
+/* Fireballs: double-tap the scene to throw one (keep the second tap down and drag to aim it; let go to throw it that way): a gradient sphere 1 cm across, in flames, at the nearest dragon.
    Every other fireball (the 1st, 3rd, 5th...) explodes where it lands, knocking every dragon near it dizzy; the others
    just burst on the one they hit. Water: keep a finger down and a water ball grows above it, full at 15 s; let go to
    throw it (the way you flick, or at the nearest dragon). Let go before 15 s and it fizzles. Real time, whatever the speed. */
 const BALL_WET = 15000, BALL_UP = 46, BALL_SP = .75, CM = 96/2.54, FB_R = CM/2, TAP2 = 320;   // BALL_SP: px a millisecond
 let balls = [], booms = [], thrown = 0, lastTap = null;
 const ballQ = () => Math.max(2, Math.round(sNear));   // one water-ball block, about a dragon pixel
-const charge = p => p && p.down && !p.wasOpen && !p.pan ? performance.now() - p.t : 0;
+const charge = p => p && p.down && !p.wasOpen && !p.pan && !p.fb ? performance.now() - p.t : 0;
 const wetR = ms => 1 + 4.5*Math.min(1, ms/BALL_WET);
 const canHit = d => !d.mom && !d.hid && d.mode !== 'off' && d.mode !== 'under' && d.mode !== 'spin' && !offScreen(d);
 const nearest = (x, y) => dg.filter(canHit).sort((a, b) => Math.hypot(a.cx - x, a.cy - y) - Math.hypot(b.cx - x, b.cy - y))[0] || null;
 function aimAt(x, y, tgt, sp){ const tx = tgt ? tgt.cx : x, ty = tgt ? tgt.cy : -100, D = Math.hypot(tx - x, ty - y) || 1; return [(tx - x)/D*sp, (ty - y)/D*sp]; }
 function tapped(x, y){ const now = performance.now();   // a second tap close in time and place: throw a fireball
-  if(lastTap && now - lastTap.t < TAP2 && Math.hypot(x - lastTap.x, y - lastTap.y) < 50){ lastTap = null;
-    const tgt = nearest(x, y), [vx, vy] = aimAt(x, y, tgt, BALL_SP);
-    balls.push({x, y, vx, vy, tgt, wet: false, boom: thrown++ % 2 === 0, r: FB_R, age: 0, sp: R()*6}); return true; }
+  if(lastTap && now - lastTap.t < TAP2 && Math.hypot(x - lastTap.x, y - lastTap.y) < 50){ lastTap = null; return true; }
   lastTap = {x, y, t: now}; return false; }
 function ballPops(){ const ms = charge(press); if(!ms) return;
   if(press.st === 0 && ms >= BALL_WET){ press.st = 1; const x = press.x, y = press.y - BALL_UP, q = ballQ(); sparks.push({x, y, n: 14, s: q});   // ready
     for(let i=0; i<8; i++) bits.push(puff('steam', x, y, R()*2*Math.PI, q)); } }
+function throwFb(p){ const {x, y} = p.fb, dx = p.x - x, dy = p.y - y, L = Math.hypot(dx, dy); let vx, vy, tgt = null;
+  if(L > 24){ const sp = BALL_SP*(1 + Math.min(1, L/250)); vx = dx/L*sp; vy = dy/L*sp; }   // aimed: the way the finger was dragged, faster the further
+  else { tgt = nearest(x, y); [vx, vy] = aimAt(x, y, tgt, BALL_SP); }   // no drag: at the nearest dragon
+  balls.push({x, y, vx, vy, tgt, wet: false, aimed: L > 24, boom: thrown++ % 2 === 0, r: FB_R, age: 0, sp: p.fb.sp}); }
 function release(p){ const ms = charge(p); if(ms < 2500) return; const x = p.x, y = p.y - BALL_UP, q = ballQ();
   if(ms < BALL_WET){ for(let i=0; i<5; i++) bits.push(puff('steam', x, y, -Math.PI/2 + (R()-.5), q*.8)); return; }   // not ready: fizzles
   const now = performance.now(), h = p.hist.filter(s => now - s[2] < 120);
@@ -1177,7 +1200,7 @@ function ballStep(dt){ booms = booms.filter(o => (o.age += dt) < 600);
     if(b.tgt && !canHit(b.tgt)) b.tgt = null;
     if(b.tgt){ const dx = b.tgt.cx - b.x, dy = b.tgt.cy - b.y, D = Math.hypot(dx, dy) || 1, sp = Math.hypot(b.vx, b.vy), k = Math.min(1, dt*.008);
       b.vx += (dx/D*sp - b.vx)*k; b.vy += (dy/D*sp - b.vy)*k; }   // homes in on the one it was thrown at
-    else b.vy += .0007*dt/LOWG();   // otherwise it arcs down a little
+    else b.vy += (b.aimed ? .00012 : .0007)*dt/LOWG();   // otherwise it arcs down a little (an aimed one barely drops)
     const steps = Math.max(1, Math.ceil(Math.hypot(b.vx, b.vy)*dt/q));
     for(let i=0; i<steps && !gone; i++){ b.x += b.vx*dt/steps; b.y += b.vy*dt/steps;
       if(b.age < 60) continue;   // clear of the thrower's own spot first
@@ -1223,6 +1246,12 @@ function drawBooms(){ for(const o of booms){ const u = o.age/600, r = CM*3*(.25 
   ctx.globalAlpha = a*.8; ctx.strokeStyle = '#fff1b0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(o.x, o.y, r*1.15, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1; } }   // the shock ring
 function drawBalls(){ ctx = ctxB;
   drawPanArrow(); drawBooms();
+  if(press && press.fb && press.down){ const {x, y} = press.fb, dx = press.x - x, dy = press.y - y, L = Math.hypot(dx, dy), on = L > 24;   // held: the fireball waits, aimed by dragging
+    if(on){ const ux = dx/L, uy = dy/L, n = 3 + Math.min(7, L/30 | 0), q = ballQ();
+      for(let k=1; k<=n; k++){ const t = FB_R + 6 + k*16, px = x + ux*t, py = y + uy*t; ctx.globalAlpha = .85*(1 - k/(n + 1));
+        ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(Math.round(px - q), Math.round(py - q), q*2, q*2); ctx.fillStyle = '#ffd25a'; ctx.fillRect(Math.round(px - q/2), Math.round(py - q/2), q, q); }
+      ctx.globalAlpha = 1; }
+    drawFireball({x, y, vx: on ? dx : 0, vy: on ? dy : -1, r: FB_R, boom: thrown % 2 === 0, sp: press.fb.sp}); }
   for(const b of balls) if(b.wet) drawWet(b.x, b.y, b.r, 1); else drawFireball(b);
   const ms = charge(press);
   if(ms >= 5000){ const ready = ms >= BALL_WET; drawWet(press.x, press.y - BALL_UP, wetR(ms)*ballQ() + (ready ? Math.sin(performance.now()/120)*.5*ballQ() : 0), ready ? 1 : .35 + .5*ms/BALL_WET); }
@@ -1284,11 +1313,12 @@ for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' 
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
 $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, clouds, mountains, ground, rocks); the dragons and their settings stay
   const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join();
-  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert','moon','volcano']), rocks: R() < .7,
+  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert','moon']), rocks: R() < .7,
     river: R() < .4, wx: pick(['clear','clear','rain','snow']), windv: (R() < .5 ? -1 : 1)*pick([0, 0, 0, 0, 1, 1, 1, 2, 2, 3])});   // weather: clear about half the time; calm, breezy, windy or a gale
   while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join() === was);
+  if(volcanoTurn()) cfg.ground = 'volcano';
   if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});
-  else if(cfg.ground === 'volcano') Object.assign(cfg, {sky: 'night', river: false});   // the volcano: always at night
+  else if(cfg.ground === 'volcano') Object.assign(cfg, {sky: 'night', river: false, rocks: true});   // the volcano: always at night
   else if(cfg.wx !== 'clear') cfg.clouds = 'many';   // rain and snow come with a cloudy sky   // the moon: black sky, stars, no weather
   PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;   // always a visibly different one
   seed = (R()*1e9)|0; save(); PAN.tiles.clear(); PAN.on = false; PAN.dir = 0; PAN.v = 0; PAN.cam = PAN.at*gw; buildScene(); ECL = null; countShow(); drawScene();
