@@ -1107,7 +1107,7 @@ function loop(now){ raf = 0; if(!playing){ return; }
   let n = 0; while(acc >= STEP && n < 12){ tick(); acc -= STEP; n++; }
   let k = 0; if(SEA){ seaAcc += dt; while(seaAcc >= SEA_MS && k < 4){ seaStep(); seaAcc -= SEA_MS; k++; } }   // the sea keeps real time, at 35% of /waves
   ballPops(); ballStep(dt); const pdx = panStep(dt); panWorld(pdx);
-  if(n || balls.length || booms.length || charge(press) >= 5000 || PAN.on || (press && press.fb)) draw();
+  if(n || balls.length || booms.length || charge(press) >= 5000 || PAN.on) draw();
   if(ECL){ ECL.t += dt; if(ECL.t >= ECL_MS) ECL = null; }   // two minutes of real time, whatever the dragon speed
   if((n && (++sceneDirty % 2 === 0 || stars.length)) || k || ECL || PAN.on) drawScene();
   raf = requestAnimationFrame(loop); }
@@ -1246,12 +1246,6 @@ function drawBooms(){ for(const o of booms){ const u = o.age/600, r = CM*3*(.25 
   ctx.globalAlpha = a*.8; ctx.strokeStyle = '#fff1b0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(o.x, o.y, r*1.15, 0, 2*Math.PI); ctx.stroke(); ctx.globalAlpha = 1; } }   // the shock ring
 function drawBalls(){ ctx = ctxB;
   drawPanArrow(); drawBooms();
-  if(press && press.fb && press.down){ const {x, y} = press.fb, dx = press.x - x, dy = press.y - y, L = Math.hypot(dx, dy), on = L > 24;   // held: the fireball waits, aimed by dragging
-    if(on){ const ux = dx/L, uy = dy/L, n = 3 + Math.min(7, L/30 | 0), q = ballQ();
-      for(let k=1; k<=n; k++){ const t = FB_R + 6 + k*16, px = x + ux*t, py = y + uy*t; ctx.globalAlpha = .85*(1 - k/(n + 1));
-        ctx.fillStyle = 'rgb(36,22,48)'; ctx.fillRect(Math.round(px - q), Math.round(py - q), q*2, q*2); ctx.fillStyle = '#ffd25a'; ctx.fillRect(Math.round(px - q/2), Math.round(py - q/2), q, q); }
-      ctx.globalAlpha = 1; }
-    drawFireball({x, y, vx: on ? dx : 0, vy: on ? dy : -1, r: FB_R, boom: thrown % 2 === 0, sp: press.fb.sp}); }
   for(const b of balls) if(b.wet) drawWet(b.x, b.y, b.r, 1); else drawFireball(b);
   const ms = charge(press);
   if(ms >= 5000){ const ready = ms >= BALL_WET; drawWet(press.x, press.y - BALL_UP, wetR(ms)*ballQ() + (ready ? Math.sin(performance.now()/120)*.5*ballQ() : 0), ready ? 1 : .35 + .5*ms/BALL_WET); }
