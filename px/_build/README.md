@@ -12,3 +12,5 @@ Dragon controls: number (1-12), what they do (mixed, walk, hop, march in step, f
 Scene controls: background (landscape or plain paper), sky (day, sunset, night), clouds, mountains, ground (grass, sand, snow, none), random rocks.
 
 Reduced motion: a still frame until Play is pressed.
+
+Fireballs: hold a finger on the scene and a ball grows just above it. From 5 s it is a fireball; let go to throw it (the way you flick, or at the nearest dragon if you don't). Held past 15 s it turns to water. Let go before 5 s and it fizzles. A dragon it hits goes dizzy. Timed in real time, whatever the speed setting. Taps still make the nearest dragons fire at your finger.
