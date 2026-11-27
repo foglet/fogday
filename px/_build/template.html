@@ -248,7 +248,8 @@ const GROUNDS = {moon:{top:[112,112,118], body:[[148,148,152],[158,158,162],[168
   desert:{top:[192,142,92], body:[[224,180,120],[230,188,128],[236,196,138]], dots:[[206,158,100],[244,212,160],[186,134,84]]},
   grass:{top:[70,132,72], body:[[96,162,84],[110,176,92],[120,184,98]], dots:[[78,146,70],[146,198,112],[66,124,62]]},
   sand:{top:[204,174,118], body:[[228,200,146],[234,208,154],[238,214,162]], dots:[[212,182,126],[246,226,182],[196,166,112]]},
-  snow:{top:[196,210,228], body:[[232,238,246],[238,242,248],[244,247,251]], dots:[[212,222,236],[255,255,255],[200,212,230]]}};
+  snow:{top:[196,210,228], body:[[232,238,246],[238,242,248],[244,247,251]], dots:[[212,222,236],[255,255,255],[200,212,230]]},
+  ash:{top:[52,46,50], body:[[62,56,60],[70,62,66],[78,70,72]], dots:[[44,40,44],[100,90,92],[34,30,36]]}};   // black volcanic sand
 function lerpC(stops, u){ for(let i=0; i<stops.length-1; i++){ const [u0,c0] = stops[i], [u1,c1] = stops[i+1];
   if(u <= u1){ const k = (u-u0)/Math.max(1e-6, u1-u0); return c0.map((c,j) => c + (c1[j]-c)*k); } } return stops[stops.length-1][1]; }
 const themeMeta = document.querySelector('meta[name="theme-color"]');
@@ -344,7 +345,7 @@ const gdim = sk => sk.gdim || sk.dim;   // the ground at night is darker than th
 function buildScene(){
   const rand = rng(seed), on = cfg.bg === 'scene', sk = SKIES[cfg.sky];
   if(themeMeta) themeMeta.content = on ? 'rgb(' + sk.stops[0][1].join(',') + ')' : '#fbf8f1';
-  const sea = on && cfg.ground === 'sea', desert = on && cfg.ground === 'desert', visA = Math.round(VH/P);
+  const volc = on && cfg.ground === 'volcano', sea = on && (cfg.ground === 'sea' || volc), desert = on && cfg.ground === 'desert', visA = Math.round(VH/P);
   OBJ = new Uint8Array(gw*gh);
   if(sea){ const top = Math.round(visA*.5); BEACH_A = Math.round(visA*.9); seaMake(top, BEACH_A); gTopA = top + Math.round(SEA.H*.55); }   // mountains end behind the water
   else { SEA = null; gTopA = on && cfg.ground !== 'none' ? Math.round(VH/P*.7) : gh; }
@@ -383,8 +384,10 @@ function buildScene(){
           if(y === Math.round(top)) c = c.map(v => v*.86);
           put(fgBuf, x, y, c.map(Math.round)); } } } }
   // ground
-  if(sea){ const G = GROUNDS.sand, sh = c => c.map((v, j) => Math.round(clamp(v*gdim(sk) + sk.tint[j], 0, 255)));   // the beach strip, wet at the waterline
-    for(let y=BEACH_A; y<gh; y++) for(let x=0; x<gw; x++){ let c = y < BEACH_A + 2 ? [188,166,118] : G.body[Math.min(2, ((y - BEACH_A)/3)|0)]; if(rand() < .06) c = G.dots[(rand()*3)|0]; put(fgBuf, x, y, sh(c)); } }
+  VOL = null;
+  if(sea){ const G = volc ? GROUNDS.ash : GROUNDS.sand, dm = volc ? Math.max(.6, gdim(sk)) : gdim(sk), sh = c => c.map((v, j) => Math.round(clamp(v*dm + sk.tint[j], 0, 255)));   // the beach strip, wet at the waterline
+    if(volc) buildVolcano(put, rand, sk);
+    for(let y=BEACH_A; y<gh; y++) for(let x=0; x<gw; x++){ let c = y < BEACH_A + 2 ? (volc ? [40,36,40] : [188,166,118]) : G.body[Math.min(2, ((y - BEACH_A)/3)|0)]; if(rand() < .06) c = G.dots[(rand()*3)|0]; put(fgBuf, x, y, sh(c)); } }
   else if(cfg.ground !== 'none'){ const G = GROUNDS[cfg.ground], dim = gdim(sk);
     const sh = c => c.map((v, j) => Math.round(clamp(v*dim + sk.tint[j], 0, 255)));
     for(let y=gTopA; y<gh; y++){ const u = (y - gTopA)/Math.max(1, gh - gTopA), bi = Math.min(2, (u*3)|0);
@@ -398,18 +401,19 @@ function buildScene(){
       for(let dy=-Math.ceil(ry) - 1; dy<=Math.ceil(ry) + 1; dy++) for(let dx=-Math.ceil(rx) - 1; dx<=Math.ceil(rx) + 1; dx++){ const e = (dx/rx)**2 + (dy/ry)**2;
         if(e <= 1) put(fgBuf, cx + dx, cy + dy, sh(dx < 0 && e > .4 ? [88,88,96] : [118,118,126]));
         else if(e <= 1.8 && (dx > 0 || dy > 0)) put(fgBuf, cx + dx, cy + dy, sh([204,204,208])); } } }
+  if(VOL) VOL.base0 = fgBuf.slice();   // the ground under the rocks, for melting
   RIV = on && !sea && !moon && cfg.river && cfg.ground !== 'none' ? {base: .3 + rand()*.4, amp: .12 + rand()*.12, ph: rand()*6.28} : null;
   const offRiver = (x, y) => !RIV || Math.abs(x - riverX(y)) > riverW(y)/2 + 3;
   PUD = []; if(on && !sea && cfg.ground !== 'none') for(let i=0, n = Math.max(3, (gw/16)|0); i<n*3 && PUD.length < n; i++){
     const u = rand(), y = gTopA + 4 + u*(gh - gTopA - 8), x = 6 + rand()*(gw - 12); if(offRiver(x, y)) PUD.push({x, y, r: 2.5 + u*7 + rand()*2}); }
   const putO = (x, y, c) => { put(fgBuf, x, y, c); x |= 0; y |= 0; if(x >= 0 && y >= 0 && x < gw && y < gh) OBJ[y*gw + x] = 1; };
-  if(cfg.rocks){ const n = Math.max(3, ((sea ? .4 : 1)*gw/12)|0), top = sea ? BEACH_A + 2 : cfg.ground === 'none' ? gh - 2 : gTopA + 2;
+  if(cfg.rocks){ const n = Math.max(3, ((volc ? .8 : sea ? .4 : 1)*gw/12)|0), top = sea ? BEACH_A + 2 : cfg.ground === 'none' ? gh - 2 : gTopA + 2;
     // Rocks differ from scene to scene and from rock to rock: shape (round boulder, flat slab, jagged, tall standing stone,
     // pebbles), colour from the scene's own stone, speckled, lit from the upper left; moss on some in grass; a big boulder or two.
     const ROCKS = {grass:[[128,124,120],[112,116,124],[134,120,102],[100,104,98]], sand:[[176,160,130],[150,136,112],[132,126,118]],
       desert:[[178,104,72],[152,94,68],[196,150,92],[128,86,66]], snow:[[118,126,140],[100,106,118],[140,146,156]], moon:[[124,124,130],[98,98,106],[146,146,150]],
-      sea:[[136,130,122],[96,94,96],[118,112,104]], none:[[128,124,120],[110,112,118]]};
-    const pal = ROCKS[sea ? 'sea' : cfg.ground] || ROCKS.grass, kinds = ['round','round','slab','jag','jag','tall','pebbles'];
+      sea:[[136,130,122],[96,94,96],[118,112,104]], volcano:[[60,54,62],[84,72,72],[44,40,50],[110,92,84]], none:[[128,124,120],[110,112,118]]};
+    const pal = ROCKS[volc ? 'volcano' : sea ? 'sea' : cfg.ground] || ROCKS.grass, kinds = ['round','round','slab','jag','jag','tall','pebbles'];
     const rs = []; for(let i=0; i<n; i++){ const u = cfg.ground === 'none' ? 1 : rand(), x = rand()*gw, y = top + u*(gh - top - 2); if(offRiver(x, y)) rs.push([x, y, u, kinds[(rand()*kinds.length)|0], 1]); }
     for(let i=0, nb = rand() < .35 ? 2 : 1; i<nb; i++){ const u = cfg.ground === 'none' ? 1 : .7 + rand()*.3, x = 10 + rand()*(gw - 20), y = top + u*(gh - top - 2);   // the big boulders, up front
       if(offRiver(x, y)) rs.push([x, y, u, rand() < .6 ? 'round' : 'jag', 2.2 + rand()*1.2]); }
@@ -481,6 +485,7 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
       for(let x=0; x<c.w; x++){ const v = row[x]; if(!v) continue; let xx = x0 + x; xx = ((xx % (gw + c.w*2)) + gw + c.w*2) % (gw + c.w*2) - c.w; if(xx < 0 || xx >= gw) continue;
         const col = v === 3 ? sk.cloud[1].map(c => c*.68) : v === 4 ? sk.cloud[0] : sk.cloud[v-1], i = (yy*gw + xx)*4; d[i] = col[0]; d[i+1] = col[1]; d[i+2] = col[2]; } } }
   if(PAN.on) panFg(d); else for(let i=0; i<fgBuf.length; i+=4) if(fgBuf[i+3]){ d[i] = fgBuf[i]; d[i+1] = fgBuf[i+1]; d[i+2] = fgBuf[i+2]; }
+  if(VOL && SEA && !PAN.on) drawVolcano(d);
   if(cfg.bg === 'scene' && !SEA && cfg.ground !== 'none' && !PAN.on){ const sk2 = SKIES[cfg.sky], dim = gdim(sk2), tn = sk2.tint;
     const put3 = (i, c) => { i *= 4; d[i] = clamp(c[0]*dim + tn[0], 0, 255); d[i+1] = clamp(c[1]*dim + tn[1], 0, 255); d[i+2] = clamp(c[2]*dim + tn[2], 0, 255); };
     if(COVER > .01 && cfg.ground !== 'snow'){ for(let y=gTopA; y<gh; y++){ const u = (y - gTopA)/Math.max(1, gh - gTopA);   // snow settling in patches
@@ -507,8 +512,136 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
     for(let y=0; y<S.H; y++){ const row = S.top + y; if(row < 0 || row >= gh) continue;
       for(let x=0; x<gw; x++){ const sx = x + so; if(sx < 0 || sx >= gw) continue; const v = S.px[y*gw + sx]; if(!v) continue; const idx = Math.max(1, Math.round(v - F*7*Math.pow(1 - v/36, 2.2))), c = SEA_PAL[idx], i = (row*gw + x)*4;
         d[i] = clamp(c[0]*dim + tint[0], 0, 255); d[i+1] = clamp(c[1]*dim + tint[1], 0, 255); d[i+2] = clamp(c[2]*dim + tint[2], 0, 255); d[i+3] = 255; } } }
+  if(VOL && SEA && !PAN.on) seaGlow(d2, 0);
   { const dk = eclDark(); if(dk > 0) for(let i=0; i<d2.length; i+=4){ d2[i] *= 1 - .55*dk; d2[i+1] *= 1 - .55*dk; d2[i+2] *= 1 - .45*dk; } }
   qctx.putImageData(qframe, 0, 0); }
+
+/* ---------- volcano: a night scene, a volcano rising out of the sea at one side, lava running down its flanks into the
+   ocean (steam where it meets the water, the sea glowing there) and a black-sand beach in front. It smokes, and every
+   so often it rumbles and erupts: lava bombs fly, land on the beach or hiss into the sea, and fire monkeys are flung
+   out to run about the beach before they leap back in. Lava that lands near rocks heats them until they glow, slump and
+   run down into puddles; the spots it leaves cool from white-hot to crust. A bomb that hits a dragon knocks it dizzy. */
+let VOL = null, lava = [], monkeys = [];
+const LAVA = [[255,250,210],[255,222,104],[255,160,50],[236,92,30],[180,46,24],[110,30,22]];
+const stageEl = document.querySelector('.stage');
+function buildVolcano(put, rand, sk){ const side = rand() < .5 ? -1 : 1, cx = Math.round(gw*(side < 0 ? .27 : .73)), visA = Math.round(VH/P);
+  const peak = Math.round(SEA.top - visA*.27), base = Math.round(SEA.top + SEA.H*.6), hw = Math.max(34, gw*.36), cw = Math.max(3, Math.round(hw*.09)), dim = Math.max(.45, gdim(sk));
+  const sh = c => c.map((v, j) => Math.round(clamp(v*dim + sk.tint[j], 0, 255))), prof = [];
+  let j = 0;
+  for(let x=Math.floor(cx - hw); x<=Math.ceil(cx + hw); x++){ const u = Math.abs(x - cx); j += (rand() - .5)*.8; j *= .85;
+    const t = u < cw ? 0 : (u - cw)/(hw - cw), top = u < cw ? peak + 1 + (u < cw - 1 ? 1 : 0) : base - (base - peak)*Math.pow(1 - t, 1.7) + j*t*3;
+    prof.push([x, top]);
+    for(let y=Math.max(0, Math.round(top)); y<base; y++){ const lit = (x - cx)*side*-1 > 0;   // lit on the side away from the sea's open water
+      let c = lit ? [92,74,76] : [64,52,58]; const k = hash(x, y); if(k < .1) c = c.map(v => v*.8); else if(k > .94) c = c.map(v => v + 16);
+      if(y === Math.round(top)) c = [44,36,42];
+      put(fgBuf, x, y, sh(c)); } }
+  const tAt = y => 1 - Math.pow(clamp((base - y)/(base - peak), 0, 1), 1/1.7), flows = [];
+  for(let n=0, N = 2 + (rand()*3|0); n<N; n++){ const s = n === 0 ? -side : rand() < .5 ? -1 : 1, f = .25 + rand()*.6, ph = rand()*6, pts = [];   // the first flows toward the open sea
+    for(let y=peak + 1; y<base; y++){ const t = tAt(y), x = cx + s*(cw*.6 + (hw - cw)*t*f) + Math.sin(y*.25 + ph)*1.5*t, w = 1 + 2.2*t;
+      pts.push([x, y, w]); for(let dx=-Math.floor(w/2); dx<=Math.floor(w/2); dx++) put(fgBuf, x + dx, y, sh([86,34,28])); }   // crust, seen while panning
+    flows.push(pts); }
+  VOL = {cx, peak, base, hw, cw, side, flows, base0: null, heat: new Float32Array(gw*gh), hot: new Set(), smoke: [], spots: [], next: ri(160, 320), er: 0, glow: .3, shake: 0, prof}; }
+function heatAround(ax, ay, r, amt){ if(!VOL || !OBJ) return; for(let dy=-r; dy<=r; dy++) for(let dx=-r; dx<=r; dx++){ const d = Math.hypot(dx, dy); if(d > r) continue;
+  const x = Math.round(ax + dx), y = Math.round(ay + dy); if(x < 0 || y < 0 || x >= gw || y >= gh) continue; const i = y*gw + x;
+  if(OBJ[i]){ VOL.heat[i] = Math.min(1.2, VOL.heat[i] + amt*(1 - d/r)); VOL.hot.add(i); } } }
+function meltStep(){ const V = VOL, add = [];   // hot rock glows, then slumps and runs down into a puddle
+  for(const i of V.hot){ const h = V.heat[i]; if(h < .04 || !OBJ[i]){ V.heat[i] = 0; V.hot.delete(i); continue; }
+    V.heat[i] = h*.99; if(h < .45 || R() < .5) continue;
+    const y = (i/gw)|0, x = i - y*gw; if(y >= gh - 1) continue;
+    for(const j of R() < .5 ? [i + gw, i + gw - 1, i + gw + 1] : [i + gw, i + gw + 1, i + gw - 1]){ const jx = j % gw; if(Math.abs(jx - x) > 1 || OBJ[j]) continue;
+      for(let c=0; c<4; c++) fgBuf[j*4 + c] = fgBuf[i*4 + c]; OBJ[j] = 1; V.heat[j] = h*.9; add.push(j);
+      for(let c=0; c<4; c++) fgBuf[i*4 + c] = V.base0[i*4 + c]; OBJ[i] = 0; V.heat[i] = 0; V.hot.delete(i); break; } }
+  for(const j of add) V.hot.add(j); }
+function entryOf(f){ for(const [x, y] of f) if(y*P >= seaY(x*P) - P) return [x, y]; return null; }   // where a flow meets the sea
+function bomb(){ const V = VOL, g = .3*K/LOWG(), n = ri(40, 70), toSea = R() < .4, [a, b] = band(), x = (V.cx + rr(-V.cw, V.cw))*P, y = V.peak*P;
+  const tx = toSea ? clamp(V.cx*P - V.side*rr(.05, .45)*W, 10, W - 10) : rr(.06, .94)*W, ty = toSea ? seaY(tx) : rr(a, b);
+  lava.push({x, y, vx: (tx - x)/n, vy: (ty - y)/n - .5*g*n, g, n, k: 0, sea: toSea, r: rr(1.6, 2.6)}); }
+function bombLand(o){ const q = ballQ();
+  if(o.sea){ seaSplash(o.x, q*.8); for(let i=0; i<6; i++) bits.push(puff('steam', o.x, o.y, -Math.PI/2 + (R()-.5), q*1.4)); return; }
+  for(let i=0; i<10; i++) bits.push(puff('fire', o.x, o.y, -Math.PI/2 + (R()-.5)*2.4, q)); sparks.push({x: o.x, y: o.y, n: 14, s: q*.8});
+  if(!PAN.on && VOL){ const ax = o.x/P, ay = o.y/P; VOL.spots.push({x: ax, y: ay, r: rr(2, 3.6), h: 1}); heatAround(ax, ay, 6, 1); }
+  for(const d of dg) if(!d.mom && canHit(d) && Math.hypot(d.cx - o.x, d.cy - o.y) < GW*d.s*.45) dizzyHit(d, o.vx*3, -3*K); }
+const MON = (() => { const Wm = 16, Hm = 14, frames = [];   // an original fire monkey: orange fur, pale face, flames for hair and tail tip
+  for(let f=0; f<2; f++){ const a = new Uint8Array(Wm*Hm), put = (x, y, v) => { x = Math.round(x); y = Math.round(y); if(x >= 0 && y >= 0 && x < Wm && y < Hm) a[y*Wm + x] = v; },
+      disc = (cx, cy, rx, ry, v) => { for(let y=0; y<Hm; y++) for(let x=0; x<Wm; x++) if(((x - cx)/rx)**2 + ((y - cy)/ry)**2 <= 1) a[y*Wm + x] = v; },
+      line = (x0, y0, x1, y1, v) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for(let i=0; i<=n; i++) put(x0 + (x1 - x0)*i/n, y0 + (y1 - y0)*i/n, v); };
+    for(const [x, y] of [[5,9],[4,9],[3,8],[2,7],[2,6],[2,5],[3,4]]) put(x, y, 3);
+    put(3, 3, 7); put(2, 3, 7); put(3, 2, 6); put(2, 1, 6); put(4, 2, 7);   // tail flame
+    if(f === 0){ line(9, 11, 10, 13, 3); line(5, 11, 4, 13, 3); } else { line(7, 11, 7, 13, 3); line(9, 11, 9, 13, 3); }
+    disc(7, 9, 3.2, 2.6, 2); disc(7.8, 9.7, 1.8, 1.5, 4);
+    disc(8.3, 4.6, 1.2, 1.2, 3); disc(11, 5, 2.9, 2.7, 2); disc(12.2, 6, 1.9, 1.7, 4); put(12, 5, 5); put(13, 7, 3);
+    for(const [x, y, v] of [[10,2,7],[11,1,6],[11,2,7],[12,2,7],[12,1,7],[10,1,6],[12,0,6],[13,2,6]]) put(x, y, v);   // flame hair
+    if(f === 0){ line(9, 9, 12, 10, 3); put(12, 10, 4); } else { line(8, 9, 6, 11, 3); put(6, 11, 4); }
+    const o = a.slice(); for(let y=0; y<Hm; y++) for(let x=0; x<Wm; x++) if(!a[y*Wm + x] && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => { const X = x + dx, Y = y + dy; return X >= 0 && Y >= 0 && X < Wm && Y < Hm && a[Y*Wm + X]; })) o[y*Wm + x] = 1;
+    frames.push(o); }
+  return {Wm, Hm, frames, pal: [null, 'rgb(36,22,48)', 'rgb(222,86,36)', 'rgb(156,46,24)', 'rgb(252,200,132)', 'rgb(24,16,30)', 'rgb(255,228,96)', 'rgb(255,140,40)']}; })();
+function expel(){ if(monkeys.length >= 10) return; const V = VOL, [a, b] = band(), fy = rr(a, b), tx = rr(.08, .92)*W, x = V.cx*P, y = V.peak*P, n = ri(45, 70), g = .3*K/LOWG();
+  monkeys.push({x, y, vx: (tx - x)/n, vy: (fy - y)/n - .5*g*n, g, n, k: 0, fy, mode: 'air', dir: tx > x ? 1 : -1, s: sNear*.7, rot: 0, life: ri(400, 900), f: 0, hop: 0, jy: 0}); }
+function monkeyTick(){ const [a, b] = band();
+  monkeys = monkeys.filter(m => { m.k++;
+    if(m.mode === 'air'){ m.vy += m.g; m.x += m.vx; m.y += m.vy; if(m.k % 4 === 0) m.rot = (m.rot + m.dir + 4) % 4;   // tumbling
+      if(m.k % 2 === 0) bits.push(puff('fire', m.x, m.y - 6*m.s, Math.atan2(-m.vy, -m.vx), m.s*.6));
+      if(m.k >= m.n){ if(m.home) { for(let i=0; i<8; i++) bits.push(puff('fire', m.x, m.y, -Math.PI/2 + (R()-.5)*2, ballQ())); return false; }   // back into the crater
+        m.mode = 'run'; m.y = m.fy; m.rot = 0; m.k = 0; m.s = depthS(m.fy)*.75; for(let i=0; i<8; i++) bits.push(puff('fire', m.x, m.y, -Math.PI/2 + (R()-.5)*2.4, m.s*.8)); }
+      return m.y < H + 200; }
+    m.fy = clamp(m.fy, a, b); m.y = m.fy; m.s = depthS(m.fy)*.75;
+    const sp = (m.mode === 'off' ? 2.4 : 1.5)*K*(1 + WIND()*.15*m.dir); m.x += m.dir*sp; if(m.k % 5 === 0) m.f ^= 1;
+    if(m.hop > 0){ m.hop--; m.jy = -Math.sin(Math.PI*(1 - m.hop/18))*10*K*LOWG(); } else { m.jy = 0; if(R() < .012) m.hop = 18; }
+    if(m.k % 6 === 0) bits.push(puff('fire', m.x - m.dir*4*m.s, m.y - 2*m.s, -Math.PI/2, m.s*.5));   // hot footprints
+    if(m.mode === 'off') return m.x > -60 && m.x < W + 60;
+    if((m.x < 16 && m.dir < 0) || (m.x > W - 16 && m.dir > 0) || R() < .008) m.dir *= -1;
+    if(--m.life <= 0){ if(VOL && !PAN.on){ const n = ri(40, 60), tx = VOL.cx*P, ty = VOL.peak*P - 2; Object.assign(m, {mode: 'air', home: true, k: 0, n, vx: (tx - m.x)/n, vy: (ty - m.y)/n - .5*m.g*n, s: sNear*.7, dir: tx > m.x ? 1 : -1}); }   // leaps home
+      else { m.mode = 'off'; m.dir = m.x < W/2 ? -1 : 1; } }
+    return true; }); }
+function volcanoTick(){ monkeyTick();
+  lava = lava.filter(o => { o.k++; o.vy += o.g; o.x += o.vx; o.y += o.vy; if(o.k % 2 === 0) bits.push(puff('fire', o.x, o.y, Math.atan2(-o.vy, -o.vx), ballQ()*.7)); if(o.k >= o.n){ bombLand(o); return false; } return true; });
+  const V = VOL; if(!V || PAN.on || cfg.ground !== 'volcano'){ if(stageEl.style.transform) stageEl.style.transform = ''; return; }
+  V.smoke = V.smoke.filter(p => { p.y += p.vy; p.x += p.vx + WIND()*.02; p.r += p.st ? .04 : .035; p.a -= p.st ? .004 : .0022; return p.a > 0 && p.y > -20; });
+  const er = V.er > 0, ph = 300 - V.er;
+  if(V.smoke.length < 260){ if(R() < (er ? 1 : .3)) V.smoke.push({x: V.cx + rr(-V.cw, V.cw), y: V.peak - 1, vx: rr(-.04, .04), vy: -(er ? rr(.25, .5) : rr(.08, .16)), r: er ? 2.5 : 1.5, a: er ? .9 : .5, dark: er});
+    for(const f of V.flows) if(R() < .25){ const e = entryOf(f); if(e) V.smoke.push({x: e[0] + rr(-1, 1), y: seaY(e[0]*P)/P - 1, vx: rr(-.03, .03), vy: -rr(.1, .2), r: 1, a: .6, st: true}); } }   // steam where lava meets the sea
+  if(!er && --V.next <= 0){ V.er = 300; V.mk = ri(2, 5); }
+  if(V.er > 0){ V.er--;
+    V.shake = ph < 60 ? 1 : ph < 150 ? 2 : ph < 220 ? 1 : 0;   // rumble, then the blast
+    if(ph >= 60 && ph < 260){ if(R() < (ph < 150 ? .35 : .15)) bomb();
+      const cx = V.cx*P, cy = V.peak*P; for(let i=0; i<(ph < 150 ? 4 : 2); i++) bits.push(puff('fire', cx + rr(-V.cw, V.cw)*P, cy, -Math.PI/2 + (R()-.5)*.6, ballQ()*1.6));   // the fountain
+      if(V.mk > 0 && (R() < .03 || ph === 230)){ const k = ph === 230 ? V.mk : 1; for(let i=0; i<k; i++) expel(); V.mk -= k; } }
+    if(V.er === 0) V.next = ri(500, 1100); }
+  else V.shake = 0;
+  V.glow += ((er && ph >= 40 ? 1 : .3) - V.glow)*.03;
+  stageEl.style.transform = V.shake ? 'translate(' + ((R()-.5)*2*V.shake).toFixed(1) + 'px,' + ((R()-.5)*2*V.shake).toFixed(1) + 'px)' : '';
+  for(const s of V.spots){ s.h -= .0025; if(T % 10 === 0 && s.h > .3) heatAround(s.x, s.y, Math.round(s.r + 4), .12*s.h); }   // hot ground heats the rocks around it
+  for(const s of V.spots) if(s.h <= 0 && !s.baked){ s.baked = true; for(let dy=-Math.ceil(s.r*.35); dy<=Math.ceil(s.r*.35); dy++) for(let dx=-Math.ceil(s.r); dx<=Math.ceil(s.r); dx++) if((dx/s.r)**2 + (dy/(s.r*.35))**2 <= 1){   // cooled to crust
+      const x = Math.round(s.x + dx), y = Math.round(s.y + dy); if(x >= 0 && y >= 0 && x < gw && y < gh && !OBJ[y*gw + x]){ const i = (y*gw + x)*4; fgBuf[i] = 30; fgBuf[i+1] = 26; fgBuf[i+2] = 30; fgBuf[i+3] = 255; } } }
+  V.spots = V.spots.filter(s => !s.baked);
+  if(T % 2 === 0) meltStep(); }
+function drawVolcano(d){ const V = VOL, set = (x, y, c, a = 1) => { x |= 0; y |= 0; if(x < 0 || y < 0 || x >= gw || y >= gh) return; const i = (y*gw + x)*4; d[i] += (c[0] - d[i])*a; d[i+1] += (c[1] - d[i+1])*a; d[i+2] += (c[2] - d[i+2])*a; };
+  if(V.glow > .35){ const g = (V.glow - .3)/.7; for(let y=0; y<Math.min(gh, SEA.top); y++) for(let x=Math.max(0, (V.cx - V.hw*1.4)|0); x<Math.min(gw, V.cx + V.hw*1.4); x++){   // the sky glows red over it
+      const e = 1 - Math.hypot((x - V.cx)/(V.hw*1.4), (y - V.peak)/(gTopA*.9)); if(e > 0 && BAYER[(y&3)*4 + (x&3)]/16 < e*g*.9) set(x, y, [150,40,30], .35); } }
+  for(const f of V.flows) f.forEach(([x, y, w], k) => { const u = (Math.sin(k*.45 - T*.12) + 1)/2, idx = clamp(Math.round(4 - u*2.2 - V.glow*1.6 + (k > f.length*.7 ? 1 : 0)), 0, 5);   // the lava runs down
+    for(let dx=-Math.floor(w/2); dx<=Math.floor(w/2); dx++) set(x + dx, y, LAVA[Math.min(5, idx + (dx && Math.abs(dx) === Math.floor(w/2) ? 1 : 0))]); });
+  for(let dx=-V.cw - 1; dx<=V.cw + 1; dx++){ const u = (Math.sin(dx*.9 + T*.2) + 1)/2; set(V.cx + dx, V.peak + 1, LAVA[clamp(Math.round(2 - V.glow*2 + u), 0, 4)]); set(V.cx + dx, V.peak, LAVA[clamp(Math.round(3 - V.glow*2 + u), 0, 5)], .7); }   // the crater
+  for(const s of V.spots){ const c = LAVA[clamp(Math.round((1 - s.h)*5), 0, 5)];
+    for(let dy=-Math.ceil(s.r*.35); dy<=Math.ceil(s.r*.35); dy++) for(let dx=-Math.ceil(s.r); dx<=Math.ceil(s.r); dx++) if((dx/s.r)**2 + (dy/(s.r*.35))**2 <= 1) set(s.x + dx, s.y + dy, c); }
+  for(const i of V.hot){ const h = V.heat[i]; if(h < .08) continue; const y = (i/gw)|0, x = i - y*gw; set(x, y, LAVA[clamp(Math.round(5 - h*3.2), 1, 5)], Math.min(1, h*1.1)); }   // glowing, melting rock
+  for(const p of V.smoke){ const r = p.r, lit = p.st ? 0 : clamp(1 - (V.peak - p.y)/30, 0, 1)*V.glow;
+    const c = p.st ? [150,152,162] : p.dark ? [46,40,44] : [84,80,88], col = c.map((v, j) => v + ([230,90,40][j] - v)*lit*.5);
+    for(let dy=-Math.ceil(r); dy<=Math.ceil(r); dy++) for(let dx=-Math.ceil(r); dx<=Math.ceil(r); dx++){ const e = 1 - Math.hypot(dx, dy)/r; if(e <= 0) continue;
+      const x = Math.round(p.x + dx), y = Math.round(p.y + dy); if(x < 0 || y < 0 || x >= gw || y >= gh) continue; if(BAYER[(y&3)*4 + (x&3)]/16 < p.a*(.4 + .6*e)) set(x, y, col); } } }
+function seaGlow(d2, so){ const V = VOL, S = SEA;   // the sea glows where the lava pours in
+  for(const f of V.flows){ const e = entryOf(f); if(!e) continue; const ex = Math.round(e[0]) - so;
+    for(let dx=-6; dx<=6; dx++){ const x = ex + dx; if(x < 0 || x >= gw) continue; const top = S.top + S.tip[clamp(x + so, 0, gw - 1)];
+      for(let dy=0; dy<7; dy++){ const y = top + dy, a = .7*(1 - Math.abs(dx)/7)*(1 - dy/7)*(.6 + .4*V.glow); if(y < 0 || y >= gh || a <= 0) continue; const i = (y*gw + x)*4; if(!d2[i+3]) continue;
+        const c = dy < 2 && Math.abs(dx) < 3 ? LAVA[2] : [230,90,40]; d2[i] += (c[0] - d2[i])*a; d2[i+1] += (c[1] - d2[i+1])*a; d2[i+2] += (c[2] - d2[i+2])*a; } } } }
+function drawMonkeys(){ for(const m of monkeys){ const {Wm, Hm, frames, pal} = MON, a = frames[m.mode === 'air' ? 0 : m.f], s = m.s, fl = (T >> 2) & 1;
+    for(let y=0; y<Hm; y++) for(let x=0; x<Wm; x++){ let v = a[y*Wm + x]; if(!v) continue; if(fl && v >= 6) v = v === 6 ? 7 : 6;
+      let sx = m.dir > 0 ? x : Wm - 1 - x, sy = y, X, Y;
+      if(m.mode === 'air'){ const cx = sx - Wm/2 + .5, cy = sy - Hm/2 + .5, r = m.rot; const rx = r === 1 ? -cy : r === 2 ? -cx : r === 3 ? cy : cx, ry = r === 1 ? cx : r === 2 ? -cy : r === 3 ? -cx : cy; X = m.x + rx*s; Y = m.y + ry*s; }   // tumbling, in quarter turns
+      else { X = m.x + (sx - Wm/2)*s; Y = m.y + m.jy + (sy - Hm + 1)*s; }
+      ctx.fillStyle = pal[v]; ctx.fillRect(Math.round(X), Math.round(Y), Math.ceil(s), Math.ceil(s)); } } }
+function drawLava(){ const q = ballQ(); for(const o of lava){ const r = Math.round(o.r), gx = Math.round(o.x/q)*q, gy = Math.round(o.y/q)*q;
+  for(let j=-r - 1; j<=r + 1; j++) for(let i=-r - 1; i<=r + 1; i++){ const d = Math.hypot(i, j); if(d > r + 1) continue;
+    ctx.fillStyle = 'rgb(' + (d > r ? [70,22,18] : LAVA[clamp(Math.round(d/r*3 + (R() < .2 ? 1 : 0)), 0, 4)]).join(',') + ')'; ctx.fillRect(gx + i*q - q/2, gy + j*q - q/2, q, q); } } }
 
 /* ---------- panning: hold a finger at the far right or far left, in the middle third of the height, and the view pans
    that way through an endless strip of landscapes. Each screen-width is its own scene (ground, mountains, rocks, river),
@@ -517,8 +650,8 @@ function drawScene(){ if(!frame) return; const d = frame.data; d.set(skyBuf);
 const PAN = {cam: 0, v: 0, dir: 0, last: 0, at: 0, tiles: new Map(), on: false};
 const PAN_KEYS = ['ground', 'mtn', 'rocks', 'river'];
 const panZone = (x, y) => !EMB && y > VH/3 && y < VH*2/3 ? (x > W*.82 ? 1 : x < W*.18 ? -1 : 0) : 0;
-function keepGlobals(){ return {seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A}; }
-function putGlobals(G){ ({seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A} = G); }
+function keepGlobals(){ return {seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A, VOL}; }
+function putGlobals(G){ ({seed, fgBuf, skyBuf, frame, OBJ, RIV, PUD, EDGES, clouds, stars, ORB, SEA, gTopA, BEACH_A, VOL} = G); }
 function homeTile(){ if(!PAN.tiles.has(PAN.at)) PAN.tiles.set(PAN.at, {fg: fgBuf.slice(), riv: RIV, sc: Object.fromEntries(PAN_KEYS.map(k => [k, cfg[k]])), seed, sea: !!SEA}); }
 function tileAt(i){ let t = PAN.tiles.get(i); if(t) return t;
   const nb = [PAN.tiles.get(i - 1), PAN.tiles.get(i + 1)].filter(Boolean).map(t => t.sc.ground), moon = cfg.ground === 'moon';
@@ -542,6 +675,7 @@ function panWorld(dx){ if(!dx) return; const px = dx*P;   // the ground and ever
   for(const d of dg){ const ground = d.mom ? !d.air : d.mode === 'walk';
     if(d.mode === 'land' && d.tx !== undefined) d.tx -= px;
     if(!ground) continue; d.cx -= px; d.lx = d.cx; if(d.cx < -40) d.cx += W + 80; else if(d.cx > W + 40) d.cx -= W + 80; }
+  for(const m of monkeys) m.x -= px; for(const o of lava) o.x -= px;
   for(const c of clouds) c.x -= dx*.3; }   // clouds drift by more slowly
 function panFg(d){ const cam = PAN.cam, i0 = Math.floor(cam/gw), off = Math.round(cam - i0*gw), A = tileAt(i0), B = tileAt(i0 + 1), SEAM = 16, sk = SKIES[cfg.sky], dim = gdim(sk), tn = sk.tint;
   for(let x=0; x<gw; x++){ const wx = x + off, e = wx - gw;
@@ -763,7 +897,7 @@ function tick(){ T++;
       if(d.water){ for(let i=0; i<3; i++) bits.push(puff('drop', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); bits.push(puff('steam', mx, my, ang, d.s)); }
       else for(let i=0; i<4; i++) bits.push(puff('fire', mx, my, ang, d.s, d.vx || 0, d.vy || 0)); }
     else if(--d.fireT <= 0){ d.breath = ri(14, 30); d.fireT = ri(150, 500); } }
-  weatherTick();
+  weatherTick(); volcanoTick();
   bits = moveBits(bits);
   sparks = sparks.filter(s => --s.n > 0);
   for(const c of clouds) c.x += c.v;
@@ -936,6 +1070,7 @@ function draw(){ for(const c of [ctxA, ctxB]){ c.setTransform(DPR, 0, 0, DPR, 0,
   for(const d of order) if(!grounded(d) && d.mode !== 'off' && d.mode !== 'under' && !d.hid && !offScreen(d)) drawDragon(d);   // fliers: under the sea layer
   ctx = ctxB;
   for(const d of order) if(grounded(d) && !d.hid && !offScreen(d)) drawDragon(d);   // walkers on the beach or ground: in front
+  drawMonkeys(); drawLava();
   for(const e of bits){ const [c, sz, a] = lookBit(e); if(a <= 0) continue; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = 'rgb(' + c.join(',') + ')'; const z = sz*e.sc; ctx.fillRect(e.x - z/2, e.y - z/2, z, z); }
   ctx.globalAlpha = 1; ctx.fillStyle = 'rgb(255,226,80)';
   for(const sp of sparks){ const r = (16 - sp.n)*sp.s; for(let k=0; k<8; k++){ const a = k*Math.PI/4; ctx.fillRect(sp.x + Math.cos(a)*r - sp.s/2, sp.y + Math.sin(a)*r*.7 - sp.s/2, sp.s, sp.s); } }
@@ -1148,10 +1283,11 @@ for(const id of IDS){ const el = $(id); el.addEventListener(el.type === 'range' 
 $('hatch').addEventListener('click', () => { populate(true); if(!playing) draw(); });
 $('reset').addEventListener('click', () => {   // Random: a new landscape (sky, clouds, mountains, ground, rocks); the dragons and their settings stay
   const was = [cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join();
-  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert','moon']), rocks: R() < .7,
+  do Object.assign(cfg, {bg: 'scene', sky: pick(['day','sunset','night']), clouds: pick(['few','many','none']), mtn: R() < .75, ground: pick(['grass','sand','snow','none','sea','desert','moon','volcano']), rocks: R() < .7,
     river: R() < .4, wx: pick(['clear','clear','rain','snow']), windv: (R() < .5 ? -1 : 1)*pick([0, 0, 0, 0, 1, 1, 1, 2, 2, 3])});   // weather: clear about half the time; calm, breezy, windy or a gale
   while([cfg.sky, cfg.clouds, cfg.mtn, cfg.ground, cfg.rocks, cfg.wx, cfg.windv, cfg.river].join() === was);
   if(cfg.ground === 'moon') Object.assign(cfg, {sky: 'space', clouds: 'none', wx: 'clear', windv: 0, river: false});
+  else if(cfg.ground === 'volcano') Object.assign(cfg, {sky: 'night', river: false});   // the volcano: always at night
   else if(cfg.wx !== 'clear') cfg.clouds = 'many';   // rain and snow come with a cloudy sky   // the moon: black sky, stars, no weather
   PREC = []; TW = null; RIP = []; COVER = cfg.wx === 'snow' ? .15 : 0; WET = cfg.wx === 'rain' ? .15 : 0;   // always a visibly different one
   seed = (R()*1e9)|0; save(); PAN.tiles.clear(); PAN.on = false; PAN.dir = 0; PAN.v = 0; PAN.cam = PAN.at*gw; buildScene(); ECL = null; countShow(); drawScene();
@@ -1212,7 +1348,7 @@ titleInk();
 for(let i=0; i<3; i++) tick();   // settle one step so the still frame (reduced motion) has dragons in place
 draw(); drawScene(); setPlay(playing);
 countShow();   // each visit counts as a scene shown
-window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get balls(){ return balls; }, PAN};
+window.__px = {eclipse: (t = 0) => { startEclipse(); ECL.t = t; }, get ecl(){ return ECL; }, draw: () => draw(), drawScene: () => drawScene(), get tw(){ return TW; }, twister: () => { TW = {x: W*.2, vx: .8*K, age: 60, life: 1200, a: 1, ph: 0}; }, get dg(){ return dg; }, get cfg(){ return cfg; }, tick, get bits(){ return bits; }, get balls(){ return balls; }, PAN, get VOL(){ return VOL; }, get monkeys(){ return monkeys; }, get lava(){ return lava; }, expel, bomb};
 })();
 </script>
 <script src="/assets/js/bento-anim.js?v=2" data-colors="none" defer></script>  <!-- bento: new color + animation each load -->
