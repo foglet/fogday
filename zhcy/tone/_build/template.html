@@ -17,12 +17,12 @@
    19 characters used here, so a small LXGW WenKai (OFL) subset fills them in for Kaiti, and Ouyang falls back to it too. */
 @font-face{font-family:"zhcy kai";src:url(fonts/lxgw-wenkai-tone.woff2) format("woff2");font-display:block;unicode-range:U+4E48,U+4EC0,U+4EEC,U+4F1E,U+5531,U+573A,U+5976,U+5988,U+5B69,U+679C,U+6821,U+684C,U+6905,U+7761,U+8C22,U+8CFD,U+8FDF,U+9280,U+94F6}
 :root{--ou:"FZOuYangXunKaiShuS","FZOuYangXunKaiShu-S","方正欧阳询楷书 简","DFOuYangXun-W5","華康歐陽詢體W5","zhcy ou","zhcy kai","Noto Serif SC",serif}
-/* Header and footer scroll with the page (not pinned), so the whole grid can scroll. */
+/* Header scrolls with the page (not pinned), so the whole grid can scroll. */
 .top{position:static}
-/* Grid view: at least as tall as Safari's large viewport (toolbar hidden). On an iPhone the grid page is taller than
-   the small viewport but shorter than the large one, so hiding the toolbar mid-scroll shrank the scroll range under
-   the finger: the bottom row stuck, then jumped. At 100lvh or more, the range shrinks exactly as the toolbar hides. */
-body:has(#vBooks:not([hidden])){min-height:100lvh}
+/* Bottom row pinned to the bottom of the screen (the grid scrolls under it). Left in the page flow, it stuck and then
+   jumped as Safari's toolbar hid and showed at the end of a scroll. Same frosted paper as the header. */
+.actions{position:sticky;bottom:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .tp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--s5) 0;touch-action:pan-y}
 .tp-word{display:flex;justify-content:center;gap:.04em;border:0;background:transparent;color:var(--ink);padding:var(--s3);cursor:pointer;
   font-family:var(--cy);font-weight:var(--cyw);
