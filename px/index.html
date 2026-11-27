@@ -230,7 +230,7 @@ const qcv = document.getElementById('sea'), qctx = qcv.getContext('2d'); let qfr
 let W = 0, H = 0, VH = 0, DPR = 1, P = 3, gw = 0, gh = 0, gTopA = 0, K = 1, sNear = 3, sFar = 2;
 const LOWG = () => cfg.ground === 'moon' ? 1.7 : 1;   // the moon: higher, floatier jumps
 function band(){   // where walkers' feet can be, in CSS px
-  if(SEA) return [BEACH_A*P + 4, VH - 10];   // sea scene: the strip of beach at the bottom
+  if(SEA) return [BEACH_A*P + 4, VH - (VOL ? 56 : 10)];   // sea scene: the strip of beach at the bottom (the volcano's keeps clear of the bottom labels)
   if(cfg.bg === 'scene' && cfg.ground !== 'none') return [gTopA*P + 6, VH - 10];
   return [VH*.86, VH - 10]; }
 const depthS = fy => { const [a, b] = band(); return sFar + (sNear - sFar)*clamp((fy - a)/Math.max(1, b - a), 0, 1); };
@@ -347,7 +347,8 @@ function buildScene(){
   if(themeMeta) themeMeta.content = on ? 'rgb(' + sk.stops[0][1].join(',') + ')' : '#fbf8f1';
   const volc = on && cfg.ground === 'volcano', sea = on && (cfg.ground === 'sea' || volc), desert = on && cfg.ground === 'desert', visA = Math.round(VH/P);
   OBJ = new Uint8Array(gw*gh);
-  if(sea){ const top = Math.round(visA*.5); BEACH_A = Math.round(visA*.9); seaMake(top, BEACH_A); gTopA = top + Math.round(SEA.H*.55); }   // mountains end behind the water
+  if(sea){ const top = Math.round(visA*(volc ? .42 : .5)); BEACH_A = Math.round(visA*(volc ? .72 : .9));   // the volcano's beach is taller
+    seaMake(top, BEACH_A); gTopA = top + Math.round(SEA.H*.55); }   // mountains end behind the water
   else { SEA = null; gTopA = on && cfg.ground !== 'none' ? Math.round(VH/P*.7) : gh; }
   skyBuf = new Uint8ClampedArray(gw*gh*4); fgBuf = new Uint8ClampedArray(gw*gh*4); frame = sctx.createImageData(gw, gh);
   const put = (buf, x, y, c, a = 255) => { x |= 0; y |= 0; if(x < 0 || y < 0 || x >= gw || y >= gh) return; const i = (y*gw + x)*4; buf[i] = c[0]; buf[i+1] = c[1]; buf[i+2] = c[2]; buf[i+3] = a; };
