@@ -65,6 +65,8 @@ a[href^="http"]:not([href*="//fogday.com"])::after{content:"";display:inline-blo
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :focus-visible{outline:var(--ring-w) solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
 .wrap{width:100%;max-width:34rem;margin:0 auto;padding:0 var(--s4)}
+/* Hairline rules below the header and above the footer row, 5px clear above and below (Tone Pairs uses them too). */
+.rule{flex:none;width:100%;height:0;margin:5px 0;border:0;border-top:1px solid var(--line)}
 p,li,dd{overflow-wrap:anywhere}
 /* All icons are 20px, in ink-2, as on fogday.com/cn-dr. */
 svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -525,6 +527,7 @@ html,body{overscroll-behavior-y:auto}
 
 <main id="main">
   <div class="wrap">
+  <hr class="rule">
   <div class="view" id="vHome">
     <h1 class="vh">Tone Pairs</h1>
     <section class="tp" id="tp" aria-label="Tone pair practice">
@@ -554,6 +557,7 @@ html,body{overscroll-behavior-y:auto}
     </section>
   </div>
 
+  <hr class="rule">
 <div class="actions">
       <p class="note" id="note" role="status"></p>
       <span class="ibtn tp-gap" aria-hidden="true"></span>
@@ -631,9 +635,23 @@ const LT = () => LANG === 'zht' ? 'zh-Hant' : 'zh-Hans';
    If Web Audio is missing or a clip will not decode, the <audio> player is the fallback. */
 const AC = window.AudioContext || window.webkitAudioContext;
 let ctx = null;
+/* Swipes: iPhone does not count a swipe as a tap, so a swipe can neither start nor resume the audio context. If the
+   context is not running at a swipe (phone locked, app switch, a call, or the first touch was a swipe), the clip plays
+   through the <audio> player instead. That player is primed with a moment of silence in the first real tap, which
+   lets it play later without one. Only then can iPhone show its media player. */
+const SILENT = 'data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
+let primed = false, priming = false;
+function prime(){
+  if(primed || priming) return; priming = true;
+  if(!el) el = makeEl();
+  el.src = SILENT;
+  try{ const p = el.play(); if(p && p.then) p.then(() => { primed = true; priming = false; }, () => { priming = false; }); else { primed = true; priming = false; } }
+  catch(e){ priming = false; }
+}
 function unlock(){
-  if(!AC) return null;
+  if(!AC){ prime(); return null; }
   try{ if(navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; }catch(e){}
+  prime();
   if(!ctx){
     try{ ctx = new AC(); }catch(e){ return null; }
     try{ const b = ctx.createBuffer(1, 1, 22050), n = ctx.createBufferSource(); n.buffer = b; n.connect(ctx.destination); n.start(0); }catch(e){}
@@ -652,11 +670,15 @@ function resetAudio(){
   bufs.clear();
 }
 addEventListener('pagehide', () => { robotStop(); resetAudio(); });
-addEventListener('pageshow', e => { if(e.persisted) resetAudio(); });
+addEventListener('pageshow', e => { if(e.persisted){ resetAudio(); primed = false; } });
+/* Back on screen after a lock or app switch: try to wake the context (works on most browsers; iPhone waits for a tap). */
+document.addEventListener('visibilitychange', () => { if(!document.hidden && ctx && ctx.state !== 'running'){ try{ ctx.resume(); }catch(e){} } });
 const bytes = new Map();   // src -> Promise<ArrayBuffer|null>, fetched ahead of the tap
 const bufs = new Map();    // src -> Promise<AudioBuffer|null>, decoded once there is a context
 function fetchClip(src){
-  if(!bytes.has(src)) bytes.set(src, fetch(src).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null));
+  /* A failed fetch is forgotten, so the next play fetches again instead of falling back for good. */
+  if(!bytes.has(src)) bytes.set(src, fetch(src).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null)
+    .then(a => { if(!a) bytes.delete(src); return a; }));
   return bytes.get(src);
 }
 function decoded(src){
@@ -683,10 +705,15 @@ function prefetchAll(){   // a few at a time
 const playing = () => {};
 let el = null, node = null, token = 0, elDone = null;
 function stopAll(){ elDone = null; try{ if(node) node.stop(); }catch(e){} node = null; if(el) el.pause(); playing(false); }
-function playEl(src, done){   // fallback: the <audio> player, started inside the tap
-  if(!el){ el = new Audio(); el.addEventListener('ended', () => { playing(false); const f = elDone; elDone = null; if(f) f(); }); }
+function makeEl(){
+  const a = new Audio(); a.preload = 'auto';
+  a.addEventListener('ended', () => { playing(false); const f = elDone; elDone = null; if(f) f(); });
+  return a;
+}
+function playEl(src, done){   // fallback: the <audio> player (primed in the first tap, so it also plays from a swipe)
+  if(!el) el = makeEl();
   elDone = done || null; el.src = src; const p = el.play(); playing(true);
-  if(p && p.catch) p.catch(() => { playing(false); if(elDone === done && done) robotStop(); });
+  if(p && p.then) p.then(() => { primed = true; }, () => { playing(false); if(elDone === done && done) robotStop(); });
 }
 function speakTTS(text, done){
   const SS = window.speechSynthesis; if(!SS){ note('Pronunciation is not available in this browser.'); if(done) robotStop(); return; }
@@ -706,10 +733,13 @@ function play(k, o){
   stopAll();
   const c = unlock();   // inside the tap
   if(!c){ playEl(src, done); return; }
+  /* Not running even after unlock() tried to resume it (a swipe cannot): use the primed player now, not 300ms later. */
+  if(c.state !== 'running' && primed){ playEl(src, done); if(!o) prefetch(k == null ? cur : k); return; }
   decoded(src).then(buf => {
     if(t !== token) return;   // a newer tap won
     if(!buf){ playEl(src, done); return; }
     if(c.state !== 'running'){ try{ c.resume(); }catch(e){} }
+    if(c.state !== 'running' && primed){ playEl(src, done); return; }
     const n = c.createBufferSource(); n.buffer = buf; n.connect(c.destination); n.start(0); node = n; playing(true);
     n.onended = () => { if(node === n){ node = null; playing(false); done(); } };
     /* Safety net: if the context still is not running shortly after, it would be silent; use the <audio> player. */
