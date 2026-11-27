@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#fbf8f1">
 <!-- Added to the Home Screen it opens with no browser toolbars (iPhone has no full-screen button for pages) -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -19,7 +19,7 @@
 <style>
 :root{--pixel:"Silkscreen","Pixelify Sans",monospace;--font:"Pixelify Sans",system-ui,sans-serif;--paper:#fbf8f1;--ink:#1d2622;--muted:#55605a;--felt:#1f5c4a;--felt-d:#164536;--red:#b8352b;--line:#d9d2c3;--card:#fffdf8}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:16px/1.4 var(--font);overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;margin:0;height:100%;background:var(--paper);color:var(--ink);font:16px/1.4 var(--font);overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 /* Full screen as on /treesf/: the canvases run under Safari's toolbars (large viewport). Absolute, not fixed: Safari 26
    paints page content under its floating toolbar but clips fixed layers at its edge. */
 canvas{position:absolute;left:0;top:0;display:block}
@@ -1143,6 +1143,10 @@ function pDown(x, y){ press = {x, y, t: performance.now(), held: false, down: tr
   clearTimeout(holdT); holdT = setTimeout(hold, HOLD); }
 function pMove(x, y){ if(!press) return; press.x = x; press.y = y; press.hist.push([x, y, performance.now()]); if(press.hist.length > 10) press.hist.shift(); if(press.held) P0 = {x, y, t: performance.now()}; }
 addEventListener('pointerdown', e => { if(inUI(e)) return; pDown(e.clientX, e.clientY); }, {passive: true});
+/* Never a zoom circle: on the scene, no magnifier loupe, text selection, callout, double-tap zoom or pinch zoom
+   (pointer events still arrive; the Controls sheet, dock, title and corner buttons are left alone). */
+for(const ev of ['touchstart', 'touchmove', 'touchend']) document.addEventListener(ev, e => { if(!inUI(e)) e.preventDefault(); }, {passive: false});
+for(const ev of ['gesturestart', 'gesturechange', 'dblclick', 'selectstart', 'contextmenu']) document.addEventListener(ev, e => { if(!inUI(e)) e.preventDefault(); }, {passive: false});
 addEventListener('pointermove', e => { if(inUI(e)) return; pMove(e.clientX, e.clientY); }, {passive: true});
 const lift = () => { clearTimeout(holdT); if(press){ if(press.pan) endPan(); else if(press.fb) throwFb(press); else release(press); press.down = false; } press = null; };
 addEventListener('pointerup', lift, {passive: true}); addEventListener('pointercancel', lift, {passive: true});
