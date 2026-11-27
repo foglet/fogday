@@ -21,4 +21,4 @@ Volcano (a Random ground, always at night): a volcano rises out of the sea at on
 
 Every fifth new scene is a volcano: a counter on the device (`px:scenes`) counts each Random press and each new scene made while panning. A volcano panned into brings its own night sky; the sky changes at a dithered seam, and land scenes after it go back to the strip's sky. Random no longer picks a volcano otherwise.
 
-Never a zoom circle: on the scene, touch defaults are cancelled (no magnifier loupe, text selection, callout, double-tap zoom or pinch zoom), and the viewport can't be zoomed. Pointer events still arrive; the Controls sheet, dock, title and corner buttons keep their normal touch behaviour.
+Never a zoom circle: on the scene, touch defaults are cancelled (no magnifier loupe, text selection, callout, double-tap zoom or pinch zoom). Pointer events still arrive; the Controls sheet, dock, title and corner buttons keep their normal touch behaviour.
