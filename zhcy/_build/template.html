@@ -407,6 +407,9 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
   const dest = dx => PG === 'tone' ? (dx > 0 ? backUrl() : null) : (dx < 0 ? TONE : null);
   document.addEventListener('touchstart', e => {
     row = e.target.closest('.actions');
+    /* Only the icon row below the footer rule swipes between pages; above it (play) the card swipe takes over. */
+    const rule = row && row.querySelector('.rule');
+    if(rule && e.touches.length === 1 && e.touches[0].clientY < rule.getBoundingClientRect().bottom) row = null;
     if(!row || e.touches.length !== 1 || !menu.hidden){ sx = null; return; }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; axis = ''; row.style.transition = 'none';
   }, {passive: true});
@@ -978,10 +981,14 @@ document.addEventListener('keydown', ev => {
     else if(was) springBack();
     return was;
   };
-  card.addEventListener('touchstart', ev => { if(ev.touches.length !== 1){ x0 = null; return; } start(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
-  card.addEventListener('touchmove', ev => { move(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
-  card.addEventListener('touchend', ev => { if(end(ev.changedTouches[0].clientX)) ev.preventDefault(); });   // no click on the characters after a drag
-  card.addEventListener('touchcancel', () => { if(x0 != null && axis === 'x') springBack(); x0 = null; });
+  /* Touch: the whole card view swipes, down to the footer rule, so a swipe around play also moves to the next
+     chengyu. Below the rule, the icon row swipes between pages (see the header). */
+  const zone = $('#vHome'), rule = zone.querySelector('.actions>.rule');
+  const above = y => !rule || y < rule.getBoundingClientRect().bottom;
+  zone.addEventListener('touchstart', ev => { if(ev.touches.length !== 1 || !above(ev.touches[0].clientY)){ x0 = null; return; } start(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
+  zone.addEventListener('touchmove', ev => { move(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
+  zone.addEventListener('touchend', ev => { if(end(ev.changedTouches[0].clientX)) ev.preventDefault(); });   // no click (characters, play) after a drag
+  zone.addEventListener('touchcancel', () => { if(x0 != null && axis === 'x') springBack(); x0 = null; });
   // Mouse: drag the card left or right.
   let mouse = false, dragged = false;
   card.addEventListener('pointerdown', ev => { if(ev.pointerType !== 'mouse' || ev.button) return; mouse = true; dragged = false; start(ev.clientX, ev.clientY); });

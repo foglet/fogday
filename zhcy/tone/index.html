@@ -483,6 +483,9 @@ html,body{overscroll-behavior-y:auto}
   const dest = dx => PG === 'tone' ? (dx > 0 ? backUrl() : null) : (dx < 0 ? TONE : null);
   document.addEventListener('touchstart', e => {
     row = e.target.closest('.actions');
+    /* Only the icon row below the footer rule swipes between pages; above it (play) the card swipe takes over. */
+    const rule = row && row.querySelector('.rule');
+    if(rule && e.touches.length === 1 && e.touches[0].clientY < rule.getBoundingClientRect().bottom) row = null;
     if(!row || e.touches.length !== 1 || !menu.hidden){ sx = null; return; }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; axis = ''; row.style.transition = 'none';
   }, {passive: true});
