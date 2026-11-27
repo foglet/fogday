@@ -19,10 +19,13 @@
 :root{--ou:"FZOuYangXunKaiShuS","FZOuYangXunKaiShu-S","方正欧阳询楷书 简","DFOuYangXun-W5","華康歐陽詢體W5","zhcy ou","zhcy kai","Noto Serif SC",serif}
 /* Header scrolls with the page (not pinned), so the whole grid can scroll. */
 .top{position:static}
-/* Bottom row pinned to the bottom of the screen (the grid scrolls under it). Left in the page flow, it stuck and then
-   jumped as Safari's toolbar hid and showed at the end of a scroll. Same frosted paper as the header. */
-.actions{position:sticky;bottom:0;z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+/* Bottom row fixed to the bottom of the screen; the grid scrolls under it. (In the page flow it stuck then jumped at the
+   end of a scroll; position:sticky did not hold in iPhone Safari.) Same width and edge alignment as before: the column
+   width plus 12px each side. Same frosted paper as the header. The page keeps room for it (body padding, set in script). */
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:5;width:auto;max-width:calc(34rem - 2 * var(--s4) + 24px);
+  margin:0 auto;padding-left:max(calc(var(--s4) - 12px),env(safe-area-inset-left));padding-right:max(calc(var(--s4) - 12px),env(safe-area-inset-right));
+  background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+@media (min-width:34rem){.actions{padding-left:0;padding-right:0}}
 /* Smooth scrolling: let Safari's own momentum and edge bounce finish a scroll here. With bounce off, a fling stopped
    dead at the end of the grid. */
 html,body{overscroll-behavior-y:auto}
@@ -378,6 +381,10 @@ function list(){
   if(start) pick(start, false);
   enterTiles();
 }
+/* Room at the foot of the page for the fixed bottom row, so the last grid row and the info text clear it. */
+(() => { const A = document.querySelector('.actions'); if(!A) return;
+  const fit = () => { document.body.style.paddingBottom = A.offsetHeight + 'px'; };
+  fit(); if('ResizeObserver' in window) new ResizeObserver(fit).observe(A); else addEventListener('resize', fit); })();
 /* Staggered entry: each tile (background, characters and pinyin together) rises and fades in with an ease-in-out
    curve, row by row and left to right. Tiles below the screen wait and come in the same way as they scroll into view. */
 let tileIO = null;
