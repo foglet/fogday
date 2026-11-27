@@ -224,6 +224,11 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .actions{row-gap:0}
 .actions>.rule{order:-1;flex-basis:calc(100% - 24px);margin:5px 12px}
 .actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
+/* Pinned: the row stays at the screen bottom while Meaning or Info scrolls; at the end of the page it sits where it
+   always does, so it matches Tone Pairs exactly. Tone Pairs (copied stylesheet) keeps it in the flow: it shows when the bottom is reached. */
+.actions{position:sticky;bottom:0;z-index:5;background:var(--paper)}
+.top[data-pg="tone"]~main .actions{position:relative;z-index:auto;background:none}
+.actions>.play[hidden]{display:none}
 /* 36: Thirty-Six Stratagems switch. In 36 mode it reads 成语 and switches back. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
   font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}

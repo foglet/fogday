@@ -222,6 +222,11 @@ main>.wrap{flex:1;display:flex;flex-direction:column}
 .actions{row-gap:0}
 .actions>.rule{order:-1;flex-basis:calc(100% - 24px);margin:5px 12px}
 .actions .note{position:absolute;left:0;right:0;bottom:100%;margin:0;text-align:center;pointer-events:none}
+/* Pinned: the row stays at the screen bottom while Meaning or Info scrolls; at the end of the page it sits where it
+   always does, so it matches Tone Pairs exactly. Tone Pairs (copied stylesheet) keeps it in the flow: it shows when the bottom is reached. */
+.actions{position:sticky;bottom:0;z-index:5;background:var(--paper)}
+.top[data-pg="tone"]~main .actions{position:relative;z-index:auto;background:none}
+.actions>.play[hidden]{display:none}
 /* 36: Thirty-Six Stratagems switch. In 36 mode it reads 成语 and switches back. */
 .n36{min-width:var(--tap);height:var(--tap);padding:0 var(--s1);border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;
   font:600 var(--fs-body)/1 var(--font);letter-spacing:.02em;color:var(--ink-2)}
@@ -476,21 +481,6 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
     </article>
 
     </div>
-
-    <div class="actions">
-      <p class="note" id="note" role="status"></p>
-      <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
-      <hr class="rule">
-      <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
-      <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
-      <button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
-      <a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>
-      <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu" data-ta="copy">
-        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></svg></button>
-      <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
-    </div>
   </div>
 
   <div class="view" id="vBooks" hidden>
@@ -521,6 +511,22 @@ label{display:block;font-weight:600;font-size:var(--fs-sm);margin-bottom:var(--s
         <p><a href="https://fogday.com/">FOGDAY STUDIOS</a></p>
     </section>
   </div>
+
+  <!-- Bottom row: shared by every view, pinned to the screen bottom (see .actions). Tone Pairs puts its row in the same place. -->
+  <div class="actions">
+      <p class="note" id="note" role="status"></p>
+      <button class="play" id="play" type="button" aria-label="Play pronunciation" data-ta="play">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></button>
+      <hr class="rule">
+      <button class="ibtn lang" id="lang" type="button" aria-label="切换到简体中文" lang="zh-Hans">
+      <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></svg></button>
+      <button class="n36" id="b36" type="button" aria-label="Thirty-Six Stratagems" data-ta="b36">36</button>
+      <a class="n36 nfc" id="bfc" href="tone/" lang="zh-Hant" aria-label="Tone practice" data-ta="bfc">發財</a>
+      <button class="ibtn copy" id="copy" type="button" aria-label="Copy chengyu" data-ta="copy">
+        <svg class="ph" viewBox="0 0 256 256" aria-hidden="true"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></svg></button>
+      <button class="ibtn star" id="star" type="button" aria-pressed="false" aria-label="Star this chengyu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/></svg></button>
+    </div>
   </div>
 </main>
 
@@ -984,12 +990,17 @@ document.addEventListener('keydown', ev => {
   };
   /* Touch: the whole card view swipes, down to the footer rule, so a swipe around play also moves to the next
      chengyu. Below the rule, the icon row swipes between pages (see the header). */
-  const zone = $('#vHome'), rule = zone.querySelector('.actions>.rule');
+  const zone = $('#vHome'), rule = $('.actions>.rule'), row = $('.actions');
   const above = y => !rule || y < rule.getBoundingClientRect().bottom;
   zone.addEventListener('touchstart', ev => { if(ev.touches.length !== 1 || !above(ev.touches[0].clientY)){ x0 = null; return; } start(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
   zone.addEventListener('touchmove', ev => { move(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
   zone.addEventListener('touchend', ev => { if(end(ev.changedTouches[0].clientX)) ev.preventDefault(); });   // no click (characters, play) after a drag
   zone.addEventListener('touchcancel', () => { if(x0 != null && axis === 'x') springBack(); x0 = null; });
+  /* The bottom row now lives outside the card view; on the card, a swipe around play (above the rule) still moves the chengyu. */
+  row.addEventListener('touchstart', ev => { if(VIEW !== 'home' || ev.touches.length !== 1 || !above(ev.touches[0].clientY)){ x0 = null; return; } start(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
+  row.addEventListener('touchmove', ev => { if(x0 != null) move(ev.touches[0].clientX, ev.touches[0].clientY); }, {passive:true});
+  row.addEventListener('touchend', ev => { if(x0 != null && end(ev.changedTouches[0].clientX)) ev.preventDefault(); });
+  row.addEventListener('touchcancel', () => { if(x0 != null && axis === 'x') springBack(); x0 = null; });
   // Mouse: drag the card left or right.
   let mouse = false, dragged = false;
   card.addEventListener('pointerdown', ev => { if(ev.pointerType !== 'mouse' || ev.button) return; mouse = true; dragged = false; start(ev.clientX, ev.clientY); });
@@ -1011,6 +1022,7 @@ function setView(v, focus, quiet){
   // from a little larger, so it reads as shrinking in place.
   const fadeTo = quiet || !canSwoop() ? null
     : prev === 'home' && v === 'books' ? '#mHead b' : prev === 'books' && v === 'home' ? '#chars' : null;
+  $('#play').hidden = v !== 'home';   // the bottom row is shared; play belongs to the card
   [['home', '#vHome'], ['books', '#vBooks'], ['info', '#vInfo']].forEach(([k, id]) => {
     const el = $(id), on = k === v; el.hidden = !on;
     el.classList.remove('in'); if(on && v !== 'home') into = el;
